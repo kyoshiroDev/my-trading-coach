@@ -1,4 +1,8 @@
 ---
+import { APP_URL } from '../config';
+
+// false sur les pages où un CTA de conversion n'a pas sa place (ex. /disclaimer).
+const { stickyCta = true } = Astro.props;
 ---
 <div class="nav-bar">
   <a href="/" class="nav-logo">
@@ -10,8 +14,8 @@
     <a href="/#features">Fonctionnalités</a>
     <a href="/#pricing">Tarifs</a>
     <a href="/#faq">FAQ</a>
-    <a href="https://app.mytradingcoach.app/login" class="nav-login-link">Connexion</a>
-    <a href="https://app.mytradingcoach.app/register" class="nav-cta">Essayer gratuitement →</a>
+    <a href={`${APP_URL}/login`} class="nav-login-link">Connexion</a>
+    <a href={`${APP_URL}/register`} class="nav-cta">Commencer gratuitement →</a>
   </nav>
 
   <button
@@ -26,15 +30,27 @@
   </button>
 </div>
 
-<a href="https://app.mytradingcoach.app/register" class="nav-sticky-cta">
-  Essayer gratuitement →
-</a>
+{stickyCta && (
+  <a href={`${APP_URL}/register`} class="nav-sticky-cta">
+    Commencer gratuitement →
+  </a>
+)}
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('nav-toggle');
     const navLinks = document.getElementById('nav-links');
     const body = document.body;
+
+    const sticky = document.querySelector<HTMLElement>('.nav-sticky-cta');
+
+    // La barre sticky double le CTA du hero tant que celui-ci est à l'écran.
+    const heroCta = document.querySelector('.hero-cta-main');
+    if (sticky && heroCta) {
+      new IntersectionObserver(([entry]) => {
+        sticky.classList.toggle('behind-hero', entry.isIntersecting);
+      }).observe(heroCta);
+    }
 
     if (!toggle || !navLinks) return;
 
@@ -44,10 +60,12 @@
         navLinks.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
         body.style.overflow = '';
+        body.classList.remove('nav-open');
       } else {
         navLinks.classList.add('open');
         toggle.setAttribute('aria-expanded', 'true');
         body.style.overflow = 'hidden';
+        body.classList.add('nav-open');
       }
     });
 
@@ -56,6 +74,7 @@
         navLinks.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
         body.style.overflow = '';
+        body.classList.remove('nav-open');
       });
     });
 
@@ -64,6 +83,7 @@
         navLinks.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
         body.style.overflow = '';
+        body.classList.remove('nav-open');
       }
     });
   });
@@ -231,6 +251,13 @@
       text-decoration: none;
       z-index: 999;
       box-shadow: 0 -4px 20px rgba(0,0,0,.4);
+      transition: transform .2s ease;
+    }
+    /* Masquée quand le CTA du hero est visible ou que le menu (qui a son propre CTA) est ouvert. */
+    .nav-sticky-cta.behind-hero,
+    :global(body.nav-open) .nav-sticky-cta {
+      transform: translateY(100%);
+      pointer-events: none;
     }
   }
 </style>

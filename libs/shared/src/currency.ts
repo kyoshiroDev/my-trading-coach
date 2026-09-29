@@ -1,5 +1,5 @@
 /**
- * Devise d'un compte de trading : SOURCE UNIQUE front + back (PROMPT-214).
+ * Devise d'un compte de trading : SOURCE UNIQUE front + back.
  *
  * La devise est une propriété DU COMPTE (`TradingAccount.currency`) : imposée par le broker pour un
  * compte synchronisé, choisie par l'utilisateur pour un compte manuel. Il n'existe AUCUNE préférence

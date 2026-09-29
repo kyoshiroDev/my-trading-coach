@@ -1,119 +1,89 @@
-# New Nx Repository
+# MyTradingCoach
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Journal de trading intelligent (SaaS freemium) : le trader enregistre ses trades, et l'IA analyse
+ses émotions et ses comportements pour l'aider à progresser. Marchés : crypto, forex, actions, futures.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+Monorepo [Nx](https://nx.dev) géré avec **pnpm**.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-## Finish your Nx platform setup
+| Projet | Techno | Dossier | Port local |
+|---|---|---|---|
+| App (utilisateurs) | Angular 22 | `apps/app-mytradingcoach` | 4200 |
+| Admin (back-office) | Angular 22 | `apps/admin-mytradingcoach` | 4300 |
+| API | NestJS 11 + Prisma 7 | `apps/api-mytradingcoach` | 3001 |
+| Landing (site public) | Astro 7 | `apps/landing-mytradingcoach` | 4321 |
+| Code partagé | TypeScript pur | `libs/shared` (`@mtc/shared`) | — |
 
-🚀 [Finish setting up your workspace](https://cloud.nx.app/connect/h2XsCQusV8) to get faster builds with remote caching, distributed task execution, and self-healing CI. [Learn more about Nx Cloud](https://nx.dev/ci/intro/why-nx-cloud).
-## Generate a library
+Base de données : PostgreSQL (`prisma/schema.prisma`). Cache et files de jobs : Redis.
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
+---
 
-## Run tasks
+## Prérequis
 
-To build the library use:
+- **Node.js 22.23.2** (voir `.nvmrc` ; `nvm use` le sélectionne). Minimum : 22.22.3.
+- **Corepack** activé : il installe automatiquement la bonne version de pnpm (champ `packageManager`).
+- **Docker** pour PostgreSQL et Redis en local.
 
-```sh
-npx nx build pkg1
-```
+> ⚠️ Toujours `pnpm` / `pnpm dlx`, jamais `npm` / `npx`.
 
-To run any task with Nx use:
-
-```sh
-npx nx <target> <project-name>
-```
-
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
-
-```
-npx nx release
-```
-
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+## Démarrage
 
 ```sh
-npx nx sync
+corepack enable            # une seule fois par machine
+pnpm install
+cp apps/api-mytradingcoach/.env.example apps/api-mytradingcoach/.env   # valeurs de dev prêtes à l'emploi
+pnpm db:up                 # PostgreSQL :5432 + Redis :6379 (docker compose)
+pnpm db:deploy             # applique les migrations
+pnpm db:generate           # génère le client Prisma
+pnpm seed:demo             # optionnel : compte démo demo@mytradingcoach.app
+
+pnpm dev:api               # API → http://localhost:3001/api (santé : /api/health)
+pnpm dev                   # App → http://localhost:4200
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+> Ancienne installation avec un `.env` à la racine : déplace-le dans `apps/api-mytradingcoach/.env`.
+> À la racine, Nx l'injecte dans toutes les tâches et son `PORT` détourne le serveur de l'app.
 
-```sh
-npx nx sync:check
-```
+Autres apps : `pnpm dev:admin` (http://localhost:4300) et `pnpm dev:landing` (http://localhost:4321).
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+Le compte démo est en **lecture seule** : l'API bloque toute écriture (`DemoReadOnlyGuard`).
+Pour y accéder, ouvre http://localhost:4200/demo.
 
-## Nx Cloud
+En local, l'IA est désactivée par défaut (`AI_ENABLED=true` dans `.env` pour l'activer, clé Anthropic requise).
+Stripe, Resend, Tradovate et Discord n'ont besoin de vraies clés que pour tester ces intégrations.
 
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+## Commandes utiles
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Commande | Rôle |
+|---|---|
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm build` | Sur tous les projets |
+| `pnpm affected` | Lint, typecheck, tests et build des seuls projets touchés par ta branche |
+| `pnpm nx test app-mytradingcoach` | Une cible sur un seul projet |
+| `pnpm nx graph` | Graphe des dépendances entre projets |
+| `pnpm db:migrate` | Crée une migration après modification de `schema.prisma` |
+| `pnpm db:studio` | Explorer la base dans le navigateur |
+| `pnpm db:reset` | ⚠️ Vide la base locale et rejoue toutes les migrations |
+| `pnpm db:down` | Arrête PostgreSQL et Redis |
 
-### Set up CI (non-Github Actions CI)
+## Où trouver quoi
 
-**Note:** This is only required if your CI provider is not GitHub Actions.
+| Besoin | Où regarder |
+|---|---|
+| Où mettre quoi, conventions, commits, checklist de PR | `CONTRIBUTING.md` |
+| Règles globales du projet | `CLAUDE.md` |
+| Conventions détaillées par domaine (Angular, NestJS, Prisma, plans et prix, design, sécurité, tests, déploiement) | `.claude/agents/*.md` |
+| Plans, prix, fonctionnalités par plan | `.claude/agents/plans.md` et `libs/shared/src/pricing.ts` |
+| Référence visuelle de l'admin | `admin-mytradingcoach.html` |
+| Audits, plans de correction, checklists de mise en prod | `docs/` (`docs/ops/`) |
 
-Use the following command to configure a CI workflow for your workspace:
+## Branches et workflow
 
-```sh
-npx nx g ci-workflow
-```
+| Branche | Environnement | Déploiement |
+|---|---|---|
+| `dev` | dev.app / dev.api | automatique au push (`ci.yml`) |
+| `beta` | beta.app / beta.api (pré-prod) | automatique au push (`beta.yml`) |
+| `main` | production | automatique après CI verte (`cd.yml`) |
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## IA — interrupteur d'environnement (`AI_ENABLED`)
-
-Tous les appels au modèle Anthropic passent par `AnthropicClientService` et sont coupés si
-`AI_ENABLED !== 'true'`. C'est le seul interrupteur d'environnement (indépendant de `NODE_ENV`,
-car le déploiement **Dev** tourne en `NODE_ENV=production`).
-
-- **Production** : `AI_ENABLED=true`.
-- **Déploiement Dev + CI** : `AI_ENABLED=false` → **zéro dépense Anthropic** (les crons de
-  traduction news/eco et tous les appels IA sont court-circuités).
-
-Chaque appel est loggé dans `AiUsageLog` avec le vrai modèle et le coût au tarif du modèle
-(`ai-pricing.const.ts`) — visible dans l'écran admin `ai-usage` (coût du mois + ventilation Haiku/Sonnet).
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+1. Crée ta branche depuis la branche cible.
+2. Commits conventionnels en minuscules, vérifiés par commitlint : `feat(scope): …`, `fix(scope): …`.
+3. Avant de pousser : `pnpm affected`.
+4. Ouvre une PR : la CI lance lint, typecheck, tests et build.

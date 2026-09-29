@@ -1,56 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { RedisService } from '../infra/redis.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
-import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
+
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
+import { AI_MODELS } from '../infra/ai-pricing.const';
+import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
+import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
+import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
+import * as dates from './eco-calendar.dates';
+import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 
-export interface EcoEvent {
-  date?: string;
-  time: string;
-  name: string;
-  impact: 'high' | 'medium';
-  country: string;
-  currency: string;
-  actual: number | null;
-  estimate: number | null;
-  previous: number | null;
-  isReleased: boolean;
-  unit?: string | null;
-}
+// Réexport : les appelants existants importent ces types depuis le service.
+export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
 
-export interface EcoAnalysis {
-  summary: string;
-  recommendation: string;
-  assetImpacts: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; reason: string }[];
-}
-
-export interface EcoResultAnalysis {
-  interpretation: string;
-  assetSentiments: { asset: string; sentiment: 'bull' | 'bear' | 'neutral'; shortReason: string }[];
-}
-
-export interface EcoCalendarData {
-  events: EcoEvent[];
-  analysis: EcoAnalysis;
-  userAssets: string[];
-  pinnedEvents?: string[];
-}
-
-interface FmpEcoEvent {
-  date: string;        // '2026-05-26 13:30:00' UTC
-  event: string;
-  country: string;
-  currency: string;
-  previous: number | null;
-  estimate: number | null;
-  actual: number | null;
-  change: number | null;
-  changePercentage: number | null;
-  impact: string;      // 'High' | 'Medium' | 'Low'
-  unit: string;
-}
 
 @Injectable()
 export class EcoCalendarService {
@@ -206,7 +170,7 @@ export class EcoCalendarService {
 
       const msg = await this.anthropicClient.create(
         {
-          model: 'claude-haiku-4-5-20251001',
+          model: AI_MODELS.fast,
           max_tokens: 300,
           messages: [{ role: 'user', content:
             `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(missing)}` }],
@@ -279,7 +243,7 @@ export class EcoCalendarService {
     const prevSet = new Set(
       before
         .filter((e) => e.isReleased)
-        .map((e) => this.normalizeEventKey(`${e.name}:${e.currency}`)),
+        .map((e) => normalizeEventKey(`${e.name}:${e.currency}`)),
     );
 
     // Fetch + upsert (met aussi à jour nameFr en prod)
@@ -291,7 +255,7 @@ export class EcoCalendarService {
     const brandNew = after.filter(
       (e) =>
         e.isReleased &&
-        !prevSet.has(this.normalizeEventKey(`${e.name}:${e.currency}`)),
+        !prevSet.has(normalizeEventKey(`${e.name}:${e.currency}`)),
     );
 
     return { hasNew: brandNew.length > 0, newEvents: brandNew };
@@ -481,72 +445,23 @@ export class EcoCalendarService {
     return analysis;
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  // ── Dates (cf. eco-calendar.dates.ts) ─────────────────────────────────────
 
   private toParisDateTime(utcDateStr: string): { date: string; time: string } {
-    try {
-      const d = new Date(utcDateStr.replace(' ', 'T') + 'Z');
-      const date = d.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-      const time = d.toLocaleTimeString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      return { date, time };
-    } catch {
-      return { date: utcDateStr.slice(0, 10), time: utcDateStr.slice(11, 16) };
-    }
-  }
-
-  private toParisTime(utcDateStr: string): string {
-    try {
-      const d = new Date(utcDateStr.replace(' ', 'T') + 'Z');
-      return d.toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-    } catch {
-      return utcDateStr.slice(11, 16);
-    }
+    return dates.toParisDateTime(utcDateStr);
   }
 
   getNextTradingDay(from: Date = new Date()): Date {
-    const d = new Date(from);
-    d.setDate(d.getDate() + 1);
-    // Saut des week-ends en jour de PARIS (cohérent avec toParisDateStr en aval) :
-    // près de minuit UTC, le getDay() local pouvait renvoyer un jour ≠ de la date Paris
-    // formatée → on pouvait produire une date Paris tombant un samedi/dimanche.
-    while (this.parisWeekday(d) === 0 || this.parisWeekday(d) === 6) {
-      d.setDate(d.getDate() + 1);
-    }
-    return d;
-  }
-
-  /** Jour de la semaine (0=dim … 6=sam) d'une Date, évalué en heure de Paris. */
-  private parisWeekday(d: Date): number {
-    const short = d.toLocaleDateString('en-US', { timeZone: 'Europe/Paris', weekday: 'short' });
-    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    return map[short] ?? d.getDay();
+    return dates.nextTradingDay(from);
   }
 
   isAfterSessionClose(date: Date = new Date()): boolean {
-    const parisHour = parseInt(
-      date.toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris',
-        hour: '2-digit',
-        hour12: false,
-      }),
-      10,
-    );
-    return parisHour >= 18;
+    return dates.isAfterSessionClose(date);
   }
 
   isWeekend(date: Date = new Date()): boolean {
-    const day = date.getDay();
-    return day === 0 || day === 6;
+    return dates.isWeekend(date);
   }
 
   // ── getEventsRange : events sur une plage de dates (vue semaine) ──────────
@@ -578,53 +493,18 @@ export class EcoCalendarService {
     return results.filter((r) => r.events.length > 0);
   }
 
-  // ── Gestion des pins ─────────────────────────────────────────────────────
+  // ── Événements épinglés (cf. eco-calendar.pins.ts) ────────────────────────
 
-  async getUserPins(userId: string): Promise<string[]> {
-    const profile = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { pinnedEcoEvents: true, pinnedEcoDate: true },
-    });
-    if (!profile) return [];
-
-    // Sélection quotidienne : si la date stockée n'est pas aujourd'hui (Paris),
-    // la sélection a expiré → reset paresseux (nettoyage best-effort) + vide.
-    if (profile.pinnedEcoDate !== todayParis()) {
-      if (profile.pinnedEcoEvents.length > 0 || profile.pinnedEcoDate) {
-        try {
-          await this.prisma.user.update({
-            where: { id: userId },
-            data: { pinnedEcoEvents: [], pinnedEcoDate: null },
-          });
-        } catch { /* nettoyage best-effort */ }
-      }
-      return [];
-    }
-    return profile.pinnedEcoEvents;
+  getUserPins(userId: string): Promise<string[]> {
+    return readUserPins(this.prisma, userId);
   }
 
-  async updateUserPins(userId: string, pins: string[]): Promise<string[]> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { pinnedEcoEvents: pins, pinnedEcoDate: todayParis() },
-    });
-    // Invalider le cache du jour pour que le dashboard voit le nouvel ordre
-    const today = todayParis();
-    try {
-      await this.redis.del(`eco:calendar:${today}:${userId}`);
-    } catch { /* Redis indisponible */ }
-    return pins;
+  updateUserPins(userId: string, pins: string[]): Promise<string[]> {
+    return saveUserPins(this.prisma, this.redis, userId, pins);
   }
 
   private sortWithPins(events: EcoEvent[], pins: string[]): EcoEvent[] {
-    if (pins.length === 0) return events;
-    return [...events].sort((a, b) => {
-      const aPinned = pins.includes(`${a.name}:${a.currency}`);
-      const bPinned = pins.includes(`${b.name}:${b.currency}`);
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-      return a.time.localeCompare(b.time);
-    });
+    return sortWithPins(events, pins);
   }
 
   // ── getPinnedUpcoming : les épinglés du JOUR (sélection quotidienne) ──────────
@@ -656,30 +536,7 @@ export class EcoCalendarService {
       .map((e) => ({ ...e, date: today }))
       .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
   }
-
-  // Retire le suffixe de période "(May)", "(Q1 2026)", "(Apr)" d'une clé nom:devise
-  private normalizeEventKey(key: string): string {
-    const colonIdx = key.lastIndexOf(':');
-    if (colonIdx === -1) return key;
-    const name     = key.substring(0, colonIdx).replace(/\s*\([^)]*\)\s*$/, '').trim();
-    const currency = key.substring(colonIdx + 1);
-    return `${name}:${currency}`;
-  }
-
-  async getUserTopAssets(userId: string): Promise<string[]> {
-    const trades = await this.prisma.trade.findMany({
-      where: { userId },
-      select: { asset: true },
-      take: 100,
-      orderBy: { tradedAt: 'desc' },
-    });
-
-    const count = new Map<string, number>();
-    trades.forEach((t) => count.set(t.asset, (count.get(t.asset) ?? 0) + 1));
-
-    return [...count.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([asset]) => asset);
+  getUserTopAssets(userId: string): Promise<string[]> {
+    return userTopAssets(this.prisma, userId);
   }
 }

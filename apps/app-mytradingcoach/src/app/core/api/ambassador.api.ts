@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
+import type { Plan } from '@mtc/shared';
 
 export interface ReferralUser {
   id: string;
   name: string | null;
   email: string;
-  plan: 'FREE' | 'PREMIUM';
+  plan: Plan;
   createdAt: string;
   isActive: boolean;
 }

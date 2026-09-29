@@ -77,7 +77,7 @@
 }
 
 .btn-upgrade {
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -327,7 +327,7 @@
   color: var(--text-3);
   line-height: 1.5;
 }
-/* Note informative post-import (PROMPT-167) : ni erreur ni échec → pas d'icône, pas de rouge. */
+/* Note informative post-import : ni erreur ni échec → pas d'icône, pas de rouge. */
 .import-no-stop-note {
   font-size: 11.5px;
   color: var(--text-3);
@@ -395,7 +395,7 @@
   font-family: var(--font-display);
 }
 .src-sub {
-  font-size: 10.5px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   line-height: 1.4;
 }
@@ -404,7 +404,7 @@
 .src-tag {
   display: inline-block;
   vertical-align: middle;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 999px;
@@ -485,7 +485,7 @@
 }
 
 .btn-primary {
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -520,7 +520,7 @@
   color: var(--text);
 }
 
-/* ── Tradovate : synchro API recommandée, CSV en repli (PROMPT-211) ── */
+/* ── Tradovate : synchro API recommandée, CSV en repli ── */
 .nt-word { color: var(--nt); font-weight: 700; }
 .tv-reco {
   display: flex; flex-direction: column; gap: 8px;
@@ -533,7 +533,7 @@
 .tv-reco-title { font-weight: 600; font-size: 14px; color: var(--text); }
 .tv-reco-tag {
   margin-left: auto;
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.5px;
   padding: 2px 8px; border-radius: 20px;
   color: var(--nt); background: rgba(255, 90, 31, 0.12); border: 1px solid rgba(255, 90, 31, 0.3);

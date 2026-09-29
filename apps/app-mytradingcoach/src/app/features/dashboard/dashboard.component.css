@@ -125,7 +125,7 @@
 }
 
 .premium-banner-btn {
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -140,7 +140,7 @@
 }
 
 .premium-banner-btn:hover {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   box-shadow: 0 0 24px rgba(59, 130, 246, 0.5);
   transform: translateY(-1px);
 }
@@ -215,10 +215,10 @@
   transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center;
 }
 .firstrun-btn.primary {
-  background: var(--blue); border: 1px solid var(--blue); color: #fff;
+  background: var(--primary); border: 1px solid var(--blue); color: #fff;
   box-shadow: 0 0 18px rgba(59, 130, 246, 0.3);
 }
-.firstrun-btn.primary:hover { background: var(--blue-bright); }
+.firstrun-btn.primary:hover { background: var(--primary-hover); }
 .firstrun-btn.ghost {
   background: transparent; border: 1px solid rgba(59, 130, 246, 0.5); color: var(--blue-bright);
 }
@@ -255,8 +255,8 @@
 /* Grille principale = 3 colonnes (fidèle au design : équité|top|P&L jour,
    puis AI coach|stratégies|émotions). Responsive 3 → 2 → 1. */
 .mtc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-@media (max-width: 1200px) { .mtc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .mtc-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1280px) { .mtc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .mtc-grid { grid-template-columns: 1fr; } }
 
 .mtc-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-width: 0; margin-top: 16px; }
 .mtc-grid > .mtc-panel { margin-top: 0; }
@@ -264,16 +264,16 @@
 .mtc-panel-head-l { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .mtc-phi { color: var(--text-3); display: inline-flex; flex-shrink: 0; }
 .mtc-panel-title { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; letter-spacing: -.2px; color: var(--text); }
-.mtc-panel-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+.mtc-panel-sub { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-faint); margin-top: 2px; }
 .mtc-panel-body { padding: 18px; flex: 1; min-height: 0; }
 .mtc-eq-tabs { display: flex; gap: 4px; flex-shrink: 0; }
-.mtc-eq-tabs button { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border: none; background: transparent; border-radius: 5px; color: var(--text-faint); cursor: pointer; transition: color .15s, background .15s; }
+.mtc-eq-tabs button { font-family: var(--font-mono); font-size: var(--fs-2xs); padding: 3px 8px; border: none; background: transparent; border-radius: 5px; color: var(--text-faint); cursor: pointer; transition: color .15s, background .15s; }
 .mtc-eq-tabs button:hover { color: var(--text-2); }
 .mtc-eq-tabs button.on { color: var(--green); background: var(--green-dim); }
 .mtc-eq-tabs button.on:hover { color: var(--green); }
 
 .mtc-ai { border-color: rgba(34, 211, 238, .32); background: linear-gradient(180deg, rgba(34, 211, 238, .05), var(--bg-card)); }
-.mtc-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--cyan); }
+.mtc-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--cyan); }
 .mtc-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: mtcBlink 2s ease infinite; }
 @keyframes mtcBlink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 

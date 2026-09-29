@@ -1,0 +1,145 @@
+<div class="screen">
+  <div class="page-head">
+    <div class="page-title">Utilisateurs</div>
+    <div class="head-right">
+      <select class="sort-mobile" [value]="sort.key()" (change)="setSort($any($event.target).value)" aria-label="Trier par">
+        <option value="act">Trier : Activité</option>
+        <option value="n">Trier : Utilisateur</option>
+        <option value="role">Trier : Rôle</option>
+        <option value="plan">Trier : Plan</option>
+        <option value="ses">Trier : Session</option>
+        <option value="reg">Trier : Inscrit</option>
+      </select>
+      <div class="search">⌕
+        <input type="text" placeholder="Rechercher par email ou nom…"
+          [value]="search()" (input)="onSearch($any($event.target).value)" />
+      </div>
+    </div>
+  </div>
+
+  @if (stats(); as s) {
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div><div class="kpi-value teal">{{ s.mrr }}€</div><div class="kpi-sub">ARR {{ s.arr }}€</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium actifs</div><div class="kpi-value blue">{{ s.totalPremium }}</div><div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
+      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ s.ambassadors }}</div><div class="kpi-sub">{{ s.betaTesters }} bêta testeur{{ s.betaTesters > 1 ? 's' : '' }}</div></div>
+      <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Nouveaux ce mois</div><div class="kpi-value">{{ s.newThisMonth }}</div><div class="kpi-sub">inscrits en {{ getMonthLabel() }}</div></div>
+      <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Churn ce mois</div><div class="kpi-value red">{{ s.churnedThisMonth }}</div><div class="kpi-sub">passés en FREE</div></div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card"><div class="empty">Chargement…</div></div>
+  } @else if (sortedUsers().length === 0) {
+    <div class="card"><div class="empty">Aucun utilisateur trouvé.</div></div>
+  } @else {
+    <div class="card fill">
+      <table class="tbl">
+        <caption class="sr-only">Utilisateurs</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('n')" [attr.aria-sort]="sort.ariaSort('n')"><button type="button" class="sort-btn" (click)="sort.toggle('n')">Utilisateur <span class="caret" aria-hidden="true">{{ sort.caret('n') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('role')" [attr.aria-sort]="sort.ariaSort('role')"><button type="button" class="sort-btn" (click)="sort.toggle('role')">Rôle <span class="caret" aria-hidden="true">{{ sort.caret('role') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('plan')" [attr.aria-sort]="sort.ariaSort('plan')"><button type="button" class="sort-btn" (click)="sort.toggle('plan')">Plan <span class="caret" aria-hidden="true">{{ sort.caret('plan') }}</span></button></th>
+            <th scope="col">Abonnement</th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('act')" [attr.aria-sort]="sort.ariaSort('act')"><button type="button" class="sort-btn" (click)="sort.toggle('act')">Activité <span class="caret" aria-hidden="true">{{ sort.caret('act') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('ses')" [attr.aria-sort]="sort.ariaSort('ses')"><button type="button" class="sort-btn" (click)="sort.toggle('ses')">Session <span class="caret" aria-hidden="true">{{ sort.caret('ses') }}</span></button></th>
+            <th scope="col" class="sortable" [class.active]="sort.isActive('reg')" [attr.aria-sort]="sort.ariaSort('reg')"><button type="button" class="sort-btn" (click)="sort.toggle('reg')">Inscrit <span class="caret" aria-hidden="true">{{ sort.caret('reg') }}</span></button></th>
+            <th scope="col" class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of sortedUsers(); track u.id) {
+            <tr class="clickable" (click)="goToDetail(u.id)">
+              <td data-label="Utilisateur"><div class="u-cell"><div class="u-av">{{ initials(u) }}</div><div><div class="u-name">{{ u.name ?? '-' }}</div><div class="u-mail">{{ u.email }}</div></div></div></td>
+              <td data-label="Rôle"><span class="role-tag" [class.purple]="u.role !== 'USER'">{{ u.role }}</span></td>
+              <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
+              <td data-label="Abonnement">
+                @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
+                @else { <span class="muted">-</span> }
+              </td>
+              <td data-label="Activité" class="td-mono" [class.muted]="!u.lastSeenAt">{{ relativeTime(u.lastSeenAt) }}</td>
+              <td data-label="Session" class="td-mono">{{ u.lastLoginAt ? sessionDuration(u.lastLoginAt) : '-' }}</td>
+              <td data-label="Inscrit" class="td-mono muted">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Actions">
+                <div class="row-actions">
+                  @if (u.role !== 'ADMIN') {
+                    <button class="icon-btn" (click)="$event.stopPropagation(); openEdit(u)" aria-label="Modifier"><svg [lucideIcon]="PencilIcon" [size]="13"></svg></button>
+                    <button class="icon-btn danger" (click)="$event.stopPropagation(); openDeleteModal(u)" aria-label="Supprimer"><svg [lucideIcon]="Trash2Icon" [size]="13"></svg></button>
+                  } @else {
+                    <svg [lucideIcon]="ShieldCheckIcon" [size]="14" color="var(--blue)"></svg>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="btn-page" [disabled]="page() === 1" (click)="changePage(page()-1)">← Précédent</button>
+          <span class="td-mono muted">{{ page() }} / {{ totalPages() }}</span>
+          <button class="btn-page" [disabled]="page() === totalPages()" (click)="changePage(page()+1)">Suivant →</button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Modal édition ── -->
+  @if (editUser()) {
+    <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
+      (click)="closeIfBackdrop($event, 'edit')" (keydown.escape)="closeEdit()">
+      <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeEdit()">
+        <div class="modal-header">
+          <h2 class="modal-title">Modifier l'utilisateur</h2>
+          <button class="btn-icon" (click)="closeEdit()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-email">{{ editUser()!.email }}</div>
+          <div class="field">
+            <label for="edit-name">Nom</label>
+            <input id="edit-name" class="field-input" type="text" [(ngModel)]="editName" placeholder="Nom complet" />
+          </div>
+          <div class="field">
+            <label for="modal-edit-plan">Plan</label>
+            <select id="modal-edit-plan" class="field-select" [(ngModel)]="editPlan">
+              <option value="FREE">FREE</option>
+              <option value="PREMIUM">PREMIUM · {{ pricing.PREMIUM.monthly }}€/mois</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="modal-edit-role">Rôle</label>
+            <select id="modal-edit-role" class="field-select" [(ngModel)]="editRole">
+              <option value="USER">USER · Utilisateur standard</option>
+              <option value="BETA_TESTER">BETA_TESTER · Premium offert</option>
+              <option value="AMBASSADOR">AMBASSADOR · Programme ambassadeur</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeEdit()">Annuler</button>
+          <button class="btn-save" (click)="saveEdit()" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Sauvegarder' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Modal suppression ── -->
+  @if (deleteModal()) {
+    <div class="modal-overlay" role="button" tabindex="0" aria-label="Fermer"
+      (click)="closeIfBackdrop($event, 'delete')" (keydown.escape)="closeDeleteModal()">
+      <div class="modal modal-sm" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeDeleteModal()">
+        <div class="modal-header">
+          <h2 class="modal-title danger-title">Supprimer l'utilisateur</h2>
+          <button class="btn-icon" (click)="closeDeleteModal()" aria-label="Fermer"><svg [lucideIcon]="XIcon" [size]="14"></svg></button>
+        </div>
+        <div class="modal-body">
+          <p class="delete-msg">Supprimer définitivement <strong>{{ deleteModal()!.email }}</strong> ainsi que tous ses trades et debriefs ? Cette action est irréversible.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeDeleteModal()">Annuler</button>
+          <button class="btn-save danger-btn" (click)="confirmDelete()" [disabled]="saving()">{{ saving() ? 'Suppression…' : 'Supprimer définitivement' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

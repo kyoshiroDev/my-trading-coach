@@ -1,5 +1,5 @@
 <mtc-topbar
-  title="IA Insights"
+  title="Insights IA"
   [globalScopeNote]="true"
   [showAddButton]="userStore.isPremium()"
   [addLabel]="
@@ -23,7 +23,7 @@
       <div class="paywall-icon"><svg [lucideIcon]="SparklesIcon" [size]="40"></svg></div>
       <h3 class="paywall-title">Fonctionnalité Premium</h3>
       <p class="paywall-desc">
-        Les IA Insights sont disponibles avec le plan Premium.<br />Analyse
+        Les Insights IA sont disponibles avec le plan Premium.<br />Analyse
         tes patterns comportementaux avec le coach IA.
       </p>
       <button class="paywall-cta" (click)="showPlanModal.set(true)">
@@ -208,6 +208,7 @@
           />
           <button
             class="btn-send"
+            aria-label="Envoyer le message"
             data-testid="chat-send"
             (click)="sendMessage()"
             [disabled]="

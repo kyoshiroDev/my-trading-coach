@@ -31,7 +31,7 @@ export class DailyRecapService {
         asset: true,
         side: true,
         pnl: true,
-        commission: true, // stats sur le net (PROMPT-213)
+        commission: true, // stats sur le net
         emotion: true,
         // Humeur de la journée → émotion effective quand le trade n'a pas d'override.
         tradeSession: { select: { moodStart: true } },
@@ -49,7 +49,7 @@ export class DailyRecapService {
 
     if (trades.length === 0) return null;
 
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur).
     const stats = computeTradeStats(trades);
     const pnl = stats.totalPnl;
     const winRate = stats.winRate;

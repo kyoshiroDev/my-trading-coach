@@ -63,7 +63,7 @@ describe('BecomeAmbassadorComponent', () => {
     const { cmp } = setup({ applyAmbassador: vi.fn(() => throwError(() => new Error('boom'))) });
     cmp.socials.set('@montrading');
     cmp.submit();
-    // Erreur d'envoi = feedback transitoire → toast (PROMPT-210), plus de bandeau inline.
+    // Erreur d'envoi = feedback transitoire → toast, plus de bandeau inline.
     expect(TestBed.inject(ToastService).visible()[0]).toMatchObject({ type: 'error' });
     expect(cmp.submitted()).toBe(false);
   });

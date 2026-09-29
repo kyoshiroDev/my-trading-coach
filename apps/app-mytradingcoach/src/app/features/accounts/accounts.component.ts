@@ -65,6 +65,7 @@ import {
   TradingAccount,
   AccountsApi,
 } from '../../core/api/accounts.api';
+import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 
 interface AccountFormState {
   label: string;
@@ -100,6 +101,7 @@ function emptyForm(): AccountFormState {
   selector: 'mtc-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent,
   ],
@@ -113,9 +115,10 @@ export class AccountsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly tradesStore = inject(TradesStore);
+  private readonly confirm = inject(ConfirmService);
   private readonly toast = inject(ToastService);
 
-  // ── Connexion Tradovate par compte (PROMPT-208) ──────────────────────────
+  // ── Connexion Tradovate par compte ──────────────────────────
   protected readonly tv = inject(TradovateStore);
   /** Compte pour lequel l'écran de réassurance est ouvert. */
   protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
@@ -189,7 +192,7 @@ export class AccountsComponent implements OnInit {
     this.visibleAccounts().reduce((s, a) => s + a.metrics.tradesCount, 0),
   );
 
-  // ── Devise (PROMPT-214) : propriété DU COMPTE, jamais convertie ──────────
+  // ── Devise : propriété DU COMPTE, jamais convertie ──────────
   protected readonly accountCurrencies = ACCOUNT_CURRENCIES;
   /** Devise des totaux (capital suivi, P&L cumulé) ; null si les comptes affichés en ont plusieurs. */
   protected readonly totalsCurrency = computed(() =>
@@ -253,7 +256,7 @@ export class AccountsComponent implements OnInit {
     );
     if (!ret || ret.fromWizard) return;
 
-    // Retour ponctuel → toasts (PROMPT-210). L'état durable (pilule, sélecteur de compte,
+    // Retour ponctuel → toasts. L'état durable (pilule, sélecteur de compte,
     // « à reconnecter ») vit dans la carte du compte.
     if (ret.status === 'error') {
       this.toast.error(tradovateErrorMessage(ret.reason, false));
@@ -532,12 +535,17 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Suppression / archivage ──────────────────────────────────────────────
-  protected confirmDelete(a: TradingAccount): void {
+  protected async confirmDelete(a: TradingAccount): Promise<void> {
     this.menuOpenId.set(null);
-    const msg =
-      `Supprimer « ${a.label} » ? Les trades et sessions rattachés ne sont pas supprimés ` +
-      `mais perdent leur compte. Un compte avec historique est archivé plutôt que supprimé.`;
-    if (!confirm(msg)) return;
+    const confirmed = await this.confirm.ask({
+      title: `Supprimer « ${a.label} » ?`,
+      message:
+        'Les trades et sessions rattachés ne sont pas supprimés mais perdent leur compte. ' +
+        'Un compte avec historique est archivé plutôt que supprimé.',
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!confirmed) return;
     this.deleteError.set(null);
     this.api
       .remove(a.id)

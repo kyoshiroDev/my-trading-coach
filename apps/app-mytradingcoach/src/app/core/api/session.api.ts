@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
+import type { MoodState, SessionHistoryItem, SessionStatus, TradeSide } from '@mtc/shared';
 
-export type MoodState = 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'TIRED' | 'STRESSED';
+export type { MoodState };
 
 export interface TradingSession {
   id: string;
@@ -15,7 +16,7 @@ export interface TradingSession {
   totalPnl?: number;
   totalTrades: number;
   winRate?: number;
-  status: 'ACTIVE' | 'CLOSED';
+  status: SessionStatus;
   notes?: string;
   reflectionNote?: string;
   reflectionQuestion?: string;
@@ -24,26 +25,7 @@ export interface TradingSession {
   accountId?: string | null;
 }
 
-export interface SessionHistoryItem {
-  id: string;
-  startedAt: string;
-  endedAt?: string;
-  moodStart?: MoodState;
-  moodEnd?: MoodState;
-  totalPnl?: number | null;
-  totalTrades: number;
-  winRate?: number | null;
-  notes?: string | null;
-  reflectionNote?: string | null;
-  reflectionQuestion?: string | null;
-  planNote?: string | null;
-  marketContext?: string | null;
-  maxDrawdown?: number | null;
-  bestTradePnl?: number | null;
-  bestTradeAsset?: string | null;
-  topAssets: string[];
-  aiOneLiner?: string | null;
-}
+export type { SessionHistoryItem };
 
 export interface LiveStats {
   totalPnl: number;
@@ -56,7 +38,7 @@ export interface LiveStats {
 export interface SessionTrade {
   id: string;
   asset: string;
-  side: 'LONG' | 'SHORT';
+  side: TradeSide;
   entry: number;
   exit: number | null;
   stopLoss: number | null;

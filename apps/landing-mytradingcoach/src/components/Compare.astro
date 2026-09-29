@@ -2,6 +2,8 @@
 // Une seule source de verite pour les lignes : le tableau desktop (5 colonnes) et
 // la version mobile (2 colonnes) sont rendus depuis les memes donnees, donc ils ne
 // peuvent pas diverger. En mobile, les 3 concurrents sont fusionnes en « Les autres ».
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+
 type Val = boolean | string;
 
 interface Row {
@@ -9,6 +11,17 @@ interface Row {
   isNew?: boolean;
   pulse?: boolean;  // coche MTC en couleur accent
   hl?: boolean;     // ligne mise en avant
+  /**
+   * Reserve au Premium par le CONTROLE D'ACCES REEL, pas par le marketing. Verifie le
+   * 2026-09-28 dans les guards de l'API, seule source qui fasse foi :
+   *  - Analytics avances  -> analytics.controller, PremiumGuard sur by-setup et by-hour
+   *  - Coach IA           -> ai.controller, PremiumGuard sur tout le controller
+   *  - Weekly Debrief     -> debrief.controller (PremiumGuard) + cron getEligibleUsers()
+   *  - Recap 17h30        -> daily-recap.cron, where { plan: 'PREMIUM' }
+   * Concorde avec .claude/agents/plans.md et avec les listes de Pricing.astro.
+   * Une coche nue sans ce drapeau = vraiment inclus dans le Gratuit.
+   */
+  premium?: boolean;
   mtc: Val;
   rivals: [Val, Val, Val];  // TraderSync · TradesViz · Edgely
   othersLabel?: string;     // fusion explicite quand les valeurs ne sont pas booleennes
@@ -16,17 +29,20 @@ interface Row {
 
 const rows: Row[] = [
   { label: 'Journal de trading', mtc: true, rivals: [true, true, true] },
-  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] },
+  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] , premium: true },
   { label: 'Tracking émotionnel', mtc: true, rivals: [false, false, false] },
-  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] },
-  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true },
+  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] , premium: true },
+  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true , premium: true },
   { label: 'Pré-session matin', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Session live + trade rapide', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Calendrier éco IA filtré', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
-  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
+  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true , premium: true },
   { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
   { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
-  { label: 'Prix mensuel', mtc: 'dès 49 €/mois', rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
+    // Les deux paliers : « dès 0 € » seul laissait croire que toutes les coches MTC
+    // (Coach IA, débrief hebdo, récap 17h30…) sont gratuites alors qu'une partie est Premium.
+    // Prix tiré de @mtc/shared : aucune valeur en dur sur la landing.
+    { label: 'Prix mensuel', mtc: `0 € (Gratuit) · dès ${PREMIUM_PRICE_EUR.monthly} € (Premium)`, rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
 ];
 
 type Cell = { cls: string; text: string; accent?: boolean };
@@ -51,18 +67,18 @@ const merge = (row: Row): Cell => {
 ---
 
 <section class="comp-section" id="compare">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal" style="text-align:center">
+  <div class="wrap">
+    <div class="reveal head">
       <span class="sec-label">Comparaison</span>
       <h2>Pourquoi MyTradingCoach <em>plutôt que</em> les autres ?</h2>
-      <p class="sec-sub" style="margin:0 auto;text-align:center;max-width:500px">Les autres journaux de trading analysent après. MTC supervise avant, pendant et après.</p>
+      <p class="sec-sub intro">Les autres journaux de trading analysent après. MTC supervise avant, pendant et après.</p>
     </div>
     <div class="reveal">
       <div class="table-wrapper">
         <table class="comp-table">
           <thead>
             <tr>
-              <th style="text-align:left">Fonctionnalité</th>
+              <th class="th-left">Fonctionnalité</th>
               <th class="hl">MyTrading<wbr />Coach</th>
               <th class="c-rival">TraderSync</th>
               <th class="c-rival">TradesViz</th>
@@ -79,7 +95,11 @@ const merge = (row: Row): Cell => {
                   <td class={row.hl ? 'cell-hl' : undefined}>
                     {row.label}{row.isNew && <span class="comp-new">NEW</span>}
                   </td>
-                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>{mtc.text}</span></td>
+                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>
+                    {mtc.text.split(' · ').map((part, i) => (
+                      <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
+                    ))}
+                  </span>{row.premium && <span class="comp-premium" title="Inclus dans le plan Premium">PREMIUM</span>}</td>
                   {row.rivals.map((v) => {
                     const c = cell(v);
                     return <td class="c-rival"><span class={c.cls}>{c.text}</span></td>;
@@ -91,12 +111,19 @@ const merge = (row: Row): Cell => {
           </tbody>
         </table>
       </div>
+      <p class="comp-note">
+        <span class="comp-premium legend-badge">PREMIUM</span> = inclus dans le plan Premium · une coche seule
+        est incluse dans le Gratuit
+      </p>
       <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées · Mise à jour mai 2026</p>
     </div>
   </div>
 </section>
 
 <style>
+  .th-left { text-align: left; }
+  .intro { margin: 0 auto; text-align: center; max-width: 500px; }
+  .head { text-align: center; }
   .comp-section {
     background: var(--bg2);
     border-top: 1px solid var(--b);
@@ -152,6 +179,13 @@ const merge = (row: Row): Cell => {
   /* Fusion mixte : au moins un concurrent propose la fonctionnalite. */
   .comp-partial { color: var(--txt3); font-family: var(--mono); font-size: 11px; }
   .comp-price { font-family: var(--mono); font-size: 12px; }
+  /* Chaque palier reste sur une ligne ; la coupure ne peut tomber qu'après le « · ». */
+  .comp-price-part { white-space: nowrap; }
+  @media (max-width: 767px) {
+    /* Colonne étroite : un palier par ligne, sans « · » orphelin entre les deux. */
+    .comp-price-sep { display: none; }
+    .comp-price-part { display: block; white-space: normal; font-size: 12px; }
+  }
   .comp-price-hl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--pulse); }
   .comp-new {
     margin-left: 6px;
@@ -165,6 +199,23 @@ const merge = (row: Row): Cell => {
     font-family: var(--mono);
     font-weight: 700;
   }
+
+  /* Meme structure que .comp-new, couleur du badge « Recommande » de Pricing : dans toute la
+     landing, le jaune signale une nouveaute et le bleu/indigo signale le palier Premium. */
+  .comp-premium {
+    margin-left: 6px;
+    white-space: nowrap;
+    font-size: 9px;
+    background: rgba(99,102,241,.12);
+    color: var(--blue2);
+    border: 1px solid rgba(99,102,241,.3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: .4px;
+  }
+  .legend-badge { margin-left: 0; }
 
   .comp-note {
     font-size: 11px;
@@ -188,5 +239,9 @@ const merge = (row: Row): Cell => {
 
     .comp-table th:first-child, .comp-table td:first-child { width: 52%; }
     .comp-table th:not(:first-child), .comp-table td:not(:first-child) { width: 24%; }
+
+    /* 24 % de large : « PREMIUM » ne tient pas a cote de la coche, il passe dessous. */
+    .comp-premium { display: block; width: fit-content; margin: 4px auto 0; }
+    .legend-badge { display: inline-block; margin: 0; }
   }
 </style>

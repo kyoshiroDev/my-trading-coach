@@ -6,8 +6,6 @@ import {
 import {
   Prisma,
   SessionStatus,
-  EmotionState,
-  MoodState,
   ExecutionGrade,
   ExecutionMethod,
   TradeSource,
@@ -15,14 +13,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import {
-  computeTradeStats,
-  BREAKEVEN_EPSILON,
-} from '@mtc/shared';
-import {
   computeExecutionGrade,
-  computeBehavioralGrade,
-  median,
-  BEHAVIORAL_MIN_TRADES,
   ExecutionTradeInput,
   ExecutionGradeResult,
 } from '../../common/utils/execution-grade.util';
@@ -33,43 +24,21 @@ import { CrossSourcePool } from './import-dedupe.util';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { getTickValue, getTickSize, INSTRUMENTS } from './instruments.const';
+import { buildTradeWhere } from './trade-filters.util';
+import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
+import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
+import { summarizeJournal, type JournalStats } from './journal-stats.util';
+import { recomputeBehavioralGrades } from './behavioral-grades';
+
+// Réexports : les appelants existants importent ces types depuis le service.
+export type { JournalStats } from './journal-stats.util';
+export type { UserAssetItem } from './user-assets.service';
 
 /** Violation d'unicité Prisma (P2002) : ici, un import concurrent a déjà écrit ce trade. */
 function isUniqueConstraintError(err: unknown): boolean {
   return (
     err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
   );
-}
-
-export interface UserAssetItem {
-  symbol: string;
-  label: string;
-  category: string;
-  tradeCount: number;
-  lastEntry: number | null;
-  lastQty: number | null;
-  isFavorite: boolean;
-}
-
-/** KPIs du journal agrégés sur l'ensemble filtré complet (hors pagination). */
-export interface JournalStats {
-  totalTrades: number;
-  winRate: number;
-  pnlBrut: number;
-  fees: number;
-  pnlNet: number;
-  bestTrade: number;
-  worstTrade: number;
-}
-
-/**
- * Empreinte de la n-ième occurrence d'un même trade dans une source (fichier, synchro) : la 1ʳᵉ
- * garde la clé, les suivantes prennent `#n`. Réimporter la même source redonne les mêmes
- * numéros → aucun doublon ; une répétition absente de la base est, elle, bien créée.
- */
-function occurrenceHash(key: string, n: number): string {
-  return n === 1 ? key : `${key}#${n}`;
 }
 
 @Injectable()
@@ -93,8 +62,8 @@ export class TradesService {
     // `create()` directement avec un setup déjà résolu (resolveBatchSetupId) —
     // éventuellement absent si le user n'a plus aucun setup actif.
     if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
-    const pnl = this.calculatePnl(dto);
-    const riskReward = this.calculateRiskReward(dto);
+    const pnl = calculatePnl(dto);
+    const riskReward = calculateRiskReward(dto);
 
     const activeSession = await this.prisma.tradeSession.findFirst({
       where: { userId, status: SessionStatus.ACTIVE },
@@ -111,9 +80,9 @@ export class TradesService {
     if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
 
     const rr = dto.riskReward ?? riskReward;
-    // Barème A (stop présent) : intrinsèque, calculé ici (PROMPT-161). Trade SANS stop → barème B
+    // Barème A (stop présent) : intrinsèque, calculé ici. Trade SANS stop → barème B
     // comportemental, dépendant de l'historique → laissé null ici, renseigné par le recalcul par lot
-    // (PROMPT-168). On ne mélange jamais les deux : stop absent ⇒ jamais de note STOP_BASED.
+    //. On ne mélange jamais les deux : stop absent ⇒ jamais de note STOP_BASED.
     let executionScore: number | null = null;
     let executionGrade: ExecutionGrade | null = null;
     let executionMethod: ExecutionMethod | null = null;
@@ -189,7 +158,7 @@ export class TradesService {
    *  2. contrainte d'unicité `@@unique([userId, importHash])` en base, qui tranche les
    *     accès CONCURRENTS. Le niveau 1 seul laissait un double-clic sur « Importer »
    *     créer l'historique deux fois : les deux requêtes lisaient le même état vide
-   *     avant d'insérer (PROMPT-186 #1).
+   *     avant d'insérer.
    *
    * Un conflit d'unicité n'est donc pas une erreur : c'est un doublon, on le compte
    * comme tel — un ré-import du même fichier ne recrée toujours rien.
@@ -221,7 +190,7 @@ export class TradesService {
     const seen = new Set<string>();
     const inBase = new Map<string, number>();
     for (const t of existing) {
-      const key = this.dedupeKey(t);
+      const key = dedupeKey(t);
       const n = (inBase.get(key) ?? 0) + 1;
       inBase.set(key, n);
       seen.add(occurrenceHash(key, n));
@@ -230,7 +199,7 @@ export class TradesService {
     let created = 0;
     let duplicates = 0;
     let failed = 0;
-    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1, PROMPT-168).
+    // Comptes touchés → un seul recalcul comportemental par compte à la fin (pas de N+1).
     const affectedAccounts = new Set<string>();
     // Rang de chaque clé DANS la source : deux lignes identiques sont deux trades (cf. occurrenceHash).
     const inSource = new Map<string, number>();
@@ -240,7 +209,7 @@ export class TradesService {
         duplicates++;
         continue;
       }
-      const key = this.dedupeKey(dto);
+      const key = dedupeKey(dto);
       const n = (inSource.get(key) ?? 0) + 1;
       inSource.set(key, n);
       const hash = occurrenceHash(key, n);
@@ -273,35 +242,7 @@ export class TradesService {
     return { created, duplicates, failed, total: dtos.length };
   }
 
-  /** Clé d'unicité d'un trade : asset + side + tradedAt + entry + exit + pnl. */
-  private dedupeKey(t: {
-    asset?: string | null;
-    side?: string | null;
-    tradedAt?: string | Date | null;
-    entry?: number | null;
-    exit?: number | null;
-    pnl?: number | null;
-  }): string {
-    const at = t.tradedAt ? new Date(t.tradedAt).toISOString() : '';
-    return [t.asset ?? '', t.side ?? '', at, t.entry ?? '', t.exit ?? '', t.pnl ?? ''].join('|');
-  }
 
-  /**
-   * Identité d'un trade pour la détection de doublons : son empreinte d'import si elle existe
-   * (une répétition légitime porte `#2`, `#3`… et n'est donc JAMAIS un doublon), sinon la clé
-   * recalculée (trades saisis à la main ou importés avant la migration `importHash`).
-   */
-  private duplicateIdentity(t: {
-    asset?: string | null;
-    side?: string | null;
-    tradedAt?: string | Date | null;
-    entry?: number | null;
-    exit?: number | null;
-    pnl?: number | null;
-    importHash?: string | null;
-  }): string {
-    return t.importHash ?? this.dedupeKey(t);
-  }
 
   /** Compte les doublons existants pour un user (lignes en trop par rapport aux uniques). */
   async countDuplicates(
@@ -311,7 +252,7 @@ export class TradesService {
       where: { userId },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true, importHash: true },
     });
-    const keys = new Set(trades.map((t) => this.duplicateIdentity(t)));
+    const keys = new Set(trades.map((t) => duplicateIdentity(t)));
     return { total: trades.length, unique: keys.size, duplicates: trades.length - keys.size };
   }
 
@@ -325,7 +266,7 @@ export class TradesService {
     const seen = new Set<string>();
     const toDelete: string[] = [];
     for (const t of trades) {
-      const key = this.duplicateIdentity(t);
+      const key = duplicateIdentity(t);
       if (seen.has(key)) toDelete.push(t.id);
       else seen.add(key);
     }
@@ -336,66 +277,7 @@ export class TradesService {
     return { removed: toDelete.length, kept: seen.size };
   }
 
-  /**
-   * Construit le `where` Prisma commun à la liste et aux stats (même filtres → mêmes résultats).
-   * Factorisé pour que la liste paginée et l'agrégat de stats ne divergent jamais.
-   */
-  private buildTradeWhere(
-    userId: string,
-    f: Pick<
-      TradeFiltersDto,
-      | 'accountId'
-      | 'side'
-      | 'setupId'
-      | 'emotion'
-      | 'result'
-      | 'executionGrade'
-      | 'dateFrom'
-      | 'dateTo'
-    >,
-  ): Prisma.TradeWhereInput {
-    const where: Prisma.TradeWhereInput = { userId };
-    if (f.accountId && f.accountId !== 'all') where.accountId = f.accountId;
-    if (f.side) where.side = f.side;
-    if (f.setupId) where.setupId = f.setupId;
 
-    // Résultat : mêmes seuils ε que trade-stats.util (les null/ouverts sont exclus par
-    // les comparaisons SQL). WIN pnl>ε · LOSS pnl<-ε · BREAKEVEN -ε≤pnl≤ε.
-    if (f.result === 'WIN') where.pnl = { gt: BREAKEVEN_EPSILON };
-    else if (f.result === 'LOSS') where.pnl = { lt: -BREAKEVEN_EPSILON };
-    else if (f.result === 'BREAKEVEN')
-      where.pnl = { gte: -BREAKEVEN_EPSILON, lte: BREAKEVEN_EPSILON };
-
-    // Note d'exécution : enum direct ; 'NONE' → non évaluée (null).
-    if (f.executionGrade === 'NONE') where.executionGrade = null;
-    else if (f.executionGrade)
-      where.executionGrade = f.executionGrade as ExecutionGrade;
-
-    // Émotion effective = override du trade ?? humeur de la session. Filtre en OR sur les
-    // deux sources ; les valeurs propres à un seul enum ne génèrent que la branche valide
-    // (TIRED → MoodState uniquement, REVENGE/FEAR → EmotionState uniquement).
-    if (f.emotion === 'NONE') {
-      where.emotion = null;
-      where.OR = [{ sessionId: null }, { tradeSession: { moodStart: null } }];
-    } else if (f.emotion) {
-      const branches: Prisma.TradeWhereInput[] = [];
-      if ((Object.values(EmotionState) as string[]).includes(f.emotion))
-        branches.push({ emotion: f.emotion as EmotionState });
-      if ((Object.values(MoodState) as string[]).includes(f.emotion))
-        branches.push({
-          emotion: null,
-          tradeSession: { moodStart: f.emotion as MoodState },
-        });
-      if (branches.length) where.OR = branches;
-    }
-
-    if (f.dateFrom || f.dateTo) {
-      where.tradedAt = {};
-      if (f.dateFrom) where.tradedAt.gte = new Date(f.dateFrom);
-      if (f.dateTo) where.tradedAt.lte = new Date(f.dateTo);
-    }
-    return where;
-  }
 
   /**
    * KPIs du journal calculés en base sur TOUT l'ensemble filtré (hors pagination).
@@ -406,49 +288,19 @@ export class TradesService {
     filters: TradeFiltersDto,
   ): Promise<JournalStats> {
     // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll.
-    const where = this.buildTradeWhere(userId, filters);
+    const where = buildTradeWhere(userId, filters);
 
     const trades = await this.prisma.trade.findMany({
       where,
       select: { pnl: true, commission: true },
     });
 
-    const totalTrades = trades.length;
-    if (totalTrades === 0) {
-      return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
-    }
-
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
-    const { winRate } = computeTradeStats(trades);
-
-    let pnlBrut = 0;
-    let fees = 0;
-    let bestTrade = -Infinity;
-    let worstTrade = Infinity;
-    for (const t of trades) {
-      const pnl = t.pnl ?? 0;
-      const fee = Math.abs(t.commission ?? 0);
-      pnlBrut += pnl;
-      fees += fee;
-      const net = pnl - fee;
-      if (net > bestTrade) bestTrade = net;
-      if (net < worstTrade) worstTrade = net;
-    }
-
-    return {
-      totalTrades,
-      winRate,
-      pnlBrut,
-      fees,
-      pnlNet: pnlBrut - fees,
-      bestTrade,
-      worstTrade,
-    };
+    return summarizeJournal(trades);
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {
     const { cursor, limit = 20 } = filters;
-    const where = this.buildTradeWhere(userId, filters);
+    const where = buildTradeWhere(userId, filters);
 
     const trades = await this.prisma.trade.findMany({
       take: limit + 1,
@@ -503,10 +355,10 @@ export class TradesService {
       dto.commission !== undefined ||
       dto.pnl !== undefined;
 
-    const newPnl = priceFieldsChanged ? this.calculatePnl(merged) : undefined;
-    const newRR = priceFieldsChanged ? this.calculateRiskReward(merged) : undefined;
+    const newPnl = priceFieldsChanged ? calculatePnl(merged) : undefined;
+    const newRR = priceFieldsChanged ? calculateRiskReward(merged) : undefined;
 
-    // Recalcul de la note d'exécution si un champ concerné change (PROMPT-161).
+    // Recalcul de la note d'exécution si un champ concerné change.
     const execRelevant =
       priceFieldsChanged ||
       dto.stopLoss !== undefined ||
@@ -585,14 +437,14 @@ export class TradesService {
     const existing = await this.findOne(userId, id);
     await this.prisma.trade.delete({ where: { id } });
     await this.analyticsService.invalidateUserCache(userId);
-    // La suppression modifie les médianes du compte → recalcul comportemental (PROMPT-168).
+    // La suppression modifie les médianes du compte → recalcul comportemental.
     if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
   }
 
   /**
    * Réaffecte un lot de trades à un autre compte. Le `userId` dans le `where`
    * garantit qu'on ne touche que les trades du user (anti-IDOR). Le déplacement change
-   * les médianes des comptes source ET cible → recalcul comportemental des deux côtés (PROMPT-168).
+   * les médianes des comptes source ET cible → recalcul comportemental des deux côtés.
    */
   async reassignAccount(userId: string, tradeIds: string[], accountId: string) {
     // Comptes source (avant déplacement) pour recalculer leur barème comportemental.
@@ -614,100 +466,9 @@ export class TradesService {
     return { moved: result.count };
   }
 
-  async getUserAssets(userId: string): Promise<UserAssetItem[]> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { tradingAssets: true, favoriteAsset: true },
-    });
-    const favoriteAsset = user?.favoriteAsset ?? null;
-    const instrMap = new Map(INSTRUMENTS.map((i) => [i.symbol, i]));
-
-    // Si l'user a configuré ses actifs → priorité au profil
-    if (user?.tradingAssets?.length) {
-      return user.tradingAssets.map((symbol) => {
-        const instr = instrMap.get(symbol);
-        return {
-          symbol,
-          label: instr?.label ?? symbol,
-          category: instr?.category ?? 'CRYPTO',
-          tradeCount: 0,
-          lastEntry: null,
-          lastQty: null,
-          isFavorite: symbol === favoriteAsset,
-        };
-      });
-    }
-
-    // Fallback : top actifs sur les 100 derniers trades (tous mois confondus)
-    const rows = await this.prisma.trade.findMany({
-      where: { userId },
-      select: { asset: true, entry: true, quantity: true, tradedAt: true },
-      orderBy: { tradedAt: 'desc' },
-      take: 100,
-    });
-
-    const map = new Map<string, { count: number; lastEntry: number | null; lastQty: number | null }>();
-    for (const row of rows) {
-      if (!map.has(row.asset)) {
-        map.set(row.asset, { count: 0, lastEntry: row.entry, lastQty: row.quantity });
-      }
-      map.get(row.asset)!.count++;
-    }
-
-    const items: UserAssetItem[] = Array.from(map.entries()).map(([symbol, data]) => {
-      const instr = instrMap.get(symbol);
-      return {
-        symbol,
-        label: instr?.label ?? symbol,
-        category: instr?.category ?? 'CRYPTO',
-        tradeCount: data.count,
-        lastEntry: data.lastEntry,
-        lastQty: data.lastQty,
-        isFavorite: symbol === favoriteAsset,
-      };
-    });
-
-    items.sort((a, b) => b.tradeCount - a.tradeCount);
-
-    if (favoriteAsset && !items.find((i) => i.symbol === favoriteAsset)) {
-      const instr = instrMap.get(favoriteAsset);
-      items.unshift({
-        symbol: favoriteAsset,
-        label: instr?.label ?? favoriteAsset,
-        category: instr?.category ?? 'CRYPTO',
-        tradeCount: 0,
-        lastEntry: null,
-        lastQty: null,
-        isFavorite: true,
-      });
-    }
-
-    return items.slice(0, 8);
-  }
-
-  async saveUserAssets(
-    userId: string,
-    assets: string[],
-    favoriteAsset?: string | null,
-  ): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        tradingAssets: assets,
-        favoriteAsset: favoriteAsset ?? null,
-      },
-    });
-  }
-
-  async setFavoriteAsset(userId: string, asset: string | null): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { favoriteAsset: asset },
-    });
-  }
 
   /**
-   * Note d'exécution CALCULÉE (PROMPT-161) : récupère le capital du compte cible et délègue
+   * Note d'exécution CALCULÉE : récupère le capital du compte cible et délègue
    * au util déterministe. Aucune IA. Retourne { score, grade } (null si < 2 critères applicables).
    */
   private async computeExecution(
@@ -723,135 +484,8 @@ export class TradesService {
     return computeExecutionGrade(trade, account);
   }
 
-  /**
-   * Recalcul par lot du barème comportemental (PROMPT-168) d'un compte, EN UNE SEULE PASSE.
-   * Ne touche QUE les trades sans stop (ceux avec stop gardent leur barème A intrinsèque). Contextuel :
-   * les 3 critères dépendent des médianes du compte → la note d'un trade évolue quand l'historique
-   * s'étoffe (attendu). Charge les trades clôturés triés une fois, calcule les médianes une fois,
-   * puis parcourt : aucune requête par trade (N+1 évité). Écritures limitées aux trades dont la note change.
-   */
-  async recomputeBehavioralGrades(accountId: string): Promise<void> {
-    const trades = await this.prisma.trade.findMany({
-      where: { accountId, pnl: { not: null } }, // clôturés seulement
-      select: {
-        id: true, pnl: true, quantity: true, tradedAt: true, stopLoss: true,
-        executionScore: true, executionGrade: true, executionMethod: true,
-      },
-      orderBy: { tradedAt: 'asc' },
-    });
-
-    const eps = BREAKEVEN_EPSILON;
-    const isLoss = (pnl: number | null) => pnl != null && pnl < -eps;
-    // Garde-fou : sous 20 trades clôturés, les médianes n'ont pas de sens → tout reste « Non évaluée ».
-    const enoughHistory = trades.length >= BEHAVIORAL_MIN_TRADES;
-
-    // Médianes sur TOUS les trades clôturés du compte (référence de l'historique du trader).
-    const medianLoss = median(
-      trades.filter((t) => isLoss(t.pnl)).map((t) => Math.abs(t.pnl as number)),
-    );
-    const medianQuantity = median(trades.map((t) => t.quantity ?? 1));
-
-    const updates: Prisma.PrismaPromise<unknown>[] = [];
-
-    for (let i = 0; i < trades.length; i++) {
-      const t = trades[i];
-      if (t.stopLoss != null) continue; // barème A → on ne touche pas
-
-      let score: number | null = null;
-      let grade: ExecutionGrade | null = null;
-      let method: ExecutionMethod | null = null;
-
-      if (enoughHistory) {
-        const prev = trades[i - 1];
-        const previousIsLoss = prev ? isLoss(prev.pnl) : false;
-
-        // Dernier trade perdant le MÊME jour, avant celui-ci (revenge).
-        const day = t.tradedAt.toISOString().slice(0, 10);
-        let lastSameDayLossAt: Date | null = null;
-        for (let j = i - 1; j >= 0; j--) {
-          if (trades[j].tradedAt.toISOString().slice(0, 10) !== day) break; // trié asc → sorti du jour
-          if (isLoss(trades[j].pnl)) { lastSameDayLossAt = trades[j].tradedAt; break; }
-        }
-
-        const b = computeBehavioralGrade({
-          pnl: t.pnl as number,
-          quantity: t.quantity ?? 1,
-          tradedAt: t.tradedAt,
-          medianLoss,
-          medianQuantity,
-          previousIsLoss,
-          lastSameDayLossAt,
-        });
-        score = b.score;
-        grade = b.grade;
-        method = b.grade != null ? ExecutionMethod.BEHAVIORAL : null;
-      }
-
-      if (
-        score !== t.executionScore ||
-        grade !== t.executionGrade ||
-        method !== t.executionMethod
-      ) {
-        updates.push(
-          this.prisma.trade.update({
-            where: { id: t.id },
-            data: { executionScore: score, executionGrade: grade, executionMethod: method },
-          }),
-        );
-      }
-    }
-
-    if (updates.length) await this.prisma.$transaction(updates);
-  }
-
-  /**
-   * P&L BRUT du trade (résultat des prix). Les frais restent dans `commission` : le net est
-   * calculé à la lecture par `netPnl` (@mtc/shared), CONVENTION UNIQUE depuis PROMPT-213. Avant,
-   * ce calcul retirait déjà les frais alors que les écrans les retiraient encore : frais
-   * comptés deux fois sur les trades saisis ou édités.
-   */
-  private calculatePnl(dto: CreateTradeDto): number | undefined {
-    if (dto.entry == null || dto.entry <= 0) return undefined;
-
-    // P&L réalisé fourni (import broker, ou édition sans changement de prix/qty) = source de vérité.
-    // On NE recalcule PAS points × quantité : faux pour la crypto/contrats (qty MEXC en contrats, pas en coins).
-    if (dto.pnl != null) return +dto.pnl.toFixed(2);
-
-    if (dto.exit == null || dto.exit <= 0) return undefined;
-    const effectiveExit = dto.exit;
-
-    const points =
-      dto.side === 'LONG'
-        ? effectiveExit - dto.entry
-        : dto.entry - effectiveExit;
-
-    const quantity = dto.quantity ?? 1;
-    const tickValue = getTickValue(dto.asset);
-    const tickSize = getTickSize(dto.asset);
-
-    let pnl: number;
-    if (tickValue != null) {
-      const ticks = tickSize && tickSize > 0 ? points / tickSize : points;
-      pnl = ticks * tickValue * quantity;
-    } else if (dto.capitalEngaged != null && dto.capitalEngaged > 0) {
-      pnl = (points / dto.entry) * dto.capitalEngaged;
-    } else {
-      pnl = points * quantity;
-    }
-
-    return +pnl.toFixed(2);
-  }
-
-  private calculateRiskReward(dto: CreateTradeDto): number | undefined {
-    // R/R calculé depuis takeProfit (objectif prévu), pas exit (sortie réelle)
-    if (dto.entry != null && dto.takeProfit != null && dto.stopLoss != null) {
-      const reward =
-        dto.side === 'LONG'
-          ? dto.takeProfit - dto.entry
-          : dto.entry - dto.takeProfit;
-      const risk = Math.abs(dto.entry - dto.stopLoss);
-      return risk > 0 && reward > 0 ? +(reward / risk).toFixed(2) : undefined;
-    }
-    return undefined;
+  /** Recalcul du barème comportemental (sans stop) d'un compte : cf. behavioral-grades.ts. */
+  recomputeBehavioralGrades(accountId: string): Promise<void> {
+    return recomputeBehavioralGrades(this.prisma, accountId);
   }
 }

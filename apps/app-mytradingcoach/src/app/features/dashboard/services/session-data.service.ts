@@ -1,7 +1,7 @@
 import { Injectable, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TradesApi, MarketContext, NewsItem } from '../../../core/api/trades.api';
-import { POLLING_MS } from '../../../core/constants/polling.const';
+import { TradesApi, MarketContext, NewsItem } from '@app/core/api/trades.api';
+import { POLLING_MS } from '@app/core/constants/polling.const';
 
 @Injectable()
 export class SessionDataService {
@@ -16,7 +16,7 @@ export class SessionDataService {
   private newsInterval?: ReturnType<typeof setInterval>;
 
   startPolling(getTradeSymbols: () => string[]): void {
-    // Contexte marché + news = IA mutualisée → FREE (PROMPT-169), accessible à tous.
+    // Contexte marché + news = IA mutualisée → FREE, accessible à tous.
     this.fetchMarketContext();
     this.fetchNewsItems(getTradeSymbols());
     this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);

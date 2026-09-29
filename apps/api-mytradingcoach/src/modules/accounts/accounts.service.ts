@@ -117,12 +117,12 @@ export class AccountsService {
       (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
     );
     // P&L NET par trade = pnl − frais (commission). Le solde/objectif/drawdown sont nets des
-    // frais, cohérents avec le « P&L net » du dashboard et du journal (PROMPT-175).
+    // frais, cohérents avec le « P&L net » du dashboard et du journal.
     const net = (t: RuleTrade) => (t.pnl ?? 0) - (t.commission ?? 0);
     const realizedPnl = sorted.reduce((s, t) => s + net(t), 0);
     const currentBalance = startingBalance + realizedPnl;
 
-    // Taux de réussite via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Taux de réussite via le helper unique (BE exclus du dénominateur).
     // Ce champ est un RATIO 0..1 (null si aucun trade décisif) ; le helper renvoie un %.
     const accStats = computeTradeStats(sorted);
     const winRate =
@@ -255,7 +255,7 @@ export class AccountsService {
     if (dto.status === AccountStatus.ACTIVE && account.status !== AccountStatus.ACTIVE) {
       await this.assertActiveSlotAvailable(userId, ctx);
     }
-    // La devise d'un compte synchronisé vient du broker (PROMPT-214) : non modifiable ici.
+    // La devise d'un compte synchronisé vient du broker : non modifiable ici.
     if (dto.currency !== undefined && dto.currency !== account.currency) {
       const synced = await this.prisma.brokerConnection.count({ where: { accountId: id } });
       if (synced > 0) {

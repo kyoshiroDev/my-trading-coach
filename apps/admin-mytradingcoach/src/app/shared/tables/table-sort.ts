@@ -15,7 +15,10 @@ export type SortAccessor<T> = (row: T) => string | number;
  *   ['ses', 'reg'],        // ces colonnes partent en "plus grand d'abord"
  * );
  * readonly rows = sort.connect(this.users);  // Signal<User[]> trié
- * // template : (click)="sort.toggle('act')"  [class.active]="sort.isActive('act')"  {{ sort.caret('act') }}
+ * // template (bouton dans l'en-tête, pour le clavier) :
+ * // <th scope="col" class="sortable" [class.active]="sort.isActive('act')" [attr.aria-sort]="sort.ariaSort('act')">
+ * //   <button type="button" class="sort-btn" (click)="sort.toggle('act')">Activité <span class="caret" aria-hidden="true">{{ sort.caret('act') }}</span></button>
+ * // </th>
  */
 export class TableSort<T> {
   readonly key = signal<string>('');
@@ -55,6 +58,12 @@ export class TableSort<T> {
       this.key.set(k);
       this.dir.set(this.descFirstKeys.includes(k) ? -1 : 1);
     }
+  }
+
+  /** Valeur `aria-sort` de l'en-tête : annonce au lecteur d'écran la colonne et le sens du tri. */
+  ariaSort(k: string): 'ascending' | 'descending' | 'none' {
+    if (k !== this.key()) return 'none';
+    return this.dir() === 1 ? 'ascending' : 'descending';
   }
 
   isActive(k: string): boolean {

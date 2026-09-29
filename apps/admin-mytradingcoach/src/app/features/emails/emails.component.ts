@@ -14,10 +14,12 @@ import {
   LucideRefreshCw as RefreshCw,
 } from '@lucide/angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
+import { renderEmailMarkdown } from '@mtc/shared';
+import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
   selector: 'mtc-admin-emails',
-  imports: [FormsModule, DatePipe, LucideDynamicIcon],
+  imports: [DialogDirective, FormsModule, DatePipe, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './emails.component.css',
   templateUrl: './emails.component.html',
@@ -133,37 +135,12 @@ export class EmailsComponent {
       });
   }
 
+  /** Aperçu : même rendu que l'email envoyé (@mtc/shared), avec un texte d'attente si vide. */
   private renderMarkdown(raw: string): string {
     if (!raw?.trim()) return '<p style="color:#5e789c;font-style:italic;">Ton message apparaîtra ici…</p>';
-
-    const escapeHtml = (s: string) =>
-      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    const inline = (s: string) =>
-      escapeHtml(s)
-        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#eef3fb;">$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-    const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
-
-    return blocks.map(block => {
-      const lines = block.split('\n');
-
-      if (/^#\s+/.test(block) && lines.length === 1) {
-        return `<p style="font-size:16px;font-weight:700;color:#eef3fb;margin:22px 0 8px;">${inline(block.replace(/^#\s+/, ''))}</p>`;
-      }
-
-      if (lines.every(l => /^[-•]\s+/.test(l))) {
-        const items = lines
-          .map(l => `<tr><td style="vertical-align:top;padding:2px 8px 2px 0;color:#60a5fa;">•</td><td style="padding:2px 0;color:#9bb0cf;line-height:1.6;">${inline(l.replace(/^[-•]\s+/, ''))}</td></tr>`)
-          .join('');
-        return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">${items}</table>`;
-      }
-
-      const withBreaks = lines.map(inline).join('<br/>');
-      return `<p style="color:#9bb0cf;line-height:1.7;margin:0 0 14px;">${withBreaks}</p>`;
-    }).join('');
+    return renderEmailMarkdown(raw);
   }
+
 
   private showToast(message: string, error = false): void {
     this.toast.set({ message, error });

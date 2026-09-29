@@ -7,6 +7,7 @@ import { AmbassadorApi, AmbassadorStats } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
 import { ToastService } from '../../core/services/toast.service';
 import { AmbassadorNotifService } from '../../core/services/ambassador-notif.service';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 function makeStats(partial: Partial<AmbassadorStats> = {}): AmbassadorStats {
   return {
@@ -37,6 +38,8 @@ function setup(referralOverride: Partial<Record<'generateStatement', unknown>> =
       { provide: AmbassadorNotifService, useValue: notif },
     ],
   });
+  // Composant de lib : en JIT, son styleUrl doit être neutralisé comme celui du composant testé.
+  TestBed.overrideComponent(ErrorStateComponent, { set: { styleUrls: [], styleUrl: undefined as unknown as string } });
   TestBed.overrideComponent(AmbassadorComponent, {
     set: {
       template: '<div></div>',

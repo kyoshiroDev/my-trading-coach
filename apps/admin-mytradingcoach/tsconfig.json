@@ -6,9 +6,6 @@
     "moduleResolution": "bundler",
     "module": "preserve",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "paths": {
-      "@mtc/shared": ["../../libs/shared/src/index.ts"]
-    },
     "ignoreDeprecations": "6.0"
   },
   "angularCompilerOptions": {

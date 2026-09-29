@@ -45,6 +45,7 @@ node_modules
 /.sass-cache
 /connect.lock
 /coverage
+coverage/
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
@@ -78,7 +79,6 @@ playwright/.cache
 .env.*
 .env.
 !.env.example
-!.env.local.example
 SECRETS.md
 
 .nx/self-healing

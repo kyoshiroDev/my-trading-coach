@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -22,7 +22,6 @@ export interface DispatchUser {
  */
 @Injectable()
 export class EmailDispatchService {
-  private readonly logger = new Logger(EmailDispatchService.name);
   private readonly cooldownDays: number;
 
   constructor(

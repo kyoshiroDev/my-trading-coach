@@ -1,6 +1,6 @@
 /**
  * Règles Tradovate partagées entre l'import CSV (export Performance + Cash history) et la
- * synchro API (PROMPT-207). Une seule implémentation : un trade issu de l'API doit avoir
+ * synchro API. Une seule implémentation : un trade issu de l'API doit avoir
  * EXACTEMENT la forme d'un trade issu du CSV (même sens, même entrée/sortie, même date, mêmes
  * frais), sinon scoring, analytics et débrief verraient deux produits différents.
  *

@@ -57,6 +57,8 @@
         <div class="skel-card"></div>
       }
     </div>
+  } @else if (loadError()) {
+    <mtc-error-state message="Tes sessions n’ont pas pu être chargées. Vérifie ta connexion puis réessaie." (retry)="reload()" />
   } @else if (sessions().length === 0) {
     <div class="empty-state">
       <div class="empty-icon">📋</div>

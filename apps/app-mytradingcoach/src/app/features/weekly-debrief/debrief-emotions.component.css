@@ -34,7 +34,7 @@
   font-weight: 500;
 }
 .emotion-count {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-family: var(--font-mono);
 }

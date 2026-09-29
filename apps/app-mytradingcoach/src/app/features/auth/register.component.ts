@@ -15,7 +15,7 @@ import {
   LucideEyeOff as EyeOff,
 } from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
-import { BillingApi } from '../../core/api/billing.api';
+import { BillingService } from '../../core/services/billing.service';
 import { ToastService } from '../../core/services/toast.service';
 
 @Component({
@@ -27,7 +27,7 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
-  private readonly billingApi = inject(BillingApi);
+  private readonly billing = inject(BillingService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -83,7 +83,7 @@ export class RegisterComponent {
     if (!this.submitted() && !this.emailTouched()) return null;
     if (!this.email()) return "L'adresse email est requise";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email()))
-      return 'Veuillez saisir une adresse email valide';
+      return 'Saisis une adresse email valide';
     return null;
   });
 
@@ -101,7 +101,7 @@ export class RegisterComponent {
 
   protected readonly confirmError = computed(() => {
     if (!this.submitted() && !this.confirmTouched()) return null;
-    if (!this.confirmPassword()) return 'Veuillez confirmer votre mot de passe';
+    if (!this.confirmPassword()) return 'Confirme ton mot de passe';
     if (this.password() !== this.confirmPassword())
       return 'Les mots de passe ne correspondent pas';
     return null;
@@ -127,20 +127,12 @@ export class RegisterComponent {
       .subscribe({
         next: () => {
           if (this.isPremiumFlow()) {
-            this.billingApi
-              .checkout('premium_monthly')
-              .pipe(takeUntilDestroyed(this.destroyRef))
-              .subscribe({
-                next: (res) => {
-                  window.location.href = res.data.url;
-                },
-                // Compte créé mais paiement indisponible : on continue, sans le cacher.
-                error: () => {
-                  this.isLoading.set(false);
-                  this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
-                  this.router.navigate(['/dashboard']);
-                },
-              });
+            // Compte créé mais paiement indisponible : on continue, sans le cacher.
+            this.billing.startCheckout('premium_monthly', () => {
+              this.isLoading.set(false);
+              this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
+              this.router.navigate(['/dashboard']);
+            });
           } else {
             this.router.navigate(['/dashboard']);
           }
@@ -149,7 +141,7 @@ export class RegisterComponent {
           const status = err.status;
           if (status === 409)
             this.apiError.set('Un compte existe déjà avec cette adresse email');
-          else this.apiError.set('Une erreur est survenue, veuillez réessayer');
+          else this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);
         },
       });

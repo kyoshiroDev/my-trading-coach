@@ -3,6 +3,32 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/src",
   "projectType": "library",
-  "tags": ["scope:shared"],
-  "targets": {}
+  "tags": [
+    "type:lib",
+    "scope:shared"
+  ],
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default"
+      ],
+      "options": {
+        "command": "vitest run --config vitest.config.mts",
+        "cwd": "libs/shared"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default"
+      ],
+      "options": {
+        "command": "tsc -p tsconfig.check.json",
+        "cwd": "libs/shared"
+      }
+    }
+  }
 }

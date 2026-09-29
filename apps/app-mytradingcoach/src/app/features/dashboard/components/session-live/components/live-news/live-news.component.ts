@@ -2,17 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  effect,
   inject,
   input,
   signal,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideDynamicIcon, LucideNewspaper as Newspaper } from '@lucide/angular';
-import { NewsItem, TradesApi } from '../../../../../../core/api/trades.api';
-import { UserStore } from '../../../../../../core/stores/user.store';
+import { NewsItem, TradesApi } from '@app/core/api/trades.api';
+import { UserStore } from '@app/core/stores/user.store';
+import { DialogDirective } from '@mtc/front-ui';
 
 /**
  * News live de la session : ticker horizontal (défilement continu) dans la carte marché,
@@ -21,7 +19,7 @@ import { UserStore } from '../../../../../../core/stores/user.store';
 @Component({
   selector: 'mtc-live-news',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon],
+  imports: [LucideDynamicIcon, DialogDirective],
   styleUrl: './live-news.component.css',
   template: `
     <div class="news-ticker">
@@ -56,13 +54,11 @@ import { UserStore } from '../../../../../../core/stores/user.store';
            tabindex="0"
            (click)="closeNews()"
            (keyup.escape)="closeNews()">
-        <div #newsDialog class="news-modal"
-             role="dialog"
-             aria-modal="true"
+        <div class="news-modal"
+             role="dialog" aria-modal="true" mtcDialog
+             (mtcDialogClose)="closeNews()"
              aria-labelledby="news-modal-title"
-             tabindex="-1"
              (click)="$event.stopPropagation()"
-             (keydown.escape)="closeNews()"
              (keydown)="$event.stopPropagation()">
           <!-- Header -->
           <div class="nm-header">
@@ -115,19 +111,8 @@ export class LiveNewsComponent {
   protected readonly selectedNews = signal<NewsItem | null>(null);
   // Traduction paresseuse du corps : true pendant l'appel à /news/:id/text.
   protected readonly translatingNewsText = signal(false);
-  private readonly newsDialogRef = viewChild<ElementRef<HTMLElement>>('newsDialog');
-  private newsTrigger: HTMLElement | null = null;
-
-  constructor() {
-    // Modale news → focus sur le dialogue à l'ouverture (accessibilité clavier)
-    effect(() => {
-      const dialog = this.newsDialogRef()?.nativeElement;
-      if (this.selectedNews() && dialog) dialog.focus();
-    });
-  }
 
   protected openNews(item: NewsItem): void {
-    this.newsTrigger = (document.activeElement as HTMLElement) ?? null;
     this.selectedNews.set(item);
     this.translatingNewsText.set(false);
 
@@ -155,8 +140,6 @@ export class LiveNewsComponent {
   protected closeNews(): void {
     this.selectedNews.set(null);
     this.translatingNewsText.set(false);
-    this.newsTrigger?.focus();
-    this.newsTrigger = null;
   }
 
   protected formatNewsTime(iso: string): string {

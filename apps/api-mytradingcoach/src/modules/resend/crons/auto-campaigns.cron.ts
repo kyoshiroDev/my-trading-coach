@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { Role } from '@prisma/client';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { EmailDispatchService } from '../email-dispatch.service';
 import { CAMPAIGNS } from '../campaigns/campaign-registry';
 

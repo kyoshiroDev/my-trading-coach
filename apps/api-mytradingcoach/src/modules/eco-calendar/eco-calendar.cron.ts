@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { EcoCalendarService } from './eco-calendar.service';
 import { EcoCalendarGateway } from './eco-calendar.gateway';
-import { todayParis, toParisDateStr } from '../../common/utils/paris-date';
+import { toParisDateStr, todayParis } from '@mtc/shared';
 
 @Injectable()
 export class EcoCalendarCron {

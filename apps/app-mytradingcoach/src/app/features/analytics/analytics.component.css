@@ -37,7 +37,7 @@
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 400;
   color: var(--text-3);
@@ -78,7 +78,7 @@
 }
 
 .separator-label {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   letter-spacing: 1px;
@@ -209,12 +209,12 @@
 }
 
 .dot-red {
-  background: #3a0f0f;
-  outline: 1px solid var(--red);
+  background: repeating-linear-gradient(135deg, #3a0f0f 0 2px, rgba(239,68,68,0.5) 2px 3px);
+  outline: 1px dashed var(--red);
 }
 .dot-orange {
   background: #3a2a0a;
-  outline: 1px solid var(--yellow);
+  outline: 1px dotted var(--yellow);
 }
 .dot-green {
   background: #1e3a2f;
@@ -222,7 +222,7 @@
 }
 
 .legend-txt {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   color: var(--text-3);
   margin-right: 6px;
@@ -244,7 +244,7 @@
 }
 
 .heatmap-hour-th {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-family: var(--font-mono);
   text-align: center;
@@ -253,7 +253,9 @@
 }
 
 .heatmap-day-td {
-  font-size: 10px;
+  font-weight: 400;
+  text-align: left;
+  font-size: var(--fs-2xs);
   color: var(--text-3);
   font-family: var(--font-mono);
   padding: 3px 8px 3px 0;
@@ -265,7 +267,7 @@
   border-radius: 6px;
   padding: 0;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 700;
   white-space: nowrap;
@@ -284,15 +286,19 @@
   color: var(--green);
   border: 1px solid rgba(16,185,129,0.25);
 }
+/* Daltonisme : la couleur n'est jamais seule. Vert = bordure pleine, orange = pointillés,
+   rouge = tirets + hachures. */
 .cell-orange {
   background: rgba(245,158,11,0.15);
   color: var(--yellow);
-  border: 1px solid rgba(245,158,11,0.2);
+  border: 1px dotted rgba(245,158,11,0.6);
 }
 .cell-red {
-  background: rgba(239,68,68,0.15);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 5px, rgba(239,68,68,0.14) 5px 7px),
+    rgba(239,68,68,0.12);
   color: var(--red);
-  border: 1px solid rgba(239,68,68,0.2);
+  border: 1px dashed rgba(239,68,68,0.6);
 }
 .cell-empty {
   background: rgba(99,155,255,0.04);
@@ -309,7 +315,7 @@
 }
 
 .perf-table th {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-family: var(--font-mono);
   font-weight: 500;
   color: var(--text-3);

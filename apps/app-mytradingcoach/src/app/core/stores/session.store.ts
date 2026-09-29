@@ -11,12 +11,13 @@ import { SessionApi, TradingSession, LiveStats, SessionTrade, MoodState } from '
 import { TradesApi, CreateTradeDto, MarketContext, NewsItem } from '../api/trades.api';
 import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
 import { DebriefApi, DebriefObjective } from '../api/debrief.api';
-import { EcoCalendarApi, EcoCalendarData, EcoEvent } from '../api/eco-calendar.api';
+import { EcoCalendarApi, EcoCalendarData } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
-import { todayParis, toParisDateStr } from '../utils/paris-date';
 import { POLLING_MS } from '../constants/polling.const';
 import { ToastService } from '../services/toast.service';
 import { apiErrorMessage } from '../utils/api-error';
+import { toParisDateStr, todayParis } from '@mtc/shared';
+import type { EcoEvent } from '@mtc/shared';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
@@ -58,6 +59,9 @@ export class SessionStore {
       pinnedEvents: this.weekEcoPinnedEvents(),
     };
   });
+
+  /** La session du jour n'a pas pu être chargée. */
+  readonly sessionLoadError = signal(false);
 
   readonly hasActiveSession = computed(() => this.activeSession()?.status === 'ACTIVE');
 
@@ -105,7 +109,7 @@ export class SessionStore {
       });
 
     // Polling market context + news : session active (contexte marché + news = IA
-    // mutualisée → FREE depuis PROMPT-169, accessible à tous les utilisateurs connectés).
+    // mutualisée → FREE, accessible à tous les utilisateurs connectés).
     toObservable(this.activeSession)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((session) => {
@@ -125,6 +129,7 @@ export class SessionStore {
   // ── Public API ────────────────────────────────────────────────────────────
 
   loadSessionData(): void {
+    this.sessionLoadError.set(false);
     this.sessionApi
       .getActiveSession()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -133,6 +138,8 @@ export class SessionStore {
           this.activeSession.set(res.data ?? null);
           if (res.data?.status === 'ACTIVE') this.refreshLiveStats();
         },
+        // Sans ce drapeau, une panne ressemblerait à « aucune session en cours ».
+        error: () => this.sessionLoadError.set(true),
       });
 
     this.dailyRecapApi
@@ -233,7 +240,7 @@ export class SessionStore {
       });
   }
 
-  /** Retour d'action live → toast global (PROMPT-210 ; remplace le toast local de session-live). */
+  /** Retour d'action live → toast global (remplace le toast local de session-live). */
   private flashFeedback(type: 'success' | 'error', text: string): void {
     this.toast[type](text);
   }
@@ -262,7 +269,7 @@ export class SessionStore {
     return map[mood ?? ''] ?? '😐';
   }
 
-  /** Stats + Live feed rechargés (trade Tradovate poussé en direct, PROMPT-210 live). */
+  /** Stats + Live feed rechargés (trade Tradovate poussé en direct). */
   refreshLive(): void {
     this.refreshLiveStats();
   }

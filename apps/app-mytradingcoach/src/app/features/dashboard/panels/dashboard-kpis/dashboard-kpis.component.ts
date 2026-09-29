@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { MoneyService } from '../../../../core/services/money.service';
+import { MoneyService } from '@app/core/services/money.service';
 import { DecimalPipe } from '@angular/common';
-import { AnalyticsSummary } from '../../../../core/api/analytics.api';
-import { InfoTooltipComponent } from '../../../../shared/components/info-tooltip/info-tooltip.component';
-import { PnlFormatPipe } from '../../../../shared/pipes';
+import { AnalyticsSummary } from '@app/core/api/analytics.api';
+import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
+import { PnlFormatPipe } from '@app/shared/pipes';
 import { sparkPath } from '../../dashboard-charts.util';
 
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */

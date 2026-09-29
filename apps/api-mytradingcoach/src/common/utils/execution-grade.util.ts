@@ -7,7 +7,7 @@ import {
 import { BREAKEVEN_EPSILON } from '@mtc/shared';
 
 /**
- * Note d'exécution CALCULÉE d'un trade (PROMPT-161).
+ * Note d'exécution CALCULÉE d'un trade.
  *
  * Déterministe, **zéro appel IA**, **indépendante du P&L** : un perdant bien exécuté peut être
  * EXCELLENT, un gagnant chanceux MAUVAIS. Jamais saisie par l'utilisateur.
@@ -99,7 +99,7 @@ function fracRr(t: ExecutionTradeInput): number | null {
   return 0;
 }
 
-/** Émotion saine (émotion effective, PROMPT-163) : healthy → 1 ; risky → 0 ; unknown/null → ignoré. */
+/** Émotion saine (émotion effective) : healthy → 1 ; risky → 0 ; unknown/null → ignoré. */
 function fracEmotion(t: ExecutionTradeInput): number | null {
   const e = effectiveEmotion(t);
   if (isHealthyEmotion(e)) return 1;
@@ -136,7 +136,7 @@ export function computeExecutionGrade(
   return scoreFromCriteria(criteria);
 }
 
-// ── Barème B : comportemental (PROMPT-168) ──────────────────────────────────
+// ── Barème B : comportemental ──────────────────────────────────
 // Utilisé quand le trade n'a PAS de stop loss (scalp manuel, imports broker). Ne mesure PAS la même
 // chose que le barème A → non comparable ; on trace lequel a servi (executionMethod). Contextuel :
 // dépend de l'historique du trader sur le compte (médianes) → recalcul par lot (voir service).

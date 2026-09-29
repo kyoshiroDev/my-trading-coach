@@ -3,7 +3,7 @@ import {
   LucideDynamicIcon,
   LucideActivity as Activity,
 } from '@lucide/angular';
-import { MarketContext } from '../../../../core/api/trades.api';
+import { MarketContext } from '@app/core/api/trades.api';
 
 @Component({
   selector: 'mtc-market-context-bar',

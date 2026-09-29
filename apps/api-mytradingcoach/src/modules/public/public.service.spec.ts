@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { PublicService } from './public.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 
 const mockPrisma = { user: { count: vi.fn() } };
@@ -26,6 +27,7 @@ describe('PublicService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: RedisService, useValue: mockRedisService },
         { provide: ResendService, useValue: mockResend },
+        { provide: ConfigService, useValue: { get: vi.fn(() => 'https://dev.app.mytradingcoach.app') } },
       ],
     }).compile();
     service = module.get(PublicService);
@@ -42,7 +44,7 @@ describe('PublicService', () => {
       where: { isDemo: false, role: { not: Role.ADMIN } },
     });
     // Résultat mis en cache 10 min
-    expect(mockRedisService.client.setex).toHaveBeenCalledWith('public:traders-count', 600, '14');
+    expect(mockRedisService.client.setex).toHaveBeenCalledWith('public:traders-count:dev.app.mytradingcoach.app', 600, '14');
   });
 
   it('sert depuis le cache Redis sans taper la BDD', async () => {
@@ -51,6 +53,7 @@ describe('PublicService', () => {
     const result = await service.getTradersCount();
 
     expect(result).toBe(27);
+    expect(mockRedisService.client.get).toHaveBeenCalledWith('public:traders-count:dev.app.mytradingcoach.app');
     expect(mockPrisma.user.count).not.toHaveBeenCalled();
   });
 

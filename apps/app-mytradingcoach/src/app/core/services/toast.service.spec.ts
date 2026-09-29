@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MAX_VISIBLE_TOASTS, TOAST_DURATIONS, ToastService } from './toast.service';
 
-describe('ToastService — file, durées, pause (PROMPT-210)', () => {
+describe('ToastService — file, durées, pause', () => {
   let toast: ToastService;
 
   beforeEach(() => {

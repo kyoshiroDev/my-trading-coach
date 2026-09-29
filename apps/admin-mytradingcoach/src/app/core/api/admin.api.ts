@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { environment } from '@admin/environments/environment';
+import type { AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+export type { UserDetailData };
 
 export interface AdminUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: Plan; role: Role;
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
@@ -27,42 +29,8 @@ export interface AdminStats {
 
 export interface AdminOnlineUser {
   id: string; email: string; name: string | null;
-  plan: 'FREE' | 'PREMIUM'; role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  plan: Plan; role: Role;
   lastSeenAt: string; lastLoginAt: string | null;
-}
-
-export interface AdminUserProfile {
-  tradingStyle?: string | null;
-  tradingStrategy?: string[];
-  tradingSessions?: string[];
-  tradesPerDayMin?: number | null;
-  tradesPerDayMax?: number | null;
-  strategyDescription?: string | null;
-  market?: string | null;
-  goal?: string | null;
-  startingCapital?: number;
-}
-
-export interface AdminUserDetailStats {
-  totalTrades: number;
-  tradesThisMonth: number;
-  totalPnl: number;
-  winRate: number;
-  totalAiCalls: number;
-  totalTokens: number;
-  totalCostUsd: number;
-  byFeature: Record<string, number>;
-  monthlyLimit: number | null;
-  monthlyPercent: number | null;
-}
-
-export interface AdminTopAsset { asset: string; count: number; }
-
-export interface AdminUserDetail {
-  user: AdminUser & AdminUserProfile;
-  stats: AdminUserDetailStats;
-  topAssets: AdminTopAsset[];
-  timeline: { action: string; detail: string; type: 'auth' | 'ai' | 'trade'; createdAt: string }[];
 }
 
 /** Usage IA 30j : coût RÉEL (Cost API) + attribution ESTIMÉE (logs) + réconciliation. */
@@ -117,7 +85,7 @@ export interface AdminAmbassador {
 export interface AdminAmbassadorPromoteResult {
   email: string;
   name: string | null;
-  role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+  role: Role;
   referralCode: string;
   referralLink: string;
 }
@@ -128,7 +96,7 @@ export interface AdminAmbassadorDetail {
     id: string;
     name: string | null;
     email: string;
-    plan: 'FREE' | 'PREMIUM';
+    plan: Plan;
     createdAt: string;
     isActive: boolean;
   }>;
@@ -162,7 +130,7 @@ export interface DeletedAccount {
   signedUpAt: string;
   deletedAt: string;
   lifetimeDays: number;
-  plan: 'FREE' | 'PREMIUM';
+  plan: Plan;
   hadTraded: boolean;
   tradesCount: number;
   referredBy: string | null;
@@ -200,49 +168,6 @@ export interface ReferralAdminOverview {
   filleulsRecents: ReferralAdminFilleul[];
 }
 
-export interface UserDetailData {
-  identity: {
-    id: string;
-    name: string | null;
-    email: string;
-    plan: 'FREE' | 'PREMIUM';
-    role: 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
-    subscriptionStatus: string | null;
-    ambassadorRefCode: string | null;
-    createdAt: string;
-    lastActivityAt: string | null;
-  };
-  kpis: {
-    daysSinceSignup: number;
-    lastConnection: string | null;
-    activeDays: number;
-    totalDays: number;
-    sessionTimeMinutes: number | null;
-    ai: { usd: number; tokens: number };
-  };
-  activeDates: string[];
-  aiByFeature: { feature: string; tokens: number; costUsd: number }[];
-  profile: {
-    market: string | null;
-    goal: string | null;
-    tradingStyle: string | null;
-    tradingStrategy: string[];
-    tradingSessions: string[];
-    tradesPerDayMin: number | null;
-    tradesPerDayMax: number | null;
-    strategyDescription: string | null;
-    startingCapital: number;
-  };
-  usage: {
-    totalTrades: number;
-    tradesThisMonth: number;
-    totalPnl: number;
-    winRate: number;
-  };
-  topAssets: { asset: string; count: number }[];
-  sessions: { date: string; trades: number; pnl: number; winRate: number; emotion: string | null; durationMinutes: number | null }[];
-}
-
 export interface DeletedAccountsData {
   accounts: DeletedAccount[];
   stats: { thisMonth: number; total: number; medianLifetimeDays: number; noTradePct: number; noTradeCount: number };
@@ -265,24 +190,24 @@ export interface StripeReconcileData {
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/users/admin`;
+  /** Toutes les routes admin de l'API vivent sous /admin (guard admin au niveau du contrôleur). */
   private readonly adminBase = `${environment.apiUrl}/admin`;
+  private readonly usersBase = `${this.adminBase}/users`;
 
   list(page = 1, limit = 20, search?: string) {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (search) params = params.set('search', search);
-    return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.base, { params });
+    return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  detail(id: string)    { return this.http.get<{ data: AdminUserDetail }>(`${this.base}/${id}/detail`); }
-  update(id: string, dto: { name?: string; plan?: 'FREE' | 'PREMIUM'; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
-    return this.http.patch<{ data: AdminUser }>(`${this.base}/${id}`, dto);
+  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
+    return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
-  delete(id: string)    { return this.http.delete<void>(`${this.base}/${id}`); }
-  stats()               { return this.http.get<{ data: AdminStats }>(`${this.base}/stats`); }
-  online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.base}/online`); }
-  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.base}/subscriptions`); }
-  aiCost()              { return this.http.get<{ data: AiCostData }>(`${environment.apiUrl}/admin/ai-cost`); }
-  refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${environment.apiUrl}/admin/ai-cost/refresh`, {}); }
+  delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }
+  stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
+  online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
+  subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
+  aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }
+  refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${this.adminBase}/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
   metricsHistory(days = 30) {
     return this.http.get<{ data: MetricsHistoryPoint[] }>(
@@ -293,7 +218,7 @@ export class AdminApi {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
-  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${environment.apiUrl}/referral/admin/overview`); }
+  referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }
 
   listCampaigns() {
     return this.http.get<{ data: CampaignMeta[] }>(`${this.adminBase}/campaigns`);
@@ -310,36 +235,137 @@ export class AdminApi {
   }
 
   getAmbassadors() {
-    return this.http.get<{ data: AdminAmbassador[] }>(
-      `${environment.apiUrl}/ambassador/list`,
-    );
+    return this.http.get<{ data: AdminAmbassador[] }>(`${this.adminBase}/ambassadors`);
   }
 
   getAmbassadorDetail(userId: string) {
-    return this.http.get<{ data: AdminAmbassadorDetail }>(
-      `${environment.apiUrl}/ambassador/stats`,
-      { params: { userId } },
-    );
+    return this.http.get<{ data: AdminAmbassadorDetail }>(`${this.adminBase}/ambassadors/${userId}/stats`);
   }
 
   markAmbassadorPaid(ambassadorId: string) {
-    return this.http.patch<{ data: { success: boolean } }>(
-      `${environment.apiUrl}/ambassador/pay-all/${ambassadorId}`,
-      {},
-    );
+    return this.http.patch<{ data: { success: boolean } }>(`${this.adminBase}/ambassadors/${ambassadorId}/pay-all`, {});
   }
 
   promoteAmbassador(email: string, referralCode?: string) {
     return this.http.post<{ data: AdminAmbassadorPromoteResult }>(
-      `${environment.apiUrl}/ambassador/admin/promote`,
+      `${this.adminBase}/ambassadors/promote`,
       referralCode ? { email, referralCode } : { email },
+    );
+  }
+
+  // ── Registre des brokers ──────────────────────────────────────────────────
+  // `analyse` est le SEUL appel qui coûte de l'IA (~0,003 $). `preview` rejoue une fiche
+  // corrigée à la main, gratuitement : l'admin peut ajuster autant qu'il veut.
+
+  brokerMappings() {
+    return this.http.get<{ data: BrokerMappingRow[] }>(`${this.adminBase}/broker-mappings`);
+  }
+
+  analyseBrokerSample(sample: string) {
+    return this.http.post<{ data: BrokerMappingAnalysis }>(
+      `${this.adminBase}/broker-mappings/analyse`,
+      { sample },
+    );
+  }
+
+  previewBrokerMapping(sample: string, mapping: BrokerMapping) {
+    return this.http.post<{ data: BrokerMappingAnalysis }>(
+      `${this.adminBase}/broker-mappings/preview`,
+      { sample, mapping },
+    );
+  }
+
+  saveBrokerMapping(sample: string, mapping: BrokerMapping, brokerName: string) {
+    return this.http.post<{ data: { id: string } }>(
+      `${this.adminBase}/broker-mappings`,
+      { sample, mapping, brokerName },
+    );
+  }
+
+  setBrokerMappingEnabled(id: string, enabled: boolean) {
+    return this.http.patch<{ data: { id: string; enabled: boolean } }>(
+      `${this.adminBase}/broker-mappings/${id}/enabled`,
+      { enabled },
     );
   }
 
   revokeAmbassador(email: string) {
     return this.http.post<{ data: { email: string; name: string | null; role: string } }>(
-      `${environment.apiUrl}/ambassador/admin/revoke`,
+      `${this.adminBase}/ambassadors/revoke`,
       { email },
     );
   }
+}
+
+/**
+ * Registre des brokers : fiche de correspondance des colonnes d'un export CSV.
+ * Le modèle la déduit d'un échantillon, un admin la corrige et la valide, puis elle sert
+ * à tous les utilisateurs — donc les index doivent être lisibles et modifiables à la main.
+ */
+export interface BrokerMappingColumns {
+  symbol: number;
+  entry: number | null;
+  exit: number;
+  quantity: number;
+  pnl: number;
+  tradedAt: number;
+}
+
+export interface BrokerMappingSide {
+  mode: 'column' | 'derived_from_timestamps';
+  index: number | null;
+  longValues: string[];
+  shortValues: string[];
+  buyTimeIndex: number | null;
+  sellTimeIndex: number | null;
+}
+
+export interface BrokerMapping {
+  delimiter: string;
+  decimalSeparator: '.' | ',';
+  /** Ordre jour/mois des dates : « 01/06 » vaut le 1er juin en dmy, le 6 janvier en mdy. */
+  dateFormat: 'iso' | 'dmy' | 'mdy';
+  columns: BrokerMappingColumns;
+  side: BrokerMappingSide;
+  pnlExtraColumns: number[];
+  notes?: string;
+}
+
+/** Trade tel qu'il serait importé : c'est l'aperçu que l'admin valide, pas le JSON. */
+export interface BrokerMappingPreviewRow {
+  asset?: string;
+  side?: string;
+  entry?: number;
+  exit?: number;
+  quantity?: number;
+  pnl?: number;
+  tradedAt?: string;
+}
+
+export interface BrokerMappingAnalysis {
+  header: string;
+  mapping: BrokerMapping | null;
+  preview: BrokerMappingPreviewRow[];
+  /** Part des lignes testables dont le signe du P&L confirme le sens. null = non vérifiable. */
+  pnlRatio: number | null;
+  /** Le sens proposé a été redressé par le contrôle arithmétique. */
+  flipped: boolean;
+  skipped: number;
+  rowsRead: number;
+  /**
+   * Colonnes additionnées au P&L. Non vérifiable par le code : il faudrait la valeur du point
+   * de l'instrument. C'est à l'admin de dire si c'est un complément légitime (MT5 éclate le
+   * résultat) ou un double comptage (une colonne « net » inclut déjà les frais).
+   */
+  fraisAdditionnes: number[];
+}
+
+export interface BrokerMappingRow {
+  id: string;
+  brokerName: string;
+  headerSample: string;
+  pnlConfidence: number;
+  enabled: boolean;
+  usageCount: number;
+  createdAt: string;
 }

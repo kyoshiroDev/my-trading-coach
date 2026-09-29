@@ -21,7 +21,7 @@ export class SetupsStore {
     this.setups().filter((s) => s.archived).sort((a, b) => a.sortOrder - b.sortOrder),
   );
 
-  /** Réinitialise le store (logout) : évite d'afficher les setups du user précédent. PROMPT-175. */
+  /** Réinitialise le store (logout) : évite d'afficher les setups du user précédent. */
   reset(): void {
     this.setups.set([]);
     this.loaded.set(false);

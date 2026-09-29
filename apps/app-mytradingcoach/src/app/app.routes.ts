@@ -16,7 +16,7 @@ export const appRoutes: Routes = [
       seo: {
         title: 'Connexion',
         description:
-          'Connectez-vous à MyTradingCoach pour accéder à votre journal de trading intelligent.',
+          'Connecte-toi à MyTradingCoach pour accéder à ton journal de trading intelligent.',
         noindex: false,
       },
     },
@@ -29,7 +29,7 @@ export const appRoutes: Routes = [
       seo: {
         title: 'Créer un compte',
         description:
-          "Créez votre compte MyTradingCoach gratuitement et commencez à analyser vos trades avec l'IA.",
+          "Crée ton compte MyTradingCoach gratuitement et commence à analyser tes trades avec l'IA.",
         noindex: false,
       },
     },
@@ -65,15 +65,15 @@ export const appRoutes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'session',
-        data: { seo: { title: 'Ma session', noindex: true } },
+        data: { seo: { title: 'Session du jour', noindex: true } },
         loadComponent: () =>
-          import('./features/session-day/session-day.component').then(
-            (m) => m.SessionDayComponent,
+          import('./features/today-session/today-session.component').then(
+            (m) => m.TodaySessionComponent,
           ),
       },
       {
         path: 'dashboard',
-        data: { seo: { title: 'Dashboard', noindex: true } },
+        data: { seo: { title: 'Tableau de bord', noindex: true } },
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
@@ -98,7 +98,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'sessions',
-        data: { seo: { title: 'Mes sessions', noindex: true } },
+        data: { seo: { title: 'Historique des sessions', noindex: true } },
         loadComponent: () =>
           import('./features/sessions/sessions.component').then(
             (m) => m.SessionsComponent,
@@ -106,7 +106,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'analytics',
-        data: { seo: { title: 'Analytics', noindex: true } },
+        data: { seo: { title: 'Statistiques', noindex: true } },
         loadComponent: () =>
           import('./features/analytics/analytics.component').then(
             (m) => m.AnalyticsComponent,
@@ -115,7 +115,7 @@ export const appRoutes: Routes = [
       {
         path: 'ai-insights',
         // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
-        data: { seo: { title: 'AI Insights', noindex: true } },
+        data: { seo: { title: 'Insights IA', noindex: true } },
         loadComponent: () =>
           import('./features/ai-insights/ai-insights.component').then(
             (m) => m.AiInsightsComponent,
@@ -124,7 +124,7 @@ export const appRoutes: Routes = [
       {
         path: 'debrief',
         // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
-        data: { seo: { title: 'Weekly Debrief', noindex: true } },
+        data: { seo: { title: 'Débrief hebdo', noindex: true } },
         loadComponent: () =>
           import('./features/weekly-debrief/debrief.component').then(
             (m) => m.DebriefComponent,
@@ -133,7 +133,7 @@ export const appRoutes: Routes = [
       {
         path: 'scoring',
         // Pas de premiumGuard : paywall inline intentionnel (preview + UX conversion)
-        data: { seo: { title: 'Scoring', noindex: true } },
+        data: { seo: { title: 'Score trader', noindex: true } },
         loadComponent: () =>
           import('./features/scoring/scoring.component').then(
             (m) => m.ScoringComponent,
@@ -141,11 +141,11 @@ export const appRoutes: Routes = [
       },
       {
         path: 'eco-calendar',
-        // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE (PROMPT-169).
+        // Calendrier économique (affichage + analyse IA) = IA mutualisée → FREE.
         data: {
           seo: {
             title: 'Calendrier économique',
-            description: 'Suivez les événements économiques majeurs et épinglez vos favoris.',
+            description: 'Suis les événements économiques majeurs et épingle tes favoris.',
             noindex: true,
           },
         },
@@ -158,8 +158,8 @@ export const appRoutes: Routes = [
         path: 'profil',
         data: { seo: { title: 'Profil', noindex: true } },
         loadComponent: () =>
-          import('./features/settings/settings.component').then(
-            (m) => m.SettingsComponent,
+          import('./features/profile/profile.component').then(
+            (m) => m.ProfileComponent,
           ),
       },
       // Compat : anciens liens /settings (bookmarks, emails, retours Stripe ?checkout=…).

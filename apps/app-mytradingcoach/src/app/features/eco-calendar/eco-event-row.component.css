@@ -50,20 +50,20 @@
   overflow: hidden; line-height: 1.25;
 }
 .eco-event-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.eco-val { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.eco-val { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
 .eco-val.actual { font-weight: 700; color: var(--text-2); }
 .eco-val.actual.beat { color: var(--green); }
 .eco-val.actual.miss { color: var(--red); }
 
 .eco-currency-tag {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600;
   background: var(--blue-glow); color: var(--blue-bright);
   border: 1px solid rgba(59,130,246,.2);
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
 }
 
 .eco-impact-badge {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700;
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
   text-transform: uppercase; letter-spacing: .3px;
 }
@@ -76,7 +76,7 @@
   border: 1px solid rgba(245,158,11,.2);
 }
 .eco-published {
-  font-family: var(--font-mono); font-size: 10px;
+  font-family: var(--font-mono); font-size: var(--fs-2xs);
   color: var(--green); background: var(--green-dim);
   border-radius: 5px; padding: 2px 7px; flex-shrink: 0;
 }

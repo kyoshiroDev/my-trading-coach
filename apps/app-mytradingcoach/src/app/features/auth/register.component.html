@@ -47,6 +47,8 @@
         <label for="email">Email</label>
         <input
           id="email"
+          [attr.aria-invalid]="!!emailError()"
+          [attr.aria-describedby]="emailError() ? 'email-error' : null"
           data-testid="register-email"
           type="email"
           [ngModel]="email()"
@@ -57,7 +59,7 @@
           (blur)="emailTouched.set(true)"
         />
         @if (emailError()) {
-          <span class="field-error">{{ emailError() }}</span>
+          <span class="field-error" id="email-error">{{ emailError() }}</span>
         }
       </div>
 
@@ -69,6 +71,8 @@
         <div class="input-wrapper">
           <input
             id="password"
+            [attr.aria-invalid]="!!passwordError()"
+            [attr.aria-describedby]="passwordError() ? 'password-error' : null"
             data-testid="register-password"
             [type]="showPassword() ? 'text' : 'password'"
             [ngModel]="password()"
@@ -81,6 +85,8 @@
           <button
             type="button"
             class="eye-btn"
+            [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            [attr.aria-pressed]="showPassword()"
             (click)="showPassword.set(!showPassword())"
           >
             <svg
@@ -90,7 +96,7 @@
           </button>
         </div>
         @if (passwordError()) {
-          <span class="field-error">{{ passwordError() }}</span>
+          <span class="field-error" id="password-error">{{ passwordError() }}</span>
         }
       </div>
 
@@ -99,6 +105,8 @@
         <div class="input-wrapper">
           <input
             id="confirm-password"
+            [attr.aria-invalid]="!!confirmError()"
+            [attr.aria-describedby]="confirmError() ? 'confirm-password-error' : null"
             data-testid="register-confirm"
             [type]="showConfirm() ? 'text' : 'password'"
             [ngModel]="confirmPassword()"
@@ -111,6 +119,8 @@
           <button
             type="button"
             class="eye-btn"
+            [attr.aria-label]="showConfirm() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            [attr.aria-pressed]="showConfirm()"
             (click)="showConfirm.set(!showConfirm())"
           >
             <svg
@@ -120,7 +130,7 @@
           </button>
         </div>
         @if (confirmError()) {
-          <span class="field-error">{{ confirmError() }}</span>
+          <span class="field-error" id="confirm-password-error">{{ confirmError() }}</span>
         }
       </div>
 
@@ -157,7 +167,7 @@
       </button>
 
       @if (apiError()) {
-        <div class="error-msg" data-testid="error-message">
+        <div class="error-msg" role="alert" data-testid="error-message">
           {{ apiError() }}
         </div>
       }

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { ToastService } from './toast.service';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradovateStore } from '../stores/tradovate.store';
@@ -21,7 +21,7 @@ const RETRY_BASE_MS = 2_000;
 const RETRY_MAX_MS = 60_000;
 
 /**
- * Temps réel Tradovate (PROMPT-210 live) — même pattern que `EcoSocketService`, mais ouvert
+ * Temps réel Tradovate — même pattern que `EcoSocketService`, mais ouvert
  * dès que l'app l'est (monté par le shell, pas par l'écran Session live), et authentifié.
  *
  * - App ouverte → le serveur rattrape les trades faits app fermée, puis suit Tradovate en direct.

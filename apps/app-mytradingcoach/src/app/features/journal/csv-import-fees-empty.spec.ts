@@ -1,5 +1,5 @@
 /**
- * PROMPT-203 — « fichier vide » et « mauvais format » ne sont pas le même problème.
+ * « fichier vide » et « mauvais format » ne sont pas le même problème.
  *
  * Cas réel (Val) : un export Tradovate raté produit un fichier de 9 octets contenant
  * littéralement `undefined`. Le message générique « ce fichier ne ressemble pas à un

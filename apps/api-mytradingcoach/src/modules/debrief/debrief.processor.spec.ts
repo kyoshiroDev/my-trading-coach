@@ -5,7 +5,7 @@ import { DebriefProcessor } from './debrief.processor';
 const mockService = { generateForUser: vi.fn() };
 const mockPrisma = {
   user: { findUnique: vi.fn() },
-  // Devise de l'email = celle des comptes (PROMPT-214).
+  // Devise de l'email = celle des comptes.
   tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
 const mockResend = { sendDebriefReady: vi.fn() };

@@ -1,5 +1,5 @@
 /**
- * PROMPT-204bis — un parrain ne pouvait plus supprimer son compte.
+ * Régression — un parrain ne pouvait plus supprimer son compte.
  *
  * `ReferralCommission.ambassadorId` et `ReferralReward.parrainId` étaient les deux
  * seules FK vers `User` sans règle `onDelete` : Postgres appliquait donc RESTRICT.
@@ -44,7 +44,7 @@ async function registerUser(): Promise<string> {
 }
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
   users = app.get(UsersService);

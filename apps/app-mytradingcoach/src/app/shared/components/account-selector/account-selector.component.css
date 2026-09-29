@@ -128,7 +128,7 @@
 }
 .menu-lbl {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--text-3);
@@ -226,7 +226,7 @@
 }
 
 /* Mobile : le trigger prend la largeur dispo, le menu s'adapte. */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .acct-trigger {
     min-width: 0;
     flex: 1;

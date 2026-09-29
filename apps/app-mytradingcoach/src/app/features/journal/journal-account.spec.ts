@@ -6,7 +6,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { JournalComponent } from './journal.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { CreateTradeDto } from '../../core/api/trades.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 const DTO: CreateTradeDto = {
   asset: 'BTC/USDT', side: 'LONG', emotion: 'NEUTRAL',

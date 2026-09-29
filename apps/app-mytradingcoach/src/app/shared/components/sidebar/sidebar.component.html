@@ -2,7 +2,14 @@
   <mtc-onboarding (completed)="onOnboardingCompleted()" />
 }
 
-<button class="burger" (click)="toggleSidebar()" aria-label="Menu">
+<button
+  #burger
+  class="burger"
+  (click)="toggleSidebar()"
+  [attr.aria-label]="sidebarOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+  [attr.aria-expanded]="sidebarOpen()"
+  aria-controls="app-sidebar"
+>
   <span></span><span></span><span></span>
 </button>
 
@@ -16,7 +23,7 @@
 
 <div class="app-layout">
   <!-- ─── SIDEBAR ─── -->
-  <aside class="sidebar" [class.open]="sidebarOpen()" [class.collapsed]="collapsed()">
+  <aside #drawer id="app-sidebar" class="sidebar" [class.open]="sidebarOpen()" [class.collapsed]="collapsed()">
     <!-- Logo (complet déplié / marque seule replié) -->
     <a routerLink="/dashboard" class="logo">
       <img class="logo-full" src="icon/logo-horizontal.svg" alt="MyTradingCoach" height="40" />
@@ -24,19 +31,19 @@
     </a>
 
     <!-- Nav -->
-    <nav class="nav">
-      <div class="nav-section">OVERVIEW</div>
+    <nav class="nav" aria-label="Navigation principale">
+      <div class="nav-section">VUE D'ENSEMBLE</div>
 
       <a
         routerLink="/dashboard"
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-dashboard"
-        [attr.title]="collapsed() ? 'Dashboard' : null"
+        [attr.title]="collapsed() ? 'Tableau de bord' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="DashboardIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Dashboard</span>
+        <span class="nav-label">Tableau de bord</span>
       </a>
 
       <a
@@ -44,23 +51,11 @@
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-session"
-        [attr.title]="collapsed() ? 'Ma session' : null"
+        [attr.title]="collapsed() ? 'Session du jour' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="SessionIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Ma session</span>
-      </a>
-
-      <a
-        routerLink="/accounts"
-        routerLinkActive="active"
-        class="nav-item"
-        data-testid="nav-accounts"
-        [attr.title]="collapsed() ? 'Mes comptes' : null"
-        (click)="closeSidebar()"
-      >
-        <svg [lucideIcon]="AccountsIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Mes comptes</span>
+        <span class="nav-label">Session du jour</span>
       </a>
 
       <a
@@ -80,23 +75,37 @@
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-sessions"
-        [attr.title]="collapsed() ? 'Mes sessions' : null"
+        [attr.title]="collapsed() ? 'Historique des sessions' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="SessionsIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Mes sessions</span>
+        <span class="nav-label">Historique des sessions</span>
       </a>
+
+      <a
+        routerLink="/accounts"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-accounts"
+        [attr.title]="collapsed() ? 'Mes comptes' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="AccountsIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Mes comptes</span>
+      </a>
+
+      <div class="nav-section">ANALYSE &amp; IA</div>
 
       <a
         routerLink="/analytics"
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-analytics"
-        [attr.title]="collapsed() ? 'Analytics' : null"
+        [attr.title]="collapsed() ? 'Statistiques' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="AnalyticsIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Analytics</span>
+        <span class="nav-label">Statistiques</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
             <svg [lucideIcon]="LockIcon" [size]="12"></svg>
@@ -104,18 +113,16 @@
         }
       </a>
 
-      <div class="nav-section">ANALYSE &amp; IA</div>
-
       <a
         routerLink="/ai-insights"
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-ai-insights"
-        [attr.title]="collapsed() ? 'IA Insights' : null"
+        [attr.title]="collapsed() ? 'Insights IA' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="AiIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">IA Insights</span>
+        <span class="nav-label">Insights IA</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
             <svg [lucideIcon]="LockIcon" [size]="12"></svg>
@@ -128,11 +135,28 @@
         routerLinkActive="active"
         class="nav-item"
         data-testid="nav-debrief"
-        [attr.title]="collapsed() ? 'Weekly Debrief' : null"
+        [attr.title]="collapsed() ? 'Débrief hebdo' : null"
         (click)="closeSidebar()"
       >
         <svg [lucideIcon]="DebriefIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Weekly Debrief</span>
+        <span class="nav-label">Débrief hebdo</span>
+        @if (!userStore.isPremium()) {
+          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
+            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
+          </span>
+        }
+      </a>
+
+      <a
+        routerLink="/scoring"
+        routerLinkActive="active"
+        class="nav-item"
+        data-testid="nav-scoring"
+        [attr.title]="collapsed() ? 'Score trader' : null"
+        (click)="closeSidebar()"
+      >
+        <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
+        <span class="nav-label">Score trader</span>
         @if (!userStore.isPremium()) {
           <span class="nav-lock" title="Premium : débloque avec l'abonnement">
             <svg [lucideIcon]="LockIcon" [size]="12"></svg>
@@ -151,6 +175,8 @@
         <svg [lucideIcon]="EcoIcon" [size]="16" class="nav-icon"></svg>
         <span class="nav-label">Calendrier éco</span>
       </a>
+
+      <div class="nav-section">COMPTE</div>
 
       <!-- Surface(s) de parrainage selon le rôle. L'admin voit les DEUX. -->
       @if (userStore.isAmbassador()) {
@@ -182,25 +208,6 @@
           <span class="nav-label">Parrainage</span>
         </a>
       }
-
-      <div class="nav-section">ACCOUNT</div>
-
-      <a
-        routerLink="/scoring"
-        routerLinkActive="active"
-        class="nav-item"
-        data-testid="nav-scoring"
-        [attr.title]="collapsed() ? 'Scoring' : null"
-        (click)="closeSidebar()"
-      >
-        <svg [lucideIcon]="ScoringIcon" [size]="16" class="nav-icon"></svg>
-        <span class="nav-label">Scoring</span>
-        @if (!userStore.isPremium()) {
-          <span class="nav-lock" title="Premium : débloque avec l'abonnement">
-            <svg [lucideIcon]="LockIcon" [size]="12"></svg>
-          </span>
-        }
-      </a>
 
       <a
         routerLink="/profil"
@@ -263,7 +270,7 @@
   <!-- La classe has-demo-banner publie --demo-banner-h : les vues calées sur le
        viewport (Pré-session / Session live / Débrief) en retranchent la hauteur
        du bandeau au lieu de déborder de 52 px. -->
-  <main class="main-content"
+  <main class="main-content" mtcScrollMemory
         [class.has-demo-banner]="userStore.isDemo()"
         [style.overflow]="liveModeService.isLive() ? 'hidden' : null">
     @if (userStore.isDemo()) {
@@ -281,10 +288,10 @@
 @if (demo.showSignupPrompt()) {
   <div class="demo-modal-overlay" role="button" tabindex="-1"
        (click)="demo.dismiss()" (keydown.escape)="demo.dismiss()">
-    <div class="demo-modal" role="dialog"
+    <div class="demo-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="demo.dismiss()" aria-labelledby="demo-modal-title"
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="demo-modal-emoji">🚀</div>
-      <h2 class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
+      <h2 id="demo-modal-title" class="demo-modal-title">Crée ton compte pour aller plus loin</h2>
       <p class="demo-modal-text">
         En mode démo, les données sont en lecture seule. Crée ton compte gratuit
         pour logger tes vrais trades et débloquer ton coaching personnalisé.

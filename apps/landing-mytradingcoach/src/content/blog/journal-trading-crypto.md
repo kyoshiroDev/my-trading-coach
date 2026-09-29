@@ -1,79 +1,128 @@
 ---
-title: "Journal de Trading Crypto : Le Guide Complet 2026"
-description: "Comment tenir un journal de trading crypto efficace ? Template, méthodes et outils pour tracker tes trades BTC, ETH et altcoins et progresser rapidement."
-publishDate: 2026-03-15
-tags: ["journal de trading", "trading crypto", "journal trading crypto"]
+title: "Journal de Trading Crypto : Suivre et Analyser ses Trades BTC/ETH"
+seoTitle: "Journal de trading crypto (BTC, ETH) | MyTradingCoach"
+description: "Comment tenir un journal de trading crypto efficace. Suivez vos trades Bitcoin, Ethereum et altcoins pour améliorer vos performances."
+publishDate: 2026-04-20
+tags: ["journal trading crypto", "crypto", "BTC", "ETH"]
 ---
 
-Le marché crypto a des particularités qui rendent le journaling encore plus critique que sur les marchés traditionnels : volatilité extrême, trading 24h/24, absence de pause weekend. Sans journal de trading crypto, il est impossible de distinguer la compétence de la chance.
+<p>
+Le marché crypto a des particularités qui rendent le journaling encore plus critique que sur les marchés traditionnels : volatilité extrême, trading 24h/24, absence de pause weekend. Sans journal, il est impossible de distinguer la compétence de la chance.
+</p>
 
-## Pourquoi le journal est encore plus important en crypto
-
+<h2>Pourquoi le journal est encore plus important en crypto</h2>
+<p>
 En crypto, 3 pièges spécifiques détruisent les comptes :
+</p>
+<ul>
+<li><strong>La volatilité amplifiée</strong> : Les mouvements de 20-30% en quelques heures créent des décisions émotionnelles en cascade. Sans journal, impossible de voir le pattern.</li>
+<li><strong>Le trading nocturne</strong> : La session asiatique et les mouvements de nuit tentent les traders qui manquent de sommeil. La fatigue détruit le jugement. Un journal capture l'heure de chaque trade.</li>
+<li><strong>L'effet altcoin</strong> : La rotation de capital entre BTC, ETH et altcoins crée l'illusion d'opportunités permanentes. Le FOMO est omniprésent.</li>
+</ul>
 
-- **La volatilité amplifiée** : Les mouvements de 20-30% en quelques heures créent des décisions émotionnelles en cascade. Sans journal, impossible de voir le pattern.
-- **Le trading nocturne** : La session asiatique et les mouvements de nuit tentent les traders qui manquent de sommeil. La fatigue détruit le jugement. Un journal de trading crypto capture l'heure de chaque trade.
-- **L'effet altcoin** : La rotation de capital entre BTC, ETH et altcoins crée l'illusion d'opportunités permanentes. Le FOMO est omniprésent.
+<h2>Template de journal crypto : données à capturer</h2>
 
-## Template de journal de trading crypto : données à capturer
+<h3>Pour chaque trade</h3>
+<ul>
+<li>Paire (BTC/USDT, ETH/USDT, SOL/USDT…)</li>
+<li>Exchange (Binance, Bybit, Kraken…)</li>
+<li>Type (Spot, Futures, Options)</li>
+<li>Levier utilisé (1x, 5x, 10x…)</li>
+<li>Direction (Long / Short)</li>
+<li>Entrée, Stop Loss, Take Profit</li>
+<li>Taille de position (en % du capital ou en $)</li>
+<li>Setup (Breakout de résistance, Pullback sur support, Divergence RSI…)</li>
+<li>Timeframe d'analyse (1H, 4H, Daily…)</li>
+<li>Session (London overlap, New York, Asie)</li>
+<li>État émotionnel (Confident, FOMO, Stressed, Neutral…)</li>
+<li>Contexte macro (halving proche ? ETF news ? Réglementation ?)</li>
+<li>R/R prévu et R/R réalisé</li>
+<li>Notes post-trade : qu'est-ce que j'aurais fait différemment ?</li>
+</ul>
 
-### Pour chaque trade
+<h2>Les analyses clés pour un trader crypto</h2>
 
-- Paire (BTC/USDT, ETH/USDT, SOL/USDT…)
-- Exchange (Binance, Bybit, Kraken…)
-- Type (Spot, Futures, Options)
-- Levier utilisé (1x, 5x, 10x…)
-- Direction (Long / Short)
-- Entrée, Stop Loss, Take Profit
-- Taille de position (en % du capital ou en $)
-- Setup (Breakout de résistance, Pullback sur support, Divergence RSI…)
-- Timeframe d'analyse (1H, 4H, Daily…)
-- Session (London overlap, New York, Asie)
-- État émotionnel (Confident, FOMO, Stressed, Neutral…)
-- Contexte macro (halving proche ? ETF news ? Réglementation ?)
-- R/R prévu et R/R réalisé
-- Notes post-trade : qu'est-ce que j'aurais fait différemment ?
+<h3>Win rate par session de trading</h3>
+<p>
+La session London Overlap (14h-18h CET) est généralement la plus liquide et la plus prévisible pour BTC/ETH. La session asiatique apporte de la volatilité mais moins de direction. Ton journal va révéler ta session de prédilection.
+</p>
 
-## Les analyses clés pour un trader crypto
+<h3>Performance avec vs sans levier</h3>
+<p>
+Beaucoup de traders font des profits en spot et perdent de l'argent en levier. Le levier amplifie autant les pertes que les gains. Un journal permet de mesurer l'impact réel du levier sur ta performance.
+</p>
 
-### Win rate par session de trading
-
-La session London Overlap (14h-18h CET) est généralement la plus liquide et la plus prévisible pour BTC/ETH. La session asiatique apporte de la volatilité mais moins de direction. Ton journal de trading crypto va révéler ta session de prédilection.
-
-### Performance avec vs sans levier
-
-Beaucoup de traders font des profits en spot et perdent de l'argent en levier. Le levier amplifie autant les pertes que les gains. Un carnet de trading permet de mesurer l'impact réel du levier sur ta performance.
-
-### Bitcoin vs Altcoins
-
+<h3>Bitcoin vs Altcoins</h3>
+<p>
 En période de bull market, les altcoins surperforment. En bear market, ils perdent plus vite que BTC. Ton journal va montrer si tu es meilleur sur le BTC (plus prévisible) ou sur les altcoins (plus volatils).
+</p>
 
-## Psychologie du trading crypto : les pièges spécifiques
+<h2>MyTradingCoach pour les traders crypto</h2>
+<p>
+MyTradingCoach supporte tous les paires crypto. La heatmap horaire est particulièrement utile pour identifier tes meilleures heures de trading. L'IA analyse tes patterns spécifiques : si tu trades mieux quand BTC est en consolidation qu'en tendance forte, elle te le dira.
+</p>
+<p>
+Le Weekly Debrief de dimanche est parfait pour le marché crypto : il analyse ta semaine entière (7 jours, pas 5 comme en actions) et t'aide à préparer la semaine suivante.
+</p>
 
-La psychologie du trading est encore plus sollicitée en crypto qu'ailleurs. Trois biais sont particulièrement actifs :
+<h2>Erreurs à éviter dans son journal crypto</h2>
+<ul>
+<li>Ne pas noter les trades qui "ne comptent pas" (tous les trades comptent)</li>
+<li>Modifier rétrospectivement ses notes pour se flatter</li>
+<li>Oublier de noter le levier utilisé</li>
+<li>Ne pas distinguer spot et futures dans l'analyse</li>
+<li>Ignorer les trades nuls (entrée et sortie au même prix)</li>
+</ul>
 
-1. **FOMO crypto** : Voir un altcoin multiplié par 5 en 48h quand on n'est pas positionné crée une pression émotionnelle intense.
-2. **Diamond hands vs cut your losses** : La culture crypto glorifie le "hold" à tout prix, ce qui contredit les règles de gestion des risques.
-3. **Biais de récence** : Une série haussière de 3 semaines fait oublier les corrections de 60-80% qui arrivent régulièrement.
+<blockquote>
+"En crypto, la mémoire est l'ennemi. Les données sont ton allié."
+</blockquote>
 
-Un bon journal de trading crypto te protège de ces biais en te montrant tes vraies données de performance plutôt que tes impressions.
+<h2>Analyse par actif : BTC, ETH et les altcoins</h2>
+<p>
+Une des analyses les plus utiles pour un trader crypto est la décomposition de ses performances par actif. Voici ce que révèlent typiquement les données :
+</p>
+<h3>Bitcoin (BTC)</h3>
+<p>
+Généralement le plus prévisible techniquement. Forte liquidité, spreads serrés, moins de manipulation. Les traders qui débutent performent souvent mieux sur BTC que sur les altcoins : même si BTC semble "ennuyeux". Si tu n'as pas 6 mois de données sur un altcoin, reste sur BTC.
+</p>
+<h3>Ethereum (ETH)</h3>
+<p>
+Souvent très corrélé à BTC mais avec sa propre dynamique (mises à jour réseau, staking yield, activité DeFi). ETH peut diverger fortement de BTC pendant certaines périodes. Ton journal te montrera si tu trades mieux les périodes de corrélation ou de décorrélation.
+</p>
+<h3>Altcoins</h3>
+<p>
+Volatilité 3-10× plus élevée que BTC. Win rate généralement plus bas mais gains potentiels plus élevés. Les altcoins amplifient tous les biais psychologiques : FOMO maximal lors des pumps, panique lors des dumps. Attends d'avoir un win rate stable sur BTC avant de te disperser sur les altcoins.
+</p>
 
-## MyTradingCoach pour les traders crypto
+<h2>Gestion du risque spécifique au trading crypto 24h/24</h2>
+<p>
+Le marché crypto ne ferme jamais. C'est à la fois une opportunité et un piège. Voici les règles de gestion du risque adaptées à ce contexte :
+</p>
+<ul>
+<li><strong>Stop loss obligatoire sur toutes les positions overnight.</strong> Ne jamais laisser une position sans protection pendant la nuit : un news event peut faire bouger le marché de 15% en 5 minutes à 3h du matin.</li>
+<li><strong>Définir des heures de trading fixes.</strong> Même si le marché est ouvert 24h/24, tu ne dois pas l'être. Note tes heures de trading dans ton journal et analyse tes performances selon ces plages.</li>
+<li><strong>Règle du stop journalier en crypto.</strong> En raison de la volatilité amplifiée, ton stop journalier doit être inférieur à celui que tu utiliserais sur les actions. Une perte de 3% du capital en une session doit déclencher l'arrêt immédiat.</li>
+</ul>
 
-MyTradingCoach supporte toutes les paires crypto. La heatmap horaire est particulièrement utile pour identifier tes meilleures heures de trading. L'IA analyse tes patterns spécifiques : si tu trades mieux quand BTC est en consolidation qu'en tendance forte, elle te le dira.
+<h2>L'impact du cycle bull/bear sur ton journal</h2>
+<p>
+Tes performances en bull market ne prédisent pas tes performances en bear market. Un journal tenu uniquement pendant un bull market va te montrer d'excellents résultats : en grande partie dus au momentum général, pas à ta compétence. Quand le marché retourne, cette illusion se brise.
+</p>
+<p>
+C'est pourquoi il est crucial de noter le "contexte macro" dans chaque trade : est-ce que le marché est en tendance haussière, baissière ou en range ? Après 6 mois, tu sauras si tu es un trader de tendance (qui sous-performe en range) ou un trader de range (qui sous-performe en tendance forte).
+</p>
 
-Le Weekly Debrief du dimanche est parfait pour le marché crypto : il analyse ta semaine entière (7 jours, pas 5 comme en actions) et t'aide à préparer la semaine suivante avec 3 objectifs concrets.
-
-## Erreurs à éviter dans son journal de trading crypto
-
-- Ne pas noter les trades qui "ne comptent pas" (tous les trades comptent)
-- Modifier rétrospectivement ses notes pour se flatter
-- Oublier de noter le levier utilisé
-- Ne pas distinguer spot et futures dans l'analyse
-- Ignorer les trades nuls (entrée et sortie au même prix)
-
-> "En crypto, la mémoire est l'ennemi. Les données sont ton allié."
-
----
-
-Essaie [MyTradingCoach gratuitement →](https://app.mytradingcoach.app/register) : un journal de trading crypto gratuit pour commencer à tracker tes performances dès aujourd'hui.
+<h2>Intégrer le calendrier crypto dans son journal</h2>
+<p>
+Certains événements créent des opportunités ou des risques récurrents en crypto :
+</p>
+<ul>
+<li><strong>Bitcoin Halving :</strong> réduit l'offre tous les 4 ans : généralement bullish sur 12-18 mois après</li>
+<li><strong>Expiration des options (fin de mois, fin de trimestre) :</strong> souvent accompagnée de volatilité inhabituelle</li>
+<li><strong>Annonces de la Fed :</strong> depuis 2022, la crypto réagit fortement aux décisions de politique monétaire</li>
+<li><strong>Listings/delistings d'exchanges majeurs :</strong> pumps et dumps artificiels à anticiper</li>
+</ul>
+<p>
+Note ces contextes dans ton journal. Avec 12 mois de données, tu verras si tu dois éviter de trader les jours d'annonce Fed ou si tu t'y comportes mieux que la moyenne.
+</p>

@@ -16,7 +16,7 @@
  *    la branche d'erreur l'emportait alors que 20 suppressions avaient réussi — et
  *    cette branche ne retirait aucune ligne. L'écran mentait sur l'état du serveur.
  * 3. Cette branche ne faisait que relâcher le spinner : `error: () => this.isDeletingDay.set(false)`.
- *    Aucun message. Même classe de bug que PROMPT-204, sur l'écran voisin.
+ *    Aucun message. Même classe de bug que la suppression de compte muette, sur l'écran voisin.
  *
  * `deleteTrade` (la croix de chaque ligne) n'avait, lui, aucun handler `error` du tout.
  */
@@ -34,7 +34,7 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
 import { ToastService } from '../../core/services/toast.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 
 const JOUR = '2026-07-10T16:41:00.000Z';
 
@@ -307,7 +307,7 @@ describe('Journal — la modale de déplacement suit elle aussi les trades', () 
     c.reassignTo(c.reassignDay(), 'compte-2');
 
     expect(
-      tradesApi.reassign.mock.calls[0][0].sort(),
+      ((tradesApi.reassign.mock.calls[0] as unknown[])[0] as string[]).sort(),
       'Le trade « a » est déplacé alors qu\'il n\'existe plus',
     ).toEqual(['b', 'c']);
   });

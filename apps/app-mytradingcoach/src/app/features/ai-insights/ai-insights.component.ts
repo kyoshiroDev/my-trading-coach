@@ -26,9 +26,10 @@ import {
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { interval } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { todayParis } from '../../core/utils/paris-date';
+
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { AiApi } from '../../core/api/ai.api';
+import { todayParis } from '@mtc/shared';
 
 interface Insight {
   type: 'strength' | 'weakness' | 'pattern';

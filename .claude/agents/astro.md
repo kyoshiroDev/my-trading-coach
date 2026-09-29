@@ -1,7 +1,13 @@
+---
+name: astro
+description: "Conventions de la landing Astro (structure, blog en collection, JSON-LD, prix et liens partagés, conformité NinjaTrader). À lire avant tout travail dans apps/landing-mytradingcoach."
+---
+
 # Agent Astro — landing-mytradingcoach
 
 ## Stack
-Astro 7 · Tailwind 4 · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
+Astro 7 · CSS propre aux composants (Tailwind installé mais **inutilisé** : à retirer dès que le
+réseau permet de régénérer le lockfile) · Static output · servi sur le VPS (conteneur nginx:alpine derrière Traefik,
 rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ---
@@ -20,28 +26,36 @@ rsync depuis GitHub Actions vers `/opt/static/landing-prod`). Plus de Vercel.
 
 ```
 src/
+├── config.ts                    ← APP_URL, API_URL, FEATURES (flags de publication)
+├── data/
+│   ├── faq.ts                   ← FAQ de la home : texte affiché ET JSON-LD FAQPage
+│   └── schema.ts                ← JSON-LD (home : SoftwareApplication + FAQPage ; autres : Organization + WebSite)
+├── content/blog/<slug>.md       ← UN fichier par article (le slug = nom du fichier)
+├── content.config.ts            ← schéma du frontmatter blog
 ├── pages/
-│   ├── index.astro              ← landing principale
-│   ├── mentions-legales.astro
-│   ├── confidentialite.astro
-│   └── cgu.astro
-├── content/
-│   └── blog/                   ← articles Markdown SEO
-│       ├── journal-trading-debutant.md
-│       ├── psychologie-trading.md
-│       ├── revenge-trading.md
-│       ├── win-rate-trading.md
-│       └── journal-trading-crypto.md
-├── components/
-│   ├── Hero.astro
-│   ├── Features.astro
-│   ├── Pricing.astro
-│   ├── FAQ.astro
-│   ├── Testimonials.astro
-│   └── Footer.astro
-└── layouts/
-    └── Layout.astro             ← meta SEO, fonts, analytics
+│   ├── index.astro              ← home
+│   ├── blog/index.astro         ← liste générée depuis la collection (tri par publishDate)
+│   ├── blog/[slug].astro        ← rendu d'un article
+│   └── cgu, mentions-legales, politique-confidentialite, disclaimer, 404, ambassadeur…
+├── components/                  ← sections de la home + mockup/ (maquettes produit de Showcase)
+├── layouts/Base.astro           ← meta SEO, JSON-LD, fontes · BlogPost.astro ← gabarit article
+└── styles/global.css, legal.css ← variables, utilitaires (.wrap), pages légales (.legal)
 ```
+
+## Règles de contenu (audit du 27/09/2026)
+
+- **Prix** : toujours `PREMIUM_PRICE_EUR` / `PREMIUM_ANNUAL_SAVINGS_EUR` de `@mtc/shared` (alias dans
+  `tsconfig.json`), jamais un nombre en dur : Hero, Pricing, Compare, CGU, FAQ et JSON-LD en dépendent.
+- **Liens vers l'app** : `${APP_URL}/register` (jamais `https://app.mytradingcoach.app` en dur) ;
+  dans un article Markdown, écrire `href="{APP_URL}/register"` (remplacé au rendu par `[slug].astro`).
+- **JSON-LD** : jamais d'`aggregateRating` sans avis vérifiables (règles Google + pratiques
+  commerciales trompeuses). FAQ modifiée = `src/data/faq.ts` uniquement (affichage + JSON-LD suivent).
+- **Nouvel article** : créer `src/content/blog/<slug>.md` avec le frontmatter ci-dessous. Rien d'autre :
+  la page, la liste du blog et le sitemap (lastmod = updatedDate ?? publishDate) suivent.
+- **Styles** : pas de `style="…"` ; classes dans le `<style>` du composant (scopé) ou utilitaire global
+  (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
+  (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
+- Aucun composant orphelin : un composant non rendu est branché ou supprimé.
 
 ---
 
@@ -80,9 +94,11 @@ Règles :
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
-- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Quels brokers
-  sont compatibles ? ») présentent la **connexion Tradovate** (synchro auto des trades + frais, en
-  lecture seule) comme voie principale, l'import CSV pour les autres brokers et en repli.
+- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
+  mon historique ? ») présentent la **connexion Tradovate** comme voie principale : **dès la
+  connexion, les nouveaux trades + frais remontent en direct**, en lecture seule. Ne jamais écrire
+  que la synchro « rattrape » l'historique : le passé s'importe à part (export CSV Tradovate).
+  L'import CSV couvre aussi les autres brokers (audit UX 2026-09-27).
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
   « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
   footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
@@ -125,24 +141,27 @@ Formulation : jamais "limité à", toujours "jusqu'à" ou entre parenthèses en 
 
 ```markdown
 ---
-title: "Titre avec mot-clé principal"
+title: "Titre affiché avec mot-clé principal"
+seoTitle: "Titre de l'onglet / Google (optionnel)"
 description: "Description 155 caractères max avec mot-clé"
 publishDate: 2026-04-01
+updatedDate: 2026-05-01   # optionnel, alimente lastmod du sitemap
 tags: ["trading", "journal", "psychologie"]
-draft: false
 ---
 ```
 
+Le corps peut être du Markdown ou du HTML (les articles migrés gardent leur HTML d'origine).
+
 CTA en fin de chaque article :
 ```markdown
-**Essaie MyTradingCoach gratuitement →** [Commencer maintenant](https://app.mytradingcoach.app/register)
+<a href="{APP_URL}/register">Commencer gratuitement</a>
 ```
 
 ---
 
 ## Articles blog SEO cibles
 
-| Fichier | Mot-clé principal |
+| Fichier (`src/content/blog/`) | Mot-clé principal |
 |---|---|
 | `journal-trading-debutant.md` | journal de trading débutant |
 | `psychologie-trading.md` | psychologie trading biais cognitifs |
@@ -154,20 +173,10 @@ CTA en fin de chaque article :
 
 ## Package.json landing
 
-```json
-{
-  "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.2",
-    "tailwindcss": "^4.3.3"
-  },
-  "devDependencies": {
-    "@astrojs/check": "0.9.10",
-    "@tailwindcss/vite": "^4.3.3",
-    "typescript": "^5.9.2"
-  }
-}
-```
+Voir `apps/landing-mytradingcoach/package.json`. À faire quand le réseau le permet (lockfile) :
+retirer `tailwindcss` et `@tailwindcss/vite`, aligner TypeScript sur la racine (6.x), ajouter
+`eslint-plugin-astro` + `prettier-plugin-astro` (cible `lint` = eslint + `astro check`), et
+auto-héberger les fontes (`@fontsource/*`, fin du hack `media="print" onload`).
 
 ---
 
@@ -198,3 +207,38 @@ CTA en fin de chaque article :
   navigateur (accueil, un article, /ambassadeur ; bureau 2 398 px et mobile 400 px) : identique.
   La CSS générée change de forme (identifiants `data-astro-cid-*`, media queries en syntaxe
   d'intervalle `(width>=1200px)`), sans effet sur le rendu.
+
+## Règles issues de l'audit UX (2026-09-27)
+
+- **URLs de l'app** : jamais `https://app.mytradingcoach.app/...` en dur dans un `.astro`, toujours
+  `` href={`${APP_URL}/register`} `` (`src/config.ts`). Sinon la landing DEV inscrit en prod.
+  Seuls les `.md` de `content/blog/` gardent l'URL prod en dur (pas d'import possible).
+- **Compteur de traders** : n'affiche **aucun chiffre** sous `TRADERS_PUBLIC_THRESHOLD` (100,
+  `config.ts`). Hero : bloc `.hero-proof` non rendu. Testimonials : titre « Construit avec les
+  premiers traders » sans chiffre. Le script live de `index.astro` retire `[data-traders-proof]`
+  si l'API repasse sous le seuil. Côté API, la clé Redis est suffixée par l'hôte de `FRONTEND_URL`
+  (dev et prod partagent Redis db0).
+- **Chiffres de performance** (P&L, WR) dans une narration ou une capture : toujours accompagnés de
+  « exemple illustratif » / « données d'exemple » (`.day-illus` dans DayTimeline,
+  `.showcase-note` dans Showcase). Pas de promesse de progression (« tu seras meilleur »).
+- **Showcase = vraies captures, jamais de maquette** : `public/showcase/app-dashboard.webp` et
+  `app-ai.webp`, prises sur le compte démo DEV (`https://dev.app.mytradingcoach.app/demo`, Lucas
+  Mercier). Les anciens mockups (`components/mockup/`, données inventées) ont été supprimés : ils
+  dérivaient à chaque refonte de l'app. **Rafraîchir** après une refonte visible de ces écrans :
+  - Dashboard : viewport **1680×1000**, DPR 1.5, rogner le bandeau « Mode démo » (44 px en haut).
+    À 1440 px, les sparklines des cartes KPI chevauchent les montants (bug app) : ne pas descendre.
+  - IA Insights : 1440×900, DPR 2, rogné sur le contenu (sans l'en-tête, dont le bouton affiche
+    « Disponible dans 3h 60min », bug d'arrondi de l'app).
+  - PNG → WebP qualité 82 (`convert x.png -quality 82 -define webp:method=6 x.webp`, ~90-110 Ko),
+    puis mettre à jour `width`/`height` des `<img>` (zéro CLS).
+  - Journal et Analytics écartés (sept. 2026) : pourcentages P&L forex aberrants sur les EUR/USD du
+    seed démo (+2764 %), graphiques Analytics vides sur la période par défaut.
+- **Ordre de la home** : Hero → **Showcase** → Moments → DayTimeline → Features → … `Problem.astro`
+  n'est plus rendu (il redisait Moments). `CoachIA` et `Debrief` restent non rendus.
+- **Compare** : le prix MTC affiche **les deux paliers** « 0 € (Gratuit) · dès 49 € (Premium) ».
+  Jamais le Premium seul (MTC paraît le plus cher), jamais « dès 0 € » seul (laisse croire que
+  toutes les coches MTC, dont Coach IA / Weekly Debrief / recap 17h30, sont gratuites). En mobile,
+  un palier par ligne, sans le « · » (`.comp-price-part` / `.comp-price-sep`).
+- **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
+  l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
+  qui passent `<Nav stickyCta={false} />` (`/disclaimer`).

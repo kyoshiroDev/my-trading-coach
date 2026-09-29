@@ -3,8 +3,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { Pattern } from './pattern.agent';
-import { AnthropicClientService } from '../../shared/anthropic-client.service';
+import { AnthropicClientService } from '../../infra/anthropic-client.service';
 import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
+import { AI_MODELS } from '../../infra/ai-pricing.const';
 
 export interface Advice {
   title: string;
@@ -36,7 +37,7 @@ export class CoachAgent {
     try {
       response = await this.anthropicClient.create(
         {
-          model: 'claude-sonnet-4-6',
+          model: AI_MODELS.analysis,
           max_tokens: 512,
           system: [
             {

@@ -55,13 +55,13 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
       <h2 class="amb-t">Ta commission</h2>
       <div class="amb-rew">
         <article class="amb-rew-card">
-          <span class="amb-rew-num" style="color:var(--green)">Sur chaque abonnement</span>
-          <div class="amb-rew-amt" style="color:var(--green)">20 % récurrent</div>
+          <span class="amb-rew-num green">Sur chaque abonnement</span>
+          <div class="amb-rew-amt green">20 % récurrent</div>
           <p>Tu touches 20 % sur chaque abonnement souscrit via ton lien, mensuel ou annuel.</p>
         </article>
         <article class="amb-rew-card">
-          <span class="amb-rew-num" style="color:var(--blue2)">Versement</span>
-          <div class="amb-rew-amt" style="color:var(--blue2)">Mensuel</div>
+          <span class="amb-rew-num blue">Versement</span>
+          <div class="amb-rew-amt blue">Mensuel</div>
           <p>Ta commission tombe chaque mois tant que ton filleul reste abonné. Pas un paiement unique.</p>
         </article>
       </div>
@@ -94,7 +94,7 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
       </ul>
     </section>
 
-    <section class="amb-sec" style="border-bottom:none">
+    <section class="amb-sec no-border">
       <form class="amb-apply" id="amb-form" data-api={API_URL}>
         <h2 class="amb-apply-t">Candidater</h2>
         <p class="amb-apply-sub">On regarde chaque demande à la main. Réponse sous quelques jours.</p>
@@ -196,6 +196,9 @@ const COMMUNITIES = ['YouTube', 'X / Twitter', 'Discord', 'Twitch', 'Formation',
 </script>
 
 <style>
+  .green { color: var(--green); }
+  .blue { color: var(--blue2); }
+  .no-border { border-bottom: none; }
   .amb { max-width: 880px; margin: 0 auto; padding: 0 5% 40px; }
   .amb-back { display: inline-block; font-family: var(--mono); font-size: 13px; color: var(--txt3); text-decoration: none; padding: 28px 0 0; }
   .amb-back:hover { color: var(--txt2); }

@@ -3,7 +3,7 @@ import { MoneyOptions, formatMoney } from '@mtc/shared';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 
 /**
- * Montants dans la devise NATIVE du compte (PROMPT-213/214) : jamais de conversion, jamais de
+ * Montants dans la devise NATIVE du compte : jamais de conversion, jamais de
  * préférence globale. Formateur et liste des devises : `@mtc/shared` (source unique front + back).
  *
  * - `format()` : totaux de l'écran courant, dans la devise du compte sélectionné (ou la devise

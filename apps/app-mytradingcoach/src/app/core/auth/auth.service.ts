@@ -3,18 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EMPTY, fromEvent, interval } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradesStore } from '../stores/trades.store';
 import { SetupsStore } from '../stores/setups.store';
+import type { Plan, Role } from '@mtc/shared';
 
-export type UserRole = 'ADMIN' | 'USER' | 'BETA_TESTER' | 'AMBASSADOR';
+/** Rôle d'un utilisateur : alias du contrat partagé, gardé pour les importeurs existants. */
+export type UserRole = Role;
 
 export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  plan: 'FREE' | 'PREMIUM';
+  plan: Plan;
   role?: UserRole;
   trialEndsAt?: string | null;
   stripeCurrentPeriodEnd?: string | null;
@@ -117,7 +119,7 @@ export class AuthService {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
     // Purge les stores user-scoped : sans ça, un login sur un AUTRE compte dans le même onglet
-    // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent. PROMPT-175.
+    // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent.
     this.accountStore.reset();
     this.tradesStore.reset();
     this.setupsStore.reset();

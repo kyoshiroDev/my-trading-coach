@@ -12,37 +12,7 @@ const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet'
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './activity-calendar.component.css',
   host: { '[class.compact]': 'compact()' },
-  template: `
-    <div class="cal-nav">
-      <button class="cal-arrow" (click)="nav(-1)" aria-label="Mois précédent">‹</button>
-      <div class="cal-month-label">{{ label() }}</div>
-      <button class="cal-arrow" [disabled]="atCurrentMonth()" (click)="nav(1)" aria-label="Mois suivant">›</button>
-    </div>
-
-    <div class="cal-single">
-      @for (h of weekdays; track $index) { <div class="cal-hd">{{ h }}</div> }
-      @for (c of grid(); track $index) {
-        @if (c.state === 'pad') {
-          <div class="cal-d pad"></div>
-        } @else {
-          <div class="cal-d" [class.on]="c.state === 'on'" [class.future]="c.state === 'future'">{{ c.day }}</div>
-        }
-      }
-    </div>
-
-    @if (!compact()) {
-      <div class="hm-legend">
-        <i class="lg-on"></i> connecté&nbsp;&nbsp;<i class="lg-off"></i> non
-        <span class="hm-sum">{{ monthCount() }} jour{{ monthCount() > 1 ? 's' : '' }} connecté ce mois</span>
-      </div>
-    }
-
-    <div class="cal-stats">
-      <div class="cal-stat"><div class="v">{{ stats().total }}</div><div class="l">jours connectés</div></div>
-      <div class="cal-stat"><div class="v">{{ stats().best }}</div><div class="l">plus longue série</div></div>
-      <div class="cal-stat"><div class="v">{{ stats().avg }}</div><div class="l">jours / sem.</div></div>
-    </div>
-  `,
+  templateUrl: './activity-calendar.component.html',
 })
 export class ActivityCalendarComponent {
   readonly activeDates = input.required<string[]>();

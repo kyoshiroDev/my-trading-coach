@@ -30,7 +30,7 @@ export class CreateAccountDto {
   @Min(0, { message: 'La taille du compte ne peut pas être négative.' })
   accountSize?: number;
 
-  // Devise DU COMPTE (PROMPT-214) : liste unique `ACCOUNT_CURRENCIES` (@mtc/shared), normalisée
+  // Devise DU COMPTE : liste unique `ACCOUNT_CURRENCIES` (@mtc/shared), normalisée
   // en majuscules. Absente → USD (défaut Prisma). Aucune conversion ailleurs dans l'app.
   @IsOptional()
   @Transform(({ value }) => normalizeCurrencyCode(value) ?? value)

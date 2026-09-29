@@ -7,7 +7,7 @@ export interface PremiumAccessUser {
 
 /**
  * Un client a-t-il droit au rôle ⭐ Premium sur Discord ?
- * Seul PREMIUM est un palier payant (PROMPT-169) → rôle Premium.
+ * Seul PREMIUM est un palier payant → rôle Premium.
  * Source unique partagée par syncDiscordRole et l'endpoint /verify.
  */
 export function isPremiumAccess(user: PremiumAccessUser): boolean {

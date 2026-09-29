@@ -4,7 +4,7 @@ import { OrchestratorAgent } from './orchestrator.agent';
 import { DataAgent } from './data.agent';
 import { PatternAgent } from './pattern.agent';
 import { CoachAgent } from './coach.agent';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 
 const mockTrades = [
   {
@@ -30,7 +30,7 @@ const mockTrades = [
 const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
-  // Devise du résumé = celle des comptes (PROMPT-214).
+  // Devise du résumé = celle des comptes.
   tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
 };
 

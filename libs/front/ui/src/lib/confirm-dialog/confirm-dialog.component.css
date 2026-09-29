@@ -1,0 +1,68 @@
+/* Couleurs lues dans les tokens de l'app qui l'affiche (app : --bg-card, admin : --bg3…). */
+.cd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 900);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.cd-dialog {
+  position: fixed;
+  z-index: var(--z-modal, 1000);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 32px));
+  padding: var(--space-6, 24px);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-hover, var(--border2, rgba(255, 255, 255, 0.1)));
+  background: var(--bg-card, var(--bg3, #111416));
+  color: var(--text, #e8eaed);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.cd-title {
+  margin: 0 0 var(--space-2, 8px);
+  font-size: var(--fs-lg, 16px);
+  font-weight: 700;
+}
+
+.cd-message {
+  margin: 0 0 var(--space-6, 24px);
+  font-size: var(--fs-md, 14px);
+  line-height: 1.6;
+  color: var(--text-2, var(--text2, #9aa3af));
+}
+
+.cd-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+}
+
+.cd-btn {
+  min-height: 40px;
+  padding: 0 var(--space-4, 16px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--fs-md, 14px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cd-cancel {
+  border: 1px solid var(--border-hover, var(--border2, rgba(255, 255, 255, 0.1)));
+  background: transparent;
+  color: var(--text, #e8eaed);
+}
+
+.cd-confirm {
+  border: none;
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+/* Rouge assombri pour garder un contraste AA avec du texte blanc. */
+.cd-danger {
+  background: #c81e1e;
+}

@@ -74,7 +74,7 @@ describe('StripeWebhookService.processWebhookEvent — tunnel argent', () => {
     expect(resend.sendWelcomePremium).toHaveBeenCalledOnce();
   });
 
-  // PROMPT-169 §5.1 : un abonné annuel DIRECT (sans trial_end) ne doit PAS voir son
+  // Règle d'essai (plans.md) : un abonné annuel DIRECT (sans trial_end) ne doit PAS voir son
   // essai marqué consommé — sinon il perd son droit à l'essai après une résiliation.
   it('sub active sans trial_end → trialUsed reste false', async () => {
     const { svc, prisma, retrieve } = makeSvc();

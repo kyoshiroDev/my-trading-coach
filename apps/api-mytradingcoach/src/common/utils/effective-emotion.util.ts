@@ -1,7 +1,7 @@
 import { EmotionState, MoodState } from '@prisma/client';
 
 /**
- * Émotion effective d'un trade (PROMPT-163).
+ * Émotion effective d'un trade.
  *
  * Modèle : l'émotion de base vient de la journée/session (`TradeSession.moodStart`) ;
  * `Trade.emotion` est un override optionnel (surtout REVENGE/FEAR dans l'instant).

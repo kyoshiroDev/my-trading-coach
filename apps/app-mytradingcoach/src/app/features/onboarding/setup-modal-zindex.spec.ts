@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * PROMPT-199 tâche 1 — la modale de setup doit passer AU-DESSUS du wizard.
+ * La modale de setup doit passer AU-DESSUS du wizard.
  *
  * Le bouton « + Ajouter un setup » de l'étape Setups semblait ne rien faire : la modale
  * partagée s'ouvrait à z-index 200, sous l'overlay de l'onboarding à 300. Elle était
@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * PROMPT-199 tâche 1 — la modale de setup doit passer AU-DESSUS du wizard.
+ * La modale de setup doit passer AU-DESSUS du wizard.
  *
  * Le bouton « + Ajouter un setup » de l'étape Setups semblait ne rien faire : la modale
  * partagée s'ouvrait à z-index 200, sous l'overlay de l'onboarding à 300. Elle était

@@ -11,9 +11,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * PROMPT-202 — reliquat du layout à 2 paliers.
+ * reliquat du layout à 2 paliers.
  *
- * Le palier STARTER a été supprimé au PROMPT-169, mais le CSS avait gardé
+ * Le palier STARTER a été supprimé, mais le CSS avait gardé
  * `grid-template-columns: 1fr 1fr` et `max-width: 620px`. La seule colonne restante se
  * retrouvait collée à gauche d'une grille pensée pour deux, avec un grand vide à droite
  * — le « ça fait pas pro » remonté par Greg.

@@ -18,7 +18,7 @@ describe('MetricsSnapshotCron', () => {
     findMany = vi.fn().mockResolvedValue([...SNAPS_DESC]);
     const prisma = { metricsSnapshot: { findMany } } as unknown as PrismaService;
     const users = {} as UsersService;
-    cron = new MetricsSnapshotCron(prisma, users);
+    cron = new MetricsSnapshotCron(prisma, users, {} as never, {} as never) // VpsService, RedisService : non utilisés ici;
   });
 
   describe('history()', () => {
@@ -51,7 +51,7 @@ describe('MetricsSnapshotCron', () => {
   });
 
   /**
-   * PROMPT-177 : la ligne doit être datée du jour qu'elle DÉCRIT. Avant, le cron de
+   * la ligne doit être datée du jour qu'elle DÉCRIT. Avant, le cron de
    * 00h05 comptait 24 h glissantes (donc la veille) et rangeait sous le jour courant,
    * décalant tout le graphe d'un jour.
    */
@@ -73,7 +73,7 @@ describe('MetricsSnapshotCron', () => {
           trials: 0, betaTesters: 0, ambassadors: 0,
         }),
       } as unknown as UsersService;
-      snapCron = new MetricsSnapshotCron(prisma, users);
+      snapCron = new MetricsSnapshotCron(prisma, users, {} as never, {} as never) // VpsService, RedisService : non utilisés ici;
     });
 
     it('compte les inscrits sur la journée calendaire ciblée, pas sur 24 h glissantes', async () => {

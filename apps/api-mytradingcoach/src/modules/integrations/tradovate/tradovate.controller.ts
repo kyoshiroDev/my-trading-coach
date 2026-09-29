@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { Public } from '../../../common/decorators/public.decorator';
+import { CurrentUser } from '@api/common/decorators/current-user.decorator';
+import { Public } from '@api/common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService, type HistoryImportResult } from './tradovate-history.service';
@@ -28,7 +28,7 @@ export const TRADOVATE_STATE_COOKIE = 'mtc_tradovate_oauth';
 export const TRADOVATE_CALLBACK_PATH = 'integrations/tradovate/callback';
 
 /**
- * Connexion / synchro Tradovate PAR TradingAccount (PROMPT-207). FREE (pas de PremiumGuard) :
+ * Connexion / synchro Tradovate PAR TradingAccount. FREE (pas de PremiumGuard) :
  * même règle que l'import CSV d'un broker connu, zéro coût IA ; le FREE reste borné à 1 compte.
  *
  * Toutes les mutations sont protégées par JwtAuthGuard + DemoReadOnlyGuard (APP_GUARD) : le
@@ -144,7 +144,7 @@ export class TradovateCallbackController {
     const cookieState = (req.cookies as Record<string, string> | undefined)?.[TRADOVATE_STATE_COOKIE];
     const outcome = await this.connections.completeAuthorization({ code, state, error }, cookieState);
 
-    // Première synchro dès le retour (PROMPT-208) : l'utilisateur revient avec ses trades,
+    // Première synchro dès le retour : l'utilisateur revient avec ses trades,
     // pas avec un compte connecté mais vide. Jamais bloquante : si elle échoue, la connexion
     // reste faite et le front propose « Synchroniser » (`sync=error`).
     let summary: FirstSyncSummary | undefined;

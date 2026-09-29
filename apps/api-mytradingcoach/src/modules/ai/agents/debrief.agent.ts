@@ -6,7 +6,8 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AnthropicClientService } from '../../shared/anthropic-client.service';
+import { AnthropicClientService } from '../../infra/anthropic-client.service';
+import { AI_MODELS } from '../../infra/ai-pricing.const';
 
 @Injectable()
 export class DebriefAgent {
@@ -38,7 +39,7 @@ export class DebriefAgent {
     try {
       response = await this.anthropicClient.create(
         {
-          model: 'claude-sonnet-4-6',
+          model: AI_MODELS.analysis,
           max_tokens: maxTokens,
           system: [
             {

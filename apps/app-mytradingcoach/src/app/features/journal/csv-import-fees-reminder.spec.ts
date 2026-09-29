@@ -1,8 +1,8 @@
 /**
- * PROMPT-186 #7 — après un import Tradovate sans Cash history, le rappel « frais non
+ * après un import Tradovate sans Cash history, le rappel « frais non
  * importés » doit apparaître.
  *
- * Constat navigateur (PROMPT-184) : import Performance seul → 20 trades, P&L brut
+ * Constat navigateur : import Performance seul → 20 trades, P&L brut
  * (+466,50 au lieu de +444,66), `Frais -0,00`, et aucun message. Un hint existe
  * AVANT l'import, rien après : l'écart de 21,84 $ passait inaperçu.
  */

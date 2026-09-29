@@ -68,7 +68,7 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
         }
 
         @if (showNotifications()) {
-          <button class="btn btn-ghost icon-btn" title="Notifications">
+          <button aria-label="Notifications" class="btn btn-ghost icon-btn" title="Notifications">
             <svg [lucideIcon]="BellIcon" [size]="16"></svg>
           </button>
         }

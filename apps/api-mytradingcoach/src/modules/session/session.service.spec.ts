@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../shared/redis.service';
+import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 
 const mockAccounts = {

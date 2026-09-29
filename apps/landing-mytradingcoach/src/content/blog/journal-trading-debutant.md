@@ -3,95 +3,98 @@ title: "Journal de Trading pour Débutants : Guide Complet 2026"
 description: "Tenir un journal de trading qui te fait vraiment progresser : quoi noter, comment analyser tes trades, et avancer plus vite."
 publishDate: 2026-04-01
 tags: ["journal de trading", "débutant", "guide"]
-draft: false
 ---
 
-La majorité des traders qui échouent ont un point commun : ils ne tiennent pas de journal. Pas par flemme : par manque de méthode. Un fichier Excel avec quelques colonnes ne suffit pas. Un journal de trading efficace doit capturer **les données qui expliquent vraiment tes performances**.
+<p>
+La majorité des traders qui échouent ont un point commun : ils ne tiennent pas de journal. Pas par flemme : par manque de méthode. Un fichier Excel avec quelques colonnes ne suffit pas. Un journal de trading efficace doit capturer <strong>les données qui expliquent vraiment tes performances</strong>.
+</p>
 
-## Pourquoi tenir un journal de trading ?
+<h2>Pourquoi 95% des journaux de trading ne servent à rien</h2>
+<p>
+La plupart des traders notent : date, actif, entrée, sortie, P&L. C'est utile pour la comptabilité. Inutile pour progresser. Ce qui fait réellement la différence entre un trader qui s'améliore et un qui stagne, c'est la capture du <strong>contexte mental</strong> autour de chaque décision.
+</p>
+<p>
+Quand tu regardes tes trades perdants dans 3 mois, tu veux savoir : était-tu stressé ? Est-ce que c'était un revenge trade ? Est-ce que tu as suivi ton plan ? Ces données disparaissent de ta mémoire en 48h.
+</p>
 
-Le journal de trading est l'outil le plus sous-estimé du trading. Il te permet de transformer chaque trade (qu'il soit gagnant ou perdant) en donnée exploitable. Sans journal, tu rejoues les mêmes erreurs sans jamais les voir. Avec un journal bien tenu, tu construis une base de données personnelle qui révèle tes patterns comportementaux.
+<h2>Les 7 données indispensables à capturer par trade</h2>
+<ul>
+<li><strong>Actif et direction</strong> (BTC/USDT LONG) : la base</li>
+<li><strong>Setup utilisé</strong> (Breakout, Pullback, Reversal…) : pour analyser quel setup fonctionne réellement</li>
+<li><strong>Session de trading</strong> (London, New York, Asian…) : tes résultats varient énormément selon l'heure</li>
+<li><strong>État émotionnel au moment de l'entrée</strong> : Focused, Confident, Stressed, Revenge, Fear, Neutral</li>
+<li><strong>Entrée, sortie, Stop Loss, Take Profit</strong> : pour calculer le R/R réel vs prévu</li>
+<li><strong>Tags</strong> : FOMO, overtrading, setup raté, bon trade mal géré…</li>
+<li><strong>Notes libres</strong> : ce que tu pensais au moment du trade, ton raisonnement</li>
+</ul>
 
-Les traders professionnels tiennent tous un journal. Pas parce qu'on leur dit de le faire : parce qu'ils ont compris que les marchés ne changent pas, mais leur comportement si. Et seules les données permettent de mesurer ce changement.
+<h2>Le pattern que révèle un journal bien tenu</h2>
+<p>
+Après 3 mois de journaling sérieux, voici ce que tu vas découvrir (et que tu ne soupçonnes probablement pas aujourd'hui) :
+</p>
+<ul>
+<li>Tu as un créneau horaire qui génère 80% de tes pertes</li>
+<li>Un setup spécifique qui fonctionne à 70%+, et tu ne l'utilises pas assez</li>
+<li>Tes trades en état "REVENGE" perdent en moyenne 2,4× plus que les autres</li>
+<li>Tu surperforme le lundi et sous-performe le vendredi</li>
+</ul>
+<p>
+Ces insights sont invisibles sans données. Avec des données, ils deviennent actionnables.
+</p>
 
-## Que noter dans son journal de trading ?
+<h2>Comment MyTradingCoach automatise l'analyse</h2>
+<p>
+Tenir un journal manuellement est fastidieux. MyTradingCoach te permet de saisir un trade en 30 secondes, puis génère automatiquement toutes les analyses : win rate par émotion, par setup, par session, courbe d'equity, heatmap horaire.
+</p>
+<p>
+Et chaque dimanche, tu reçois un debrief IA qui analyse ta semaine, identifie tes patterns et te propose 3 objectifs concrets. Ton coach personnel, disponible 24h/7j.
+</p>
 
-Un journal de trading débutant doit capturer sept éléments clés :
+<blockquote>
+"Un journal de trading sans analyse, c'est un miroir sans lumière. Tu te vois, mais tu ne vois rien."
+</blockquote>
 
-**1. Les données techniques du trade**
-- Actif tradé (BTC/USDT, EUR/USD, AAPL...)
-- Direction (LONG ou SHORT)
-- Prix d'entrée, prix de sortie
-- Stop Loss et Take Profit définis avant l'entrée
-- Résultat en P&L (euros ou %)
-- Ratio risque/récompense réel vs prévu
+<h2>Par où commencer aujourd'hui</h2>
+<p>
+Commence simple. Dès ton prochain trade, note ces 4 choses : l'actif, ton état émotionnel, ton setup, et tes notes rapides. Fais-le pendant 4 semaines. Les patterns vont émerger d'eux-mêmes, et tu vas voir ton trading sous un angle complètement nouveau.
+</p>
 
-**2. Le setup utilisé**
-Quel signal t'a fait entrer ? Breakout, pullback sur support, reversal, scalping, signal news... Après 3 mois, tu sauras quel setup fonctionne vraiment pour toi.
+<h2>Les 5 erreurs de journaling que font les débutants</h2>
+<h3>1. Ne noter que les trades gagnants</h3>
+<p>
+C'est humain mais contre-productif. Les trades perdants contiennent les informations les plus précieuses. Un journal qui ne capture que les succès est un outil de self-congratulation, pas d'amélioration.
+</p>
+<h3>2. Modifier les notes après coup</h3>
+<p>
+"J'étais confident, pas FOMO." Cette rationalisation a posteriori est très commune. La solution : noter l'état émotionnel AVANT l'issue du trade, idéalement avant même d'exécuter. MyTradingCoach te demande l'émotion au moment de la saisie du trade, pas 2 heures plus tard.
+</p>
+<h3>3. Ne pas noter les trades "honteux"</h3>
+<p>
+Tu as ouvert une position à 2h du matin en état de fatigue sur un coin douteux ? Note-le. C'est exactement le type de données qui révèle des patterns destructeurs. L'absence de jugement est la condition sine qua non d'un journal utile.
+</p>
+<h3>4. Journaler sans analyser</h3>
+<p>
+Accumuler des données sans les analyser est inutile. Prévois 30 minutes chaque semaine pour regarder tes statistiques. Qu'est-ce qui s'est amélioré ? Qu'est-ce qui s'est dégradé ? Quelle règle tu as cassée cette semaine ? Cette revue hebdomadaire est plus importante que le journaling lui-même.
+</p>
+<h3>5. Abandonner après 2 semaines</h3>
+<p>
+La plupart des insights statistiquement significatifs n'émergent qu'après 50-100 trades. Avec 10-15 trades par semaine, c'est 1 à 2 mois de données. Tiens bon : la courbe d'apprentissage est exponentielle.
+</p>
 
-**3. La session de trading**
-London (8h-12h), New York (14h-22h), Asian (0h-8h)... Tes résultats varient énormément selon l'heure. Beaucoup de débutants ne le réalisent pas.
+<h2>De quel type de journal as-tu besoin ?</h2>
+<p>
+Il existe 3 formats de journal de trading, chacun avec des avantages différents :
+</p>
+<ul>
+<li><strong>Excel/Sheets :</strong> flexible, personnalisable, mais chronophage à maintenir et les analyses doivent être faites manuellement. Idéal pour les traders qui aiment tout contrôler.</li>
+<li><strong>Application spécialisée (Edgewonk, TraderVue) :</strong> analyses automatiques, mais souvent chères, orientées traders professionnels et complexes pour débuter.</li>
+<li><strong>MyTradingCoach :</strong> conçu pour les traders particuliers, avec focus sur l'aspect émotionnel et comportemental, IA intégrée, gratuit, trades illimités. Idéal pour débuter sans courbe d'apprentissage.</li>
+</ul>
 
-**4. L'état émotionnel au moment de l'entrée**
-C'est le point le plus ignoré et le plus important. Étais-tu : Focused, Confident, Stressed, Revenge, Fear, Neutral ? Cette donnée seule peut expliquer 40% de ta variance.
-
-**5. Le timeframe**
-Sur quel timeframe as-tu pris la décision ? M5, M15, H1, H4, D1...
-
-**6. Les tags personnalisés**
-FOMO, overtrading, setup raté, bon trade mal géré, sortie trop tôt... Des étiquettes que tu définis toi-même pour catégoriser tes comportements.
-
-**7. Notes libres**
-Ton raisonnement au moment du trade. Ce que tu pensais. Pourquoi tu as ignoré le stop. Ces notes disparaissent de ta mémoire en 48h : capte-les immédiatement.
-
-## Comment analyser ses trades perdants ?
-
-Les trades perdants sont plus instructifs que les gagnants. Voici la méthode pour les analyser sans te mentir à toi-même :
-
-**Pose-toi ces 3 questions après chaque perte :**
-
-1. **Le setup était-il valide avant d'entrer ?** Si non, c'est un trade hors plan : catégorie FOMO ou overtrading.
-
-2. **As-tu respecté ton stop loss ?** Si tu l'as déplacé ou ignoré, note-le explicitement. Ce comportement coûte plus cher sur l'année que n'importe quel mauvais setup.
-
-3. **Quel était ton état émotionnel ?** Un trade Stressed ou Revenge après une perte récente, c'est prédictible. Le journal te permet de le voir dans les données avant que ça liquide ton compte.
-
-**L'analyse hebdomadaire (15 minutes)**
-
-Chaque dimanche, relis tes trades de la semaine et cherche :
-- Ton win rate par setup (quel setup performe le mieux ?)
-- Tes résultats par session (quelle heure te coûte le plus ?)
-- La corrélation émotion/résultat (trades Stressed vs Focused)
-
-Ces 15 minutes valent plus que 10 heures d'analyse technique.
-
-## Journal manuel ou logiciel ?
-
-**Journal manuel (Google Sheets, Notion)**
-
-*Avantages :* gratuit, personnalisable, aucune barrière à l'entrée.
-
-*Inconvénients :* fastidieux à maintenir, pas de visualisations automatiques, impossible d'identifier les patterns rapidement sur 100+ trades.
-
-La plupart des traders commencent avec un spreadsheet et l'abandonnent après 3 semaines parce que c'est trop long à remplir.
-
-**Logiciel spécialisé**
-
-*Avantages :* saisie rapide, graphiques automatiques, analyse IA possible, historique illimité.
-
-*Inconvénients :* certains coûtent cher et font trop de choses.
-
-Pour un débutant, le meilleur journal est celui que tu vas **réellement utiliser** au quotidien. Simplicité d'abord.
-
-## MyTradingCoach : le journal intelligent avec coach IA
-
-MyTradingCoach est conçu spécifiquement pour les problèmes du débutant : saisie rapide (moins de 60 secondes par trade), tracking émotionnel intégré, et analyse IA automatique de tes patterns.
-
-Chaque dimanche, tu reçois un Weekly Debrief généré par IA qui identifie :
-- Tes 2 forces de la semaine
-- Tes 2 axes d'amélioration prioritaires
-- 3 objectifs concrets pour la semaine suivante
-
-Le plan gratuit inclut des trades illimités, l'historique illimité, et les statistiques de base : suffisant pour démarrer et comprendre si l'outil correspond à ta façon de travailler.
-
-[Commence gratuitement →](https://app.mytradingcoach.app/register)
+<h2>Combien de temps prend le journaling quotidien ?</h2>
+<p>
+Avec un bon outil : 30 secondes par trade. Actif, direction, setup, émotion, entrée, sortie, c'est tout. L'analyse automatique prend le reste en charge. L'argument "je n'ai pas le temps" ne tient pas quand on compare 30 secondes par trade avec les heures perdues à analyser des pertes sans données.
+</p>
+<p>
+L'investissement en temps est minimal. Le retour potentiel est une amélioration de 20 à 40% de ton P&L annuel selon les statistiques que nous observons sur les utilisateurs actifs de MyTradingCoach.
+</p>

@@ -10,9 +10,10 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TradeSide } from '@prisma/client';
+import type { TradeFilters } from '@mtc/shared';
 
 /**
- * Valeurs acceptées par le filtre « émotion effective » (PROMPT-166).
+ * Valeurs acceptées par le filtre « émotion effective ».
  * Combine EmotionState (override du trade) et MoodState (humeur de session) :
  * `TIRED` n'existe que dans MoodState, `REVENGE`/`FEAR` que dans EmotionState.
  * `NONE` = émotion non renseignée.
@@ -28,7 +29,7 @@ export const EFFECTIVE_EMOTION_FILTER_VALUES = [
   'NONE',
 ] as const;
 
-export class TradeFiltersDto {
+export class TradeFiltersDto implements TradeFilters {
   @IsString()
   @IsOptional()
   cursor?: string;

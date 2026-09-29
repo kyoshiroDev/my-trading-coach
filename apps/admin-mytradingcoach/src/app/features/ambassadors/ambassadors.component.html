@@ -1,0 +1,141 @@
+<div class="screen">
+  <div class="page-head">
+    <div class="page-title">Ambassadeurs</div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ ambassadors().length }}</div><div class="kpi-sub">actifs</div></div>
+    <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Total référés</div><div class="kpi-value blue">{{ totalReferrals() }}</div><div class="kpi-sub">via liens</div></div>
+    <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Référés Premium</div><div class="kpi-value blue">{{ totalPremium() }}</div><div class="kpi-sub">{{ pricing.PREMIUM.monthly }}€/mois</div></div>
+    <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Commissions dues</div><div class="kpi-value amber">{{ totalPending() | number:'1.2-2' }}€</div><div class="kpi-sub">à verser</div></div>
+    <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Total payé</div><div class="kpi-value teal">{{ totalPaid() | number:'1.2-2' }}€</div><div class="kpi-sub">versé</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="card-label">Ambassadeurs</span><button type="button" class="card-action" data-testid="add-ambassador-btn" (click)="openAdd()">+ Ajouter un ambassadeur</button></div>
+    @if (payError(); as msg) { <p class="err-text pay-err" role="alert" data-testid="pay-error">{{ msg }}</p> }
+    @if (loading()) {
+      <div class="empty">Chargement…</div>
+    } @else if (ambassadors().length === 0) {
+      <div class="empty">Aucun ambassadeur configuré</div>
+    } @else {
+      <table class="tbl">
+        <caption class="sr-only">Ambassadeurs</caption>
+        <thead><tr><th scope="col">Ambassadeur</th><th scope="col">Code / Lien</th><th scope="col">Taux</th><th scope="col">Référés</th><th scope="col">Premium</th><th scope="col" class="num">Dû</th><th scope="col" class="num">Total payé</th><th scope="col" class="actions-col">Actions</th></tr></thead>
+        <tbody>
+          @for (amb of ambassadors(); track amb.id) {
+            <tr [class.row-selected]="selectedId() === amb.id" (click)="selectAmbassador(amb)">
+              <td data-label="Ambassadeur"><div class="u-cell"><div class="u-av amb-av">{{ (amb.name || amb.email).slice(0,2).toUpperCase() }}</div><div><div class="u-name">{{ amb.name ?? '-' }}</div><div class="u-mail">{{ amb.email }}</div></div></div></td>
+              <td data-label="Code / Lien"><div class="code-cell"><span class="pill teal-pill">{{ amb.referralCode }}</span><button class="pill" (click)="$event.stopPropagation(); copyLink(amb.referralCode)">Copier lien</button></div><div class="amb-link">mytradingcoach.app?ref={{ amb.referralCode }}</div></td>
+              <td data-label="Taux" class="td-mono blue">20%</td>
+              <td data-label="Référés" class="td-mono">{{ amb.totalReferrals }}</td>
+              <td data-label="Premium" class="td-mono">{{ amb.premiumReferrals }} P</td>
+              <td data-label="Dû" class="td-mono num amber">{{ amb.pendingPayout | number:'1.2-2' }}€</td>
+              <td data-label="Total payé" class="td-mono num">{{ (amb.totalEarned - amb.pendingPayout) | number:'1.2-2' }}€</td>
+              <td data-label="Actions"><div class="row-actions"><button class="btn pay-btn" [disabled]="amb.pendingPayout === 0" (click)="$event.stopPropagation(); payAmbassador(amb)">✓ Payer</button><button class="btn revoke-btn" (click)="$event.stopPropagation(); askRevoke(amb)">Retirer</button></div></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (selectedDetail(); as detail) {
+    <div class="card fill">
+      <div class="card-head"><span class="card-label">Détail · {{ selectedAmbassador()?.name ?? selectedAmbassador()?.email }}</span>
+        <button class="btn" [disabled]="detail.pendingPayout === 0 || paying()" (click)="paySelected()">{{ paying() ? 'En cours…' : '✓ Marquer tout payé (' + (detail.pendingPayout | number:'1.2-2') + '€)' }}</button></div>
+      <div class="card-body">
+        <div class="mini-stats">
+          <div class="mini"><span class="mini-v blue">{{ detail.total }}</span><span class="mini-l">Inscrits</span></div>
+          <div class="mini"><span class="mini-v green">{{ detail.premium }}</span><span class="mini-l">Premium</span></div>
+          <div class="mini"><span class="mini-v">{{ detail.free }}</span><span class="mini-l">Free</span></div>
+          <div class="mini"><span class="mini-v amber">{{ detail.pendingPayout | number:'1.2-2' }}€</span><span class="mini-l">À payer</span></div>
+          <div class="mini"><span class="mini-v green">{{ detail.totalEarned | number:'1.2-2' }}€</span><span class="mini-l">Total gagné</span></div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="card-label sect">Gains par mois</div>
+            <div class="chart-box amb-chart"><mtc-admin-chart [config]="earningsConfig()" /></div>
+          </div>
+          <div>
+            <div class="card-label sect">Référés ({{ detail.referrals.length }})</div>
+            @if (detail.referrals.length === 0) {
+              <div class="empty">Aucun référé encore</div>
+            } @else {
+              <table class="tbl ref-tbl">
+                <caption class="sr-only">Référés de l’ambassadeur</caption>
+                <thead><tr><th scope="col">Email</th><th scope="col">Plan</th><th scope="col">Actif</th><th scope="col">Inscrit</th></tr></thead>
+                <tbody>
+                  @for (ref of detail.referrals; track ref.id) {
+                    <tr>
+                      <td data-label="Email" class="td-mono">{{ ref.email }}</td>
+                      <td data-label="Plan"><span class="badge" [class.b-premium]="ref.plan==='PREMIUM'" [class.b-free]="ref.plan==='FREE'">{{ ref.plan }}</span></td>
+                      <td data-label="Actif"><span [class.act-on]="ref.isActive" [class.act-off]="!ref.isActive">{{ ref.isActive ? '✓' : '-' }}</span></td>
+                      <td data-label="Inscrit" class="td-mono muted">{{ ref.createdAt | date:'dd/MM/yyyy' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        </div>
+
+        <div class="sql-wrap">
+          <div class="card-label sect">SQL · marquer payé manuellement</div>
+          <div class="sql-block"><span class="kw">UPDATE</span> <span class="str">"ReferralCommission"</span> <span class="kw">SET</span> status = <span class="str">'paid'</span><br><span class="kw">WHERE</span> "ambassadorId" = <span class="str">'{{ selectedId() }}'</span><br><span class="kw">AND</span> status = <span class="str">'pending'</span>;</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showAdd()) {
+    <div class="modal-overlay" role="button" tabindex="-1" (click)="closeAdd()" (keydown.escape)="closeAdd()">
+      <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeAdd()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-head"><h3 class="modal-title">Ajouter un ambassadeur</h3><button aria-label="Fermer" class="modal-x" (click)="closeAdd()">✕</button></div>
+        @if (addResult(); as r) {
+          <div class="modal-body">
+            <p class="ok-text">✓ <strong>{{ r.name ?? r.email }}</strong> est désormais ambassadeur.</p>
+            <div class="result-row"><span class="result-lbl">Code</span><span class="pill teal-pill">{{ r.referralCode }}</span></div>
+            <div class="result-row"><span class="result-lbl">Lien</span><span class="result-link td-mono">{{ r.referralLink }}</span></div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn" (click)="copyResultLink(r.referralLink)">{{ linkCopied() ? '✓ Copié' : '⧉ Copier le lien' }}</button>
+            <button class="btn btn-primary" (click)="closeAdd()">Fermer</button>
+          </div>
+        } @else {
+          <div class="modal-body">
+            <label class="field">
+              <span class="field-lbl">Email de l'utilisateur</span>
+              <input class="field-input" type="email" data-testid="add-ambassador-email" placeholder="email@exemple.com" [value]="addEmail()" (input)="addEmail.set($any($event.target).value)" />
+            </label>
+            <label class="field">
+              <span class="field-lbl">Code de parrainage <span class="opt">(optionnel)</span></span>
+              <input class="field-input" type="text" data-testid="add-ambassador-code" placeholder="laisser vide pour générer automatiquement" [value]="addCode()" (input)="addCode.set($any($event.target).value)" />
+            </label>
+            @if (addError(); as e) { <p class="err-text" data-testid="add-ambassador-error">{{ e }}</p> }
+          </div>
+          <div class="modal-foot">
+            <button class="btn" (click)="closeAdd()">Annuler</button>
+            <button class="btn btn-primary" data-testid="add-ambassador-submit" [disabled]="!addEmail().trim() || adding()" (click)="submitAdd()">{{ adding() ? 'En cours…' : 'Ajouter' }}</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (revokeTarget(); as target) {
+    <div class="modal-overlay" role="button" tabindex="-1" (click)="cancelRevoke()" (keydown.escape)="cancelRevoke()">
+      <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="cancelRevoke()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <div class="modal-head"><h3 class="modal-title">Retirer l'ambassadeur</h3><button aria-label="Fermer" class="modal-x" (click)="cancelRevoke()">✕</button></div>
+        <div class="modal-body">
+          <p class="confirm-text">Retirer le statut ambassadeur de <strong>{{ target.name ?? target.email }}</strong> ? Son rôle repasse à <strong>USER</strong> et son code <strong>{{ target.referralCode }}</strong> est libéré. Les commissions déjà enregistrées sont conservées.</p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn" (click)="cancelRevoke()">Annuler</button>
+          <button class="btn revoke-btn" data-testid="revoke-confirm" [disabled]="revoking()" (click)="confirmRevoke()">{{ revoking() ? 'En cours…' : 'Retirer' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

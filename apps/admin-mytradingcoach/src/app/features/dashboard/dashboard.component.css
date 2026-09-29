@@ -13,12 +13,12 @@
 /* 6 KPIs sur une ligne (MRR, users, premium, ambassadeurs, churn, supprimés).
    La bande n'occupe plus que 2 colonnes sur 3 depuis que le rail « connectés »
    remonte à sa hauteur : `repeat(7)` laissait en plus une colonne vide. */
-@media (min-width: 1100px) {
+@media (min-width: 1024px) {
   .kpi-strip.dash-kpis { grid-template-columns: repeat(6, 1fr); }
 }
 
 /* Fidélisation : entonnoir 5 stats (activation → traders actifs 7j/30j → J+7 → fantômes) */
-@media (min-width: 1100px) {
+@media (min-width: 1024px) {
   .ret-grid.funnel { grid-template-columns: repeat(5, 1fr); }
 }
 .ret-stat .v.green { color: var(--green); }
@@ -31,7 +31,7 @@
 
 .st.down { background: var(--red); }
 
-.status-dot.live { font-size: 9px; letter-spacing: .1em; }
+.status-dot.live { font-size: var(--fs-2xs); letter-spacing: .1em; }
 
 .rail-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 

@@ -6,10 +6,10 @@
     (click)="onOverlayClick($event)"
     (keydown.escape)="dismissed.emit()"
   >
-    <div class="modal" data-testid="csv-import-modal">
+    <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="dismissed.emit()" aria-labelledby="csv-import-title" data-testid="csv-import-modal">
       <div class="modal-header">
-        <span class="modal-title">Importer CSV</span>
-        <button class="close-btn" (click)="dismissed.emit()">
+        <span id="csv-import-title" class="modal-title">Importer CSV</span>
+        <button class="close-btn" type="button" aria-label="Fermer" (click)="dismissed.emit()">
           <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>
@@ -92,7 +92,7 @@
           <button class="btn-primary" (click)="reset()">Réessayer</button>
         </div>
       } @else {
-        <!-- Écran de sélection unique (source → panneau inline → options → footer). PROMPT-164. -->
+        <!-- Écran de sélection unique (source → panneau inline → options → footer). -->
         <div class="import-screen">
 
           <!-- 1. Sélecteur de source (masqué en onboarding : allowFeesFile=false) -->
@@ -125,7 +125,7 @@
           <!-- 2. Panneau selon la source (dropzone direct en onboarding) -->
           @if (allowFeesFile() && source() === 'tradovate') {
             @if (!tvCsvOpen()) {
-            <!-- PROMPT-211 : pour Tradovate, la synchro API est l'option PRINCIPALE (pas de
+            <!-- pour Tradovate, la synchro API est l'option PRINCIPALE (pas de
                  fichier, frais exacts, à jour). Le CSV reste accessible juste en dessous, en
                  repli (pas de connexion voulue, souci OAuth, vieil historique). -->
             <div class="tv-reco" data-testid="import-tradovate-reco">
@@ -384,7 +384,7 @@
       }
     </div>
   </div>
-  <!-- Réassurance avant OAuth : composant partagé (PROMPT-208), aucune logique dupliquée. -->
+  <!-- Réassurance avant OAuth : composant partagé, aucune logique dupliquée. -->
   @if (tvConnectTarget(); as t) {
     <mtc-tradovate-connect-modal
       [accountId]="t.id"

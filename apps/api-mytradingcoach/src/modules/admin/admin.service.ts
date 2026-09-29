@@ -3,7 +3,6 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
-import { AnthropicCostService } from './anthropic-cost.service';
 
 @Injectable()
 export class AdminService {
@@ -11,7 +10,6 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly stripeSubscriptions: StripeSubscriptionService,
-    private readonly anthropicCost: AnthropicCostService,
   ) {}
 
   /**
@@ -221,7 +219,7 @@ export class AdminService {
       .map((s) => ({
         subscriptionId: s.id,
         customerId: typeof s.customer === 'string' ? s.customer : s.customer?.id ?? null,
-        status: s.status,
+        status: s.status as string, // libellé Stripe brut, affiché tel quel par l'admin
         monthly: Math.round(monthlyOf(s)),
       }));
 
@@ -246,7 +244,7 @@ export class AdminService {
   /**
    * Stats de parrainage agrégées par ambassadeur.
    * Filtre sur le RÔLE : `referralCode` est partagé avec le parrainage grand public,
-   * donc sa présence ne fait pas d'un utilisateur un ambassadeur (PROMPT-176).
+   * donc sa présence ne fait pas d'un utilisateur un ambassadeur.
    */
   async getReferralStats() {
     const ambassadors = await this.prisma.user.findMany({

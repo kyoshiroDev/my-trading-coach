@@ -25,7 +25,7 @@ function makeData(over: {
     profile: {
       market: null, goal: null, tradingStyle: null, tradingStrategy: [],
       tradingSessions: [], tradesPerDayMin: null, tradesPerDayMax: null,
-      strategyDescription: null, startingCapital: 0, currency: 'USD',
+      strategyDescription: null, startingCapital: 0,
     },
     usage: { totalTrades: over.totalTrades ?? 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 },
     topAssets: [],

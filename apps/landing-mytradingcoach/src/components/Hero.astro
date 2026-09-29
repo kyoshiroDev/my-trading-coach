@@ -1,6 +1,10 @@
 ---
-import { APP_URL } from '../config';
-const { traders = 14 } = Astro.props;
+import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+// Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
+// dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
+const { traders = 0 } = Astro.props;
+const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 ---
 
 <!-- BANNER -->
@@ -13,14 +17,19 @@ const { traders = 14 } = Astro.props;
   <div class="pulse-ring"></div>
   <div class="pulse-ring"></div>
 
-  <div class="hero-badge">
+  <div class="hero-badge hero-badge-top">
     <div class="bdot"></div>
-    Le premier compagnon de trading IA : multi-marché
+    <span>Le premier compagnon de trading IA : <span class="nowrap">multi-marché</span></span>
   </div>
 
-  <div class="hero-proof">
-    <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
-  </div>
+  <div class="hero-grid">
+  <div class="hero-col">
+
+  {showTraders && (
+    <div class="hero-proof" data-traders-proof>
+      <span class="hero-proof-text"><strong data-traders-count>{traders}</strong> traders depuis le lancement</span>
+    </div>
+  )}
 
   <h1>
     Tu trades seul.<br />
@@ -42,15 +51,46 @@ const { traders = 14 } = Astro.props;
     <div class="hero-moment apres">🌙 Après, il débrieffe</div>
   </div>
 
+
+  </div>
+
+  {/*
+    Le produit des le premier ecran. Il n'apparaissait qu'a 1 589 px, donc jamais sans
+    scroller : on vend un tableau de bord et le premier ecran n'en montrait rien. La meme
+    capture que la section Showcase, en `eager` puisqu'elle est desormais au-dessus de la
+    ligne de flottaison (91 ko).
+  */}
+  {/*
+    Capture complete du dashboard (compte de demonstration), des le premier ecran.
+
+    A savoir, mesure le 2026-09-29 : affichee en entier elle tombe autour de 35 % de sa taille
+    native, taille a laquelle les libelles ne se lisent plus. C'est un choix assume : elle
+    montre la densite et la realite du produit plutot qu'un detail. Si un jour tu veux des
+    chiffres lisibles ICI, il faut un recadrage, pas une image plus grande.
+  */}
+  <div class="hero-shot">
+    <img
+      src="/showcase/app-hero-dashboard.webp"
+      width="1919"
+      height="959"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      alt="Dashboard MyTradingCoach : capital 101 057,73 $, P&L net +1 057,73 $ sur 30 jours, win rate 55,6 %, profit factor 1,29, courbe d'équité, P&L par instrument et par jour, feedback du coach IA, répartition des setups et des états émotionnels."
+    />
+    <span class="hero-shot-note">Capture réelle · compte de démonstration</span>
+  </div>
+  </div>
+
   <div class="hero-actions">
-    <a href="https://app.mytradingcoach.app/register" class="btn-p hero-cta-main">
+    <a href={`${APP_URL}/register`} class="btn-p hero-cta-main">
       Commencer gratuitement
     </a>
     <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo">
       🔍 Tester la démo
     </a>
   </div>
-  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium 49€/mois, 1 mois offert · Données en France 🇫🇷</p>
+  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
 </section>
 
 <style>
@@ -69,16 +109,83 @@ const { traders = 14 } = Astro.props;
   }
 
   /* ── HERO ── */
+  /*
+   * Hauteur dictee par le CONTENU, pas par le viewport.
+   *
+   * Avec `min-height: 100vh` et un contenu centre, le bouton principal se retrouvait a
+   * 910 px du haut : invisible sans scroller sur un portable 13 pouces (~660 px utiles),
+   * 15 pouces (~780 px) et meme sur un ecran 1080p (~910 px). Seul un 1440p le montrait.
+   * Il y avait en prime 328 px de vide au-dessus du titre.
+   *
+   * Mesure du 2026-09-28 sur la page qui tourne. Ne pas remettre 100vh : la hauteur du
+   * hero doit suivre ce qu'il contient, sinon le seul element qui convertit sort de l'ecran.
+   */
   .hero {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 60px 5% 80px;
+    padding: 48px 5% 64px;
     text-align: center;
     position: relative;
     overflow: hidden;
+  }
+
+  /*
+   * Deux colonnes au-dela de 980 px : le texte garde sa largeur de lecture, la capture
+   * occupe l'espace mort qui restait a droite sur les grands ecrans. Sous ce seuil, on
+   * empile et la capture passe sous les boutons — elle illustre, elle ne doit jamais
+   * repousser le bouton hors de l'ecran sur un telephone.
+   */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    width: 100%;
+    max-width: 1240px;
+    align-items: center;
+  }
+
+  /*
+   * Toujours une vraie boite, jamais `display: contents`. Avec `contents`, chaque element du
+   * texte devenait une cellule de la grille et le `gap` de 40 px s'inserait ENTRE eux :
+   * le bouton tombait a 785 px sur mobile, soit 112 px plus bas qu'avant la refonte. Le gap
+   * ne doit separer que la colonne et la capture.
+   */
+  /* Le badge coiffe le hero : centre, sur toute la largeur, hors de la grille. */
+  .hero-badge-top { margin-left: auto; margin-right: auto; }
+
+  /* Boutons et ligne de reassurance : sous la grille, centres sur toute la largeur. */
+  .hero-actions { margin-left: auto; margin-right: auto; justify-content: center; }
+  .hero-cta-sub { margin-left: auto; margin-right: auto; text-align: center; }
+
+  .hero-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-shot {
+    position: relative;
+    z-index: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--b2);
+    background: var(--card);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  }
+
+  .hero-shot picture, .hero-shot img { display: block; width: 100%; height: auto; }
+
+  .hero-shot-note {
+    display: block;
+    padding: 7px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--txt3);
+    border-top: 1px solid var(--b);
+    text-align: left;
   }
 
   .hero-glow {
@@ -102,6 +209,9 @@ const { traders = 14 } = Astro.props;
   .pulse-ring:nth-child(2) { width:500px; height:500px; }
   .pulse-ring:nth-child(3) { width:800px; height:800px; animation-delay:1.3s; border-color:rgba(34,211,238,.03); }
   .pulse-ring:nth-child(4) { width:1100px; height:1100px; animation-delay:2.6s; border-color:rgba(34,211,238,.02); }
+
+  /* Le tiret de « multi-marché » était un point de coupure sur 375 px. */
+  .nowrap { white-space: nowrap; }
 
   .hero-badge {
     display: inline-flex;
@@ -267,14 +377,66 @@ const { traders = 14 } = Astro.props;
     z-index: 1;
   }
 
+  /*
+   * Place APRES les regles de base : a specificite egale, la derniere regle gagne. Mis plus
+   * haut dans la feuille, ce bloc etait ecrase par `.hero h1` et le titre restait a 88 px,
+   * ce qui repoussait le bouton a 950 px. Ne pas le remonter.
+   */
+  /*
+   * Sous 980 px, tout s'empile et la capture se glisserait ENTRE le texte et les boutons :
+   * mesure du 2026-09-29, le bouton tombait alors a 864 px, donc hors ecran sur un telephone
+   * (~660 px utiles). L'ordre visuel voulu — boutons sous le bloc de texte, centres — est
+   * conserve ; seule la capture passe apres eux, puisqu'elle illustre et ne convertit pas.
+   *
+   * `display: contents` sur la grille fait de la colonne et de la capture des enfants directs
+   * du hero, ce qui rend `order` utilisable. Aucun `gap` a craindre ici : c'est le hero qui
+   * gouverne l'espacement, et il n'en a pas.
+   */
+  @media (max-width: 979px) {
+    .hero-grid { display: contents; }
+    .hero-badge-top { order: 1; }
+    .hero-col { order: 2; }
+    .hero-actions { order: 3; }
+    .hero-cta-sub { order: 4; }
+    .hero-shot { order: 5; margin-top: 28px; }
+  }
+
+  @media (min-width: 980px) {
+    .hero { text-align: left; }
+    .hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+
+    /*
+     * 88 px etait calibre pour un hero pleine largeur et centre. Dans une demi-colonne, le
+     * titre occupait 488 px a lui seul, soit la moitie de la colonne, et repoussait le bouton
+     * a 950 px : pire qu'avant la refonte. Mesure du 2026-09-28.
+     */
+    .hero h1 { font-size: clamp(44px, 3.6vw, 62px); margin-bottom: 18px; }
+    .hero-badge { margin-bottom: 20px; }
+    .hero-sub { margin-bottom: 18px; font-size: 17px; }
+    .hero-moments { margin-bottom: 26px; }
+    /* `display: contents` replierait la colonne : au-dela du seuil elle redevient une vraie
+       boite, sinon chaque enfant du hero deviendrait une cellule de la grille. */
+    .hero-col { align-items: flex-start; }
+    .hero-proof, .hero-moments, .hero-sub { margin-left: 0; margin-right: 0; }
+    /* Le badge et le bloc d'action encadrent la grille, ils n'en font pas partie : sans ces
+       `auto` ils se colleraient au bord gauche avec le reste du texte. */
+    .hero-badge-top, .hero-actions, .hero-cta-sub { margin-left: auto; margin-right: auto; }
+    .hero-cta-sub { text-align: center; }
+  }
+
   @media (max-width: 768px) {
-    .hero { padding: 80px 16px 56px; min-height: auto; }
+    .hero { padding: 32px 16px 48px; }
+    .hero-grid { gap: 28px; }
+    /* Plus de rognage CSS : l'image EST deja le recadrage utile, elle s'affiche entiere. */
     .hero h1 { font-size: clamp(36px,9vw,52px); letter-spacing: -1px; }
     .hero-sub { font-size: 15px; max-width: 100%; }
     .hero-moments { gap: 4px; }
     .hero-moment { font-size: 11px; padding: 3px 8px; }
     .hero-moment-sep { display: none; }
-    .hero-actions { flex-direction: column; align-items: stretch; gap: 10px; padding: 0; }
+    /* `align-items: center` sur la colonne fait retrecir ses enfants : sans `width: 100%`
+       ici, le bouton ne faisait plus que 226 px de large au lieu de toute la largeur, et
+       redevenait une cible etroite au pouce. */
+    .hero-actions { flex-direction: column; align-items: stretch; gap: 10px; padding: 0; width: 100%; }
     .hero-actions a { text-align: center; justify-content: center; width: 100%; }
     .btn-p.hero-cta-main { font-size: 15px !important; padding: 14px 20px !important; }
     .hero-badge { font-size: 10px; padding: 4px 12px; text-align: center; }

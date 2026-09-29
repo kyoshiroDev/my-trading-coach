@@ -1,5 +1,5 @@
 /**
- * PROMPT-181 — Parcours 2 : Import CSV Tradovate (là où le bug de Val est apparu).
+ * Parcours 2 : Import CSV Tradovate (là où le bug de Val est apparu).
  *
  * Utilise les VRAIES fixtures (`tradovate-performance.csv` + `tradovate-cash-history.csv`,
  * partagées avec `csv-import.service.spec.ts` côté API) plutôt qu'un faux fichier :

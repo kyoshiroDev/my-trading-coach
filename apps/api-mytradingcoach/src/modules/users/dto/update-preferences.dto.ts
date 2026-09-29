@@ -2,7 +2,7 @@ import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, MaxLeng
 
 export class UpdatePreferencesDto {
   /**
-   * @deprecated PROMPT-214 : IGNORÉ. Il n'existe plus de devise globale (la devise est celle du
+   * @deprecated IGNORÉ. Il n'existe plus de devise globale (la devise est celle du
    * compte). Encore accepté pour ne pas rejeter en 400 un front resté en cache ; à retirer avec
    * les colonnes `User.currency` / `currencyRate` (migration séparée).
    */

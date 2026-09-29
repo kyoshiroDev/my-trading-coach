@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, dev]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, beta]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -24,9 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -38,74 +36,16 @@ jobs:
       - name: Validate PR commits
         run: pnpm dlx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
-  # ── Lint (Nx Cloud affected) ──────────────────────────────────────────────
-  lint:
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: lint nx affected
-        run: |
-          pnpm nx affected --target=lint --base=origin/main --head=HEAD --parallel=3 \
-          || pnpm nx run-many --target=lint --all --parallel=3
-
-  # ── Build (Nx Cloud affected) ─────────────────────────────────────────────
-  build:
-    runs-on: ubuntu-latest
-    needs: lint
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
-      DATABASE_DIRECT_URL: postgresql://dummy:dummy@localhost:5432/dummy
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
-
-      - name: build nx affected
-        run: |
-          pnpm nx affected --target=build --base=origin/main --head=HEAD --parallel=3 \
-          || pnpm nx run-many --target=build --all --parallel=3
-
+  # ── Lint, typecheck, build, tests, smoke E2E (définition commune : checks.yml) ─
+  checks:
+    uses: ./.github/workflows/checks.yml
+    with:
+      affected: true
 
   # ── Build & Check Astro Landing (toujours, pas affected) ─────────────────
   build-landing:
     name: Build Astro Landing
     runs-on: ubuntu-latest
-    needs: lint
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -113,9 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -135,99 +73,6 @@ jobs:
           PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
           PUBLIC_FEATURE_REFERRAL: 'true'
 
-  # ── Tests Angular ─────────────────────────────────────────────────────────
-  test-angular:
-    runs-on: ubuntu-latest
-    needs: build
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: test angular
-        run: pnpm nx test app-mytradingcoach --parallel=2
-
-  # ── Tests API (NestJS + Prisma + services) ────────────────────────────────
-  test-api:
-    runs-on: ubuntu-latest
-    needs: build
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NX_NO_CLOUD: true
-      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: testpassword
-      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
-      ANTHROPIC_API_KEY: sk-ant-test
-
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: mytradingcoach_test
-          POSTGRES_USER: mtc_user
-          POSTGRES_PASSWORD: devpassword
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7.4-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
-        ports:
-          - 6379:6379
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Prisma generate
-        run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
-
-      - name: Prisma migrate (test DB)
-        run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
-
-      - name: test api
-        run: pnpm nx test api-mytradingcoach --parallel=2
-
   # ── Intégration parrainage : webhook signé → BullMQ → Postgres ────────────
   # Déterministe et sans dépendance externe : le test SIGNE lui-même l'événement
   # avec STRIPE_WEBHOOK_SECRET, que l'API utilise pour vérifier — donc ni Stripe CLI
@@ -239,7 +84,7 @@ jobs:
   integration-referral:
     name: Intégration parrainage (webhook signé)
     runs-on: ubuntu-latest
-    needs: build
+    needs: checks
     # STRIPE_SECRET_KEY_TEST vit dans l'environment `development` (comme les secrets
     # VPS et E2E_*), pas au niveau dépôt : sans cette ligne le secret serait vide et
     # l'étape de vérification échouerait. Aucune règle de protection sur cet
@@ -302,9 +147,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -333,14 +176,14 @@ jobs:
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
       - name: Intégration parrainage
-        run: pnpm exec vitest run --config vitest.integration.config.ts
+        run: pnpm exec vitest run --config vitest.integration.config.mts
         working-directory: apps/api-mytradingcoach
 
   # ── Deploy API dev → VPS (port 3001 via traefik) ──────────────────────────
   deploy-api-dev:
     name: Deploy API dev to VPS
     runs-on: ubuntu-latest
-    needs: [test-angular, test-api]
+    needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
     env:
@@ -368,7 +211,7 @@ jobs:
   deploy-app-dev:
     name: Deploy Angular dev to VPS
     runs-on: ubuntu-latest
-    needs: [test-angular, test-api]
+    needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
     env:
@@ -378,9 +221,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:
@@ -390,7 +231,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build Angular (dev)
-        run: NX_IGNORE_UNSUPPORTED_TS_SETUP=true pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
+        run: pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
 
       - name: Setup SSH
         run: |
@@ -418,9 +259,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.6.0
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
 
       - uses: actions/setup-node@v4
         with:

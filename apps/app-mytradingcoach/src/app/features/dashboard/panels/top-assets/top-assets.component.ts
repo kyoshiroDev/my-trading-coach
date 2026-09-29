@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
-import { PnlFormatPipe } from '../../../../shared/pipes';
+import { PnlFormatPipe } from '@app/shared/pipes';
 import { TopAssetBar } from '../../dashboard-charts.util';
 
 /**

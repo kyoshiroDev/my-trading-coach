@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Plan, Role, EmotionState } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AnthropicClientService } from '../shared/anthropic-client.service';
+import { AnthropicClientService } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
 import {
@@ -15,8 +15,18 @@ import {
 import {
   assignFeesOncePerFill,
 } from './tradovate-pair.util';
+import {
+  applyMappingWithPnlCheck,
+  MAPPING_MIN_PARSED_RATIO,
+  MAPPING_MIN_PNL_RATIO,
+  MAPPING_SAMPLE_ROWS,
+  validateMappingShape,
+  type CsvMapping,
+} from './csv-mapping';
+import { BrokerMappingService } from './broker-mapping.service';
+import { AI_MODELS } from '../infra/ai-pricing.const';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = AI_MODELS.analysis;
 
 
 // Limites différenciées : un broker connu est parsé localement (sans IA),
@@ -27,7 +37,18 @@ const MAX_KNOWN_ROWS = 10_000;
 // on désactive la saisie d'un total des frais (front) et on l'ignore (back).
 const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
-const AI_BATCH = 250;
+/**
+ * Lignes par appel Claude. Ce n'est PAS un reglage de cout mais une contrainte de
+ * sortie : chaque trade rendu pese ~40 jetons de JSON, et `max_tokens` vaut 8192,
+ * donc au-dela de ~205 trades la reponse est tronquee, `JSON.parse` echoue et
+ * l'utilisateur recoit « verifie que c'est un export de trades fermes » alors que
+ * son fichier etait bon — apres avoir paye l'appel. A 120 la marge tient meme
+ * quand le champ `notes` est rempli sur chaque ligne.
+ *
+ * Baisser ce lot ne coute quasiment rien : la sortie est proportionnelle au nombre
+ * de trades, et seule l'entete de prompt (~246 jetons) est repetee par appel.
+ */
+const AI_BATCH = 120;
 
 /** Accès requis pour le chemin IA d'import (broker inconnu) : Premium strict. */
 interface AiImportAccess {
@@ -83,6 +104,7 @@ export class CsvImportService {
     private readonly anthropicClient: AnthropicClientService,
     private readonly prisma: PrismaService,
     private readonly setups: SetupsService,
+    private readonly brokerMappings: BrokerMappingService,
   ) {}
 
   async parseCSV(
@@ -123,11 +145,27 @@ export class CsvImportService {
       dtos = mapNormalizedCsvToDto(csv);
       this.logger.log(`CSV "${filename}" [${broker}] → ${dtos.length} trades (local, sans IA)`);
     } else {
+      // 3bis. Fiche du registre pour cet en-tete ? Alors c'est un broker connu comme les
+      //       autres : parsing local, gratuit, ACCESSIBLE A TOUS LES PLANS. C'est le but du
+      //       registre — un broker debloque une fois profite ensuite a chaque utilisateur,
+      //       sans appel IA et sans deploiement. Passe donc avant le verrou Premium.
+      const fiche = await this.brokerMappings.findByHeader(normalizedLines[0] ?? '');
+      const parFiche = fiche
+        ? this.parseAvecFiche(normalizedLines.slice(1), fiche, filename)
+        : null;
+
+      if (parFiche && fiche) {
+        void this.brokerMappings.noteUsage(fiche.id);
+        dtos = parFiche;
+      } else {
+      // Aucune fiche, ou fiche devenue inapplicable (le broker a change son format) : la
+      // suite reprend exactement le parcours d'un broker inconnu.
+
       // 4a. Le fichier ressemble-t-il seulement à un export de trades ? Un fichier
       //     hors sujet (image renommée .csv, tableur quelconque) renvoyait le message
       //     « broker non reconnu → passe Premium » : on vendait un upgrade qui n'aurait
       //     rien résolu, et un débutant qui se trompe de fichier comprenait « il faut
-      //     payer » (PROMPT-186 #6). Message neutre, aucun upsell, quel que soit le plan.
+      //     payer ». Message neutre, aucun upsell, quel que soit le plan.
       if (!this.looksLikeTradeExport(normalizedLines[0] ?? '', content)) {
         throw new BadRequestException(
           "Ce fichier ne ressemble pas à un export de trades. " +
@@ -148,6 +186,7 @@ export class CsvImportService {
         );
       }
       dtos = await this.parseUnknownWithAi(normalizedLines, filename, userId);
+      }
     }
 
     if (!dtos.length) throw new BadRequestException(this.emptyMessage());
@@ -197,10 +236,10 @@ export class CsvImportService {
     // Defaults appliqués à TOUT le lot : compte cible, émotion, setup.
     // - accountId : le compte choisi (validé en amont) → create() le résout ; sinon
     //   fallback backend existant (session active / compte par défaut).
-    // - emotion : override OPTIONNEL (PROMPT-163). Si le lot choisit une émotion, on l'applique
+    // - emotion : override OPTIONNEL. Si le lot choisit une émotion, on l'applique
     //   à tous les trades ; sinon `null` (non renseignée) → héritera de l'humeur de session à la
     //   lecture. Plus jamais de NEUTRAL forcé à l'import.
-    // - setupId : choix unique, sinon « Sans setup » (créé à la volée, PROMPT-213).
+    // - setupId : choix unique, sinon « Sans setup » (créé à la volée).
     const batchEmotion = this.normalizeEmotion(defaults?.emotion);
     const setupId =
       defaults?.setupId ?? (userId ? await this.setups.getImportSetupId(userId) : null);
@@ -360,7 +399,7 @@ export class CsvImportService {
    * Le chemin IA d'import (broker inconnu → Anthropic) n'est autorisé que :
    * - en production (garde NODE_ENV : zéro dépense IA hors prod), ET
    * - pour un accès Premium strict (PREMIUM / ADMIN / BETA_TESTER / trial actif).
-   * Aligné sur PremiumGuard : l'import IA (broker inconnu) est une IA personnelle → PREMIUM (PROMPT-169).
+   * Aligné sur PremiumGuard : l'import IA (broker inconnu) est une IA personnelle → PREMIUM.
    */
   private aiImportAllowed(access?: AiImportAccess): boolean {
     if (process.env['NODE_ENV'] !== 'production') return false;
@@ -400,6 +439,13 @@ export class CsvImportService {
     userId?: string,
   ): Promise<Partial<CreateTradeDto>[]> {
     const dataLines = normalizedLines.slice(1);
+
+    // Chemin prefere : UN appel pour deduire les colonnes, puis parsing local. Il est tente
+    // AVANT le plafond de MAX_AI_ROWS, parce que son cout ne depend pas de la taille du
+    // fichier : un export de 10 000 lignes coute le meme appel qu'un de 50.
+    const parMapping = await this.tryMappingPath(normalizedLines, dataLines, filename, userId);
+    if (parMapping) return parMapping;
+
     if (dataLines.length > MAX_AI_ROWS) {
       throw new BadRequestException(
         `${dataLines.length} lignes détectées. Maximum ${MAX_AI_ROWS} pour un import automatique. ` +
@@ -441,6 +487,272 @@ export class CsvImportService {
     return this.mapToDto(allTrades);
   }
 
+  // ── Registre des brokers : entrees publiques pour l'admin ────────────────────
+
+  /**
+   * Deduit une fiche depuis un echantillon colle ou televerse dans l'admin. UN appel IA.
+   *
+   * Pas de garde `NODE_ENV` ici, contrairement au chemin d'import : c'est une action
+   * deliberee d'un admin, et le client Anthropic refuse deja tout appel quand `AI_ENABLED`
+   * n'est pas vrai. C'est donc cette variable qui autorise ou non la depense, par
+   * environnement, sans qu'on ait besoin de reserver la fonction a la production.
+   */
+  async analyseSampleForAdmin(sample: string): Promise<{
+    header: string;
+    mapping: CsvMapping | null;
+    preview: ReturnType<CsvImportService['mapToDto']>;
+    pnlRatio: number | null;
+    flipped: boolean;
+    skipped: number;
+    rowsRead: number;
+    fraisAdditionnes: number[];
+  } | null> {
+    const lignes = this.normaliserEchantillon(sample);
+    if (lignes.length < 2) return null;
+
+    const mapping = await this.inferMapping(lignes);
+    return { ...this.previewForAdmin(lignes, mapping), header: lignes[0] };
+  }
+
+  /**
+   * L'echantillon colle par l'admin, passe par LA MEME normalisation que le chemin d'import.
+   *
+   * Indispensable, et decouvert en testant de bout en bout : un export en point-virgule avec
+   * des decimales a la virgule (« 29657,50;1,24 USD ») est converti par `preprocessCsv` en
+   * virgule/point avant d'atteindre le registre. Si l'admin deduisait la fiche sur le texte
+   * BRUT, elle porterait `delimiter: ';'` et une signature calculee sur des point-virgules,
+   * alors que l'import cherche une signature calculee sur des virgules : la fiche ne
+   * matcherait jamais. Passer par la meme fonction garantit l'accord par construction.
+   */
+  /** Meme normalisation, exposee au controleur admin pour que preview et save concordent. */
+  normaliserEchantillonPublic(sample: string): string[] {
+    return this.normaliserEchantillon(sample);
+  }
+
+  private normaliserEchantillon(sample: string): string[] {
+    return preprocessCsv(sample)
+      .csv.split('\n')
+      .map((l) => l.replace(/\r$/, ''))
+      .filter((l) => l.trim());
+  }
+
+  /** Broker deja reconnu nativement : une fiche serait inutile. */
+  brokerDejaSupporte(sample: string): string | null {
+    const { broker } = preprocessCsv(sample);
+    return broker === 'unknown' ? null : broker;
+  }
+
+  /**
+   * Rejoue une fiche, corrigee a la main ou non, sur l'echantillon. AUCUN appel IA : c'est ce
+   * qui permet a un admin d'ajuster une colonne et de revoir l'apercu autant de fois qu'il
+   * veut sans que cela coute quoi que ce soit.
+   */
+  previewForAdmin(
+    lignes: string[],
+    mapping: CsvMapping | null,
+  ): {
+    mapping: CsvMapping | null;
+    preview: ReturnType<CsvImportService['mapToDto']>;
+    pnlRatio: number | null;
+    flipped: boolean;
+    skipped: number;
+    rowsRead: number;
+    fraisAdditionnes: number[];
+  } {
+    const donnees = lignes.slice(1);
+    if (!mapping) {
+      return {
+        mapping: null, preview: [], pnlRatio: null, flipped: false,
+        skipped: donnees.length, rowsRead: donnees.length, fraisAdditionnes: [],
+      };
+    }
+    const out = applyMappingWithPnlCheck(donnees, mapping);
+    return {
+      // La fiche rendue est celle REELLEMENT appliquee : sens redresse et ordre jour/mois
+      // corrige. L'admin doit enregistrer celle-la, pas celle qu'il a envoyee.
+      mapping: out.mapping,
+      preview: this.mapToDto(out.rows),
+      pnlRatio: out.pnlRatio,
+      flipped: out.flipped,
+      skipped: out.skipped,
+      rowsRead: donnees.length,
+      fraisAdditionnes: out.fraisAdditionnes,
+    };
+  }
+
+  /**
+   * Applique une fiche du registre. Rend null si elle ne tient plus, et l'import repart alors
+   * sur le parcours « broker inconnu » : un broker qui change son format ne doit pas produire
+   * des trades faux, il doit redevenir inconnu le temps qu'on refasse sa fiche.
+   *
+   * Le meme controle qu'a la validation est rejoue A CHAQUE import, et ce n'est pas
+   * redondant : la fiche a ete validee sur 20 lignes d'UN utilisateur, elle s'applique ici
+   * au fichier entier d'un AUTRE. Si le sens ne colle plus aux chiffres, on renonce.
+   */
+  private parseAvecFiche(
+    dataLines: string[],
+    fiche: { id: string; mapping: CsvMapping },
+    filename: string,
+  ): ReturnType<CsvImportService['mapToDto']> | null {
+    if (!dataLines.length) return null;
+    const out = this.brokerMappings.apply(dataLines, fiche.mapping);
+
+    const ratioParse = out.rows.length / dataLines.length;
+    if (ratioParse < MAPPING_MIN_PARSED_RATIO) {
+      this.logger.warn(
+        `Fiche ${fiche.id} ecartee pour "${filename}" : ${out.rows.length}/${dataLines.length} ` +
+        `lignes exploitables. Le format du broker a probablement change.`,
+      );
+      return null;
+    }
+    if (out.pnlRatio != null && out.pnlRatio < MAPPING_MIN_PNL_RATIO) {
+      this.logger.warn(
+        `Fiche ${fiche.id} ecartee pour "${filename}" : sens confirme sur seulement ` +
+        `${Math.round(out.pnlRatio * 100)} % des lignes testables.`,
+      );
+      return null;
+    }
+
+    this.logger.log(
+      `CSV "${filename}" [fiche ${fiche.id}] -> ${out.rows.length} trades (local, sans IA)` +
+      `${out.flipped ? ', sens redresse par le controle du P&L' : ''}.`,
+    );
+    return this.mapToDto(out.rows);
+  }
+
+  /**
+   * Chemin mapping : un appel pour deduire les colonnes, puis parsing local du fichier entier.
+   *
+   * Rend `null` des que quelque chose ne tient pas, et l'appelant retombe sur le chemin ligne
+   * par ligne. On prefere un import cher a un import faux : une inversion du sens transformerait
+   * tous les longs en shorts sans qu'aucune erreur ne remonte.
+   *
+   * Trois raisons de renoncer :
+   *  - le modele n'a pas rendu un mapping exploitable ;
+   *  - trop de lignes inexploitables (seuil MAPPING_MIN_PARSED_RATIO) ;
+   *  - le sens n'est pas VERIFIABLE par le signe du P&L. C'est le cas d'un export sans prix
+   *    d'entree (type Binance Futures), et c'est precisement le format sur lequel les deux
+   *    modeles se sont trompes de sens a la mesure du 2026-09-28. Sans controle arithmetique,
+   *    on ne prend pas le risque.
+   */
+  private async tryMappingPath(
+    normalizedLines: string[],
+    dataLines: string[],
+    filename: string,
+    userId?: string,
+  ): Promise<Partial<CreateTradeDto>[] | null> {
+    if (!dataLines.length) return null;
+
+    let mapping: CsvMapping | null;
+    try {
+      mapping = await this.inferMapping(normalizedLines, userId);
+    } catch (err) {
+      this.logger.warn(`Mapping non deduit pour "${filename}" : ${(err as Error).message}`);
+      return null;
+    }
+    if (!mapping) return null;
+
+    const out = applyMappingWithPnlCheck(dataLines, mapping);
+
+    const ratioParse = out.rows.length / dataLines.length;
+    if (ratioParse < MAPPING_MIN_PARSED_RATIO) {
+      this.logger.warn(
+        `Mapping ecarte pour "${filename}" : ${out.rows.length}/${dataLines.length} lignes ` +
+        `exploitables (seuil ${MAPPING_MIN_PARSED_RATIO}).`,
+      );
+      return null;
+    }
+
+    if (out.pnlRatio == null) {
+      this.logger.warn(
+        `Mapping ecarte pour "${filename}" : le sens n'est pas verifiable par le signe du P&L ` +
+        `(pas de prix d'entree exploitable). Repli sur l'analyse ligne par ligne.`,
+      );
+      return null;
+    }
+
+    this.logger.log(
+      `Import par mapping pour "${filename}" : ${out.rows.length} trade(s), ` +
+      `sens confirme sur ${Math.round(out.pnlRatio * 100)} % des lignes testables` +
+      `${out.flipped ? ' (sens INVERSE par rapport au mapping deduit)' : ''}. Un seul appel IA.`,
+    );
+
+    return this.mapToDto(out.rows);
+  }
+
+  /**
+   * L'unique appel IA du chemin mapping : l'echantillon suffit, le fichier entier n'est jamais
+   * envoye. Le modele rapide fait l'affaire (mesure : colonnes justes 29/30 contre 30/30 pour
+   * le modele d'analyse, a un tiers du prix) et le sens, la ou il se trompe, est de toute facon
+   * retranche par le controle arithmetique.
+   */
+  private async inferMapping(
+    normalizedLines: string[],
+    userId?: string,
+  ): Promise<CsvMapping | null> {
+    const echantillon = normalizedLines.slice(0, MAPPING_SAMPLE_ROWS + 1).join('\n');
+
+    const prompt = `Voici les premieres lignes d'un export de trades d'un broker inconnu.
+Deduis la correspondance des colonnes pour parser le fichier ENTIER sans le relire.
+Les index commencent a 0. Certains brokers exportent la ligne de CLOTURE d'une position :
+la colonne de sens designe alors l'ordre de sortie.
+
+Reponds UNIQUEMENT avec ce JSON, sans texte autour :
+{
+  "delimiter": "<le separateur de colonnes, un seul caractere>",
+  "decimalSeparator": "." ou ",",
+  "dateFormat": "dmy" si les dates sont jour/mois/annee, "mdy" si mois/jour/annee, "iso" si annee en premier,
+  "columns": {
+    "symbol": <index>, "entry": <index ou null si le fichier ne donne pas le prix d'entree>,
+    "exit": <index>, "quantity": <index>, "pnl": <index>,
+    "tradedAt": <index de la date de CLOTURE>
+  },
+  "side": {
+    "mode": "column" si le sens est dans une colonne, sinon "derived_from_timestamps",
+    "index": <index de la colonne de sens, ou null>,
+    "longValues": [<valeurs signifiant LONG>], "shortValues": [<valeurs signifiant SHORT>],
+    "buyTimeIndex": <index ou null>, "sellTimeIndex": <index ou null>
+  },
+  "pnlExtraColumns": [<index a ADDITIONNER au pnl, par exemple commission et swap, sinon vide>],
+  "notes": "<pieges de format rencontres>"
+}
+
+FICHIER :
+${echantillon}`;
+
+    const response = await this.anthropicClient.create(
+      {
+        model: AI_MODELS.fast,
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { feature: 'csv_mapping', userId: userId ?? null },
+    );
+
+    if (response.stop_reason === 'max_tokens') return null;
+
+    const brut = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    // Le modele peut preceder le JSON d'une explication : on prend le bloc, sinon les accolades.
+    const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const candidat = bloc
+      ? bloc[1]
+      : brut.slice(brut.indexOf('{'), brut.lastIndexOf('}') + 1);
+
+    try {
+      const propose = JSON.parse(candidat.trim()) as { delimiter?: unknown };
+      // Le nombre de colonnes se compte avec LE separateur que le modele a reconnu, pas avec
+      // la virgule par defaut : un export en point-virgule (MEXC) ne fait qu'une colonne vu
+      // a la virgule, et tous les index seraient alors juges hors limites.
+      const sep = typeof propose.delimiter === 'string' && propose.delimiter.length === 1
+        ? propose.delimiter
+        : ',';
+      const nbColonnes = splitCsvLine(normalizedLines[0] ?? '', sep).length;
+      return validateMappingShape(propose, nbColonnes);
+    } catch {
+      return null;
+    }
+  }
+
   /** Un appel Claude pour un lot de lignes : extrait pour le batch des gros fichiers. */
   private async callClaudeForChunk(
     chunk: string,
@@ -464,6 +776,19 @@ export class CsvImportService {
       },
       { feature: 'csv_import', userId: userId ?? null },
     );
+
+    // Reponse coupee par max_tokens : le JSON est incomplet, donc `JSON.parse` va
+    // echouer sur un fichier parfaitement valide. Sans ce test, le message affiche
+    // accuse le fichier de l'utilisateur au lieu de dire la verite.
+    if (response.stop_reason === 'max_tokens') {
+      this.logger.error(
+        `Reponse Claude tronquee (max_tokens) pour "${filename}" : lot de ${AI_BATCH} lignes trop gros.`,
+      );
+      throw new BadRequestException(
+        "Ce fichier contient trop d'informations par ligne pour etre importe d'un bloc. " +
+        'Reessaie en le coupant en deux moities.',
+      );
+    }
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
@@ -558,7 +883,7 @@ ${csv}`;
         pnl: t.pnl,
         commission: t.commission ?? undefined,
         emotion: null, // override optionnel : réassigné par le lot (ou null) dans parseCSV
-        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import (PROMPT-138).
+        // setupId affecté en aval (parseCSV) : setup par défaut du user, ou fourni par l'import.
         session: detectSession(t.tradedAt),
         timeframe: '1h',
         tradedAt: t.tradedAt,

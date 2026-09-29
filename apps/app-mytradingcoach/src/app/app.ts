@@ -12,14 +12,15 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
+import { ConfirmDialogComponent } from '@mtc/front-ui';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 
 @Component({
-  imports: [RouterModule, ToastsComponent],
+  imports: [RouterModule, ToastsComponent, ConfirmDialogComponent],
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Conteneur de toasts monté UNE fois, hors du routeur : il survit aux navigations.
-  template: `<router-outlet /><mtc-toasts />`,
+  // Toasts et dialogue de confirmation montés UNE fois, hors du routeur : ils survivent aux navigations.
+  template: `<router-outlet /><mtc-toasts /><mtc-confirm-dialog />`,
 })
 export class App implements OnInit {
   private readonly router = inject(Router);

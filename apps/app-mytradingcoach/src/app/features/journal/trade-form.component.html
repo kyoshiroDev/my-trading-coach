@@ -7,8 +7,8 @@
   >
     <div
       class="sheet"
-      role="dialog"
-      aria-modal="true"
+      role="dialog" aria-modal="true" mtcDialog
+      (mtcDialogClose)="dismissed.emit()"
       data-testid="trade-modal"
     >
       <div class="sheet-handle"></div>
@@ -18,7 +18,7 @@
         <h2 class="sheet-title">
           {{ editTrade() ? 'Modifier le trade' : 'Nouveau trade' }}
         </h2>
-        <button class="close-btn" (click)="dismissed.emit()">
+        <button aria-label="Fermer" class="close-btn" (click)="dismissed.emit()">
           <svg [lucideIcon]="XIcon" [size]="16"></svg>
         </button>
       </div>

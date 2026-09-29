@@ -7,12 +7,12 @@ import {
   input,
   output,
 } from '@angular/core';
-import { EcoCalendarData } from '../../../../core/api/eco-calendar.api';
-import { MoodState, TradingSession, LiveStats, SessionTrade } from '../../../../core/api/session.api';
-import { CreateTradeDto, MarketContext, NewsItem } from '../../../../core/api/trades.api';
+import { EcoCalendarData } from '@app/core/api/eco-calendar.api';
+import { MoodState, TradingSession, LiveStats, SessionTrade } from '@app/core/api/session.api';
+import { CreateTradeDto, MarketContext, NewsItem } from '@app/core/api/trades.api';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
-import { EcoSocketService } from '../../../../core/services/eco-socket.service';
-import { MoneyService } from '../../../../core/services/money.service';
+import { EcoSocketService } from '@app/core/services/eco-socket.service';
+import { MoneyService } from '@app/core/services/money.service';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
 import { LiveEcoCalendarComponent } from './components/live-eco-calendar/live-eco-calendar.component';
@@ -50,7 +50,7 @@ export class SessionLiveComponent {
 
   private readonly ecoSocket = inject(EcoSocketService);
 
-  // News live + contexte marché = IA mutualisée → FREE (PROMPT-169), accessible à tous.
+  // News live + contexte marché = IA mutualisée → FREE, accessible à tous.
 
   constructor() {
     // triggerCloseModal → naviguer vers l'onglet Débrief

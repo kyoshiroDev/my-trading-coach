@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PremiumGuard } from '../../common/guards/premium.guard';
 
 // Le compagnon de session est le hook du plan FREE : accessible à tout compte connecté.
-// Ce test verrouille le contrat — si quelqu'un ajoute PremiumGuard, il casse (PROMPT-169).
+// Ce test verrouille le contrat — si quelqu'un ajoute PremiumGuard, il casse.
 describe('SessionController — accès', () => {
   const guards = (Reflect.getMetadata('__guards__', SessionController) ?? []) as unknown[];
 

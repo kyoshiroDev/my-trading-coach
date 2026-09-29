@@ -1,8 +1,8 @@
 /**
- * PROMPT-186 #1 — deux imports CONCURRENTS du même fichier ne doivent créer qu'un
+ * deux imports CONCURRENTS du même fichier ne doivent créer qu'un
  * seul historique.
  *
- * Constat navigateur (PROMPT-184) : un double-clic sur « Importer » produisait
+ * Constat navigateur : un double-clic sur « Importer » produisait
  * 40 trades au lieu de 20, avec P&L et frais doublés, sans aucun signal. La dédup
  * était applicative (lire tous les trades, comparer, insérer) : les deux requêtes
  * lisaient le même état vide avant d'écrire. Aucun verrou UI ne peut corriger ça de
@@ -52,7 +52,7 @@ function importCsv(token: string) {
 }
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
 }, 120_000);

@@ -3,10 +3,10 @@ import { API_URL, FEATURES } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
-import Moments from '../components/Moments.astro';
-import Problem from '../components/Problem.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
+import CoachIA from '../components/CoachIA.astro';
+import Debrief from '../components/Debrief.astro';
 import MultiComptes from '../components/MultiComptes.astro';
 import Compare from '../components/Compare.astro';
 import Pricing from '../components/Pricing.astro';
@@ -15,6 +15,7 @@ import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
 import Footer from '../components/Footer.astro';
+import { HOME_SCHEMA } from '../data/schema';
 
 const ARTICLES = [
   {
@@ -41,7 +42,7 @@ const ARTICLES = [
 ];
 
 // Compteur de traders : fetch au build (SEO + valeur initiale), fallback si API down.
-const FALLBACK_TRADERS = 14;
+const FALLBACK_TRADERS = 0; // sous le seuil public → aucun chiffre affiché
 let traders = FALLBACK_TRADERS;
 try {
   const res = await fetch(`${API_URL}/public/stats`);
@@ -59,13 +60,28 @@ try {
   description="Journal de trading IA : il te prépare avant ta session, t'accompagne en live et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB."
   canonical="https://www.mytradingcoach.app/"
   ogUrl="https://www.mytradingcoach.app/"
+  schema={HOME_SCHEMA}
 >
   <Nav />
   <Hero traders={traders} />
-  <Moments />
-  <Problem />
+  <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
+  {/*
+    « L'app en vrai » retiree le 2026-09-29 : le hero porte desormais une vraie capture avec
+    sa mention « capture reelle », donc l'objection « c'est une maquette ? » est traitee des
+    le premier ecran. Sa capture IA Insights a rejoint la section Coach IA, ou elle sert
+    d'appui a l'argument plutot que de section concurrente. Le composant reste dans le depot.
+  */}
+  {/*
+    `Moments` retire (audit UX 2026-09-28) : il racontait la MEME histoire avant/pendant/apres
+    que `DayTimeline`, avec 49 % de vocabulaire commun et 2 423 px a eux deux. La timeline est
+    la meilleure des deux, parce qu'elle est horodatee et incarnee : on voit un trader a 08h15,
+    pas une liste de fonctionnalites. Le composant reste dans le depot si tu veux revenir.
+  */}
   <DayTimeline />
   <Features />
+  <!-- L'app en vrai (maquettes produit), puis le coach IA et le débrief : décision D2 de l'audit. -->
+  <CoachIA />
+  <Debrief />
   {FEATURES.multiAccounts && <MultiComptes />}
   <Compare />
   <Pricing />
@@ -75,40 +91,40 @@ try {
   <CtaFinal />
 
   <!-- Section blog : liens internes pour le SEO -->
-  <section style="padding:80px 5%;background:var(--bg2);border-top:1px solid var(--b);">
-    <div style="max-width:1100px;margin:0 auto;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;">
+  <section class="blog-teaser">
+    <div class="wrap">
+      {/* Meme traitement que les autres libelles de section : centre au-dessus du bloc,
+          au lieu d'etre coince a gauche dans la rangee qui porte aussi le lien de droite. */}
+      <div class="blog-eyebrow"><span class="blog-label">Blog</span></div>
+
+      <div class="blog-head">
         <div>
-          <span style="font-size:11px;font-family:var(--mono);color:var(--pulse);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:10px;">Blog</span>
-          <h2 style="font-family:var(--disp);font-size:clamp(24px,4vw,36px);font-weight:700;letter-spacing:-0.5px;color:var(--txt);margin:0;">
-            Ressources pour <em style="font-style:italic;font-family:var(--body);font-weight:300;color:var(--blue2);">mieux trader</em>
+          <h2 class="blog-title">
+            Ressources pour <em>mieux trader</em>
           </h2>
         </div>
-        <a href="/blog" style="font-size:13px;color:var(--blue2);text-decoration:none;font-family:var(--mono);white-space:nowrap;flex-shrink:0;">
+        <a href="/blog" class="blog-all">
           Voir tous les articles →
         </a>
       </div>
 
-      <div class="blog-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+      <div class="blog-grid">
         {ARTICLES.map((article) => (
-          <a href={`/blog/${article.slug}`}
-             style="background:var(--card);border:1px solid var(--b);border-radius:14px;padding:24px;text-decoration:none;display:flex;flex-direction:column;gap:12px;transition:border-color .2s;"
-             onmouseover="this.style.borderColor='rgba(99,155,255,.3)'"
-             onmouseout="this.style.borderColor='var(--b)'">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <a href={`/blog/${article.slug}`} class="blog-card">
+            <div class="blog-tags">
               {article.tags.map((tag) => (
-                <span style="font-size:10px;font-family:var(--mono);color:var(--pulse);background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);padding:2px 8px;border-radius:100px;">
+                <span class="blog-tag">
                   {tag}
                 </span>
               ))}
             </div>
-            <h3 style="font-family:var(--disp);font-size:16px;font-weight:700;color:var(--txt);margin:0;line-height:1.3;">
+            <h3>
               {article.title}
             </h3>
-            <p style="font-size:13px;color:var(--txt2);margin:0;line-height:1.6;font-weight:300;flex:1;">
+            <p>
               {article.desc}
             </p>
-            <span style="font-size:11px;color:var(--txt3);font-family:var(--mono);">{article.date}</span>
+            <span class="blog-date">{article.date}</span>
           </a>
         ))}
       </div>
@@ -119,26 +135,63 @@ try {
 
   <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
   <script>
+    import { TRADERS_PUBLIC_THRESHOLD } from '../config';
     const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
     fetch(`${API}/public/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const n = j?.data?.traders;
-        if (typeof n === 'number') {
-          document
-            .querySelectorAll('[data-traders-count]')
-            .forEach((el) => { el.textContent = String(n); });
+        if (typeof n !== 'number') return;
+        // Repassé sous le seuil depuis le build → on retire le chiffre plutôt que d'afficher un petit nombre.
+        if (n < TRADERS_PUBLIC_THRESHOLD) {
+          document.querySelectorAll('[data-traders-proof]').forEach((el) => el.remove());
+          return;
         }
+        document
+          .querySelectorAll('[data-traders-count]')
+          .forEach((el) => { el.textContent = String(n); });
       })
       .catch(() => { /* API down → on garde la valeur du build */ });
   </script>
 </Base>
 
 <style>
+.blog-teaser { padding: 80px 5%; background: var(--bg2); border-top: 1px solid var(--b); }
+.blog-eyebrow { text-align: center; margin-bottom: 14px; }
+
+.blog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+.blog-label {
+  font-size: 11px; font-family: var(--mono); color: var(--pulse); letter-spacing: 2px;
+  text-transform: uppercase; display: block; margin-bottom: 10px;
+}
+.blog-title {
+  font-family: var(--disp); font-size: clamp(24px, 4vw, 36px); font-weight: 700;
+  letter-spacing: -0.5px; color: var(--txt); margin: 0;
+}
+.blog-title em { font-style: italic; font-family: var(--body); font-weight: 300; color: var(--blue2); }
+.blog-all {
+  font-size: 13px; color: var(--blue2); text-decoration: none; font-family: var(--mono);
+  white-space: nowrap; flex-shrink: 0;
+}
+.blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.blog-card {
+  background: var(--card); border: 1px solid var(--b); border-radius: 14px; padding: 24px;
+  text-decoration: none; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s;
+}
+.blog-card:hover { border-color: rgba(99, 155, 255, .3); }
+.blog-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.blog-tag {
+  font-size: 10px; font-family: var(--mono); color: var(--pulse); background: rgba(34, 211, 238, .07);
+  border: 1px solid rgba(34, 211, 238, .2); padding: 2px 8px; border-radius: 100px;
+}
+.blog-card h3 { font-family: var(--disp); font-size: 16px; font-weight: 700; color: var(--txt); margin: 0; line-height: 1.3; }
+.blog-card p { font-size: 13px; color: var(--txt2); margin: 0; line-height: 1.6; font-weight: 300; flex: 1; }
+.blog-date { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
+
 @media (max-width: 767px) {
   .blog-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 </style>

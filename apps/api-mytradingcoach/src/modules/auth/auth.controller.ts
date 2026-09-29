@@ -15,6 +15,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -32,11 +33,14 @@ function setRefreshCookie(res: Response, token: string): void {
   });
 }
 
+// Limites par IP plus strictes que le défaut (60/min) sur les routes sensibles :
+// brute force des mots de passe, création de comptes en masse, envoi d'emails.
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -48,6 +52,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -73,6 +78,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('demo-login')
   demoLogin() {
     return this.authService.demoLogin();
@@ -86,6 +92,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 3 } }) // chaque appel envoie un email
   @Post('forgot-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -94,6 +101,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('reset-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async resetPassword(@Body() dto: ResetPasswordDto) {

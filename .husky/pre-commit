@@ -1,1 +1,9 @@
-# pre-commit hook
+# Lint des seuls projets Nx touchés par les fichiers indexés (quelques secondes).
+# Silencieux si tout va bien ; affiche le détail seulement en cas d'erreur.
+files=$(git diff --cached --name-only --diff-filter=ACMR | paste -sd, -)
+[ -z "$files" ] && exit 0
+if ! out=$(pnpm exec nx affected -t lint --files="$files" --output-style=static 2>&1); then
+  echo "$out"
+  echo "✖ Lint en échec : corrige les erreurs ci-dessus avant de committer."
+  exit 1
+fi

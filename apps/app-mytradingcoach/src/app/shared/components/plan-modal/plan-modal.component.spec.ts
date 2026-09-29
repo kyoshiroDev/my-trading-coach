@@ -4,7 +4,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import * as angularCore from '@angular/core';
 import { of } from 'rxjs';
 import { PlanModalComponent } from './plan-modal.component';
-import { BillingApi } from '../../../core/api/billing.api';
+import { BillingApi } from '@app/core/api/billing.api';
 
 const resolveComponentResources = (
   angularCore as Record<string, unknown>

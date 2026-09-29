@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '@api/prisma/prisma.service';
 import { DataAgent } from './data.agent';
 import { PatternAgent } from './pattern.agent';
 import { CoachAgent, Advice } from './coach.agent';
 import { Pattern } from './pattern.agent';
 import { buildUserTradingContext } from '../user-context.builder';
-import { effectiveEmotion } from '../../../common/utils/effective-emotion.util';
-import { userAmountsCurrency } from '../../../common/utils/user-currency.util';
+import { effectiveEmotion } from '@api/common/utils/effective-emotion.util';
+import { userAmountsCurrency } from '@api/common/utils/user-currency.util';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';

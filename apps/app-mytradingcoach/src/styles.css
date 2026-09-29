@@ -1,4 +1,25 @@
-/* ===== Design Tokens ===== */
+/* ===== Fontes auto-hébergées (plus aucune requête vers Google) =====
+ * Graisses strictement identiques à ce que demandait le lien Google : migrer le mode de
+ * livraison ne doit pas changer le rendu. Les fichiers complets (et non `latin-*.css`) portent
+ * les `unicode-range` par sous-ensemble : le navigateur ne télécharge que le latin, comme avant,
+ * et aucun glyphe ne peut manquer (œ, ’, €…).
+ */
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
+/* ===== Fondations partagées (échelles, focus clavier, mouvement réduit) ===== */
+@import url('../../../libs/front/ui/src/styles/foundations.css');
+
+/* ===== Design Tokens (couleurs de l'app) ===== */
 @import url('./styles/theme.css');
 
 /* ===== Reset ===== */
@@ -52,7 +73,7 @@ body {
   white-space: normal;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .it-content { max-width: 180px; }
 }
 
@@ -61,7 +82,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   font-family: var(--font-mono);
   padding: 2px 8px;

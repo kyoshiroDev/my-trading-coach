@@ -2,8 +2,8 @@
 ---
 
 <section class="day-section" id="journee">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 64px">
+  <div class="wrap">
+    <div class="reveal head">
       <span class="sec-label">Une journée avec ton compagnon</span>
       <h2>De 8h à minuit, il est <em>là</em></h2>
     </div>
@@ -22,7 +22,7 @@
           <div class="day-content">
             <div class="day-tag avant">☀️ Avant : Préparation</div>
             <h3>Recap de la veille + Agenda du jour</h3>
-            <p>Tu ouvres MTC avant TradingView. Hier : +$620, 72% WR, émotion dominante 😎. Aujourd'hui : PMI Zone Euro à 10h00 : ton compagnon te recommande d'éviter EUR/USD entre 09h45 et 10h15.</p>
+            <p>Tu ouvres MTC avant TradingView. Hier : +$620, 72% WR, émotion dominante 😎 <span class="day-illus">(exemple illustratif)</span>. Aujourd'hui : PMI Zone Euro à 10h00 : ton compagnon te recommande d'éviter EUR/USD entre 09h45 et 10h15.</p>
             <div class="day-pills">
               <span class="day-pill g">Recap hier</span>
               <span class="day-pill g">Objectifs semaine</span>
@@ -98,7 +98,7 @@
           <div class="day-content">
             <div class="day-tag apres">🌙 Après : Recap automatique</div>
             <h3>L'email que tu attends</h3>
-            <p>Un email t'attend à 17h30, sans que tu aies rien demandé. P&amp;L du jour, win rate, émotion dominante, une phrase coaching IA personnalisée sur ta session. Tu lis ça avant le dîner. Demain tu seras meilleur.</p>
+            <p>Un email t'attend à 17h30, sans que tu aies rien demandé. P&amp;L du jour, win rate, émotion dominante, une phrase coaching IA personnalisée sur ta session. Tu lis ça avant le dîner, et tu sais sur quoi travailler demain.</p>
             <div class="day-pills">
               <span class="day-pill p">Email recap 17h30</span>
               <span class="day-pill p">Phrase coaching IA</span>
@@ -108,7 +108,7 @@
 
         <div class="day-item last">
           <div class="day-time-col">
-            <span class="day-time">Dimanche</span>
+            <span class="day-time"><span class="day-time-long">Dimanche</span><span class="day-time-short">Dim.</span></span>
           </div>
           <div class="day-connector-col">
             <div class="day-dot purple"></div>
@@ -131,6 +131,7 @@
 </section>
 
 <style>
+  .head { text-align: center; max-width: 600px; margin: 0 auto 64px; }
   .day-section {
     background: var(--bg2);
     border-top: 1px solid var(--b);
@@ -162,6 +163,16 @@
     font-size: 11px;
     color: var(--txt3);
     font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .day-time-short { display: none; }
+
+  /* Chiffres de performance de la narration : toujours signalés comme fictifs. */
+  .day-illus {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--txt3);
     white-space: nowrap;
   }
 
@@ -258,5 +269,9 @@
 
   @media (max-width: 480px) {
     .day-item { grid-template-columns: 46px 28px 1fr; }
+    .day-time-col { padding-right: 8px; }
+    /* « Dimanche » ne tient pas dans 46 px : il débordait à gauche et se faisait rogner. */
+    .day-time-long { display: none; }
+    .day-time-short { display: inline; }
   }
 </style>

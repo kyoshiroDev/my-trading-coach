@@ -10,7 +10,7 @@ export const PRICING_EUR = {
 } as const;
 
 /**
- * Essai gratuit : 30 jours, MENSUEL uniquement (PROMPT-169) — cf. `@mtc/shared`. Ré-export direct
+ * Essai gratuit : 30 jours, MENSUEL uniquement — cf. `@mtc/shared`. Ré-export direct
  * (`export … from`) : un import puis `export { X }` est effacé en transpilation fichier par fichier.
  */
 export { TRIAL_PERIOD_DAYS } from '@mtc/shared';

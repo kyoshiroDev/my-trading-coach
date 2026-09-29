@@ -66,7 +66,7 @@ export class DemoSeedCron implements OnModuleInit {
     });
     if (!last) return true;
 
-    // Jours ouvrés uniquement (PROMPT-215) : le week-end, le dernier trade attendu est vendredi.
+    // Jours ouvrés uniquement : le week-end, le dernier trade attendu est vendredi.
     const lastTradingDay = new Date();
     lastTradingDay.setHours(0, 0, 0, 0);
     while (lastTradingDay.getDay() === 0 || lastTradingDay.getDay() === 6) {

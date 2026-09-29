@@ -21,102 +21,7 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
-  template: `
-    <div class="auth-page">
-      <div class="bg-glow"></div>
-
-      <div class="auth-card">
-        <div class="auth-logo">
-          <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
-        </div>
-
-        <h1 class="auth-title">Bon retour 👋</h1>
-        <p class="auth-subtitle">
-          Connecte-toi pour accéder à ton journal de trading
-        </p>
-
-        <form (ngSubmit)="onLogin()">
-          <div class="form-group" [class.input-error]="emailError()">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              data-testid="login-email"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-              name="email"
-              placeholder="trader@email.com"
-              autocomplete="email"
-              (blur)="emailTouched.set(true)"
-            />
-            @if (emailError()) {
-              <span class="field-error">{{ emailError() }}</span>
-            }
-          </div>
-
-          <div class="form-group" [class.input-error]="passwordError()">
-            <label for="password">Mot de passe</label>
-            <div class="input-wrapper">
-              <input
-                id="password"
-                data-testid="login-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                [ngModel]="password()"
-                (ngModelChange)="password.set($event)"
-                name="password"
-                placeholder="••••••••"
-                autocomplete="current-password"
-                (blur)="passwordTouched.set(true)"
-              />
-              <button
-                type="button"
-                class="eye-btn"
-                (click)="showPassword.set(!showPassword())"
-              >
-                <svg
-                  [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
-                  [size]="15"
-                  color="var(--text-2)"></svg>
-              </button>
-            </div>
-            @if (passwordError()) {
-              <span class="field-error">{{ passwordError() }}</span>
-            }
-          </div>
-
-          <div class="forgot-link-row">
-            <a routerLink="/forgot-password" class="forgot-link"
-              >Mot de passe oublié ?</a
-            >
-          </div>
-
-          <button
-            type="submit"
-            data-testid="login-submit"
-            [disabled]="isLoading()"
-            class="btn-submit"
-          >
-            @if (isLoading()) {
-              <span class="spinner"></span> Connexion...
-            } @else {
-              Se connecter
-            }
-          </button>
-
-          @if (apiError()) {
-            <div class="error-msg" data-testid="error-message">
-              {{ apiError() }}
-            </div>
-          }
-        </form>
-
-        <p class="auth-link">
-          Pas encore de compte ?
-          <a routerLink="/register">S'inscrire gratuitement</a>
-        </p>
-      </div>
-    </div>
-  `,
+  templateUrl: './login.component.html',
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
@@ -139,7 +44,7 @@ export class LoginComponent {
     if (!this.submitted() && !this.emailTouched()) return null;
     if (!this.email()) return "L'adresse email est requise";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email()))
-      return 'Veuillez saisir une adresse email valide';
+      return 'Saisis une adresse email valide';
     return null;
   });
 
@@ -167,7 +72,7 @@ export class LoginComponent {
             this.apiError.set('Email ou mot de passe incorrect');
           else if (status === 404)
             this.apiError.set('Aucun compte trouvé avec cette adresse email');
-          else this.apiError.set('Une erreur est survenue, veuillez réessayer');
+          else this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);
         },
       });

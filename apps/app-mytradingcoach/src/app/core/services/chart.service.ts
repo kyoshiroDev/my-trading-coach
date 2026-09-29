@@ -114,7 +114,7 @@ export class ChartService {
             titleColor: '#8fafc8',
             bodyColor: color,
             bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 11 },
             callbacks: {
               label: (ctx) => {
                 if (ctx.datasetIndex === 1) return '';
@@ -130,7 +130,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.7)',
-              font: { family: '"JetBrains Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 11 },
               maxTicksLimit: values.length <= 10 ? values.length : 6,
               autoSkip: true,
               autoSkipPadding: 10,
@@ -143,7 +143,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"JetBrains Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 11 },
               callback: (v) => this.money(Number(v)),
             },
           },
@@ -210,7 +210,7 @@ export class ChartService {
             titleColor: '#8fafc8',
             bodyColor: '#ef4444',
             bodyFont: { family: '"JetBrains Mono", monospace', size: 13, weight: 'bold' },
-            titleFont: { family: '"JetBrains Mono", monospace', size: 10 },
+            titleFont: { family: '"JetBrains Mono", monospace', size: 11 },
             callbacks: {
               label: (ctx) => this.money(ctx.parsed.y ?? 0),
             },
@@ -222,7 +222,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"JetBrains Mono", monospace', size: 9 },
+              font: { family: '"JetBrains Mono", monospace', size: 11 },
               maxTicksLimit: 5,
               maxRotation: 0,
             },
@@ -233,7 +233,7 @@ export class ChartService {
             border: { display: false },
             ticks: {
               color: 'rgba(112,144,176,0.6)',
-              font: { family: '"JetBrains Mono", monospace', size: 10 },
+              font: { family: '"JetBrains Mono", monospace', size: 11 },
               callback: (v) => this.money(Number(v)),
             },
           },

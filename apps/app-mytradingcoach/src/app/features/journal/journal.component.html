@@ -116,7 +116,7 @@
     </div>
   </div>
 
-  <!-- ── Résumé période ── (devises mêlées : pas de total, PROMPT-214) -->
+  <!-- ── Résumé période ── (devises mêlées : pas de total) -->
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
   } @else if (periodStats(); as s) {
@@ -180,7 +180,7 @@
         <span class="th-price">Exit</span>
         <span class="th-pnl">P&L
           <mtc-info-tooltip label="Comment le P&L est calculé"
-            text="Résultat net du trade, commissions et frais déduits." />
+            text="Résultat net du trade, commissions et frais déduits. Entre parenthèses : variation du prix entre l'entrée et la sortie, dans le sens du trade." />
         </span>
         <span class="th-qty">Qté</span>
         <span class="th-rr">R/R
@@ -274,14 +274,14 @@
               }
             </div>
             @if (canReassign()) {
-              <button class="day-reassign-btn"
+              <button aria-label="Déplacer tous les trades de ce jour vers un autre compte" class="day-reassign-btn"
                 title="Déplacer tous les trades de ce jour vers un autre compte"
                 (click)="$event.stopPropagation(); openReassign(day)"
                 (keydown.enter)="$event.stopPropagation(); openReassign(day)">
                 <svg [lucideIcon]="ReassignIcon" [size]="12"></svg>
               </button>
             }
-            <button class="day-delete-btn"
+            <button aria-label="Supprimer tous les trades de ce jour" class="day-delete-btn"
               title="Supprimer tous les trades de ce jour"
               (click)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)"
               (keydown.enter)="$event.stopPropagation(); confirmDeleteDayKey.set(day.key)">
@@ -301,7 +301,7 @@
                   <span class="td-price mono">{{ trade.entry }}</span>
                   <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
                   <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                    {{ trade.pnl | pnlFormat: trade.entry : trade.accountId }}
+                    {{ trade.pnl | pnlFormat: trade : trade.accountId }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
                   <span class="td-rr mono">
@@ -334,10 +334,10 @@
                   </span>
                   <span class="td-setup"><span class="setup-badge"><span class="setup-badge-dot" [style.background]="trade.setup.color"></span>{{ trade.setup.title }}</span></span>
                   <span class="td-actions">
-                    <button class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
+                    <button aria-label="Modifier" class="btn-edit" (click)="openEditModal(trade)" title="Modifier">
                       <svg [lucideIcon]="PencilIcon" [size]="12"></svg>
                     </button>
-                    <button class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
+                    <button aria-label="Supprimer" class="btn-delete" data-testid="trade-delete" (click)="deleteTrade(trade.id)" title="Supprimer">
                       <svg [lucideIcon]="XIcon" [size]="12"></svg>
                     </button>
                   </span>
@@ -376,7 +376,7 @@
 @if (confirmDeleteDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
     (click)="confirmDeleteDayKey.set(null)" (keydown.escape)="confirmDeleteDayKey.set(null)">
-    <div class="confirm-modal" role="dialog" aria-modal="true"
+    <div class="confirm-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmDeleteDayKey.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
         <span class="confirm-modal-ic">🗑️</span>
@@ -413,7 +413,7 @@
 @if (reassignDay(); as day) {
   <div class="modal-overlay" role="button" tabindex="0" aria-label="Annuler"
     (click)="reassignDayKey.set(null)" (keydown.escape)="reassignDayKey.set(null)">
-    <div class="confirm-modal" role="dialog" aria-modal="true"
+    <div class="confirm-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="reassignDayKey.set(null)"
       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="confirm-modal-header">
         <span class="confirm-modal-ic">↔️</span>

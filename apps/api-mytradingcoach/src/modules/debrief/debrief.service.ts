@@ -1,24 +1,11 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
-import { Plan, Role, WeeklyDebrief } from '@prisma/client';
+import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { DebriefPdfData } from '../pdf/pdf.service';
 import { OBJECTIVE_CHECK_TYPES, DebriefAccountInput } from '../ai/prompts/debrief.prompt';
 
-interface ObjectiveCheck {
-  type: string;
-  params?: Record<string, unknown>;
-}
-interface DebriefObjective {
-  title: string;
-  reason: string;
-  check?: ObjectiveCheck | null;
-}
-interface DebriefBadgeItem {
-  badge: string;
-  text: string;
-}
 /** Analyse qualitative IA d'un compte (avant fusion avec les stats backend). */
 interface DebriefAccountAi {
   accountId: string;
@@ -28,25 +15,7 @@ interface DebriefAccountAi {
   objectives?: { title: string; reason: string }[];
   propNote?: string | null;
 }
-/** Section compte stockée (stats + règles backend + analyse IA). */
-interface DebriefAccountSection {
-  accountId: string;
-  name: string;
-  type: string;
-  status: string;
-  stats: { totalTrades: number; winRate: number; totalPnl: number };
-  rules: {
-    startingBalance: number | null;
-    profitTarget: number | null;
-    maxDrawdown: number | null;
-    drawdownType: string | null;
-  } | null;
-  summary: string;
-  strengths: DebriefBadgeItem[];
-  weaknesses: DebriefBadgeItem[];
-  objectives: { title: string; reason: string }[];
-  propNote: string | null;
-}
+
 interface DebriefAiResult {
   summary?: string;
   overview?: { summary: string };
@@ -58,6 +27,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
+import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
 @Injectable()
 export class DebriefService {
@@ -148,7 +118,7 @@ export class DebriefService {
           asset: true,
           side: true,
           pnl: true,
-          commission: true, // stats sur le net (PROMPT-213)
+          commission: true, // stats sur le net
           emotion: true,
           tradeSession: { select: { moodStart: true } },
           setup: { select: { title: true } },
@@ -229,6 +199,8 @@ export class DebriefService {
     }, userId)) as DebriefAiResult;
 
     const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
+    // Colonne JSON Prisma : nos interfaces n'ont pas de signature d'index, d'où le cast explicite.
+    const objectivesJson = normalizedObjectives as unknown as Prisma.InputJsonArray;
 
     // Vue d'ensemble (rétrocompat : ancien `summary` à plat si pas d'overview).
     const overviewSummary = aiResult.overview?.summary ?? aiResult.summary ?? '';
@@ -277,13 +249,13 @@ export class DebriefService {
         endDate,
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
-        objectives: normalizedObjectives,
+        objectives: objectivesJson,
         stats,
       },
       update: {
         aiSummary: overviewSummary,
         insights: JSON.parse(JSON.stringify(structuredInsights)),
-        objectives: normalizedObjectives,
+        objectives: objectivesJson,
         stats,
         generatedAt: new Date(),
       },
@@ -293,7 +265,7 @@ export class DebriefService {
 
   /** Stats déterministes d'un compte sur la semaine (jamais l'IA pour les chiffres). */
   private accountStats(trades: { pnl: number | null; commission?: number | null }[]) {
-    // Helper unique : BE exclus du win rate (PROMPT-160).
+    // Helper unique : BE exclus du win rate.
     const stats = computeTradeStats(trades);
     return {
       totalTrades: stats.total,
@@ -337,7 +309,7 @@ export class DebriefService {
   /**
    * Éligibles au débrief auto : non-démo, opt-in, accès Premium.
    * Doit matcher le PremiumGuard du controller ET la promesse landing/front :
-   * le Weekly Debrief automatique est une feature Premium (PROMPT-169).
+   * le Weekly Debrief automatique est une feature Premium.
    * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
   getEligibleUsers() {
@@ -405,11 +377,11 @@ export class DebriefService {
       orderBy: { pnl: 'desc' },
     });
 
-    // Montants en NET (frais déduits), comme le win rate (PROMPT-213). Tri par net décroissant
+    // Montants en NET (frais déduits), comme le win rate. Tri par net décroissant
     // pour le top 5 (l'orderBy SQL trie sur le brut).
     trades.sort((a, b) => (netPnl(b) ?? 0) - (netPnl(a) ?? 0));
     const pnlValues = trades.map((t) => netPnl(t) ?? 0);
-    // Win rate via le helper unique (BE exclus du dénominateur, PROMPT-160).
+    // Win rate via le helper unique (BE exclus du dénominateur).
     const pdfStats = computeTradeStats(trades);
 
     const storedInsights = debrief.insights as {

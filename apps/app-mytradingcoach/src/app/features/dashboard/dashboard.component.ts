@@ -40,7 +40,7 @@ import {
   EmotionStat,
   TopAsset,
 } from '../../core/api/analytics.api';
-import { environment } from '../../../environments/environment';
+import { environment } from '@app/environments/environment';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
@@ -68,6 +68,7 @@ import { DonutChartComponent } from './panels/donut-chart/donut-chart.component'
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
 import { MoneyPipe } from '../../shared/pipes';
 import { netPnl } from '@mtc/shared';
+import { ErrorStateComponent } from '@mtc/front-ui';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -77,6 +78,7 @@ import { netPnl } from '@mtc/shared';
 @Component({
   selector: 'mtc-dashboard',
   imports: [
+    ErrorStateComponent,
     RouterLink,
     TopbarComponent,
     TradeFormComponent,
@@ -127,7 +129,7 @@ export class DashboardComponent {
   protected readonly TableIcon    = List;
 
   // ── Période unique du dashboard ────────────────────────────────────────────
-  // KPIs, courbe d'équité et P&L par jour lisent TOUS cette même période (PROMPT-175).
+  // KPIs, courbe d'équité et P&L par jour lisent TOUS cette même période.
   // Fenêtres glissantes (to = maintenant) pour que l'historique importé d'un mois passé
   // réapparaisse dès qu'on élargit la période. 'ALL' = tout l'historique (pas de borne basse).
   protected readonly periods = [
@@ -219,6 +221,35 @@ export class DashboardComponent {
     `${environment.apiUrl}/analytics/top-assets${this.accQuery()}`,
   );
 
+  /**
+   * Une donnée du dashboard n'a pas pu être chargée. Sans ce signal, une panne de l'API
+   * s'affichait comme un compte vide (KPI à zéro, graphiques vides).
+   */
+  protected readonly loadError = computed(
+    () =>
+      !!(
+        this.summaryResource.error() ||
+        this.equityCurveResource.error() ||
+        this.activityResource.error() ||
+        this.bySetupResource.error() ||
+        this.byEmotionResource.error() ||
+        this.topAssetsResource.error()
+      ),
+  );
+
+  protected reload(): void {
+    for (const resource of [
+      this.summaryResource,
+      this.equityCurveResource,
+      this.activityResource,
+      this.bySetupResource,
+      this.byEmotionResource,
+      this.topAssetsResource,
+    ]) {
+      resource.reload();
+    }
+  }
+
   protected readonly summary = computed(() => this.summaryResource.value()?.data ?? null);
 
   /** Top actifs par P&L (HBars) : largeur de barre précalculée sur le max absolu. */
@@ -243,7 +274,7 @@ export class DashboardComponent {
     // qu'au premier trade) → le capital déclaré à l'onboarding faisait place à
     // « $0.00 », comme si sa saisie avait été perdue. On retombe donc sur le profil,
     // exactement comme le backend le fait à la création implicite du compte
-    // (accounts.service ensureDefaultAccountId). PROMPT-186 #5.
+    // (accounts.service ensureDefaultAccountId).
     if (active.length === 0) return this.userStore.startingCapital();
     return active.reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
   });
@@ -259,7 +290,7 @@ export class DashboardComponent {
   });
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
-   * comptent (critère d'acceptation PROMPT-175). Une courbe a besoin d'au moins 2 jours tradés ;
+   * comptent (critère d'acceptation de la courbe). Une courbe a besoin d'au moins 2 jours tradés ;
    * avec des trades sur un seul jour on l'explique au lieu de contredire les KPIs.
    */
   protected readonly equityEmptyMsg = computed(() =>
@@ -279,7 +310,7 @@ export class DashboardComponent {
    * Chargement du dashboard : on affiche un squelette (jamais des zéros) tant que les
    * comptes ou les données de base (summary, courbe d'équité) ne sont PAS chargés, pour
    * FREE comme Premium. Le gating `isPremium()` d'avant rendait `isLoading` toujours faux
-   * en FREE, d'où « Capital $0 / 0 compte » affiché au premier rendu post-onboarding (PROMPT-175).
+   * en FREE, d'où « Capital $0 / 0 compte » affiché au premier rendu post-onboarding.
    * Les resources by-setup/by-emotion ne comptent que pour un Premium (chargées pour lui seul).
    */
   protected readonly isLoading = computed(
@@ -297,7 +328,7 @@ export class DashboardComponent {
    * Les trois conditions comptent — comptes chargés, trades chargés, et seulement
    * alors un total à 0. Sans le `tradesStore.loaded()`, le bandeau s'affichait
    * pendant la fenêtre reset+recharge d'un import réussi : l'utilisateur venait
-   * d'importer son historique et lisait « tu n'as rien fait » (PROMPT-196).
+   * d'importer son historique et lisait « tu n'as rien fait ».
    * Hors fenêtre de date ≠ inexistant : le store charge sans borne de date, donc un
    * historique ancien le remplit même quand les KPIs de la période sont à zéro.
    */
@@ -312,7 +343,7 @@ export class DashboardComponent {
   private readonly knownAccountsCount = signal(-1);
 
   constructor() {
-    // Trades Tradovate poussés en direct (PROMPT-210 live) : mêmes rechargements qu'après un import.
+    // Trades Tradovate poussés en direct : mêmes rechargements qu'après un import.
     inject(TradovateLiveSocketService)
       .imported$.pipe(takeUntilDestroyed())
       .subscribe(() => this.reloadAfterImport());
@@ -342,7 +373,7 @@ export class DashboardComponent {
       this.knownAccountsCount.set(n);
     });
 
-    // Fenêtre par défaut CONSCIENTE DES DONNÉES (PROMPT-186 #2).
+    // Fenêtre par défaut CONSCIENTE DES DONNÉES.
     // Un historique importé date presque toujours de plus de 30 jours : la fenêtre 1M
     // par défaut affichait alors « Aucune donnée / 0 trade » juste après un import
     // réussi, pendant que « Top actifs » montrait les trades — l'import paraissait raté.
@@ -355,7 +386,7 @@ export class DashboardComponent {
       if (summary.totalTrades > 0) { this.periodAutoAdjusted = true; return; }
       // Store pas encore chargé (ou rechargé après un import) : son 0 signifie
       // « on ne sait pas », pas « compte vide ». On ne conclut rien et surtout on ne
-      // désarme pas — l'effect rejoue dès que `loaded` passe (PROMPT-196).
+      // désarme pas — l'effect rejoue dès que `loaded` passe.
       if (!this.tradesStore.loaded()) return;
       // `tradesStore` charge les derniers trades SANS borne de date : s'il en voit,
       // c'est que le compte a un historique, simplement hors de la fenêtre.
@@ -419,7 +450,7 @@ export class DashboardComponent {
   protected readonly tradeRows = computed<DashboardTradeRow[]>(() => {
     const base = this.baseCapital();
     return this.tradesStore.trades().slice(0, 8).map((t) => {
-      // P&L NET (frais déduits), comme les KPIs et le calendrier (PROMPT-213).
+      // P&L NET (frais déduits), comme les KPIs et le calendrier.
       const net = netPnl(t);
       return {
         ...t,

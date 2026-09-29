@@ -1,5 +1,6 @@
+import type { TradingSession } from '@mtc/shared';
 export type TradingStyle = 'SCALPING' | 'DAY_TRADING' | 'SWING' | 'POSITION';
-export type TradingSession = 'LONDON' | 'NEW_YORK' | 'ASIAN';
+export type { TradingSession };
 
 export const TRADING_STYLES: { value: TradingStyle; label: string; emoji: string; desc: string }[] = [
   { value: 'SCALPING',    label: 'Scalping',    emoji: '⚡', desc: 'Trades de quelques secondes à minutes' },

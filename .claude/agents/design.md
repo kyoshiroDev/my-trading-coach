@@ -1,3 +1,8 @@
+---
+name: design
+description: "Système visuel « The Terminal » : couleurs, typographies, composants, accessibilité. À lire avant toute modification d'interface."
+---
+
 # Agent Design — Système visuel MyTradingCoach · « The Terminal »
 
 ## Source de vérité

@@ -93,7 +93,7 @@
 /* ─── CTA ─── */
 .plan-modal-cta {
   width: 100%;
-  background: var(--blue);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -112,7 +112,7 @@
 }
 
 .plan-modal-cta:hover:not(:disabled) {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   transform: translateY(-1px);
 }
 
@@ -143,7 +143,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Palier unique depuis PROMPT-169 (STARTER supprime). Le CSS avait garde la grille
+/* Palier unique (STARTER supprime). Le CSS avait garde la grille
    deux colonnes et la largeur 620px : la seule colonne restante se retrouvait collee a
    gauche avec un grand vide a droite. Le wrapper .plan-cols est supprime du HTML, la
    marge basse qu'il portait passe sur .plan-col. */
@@ -197,14 +197,14 @@
   gap: 6px;
 }
 .interval-opt.active {
-  background: var(--blue-bright);
+  background: var(--primary-hover);
   color: #fff;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(59,130,246,.35);
 }
 .interval-opt.active .interval-save { background: rgba(255,255,255,.22); color: #fff; }
 .interval-save {
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   font-weight: 700;
   color: var(--green);
   background: rgba(16,185,129,.12);

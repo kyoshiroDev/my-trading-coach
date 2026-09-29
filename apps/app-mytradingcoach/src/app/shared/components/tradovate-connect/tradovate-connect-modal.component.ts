@@ -5,12 +5,13 @@ import {
   LucideLock as Lock,
   LucideX as X,
 } from '@lucide/angular';
-import { TradovateStore } from '../../../core/stores/tradovate.store';
-import type { TradovateOrigin } from '../../../core/api/tradovate.api';
-import { apiErrorMessage } from '../../../core/utils/api-error';
+import { TradovateStore } from '@app/core/stores/tradovate.store';
+import type { TradovateOrigin } from '@app/core/api/tradovate.api';
+import { apiErrorMessage } from '@app/core/utils/api-error';
+import { DialogDirective } from '@mtc/front-ui';
 
 /**
- * Écran de réassurance AVANT de quitter l'app pour Tradovate (PROMPT-208, écran 2).
+ * Écran de réassurance AVANT de quitter l'app pour Tradovate (écran 2).
  * Réutilisé par le wizard (étape 8) et « Mes comptes ». Insiste sur la lecture seule :
  * jamais le mot de passe, aucun ordre, révocable.
  *
@@ -19,7 +20,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error';
  */
 @Component({
   selector: 'mtc-tradovate-connect-modal',
-  imports: [LucideDynamicIcon],
+  imports: [DialogDirective, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tradovate-connect-modal.component.html',
   styleUrl: './tradovate-connect-modal.component.css',

@@ -1,5 +1,5 @@
 /**
- * PROMPT-200 — régression Nath (Discord) : après un changement d'émotion sur un trade,
+ * régression Nath (Discord) : après un changement d'émotion sur un trade,
  * l'UI affichait « non renseignée » jusqu'au rechargement.
  *
  * `findAll()` calculait `effectiveEmotion` ; `create()` et `update()` non — ils
@@ -76,7 +76,7 @@ const dto = (setupId: string, emotion?: EmotionState): CreateTradeDto =>
   }) as CreateTradeDto;
 
 beforeAll(async () => {
-  // Bootstrap partagé : ResendService neutralisé (PROMPT-209), aucun vrai email envoyé.
+  // Bootstrap partagé : ResendService neutralisé, aucun vrai email envoyé.
   ({ app, baseUrl } = await createIntegrationApp());
   prisma = app.get(PrismaService);
   trades = app.get(TradesService);

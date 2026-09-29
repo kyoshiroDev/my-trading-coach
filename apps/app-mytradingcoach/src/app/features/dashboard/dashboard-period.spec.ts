@@ -15,7 +15,7 @@ import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
-// Valide la source de période UNIQUE du dashboard (PROMPT-175, Bug 3) : la granularité des
+// Valide la source de période UNIQUE du dashboard (Bug 3) : la granularité des
 // barres « P&L par jour » est pilotée par le nombre de barres (~31 max), pas par le nom de la
 // période — jour (1M) → semaine (3M/6M) → mois (Tout). Les semaines sont ISO (lundi→dimanche),
 // alignées sur le journal (pas de getDay() brut).
