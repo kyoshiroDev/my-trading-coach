@@ -40,6 +40,19 @@ jobs:
           key: nx-${{ github.sha }}
           restore-keys: |
             nx-
+      # node_modules en cache, pas seulement le store pnpm : `cache: pnpm` sur setup-node
+      # evite le TELECHARGEMENT mais pas le lien des paquets, qui coute 25 s par job.
+      # Mesure du 2026-09-29 : 127 s cumulees sur les cinq jobs du pipeline.
+      # La cle suit le lockfile : toute modification de dependance invalide le cache, et
+      # `pnpm install` reste la pour rattraper un cache partiel ou absent.
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            libs/*/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
@@ -69,6 +82,19 @@ jobs:
           key: nx-${{ github.sha }}
           restore-keys: |
             nx-
+      # node_modules en cache, pas seulement le store pnpm : `cache: pnpm` sur setup-node
+      # evite le TELECHARGEMENT mais pas le lien des paquets, qui coute 25 s par job.
+      # Mesure du 2026-09-29 : 127 s cumulees sur les cinq jobs du pipeline.
+      # La cle suit le lockfile : toute modification de dependance invalide le cache, et
+      # `pnpm install` reste la pour rattraper un cache partiel ou absent.
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            libs/*/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - name: Tests (app, admin, libs)
         run: pnpm nx run-many --target=test --projects=app-mytradingcoach,admin-mytradingcoach,shared,front-ui,front-auth --parallel=2
@@ -124,6 +150,19 @@ jobs:
           key: nx-${{ github.sha }}
           restore-keys: |
             nx-
+      # node_modules en cache, pas seulement le store pnpm : `cache: pnpm` sur setup-node
+      # evite le TELECHARGEMENT mais pas le lien des paquets, qui coute 25 s par job.
+      # Mesure du 2026-09-29 : 127 s cumulees sur les cinq jobs du pipeline.
+      # La cle suit le lockfile : toute modification de dependance invalide le cache, et
+      # `pnpm install` reste la pour rattraper un cache partiel ou absent.
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            libs/*/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
@@ -195,6 +234,19 @@ jobs:
           key: nx-${{ github.sha }}
           restore-keys: |
             nx-
+      # node_modules en cache, pas seulement le store pnpm : `cache: pnpm` sur setup-node
+      # evite le TELECHARGEMENT mais pas le lien des paquets, qui coute 25 s par job.
+      # Mesure du 2026-09-29 : 127 s cumulees sur les cinq jobs du pipeline.
+      # La cle suit le lockfile : toute modification de dependance invalide le cache, et
+      # `pnpm install` reste la pour rattraper un cache partiel ou absent.
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            libs/*/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - name: Navigateur Playwright
         run: pnpm exec playwright install --with-deps chromium
