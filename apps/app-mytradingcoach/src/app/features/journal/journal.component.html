@@ -300,8 +300,9 @@
                   </span>
                   <span class="td-price mono">{{ trade.entry }}</span>
                   <span class="td-price mono">{{ trade.exit ?? '-' }}</span>
-                  <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="trade.pnl | pnlColor">
-                    {{ trade.pnl | pnlFormat: trade : trade.accountId }}
+                  @let net = netPnl(trade);
+                  <span class="td-pnl mono" data-testid="trade-pnl" [style.color]="net | pnlColor">
+                    {{ net | pnlFormat: trade : trade.accountId }}
                   </span>
                   <span class="td-qty mono">{{ trade.quantity ?? 1 }}</span>
                   <span class="td-rr mono">

@@ -46,6 +46,11 @@ Toute requête qui calcule sur `pnl` sélectionne donc aussi `commission`. Avant
 manuelle stockait un net (le formulaire envoyait `pnlNet`, `calculatePnl` retirait encore les frais)
 tandis que les imports stockaient du brut, et chaque écran choisissait brut ou net : sur le compte
 de Val, Analytics affichait −41,10 $ et le calendrier +24 $ pour la même journée.
+Même piège au niveau d'**une ligne** (corrigé le 2026-09-30) : la ligne du journal affichait
+`trade.pnl` brut sous un en-tête « résultat net » et sous des totaux jour/semaine nets ; les cartes
+meilleur/pire trade et la règle « pertes max » de la session du jour classaient aussi sur le brut.
+Dans un template : `@let net = netPnl(trade)` (exposer `protected readonly netPnl = netPnl`), jamais
+`trade.pnl | pnlFormat`. Verrouillé par `journal-row-net.spec.ts`, qui rend le vrai template.
 
 ## Devise des montants — celle du compte, jamais convertie (PROMPT-214)
 Un P&L est exprimé dans la devise de son compte de trading (`TradingAccount.currency`) : un contrat
