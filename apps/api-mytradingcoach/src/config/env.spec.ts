@@ -24,7 +24,12 @@ describe('checkEnv', () => {
 
   it('environnement complet et valide → rien à signaler', () => {
     const key = Buffer.alloc(32, 1).toString('base64');
-    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000' };
+    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', SENTRY_DSN: 'https://k@o.ingest.sentry.io/1', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000' };
     expect(checkEnv(env, true)).toEqual({ errors: [], warnings: [] });
+  });
+
+  it('production sans SENTRY_DSN → avertissement (aucune erreur suivie sinon)', () => {
+    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app' };
+    expect(checkEnv(env, true).warnings).toContain('SENTRY_DSN manquante (indispensable en production)');
   });
 });

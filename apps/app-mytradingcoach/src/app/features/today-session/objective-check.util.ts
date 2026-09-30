@@ -1,4 +1,5 @@
 import { SessionTrade } from '../../core/api/session.api';
+import { netPnl } from '@mtc/shared';
 import { ObjectiveCheck } from '../../core/api/debrief.api';
 
 /** Heure Paris « HH:MM » d'un ISO (pour le check trade_window). */
@@ -46,7 +47,8 @@ export function evaluateObjectiveCheck(
     case 'setup_only':
       return trades.length > 0 && trades.every((t) => ((p['setups'] as string[]) ?? []).includes(t.setup?.title ?? ''));
     case 'max_loss_trades':
-      return trades.filter((t) => (t.pnl ?? 0) < 0).length <= Number(p['limit']);
+      // Perte = P&L NET négatif (frais déduits), comme partout ailleurs (convention PROMPT-213).
+      return trades.filter((t) => (netPnl(t) ?? 0) < 0).length <= Number(p['limit']);
     default:
       return null;
   }

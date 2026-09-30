@@ -30,13 +30,8 @@ interface JwtPayload {
 ## Argon2 — Mots de passe
 
 ```typescript
-// Hash
-const hash = await argon2.hash(password, {
-  type: argon2.argon2id,
-  memoryCost: 65536,
-  timeCost: 3,
-  parallelism: 4,
-});
+// Hash : TOUJOURS via password-hashing.ts (argon2id, 19 Mio, t=2, p=1 — voir fin de fichier)
+const hash = await hashPassword(password);
 
 // Vérification
 const valid = await argon2.verify(user.password, password);
@@ -269,3 +264,27 @@ const user = await prisma.user.findUnique({
 - Résultat de l'étape 1 : 108 → 19 alertes. Restent, volontairement : Astro (critique, corrigée
   seulement en 7.2.8 → montée majeure), `sharp` 0.35 (0.x, mineure cassante), `deepmerge-ts` 8
   (majeure, CLI Prisma), `extract-zip` et `image-size` 2 (aucun correctif publié).
+
+## Hash des mots de passe — argon2 OWASP (SCA-B0-03, 2026-09-30)
+
+- **Toujours** `hashPassword()` de `modules/auth/password-hashing.ts`, jamais `argon2.hash()` nu :
+  paramètres `ARGON2_OPTIONS` = argon2id, `memoryCost 19456` (19 Mio), `timeCost 2`,
+  `parallelism 1`, le minimum OWASP. Les défauts de la lib (64 Mio, 4 threads) faisaient tomber
+  le conteneur API à l'OOM dès quelques inscriptions simultanées.
+- Les anciens hashs restent vérifiables ; `login` les remplace via `needsPasswordRehash()`, dans
+  la même écriture que `lastLoginAt` (pas de requête supplémentaire).
+
+## Rate limiting par IP seule sur l'auth (SCA-B0-04, 2026-09-30)
+
+La clé « IP + empreinte d'e-mail » (`EmailAwareThrottlerGuard`) se contourne en changeant
+d'e-mail à chaque requête. Un second throttler nommé **`ip`** compte par IP seule :
+
+| Route | IP + e-mail (`default`) | IP seule (`ip`) |
+|---|---|---|
+| `POST /auth/register` | 5 / min | **10 / h** |
+| `POST /auth/login` | 10 / min | **30 / 10 min** |
+| `POST /auth/forgot-password` | 3 / min | **10 / h** |
+
+Le throttler `ip` est **neutre par défaut** (`IP_THROTTLER_OFF`, jamais compté, aucun aller-retour
+Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé par
+`register-ip-throttle.int-spec.ts` (11 e-mails distincts depuis une IP → la 11ᵉ reçoit 429).

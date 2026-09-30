@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
+import { netPnl } from '@mtc/shared';
 import localeFr from '@angular/common/locales/fr';
 registerLocaleData(localeFr);
 import {
@@ -134,7 +135,12 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
 
   // ── Trades ────────────────────────────────────────────────────────────────
   protected readonly noTrades      = computed(() => this.store.todayTrades().length === 0);
-  protected readonly closedTrades  = computed(() => this.store.todayTrades().filter(t => t.pnl !== null));
+  /** Trades clôturés du jour, `pnl` remplacé par le NET (frais déduits) : c'est lui qui classe et s'affiche. */
+  protected readonly closedTrades  = computed(() =>
+    this.store.todayTrades()
+      .filter(t => t.pnl !== null)
+      .map(t => ({ ...t, pnl: netPnl(t) })),
+  );
   protected readonly bestTrade     = computed(() => {
     const t = this.closedTrades();
     if (!t.length) return null;
@@ -187,7 +193,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
       case 'journal_filled':  return 'journal trop court';
       case 'trade_window':    return `aucun trade ${String(p['start'])}-${String(p['end'])}`;
       case 'setup_only':      return 'setup hors liste';
-      case 'max_loss_trades': return `${trades.filter((t) => (t.pnl ?? 0) < 0).length} pertes (dépassé)`;
+      case 'max_loss_trades': return `${trades.filter((t) => (netPnl(t) ?? 0) < 0).length} pertes (dépassé)`;
       default:                return '';
     }
   }

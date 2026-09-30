@@ -36,7 +36,8 @@ import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tra
 import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
-import { EmailAwareThrottlerGuard } from '../common/throttler/email-aware-throttler.guard';
+import { bullPrefix, redisSettings } from '../modules/infra/redis-config';
+import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF } from '../common/throttler/email-aware-throttler.guard';
 import { RedisService } from '../modules/infra/redis.service';
 
 @Module({
@@ -55,15 +56,19 @@ import { RedisService } from '../modules/infra/redis.service';
       imports: [InfraModule],
       inject: [RedisService],
       useFactory: (redis: RedisService) => ({
-        throttlers: [{ ttl: 60_000, limit: 60 }],
+        throttlers: [
+          { ttl: 60_000, limit: 60 },
+          // Par IP seule, neutre sauf sur les routes qui le resserrent (inscription, connexion…).
+          { name: IP_THROTTLER, ttl: 60_000, limit: IP_THROTTLER_OFF },
+        ],
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env['REDIS_HOST'] ?? 'localhost',
-        port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-        password: process.env['REDIS_PASSWORD'],
+    // Même base et même préfixe que RedisService (REDIS_DB / REDIS_PREFIX, cf. redis-config.ts).
+    BullModule.forRootAsync({
+      useFactory: () => {
+        const s = redisSettings();
+        return { connection: { host: s.host, port: s.port, password: s.password, db: s.db }, prefix: bullPrefix(s) };
       },
     }),
     // Fail-safe cluster : les crons s'activent UNIQUEMENT en opt-in explicite

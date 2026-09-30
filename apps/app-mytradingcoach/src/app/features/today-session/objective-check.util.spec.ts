@@ -81,4 +81,10 @@ describe('evaluateObjectiveCheck', () => {
     expect(evaluateObjectiveCheck({ type: 'max_loss_trades', params: { limit: 1 } }, [trade({ pnl: -5 }), trade({ pnl: 10 })], 0)).toBe(true);
     expect(evaluateObjectiveCheck({ type: 'max_loss_trades', params: { limit: 0 } }, [trade({ pnl: -5 })], 0)).toBe(false);
   });
+
+  it('max_loss_trades : une perte se juge sur le NET (+1 $ brut, 1,90 $ de frais = perte)', () => {
+    const eaten = trade({ pnl: 1, commission: 1.9 });
+    expect(evaluateObjectiveCheck({ type: 'max_loss_trades', params: { limit: 0 } }, [eaten], 0)).toBe(false);
+    expect(evaluateObjectiveCheck({ type: 'max_loss_trades', params: { limit: 1 } }, [eaten], 0)).toBe(true);
+  });
 });

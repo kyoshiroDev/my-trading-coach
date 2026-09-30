@@ -40,7 +40,8 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  // Par IP + e-mail (5/min) ET par IP seule (10/h) : changer d'e-mail ne contourne plus la limite.
+  @Throttle({ default: { ttl: 60_000, limit: 5 }, ip: { ttl: 3_600_000, limit: 10 } })
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -52,7 +53,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Throttle({ default: { ttl: 60_000, limit: 10 }, ip: { ttl: 600_000, limit: 30 } })
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -92,7 +93,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 3 } }) // chaque appel envoie un email
+  @Throttle({ default: { ttl: 60_000, limit: 3 }, ip: { ttl: 3_600_000, limit: 10 } }) // chaque appel envoie un email
   @Post('forgot-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {

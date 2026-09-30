@@ -21,6 +21,13 @@ export class EcoCalendarService {
   private readonly logger = new Logger(EcoCalendarService.name);
   get redis() { return this.redisService.client; }
 
+  /** Vide le cache Redis des événements d'une journée ; renvoie le nombre de clés supprimées. */
+  async clearDayCache(day: string): Promise<number> {
+    const keys = await this.redisService.scanKeys(`eco:calendar:${day}:*`);
+    if (keys.length > 0) await this.redis.del(...keys);
+    return keys.length;
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
