@@ -432,3 +432,14 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
   Actions → Variables). L'API n'est plus déployée, les fronts si. Tant que le gel est actif et
   que l'API a changé, le tag `deployed/prod` ne bouge pas : au dégel, le CD suivant redéploie bien
   les changements gelés. Retirer la variable (ou la passer à `false`) pour dégeler.
+
+## Sentry (SCA-B0-09, 2026-09-30)
+
+- Actif dès que `SENTRY_DSN` est défini (`src/instrument.ts`) : `sampleRate 1`, `tracesSampleRate 0`
+  (aucun surcoût), `sendDefaultPii false`, `environment` = `SENTRY_ENVIRONMENT` ou `NODE_ENV`,
+  `release` = SHA court du commit (le CD exporte `GIT_SHA`, le compose le passe en `SENTRY_RELEASE`).
+- **Où mettre le DSN** : créer un projet Node.js sur sentry.io (offre gratuite), copier le DSN dans
+  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`, et `SENTRY_ENVIRONMENT=production`),
+  puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
+- Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
+  au démarrage.

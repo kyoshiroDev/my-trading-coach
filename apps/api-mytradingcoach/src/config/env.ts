@@ -35,6 +35,8 @@ export const ENV_VARS: EnvVar[] = [
   // Sans CORS_ORIGINS, seul http://localhost:4200 est autorisé : l'app de prod est bloquée.
   { name: 'CORS_ORIGINS', level: 'production' },
   { name: 'FRONTEND_URL', level: 'production' },
+  // Sans SENTRY_DSN, aucune erreur de prod n'est suivie : une panne ne se voit que si un user écrit.
+  { name: 'SENTRY_DSN', level: 'production' },
   { name: 'PORT', level: 'optional', check: isPort },
   // Nombre de workers du cluster (config/web-concurrency.ts). Défaut : min(cœurs, 3).
   { name: 'WEB_CONCURRENCY', level: 'optional', check: (v) => (/^[1-9]\d*$/.test(v) ? undefined : 'doit être un entier >= 1') },

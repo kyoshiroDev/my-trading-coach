@@ -76,6 +76,7 @@ jobs:
             cd /opt/apps/mytradingcoach/prod
             git fetch origin
             git reset --hard ${{ github.event.workflow_run.head_sha }}
+            export GIT_SHA=$(git rev-parse --short HEAD)   # → SENTRY_RELEASE (docker-compose.prod.yml)
             docker compose -f docker-compose.prod.yml --env-file .env.production build api
             docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
             # Garde-fou : l'API doit répondre prête (Postgres + Redis) sous 90 s, sinon le job échoue

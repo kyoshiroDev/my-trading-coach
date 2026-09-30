@@ -12,6 +12,8 @@ services:
       # Plafond de tas V8 par process : un worker qui dérape meurt seul (relancé par le primaire)
       # au lieu de pousser tout le conteneur à l'OOM (audit scalabilité C1).
       - NODE_OPTIONS=--max-old-space-size=384
+      # Version déployée, remontée à Sentry (GIT_SHA exporté par le CD ; vide en build manuel).
+      - SENTRY_RELEASE=${GIT_SHA:-}
     networks:
       - mtc_network
     # 3 workers × 384 Mo de tas + primaire + mémoire native (argon2, Chromium) : 2 Gio.
