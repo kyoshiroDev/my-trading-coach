@@ -463,5 +463,13 @@ E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingc
 ⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
 Tests : `WATCH_DRY=1` (affiche l'état, n'envoie rien) · `WATCH_TEST=1` (envoie un e-mail de test).
 
-**Externe — UptimeRobot** : voir plus bas (sondes HTTP toutes les 5 min, depuis l'extérieur, qui
-détectent la perte totale du VPS, que le script interne ne peut pas signaler).
+**Externe — UptimeRobot** (plan gratuit, compte `hello@mytradingcoach.app`) : sondes HTTP toutes
+les 5 min depuis l'extérieur, alerte e-mail vers `hello@mytradingcoach.app`. Elles détectent la perte
+totale du VPS, que le script interne ne peut pas signaler.
+| Sonde | URL |
+|---|---|
+| API prod - ready (Postgres + Redis) | `https://api.mytradingcoach.app/api/health/ready` (503 si Postgres ou Redis tombe) |
+| app.mytradingcoach.app | `https://app.mytradingcoach.app` |
+| Landing prod | `https://www.mytradingcoach.app/` |
+| admin.mytradingcoach.app | `https://admin.mytradingcoach.app` |
+Pas de sonde sur dev/beta (arrêtables volontairement). Nouvelle app publique → ajouter sa sonde.
