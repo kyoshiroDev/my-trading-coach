@@ -494,6 +494,7 @@
 .tab-badge.funded { background: var(--green-dim); color: var(--green); }
 
 /* ── Tableau « par compte en un coup d'œil » ── */
+.cmp-card { margin-bottom: 16px; }
 .cmp { display: flex; flex-direction: column; }
 .cmp-row {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;

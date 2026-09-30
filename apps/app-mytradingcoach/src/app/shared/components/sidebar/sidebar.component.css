@@ -9,7 +9,7 @@
 /* ─── Flèche de repli sur le bord (desktop) ─── */
 .collapse-edge {
   position: absolute;
-  left: 200px; /* couture sidebar/contenu (largeur déployée) */
+  left: 216px; /* couture sidebar/contenu (largeur déployée) */
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
@@ -36,8 +36,8 @@
 
 /* ─── SIDEBAR ─── */
 .sidebar {
-  width: 200px;
-  min-width: 200px;
+  width: 216px;
+  min-width: 216px;
   background: var(--bg-2);
   border-right: 1px solid var(--border);
   display: flex;
