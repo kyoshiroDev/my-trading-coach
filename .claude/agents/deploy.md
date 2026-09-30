@@ -468,6 +468,13 @@ avec la prod, puis nettoie. Premier test le 2026-09-30 : dump de 3 h → 20 user
 0 erreur de chargement (prod : 911 trades, écart = activité de la journée). À relancer après tout
 changement de la sauvegarde et au moins une fois par trimestre.
 
+**Limites B2 (Caps & Alerts, gratuit, sans moyen de paiement)** : stockage 10 Go, téléchargement
+1 Go/jour, 2 500 transactions B et C/jour. Alertes e-mail à `hello@mytradingcoach.app` à 75 % et
+100 %. ⚠️ Plafonds stricts à 0 $ : à 10 Go les envois échouent (la sauvegarde de la nuit aussi) ;
+une restauration ne télécharge qu'1 Go/jour. Estimation : ~250 Mo aujourd'hui, ~14 Go vers 10 000
+actifs. À l'alerte de 7,5 Go, ou avant une restauration d'urgence volumineuse : ajouter un moyen de
+paiement et relever la limite (quelques centimes).
+
 **Restaurer pour de vrai** (VPS perdu) : sur la nouvelle machine, recréer `offsite.env` depuis le
 gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`.
