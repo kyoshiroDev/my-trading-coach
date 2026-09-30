@@ -36,6 +36,8 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'CORS_ORIGINS', level: 'production' },
   { name: 'FRONTEND_URL', level: 'production' },
   { name: 'PORT', level: 'optional', check: isPort },
+  // Nombre de workers du cluster (config/web-concurrency.ts). Défaut : min(cœurs, 3).
+  { name: 'WEB_CONCURRENCY', level: 'optional', check: (v) => (/^[1-9]\d*$/.test(v) ? undefined : 'doit être un entier >= 1') },
   // Isolation Redis par environnement (redis-config.ts). Défauts : base 0, aucun préfixe.
   { name: 'REDIS_DB', level: 'optional', check: (v) => (/^\d+$/.test(v) ? undefined : 'doit être un entier >= 0') },
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },

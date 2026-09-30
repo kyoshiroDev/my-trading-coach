@@ -375,3 +375,16 @@ partagée.
 Plus aucun `KEYS` dans le code : `RedisService.scanKeys()` (SCAN par lots, préfixe géré). Les
 échecs de jobs BullMQ sont gardés 7 jours / 1 000 au plus (`removeOnFail`), Redis étant en
 `noeviction`.
+
+## Mémoire et workers de l'API (SCA-B0-02, 2026-09-30)
+
+- `WEB_CONCURRENCY` : nombre de workers HTTP, défaut `min(cœurs, 3)`. Au démarrage, le primaire
+  journalise le nombre retenu et le plafond de tas.
+- Compose prod / dev / beta : `NODE_OPTIONS=--max-old-space-size=384`, `mem_limit: 2g`,
+  `memswap_limit: 2g`, `stop_grace_period: 30s`.
+- Le healthcheck Docker reste sur `/api/health` (liveness) **volontairement** : Traefik n'envoie
+  aucun trafic à un conteneur `unhealthy`, et une coupure Redis passagère rendrait alors toute
+  l'API injoignable alors qu'elle sait tourner en mode dégradé. `/api/health/ready` sert au
+  garde-fou du CD et à la supervision externe.
+- Les plafonds de 2 Gio sont des maxima, pas des réservations. Sur le VPS de 7,6 Go, dev et beta
+  n'ont pas vocation à tourner à plein en même temps que la prod pendant un pic.
