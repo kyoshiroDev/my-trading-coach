@@ -6,6 +6,34 @@
 > Aucun appel réel à Anthropic, Tradovate, Stripe (LIVE ou test), Resend, FMP ou Yahoo.
 >
 > Convention : **[M]** = mesuré pendant l'audit · **[E]** = estimé (calcul ou lecture du code, raisonnement donné).
+>
+> ⚠️ **Mise à jour en fin d'audit.** Pendant les mesures, `beta` a reçu la série `sca-b0-*`
+> (merge `ebfc220`, PR kyoshiroDev/my-trading-coach#235). Les mesures portent sur `d929a68`,
+> c'est-à-dire **avant** ces commits. Ce qu'ils changent au rapport est résumé au §0 et signalé
+> par ✅ (fait) ou ◐ (partiel) dans le plan d'action.
+
+## 0. Déjà corrigé sur `beta` pendant l'audit (`ebfc220`, non re-mesuré)
+
+| Constat de l'audit | Correctif arrivé | Reste à faire |
+|---|---|---|
+| Workers = `availableParallelism()`, `mem_limit: 1g`, pas de plafond de tas (goulot n°3) | `WEB_CONCURRENCY` (3 workers par défaut), `--max-old-space-size=384`, `mem_limit: 2g` (sca-b0-02) | Au pic, le passage C mesure ~2,0 Go de PSS avec 4 workers sans plafond. Vérifier en dev que 3 × 384 Mo tiennent à 1 000 VU. Poser `cpus` et `logging` |
+| argon2 m = 64 Mo, t = 3, p = 4 (goulot n°6) | Paramètres OWASP (19 Mio, t = 2, p = 1), rehash à la connexion (sca-b0-03) | Plus rien : le goulot n°6 devient « OK » |
+| Pool `pg` à 10 par worker, `connection_limit` ignoré | `DB_POOL_MAX`, 5 par défaut → 15 connexions pour la prod (sca-b0-05) | Sur le VPS-3 avec PgBouncer dédié, on peut remonter à 6–8 (§5.3) |
+| Chromium lancé à chaque PDF (P0-9) | Un navigateur réutilisé, un rendu à la fois (sca-b0-06) | Plus rien |
+| `KEYS analytics:<uid>:*` et `KEYS eco:calendar:*` bloquants (P0-2) | `SCAN` non bloquant | L'invalidation reste appelée **à chaque ligne importée** : n'invalider qu'une fois par import |
+| Redis partagé prod/dev/beta, files BullMQ communes (§5.4) | `REDIS_DB` / `REDIS_PREFIX` sur le cache, BullMQ et socket.io | Poser les variables dans chaque `.env`. En cible, Redis dédié |
+| Échecs BullMQ `debrief` gardés à vie | `removeOnFail: { age: 7 j, count: 1000 }` | `jobId`, concurrency (P1-8) |
+| Throttler `/auth/*` contournable en changeant d'email | 2e throttler par IP seule sur inscription et connexion (sca-b0-04) | Compter par `user.id` sur les routes authentifiées (P1-11) |
+| — | Scénarios k6 `tools/load/` (smoke, vague d'inscriptions, pic 1 500) | Complémentaires de `tools/load-tests/` (seed 10 k / 2,2 M trades + polling réel du compagnon). À fusionner à terme |
+
+**Non couverts par cette série**, et donc toujours prioritaires :
+- les requêtes `_count` (P0-1), qui restent le **goulot n°1 mesuré** ;
+- la synchro Tradovate ;
+- `importTrades` ligne à ligne ;
+- les crons en `Promise.all` ;
+- le cache analytics inopérant ;
+- l'injection de commande `/vps` ;
+- les imports sans plafond de lignes.
 
 ---
 
@@ -21,7 +49,7 @@ p95 = 24 ms, écriture p95 = 74 ms et 0 % d'erreurs [M]**. Le VPS-3 garde alors 
 
 Trois conditions pour y arriver :
 1. Les correctifs **P0** du §7.1, tous d'effort S.
-2. Plafonner la mémoire et le nombre de workers de l'API avant la migration.
+2. Plafonner la mémoire et le nombre de workers de l'API avant la migration (en grande partie fait sur `beta` pendant l'audit, §0 ; à valider en charge).
 3. Refondre la **synchro Tradovate** (P1-4 à P1-6) avant ~300 connexions broker. Elle n'a pas pu être testée en charge ; c'est le premier risque hors HTTP.
 
 ---
@@ -32,10 +60,10 @@ Trois conditions pour y arriver :
 |---|---|---|---|---|---|
 | 1 | **Prisma `_count` sur `Trade`**, dans `GET /setups` et `GET /session/active` | Chaque appel lance un `GROUP BY` sur **toute** la table Trade. Mesuré : 0,37 à 2 s par appel à vide, 1,37 s de moyenne sous charge, **≈ 99 % du temps DB total**, jusqu'à ~3,5 cœurs Postgres en scans parallèles **[M]** | **500 [M]** sur 4 vCPU → ~500–650 sur le VPS-3 **[E]**. Le seuil **baisse** à mesure que Trade grossit (O(trades de tous les users)) | **Bloquant** | S |
 | 2 | **Synchro Tradovate** : cron séquentiel toutes les 15 min, resynchro REST complète à chaque fill, aucun disjoncteur, pénalités non détectées | Passages de cron qui se chevauchent. Copy-traders en 429 (1 h de blocage). ~180 k req/h sortantes depuis une seule IP. Trous d'historique silencieux | ~300 connexions pour le cron **[E]**. 429 dès 1 copy-trader actif, **quel que soit le volume [E]** | **Bloquant** | M–L |
-| 3 | **Mémoire de l'API**. `mem_limit: 1g`, pas de plafond de tas, workers = `availableParallelism()` (6 sur le VPS-3) | PSS mesurée localement, sans plafond : 1,0 Go à 100 VU, 1,3 Go à 250, **2,0–2,4 Go à 1 000 [M]**. En prod, ~590 Mo sans aucun trafic [M, 30/09]. Un dépassement fait tuer tout le conteneur (tous les workers) par l'OOM killer | ~150–300 **[E]** : V8 collecte plus tôt dans un cgroup de 1 Go, et la mesure locale surestime. À confirmer en dev | **Bloquant** (risque) | S |
+| 3 | **Mémoire de l'API**. `mem_limit: 1g`, pas de plafond de tas, workers = `availableParallelism()` (6 sur le VPS-3) | PSS mesurée localement, sans plafond : 1,0 Go à 100 VU, 1,3 Go à 250, **2,0–2,4 Go à 1 000 [M]**. En prod, ~590 Mo sans aucun trafic [M, 30/09]. Un dépassement fait tuer tout le conteneur (tous les workers) par l'OOM killer | ~150–300 **[E]** : V8 collecte plus tôt dans un cgroup de 1 Go, et la mesure locale surestime. À confirmer en dev | **Bloquant** (risque) → ◐ atténué sur `beta` (§0) | S |
 | 4 | **Import ligne à ligne** (`importTrades`) + `KEYS` Redis, appelé par le CSV **et à chaque synchro Tradovate** | ~5 ms et ~6 requêtes par ligne. 2 000 lignes = 11,5 s, 10 000 lignes = **52 s dans une seule requête HTTP [M]**. Charge DB proportionnelle au nombre de connexions broker | 100 connexions/h le jour d'une campagne **[E]** | **Bloquant** | M |
 | 5 | **Crons « tout en même temps »** : `Promise.all` du recap, campagnes dans une requête HTTP, debrief en concurrency 1 | Rafale de 300–1 000 appels Sonnet + Resend à 17h30, emails perdus sans trace. Debrief ~12 h. Campagne admin ~67 min dans une requête | ~300 PREMIUM actifs **[E]** | **Bloquant** | S–M |
-| 6 | **Login argon2id** (m = 64 Mo, t = 3, p = 4) dans le threadpool libuv (4 threads/worker) | 270 ms à froid. **1,25 s de médiane dès 100 VU**, 24 s à 500 et timeouts à 1 000 quand les logins s'enchaînent (passage A). 64 Mo par vérification **[M]** | ~10–20 logins/s sur 4 cœurs **[E d'après M]**. Rarement atteint si les users gardent leur refresh token (passage B : 10 % de logins, pas de tempête ; passage C : login p95 183 ms à 1 000 VU) | À surveiller | S |
+| 6 | **Login argon2id** (m = 64 Mo, t = 3, p = 4) dans le threadpool libuv (4 threads/worker) | 270 ms à froid. **1,25 s de médiane dès 100 VU**, 24 s à 500 et timeouts à 1 000 quand les logins s'enchaînent (passage A). 64 Mo par vérification **[M]** | ✅ corrigé sur `beta` (argon2 OWASP, §0). Avant : ~10–20 logins/s sur 4 cœurs **[E d'après M]**. Rarement atteint si les users gardent leur refresh token (passage B : 10 % de logins, pas de tempête ; passage C : login p95 183 ms à 1 000 VU) | À surveiller | S |
 | 7 | **Calendrier éco** : broadcast, ruée `refresh-today` + `analyze-result`, IA non mutualisée, FMP appelé sur le chemin user les jours vides | 4–6 k requêtes en ~1 s à chaque publication, appels Haiku en double, coût IA O(users) | ~500–1 000 connectés **[E, non testé]** | À surveiller → Bloquant | M |
 | 8 | **Analytics agrégés en JS** + cache inopérant (`to` à la ms) | 8 000 lignes par endpoint pour un gros trader, jusqu'à 155 ms à froid **[M]**. Sans impact visible dans le passage C (p95 28 ms à 1 000 VU), car les gros traders sont rares | > 1 000 **[E]**. Dépend de la part de gros traders | À surveiller | M |
 | 9 | **Rate limiting par IP** (60/min) | Un user avec la saisie rapide fait ~25 req/min : 3 onglets ou collègues derrière un même NAT (prop firm) prennent des 429 | Dépend des NAT, pas de la charge | À surveiller | S |
@@ -258,8 +286,8 @@ PgBouncer (aujourd'hui 3 × 25 = 75 connexions serveur possibles pour 50 autoris
 ### 5.3 Pool Prisma (`prisma.service.ts:19-24`)
 
 Le `connection_limit=1` de `DATABASE_URL` est **ignoré** depuis le passage au driver adapter
-`PrismaPg` : c'est `pg.Pool({ max: 10 })` qui s'applique, par worker. Rendre `max` configurable
-(`DB_POOL_MAX`), et respecter `workers × max ≤ default_pool_size` :
+`PrismaPg` : c'est le `max` du `pg.Pool` qui s'applique, par worker (10 au moment des mesures,
+`DB_POOL_MAX` = 5 par défaut depuis sca-b0-05). Respecter `workers × max ≤ default_pool_size` :
 API 4 workers × 6 + worker 1 × 6 = **30 connexions client** → PgBouncer 30 → Postgres ≤ 100.
 
 ### 5.4 Redis (dédié prod)
@@ -282,7 +310,7 @@ poser `prefix: process.env.BULL_PREFIX` et un `db` par environnement.
 
 | Composant | Recommandation | Raison |
 |---|---|---|
-| API HTTP | **1 conteneur, 4 workers** (`WEB_CONCURRENCY`, au lieu de `availableParallelism()` = 6 sur le VPS-3) | 6 workers × ~250 Mo dépassent le `mem_limit: 1g` actuel ; 4 workers laissent 2 cœurs à Postgres/Redis/Traefik |
+| API HTTP | **1 conteneur, `WEB_CONCURRENCY=4`** sur le VPS-3 (3 par défaut depuis sca-b0-02) | 4 workers laissent 2 cœurs à Postgres, Redis et Traefik ; passer à 4 seulement une fois le worker séparé (P2-1) |
 | Worker | **1 conteneur séparé**, crons + BullMQ + WebSockets Tradovate | un job lourd ou un cron séquentiel ne bloque plus un worker HTTP ; un seul exécutant de cron |
 | Réplicas | **Non** avant 10 k : chaque conteneur API lance son propre worker cron (`main.ts:143-145`) → N exécutions de chaque cron | passer par un verrou Redis / `upsertJobScheduler` BullMQ avant tout 2e conteneur |
 
@@ -346,14 +374,14 @@ Chaque ligne est dimensionnée pour devenir un prompt séparé. « Gain » = eff
 | # | Fichier(s) | Changement | Gain |
 |---|---|---|---|
 | P0-1 | `setups/setups.service.ts:23-27`, `session/session.service.ts:57-60`, `users/users.service.ts:204`, `ambassador/ambassador.service.ts:267` | Remplacer `include: { _count: { select: { trades: true } } }` par un `trade.groupBy({ by: ['setupId'], where: { userId }, _count: true })` (ou `trade.count({ where: { sessionId } })`). Prisma 7 génère ici un `GROUP BY` sur **toute** la table Trade | `GET /setups` : 0,37 s à vide, 1,37 s de moyenne sous charge **[M]** → < 5 ms ; `GET /session/active` : jusqu'à 2 s **[M]** → < 2 ms ; −99 % du temps DB ; passage C : 1 000 VU tenus **[M]** |
-| P0-2 | `analytics/analytics.service.ts:38-42` + appels `trades.service.ts:128,275,416,439,459` | Remplacer `KEYS analytics:<uid>:*` par un compteur de version (`INCR analytics:ver:<uid>` inclus dans la clé) ; n'invalider qu'**une fois** par import | Supprime le blocage Redis O(keyspace) × N lignes importées |
+| P0-2 ◐ (SCAN fait) | `analytics/analytics.service.ts:38-42` + appels `trades.service.ts:128,275,416,439,459` | Remplacer `KEYS analytics:<uid>:*` par un compteur de version (`INCR analytics:ver:<uid>` inclus dans la clé) ; n'invalider qu'**une fois** par import | Supprime le blocage Redis O(keyspace) × N lignes importées |
 | P0-3 | `app-mytradingcoach/.../dashboard.component.ts:151-152,196` | Normaliser `to` au jour (`YYYY-MM-DD`) : aujourd'hui `to` est à la milliseconde → **0 % de hit** sur le cache analytics | Cache dashboard enfin effectif (÷5–10 sur les agrégats) |
 | P0-4 | `vps/docker.service.ts:84-91`, `vps.controller.ts:31-49` | Valider `:id` (`^[a-zA-Z0-9_.-]{1,64}$`) avant `docker ${action} ${id}` exécuté en SSH | Ferme une injection de commande (RCE hôte via token admin volé) |
 | P0-5 | `trades/csv-import.service.ts:152-157, 446, 638-679` | Appliquer `MAX_KNOWN_ROWS` (10 000) à **tous** les chemins (fiche registre, mapping IA) | Borne le pire cas d'import (aujourd'hui illimité) |
-| P0-6 | `docker-compose.prod.yml` | `WEB_CONCURRENCY` lu par `main.ts:102`, `NODE_OPTIONS=--max-old-space-size=384`, `cpus`, `logging` explicite | Plus d'OOM du conteneur entier ; indispensable avant le VPS-3 (6 cœurs → 6 workers → > 1 Go) |
+| P0-6 ◐ (workers, tas, 2g faits) | `docker-compose.prod.yml` | `WEB_CONCURRENCY` lu par `main.ts:102`, `NODE_OPTIONS=--max-old-space-size=384`, `cpus`, `logging` explicite | Plus d'OOM du conteneur entier ; indispensable avant le VPS-3 (6 cœurs → 6 workers → > 1 Go) |
 | P0-7 | `integrations/tradovate/tradovate-api.client.ts:134-143`, `tradovate-reporting.client.ts:96-118` | Détecter `p-ticket` / `p-time` / `p-captcha` partout (y compris oauthtoken et Reporting) ; captcha = terminal + alerte ; pénalité Reporting ≠ « mois vide » | Supprime une **perte silencieuse d'historique** et des connexions condamnées à tort |
 | P0-8 | `integrations/tradovate/*-cron.ts` | Garde anti-chevauchement (`waitForCompletion: true` + verrou Redis `cron:<nom>`) | Plus de passages empilés dès ~300 connexions |
-| P0-9 | `pdf/pdf.service.ts:46` | Un navigateur partagé par process + sémaphore 1 (ou job BullMQ) | 2–3 PDF simultanés ne tuent plus le conteneur |
+| P0-9 ✅ | `pdf/pdf.service.ts:46` | Un navigateur partagé par process + sémaphore 1 (ou job BullMQ) | 2–3 PDF simultanés ne tuent plus le conteneur |
 
 ### 7.2 Avant 5 000 inscrits (≈ 750 DAU, ≈ 250–500 simultanés, ~1 500 connexions Tradovate)
 
@@ -366,10 +394,10 @@ Chaque ligne est dimensionnée pour devenir un prompt séparé. « Gain » = eff
 | P1-5 | Nouveau `tradovate-rate-gate.ts` + clients Tradovate | Disjoncteur par login (clé Redis `tradovate:penalty:<login>` 60 min après 429/pénalité) + seau à jetons global (~30 req/s) | Fin des boucles de lockout d'1 h, trafic sortant plafonné |
 | P1-6 | `tradovate.controller.ts:164-174`, `background-refresh.cron.ts:22` | Import d'historique en job BullMQ (concurrency 5, `jobId` par connexion, retry), relever `FULL_BACKFILLS_PER_PASS` (2/h aujourd'hui) | 100 connexions/h (jour de campagne) absorbées en 10–20 min, survit aux déploiements (archivage Tradovate à 10 j) |
 | P1-7 | `daily-recap/daily-recap.cron.ts:35`, `resend/resend.cron.ts:36-44`, `admin/email-campaign.service.ts:157-185` | File BullMQ `email` avec `limiter` Resend (ou API batch), recap en jobs par user (concurrency 5) ; campagne admin hors requête HTTP | Zéro email perdu en silence (`resend.service.ts:260-275` avale les 429), plus de requête HTTP de 67 min |
-| P1-8 | `debrief/debrief.cron.ts:35,67`, `debrief.processor.ts` | `jobId: debrief:<uid>:<année>-W<sem>`, `concurrency: 5`, `removeOnFail: { age: 30 j }` ; ne plus logguer la liste des emails (`debrief.cron.ts:41-43`) | File vidée en ~1–2 h au lieu de ~12 h ; pas de doublon IA ; plus de PII dans les logs |
+| P1-8 ◐ (`removeOnFail` fait) | `debrief/debrief.cron.ts:35,67`, `debrief.processor.ts` | `jobId: debrief:<uid>:<année>-W<sem>`, `concurrency: 5`, `removeOnFail: { age: 30 j }` ; ne plus logguer la liste des emails (`debrief.cron.ts:41-43`) | File vidée en ~1–2 h au lieu de ~12 h ; pas de doublon IA ; plus de PII dans les logs |
 | P1-9 | `eco-calendar.cron.ts:28-35`, `eco-calendar.service.ts:280-316, 394-445, 469-494` | Calculer l'analyse **côté serveur avant** le broadcast, clé (date, événement, classe d'actifs), verrou `SET NX` ; `range` : un seul `findMany` + cache 60 s, **jamais** d'appel FMP sur le chemin user (jour férié = marqueur « vide ») | −250 à −400 $/mois ; plus de ruée de 4–6 k requêtes à chaque publication |
 | P1-10 | `common/interceptors/presence.interceptor.ts:14-33`, `auth/jwt.strategy.ts:22-37` | Présence dédupliquée en Redis (`SET presence:<uid> NX EX 60`) ; projection user du JWT en cache Redis 60 s | Écritures `User` ÷ nombre de workers ; −30 à −40 % de lectures PK |
-| P1-11 | `common/throttler/email-aware-throttler.guard.ts` | Compter par `user.id` sur les routes authentifiées, garder IP + IP/email sur `/auth/*` + un 2e seuil IP-seul ; `@Throttle` dédiés sur `trades/import`, PDF, `debrief/generate` | Plus de 429 entre collègues d'une même prop firm (NAT) ; bourrage d'identifiants borné |
+| P1-11 ◐ (IP seule sur /auth fait) | `common/throttler/email-aware-throttler.guard.ts` | Compter par `user.id` sur les routes authentifiées, garder IP + IP/email sur `/auth/*` + un 2e seuil IP-seul ; `@Throttle` dédiés sur `trades/import`, PDF, `debrief/generate` | Plus de 429 entre collègues d'une même prop firm (NAT) ; bourrage d'identifiants borné |
 | P1-12 | `prisma/schema.prisma` | `Trade @@index([setupId])`, `@@index([accountId, tradedAt])` (remplace `[accountId]`), `AiUsageLog @@index([userId, createdAt])` ; retirer 5 index doublons (`DailyRecap`, `UserDailyActivity`, `EcoCalendarCache`, `MetricsSnapshot`, `EcoAnalysisCache`) | FK `Setup` et `_count` couverts ; tri des notes comportementales sans sort |
 
 ### 7.3 Avant 10 000 inscrits (1 000 simultanés, 3 000 connexions)
@@ -392,9 +420,10 @@ Chaque ligne est dimensionnée pour devenir un prompt séparé. « Gain » = eff
    `9.9.9.9`, résolveur OVH en repli). Il n'est documenté **nulle part** dans le dépôt
    (`docs/ops`, agents) : à écrire dans `deploy.md` pendant la migration. Tous les appels sortants
    (Anthropic, Stripe, Resend, FMP, Yahoo, Tradovate) en dépendent.
-2. **`WEB_CONCURRENCY`** : sur 6 vCores, `availableParallelism()` lancerait 6 workers (+ primaire) ≈
-   0,9–1,2 Go au repos, soit au-dessus du `mem_limit: 1g` actuel → OOM au premier pic.
-3. **`NODE_OPTIONS=--max-old-space-size`** : absent (chaque worker croit disposer de ~2 Go).
+2. **`WEB_CONCURRENCY`** : ✅ borné à 3 par défaut depuis sca-b0-02. Sur le VPS-3, le poser
+   explicitement (3, ou 4 une fois le worker séparé).
+3. **`NODE_OPTIONS=--max-old-space-size=384`** : ✅ en place dans `docker-compose.prod.yml`. À
+   reproduire dans le compose du worker.
 4. **`mem_limit` / `cpus` / `logging`** sur **tous** les conteneurs (Postgres, Redis, Traefik
    compris) : aucun `cpus` n'existe aujourd'hui ; la rotation des logs (3 × 50 Mo) vient du
    `daemon.json` de l'hôte actuel, à recréer sur le VPS-3.
@@ -672,8 +701,10 @@ dépende pas de la mémoire de quelqu'un.
 
 ## 11. À ajouter aux agents `.claude/agents/` (pour validation, non appliqué)
 
-- **`deploy.md`** : `mem_limit` réel = 1g (le fichier dit 512m) ; nombre de workers =
-  `availableParallelism()` (pas « 4 » en dur) ; architecture cible VPS-3 / VPS-1 / Vercel ;
+> `deploy.md`, `nestjs.md` et `security.md` ont été mis à jour par la série sca-b0 : relire chaque
+> point ci-dessous contre leur version actuelle avant de l'ajouter.
+
+- **`deploy.md`** : vérifier `mem_limit` (2g) et `WEB_CONCURRENCY` (3) après sca-b0-02 ; architecture cible VPS-3 / VPS-1 / Vercel ;
   correctif DNS `systemd-resolved` (1.1.1.1 + 9.9.9.9, OVH en repli) ; rotation des logs via
   `daemon.json` ; `ulimit nofile` ; budget RAM/CPU du §4 ; config Postgres/Redis/PgBouncer du §5 ;
   RPO/RTO du §10.9 ; `deploy.sh` est mort (vise un compose sans service `api`) ; outils
