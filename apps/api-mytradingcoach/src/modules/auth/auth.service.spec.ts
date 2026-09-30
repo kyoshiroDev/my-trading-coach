@@ -111,6 +111,16 @@ describe('AuthService', () => {
       expect(result.refresh_token).toBeDefined();
     });
 
+    it('une inscription = un seul e-mail (bienvenue), plus d’alerte admin par inscription', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', createdAt: mockUser.createdAt });
+
+      await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
+
+      expect(mockResend.sendWelcomeFree).toHaveBeenCalledTimes(1);
+      expect(mockResend.sendAdminAlert).not.toHaveBeenCalled();
+    });
+
     it('lance ConflictException si email déjà utilisé', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 

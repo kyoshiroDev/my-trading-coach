@@ -148,15 +148,7 @@ export class AuthService {
         this.logger.error(`Welcome email failed: ${String(err)}`),
       );
 
-    // Notification admin : fire-and-forget
-    this.resend
-      .sendAdminAlert(
-        `🆕 Nouvel inscrit : ${user.email}`,
-        `Nom : ${user.name ?? '(non renseigné)'}\nEmail : ${user.email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`,
-      )
-      .catch((err: unknown) =>
-        this.logger.error(`Admin alert failed: ${String(err)}`),
-      );
+    // Plus d'e-mail admin par inscription : récapitulatif quotidien (admin/signup-digest.cron.ts).
 
     return { ...tokens, user: me };
   }
