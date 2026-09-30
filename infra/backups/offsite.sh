@@ -20,7 +20,13 @@ IMAGE=restic/restic:0.18.1
 grep -q 'A_COMPLETER' "$ENV_FILE" && { echo "[offsite] clés B2 non renseignées dans $ENV_FILE"; exit 1; }
 mkdir -p "$CACHE"
 
-run() { docker run --rm --env-file "$ENV_FILE" --hostname mtc-vps -v "$BACKUPS":/data:ro -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache "$IMAGE" "$@"; }
+# /data : sauvegardes locales · /infra : configs du serveur · /apps : .env des trois environnements
+# (le code est sur GitHub, les builds se refont par le CI : seuls les .env sont pris dans /apps).
+run() {
+  docker run --rm --env-file "$ENV_FILE" --hostname mtc-vps \
+    -v "$BACKUPS":/data:ro -v /opt/infra:/infra:ro -v /opt/apps/mytradingcoach:/apps:ro \
+    -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache "$IMAGE" "$@"
+}
 
 case "${1:-backup}" in
   snapshots)
@@ -36,9 +42,17 @@ case "${1:-backup}" in
     echo "[offsite] début $(date -u +%FT%TZ)"
     # Premier lancement : le dépôt n'existe pas encore sur B2.
     run cat config >/dev/null 2>&1 || run init
-    # Dumps des 3 bases (backup.sh) + configs (.env, Traefik, compose). Pas les images Docker :
-    # elles se reconstruisent depuis git.
-    run backup --tag nightly /data/mtc /data/apps/configs
+    # Crontab du jour (ce qui déclenche sauvegardes et nettoyages).
+    crontab -l > "$BACKUPS/crontab.current"
+    # Dumps des 3 bases (backup.sh) + tout ce qui n'existe QUE sur le VPS : configs du serveur,
+    # .env, crontab, scripts de sauvegarde. Pas les images Docker ni le code (git + CI), pas les
+    # certificats (Let's Encrypt les régénère), pas offsite.env (gestionnaire de mots de passe).
+    run backup --tag nightly \
+      /data/mtc /data/apps/configs /data/crontab.current /data/backup.sh /data/offsite.sh \
+      /data/restore-test.sh /data/backup-apps.sh \
+      /infra/databases /infra/static /infra/traefik/traefik.yml /infra/traefik/docker-compose.yml \
+      /infra/traefik/.env.traefik \
+      /apps/prod/.env.production /apps/dev/.env.dev /apps/beta/.env.beta
     run forget --tag nightly --keep-daily 14 --keep-weekly 8 --keep-monthly 6 --prune
     # Vérification d'intégrité hebdomadaire (lit 5 % des données pour détecter une corruption).
     if [ "$(date +%u)" = 7 ]; then run check --read-data-subset=5%; fi
