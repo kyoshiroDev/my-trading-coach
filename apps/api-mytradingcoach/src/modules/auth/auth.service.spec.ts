@@ -13,8 +13,10 @@ import { SetupsService } from '../setups/setups.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
+  argon2id: 2,
   hash: vi.fn().mockResolvedValue('hashed_password'),
   verify: vi.fn().mockResolvedValue(true),
+  needsRehash: vi.fn().mockReturnValue(false),
 }));
 
 const mockUser = {
@@ -109,6 +111,16 @@ describe('AuthService', () => {
       expect(result.refresh_token).toBeDefined();
     });
 
+    it('une inscription = un seul e-mail (bienvenue), plus d’alerte admin par inscription', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', createdAt: mockUser.createdAt });
+
+      await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
+
+      expect(mockResend.sendWelcomeFree).toHaveBeenCalledTimes(1);
+      expect(mockResend.sendAdminAlert).not.toHaveBeenCalled();
+    });
+
     it('lance ConflictException si email déjà utilisé', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
@@ -147,6 +159,28 @@ describe('AuthService', () => {
 
       expect(result.access_token).toBeDefined();
       expect(result.user.email).toBe('test@test.com');
+    });
+
+    it('hash aux anciens paramètres : remplacé dans la même écriture que lastLoginAt', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      const argon2 = await import('argon2');
+      vi.mocked(argon2.needsRehash).mockReturnValueOnce(true);
+      vi.mocked(argon2.hash).mockResolvedValueOnce('nouveau_hash');
+
+      await service.login({ email: 'test@test.com', password: 'password123' });
+
+      expect(argon2.hash).toHaveBeenCalledWith('password123', expect.objectContaining({ memoryCost: 19_456 }));
+      const data = mockPrisma.user.update.mock.calls.at(-1)![0].data;
+      expect(data).toMatchObject({ password: 'nouveau_hash' });
+      expect(data.lastLoginAt).toBeInstanceOf(Date);
+    });
+
+    it('hash déjà aux bons paramètres : le mot de passe n’est pas réécrit', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+
+      await service.login({ email: 'test@test.com', password: 'password123' });
+
+      expect(mockPrisma.user.update.mock.calls.at(-1)![0].data).not.toHaveProperty('password');
     });
 
     it('lance UnauthorizedException si email introuvable', async () => {

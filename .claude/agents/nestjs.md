@@ -537,7 +537,7 @@ async scheduledDebriefs() {
 
 ## Clustering — règles
 
-- Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `availableParallelism()` (cœurs CPU dispo ; 8 sur le VPS actuel) — pas une valeur fixe
+- Clustering activé uniquement en `NODE_ENV=production`. Nombre de workers = `WEB_CONCURRENCY`, défaut `min(cœurs, 3)` (`config/web-concurrency.ts`, SCA-B0-02). Le VPS a **4** cœurs. Chaque process a un plafond de tas (`NODE_OPTIONS=--max-old-space-size=384` dans les compose), conteneur à 2 Gio
 - `IS_CRON_WORKER=true` sur 1 seul worker → seul lui exécute `@Cron`
 - `ScheduleModule.forRoot()` conditionnel dans `app.module.ts`, en **opt-in** :
   ```typescript
@@ -899,7 +899,7 @@ sont en direct.
       connexions du même login **et les repasse `CONNECTED`** : une sœur condamnée par une rotation
       concurrente l'avait été à tort, le login vient de répondre.
     - Sans `externalUserId`, aucune propagation : on ne devine pas les liens de parenté.
-  - Détail cluster : en prod l'API tourne en **4 workers**, seul le worker 0 porte
+  - Détail cluster : en prod l'API tourne en **3 workers** (`WEB_CONCURRENCY`, défaut), seul le worker 0 porte
     `IS_CRON_WORKER=true` (`main.ts`, `cluster.fork`). `docker exec printenv IS_CRON_WORKER`
     répond « absent » — il lit l'env du conteneur, pas celui du worker. Vérifier via
     `/proc/<pid>/environ` avant de conclure qu'aucun cron ne tourne.
@@ -1113,3 +1113,12 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+
+## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
+
+`PdfService` garde **un seul** Chromium par process (lancé à la demande, fermé après 5 min sans
+PDF ou 200 rendus, recyclé après une erreur), rend **un PDF à la fois** (file interne) avec un
+timeout de 20 s, et referme toujours la page. Ne jamais revenir à `puppeteer.launch` par requête :
+150 à 300 Mo par instance, 3 ou 4 téléchargements simultanés suffisaient à l'OOM.
+Tout texte IA ou utilisateur injecté dans le HTML passe par `escapeHtml()`.
+Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files BullMQ.

@@ -2,6 +2,7 @@
 import './instrument';
 import cluster from 'node:cluster';
 import { availableParallelism } from 'node:os';
+import { getHeapStatistics } from 'node:v8';
 import { ConsoleLogger, Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -10,6 +11,7 @@ import * as cookieParser from 'cookie-parser';
 import * as compression from 'compression';
 import { AppModule } from './app/app.module';
 import { checkEnv } from './config/env';
+import { webConcurrency } from './config/web-concurrency';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
 const logger = new Logger('Bootstrap');
@@ -99,8 +101,12 @@ async function bootstrap() {
 
 // Clustering uniquement en production : en dev, process unique pour le debug
 if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
-  const numWorkers = availableParallelism();
-  logger.log(`Primary ${process.pid} starting ${numWorkers} workers...`);
+  const numWorkers = webConcurrency(process.env['WEB_CONCURRENCY'], availableParallelism());
+  const heapMb = Math.round(getHeapStatistics().heap_size_limit / 1024 / 1024);
+  logger.log(
+    `Primary ${process.pid} starting ${numWorkers} workers (WEB_CONCURRENCY=${process.env['WEB_CONCURRENCY'] ?? 'défaut'}, ` +
+      `${availableParallelism()} cœurs, plafond de tas ${heapMb} Mo par process)...`,
+  );
 
   // Garde-fou contre une boucle de plantages (ex. bug au démarrage) : relance avec un délai
   // croissant, et abandon au-delà de MAX_RESTARTS en une minute. Le process principal sort

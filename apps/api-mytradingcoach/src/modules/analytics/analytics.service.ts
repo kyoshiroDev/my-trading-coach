@@ -37,7 +37,7 @@ export class AnalyticsService {
 
   async invalidateUserCache(userId: string): Promise<void> {
     try {
-      const keys = await this.redisService.client.keys(`analytics:${userId}:*`);
+      const keys = await this.redisService.scanKeys(`analytics:${userId}:*`);
       if (keys.length > 0) await this.redisService.client.del(...keys);
     } catch { /* Redis indisponible */ }
   }

@@ -20,7 +20,7 @@ export class DebriefCron {
     attempts: 3,
     backoff: { type: 'exponential' as const, delay: 5000 },
     removeOnComplete: true,
-    removeOnFail: false,
+    removeOnFail: { age: 7 * 24 * 3600, count: 1000 }, // échecs gardés 7 j pour diagnostic, pas indéfiniment
   };
 
   // Dimanche 23h : débrief de la semaine qui se termine (refDate = maintenant, explicite).

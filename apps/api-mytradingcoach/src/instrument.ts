@@ -12,6 +12,9 @@ if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env['SENTRY_ENVIRONMENT'] ?? process.env['NODE_ENV'] ?? 'development',
+    // SHA du commit déployé (posé par le CD via GIT_SHA → SENTRY_RELEASE) : relie une erreur à sa version.
+    release: process.env['SENTRY_RELEASE'] || undefined,
+    sampleRate: 1,
     tracesSampleRate: 0,
     sendDefaultPii: false,
   });

@@ -44,10 +44,7 @@ export class EcoCalendarCron {
     this.logger.log(`🔄 Final refresh actual values for ${today}...`);
     await this.ecoCalendarService.fetchAndStoreEvents(today);
 
-    const keys = await this.ecoCalendarService.redis.keys(`eco:calendar:${today}:*`);
-    if (keys.length > 0) {
-      await this.ecoCalendarService.redis.del(...keys);
-      this.logger.log(`🗑️ Cache Redis vidé : ${keys.length} clés supprimées`);
-    }
+    const cleared = await this.ecoCalendarService.clearDayCache(today);
+    if (cleared > 0) this.logger.log(`🗑️ Cache Redis vidé : ${cleared} clés supprimées`);
   }
 }

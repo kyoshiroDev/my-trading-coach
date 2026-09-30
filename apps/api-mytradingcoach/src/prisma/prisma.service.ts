@@ -7,6 +7,7 @@ import {
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { dbPoolConfig } from './pool-config';
 
 @Injectable()
 export class PrismaService
@@ -16,12 +17,8 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const pool = new Pool({
-      connectionString: process.env['DATABASE_URL'],
-      keepAlive: true,
-      idleTimeoutMillis: 20000,
-      max: 10, // 10 connexions par worker : 4 workers prod = 40 total (limite PG: 100)
-    });
+    // Taille et délais : pool-config.ts (DB_POOL_MAX, défaut 5 par process ; Postgres limité à 50).
+    const pool = new Pool(dbPoolConfig());
     pool.on('error', (err) => {
       this.logger.error(`idle client error: ${err.message}`);
     });
