@@ -9,10 +9,16 @@ services:
     env_file: .env.beta
     environment:
       - TZ=Europe/Paris
+      # Plafond de tas V8 par process : un worker qui dérape meurt seul (relancé par le primaire)
+      # au lieu de pousser tout le conteneur à l'OOM (audit scalabilité C1).
+      - NODE_OPTIONS=--max-old-space-size=384
     networks:
       - mtc_network
-    mem_limit: 1g
-    memswap_limit: 1g
+    # 3 workers × 384 Mo de tas + primaire + mémoire native (argon2, Chromium) : 2 Gio.
+    mem_limit: 2g
+    memswap_limit: 2g
+    # Laisse aux workers le temps de finir leurs requêtes et de fermer Redis/Prisma/BullMQ.
+    stop_grace_period: 30s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-beta.rule=Host(`beta.api.mytradingcoach.app`)"

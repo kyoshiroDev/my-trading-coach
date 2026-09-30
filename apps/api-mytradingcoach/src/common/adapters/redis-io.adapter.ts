@@ -3,6 +3,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import Redis from 'ioredis';
 import type { Server, ServerOptions } from 'socket.io';
+import { redisSettings, socketIoKey } from '../../modules/infra/redis-config';
 
 /**
  * Adapter socket.io basé sur Redis (pub/sub) pour propager les broadcasts entre
@@ -11,7 +12,8 @@ import type { Server, ServerOptions } from 'socket.io';
  * analyse IA) qui ne remontait pas en prod (le cron émet sur 1 worker, le client
  * est connecté à un autre).
  *
- * Réutilise la même config Redis que RedisService (REDIS_HOST/PORT/PASSWORD).
+ * Réutilise la même config Redis que RedisService (redis-config.ts), canal compris : sans un
+ * canal propre à chaque environnement, dev et prod se diffuseraient leurs événements.
  * Résilient : si Redis est indisponible, les clients ioredis se reconnectent en
  * arrière-plan et la diffusion cross-worker reprend automatiquement ; en attendant,
  * la livraison locale (mono-worker) continue de fonctionner : comportement actuel.
@@ -26,13 +28,11 @@ export class RedisIoAdapter extends IoAdapter {
 
   async connectToRedis(): Promise<void> {
     try {
-      const host = process.env['REDIS_HOST'] ?? 'localhost';
-      const port = parseInt(process.env['REDIS_PORT'] ?? '6379', 10);
-      const password = process.env['REDIS_PASSWORD'] || undefined;
+      const s = redisSettings();
 
       // maxRetriesPerRequest: null → requis par socket.io pour les clients pub/sub.
       // Les clients se (re)connectent en arrière-plan : aucun blocage du boot.
-      const pubClient = new Redis({ host, port, password, maxRetriesPerRequest: null });
+      const pubClient = new Redis({ host: s.host, port: s.port, password: s.password, db: s.db, maxRetriesPerRequest: null });
       const subClient = pubClient.duplicate();
 
       pubClient.on('error', (e) => this.logger.warn(`Redis pub error: ${e.message}`));
@@ -41,7 +41,7 @@ export class RedisIoAdapter extends IoAdapter {
         this.logger.log('✅ Socket.io Redis adapter connecté (broadcast cross-worker actif)'),
       );
 
-      this.adapterConstructor = createAdapter(pubClient, subClient);
+      this.adapterConstructor = createAdapter(pubClient, subClient, { key: socketIoKey(s) });
     } catch (err) {
       // Résilience : ne jamais crasher le boot à cause du temps réel.
       this.logger.warn(

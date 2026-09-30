@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, map, catchError } from 'rxjs';
+import { netPnl } from '@mtc/shared';
 import {
   LucideDynamicIcon,
   LucideX as X,
@@ -61,6 +62,8 @@ export class JournalComponent {
   private readonly tradovateLive = inject(TradovateLiveSocketService);
   /** Devises mêlées en « Tous les comptes » → pas de totaux, lignes dans la devise de leur compte. */
   protected readonly money = inject(MoneyService);
+  /** Montant d'une ligne = NET (frais déduits), comme les totaux jour/semaine et le tooltip de colonne. */
+  protected readonly netPnl = netPnl;
 
   constructor() {
     this.setupsStore.load();

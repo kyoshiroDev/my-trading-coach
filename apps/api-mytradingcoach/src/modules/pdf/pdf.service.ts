@@ -1,6 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import puppeteer from 'puppeteer';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import puppeteer, { type Browser } from 'puppeteer';
 import { formatMoney } from '@mtc/shared';
+
+/** Texte IA ou utilisateur injecté dans le HTML du PDF : jamais interprété comme du balisage. */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Chromium fermé après ce délai sans PDF, ou après ce nombre de PDF (fuites mémoire). */
+export const BROWSER_IDLE_MS = 5 * 60_000;
+export const BROWSER_MAX_RENDERS = 200;
+export const PDF_TIMEOUT_MS = 20_000;
 
 export interface DebriefPdfData {
   /** Devise des comptes du débrief ; null si elles diffèrent (montants sans symbole). */
@@ -36,37 +51,93 @@ export interface DebriefPdfData {
   }[];
 }
 
+/**
+ * PDF du débrief hebdomadaire (audit scalabilité C3).
+ *
+ * Avant : un Chromium lancé par requête (150 à 300 Mo chacun), sans limite ni timeout. Trois ou
+ * quatre téléchargements simultanés — le lundi matin, après l'e-mail du débrief — suffisaient à
+ * pousser le conteneur API à l'OOM. Désormais, par process : un seul navigateur réutilisé, un
+ * PDF à la fois, un timeout, et le navigateur recyclé après inactivité ou N rendus.
+ *
+ * Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files BullMQ, des
+ * PDF de plusieurs centaines de Ko gardés des jours pourraient le remplir et bloquer les jobs.
+ */
 @Injectable()
-export class PdfService {
+export class PdfService implements OnModuleDestroy {
+  private readonly logger = new Logger(PdfService.name);
+  private browser: Promise<Browser> | null = null;
+  private renders = 0;
+  private idleTimer: NodeJS.Timeout | null = null;
+  /** File d'attente : un seul rendu à la fois dans ce process. */
+  private queue: Promise<unknown> = Promise.resolve();
 
-  async generateDebriefPDF(data: DebriefPdfData): Promise<Buffer> {
+  generateDebriefPDF(data: DebriefPdfData): Promise<Buffer> {
     const html = this.buildHTML(data);
-    let browser;
+    const run = this.queue.then(() => this.render(html));
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.closeBrowser();
+  }
+
+  private async render(html: string): Promise<Buffer> {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    const browser = await this.getBrowser();
+    const page = await browser.newPage();
     try {
-      browser = await puppeteer.launch({
-        headless: true,
-        executablePath: process.env['PUPPETEER_EXECUTABLE_PATH'],
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-        ],
-      });
-      const page = await browser.newPage();
       // Attend aussi que polices et images soient chargées (équivalent de `networkidle0`,
       // que le typage de setContent n'accepte plus) avant de générer le PDF.
-      await page.setContent(html, { waitUntil: 'load' });
-      await page.waitForNetworkIdle({ idleTime: 500 });
+      await page.setContent(html, { waitUntil: 'load', timeout: PDF_TIMEOUT_MS });
+      await page.waitForNetworkIdle({ idleTime: 500, timeout: PDF_TIMEOUT_MS });
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
         margin: { top: '0', right: '0', bottom: '0', left: '0' },
+        timeout: PDF_TIMEOUT_MS,
       });
       return Buffer.from(pdfBuffer);
+    } catch (err) {
+      await this.closeBrowser(); // navigateur dans un état douteux : le suivant repart à neuf
+      throw err;
     } finally {
-      if (browser) await browser.close();
+      await page.close().catch(() => undefined);
+      this.renders += 1;
+      if (this.renders >= BROWSER_MAX_RENDERS) await this.closeBrowser();
+      else this.idleTimer = setTimeout(() => void this.closeBrowser(), BROWSER_IDLE_MS).unref();
     }
+  }
+
+  private getBrowser(): Promise<Browser> {
+    if (!this.browser) {
+      this.browser = puppeteer
+        .launch({
+          headless: true,
+          executablePath: process.env['PUPPETEER_EXECUTABLE_PATH'],
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+        })
+        .then((b) => {
+          b.on('disconnected', () => {
+            this.browser = null;
+          });
+          return b;
+        })
+        .catch((err: unknown) => {
+          this.browser = null;
+          throw err;
+        });
+    }
+    return this.browser;
+  }
+
+  private async closeBrowser(): Promise<void> {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    this.idleTimer = null;
+    const current = this.browser;
+    this.browser = null;
+    this.renders = 0;
+    if (current) await current.then((b) => b.close()).catch((err: unknown) => this.logger.warn(`Fermeture Chromium : ${String(err)}`));
   }
 
   private buildHTML(data: DebriefPdfData): string {
@@ -76,11 +147,11 @@ export class PdfService {
     const insightsHTML = data.insights
       .map(
         (insight) => `
-      <div class="insight insight-${insight.type}">
+      <div class="insight insight-${escapeHtml(insight.type)}">
         <div class="insight-dot"></div>
         <div>
-          <div class="insight-title">${insight.title}</div>
-          <div class="insight-desc">${insight.description}</div>
+          <div class="insight-title">${escapeHtml(insight.title)}</div>
+          <div class="insight-desc">${escapeHtml(insight.description)}</div>
         </div>
       </div>`,
       )
@@ -92,8 +163,8 @@ export class PdfService {
       <div class="objective">
         <div class="objective-num">${i + 1}</div>
         <div>
-          <div class="objective-title">${obj.title}</div>
-          <div class="objective-reason">${obj.reason}</div>
+          <div class="objective-title">${escapeHtml(obj.title)}</div>
+          <div class="objective-reason">${escapeHtml(obj.reason)}</div>
         </div>
       </div>`,
       )
@@ -105,8 +176,8 @@ export class PdfService {
         const color = trade.pnl >= 0 ? '#2dd4bf' : '#fc8181';
         return `
         <tr>
-          <td>${trade.asset}</td>
-          <td class="side-${trade.side.toLowerCase()}">${trade.side}</td>
+          <td>${escapeHtml(trade.asset)}</td>
+          <td class="side-${escapeHtml(trade.side.toLowerCase())}">${escapeHtml(trade.side)}</td>
           <td style="color: ${color}">${money(trade.pnl)}</td>
           <td class="date">${new Date(trade.tradedAt).toLocaleDateString('fr-FR')}</td>
         </tr>`;
@@ -211,7 +282,7 @@ export class PdfService {
     <div>
       <div class="brand">MyTradingCoach</div>
       <div class="week-title">Weekly Debrief · Semaine ${data.weekNumber}</div>
-      <div class="week-dates">${data.startDate} → ${data.endDate} · ${data.userName}</div>
+      <div class="week-dates">${escapeHtml(data.startDate)} → ${escapeHtml(data.endDate)} · ${escapeHtml(data.userName)}</div>
     </div>
     <div class="pnl-header">
       <div class="pnl-label">P&L semaine</div>
@@ -240,7 +311,7 @@ export class PdfService {
 
   <div class="section">
     <div class="section-title">Résumé de la semaine</div>
-    <div class="summary-text">${data.summary}</div>
+    <div class="summary-text">${escapeHtml(data.summary)}</div>
   </div>
 
   <div class="two-col">

@@ -12,7 +12,7 @@ VPS OVH — 51.83.197.230 (user: greg)
 ├── mtc_traefik     → reverse proxy + SSL Let's Encrypt
 ├── mtc_postgres    → PostgreSQL 17 (partagé prod/dev) — port 5432
 ├── mtc_pgbouncer   → PgBouncer connection pooling — port 6432
-├── mtc_redis       → Redis 7.4 (partagé prod/dev)
+├── mtc_redis       → Redis 7.4 (prod en base 0 ; dev doit avoir REDIS_DB=1 + REDIS_PREFIX=dev:)
 ├── mtc_api_prod    → NestJS production (/opt/apps/mytradingcoach/prod/)
 └── mtc_api_dev     → NestJS dev      (/opt/apps/mytradingcoach/dev/)
 
@@ -307,7 +307,7 @@ DATABASE_DIRECT_URL=postgresql://mtc_user:PASSWORD@mtc_postgres:5432/mytradingco
 REDIS_HOST=mtc_redis
 REDIS_PORT=6379
 REDIS_PASSWORD=...
-REDIS_URL=redis://:PASSWORD@mtc_redis:6379
+# REDIS_DB / REDIS_PREFIX : voir « Isolation Redis » ci-dessous. Prod : ni l'un ni l'autre.
 
 JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
@@ -345,3 +345,101 @@ BROKER_TOKEN_ENCRYPTION_KEY=...      # openssl rand -base64 32 — UNE par env, 
   → `302` vers `<FRONTEND_URL>/accounts?tradovate=error&reason=session_expired` (normal sans cookie).
 - Changer `BROKER_TOKEN_ENCRYPTION_KEY` rend toutes les connexions illisibles : les users
   devront se reconnecter (aucun trade perdu).
+
+## Isolation Redis entre environnements (SCA-B0-01, 2026-09-30)
+
+⚠️ **`REDIS_URL` n'est lu par AUCUN code.** Seuls `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`,
+`REDIS_DB` et `REDIS_PREFIX` comptent (`modules/infra/redis-config.ts`). Constaté le 30/09 : le
+`/1` du `REDIS_URL` de dev était ignoré, donc **dev et prod partageaient la base 0 de `mtc_redis`**
+et le worker dev pouvait consommer les jobs `stripe` / `debrief` de la prod.
+
+| Variable | Défaut | Effet |
+|---|---|---|
+| `REDIS_DB` | `0` | base Redis de toutes les connexions (cache, throttler, BullMQ, socket.io) |
+| `REDIS_PREFIX` | vide | préfixe des clés (`keyPrefix`), des files (`<prefix>bull`) et du canal socket.io |
+
+Le canal socket.io porte aussi la base (`socket.io:db1`) : le pub/sub Redis ignore le numéro de
+base, sans ça deux environnements sur deux bases se diffuseraient leurs événements.
+
+| Env | Serveur | `REDIS_DB` | `REDIS_PREFIX` |
+|---|---|---|---|
+| prod | `mtc_redis` | *(absent → 0)* | *(absent)* : **ne pas en ajouter**, les clés et jobs existants seraient orphelins |
+| dev | `mtc_redis` | `1` | `dev:` |
+| beta | `mtc_redis_beta` (serveur à part) | *(absent → 0)* | *(absent)* ; supprimer le `REDIS_URL` périmé de `.env.beta` (pointe sur `mtc_redis`) |
+
+**Ordre de remise en route de dev** (arrêté le 30/09 à cause du partage) : déployer le code
+contenant SCA-B0-01 sur dev, ajouter `REDIS_DB=1` et `REDIS_PREFIX=dev:` à `.env.dev`, **puis
+seulement** relancer `mtc_api_dev`. Un push sur `dev` avant ça relance le conteneur sur la base
+partagée.
+
+Plus aucun `KEYS` dans le code : `RedisService.scanKeys()` (SCAN par lots, préfixe géré). Les
+échecs de jobs BullMQ sont gardés 7 jours / 1 000 au plus (`removeOnFail`), Redis étant en
+`noeviction`.
+
+## Mémoire et workers de l'API (SCA-B0-02, 2026-09-30)
+
+- `WEB_CONCURRENCY` : nombre de workers HTTP, défaut `min(cœurs, 3)`. Au démarrage, le primaire
+  journalise le nombre retenu et le plafond de tas.
+- Compose prod / dev / beta : `NODE_OPTIONS=--max-old-space-size=384`, `mem_limit: 2g`,
+  `memswap_limit: 2g`, `stop_grace_period: 30s`.
+- Le healthcheck Docker reste sur `/api/health` (liveness) **volontairement** : Traefik n'envoie
+  aucun trafic à un conteneur `unhealthy`, et une coupure Redis passagère rendrait alors toute
+  l'API injoignable alors qu'elle sait tourner en mode dégradé. `/api/health/ready` sert au
+  garde-fou du CD et à la supervision externe.
+- Les plafonds de 2 Gio sont des maxima, pas des réservations. Sur le VPS de 7,6 Go, dev et beta
+  n'ont pas vocation à tourner à plein en même temps que la prod pendant un pic.
+
+## Pool Postgres et PgBouncer (SCA-B0-05, 2026-09-30)
+
+**Côté API** (`prisma/pool-config.ts`) : `DB_POOL_MAX` connexions par process (défaut **5**), soit
+15 pour la prod à 3 workers. `connectionTimeoutMillis` 5 s, `idleTimeoutMillis` 10 s,
+`query_timeout` 15 s (côté client).
+
+⚠️ **Jamais de `statement_timeout` dans la config `pg`** : node-postgres l'envoie en paramètre de
+démarrage, que PgBouncer refuse (`ignore_startup_parameters = extra_float_digits` seulement) →
+plus aucune connexion en prod, alors que tout passe en local (pas de PgBouncer). Un plafond
+serveur se règle dans Postgres (`ALTER ROLE … SET statement_timeout`), pas dans l'API.
+
+**Côté VPS** (mesuré le 30/09) : `max_connections = 50`, PgBouncer 1.15 en `transaction`,
+`DEFAULT_POOL_SIZE=25` **par base** × 3 bases = 75 > 50. Bloc proposé pour
+`/opt/infra/databases/docker-compose.yml` (service pgbouncer), **à appliquer en SCA-B7-02 après
+validation**, hors heures de marché US :
+
+```yaml
+environment:
+  # remplace DEFAULT_POOL_SIZE=25 appliqué à toutes les bases
+  DATABASES: >-
+    mytradingcoach_prod = host=mtc_postgres port=5432 pool_size=25,
+    mytradingcoach_dev  = host=mtc_postgres port=5432 pool_size=5,
+    mytradingcoach_beta = host=mtc_postgres port=5432 pool_size=5
+  RESERVE_POOL_SIZE: 5
+  MAX_DB_CONNECTIONS: 40   # garde de la marge sous max_connections=50 (migrations, admin, psql)
+```
+
+Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, puis
+`docker compose up -d pgbouncer`.
+
+## CD de l'API : déploiement ciblé, garde-fou et gel (SCA-B0-08, 2026-09-30)
+
+- `deploy-api` ne tourne que si `changes.outputs.api == 'true'` : projet Nx `api-mytradingcoach`
+  affecté, **ou** fichier touché sous `prisma/`, `libs/`, `scripts/discord-bot/`,
+  `docker-compose.{prod,discord-bot}.yml`, `package.json`, `pnpm-lock.yaml`,
+  `pnpm-workspace.yaml` (Nx ne rattache pas ces chemins à un projet). Un commit landing seul ne
+  redémarre plus l'API.
+- Après `up`, le job attend `/api/health/ready` (Postgres + Redis) jusqu'à **90 s**, sinon il
+  échoue en affichant les 80 dernières lignes de logs, et `deployed/prod` ne bouge pas.
+- **Gel** : variable de dépôt `FREEZE_API_DEPLOY=true` (Settings → Secrets and variables →
+  Actions → Variables). L'API n'est plus déployée, les fronts si. Tant que le gel est actif et
+  que l'API a changé, le tag `deployed/prod` ne bouge pas : au dégel, le CD suivant redéploie bien
+  les changements gelés. Retirer la variable (ou la passer à `false`) pour dégeler.
+
+## Sentry (SCA-B0-09, 2026-09-30)
+
+- Actif dès que `SENTRY_DSN` est défini (`src/instrument.ts`) : `sampleRate 1`, `tracesSampleRate 0`
+  (aucun surcoût), `sendDefaultPii false`, `environment` = `SENTRY_ENVIRONMENT` ou `NODE_ENV`,
+  `release` = SHA court du commit (le CD exporte `GIT_SHA`, le compose le passe en `SENTRY_RELEASE`).
+- **Où mettre le DSN** : créer un projet Node.js sur sentry.io (offre gratuite), copier le DSN dans
+  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`, et `SENTRY_ENVIRONMENT=production`),
+  puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
+- Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
+  au démarrage.
