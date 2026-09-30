@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2';
+import { hashPassword } from '../auth/password-hashing';
 import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
 import { computeTradeStats } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
@@ -37,7 +37,7 @@ export interface DemoSeedResult {
 export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Promise<DemoSeedResult> {
   const { days, stats } = buildDemoDataset(now);
   assertDemoCalendar(days); // aucune écriture si un trade tombe un week-end ou hors futures
-  const password = await argon2.hash(`demo-${Date.now()}-${Math.random()}`);
+  const password = await hashPassword(`demo-${Date.now()}-${Math.random()}`);
 
   const user = await prisma.user.upsert({
     where: { email: DEMO_EMAIL },

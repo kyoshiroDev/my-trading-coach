@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
@@ -83,7 +84,7 @@ export class AuthService {
     });
     if (existing) throw new ConflictException('Cet email est déjà utilisé');
 
-    const hashedPassword = await argon2.hash(dto.password);
+    const hashedPassword = await hashPassword(dto.password);
 
     let referredBy: string | null = null;
     if (dto.referralCode) {
@@ -170,9 +171,11 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
     const now = new Date();
+    // Hash aux anciens paramètres (64 Mio) : remplacé dans la même écriture, sans requête de plus.
+    const rehashed = needsPasswordRehash(user.password) ? await hashPassword(dto.password) : undefined;
     const safeUser = await this.prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: now, lastSeenAt: now },
+      data: { lastLoginAt: now, lastSeenAt: now, ...(rehashed ? { password: rehashed } : {}) },
       select: ME_SELECT,
     });
 
@@ -251,7 +254,7 @@ export class AuthService {
 
     if (!user) throw new BadRequestException('Token invalide ou expiré');
 
-    const hashedPassword = await argon2.hash(newPassword);
+    const hashedPassword = await hashPassword(newPassword);
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
