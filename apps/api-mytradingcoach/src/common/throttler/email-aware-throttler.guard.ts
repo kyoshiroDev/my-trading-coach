@@ -1,6 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
 import { createHash } from 'node:crypto';
+
+/**
+ * Second throttler, compté par **IP seule** (SCA-B0-04). La clé IP + compte ci-dessous se
+ * contourne en changeant d'e-mail à chaque requête : une IP pouvait créer des comptes sans fin
+ * (un hash argon2 et deux e-mails par inscription). Ce throttler borne le total par IP.
+ *
+ * Neutre par défaut (limite `IP_THROTTLER_OFF`, jamais compté, donc aucun aller-retour Redis de
+ * plus) ; il ne s'active que sur les routes qui le resserrent avec `@Throttle({ ip: … })`.
+ */
+export const IP_THROTTLER = 'ip';
+export const IP_THROTTLER_OFF = Number.MAX_SAFE_INTEGER;
 
 /**
  * Rate limiting compté par **IP + compte visé**, et non par IP seule.
@@ -20,6 +31,12 @@ import { createHash } from 'node:crypto';
  */
 @Injectable()
 export class EmailAwareThrottlerGuard extends ThrottlerGuard {
+  protected override async handleRequest(props: ThrottlerRequest): Promise<boolean> {
+    if (props.throttler.name !== IP_THROTTLER) return super.handleRequest(props);
+    if (props.limit >= IP_THROTTLER_OFF) return true; // route sans limite par IP : rien à compter
+    return super.handleRequest({ ...props, getTracker: (req) => ThrottlerGuard.prototype['getTracker'].call(this, req) });
+  }
+
   protected override async getTracker(req: Record<string, unknown>): Promise<string> {
     const ip = await super.getTracker(req);
     const account = accountFingerprint(req);

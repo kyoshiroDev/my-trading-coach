@@ -273,3 +273,18 @@ const user = await prisma.user.findUnique({
   le conteneur API à l'OOM dès quelques inscriptions simultanées.
 - Les anciens hashs restent vérifiables ; `login` les remplace via `needsPasswordRehash()`, dans
   la même écriture que `lastLoginAt` (pas de requête supplémentaire).
+
+## Rate limiting par IP seule sur l'auth (SCA-B0-04, 2026-09-30)
+
+La clé « IP + empreinte d'e-mail » (`EmailAwareThrottlerGuard`) se contourne en changeant
+d'e-mail à chaque requête. Un second throttler nommé **`ip`** compte par IP seule :
+
+| Route | IP + e-mail (`default`) | IP seule (`ip`) |
+|---|---|---|
+| `POST /auth/register` | 5 / min | **10 / h** |
+| `POST /auth/login` | 10 / min | **30 / 10 min** |
+| `POST /auth/forgot-password` | 3 / min | **10 / h** |
+
+Le throttler `ip` est **neutre par défaut** (`IP_THROTTLER_OFF`, jamais compté, aucun aller-retour
+Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé par
+`register-ip-throttle.int-spec.ts` (11 e-mails distincts depuis une IP → la 11ᵉ reçoit 429).

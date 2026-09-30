@@ -37,7 +37,7 @@ import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
 import { bullPrefix, redisSettings } from '../modules/infra/redis-config';
-import { EmailAwareThrottlerGuard } from '../common/throttler/email-aware-throttler.guard';
+import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF } from '../common/throttler/email-aware-throttler.guard';
 import { RedisService } from '../modules/infra/redis.service';
 
 @Module({
@@ -56,7 +56,11 @@ import { RedisService } from '../modules/infra/redis.service';
       imports: [InfraModule],
       inject: [RedisService],
       useFactory: (redis: RedisService) => ({
-        throttlers: [{ ttl: 60_000, limit: 60 }],
+        throttlers: [
+          { ttl: 60_000, limit: 60 },
+          // Par IP seule, neutre sauf sur les routes qui le resserrent (inscription, connexion…).
+          { name: IP_THROTTLER, ttl: 60_000, limit: IP_THROTTLER_OFF },
+        ],
         storage: new RedisThrottlerStorage(redis),
       }),
     }),

@@ -1,4 +1,5 @@
-import { EmailAwareThrottlerGuard } from './email-aware-throttler.guard';
+import { vi } from 'vitest';
+import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF } from './email-aware-throttler.guard';
 
 /**
  * Le rate limiting des routes d'authentification doit compter par IP **et** par compte visé.
@@ -56,5 +57,38 @@ describe('EmailAwareThrottlerGuard — clé de comptage', () => {
     // Corps d'entrée non fiable : un tableau ou un objet ne doit pas casser le comptage.
     await expect(tracker({ ip: '10.0.0.1', body: { email: ['a@b.c'] } })).resolves.toBe('10.0.0.1');
     await expect(tracker({ ip: '10.0.0.1', body: { email: 42 } })).resolves.toBe('10.0.0.1');
+  });
+});
+
+describe('EmailAwareThrottlerGuard — throttler « ip » (SCA-B0-04)', () => {
+  type Props = { throttler: { name: string }; limit: number; getTracker: (r: Record<string, unknown>) => Promise<string> };
+  const guard = new EmailAwareThrottlerGuard({ throttlers: [] }, {} as never, {} as never) as unknown as {
+    handleRequest: (p: Props) => Promise<boolean>;
+  };
+  const parent = Object.getPrototypeOf(EmailAwareThrottlerGuard.prototype) as { handleRequest: (p: Props) => Promise<boolean> };
+
+  it('route sans limite par IP : rien n’est compté (aucun aller-retour Redis)', async () => {
+    const spy = vi.spyOn(parent, 'handleRequest');
+    await expect(
+      guard.handleRequest({ throttler: { name: IP_THROTTLER }, limit: IP_THROTTLER_OFF, getTracker: vi.fn() }),
+    ).resolves.toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('route limitée par IP : compte sur l’IP seule, même avec un e-mail dans le corps', async () => {
+    const spy = vi.spyOn(parent, 'handleRequest').mockResolvedValue(true);
+    await guard.handleRequest({ throttler: { name: IP_THROTTLER }, limit: 10, getTracker: vi.fn() });
+    const passed = spy.mock.calls[0][0];
+    await expect(passed.getTracker({ ip: '10.0.0.1', body: { email: 'a@example.com' } })).resolves.toBe('10.0.0.1');
+    spy.mockRestore();
+  });
+
+  it('throttler par défaut : inchangé (clé IP + compte)', async () => {
+    const spy = vi.spyOn(parent, 'handleRequest').mockResolvedValue(true);
+    const getTracker = vi.fn();
+    await guard.handleRequest({ throttler: { name: 'default' }, limit: 5, getTracker });
+    expect(spy.mock.calls[0][0].getTracker).toBe(getTracker);
+    spy.mockRestore();
   });
 });
