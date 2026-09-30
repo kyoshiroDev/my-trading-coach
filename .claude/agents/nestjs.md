@@ -1113,3 +1113,12 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+
+## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
+
+`PdfService` garde **un seul** Chromium par process (lancé à la demande, fermé après 5 min sans
+PDF ou 200 rendus, recyclé après une erreur), rend **un PDF à la fois** (file interne) avec un
+timeout de 20 s, et referme toujours la page. Ne jamais revenir à `puppeteer.launch` par requête :
+150 à 300 Mo par instance, 3 ou 4 téléchargements simultanés suffisaient à l'OOM.
+Tout texte IA ou utilisateur injecté dans le HTML passe par `escapeHtml()`.
+Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files BullMQ.
