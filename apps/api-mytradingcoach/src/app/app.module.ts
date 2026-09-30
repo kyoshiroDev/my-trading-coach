@@ -36,6 +36,7 @@ import { ActivityTrackingInterceptor } from '../common/interceptors/activity-tra
 import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
+import { bullPrefix, redisSettings } from '../modules/infra/redis-config';
 import { EmailAwareThrottlerGuard } from '../common/throttler/email-aware-throttler.guard';
 import { RedisService } from '../modules/infra/redis.service';
 
@@ -59,11 +60,11 @@ import { RedisService } from '../modules/infra/redis.service';
         storage: new RedisThrottlerStorage(redis),
       }),
     }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env['REDIS_HOST'] ?? 'localhost',
-        port: parseInt(process.env['REDIS_PORT'] ?? '6379'),
-        password: process.env['REDIS_PASSWORD'],
+    // Même base et même préfixe que RedisService (REDIS_DB / REDIS_PREFIX, cf. redis-config.ts).
+    BullModule.forRootAsync({
+      useFactory: () => {
+        const s = redisSettings();
+        return { connection: { host: s.host, port: s.port, password: s.password, db: s.db }, prefix: bullPrefix(s) };
       },
     }),
     // Fail-safe cluster : les crons s'activent UNIQUEMENT en opt-in explicite

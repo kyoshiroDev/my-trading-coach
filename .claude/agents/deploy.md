@@ -12,7 +12,7 @@ VPS OVH — 51.83.197.230 (user: greg)
 ├── mtc_traefik     → reverse proxy + SSL Let's Encrypt
 ├── mtc_postgres    → PostgreSQL 17 (partagé prod/dev) — port 5432
 ├── mtc_pgbouncer   → PgBouncer connection pooling — port 6432
-├── mtc_redis       → Redis 7.4 (partagé prod/dev)
+├── mtc_redis       → Redis 7.4 (prod en base 0 ; dev doit avoir REDIS_DB=1 + REDIS_PREFIX=dev:)
 ├── mtc_api_prod    → NestJS production (/opt/apps/mytradingcoach/prod/)
 └── mtc_api_dev     → NestJS dev      (/opt/apps/mytradingcoach/dev/)
 
@@ -307,7 +307,7 @@ DATABASE_DIRECT_URL=postgresql://mtc_user:PASSWORD@mtc_postgres:5432/mytradingco
 REDIS_HOST=mtc_redis
 REDIS_PORT=6379
 REDIS_PASSWORD=...
-REDIS_URL=redis://:PASSWORD@mtc_redis:6379
+# REDIS_DB / REDIS_PREFIX : voir « Isolation Redis » ci-dessous. Prod : ni l'un ni l'autre.
 
 JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
@@ -345,3 +345,33 @@ BROKER_TOKEN_ENCRYPTION_KEY=...      # openssl rand -base64 32 — UNE par env, 
   → `302` vers `<FRONTEND_URL>/accounts?tradovate=error&reason=session_expired` (normal sans cookie).
 - Changer `BROKER_TOKEN_ENCRYPTION_KEY` rend toutes les connexions illisibles : les users
   devront se reconnecter (aucun trade perdu).
+
+## Isolation Redis entre environnements (SCA-B0-01, 2026-09-30)
+
+⚠️ **`REDIS_URL` n'est lu par AUCUN code.** Seuls `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`,
+`REDIS_DB` et `REDIS_PREFIX` comptent (`modules/infra/redis-config.ts`). Constaté le 30/09 : le
+`/1` du `REDIS_URL` de dev était ignoré, donc **dev et prod partageaient la base 0 de `mtc_redis`**
+et le worker dev pouvait consommer les jobs `stripe` / `debrief` de la prod.
+
+| Variable | Défaut | Effet |
+|---|---|---|
+| `REDIS_DB` | `0` | base Redis de toutes les connexions (cache, throttler, BullMQ, socket.io) |
+| `REDIS_PREFIX` | vide | préfixe des clés (`keyPrefix`), des files (`<prefix>bull`) et du canal socket.io |
+
+Le canal socket.io porte aussi la base (`socket.io:db1`) : le pub/sub Redis ignore le numéro de
+base, sans ça deux environnements sur deux bases se diffuseraient leurs événements.
+
+| Env | Serveur | `REDIS_DB` | `REDIS_PREFIX` |
+|---|---|---|---|
+| prod | `mtc_redis` | *(absent → 0)* | *(absent)* : **ne pas en ajouter**, les clés et jobs existants seraient orphelins |
+| dev | `mtc_redis` | `1` | `dev:` |
+| beta | `mtc_redis_beta` (serveur à part) | *(absent → 0)* | *(absent)* ; supprimer le `REDIS_URL` périmé de `.env.beta` (pointe sur `mtc_redis`) |
+
+**Ordre de remise en route de dev** (arrêté le 30/09 à cause du partage) : déployer le code
+contenant SCA-B0-01 sur dev, ajouter `REDIS_DB=1` et `REDIS_PREFIX=dev:` à `.env.dev`, **puis
+seulement** relancer `mtc_api_dev`. Un push sur `dev` avant ça relance le conteneur sur la base
+partagée.
+
+Plus aucun `KEYS` dans le code : `RedisService.scanKeys()` (SCAN par lots, préfixe géré). Les
+échecs de jobs BullMQ sont gardés 7 jours / 1 000 au plus (`removeOnFail`), Redis étant en
+`noeviction`.

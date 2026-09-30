@@ -81,7 +81,7 @@ export class StripeWebhookService {
           attempts: 5,
           backoff: { type: 'exponential', delay: 5_000 },
           removeOnComplete: { count: 100 }, // Garde les 100 derniers succès
-          removeOnFail: false, // Garde les échecs pour inspection
+          removeOnFail: { age: 7 * 24 * 3600, count: 1000 }, // Échecs gardés 7 j pour inspection (Redis en noeviction)
         },
       );
     } catch (err: unknown) {
