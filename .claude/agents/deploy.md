@@ -475,6 +475,9 @@ une restauration ne télécharge qu'1 Go/jour. Estimation : ~250 Mo aujourd'hui,
 actifs. À l'alerte de 7,5 Go, ou avant une restauration d'urgence volumineuse : ajouter un moyen de
 paiement et relever la limite (quelques centimes).
 
+**Remonter tout le VPS** (machine perdue ou changée) : runbook pas à pas `docs/ops/reprise-vps.md`
+(serveur, B2, bases, DNS, Traefik, API, fronts, secrets GitHub, cron, vérifications).
+
 **Restaurer pour de vrai** (VPS perdu) : sur la nouvelle machine, recréer `offsite.env` depuis le
 gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
