@@ -35,8 +35,8 @@ export interface DemoSeedResult {
 
 /** Seed/refresh complet du compte démo. `prisma` = PrismaService ou PrismaClient adapter. */
 export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Promise<DemoSeedResult> {
-  const { days, stats } = buildDemoDataset(now);
-  assertDemoCalendar(days); // aucune écriture si un trade tombe un week-end ou hors futures
+  const dataset = buildDemoDataset(now);
+  assertDemoCalendar(dataset.days); // aucune écriture si un trade tombe un week-end ou hors futures
   const password = await hashPassword(`demo-${Date.now()}-${Math.random()}`);
 
   const user = await prisma.user.upsert({
@@ -44,6 +44,31 @@ export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Pr
     update: { ...PROFILE },
     create: { email: DEMO_EMAIL, password, ...PROFILE },
   });
+  return seedTradingData(prisma, user, now, { brokerShowcase: true, dataset });
+}
+
+export interface SeedTradingDataOptions {
+  /** Fausse connexion Tradovate « Connecté » (vitrine du compte démo, lecture seule). Jamais sur un vrai compte. */
+  brokerShowcase: boolean;
+  /** Jeu de données déjà construit et vérifié par l'appelant. */
+  dataset?: ReturnType<typeof buildDemoDataset>;
+}
+
+/**
+ * Remplit un compte existant avec le jeu de données du compte démo : ses comptes de trading, ~6 semaines
+ * de sessions et de trades, récaps quotidiens, débriefs hebdo, calendrier éco du jour.
+ *
+ * ⚠️ PURGE d'abord les trades, sessions, comptes, connexions broker, débriefs et récaps de CE user.
+ * Réservé au compte démo et aux comptes de test (script `seed:user`, bases beta/locales uniquement).
+ */
+export async function seedTradingData(
+  prisma: PrismaClient,
+  user: { id: string; email: string },
+  now: Date = new Date(),
+  opts: SeedTradingDataOptions = { brokerShowcase: false },
+): Promise<DemoSeedResult> {
+  const { days, stats } = opts.dataset ?? buildDemoDataset(now);
+  if (!opts.dataset) assertDemoCalendar(days);
 
   // Purge scopée (trades d'abord, FK session ; comptes APRÈS trades et sessions : onDelete SetNull).
   await prisma.trade.deleteMany({ where: { userId: user.id } });
@@ -243,7 +268,8 @@ export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Pr
   // ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST).
   const apexId = accountIdByKey.get('apex')!;
   const demoTradovateAccount = { id: '0', name: 'APEX-DEMO-01', env: 'demo' };
-  await prisma.brokerConnection.create({
+  // Jamais sur un vrai compte : le cron de renouvellement tenterait ce faux jeton en boucle.
+  if (opts.brokerShowcase) await prisma.brokerConnection.create({
     data: {
       userId: user.id, accountId: apexId, provider: BrokerProvider.TRADOVATE,
       status: BrokerConnectionStatus.CONNECTED, accessTokenEnc: 'demo:aucun-token',
