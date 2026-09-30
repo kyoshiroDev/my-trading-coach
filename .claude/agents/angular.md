@@ -54,7 +54,7 @@ src/app/
 │   │       └── session-live/     ← V2 : vue session active (cadre + mini-stats + socket éco)
 │   │           session-live.component.ts + .css
 │   │           └── components/   live-eco-calendar · live-feed · quick-trade · live-news
-│   ├── journal/            journal.component · trade-form.component · trade-row.component
+│   ├── journal/            journal.component · trade-form.component
 │   │                       csv-import.component   ← import historique GRATUIT (tous plans)
 │   │                       (register : « trades illimités, sans CB » ;
 │   │                        levier d'acquisition, dispo onboarding + bouton CSV du Journal)
