@@ -288,3 +288,10 @@ d'e-mail à chaque requête. Un second throttler nommé **`ip`** compte par IP s
 Le throttler `ip` est **neutre par défaut** (`IP_THROTTLER_OFF`, jamais compté, aucun aller-retour
 Redis) : il ne s'active que via `@Throttle({ ip: { ttl, limit } })`. Verrouillé par
 `register-ip-throttle.int-spec.ts` (11 e-mails distincts depuis une IP → la 11ᵉ reçoit 429).
+
+## PgBouncer sans authentification (relevé le 2026-10-01, SCA-B7-02)
+
+`auth_type = any` (défaut de l'image `pgbouncer/pgbouncer`) : tout conteneur du réseau
+`mtc_network` (dont Traefik, exposé à Internet) peut ouvrir une session sur les 3 bases sans mot
+de passe, PgBouncer présentant lui-même celui de `mtc_user`. Non exposé publiquement, mais à
+corriger après le lancement : `PGBOUNCER_AUTH_TYPE=scram-sha-256` + `PGBOUNCER_AUTH_FILE`.
