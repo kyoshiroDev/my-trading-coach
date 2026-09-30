@@ -454,7 +454,8 @@ Compose : `/opt/infra/databases/docker-compose.yml` (non versionné, sauvegardé
 **toutes ignorées** (tournait en `session`, 20/base, 100 clients). Toujours contrôler la config
 **effective**, jamais le compose :
 ```sh
-docker exec mtc_postgres psql -h mtc_pgbouncer -p 6432 -U postgres -d pgbouncer -c 'SHOW CONFIG'   # ou SHOW DATABASES / SHOW POOLS
+# mot de passe = celui de mtc_user (DATABASES_PASSWORD du compose)
+docker exec -it mtc_postgres psql -h mtc_pgbouncer -p 6432 -U mtc_user -d pgbouncer -c 'SHOW CONFIG'   # ou SHOW DATABASES / SHOW POOLS
 ```
 Réglages actuels :
 | | Valeur | Pourquoi |
@@ -465,8 +466,21 @@ Réglages actuels :
 | `query_wait_timeout` | 30 s (au lieu de 120) | échouer vite plutôt que de faire attendre 2 min |
 | `DB_POOL_MAX` API | prod 5 (défaut) · **dev et beta 2** (`.env.dev`, `.env.beta`) | 3 × 2 = 6 = pool de la base |
 
-⚠️ `auth_type = any` : PgBouncer accepte toute connexion du réseau `mtc_network` sans mot de
-passe (non exposé à Internet). À durcir après le lancement (userlist + scram).
+**Authentification** (corrigée le 2026-10-01 ; avant : `auth_type = any`, sans mot de passe) :
+`PGBOUNCER_AUTH_TYPE=scram-sha-256`, `PGBOUNCER_AUTH_FILE=/etc/pgbouncer-auth/userlist.txt`
+(dossier `/opt/infra/databases/pgbouncer-auth/`, monté en lecture seule, `600`, propriétaire
+uid 70 = user `postgres` du conteneur). Il contient l'**empreinte SCRAM** de `mtc_user` copiée de
+`pg_authid`, pas le mot de passe. Console admin : `mtc_user` uniquement (plus `postgres`).
+⚠️ **Si le mot de passe de `mtc_user` change, régénérer le fichier** sinon toutes les API perdent la
+base :
+```sh
+D=/opt/infra/databases/pgbouncer-auth
+s=$(docker exec mtc_postgres psql -U mtc_user -d postgres -Atc "select rolpassword from pg_authid where rolname='mtc_user'")
+(umask 077; printf '"mtc_user" "%s"\n' "$s" > $D/userlist.txt); unset s
+docker run --rm -v $D:/d alpine:3 sh -c 'chown 70:70 /d/userlist.txt && chmod 600 /d/userlist.txt'
+docker exec -it mtc_postgres psql -h mtc_pgbouncer -p 6432 -U mtc_user -d pgbouncer -c 'RELOAD'
+```
+Le dossier est inclus dans la sauvegarde B2 (`/infra/databases`).
 
 **Postgres** : `max_connections` **reste à 50** (pas 100) : `shared_buffers` = 1 920 Mo sur une
 limite conteneur de 2,5 Go, il ne reste ~640 Mo pour les connexions ; au-delà, risque d'OOM de
