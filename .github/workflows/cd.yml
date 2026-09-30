@@ -22,6 +22,7 @@ jobs:
     outputs:
       angular: ${{ steps.affected.outputs.angular }}
       admin: ${{ steps.affected.outputs.admin }}
+      api: ${{ steps.affected.outputs.api }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,12 +43,23 @@ jobs:
           has() { echo "$PROJECTS" | grep -q "\"$1\""; }
           if has app-mytradingcoach; then echo "angular=true" >> "$GITHUB_OUTPUT"; else echo "angular=false" >> "$GITHUB_OUTPUT"; fi
           if has admin-mytradingcoach; then echo "admin=true" >> "$GITHUB_OUTPUT"; else echo "admin=false" >> "$GITHUB_OUTPUT"; fi
+          # API (SCA-B0-08) : un commit landing seul ne doit plus redémarrer l'API. Nx ne rattache
+          # ni prisma/ ni le bot Discord à un projet : on les teste en plus par chemin.
+          API_PATHS='^(prisma/|libs/|scripts/discord-bot/|docker-compose\.(prod|discord-bot)\.yml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)'
+          if has api-mytradingcoach || git diff --name-only "$BASE" HEAD | grep -qE "$API_PATHS"; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
 
   # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
+  # Gel des déploiements API (jour J du référencement…) : variable de dépôt FREEZE_API_DEPLOY=true
+  # (Settings → Secrets and variables → Actions → Variables). Les fronts continuent de partir.
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.api == 'true' && vars.FREEZE_API_DEPLOY != 'true' }}
     environment: production
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -66,6 +78,19 @@ jobs:
             git reset --hard ${{ github.event.workflow_run.head_sha }}
             docker compose -f docker-compose.prod.yml --env-file .env.production build api
             docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
+            # Garde-fou : l'API doit répondre prête (Postgres + Redis) sous 90 s, sinon le job échoue
+            # et le tag deployed/prod ne bouge pas (le prochain CD recomparera depuis le bon commit).
+            ready=0
+            for i in $(seq 1 18); do
+              if docker exec mtc_api_prod wget -qO- http://localhost:3000/api/health/ready >/dev/null 2>&1; then ready=1; break; fi
+              sleep 5
+            done
+            if [ "$ready" != 1 ]; then
+              echo "❌ API non prête après 90 s : derniers logs"
+              docker logs --tail 80 mtc_api_prod
+              exit 1
+            fi
+            echo "✅ API prête"
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
             docker buildx prune --keep-storage=8GB -f
@@ -213,8 +238,9 @@ jobs:
     name: Tag deployed/prod
     runs-on: ubuntu-latest
     needs: [changes, deploy-api, deploy-angular, deploy-admin, deploy-landing]
-    # Les jobs sautés (app non modifiée) ne bloquent pas ; un échec, si.
-    if: ${{ !failure() && !cancelled() && needs.changes.result == 'success' }}
+    # Les jobs sautés (app non modifiée) ne bloquent pas ; un échec, si. API modifiée mais gelée :
+    # le tag ne bouge pas, sinon ces changements ne seraient jamais redéployés au dégel.
+    if: ${{ !failure() && !cancelled() && needs.changes.result == 'success' && !(needs.changes.outputs.api == 'true' && vars.FREEZE_API_DEPLOY == 'true') }}
     permissions:
       contents: write
     steps:

@@ -418,3 +418,17 @@ environment:
 
 Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, puis
 `docker compose up -d pgbouncer`.
+
+## CD de l'API : déploiement ciblé, garde-fou et gel (SCA-B0-08, 2026-09-30)
+
+- `deploy-api` ne tourne que si `changes.outputs.api == 'true'` : projet Nx `api-mytradingcoach`
+  affecté, **ou** fichier touché sous `prisma/`, `libs/`, `scripts/discord-bot/`,
+  `docker-compose.{prod,discord-bot}.yml`, `package.json`, `pnpm-lock.yaml`,
+  `pnpm-workspace.yaml` (Nx ne rattache pas ces chemins à un projet). Un commit landing seul ne
+  redémarre plus l'API.
+- Après `up`, le job attend `/api/health/ready` (Postgres + Redis) jusqu'à **90 s**, sinon il
+  échoue en affichant les 80 dernières lignes de logs, et `deployed/prod` ne bouge pas.
+- **Gel** : variable de dépôt `FREEZE_API_DEPLOY=true` (Settings → Secrets and variables →
+  Actions → Variables). L'API n'est plus déployée, les fronts si. Tant que le gel est actif et
+  que l'API a changé, le tag `deployed/prod` ne bouge pas : au dégel, le CD suivant redéploie bien
+  les changements gelés. Retirer la variable (ou la passer à `false`) pour dégeler.
