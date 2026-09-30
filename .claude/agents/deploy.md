@@ -443,3 +443,25 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
   puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
 - Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
   au démarrage.
+
+## Supervision (SCA-B7-08, 2026-10-01)
+
+**Interne — `infra/monitoring/watch-containers.sh`** (installé dans `/opt/backups/`, cron
+`*/5 * * * *`, log `/opt/backups/watch-containers.log`) :
+- conteneurs **critiques** (`mtc_api_prod`, `mtc_postgres`, `mtc_pgbouncer`, `mtc_redis`,
+  `mtc_traefik`, `mtc_app_prod`, `mtc_landing_prod`, `mtc_admin`, `mtc_discord_bot`) : alerte s'ils
+  sont arrêtés ;
+- tous les `mtc_*` qui tournent : alerte si `unhealthy`, tués par OOM, ou **nouveau** redémarrage
+  automatique depuis le passage précédent (`RestartCount` est cumulé : on compare au passage d'avant,
+  mémorisé dans `/opt/backups/.watch-restarts`) ;
+- dev et beta **arrêtés volontairement** (jour J) : pas d'alerte ;
+- disque `/` ≥ 85 %.
+
+E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingcoach.app`,
+**seulement au changement d'état** (panne → 🔴, rétablissement → 🟢). L'état
+(`/opt/backups/.watch-state`) n'est mémorisé qu'après un envoi réussi.
+⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
+Tests : `WATCH_DRY=1` (affiche l'état, n'envoie rien) · `WATCH_TEST=1` (envoie un e-mail de test).
+
+**Externe — UptimeRobot** : voir plus bas (sondes HTTP toutes les 5 min, depuis l'extérieur, qui
+détectent la perte totale du VPS, que le script interne ne peut pas signaler).
