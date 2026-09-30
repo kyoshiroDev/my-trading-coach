@@ -388,3 +388,33 @@ Plus aucun `KEYS` dans le code : `RedisService.scanKeys()` (SCAN par lots, préf
   garde-fou du CD et à la supervision externe.
 - Les plafonds de 2 Gio sont des maxima, pas des réservations. Sur le VPS de 7,6 Go, dev et beta
   n'ont pas vocation à tourner à plein en même temps que la prod pendant un pic.
+
+## Pool Postgres et PgBouncer (SCA-B0-05, 2026-09-30)
+
+**Côté API** (`prisma/pool-config.ts`) : `DB_POOL_MAX` connexions par process (défaut **5**), soit
+15 pour la prod à 3 workers. `connectionTimeoutMillis` 5 s, `idleTimeoutMillis` 10 s,
+`query_timeout` 15 s (côté client).
+
+⚠️ **Jamais de `statement_timeout` dans la config `pg`** : node-postgres l'envoie en paramètre de
+démarrage, que PgBouncer refuse (`ignore_startup_parameters = extra_float_digits` seulement) →
+plus aucune connexion en prod, alors que tout passe en local (pas de PgBouncer). Un plafond
+serveur se règle dans Postgres (`ALTER ROLE … SET statement_timeout`), pas dans l'API.
+
+**Côté VPS** (mesuré le 30/09) : `max_connections = 50`, PgBouncer 1.15 en `transaction`,
+`DEFAULT_POOL_SIZE=25` **par base** × 3 bases = 75 > 50. Bloc proposé pour
+`/opt/infra/databases/docker-compose.yml` (service pgbouncer), **à appliquer en SCA-B7-02 après
+validation**, hors heures de marché US :
+
+```yaml
+environment:
+  # remplace DEFAULT_POOL_SIZE=25 appliqué à toutes les bases
+  DATABASES: >-
+    mytradingcoach_prod = host=mtc_postgres port=5432 pool_size=25,
+    mytradingcoach_dev  = host=mtc_postgres port=5432 pool_size=5,
+    mytradingcoach_beta = host=mtc_postgres port=5432 pool_size=5
+  RESERVE_POOL_SIZE: 5
+  MAX_DB_CONNECTIONS: 40   # garde de la marge sous max_connections=50 (migrations, admin, psql)
+```
+
+Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, puis
+`docker compose up -d pgbouncer`.
