@@ -444,6 +444,15 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
 - Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
   au démarrage.
 
+## Jour J du lancement (SCA-B7-06)
+
+Procédure complète : `docs/ops/jour-j.md` (J-1, gel `FREEZE_API_DEPLOY`, arrêt de dev/beta,
+surveillance, correctif urgent pendant le gel, retour à la normale).
+Tableau de bord : `infra/monitoring/etat-prod.sh`, installé dans `/opt/backups/` (lecture seule,
+`watch -n 30 /opt/backups/etat-prod.sh`) : mémoire des conteneurs, `/health/ready`, 5xx/429 des
+10 dernières min, file d'attente PgBouncer, connexions et requêtes lentes Postgres, mémoire Redis,
+disque — chaque ligne OK ou ⚠️ avec son seuil. Le mot de passe PgBouncer est lu dans le compose
+des bases (3 occurrences sur la ligne `DATABASES` : n'en garder qu'une).
 ## Postgres et PgBouncer (SCA-B7-02, 2026-10-01)
 
 Compose : `/opt/infra/databases/docker-compose.yml` (non versionné, sauvegardé chaque nuit sur B2).
