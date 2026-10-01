@@ -1,0 +1,54 @@
+<div class="screen">
+  <div class="page-head">
+    <div class="page-title">Acquisition</div>
+    <span class="page-meta">source = utm_source du lien d'inscription</span>
+  </div>
+
+  @if (data(); as d) {
+    <div class="kpi-strip cols-4">
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrits 7j</div><div class="kpi-value blue">{{ d.totals.signups7d }}</div><div class="kpi-sub">toutes sources</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrits 30j</div><div class="kpi-value">{{ d.totals.signups30d }}</div><div class="kpi-sub">{{ d.totals.signupsTotal }} au total</div></div>
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Premium</div><div class="kpi-value teal">{{ d.totals.premium }}</div><div class="kpi-sub">dont {{ d.totals.trialing }} en essai</div></div>
+      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Conversion</div><div class="kpi-value purple">{{ d.totals.conversionRate }}%</div><div class="kpi-sub">Free → Premium</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-label">Par source</span><span class="card-label muted">tri : inscrits 30j</span></div>
+      @if (d.rows.length) {
+        <table class="tbl">
+          <caption class="sr-only">Inscrits et conversion Premium par source d'acquisition</caption>
+          <thead><tr>
+            <th scope="col">Source</th>
+            <th scope="col" class="num">Inscrits 7j</th>
+            <th scope="col" class="num">Inscrits 30j</th>
+            <th scope="col" class="num">Total</th>
+            <th scope="col" class="num">Premium</th>
+            <th scope="col" class="num">% converti Premium</th>
+          </tr></thead>
+          <tbody>
+            @for (r of d.rows; track r.source) {
+              <tr>
+                <td data-label="Source">
+                  @if (r.source) { <span class="td-mono">{{ r.source }}</span> }
+                  @else { <span class="muted">direct / non renseigné</span> }
+                </td>
+                <td data-label="Inscrits 7j" class="td-mono num">{{ r.signups7d }}</td>
+                <td data-label="Inscrits 30j" class="td-mono num">{{ r.signups30d }}</td>
+                <td data-label="Total" class="td-mono num muted">{{ r.signupsTotal }}</td>
+                <td data-label="Premium" class="td-mono num">{{ r.premium }}@if (r.trialing) {<span class="muted"> · {{ r.trialing }} essai</span>}</td>
+                <td data-label="% converti Premium" class="td-mono num" [class.teal]="r.conversionRate > 0">{{ r.conversionRate }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="empty">Aucun inscrit</div>
+      }
+    </div>
+    <p class="page-note">Premium = abonnement Stripe en cours (actif, essai ou impayé en relance). Hors compte démo et comptes admin.</p>
+  } @else if (error()) {
+    <div class="card"><div class="empty">⚠ {{ error() }}</div></div>
+  } @else {
+    <div class="card"><div class="empty">Chargement…</div></div>
+  }
+</div>

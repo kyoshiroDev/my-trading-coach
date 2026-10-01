@@ -275,6 +275,8 @@ jobs:
           PUBLIC_API_URL: https://dev.api.mytradingcoach.app/api
           PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
           PUBLIC_FEATURE_REFERRAL: 'true'
+          # Propriété GA4 de dev (variable de dépôt, pas un secret). Vide → ni bandeau ni GA4.
+          PUBLIC_GA_ID: ${{ vars.PUBLIC_GA_ID_DEV }}
 
       - name: Setup SSH
         run: |

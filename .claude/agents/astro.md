@@ -107,6 +107,23 @@ Règles :
 
 ---
 
+## Cookies & GA4 (consentement RGPD, oct. 2026)
+
+- `PUBLIC_GA_ID` (build, variable de dépôt GitHub `PUBLIC_GA_ID` en prod, `PUBLIC_GA_ID_DEV` en dev).
+  **Vide → ni bandeau, ni GA4, ni lien « Gérer les cookies »**, et la politique de confidentialité
+  (section 6 + Google dans les destinataires) affiche la version « aucun traceur » : tout suit `GA_ID`
+  (`config.ts`).
+- `CookieConsent.astro` recueille le choix (localStorage `mtc_cookie_consent` = `{ value, ts }`,
+  redemandé après 6 mois, `src/lib/consent.ts`) et émet `mtc:consent`. `Analytics.astro` est le
+  **seul** endroit qui charge GA4 : injection dynamique de `gtag/js` après « accepted ». Jamais de
+  balise GA statique dans le `<head>`.
+- Refuser = même taille et même poids que Accepter (CNIL). Retrait après acceptation : cookies
+  `_ga*` effacés + rechargement.
+- Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
+  et déclaré dans la politique de confidentialité.
+
+---
+
 ## Tableau comparatif (`Compare.astro`)
 
 Les 12 lignes sont **une seule source de vérité** (tableau `rows` dans le frontmatter) : le rendu

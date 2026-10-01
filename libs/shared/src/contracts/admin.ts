@@ -69,3 +69,23 @@ export interface VpsStats {
   docker: string;
   ip: string;
 }
+
+/** Acquisition par source UTM (GET /admin/acquisition). */
+export interface AdminAcquisitionRow {
+  /** `utm_source` normalisé ; null = direct / non renseigné. */
+  source: string | null;
+  signups7d: number;
+  signups30d: number;
+  signupsTotal: number;
+  /** Abonnement Stripe en cours (active, trialing ou past_due). */
+  premium: number;
+  /** Dont en essai (trialing) : carte enregistrée, pas encore facturé. */
+  trialing: number;
+  /** premium / signupsTotal, en % (1 décimale). */
+  conversionRate: number;
+}
+
+export interface AdminAcquisitionData {
+  rows: AdminAcquisitionRow[];
+  totals: Omit<AdminAcquisitionRow, 'source'>;
+}

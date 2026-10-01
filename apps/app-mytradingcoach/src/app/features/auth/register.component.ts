@@ -14,9 +14,12 @@ import {
   LucideEye as Eye,
   LucideEyeOff as EyeOff,
 } from '@lucide/angular';
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { ToastService } from '../../core/services/toast.service';
+
+/** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
+const UTM_STORAGE_KEY = 'mtc_utm';
 
 @Component({
   selector: 'mtc-register',
@@ -53,6 +56,36 @@ export class RegisterComponent {
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
   protected readonly referralCode = signal(this.resolveReferralCode());
+  private readonly acquisition = this.resolveAcquisition();
+
+  /**
+   * UTM d'acquisition : query params `utm_*` (transmis par la landing) prioritaires,
+   * sinon sessionStorage. Persistés le temps de la session pour survivre à la
+   * navigation interne (register → login → register) ; nettoyés après inscription.
+   * Indépendant du consentement cookies : donnée fonctionnelle de l'inscription.
+   */
+  private resolveAcquisition(): Acquisition {
+    const params = this.route.snapshot.queryParamMap;
+    const pick = (k: string) => params.get(k)?.trim().slice(0, 100) || undefined;
+    const fromUrl: Acquisition = {
+      acquisitionSource: pick('utm_source'),
+      acquisitionMedium: pick('utm_medium'),
+      acquisitionCampaign: pick('utm_campaign'),
+    };
+    if (Object.values(fromUrl).some(Boolean)) {
+      try {
+        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(fromUrl));
+      } catch {
+        /* sessionStorage indisponible */
+      }
+      return fromUrl;
+    }
+    try {
+      return JSON.parse(sessionStorage.getItem(UTM_STORAGE_KEY) ?? '{}') as Acquisition;
+    } catch {
+      return {};
+    }
+  }
 
   /**
    * Code de parrainage : query param `?ref` prioritaire (transmis par la landing),
@@ -122,10 +155,16 @@ export class RegisterComponent {
         this.name() || undefined,
         this.referralCode() || undefined,
         this.marketingConsent(),
+        this.acquisition,
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          try {
+            sessionStorage.removeItem(UTM_STORAGE_KEY);
+          } catch {
+            /* sessionStorage indisponible */
+          }
           if (this.isPremiumFlow()) {
             // Compte créé mais paiement indisponible : on continue, sans le cacher.
             this.billing.startCheckout('premium_monthly', () => {

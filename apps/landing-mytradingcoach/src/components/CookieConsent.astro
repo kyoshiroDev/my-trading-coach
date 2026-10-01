@@ -1,0 +1,128 @@
+---
+import { GA_ID } from '../config';
+
+// Rendu uniquement si une mesure d'audience est configurée (PUBLIC_GA_ID) :
+// sans traceur, aucun consentement à demander (et la politique de confidentialité suit).
+---
+{GA_ID && (
+  <div
+    id="cookie-consent"
+    class="cc"
+    role="region"
+    aria-label="Consentement aux cookies"
+    hidden
+  >
+    <p class="cc-txt">
+      On utilise des cookies de mesure d'audience pour comprendre comment tu utilises le site.
+      Aucune donnée vendue ou partagée.
+      <a href="/politique-confidentialite#cookies" class="cc-link">En savoir plus</a>
+    </p>
+    <div class="cc-actions">
+      <button type="button" class="cc-btn cc-refuse" data-cc="refused">Refuser</button>
+      <button type="button" class="cc-btn cc-accept" data-cc="accepted">Accepter</button>
+    </div>
+  </div>
+)}
+
+<script>
+  // RGPD : ce bandeau ne fait que recueillir le choix. Le chargement de GA4 vit dans
+  // Analytics.astro, qui ne réagit qu'à « accepted » (stocké ou émis via `mtc:consent`).
+  // Choix stocké dans localStorage `mtc_cookie_consent` = { value, ts }.
+  import { readConsent, saveConsent, type Consent } from '../lib/consent';
+
+  const banner = document.getElementById('cookie-consent');
+
+  function show() { banner?.removeAttribute('hidden'); }
+  function hide() { banner?.setAttribute('hidden', ''); }
+
+  if (banner) {
+    if (readConsent() === null) show();
+
+    banner.querySelectorAll<HTMLButtonElement>('[data-cc]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const value = btn.dataset.cc as Consent;
+        saveConsent(value);
+        hide();
+        window.dispatchEvent(new CustomEvent<Consent>('mtc:consent', { detail: value }));
+      });
+    });
+
+    // Lien « Gérer les cookies » (footer) : retirer son choix doit être aussi simple que le donner.
+    document.querySelectorAll('[data-cookie-settings]').forEach((el) => {
+      el.removeAttribute('hidden');
+      el.addEventListener('click', (e) => { e.preventDefault(); show(); });
+    });
+  }
+</script>
+
+<style>
+  .cc {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    /* Au-dessus de la barre sticky mobile (999), sous le menu plein écran (9999). */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 14px 5%;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--b);
+    font-family: var(--body);
+  }
+  .cc[hidden] { display: none; }
+
+  .cc-txt {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--txt2);
+    max-width: 720px;
+  }
+  .cc-link { color: var(--blue2); text-decoration: none; white-space: nowrap; transition: color .2s; }
+  .cc-link:hover { color: var(--txt); }
+
+  .cc-actions { display: flex; gap: 10px; flex-shrink: 0; }
+
+  /* Même taille, même graisse : refuser doit être aussi simple qu'accepter (CNIL). */
+  .cc-btn {
+    min-width: 108px;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+  }
+  .cc-accept {
+    background: var(--blue);
+    color: #fff;
+    border: 1px solid var(--blue);
+  }
+  .cc-accept:hover {
+    background: var(--blue2);
+    border-color: var(--blue2);
+    box-shadow: 0 0 20px rgba(59,130,246,.3);
+  }
+  .cc-refuse {
+    background: transparent;
+    color: var(--txt);
+    border: 1px solid var(--b2);
+  }
+  .cc-refuse:hover { border-color: var(--blue); background: rgba(59,130,246,.05); }
+  .cc-btn:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
+
+  @media (max-width: 767px) {
+    .cc {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+      /* Opaque : la barre sticky bleue (Nav) ne doit pas transparaître dessous. */
+      background: var(--bg2);
+    }
+    .cc-actions > .cc-btn { flex: 1; }
+  }
+</style>

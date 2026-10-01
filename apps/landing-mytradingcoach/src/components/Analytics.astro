@@ -1,0 +1,57 @@
+---
+import { GA_ID } from '../config';
+
+// GA4 chargé UNIQUEMENT après consentement (CookieConsent.astro) : aucune balise
+// googletagmanager n'existe dans le DOM avant « Accepter ». ID au build (PUBLIC_GA_ID).
+---
+{GA_ID && <div id="mtc-ga" data-ga-id={GA_ID} hidden></div>}
+
+<script>
+  import { readConsent, type Consent } from '../lib/consent';
+
+  type GtagWindow = Window & { dataLayer: unknown[]; gtag: (...args: unknown[]) => void };
+
+  const gaId = document.getElementById('mtc-ga')?.dataset.gaId;
+
+  function loadGa(id: string) {
+    if (document.getElementById('ga4-src')) return;
+    const w = window as unknown as GtagWindow;
+    w.dataLayer = w.dataLayer || [];
+    // gtag.js attend l'objet `arguments` tel quel, pas un tableau.
+    w.gtag = function () { w.dataLayer.push(arguments); };
+    w.gtag('js', new Date());
+    w.gtag('config', id);
+    const s = document.createElement('script');
+    s.id = 'ga4-src';
+    s.async = true;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
+    document.head.appendChild(s);
+  }
+
+  // Retrait du consentement : effacer les cookies _ga* (hôte et domaine parent).
+  function clearGaCookies() {
+    const host = location.hostname;
+    const domains = ['', host, `.${host}`, `.${host.split('.').slice(-2).join('.')}`];
+    document.cookie.split(';').forEach((c) => {
+      const name = c.split('=')[0].trim();
+      if (!name.startsWith('_ga')) return;
+      domains.forEach((d) => {
+        document.cookie = `${name}=; Max-Age=0; path=/${d ? `; domain=${d}` : ''}`;
+      });
+    });
+  }
+
+  if (gaId) {
+    if (readConsent() === 'accepted') loadGa(gaId);
+
+    window.addEventListener('mtc:consent', (e) => {
+      const value = (e as CustomEvent<Consent>).detail;
+      if (value === 'accepted') loadGa(gaId);
+      else if (document.getElementById('ga4-src')) {
+        // GA déjà actif dans cette page : seul un rechargement l'arrête vraiment.
+        clearGaCookies();
+        location.reload();
+      }
+    });
+  }
+</script>
