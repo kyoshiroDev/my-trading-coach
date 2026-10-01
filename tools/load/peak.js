@@ -33,9 +33,9 @@ export default function () {
   if (!token) { sleep(5); return; }
   http.get(`${BASE_URL}/public/stats`, { tags: { name: 'GET /public/stats' }, headers: auth(token).headers });
   openDashboard(token);
-  for (let i = 0; i < 4 && !tokenExpired; i++) {
+  for (let i = 0; i < 2 && !tokenExpired; i++) {
     sessionPoll(token);
-    sleep(15); // rythme réel du polling de session
+    sleep(30); // stats live toutes les 30 s (SCA-B4)
   }
   if (!tokenExpired) openJournal(token);
   if (tokenExpired) token = null; // reconnexion à l'itération suivante

@@ -1,9 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { EMPTY, fromEvent, interval } from 'rxjs';
+import { EMPTY, fromEvent } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '@app/environments/environment';
+import { POLLING_MS } from '../constants/polling.const';
+import { visibleInterval } from '../utils/visible-interval';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradesStore } from '../stores/trades.store';
 import { SetupsStore } from '../stores/setups.store';
@@ -65,20 +67,25 @@ export class AuthService {
   }
 
   private startUserSync(): void {
-    const refresh$ = this.fetchMe().pipe(catchError(() => EMPTY));
+    // SCA-B4-01 / B4-02 : toutes les 5 min (était 30 s, pour TOUS les connectés, onglet caché
+    // compris), muet onglet caché ; au retour sur l'onglet, rafraîchi seulement si la dernière
+    // synchro date de plus d'une minute (un trader alterne sans cesse entre ses onglets).
+    let lastSync = Date.now();
+    const refresh$ = this.fetchMe().pipe(
+      tap(() => (lastSync = Date.now())),
+      catchError(() => EMPTY),
+    );
 
-    // Toutes les 30s quand connecté
-    interval(30_000)
+    visibleInterval(POLLING_MS.USER_SYNC)
       .pipe(
         filter(() => this.isAuthenticated()),
         switchMap(() => refresh$),
       )
       .subscribe();
 
-    // Immédiatement quand l'onglet redevient visible
     fromEvent(document, 'visibilitychange')
       .pipe(
-        filter(() => !document.hidden && this.isAuthenticated()),
+        filter(() => !document.hidden && this.isAuthenticated() && Date.now() - lastSync > 60_000),
         switchMap(() => refresh$),
       )
       .subscribe();
