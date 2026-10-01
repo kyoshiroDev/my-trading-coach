@@ -4,7 +4,9 @@
 --   (médiane et maximum retenus en A-03), étalés sur 2 ans. Total ≈ 4,1 M trades.
 -- Lancement (sur le VPS) :
 --   docker exec -i mtc_postgres psql -U mtc_user -d mytradingcoach_beta \
---     -v users=2000 -v pwhash="'<hash argon2>'" < seed-beta.sql
+--     -v users=2000 -v pwhash='<hash argon2>' < seed-beta.sql
+--   :'pwhash' = psql met lui-même les guillemets (le hash contient des « $ », lus sinon comme
+--   une chaîne « dollar-quoted » par SQL ou comme des variables par un shell distant).
 -- Purge : purge-beta.sql. Mot de passe des comptes : README.
 \set ON_ERROR_STOP on
 \timing on
@@ -21,7 +23,7 @@ END $$;
 BEGIN;
 
 INSERT INTO "User" (id, email, password, name, plan, "onboardingCompleted", "isDemo", "createdAt", "updatedAt", "lastLoginAt")
-SELECT 'load-u-' || n, 'load-' || n || '@test.local', :pwhash, 'Load ' || n, 'PREMIUM', true, false,
+SELECT 'load-u-' || n, 'load-' || n || '@test.local', :'pwhash', 'Load ' || n, 'PREMIUM', true, false,
        now() - interval '2 years', now(), now()
 FROM generate_series(1, :users) n;
 

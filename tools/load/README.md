@@ -41,7 +41,7 @@ Machine partagée avec la prod : **hors heures du marché US** (15 h 30 – 22 h
    HASH=$(cd apps/api-mytradingcoach && node -e "require('argon2').hash('LoadTest-2026!',{type:2,memoryCost:19456,timeCost:2,parallelism:1}).then(console.log)")
    # le hash contient des « $ » : il ne doit JAMAIS passer dans une commande ssh entre guillemets
    # (le shell distant les interprète). On le transmet dans le SQL, par l'entrée standard :
-   { printf '\\set pwhash %s\n' "'$HASH'"; cat tools/load/seed-beta.sql; } |
+   { printf '\\set pwhash %s\n' "$HASH"; cat tools/load/seed-beta.sql; } |
      ssh greg@VPS 'docker exec -i mtc_postgres psql -U mtc_user -d mytradingcoach_beta -v users=2000'
    ```
 4. **Mesures serveur** : `nohup /opt/backups/collect-metrics.sh /opt/backups/charge-<date>.csv &`

@@ -79,3 +79,40 @@ toutes les ~75 s, et tous sont Premium (statistiques complètes).
 Comptes de charge purgés (base beta : 1,5 Go → 31 Mo après `VACUUM FULL`), clés Redis de
 charge supprimées, `LOAD_TEST_KEY` retirée de `.env.beta`, `DB_POOL_MAX=2` et pool beta 6
 rétablis, API dev relancée. Les trois API saines à la fin.
+
+## Test n°2 (même soir, 22 h 51) — scénario fidèle au dashboard, cache réparé (#254)
+
+Mêmes données, même machine. Scénario = appels exacts de `dashboard.component.ts` (période 30 j,
+courbe journalière, `by-emotion`, `activity/range`) + polling de session toutes les 15 s.
+
+| Utilisateurs | p50 | p95 | CPU API beta | Charge | Redis beta |
+|---|---|---|---|---|---|
+| 250 | — | — | 70-125 % | 2,4 | 8 Mo (test n°1 : 48) |
+| 500 | — | — | ~160 % | 3,7 | 10 Mo |
+| 760 | — | — | ~240 % | 4,1 | 17 Mo |
+| **1 000** | **234 ms** | **1,05 s** | 250-280 % (plafond) | 6,5 | 21 Mo |
+| 1 250 | **2,1 s** | 4,2 s | plafond | 8,8 | 28 Mo → **arrêté** |
+
+- **0 contrôle en échec** sur 123 607 (renouvellement du jeton corrigé) ; API : 0 erreur 5xx.
+- **Redis réglé** : 28 Mo à 1 250 utilisateurs (test n°1 : saturé à 128 Mo vers 750).
+- **Même plafond** qu'au test n°1 : ~**250 requêtes/s** pour la machine (≈ 12 ms de CPU par
+  requête, 3 workers). Le scénario émet ~0,24 req/s par utilisateur → 250 / 0,24 ≈ **1 040
+  utilisateurs**, ce qu'on mesure.
+
+**Répartition des requêtes au palier 1 000** (Traefik, 3 min) : `session/today/stats` 12 000 et
+`market/context` 12 000 (**polling toutes les 15 s = la moitié des requêtes**), puis ~3 000 pour
+chaque route du dashboard. `market/context` est déjà en cache et commun à tous : ses 265 ms de
+moyenne sont **de l'attente** derrière les workers saturés, pas du calcul.
+
+### Conclusion révisée
+
+Le plafond n'est pas un calcul lourd isolé mais **le débit total de requêtes** :
+**capacité ≈ 250 req/s ÷ requêtes par seconde et par utilisateur**. Deux leviers :
+1. **Moins de requêtes par utilisateur (B4)** : polling suspendu quand l'onglet est caché
+   (B4-02), contexte marché **poussé** par le socket `/eco` au lieu d'être interrogé par chacun
+   (B4-03). Le polling seul pèse la moitié du trafic.
+2. **Moins de CPU par requête (B3)** : utilisateur authentifié relu en base à **chaque**
+   requête (B3-01 : cache Redis 60 s), présence écrite à chaque requête (B3-02).
+3. Jour J : 4 workers en prod une fois dev/beta arrêtés (+33 % de débit théorique).
+
+Le scénario reste un **pire cas** : 100 % des utilisateurs en session active avec l'onglet visible.
