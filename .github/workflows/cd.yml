@@ -221,6 +221,8 @@ jobs:
           # /ambassadeur ne sont publiées (et entrent au sitemap) que si ON ici (PROMPT-173).
           PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
           PUBLIC_FEATURE_REFERRAL: 'true'
+          # Propriété GA4 de prod (variable de dépôt, pas un secret). Vide → ni bandeau ni GA4.
+          PUBLIC_GA_ID: ${{ vars.PUBLIC_GA_ID }}
 
       - name: Setup SSH
         run: |
