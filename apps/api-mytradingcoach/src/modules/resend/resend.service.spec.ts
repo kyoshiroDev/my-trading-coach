@@ -178,7 +178,7 @@ describe('ResendService', () => {
       expect(Sentry.captureMessage).toHaveBeenCalledOnce();
       expect(Sentry.captureMessage).toHaveBeenCalledWith(
         expect.stringContaining(`${RESEND_DAILY_WARN} e-mails`),
-        expect.objectContaining({ level: 'warning', fingerprint: ['resend-daily-volume'] }),
+        expect.objectContaining({ level: 'error', fingerprint: ['resend-daily-volume'] }), // 'warning' = priorité moyenne = pas d'e-mail
       );
       expect(redisClient.incr.mock.calls[0][0]).toMatch(/^resend:sent:\d{4}-\d{2}-\d{2}$/);
     });

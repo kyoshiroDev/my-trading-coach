@@ -321,8 +321,10 @@ export class ResendService {
       if (sent === 1) await this.redis.client.expire(key, 3 * 24 * 3600);
       if (sent === RESEND_DAILY_WARN) {
         this.logger.warn(`${sent} e-mails envoyés aujourd'hui (plan gratuit : 100/jour)`);
+        // Niveau `error` et non `warning` : la règle d'alerte Sentry (« high priority issues »)
+        // n'envoie d'e-mail que pour la priorité haute, et Sentry classe `warning` en moyenne.
         Sentry.captureMessage(`Resend : ${sent} e-mails envoyés aujourd'hui, passer au plan Pro`, {
-          level: 'warning',
+          level: 'error',
           fingerprint: ['resend-daily-volume'],
           extra: { sent, freePlanDailyLimit: 100 },
         });

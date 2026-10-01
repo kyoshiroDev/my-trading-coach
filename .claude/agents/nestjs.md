@@ -1131,7 +1131,7 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
     un quota dépassé = une seule issue ; `daily_quota_exceeded` / `monthly_quota_exceeded` en `fatal`) ;
   - jamais de throw (un e-mail raté ne fait pas échouer un job) ;
   - compteur du jour `resend:sent:<AAAA-MM-JJ UTC>` dans Redis ; au **80e** envoi
-    (`RESEND_DAILY_WARN`), alerte Sentry `warning` : seuil décidé pour passer du plan gratuit
+    (`RESEND_DAILY_WARN`), alerte Sentry de niveau **`error`** (la règle d'alerte n'envoie d'e-mail que pour la priorité haute ; `warning` = priorité moyenne = aucune notification) : seuil décidé pour passer du plan gratuit
     (100/jour) au plan Pro. Redis en panne → l'envoi part quand même.
 - **Pas de `Promise.all` sur une liste d'utilisateurs qui envoie des e-mails** :
   `mapWithConcurrency(items, 4, fn)` (`common/utils/concurrency.util.ts`). Récap quotidien et
