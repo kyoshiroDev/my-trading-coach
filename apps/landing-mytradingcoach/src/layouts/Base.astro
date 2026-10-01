@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { DEFAULT_SCHEMA } from '../data/schema';
+import CookieConsent from '../components/CookieConsent.astro';
 
 interface Props {
   title?: string;
@@ -74,6 +75,7 @@ const robots = noindex
 </head>
 <body>
   <slot />
+  <CookieConsent />
   <script>
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => {
