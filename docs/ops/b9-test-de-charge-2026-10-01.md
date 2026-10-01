@@ -2,6 +2,14 @@
 
 > Premier test de charge réel (SCA-B9-01), sur **beta**, avec un volume de prod réaliste.
 > Procédure et outils : `tools/load/README.md`.
+>
+> ⚠️ **Correctif du 2026-10-01 (soir)** : le scénario ne reproduisait pas le vrai dashboard. Il
+> appelait `/analytics/equity-curve` (un point **par trade**, sur **tout** l'historique) et
+> `summary` sur tout l'historique, alors que le dashboard appelle `/equity-curve/daily` et
+> `summary` **sur 30 jours** (+ `by-emotion`, `activity/range`). Les chiffres ci-dessous
+> **surestiment** donc le coût par utilisateur, et la conclusion Redis (160 Ko/utilisateur) vient
+> surtout de cette route que personne n'appelle. Le scénario est corrigé : **le test est à
+> relancer** (après #254, qui rend le cache du dashboard enfin efficace).
 
 ## Conditions
 
@@ -44,8 +52,8 @@ toutes les ~75 s, et tous sont Premium (statistiques complètes).
    les statistiques sont calculées **en JavaScript** à partir de **tous** les trades chargés
    (phase **B2**). Mesure isolée : compte à 50 000 trades → `/analytics/equity-curve` = **3,5 Mo
    en 1,3 s**, `summary` et `by-setup` = 0,77 s chacun ; compte à 2 000 trades : < 0,3 s.
-3. **Redis : saturé par le cache de la courbe d'equity**, **160 Ko par utilisateur** (2 000
-   trades). Beta (128 Mo) plein vers 750 utilisateurs. **La prod (256 Mo) le serait vers
+3. **Redis : saturé par le cache de la courbe d'equity par trade** (route non utilisée par le
+   front, voir l'avertissement en tête), **160 Ko par utilisateur** (2 000 trades). Beta (128 Mo) plein vers 750 utilisateurs. **La prod (256 Mo) le serait vers
    ~1 500 utilisateurs actifs.** Comportement observé à saturation (`noeviction`) : les écritures
    échouent, `markActive` ignore l'erreur, le rate limiting bascule en mémoire (prévu), le cache
    n'est plus écrit → **chaque dashboard recalcule tout → plus de CPU**. En prod, **les files
@@ -57,7 +65,7 @@ toutes les ~75 s, et tous sont Premium (statistiques complètes).
 
 | # | Action | Effet | Phase |
 |---|---|---|---|
-| 1 | Courbe d'equity **échantillonnée** (≤ 2 000 points → quelques centaines) | réponse et cache divisés par 10+ (3,5 Mo → < 100 Ko), Redis ×10 de marge | B2-01 |
+| 1 | **Fait (#254)** : cache du dashboard réellement utilisé (clé à la milliseconde → 0 % de cache) ; courbe par trade réduite à 500 points | dashboard recalculé au plus 1 fois/min/utilisateur au lieu de chaque ouverture | B2-01 |
 | 2 | Statistiques **en SQL** (`summary`, `by-setup`, `top-assets`, journal) au lieu de charger tous les trades | CPU de l'API par dashboard divisé, temps indépendant du nombre de trades | B2-01 → 04 |
 | 3 | Redis prod **512 Mo** (VPS : 3,2 Go disponibles) | repousse la saturation, protège BullMQ | B7-05 |
 | 4 | Jour J : `WEB_CONCURRENCY=4` en prod une fois dev/beta arrêtés | +1 worker sur les 4 cœurs | B7-06 |

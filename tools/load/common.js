@@ -54,15 +54,24 @@ export function get(token, path, name = `GET ${path}`) {
   return res;
 }
 
-/** Ouverture du tableau de bord : les appels du dashboard Angular. */
+/**
+ * Ouverture du tableau de bord : EXACTEMENT les appels de dashboard.component.ts (période par
+ * défaut « 1M » = 30 derniers jours, `to` = maintenant). Le scénario du 2026-10-01 appelait
+ * /analytics/equity-curve (un point par trade, sur tout l'historique) qu'aucun écran n'utilise.
+ */
 export function openDashboard(token) {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - 30);
+  from.setHours(0, 0, 0, 0);
+  const range = `?from=${from.toISOString()}&to=${to.toISOString()}`;
   get(token, '/auth/me');
-  get(token, '/analytics/summary');
-  get(token, '/analytics/equity-curve');
+  get(token, `/analytics/summary${range}`, 'GET /analytics/summary');
+  get(token, `/analytics/equity-curve/daily${range}`, 'GET /analytics/equity-curve/daily');
+  get(token, `/analytics/activity/range${range}`, 'GET /analytics/activity/range');
   get(token, '/analytics/by-setup');
+  get(token, '/analytics/by-emotion');
   get(token, '/analytics/top-assets');
-  get(token, '/analytics/activity/current-month');
-  get(token, '/session/active');
 }
 
 /** Ouverture du journal : première page + stats. */
