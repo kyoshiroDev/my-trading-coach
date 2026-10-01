@@ -51,7 +51,7 @@ src/app/
 │   │   └── components/
 │   │       ├── session-morning/  ← V2 : vue pré-session (mood, recap hier, objectifs, éco calendar)
 │   │       │   session-morning.component.ts + .css
-│   │       └── session-live/     ← V2 : vue session active (cadre + mini-stats + socket éco)
+│   │       └── session-live/     ← V2 : vue session active (cadre + mini-stats)
 │   │           session-live.component.ts + .css
 │   │           └── components/   live-eco-calendar · live-feed · quick-trade · live-news
 │   ├── journal/            journal.component · trade-form.component
@@ -110,7 +110,7 @@ la maquette design (« The Terminal »).
 ```typescript
 // activeTab = signal<'morning' | 'live' | 'debrief'>('morning')
 // effect() auto-switch vers 'live' si activeSession()?.status === 'ACTIVE'
-// Polling interval(30s) pour refreshLiveStats() pendant session active
+// Polling visibleInterval(30s) pour refreshLiveStats() pendant session active (SessionStore, SCA-B4)
 ```
 
 - **Shell** : `mtc-topbar` en **mode hero** (`[heroHeader]="true"`) — titre « Ma session »
@@ -700,8 +700,8 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   `currentCapital`, `accountReallyEmpty`, `dashboardPeriod`, `setPeriod`, `plGranularity`,
   `plTitle`, `periodRange`, `showCsvImport`) : ne pas les déplacer dans un panneau.
 - **Session live** : le parent garde le cadre (CTA sans session, carte marché, mini-stats,
-  grilles `.live-layout` / `.live-cols`) et la **connexion du WebSocket éco** (c'est l'état de
-  la session qui décide, déconnexion comprise). Calendrier éco, live feed, trade rapide et news
+  grilles `.live-layout` / `.live-cols`). La **connexion du WebSocket éco** est dans
+  `SessionStore` depuis SCA-B4 (voir « Polling »). Calendrier éco, live feed, trade rapide et news
   (ticker + modale) sont dans `session-live/components/`.
 - **CSS encapsulée** : le style d'une viz vit dans SON composant (un sélecteur du parent ne
   descend pas dans l'enfant). L'hôte d'un panneau de grille est un flex colonne
@@ -778,3 +778,19 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - Tests : `pnpm nx test front-ui` / `pnpm nx test front-auth` (config Vitest propre à chaque lib :
   l'exécuteur de l'app refuse les specs hors de sa racine). Une lib importée par l'app doit aussi
   être déclarée dans `resolve.alias` de `apps/app-mytradingcoach/vitest.config.mts`.
+
+## Polling : `visibleInterval` obligatoire (SCA-B4, 2026-10-01)
+
+Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. Règles :
+- **Jamais `interval()` / `setInterval()` pour interroger l'API** : `visibleInterval(ms)`
+  (`core/utils/visible-interval.ts`) — muet onglet caché, une émission de rattrapage au retour si
+  une période a été manquée. Délais centralisés dans `core/constants/polling.const.ts`.
+- **Donnée commune à tous** (contexte marché, calendrier éco) → **poussée par le socket `/eco`**
+  (`EcoSocketService.marketContext$`, `newReleases$`), polling HTTP en **secours à 5 min**
+  seulement, et rattrapage à chaque (re)connexion (`connected$`).
+- Le socket `/eco` est piloté par **`SessionStore`** (connecté tant que la session est active,
+  quelle que soit la page), plus par `session-live`.
+- `/auth/me` : 5 min (`USER_SYNC`), et au retour sur l'onglet seulement si la dernière synchro
+  date de plus d'une minute.
+- Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
+  (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.

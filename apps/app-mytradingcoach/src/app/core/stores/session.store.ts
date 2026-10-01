@@ -6,7 +6,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { forkJoin, interval } from 'rxjs';
+import { EMPTY, forkJoin, interval, merge } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { SessionApi, TradingSession, LiveStats, SessionTrade, MoodState } from '../api/session.api';
 import { TradesApi, CreateTradeDto, MarketContext, NewsItem } from '../api/trades.api';
 import { DailyRecapApi, DailyRecap } from '../api/daily-recap.api';
@@ -15,6 +16,8 @@ import { EcoCalendarApi, EcoCalendarData } from '../api/eco-calendar.api';
 import { UserStore } from './user.store';
 import { POLLING_MS } from '../constants/polling.const';
 import { ToastService } from '../services/toast.service';
+import { EcoSocketService } from '../services/eco-socket.service';
+import { visibleInterval } from '../utils/visible-interval';
 import { apiErrorMessage } from '../utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
@@ -29,6 +32,7 @@ export class SessionStore {
   private readonly userStore       = inject(UserStore);
   private readonly destroyRef      = inject(DestroyRef);
   private readonly toast           = inject(ToastService);
+  private readonly ecoSocket       = inject(EcoSocketService);
 
   // ── State ─────────────────────────────────────────────────────────────────
   readonly activeSession     = signal<TradingSession | null>(null);
@@ -80,50 +84,44 @@ export class SessionStore {
     return `${h}:${m}:${s}`;
   });
 
-  private marketCtxInterval?: ReturnType<typeof setInterval>;
-  private newsInterval?: ReturnType<typeof setInterval>;
-
   constructor() {
     // Horloge 1 s pour le timer de session
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.sessionNow.set(new Date()));
 
-    // Polling stats live toutes les 30 s
-    interval(30_000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        if (this.activeSession()?.status === 'ACTIVE') this.refreshLiveStats();
-      });
-
-    // Polling calendrier éco (IA mutualisée = FREE, session active) : recharge la donnée
-    // fraîche (actuals + analyse IA) toutes les 60 s. Filet de sécurité indépendant du
-    // broadcast WebSocket transitoire : la fenêtre ouverte rattrape même si un broadcast
-    // est manqué (reconnexion socket après déploiement, cycle de détection raté, etc.).
-    interval(POLLING_MS.ECO_CALENDAR)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        if (this.activeSession()?.status === 'ACTIVE') {
-          this.loadWeekEcoCalendar();
-        }
-      });
-
-    // Polling market context + news : session active (contexte marché + news = IA
-    // mutualisée → FREE, accessible à tous les utilisateurs connectés).
+    // Session active (SCA-B4-02 / B4-03) : tous les pollings passent par visibleInterval (muets
+    // onglet caché, rattrapage au retour). Contexte marché et calendrier éco sont POUSSÉS par le
+    // socket /eco ; leur polling HTTP n'est plus qu'un secours à 5 min. Cible : < 3 req/min/onglet
+    // (hors quick-trade). Contexte marché + news + calendrier = IA mutualisée → FREE.
     toObservable(this.activeSession)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((session) => {
-        clearInterval(this.marketCtxInterval);
-        clearInterval(this.newsInterval);
-        this.marketCtxInterval = undefined;
-        this.newsInterval      = undefined;
-        if (session?.status === 'ACTIVE') {
+      .pipe(
+        switchMap((session) => {
+          if (session?.status !== 'ACTIVE') {
+            this.ecoSocket.disconnect();
+            return EMPTY;
+          }
+          this.ecoSocket.connect();
           this.fetchMarketContext();
           this.fetchNewsItems();
-          this.marketCtxInterval = setInterval(() => this.fetchMarketContext(), POLLING_MS.MARKET_CONTEXT);
-          this.newsInterval      = setInterval(() => this.fetchNewsItems(), POLLING_MS.NEWS);
-        }
-      });
+          return merge(
+            visibleInterval(POLLING_MS.LIVE_STATS).pipe(tap(() => this.refreshLiveStats())),
+            visibleInterval(POLLING_MS.MARKET_CONTEXT_FALLBACK).pipe(tap(() => this.fetchMarketContext())),
+            visibleInterval(POLLING_MS.ECO_CALENDAR_FALLBACK).pipe(tap(() => this.loadWeekEcoCalendar())),
+            visibleInterval(POLLING_MS.NEWS).pipe(tap(() => this.fetchNewsItems())),
+            this.ecoSocket.marketContext$.pipe(tap((ctx) => this.marketCtx.set(ctx))),
+            // (Re)connexion du socket : rattrape ce qui a été diffusé pendant la coupure.
+            this.ecoSocket.connected$.pipe(
+              tap(() => {
+                this.fetchMarketContext();
+                this.loadWeekEcoCalendar();
+              }),
+            ),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
   }
 
   // ── Public API ────────────────────────────────────────────────────────────

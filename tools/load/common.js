@@ -80,8 +80,11 @@ export function openJournal(token) {
   get(token, '/trades/stats');
 }
 
-/** Un tour de polling en session active (stats 30 s, contexte marché 15 s). */
+/**
+ * Un tour de polling en session active, tel que le front le fait depuis SCA-B4 : stats live
+ * toutes les 30 s ; contexte marché et calendrier éco POUSSÉS par le socket /eco (plus interrogés,
+ * secours HTTP à 5 min seulement) ; /auth/me toutes les 5 min.
+ */
 export function sessionPoll(token) {
   get(token, '/session/today/stats');
-  get(token, '/market/context');
 }

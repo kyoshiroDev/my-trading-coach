@@ -11,7 +11,6 @@ import { EcoCalendarData } from '@app/core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '@app/core/api/session.api';
 import { CreateTradeDto, MarketContext, NewsItem } from '@app/core/api/trades.api';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
-import { EcoSocketService } from '@app/core/services/eco-socket.service';
 import { MoneyService } from '@app/core/services/money.service';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
 import { LiveFeedComponent } from './components/live-feed/live-feed.component';
@@ -48,7 +47,6 @@ export class SessionLiveComponent {
   readonly ecoCalendarRefreshed = output<EcoCalendarData>();
   readonly goToDebrief = output<void>();
 
-  private readonly ecoSocket = inject(EcoSocketService);
 
   // News live + contexte marché = IA mutualisée → FREE, accessible à tous.
 
@@ -60,17 +58,8 @@ export class SessionLiveComponent {
       }
     });
 
-    // WebSocket éco : connecter quand session active (analyse IA éco = IA mutualisée → FREE).
-    // Reste ici et non dans le calendrier : c'est l'état de la session qui décide, y compris
-    // la déconnexion quand elle se termine (le calendrier n'existe alors plus).
-    effect(() => {
-      const s = this.session();
-      if (s?.status === 'ACTIVE') {
-        this.ecoSocket.connect();
-      } else {
-        this.ecoSocket.disconnect();
-      }
-    });
+    // WebSocket éco : connecté/déconnecté par SessionStore selon l'état de la session (SCA-B4-03),
+    // quelle que soit la page : il porte aussi le contexte marché poussé.
   }
 
   private readonly money = inject(MoneyService);
