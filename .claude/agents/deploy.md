@@ -443,3 +443,43 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
   puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
 - Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
   au démarrage.
+
+## Sauvegarde hors-site (SCA-B7-09, 2026-09-30)
+
+Avant : dumps quotidiens **uniquement sur le VPS** (`/opt/backups/mtc`), perdus avec lui.
+
+| Élément | Valeur |
+|---|---|
+| Destination | Backblaze B2, bucket `mtc-backups-7k3q9x`, région **EU Central** (Amsterdam), privé, SSE-B2, « keep only the last version » |
+| Compte B2 | `hello@mytradingcoach.app` (2FA). Clé d'application **`mtc-vps-restic`**, limitée au bucket, Read and Write. **Jamais la clé maîtresse sur le VPS.** |
+| Outil | restic 0.18.1 **dans un conteneur** (`restic/restic`), dépôt `b2:mtc-backups-7k3q9x:mtc`, chiffré avant envoi |
+| Scripts | `infra/backups/offsite.sh` et `restore-test.sh`, copiés dans `/opt/backups/` |
+| Identifiants | `/opt/backups/offsite.env` (chmod 600, jamais versionné, modèle `offsite.env.example`) |
+| Contenu | dumps des 3 bases (`/opt/backups/mtc`) **et tout ce qui n'existe que sur le VPS**, chaque nuit : `/opt/infra/databases` (compose, `.env.databases`, `pgbouncer.ini`, `init-db.sh`), `/opt/infra/static` (compose, confs nginx), Traefik (`traefik.yml`, compose, `.env.traefik` avec le jeton API OVH des certificats), les `.env` de prod/dev/beta, la crontab, les scripts de sauvegarde. **Pas** : le code (GitHub), les builds et images (refaits par le CI), les certificats (Let's Encrypt les régénère), `offsite.env` (gestionnaire de mots de passe). Aucun fichier utilisateur sur disque : toutes les données sont dans Postgres. |
+| Planning | cron `45 3 * * *` (après `backup.sh` à 3 h et le nettoyage Docker à 3 h 30), log `/opt/backups/offsite.log` |
+| Rétention | 14 quotidiennes, 8 hebdomadaires, 6 mensuelles ; `check --read-data-subset=5%` le dimanche |
+
+⚠️ **`RESTIC_PASSWORD` est dans le gestionnaire de mots de passe de Greg.** Sans lui, les sauvegardes
+sont illisibles. Les clés B2 aussi (l'`applicationKey` n'est affichée qu'une fois par Backblaze).
+
+**Test de restauration** : `/opt/backups/restore-test.sh`. Il restaure le dernier instantané, charge
+le dernier dump prod dans un **Postgres jetable** (jamais `mtc_postgres`), compare users et trades
+avec la prod, puis nettoie. Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
+0 erreur de chargement (prod : 911 trades, écart = activité de la journée). À relancer après tout
+changement de la sauvegarde et au moins une fois par trimestre.
+
+**Limites B2 (Caps & Alerts, gratuit, sans moyen de paiement)** : stockage 10 Go, téléchargement
+1 Go/jour, 2 500 transactions B et C/jour. Alertes e-mail à `hello@mytradingcoach.app` à 75 % et
+100 %. ⚠️ Plafonds stricts à 0 $ : à 10 Go les envois échouent (la sauvegarde de la nuit aussi) ;
+une restauration ne télécharge qu'1 Go/jour. Estimation : ~250 Mo aujourd'hui, ~14 Go vers 10 000
+actifs. À l'alerte de 7,5 Go, ou avant une restauration d'urgence volumineuse : ajouter un moyen de
+paiement et relever la limite (quelques centimes).
+
+**Remonter tout le VPS** (machine perdue ou changée) : runbook pas à pas `docs/ops/reprise-vps.md`
+(serveur, B2, bases, DNS, Traefik, API, fronts, secrets GitHub, cron, vérifications).
+
+**Restaurer pour de vrai** (VPS perdu) : sur la nouvelle machine, recréer `offsite.env` depuis le
+gestionnaire de mots de passe, puis `offsite.sh snapshots` et
+`offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
+les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), les `.env` dans
+`/tmp/restauration/apps/<env>/`, la crontab dans `/tmp/restauration/data/crontab.current`.
