@@ -116,3 +116,46 @@ Le plafond n'est pas un calcul lourd isolé mais **le débit total de requêtes*
 3. Jour J : 4 workers en prod une fois dev/beta arrêtés (+33 % de débit théorique).
 
 Le scénario reste un **pire cas** : 100 % des utilisateurs en session active avec l'onglet visible.
+
+## Test n°3 (2026-10-02, 0 h 14) — polling allégé (#256)
+
+Même données et même machine ; scénario aligné sur le front après SCA-B4 : dashboard complet
+toutes les ~75 s + stats live toutes les 30 s (contexte marché poussé par le socket, plus interrogé).
+
+| Utilisateurs | Req/min | p50 | p95 | p99 | Test n°2 au même palier (p50 / p95) |
+|---|---|---|---|---|---|
+| 200 | 2 000 | 10 ms | 45 ms | 100 ms | — |
+| 500 | 5 000 | 12 ms | 55 ms | 90 ms | 10 / 43 ms (7 600 req/min) |
+| **1 000** | **9 900** | **40-66 ms** | **190-490 ms** | 350-850 ms | **234 ms / 1,05 s** (15 000 req/min) |
+| 1 075 | 11 300 | 314 ms | 1,35 s | 1,6 s | — |
+| 1 325 | 8 550 ↓ | 1,3 s | 3 s | 3,6 s | arrêté |
+
+- **0 contrôle en échec** (87 817), API : 0 erreur ; prod revenue à 0,2 s dès l'arrêt.
+- **Requêtes par utilisateur : −35 %** (9 900 contre 15 000 req/min à 1 000 utilisateurs) et
+  **latence à 1 000 utilisateurs divisée par 3 à 5**.
+- **Plafond ~190 req/s** (test n°2 : ~250) : les requêtes légères du polling ont disparu, celles
+  qui restent sont surtout le dashboard, plus coûteuses (~15 ms de CPU chacune). Le polling ne
+  pèse plus que **15 %** du trafic.
+- **Rupture vers 1 100 utilisateurs** dans ce scénario, qui rouvre le dashboard complet toutes les
+  75 s (10 appels) : c'est désormais lui qui dicte la capacité.
+
+### Lecture pour 10 000 inscrits
+
+La capacité dépend de la fréquence réelle d'ouverture du dashboard. **Estimation (non mesurée)** :
+dashboard rouvert toutes les ~5 min + stats live → ~0,07 req/s/utilisateur → 190 / 0,07 ≈
+**2 500 utilisateurs simultanés**. Le scénario de ce test reste un pire cas.
+
+### Leviers suivants
+
+1. **CPU par requête du dashboard (B2)** : `by-setup`, `by-emotion`, `top-assets` chargent
+   **tous** les trades de l'utilisateur (sans période) ; `summary`, `equity-curve/daily`,
+   `activity/range` sont recalculés à chaque nouvelle minute. Calculs en SQL → coût indépendant
+   du nombre de trades.
+2. **Coût fixe par requête (B3)** : utilisateur relu en base à chaque requête (B3-01), présence
+   écrite à chaque requête (B3-02).
+3. **Moins d'appels par ouverture du dashboard (B4-04)** : pas de rechargement des analytics au
+   premier passage des stores.
+4. Jour J : 4 workers en prod une fois dev/beta arrêtés.
+
+Nettoyage : comptes purgés (base beta 31 Mo), clés Redis supprimées, clé de test retirée,
+`DB_POOL_MAX=2` et pool 6 rétablis, API dev relancée, trois API saines (00 h 46).
