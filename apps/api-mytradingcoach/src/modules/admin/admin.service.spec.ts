@@ -5,6 +5,7 @@ const mockPrisma = {
   anthropicCostDaily: { findMany: vi.fn() },
   aiUsageLog: { aggregate: vi.fn(), groupBy: vi.fn() },
   user: { findMany: vi.fn() },
+  $queryRaw: vi.fn(),
 } as never;
 
 const service = new AdminService(
@@ -69,5 +70,32 @@ describe('AdminService.getAiCost', () => {
     expect(res.billed.total30d).toBe(0);
     expect(res.billed.updatedAt).toBeNull();
     expect(res.unattributed).toBe(0);
+  });
+});
+describe('AdminService.getAcquisition', () => {
+  it('convertit les compteurs SQL, garde null pour « direct » et calcule les totaux', async () => {
+    (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw.mockResolvedValue([
+      { source: 'ninjatrader', d7: 3n, d30: 8n, total: 8n, premium: 2n, trialing: 1n },
+      { source: null, d7: 1n, d30: 4n, total: 40n, premium: 4n, trialing: 0n },
+    ]);
+
+    const res = await service.getAcquisition();
+
+    expect(res.rows[0]).toEqual({
+      source: 'ninjatrader', signups7d: 3, signups30d: 8, signupsTotal: 8,
+      premium: 2, trialing: 1, conversionRate: 25,
+    });
+    expect(res.rows[1].source).toBeNull();
+    expect(res.rows[1].conversionRate).toBe(10);
+    expect(res.totals).toEqual({
+      signups7d: 4, signups30d: 12, signupsTotal: 48, premium: 6, trialing: 1, conversionRate: 12.5,
+    });
+  });
+
+  it('renvoie des totaux à zéro sans inscrit', async () => {
+    (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw.mockResolvedValue([]);
+    const res = await service.getAcquisition();
+    expect(res.rows).toEqual([]);
+    expect(res.totals.conversionRate).toBe(0);
   });
 });
