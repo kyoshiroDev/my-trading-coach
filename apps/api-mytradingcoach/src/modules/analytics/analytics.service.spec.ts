@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { minuteKey } from './analytics.service';
+import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS } from './analytics.service';
 import {
   EmotionState,
   TradingSession,
@@ -446,6 +446,46 @@ describe('AnalyticsService', () => {
       await service.getEquityCurveDaily('user-123', undefined, to);
       const where = mockPrisma.trade.findMany.mock.calls[0][0].where;
       expect(where.tradedAt.lte).toEqual(to);
+    });
+  });
+
+  describe('downsampleEquity (courbe par trade, garde-fou B9)', () => {
+    const curve = (n: number) => {
+      let cum = 0;
+      return Array.from({ length: n }, (_, i) => ({ i, cumulativePnl: (cum += Math.sin(i / 37) * 50 + ((i * 7919) % 13) - 6) }));
+    };
+    const maxDrawdown = (pts: { cumulativePnl: number }[]) => {
+      let peak = 0, dd = 0;
+      for (const p of pts) { peak = Math.max(peak, p.cumulativePnl); dd = Math.min(dd, p.cumulativePnl - peak); }
+      return dd;
+    };
+
+    it('courbe courte → inchangée', () => {
+      const c = curve(EQUITY_MAX_POINTS);
+      expect(downsampleEquity(c, EQUITY_MAX_POINTS)).toBe(c);
+    });
+
+    it('50 000 points → ≤ 500, premier/dernier, pic, creux et drawdown max exacts, ordre conservé', () => {
+      const c = curve(50_000);
+      const s = downsampleEquity(c, EQUITY_MAX_POINTS);
+      expect(s.length).toBeLessThanOrEqual(EQUITY_MAX_POINTS);
+      expect(s[0]).toBe(c[0]);
+      expect(s.at(-1)).toBe(c.at(-1));
+      const vals = c.map((p) => p.cumulativePnl);
+      expect(Math.max(...s.map((p) => p.cumulativePnl))).toBe(Math.max(...vals));
+      expect(Math.min(...s.map((p) => p.cumulativePnl))).toBe(Math.min(...vals));
+      expect(maxDrawdown(s)).toBeCloseTo(maxDrawdown(c), 6);
+      expect(s.every((p, k) => k === 0 || p.i > s[k - 1].i)).toBe(true);
+    });
+
+    it('getEquityCurve applique la réduction', async () => {
+      mockRedisService.client.get.mockResolvedValueOnce(null);
+      mockPrisma.trade.findMany.mockResolvedValueOnce(
+        Array.from({ length: 3000 }, (_, i) => ({ tradedAt: new Date(1_700_000_000_000 + i * 60_000), pnl: i % 2 ? 10 : -8, commission: 0 })),
+      );
+      const { points } = await service.getEquityCurve('user-ds');
+      expect(points.length).toBeLessThanOrEqual(EQUITY_MAX_POINTS);
+      expect(points.at(-1)?.cumulativePnl).toBe(1500 * 10 - 1500 * 8);
     });
   });
 });

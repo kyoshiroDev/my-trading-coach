@@ -22,6 +22,34 @@ export function minuteKey(d?: Date): string {
   return d ? d.toISOString().slice(0, 16) : '';
 }
 
+export const EQUITY_MAX_POINTS = 500;
+
+/**
+ * Réduit une courbe à ~`max` points sans en changer la lecture : le premier et le dernier point
+ * sont gardés, et chaque tranche garde son plus BAS et son plus HAUT (dans l'ordre du temps). Les
+ * extrêmes — donc le pic, le creux et le drawdown maximal — restent exacts.
+ */
+export function downsampleEquity<T extends { cumulativePnl: number }>(points: T[], max: number): T[] {
+  if (points.length <= max) return points;
+  const inner = points.slice(1, -1);
+  const buckets = Math.max(1, Math.floor((max - 2) / 2));
+  const size = Math.ceil(inner.length / buckets);
+  const out: T[] = [points[0]];
+  for (let b = 0; b < inner.length; b += size) {
+    const slice = inner.slice(b, b + size);
+    let lo = 0;
+    let hi = 0;
+    slice.forEach((p, k) => {
+      if (p.cumulativePnl < slice[lo].cumulativePnl) lo = k;
+      if (p.cumulativePnl > slice[hi].cumulativePnl) hi = k;
+    });
+    if (lo === hi) out.push(slice[lo]);
+    else out.push(slice[Math.min(lo, hi)], slice[Math.max(lo, hi)]);
+  }
+  out.push(points[points.length - 1]);
+  return out;
+}
+
 @Injectable()
 export class AnalyticsService {
 
@@ -352,7 +380,9 @@ export class AnalyticsService {
       return { date: t.tradedAt, cumulativePnl: cumPnl };
     });
 
-    return { points, startingCapital };
+    // Un point par trade : 50 000 trades = 3,5 Mo de réponse et de cache (test B9). Aucun écran
+    // n'appelle cette route (le front utilise /equity-curve/daily) : garde-fou contre un appel lourd.
+    return { points: downsampleEquity(points, EQUITY_MAX_POINTS), startingCapital };
   }
 
   private async computeEquityCurveDaily(
