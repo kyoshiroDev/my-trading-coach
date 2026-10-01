@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
+import { minuteKey } from './analytics.service';
 import {
   EmotionState,
   TradingSession,
@@ -413,6 +414,38 @@ describe('AnalyticsService', () => {
       const toMonth = call.where.tradedAt.lte.getMonth();
       expect(fromMonth).toBe(now.getMonth());
       expect(toMonth).toBe(now.getMonth());
+    });
+  });
+
+  describe('clés de cache des périodes (B9 : le cache du dashboard ne servait jamais)', () => {
+    const keysWritten = () => mockRedisService.client.setex.mock.calls.map((c) => c[0] as string);
+    beforeEach(() => mockRedisService.client.setex.mockClear());
+
+    it('minuteKey arrondit à la minute (UTC), vide si absent', () => {
+      expect(minuteKey(new Date('2026-10-01T20:14:37.512Z'))).toBe('2026-10-01T20:14');
+      expect(minuteKey(undefined)).toBe('');
+    });
+
+    it('deux ouvertures du dashboard dans la même minute → même clé (summary, équité jour, activité)', async () => {
+      const from = new Date('2026-09-01T00:00:00.000Z');
+      for (const to of [new Date('2026-10-01T20:14:01.001Z'), new Date('2026-10-01T20:14:59.999Z')]) {
+        await service.getSummary('user-123', undefined, from, to);
+        await service.getEquityCurveDaily('user-123', from, to);
+        await service.getActivityRange('user-123', from, to);
+      }
+      const keys = keysWritten();
+      expect(keys).toHaveLength(6);
+      expect(new Set(keys).size).toBe(3);
+      expect(keys.every((k) => k.includes(':range:2026-09-01T00:00:2026-10-01T20:14'))).toBe(true);
+      expect(keys.every((k) => k.startsWith('analytics:user-123:'))).toBe(true); // couverts par invalidateUserCache
+    });
+
+    it('le calcul garde la vraie borne (seule la clé est arrondie)', async () => {
+      const to = new Date('2026-10-01T20:14:59.999Z');
+      mockPrisma.trade.findMany.mockClear();
+      await service.getEquityCurveDaily('user-123', undefined, to);
+      const where = mockPrisma.trade.findMany.mock.calls[0][0].where;
+      expect(where.tradedAt.lte).toEqual(to);
     });
   });
 });

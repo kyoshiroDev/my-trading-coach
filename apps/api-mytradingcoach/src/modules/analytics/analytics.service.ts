@@ -17,6 +17,11 @@ export interface EquityPoint {
   cumulativePnl: number;
 }
 
+/** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
+export function minuteKey(d?: Date): string {
+  return d ? d.toISOString().slice(0, 16) : '';
+}
+
 @Injectable()
 export class AnalyticsService {
 
@@ -51,8 +56,15 @@ export class AnalyticsService {
     if (!from && !to) return {};
     return { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
   }
+  /**
+   * Bornes de période dans la clé de cache, **arrondies à la minute**. Le dashboard envoie
+   * `to = maintenant` : à la milliseconde, chaque ouverture créait une clé neuve (0 % de cache,
+   * et une clé Redis de plus par ouverture ; mesuré au test de charge B9 du 2026-10-01).
+   * Seule la clé est arrondie, le calcul garde les vraies bornes. Fraîcheur : toute écriture de
+   * trade vide déjà `analytics:<user>:*` (invalidateUserCache).
+   */
   private rangeKey(from?: Date, to?: Date): string {
-    return from || to ? `:range:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}` : '';
+    return from || to ? `:range:${minuteKey(from)}:${minuteKey(to)}` : '';
   }
 
   async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
@@ -89,7 +101,7 @@ export class AnalyticsService {
     }));
   }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}${this.accKey(accountId)}`;
+    const key = `analytics:${userId}:equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
     return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
