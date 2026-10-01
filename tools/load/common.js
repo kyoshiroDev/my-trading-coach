@@ -23,6 +23,10 @@ export function uniqueEmail(tag) {
   return `load-${tag}-${Date.now()}-${__VU}-${__ITER}-${Math.floor(Math.random() * 1e6)}@test.local`;
 }
 
+// Jeton expiré (15 min) : le VU se reconnecte à l'itération suivante. Sans ça, B9 du 2026-10-01
+// a compté 1 253 « erreurs » 401 qui n'étaient que des jetons périmés (le vrai front rafraîchit).
+export let tokenExpired = false;
+
 export function register(email, password = 'LoadTest-2026!') {
   const res = http.post(`${BASE_URL}/auth/register`, JSON.stringify({ email, password, name: 'Load Test' }), {
     headers: jsonHeaders(),
@@ -38,19 +42,21 @@ export function login(email, password) {
     tags: { name: 'POST /auth/login' },
   });
   check(res, { 'login 2xx': (r) => r.status === 200 || r.status === 201 });
+  if (res.status < 300) tokenExpired = false;
   return res.status < 300 ? res.json('data.access_token') : null;
 }
 
 /** GET authentifié, taggé par route (regroupement des métriques k6). */
 export function get(token, path, name = `GET ${path}`) {
   const res = http.get(`${BASE_URL}${path}`, { ...auth(token), tags: { name } });
+  if (res.status === 401) { tokenExpired = true; return res; }
   check(res, { [`${name} 200`]: (r) => r.status === 200 });
   return res;
 }
 
 /** Ouverture du tableau de bord : les appels du dashboard Angular. */
 export function openDashboard(token) {
-  if (get(token, '/auth/me').status === 401) return 401; // jeton expiré : le VU se reconnecte
+  get(token, '/auth/me');
   get(token, '/analytics/summary');
   get(token, '/analytics/equity-curve');
   get(token, '/analytics/by-setup');
