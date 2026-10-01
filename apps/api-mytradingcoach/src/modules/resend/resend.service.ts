@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as Sentry from '@sentry/nestjs';
 import { Resend } from 'resend';
+import { RedisService } from '../infra/redis.service';
 import {
   dailyRecapTemplate,
   debriefReadyTemplate,
@@ -15,6 +17,19 @@ import {
 // Boîte interne de réception (candidatures ambassadeur, relevés). Aligné sur
 // sendAdminAlert (inbox éprouvée du projet).
 const CONTACT_INBOX = 'hello@mytradingcoach.app';
+
+// Plan gratuit Resend : 100 e-mails/jour (remise à zéro à minuit UTC), 3 000/mois. Décision du
+// 2026-10-01 : passer au plan Pro dès qu'on dépasse 80 envois/jour → alerte Sentry à ce seuil.
+export const RESEND_DAILY_WARN = 80;
+// Resend : 10 requêtes/s par équipe ; au-delà → `rate_limit_exceeded` (429). On réessaie.
+const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000, 4000];
+const QUOTA_ERRORS = new Set(['daily_quota_exceeded', 'monthly_quota_exceeded']);
+
+/** `jean.dupont@gmail.com` → `j***@gmail.com` : diagnostic possible sans adresse complète dans les logs. */
+export function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  return at > 0 ? `${email[0]}***${email.slice(at)}` : '***';
+}
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c] ?? c);
@@ -31,7 +46,10 @@ export class ResendService {
 
   private readonly replyTo: string;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly redis: RedisService,
+  ) {
     const apiKey = this.config.getOrThrow<string>('RESEND_API_KEY');
     this.resend = new Resend(apiKey);
     const mailFrom =
@@ -253,31 +271,70 @@ export class ResendService {
     subject: string;
     html: string;
   }): Promise<void> {
-    this.logger.debug(
-      `Envoi email | from: "${this.from}" to: "${params.to}" subject: "${params.subject}"`,
-    );
+    const to = maskEmail(params.to);
+    this.logger.debug(`Envoi email | from: "${this.from}" to: "${to}" subject: "${params.subject}"`);
 
-    const { data, error } = await this.resend.emails.send({
-      from: this.from,
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
-      replyTo: this.replyTo,
-    });
+    for (let attempt = 0; ; attempt++) {
+      const { data, error } = await this.resend.emails.send({
+        from: this.from,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        replyTo: this.replyTo,
+      });
 
-    if (error) {
-      this.logger.error(
-        `[RESEND ERROR] "${params.subject}" → ${params.to}\n` +
-          `  name: ${(error as { name?: string }).name}\n` +
-          `  message: ${error.message}\n` +
-          `  details: ${JSON.stringify(error)}`,
-      );
+      if (!error) {
+        this.logger.log(`[RESEND OK] "${params.subject}" → ${to} (id: ${data?.id})`);
+        await this.countSent();
+        return;
+      }
+
+      if (error.name === 'rate_limit_exceeded' && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
+        await this.sleep(RATE_LIMIT_RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+
+      this.logger.error(`[RESEND ERROR] "${params.subject}" → ${to} | ${error.name} : ${error.message}`);
+      // Un échec d'envoi était silencieux (logs seulement). Sentry, regroupé par type d'erreur :
+      // un quota dépassé = une seule issue, pas une par e-mail.
+      Sentry.captureMessage(`Resend : ${error.name}`, {
+        level: QUOTA_ERRORS.has(error.name) ? 'fatal' : 'error',
+        fingerprint: ['resend-send-failed', error.name],
+        tags: { resend_error: error.name },
+        extra: { subject: params.subject, message: error.message, attempts: attempt + 1 },
+      });
       // Ne pas throw : un email raté ne doit pas faire échouer le job BullMQ
       return;
     }
-
-    this.logger.log(
-      `[RESEND OK] "${params.subject}" → ${params.to} (id: ${data?.id})`,
-    );
   }
+
+  /**
+   * Compte les envois réussis du jour (UTC, comme le quota Resend) et prévient Sentry au seuil
+   * RESEND_DAILY_WARN. Redis indisponible → on n'empêche jamais l'envoi.
+   * Propriété (pas méthode) : hors du prototype, donc hors du contrat que le double de test
+   * `createResendMock()` doit couvrir (resend-neutralized.int-spec.ts).
+   */
+  private readonly countSent = async (): Promise<void> => {
+    try {
+      const key = `resend:sent:${new Date().toISOString().slice(0, 10)}`;
+      const sent = await this.redis.client.incr(key);
+      if (sent === 1) await this.redis.client.expire(key, 3 * 24 * 3600);
+      if (sent === RESEND_DAILY_WARN) {
+        this.logger.warn(`${sent} e-mails envoyés aujourd'hui (plan gratuit : 100/jour)`);
+        // Niveau `error` et non `warning` : la règle d'alerte Sentry (« high priority issues »)
+        // n'envoie d'e-mail que pour la priorité haute, et Sentry classe `warning` en moyenne.
+        Sentry.captureMessage(`Resend : ${sent} e-mails envoyés aujourd'hui, passer au plan Pro`, {
+          level: 'error',
+          fingerprint: ['resend-daily-volume'],
+          extra: { sent, freePlanDailyLimit: 100 },
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`Compteur d'envois indisponible : ${String(err)}`);
+    }
+  };
+
+  // Propriété remplaçable par les tests (pas d'attente réelle) ; hors prototype, comme countSent.
+  protected readonly sleep = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 }
