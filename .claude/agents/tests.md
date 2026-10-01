@@ -413,3 +413,12 @@ async upgradeForTest(@Body() body: { email: string }) {
 3. Toujours mocker les appels Anthropic en CI
 4. `afterEach` nettoie les données pour éviter la pollution
 5. Timeout default : 10s, navigation : 15s
+
+## Typecheck : inclure les tests (2026-10-01)
+
+`tsc -p apps/api-mytradingcoach/tsconfig.app.json` **exclut** les `*.spec.ts` / `*.int-spec.ts` :
+un changement de signature (constructeur, méthode) peut passer en local et casser la CI. Vérifier
+comme la CI : `pnpm nx run-many -t typecheck -p api-mytradingcoach` (ou `tsconfig.spec.json`).
+`resend-neutralized.int-spec.ts` compare les méthodes du **prototype** de `ResendService` au double
+`createResendMock()` : un helper interne ajouté au service doit être une propriété
+(`private readonly x = () => …`), sinon le test échoue.
