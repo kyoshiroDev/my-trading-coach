@@ -114,5 +114,36 @@ const robots = noindex
       } catch (e) {}
     })();
   </script>
+
+  <!-- Acquisition : propage utm_source/medium/campaign vers les CTA d'inscription.
+       sessionStorage pour survivre à la navigation interne (home → blog → CTA).
+       Donnée fonctionnelle de l'inscription, indépendante du bandeau cookies. -->
+  <script is:inline>
+    (function () {
+      try {
+        var KEY = 'mtc_utm', NAMES = ['utm_source', 'utm_medium', 'utm_campaign'];
+        var params = new URL(window.location.href).searchParams, utm = {}, found = false;
+        NAMES.forEach(function (n) {
+          var v = (params.get(n) || '').trim().slice(0, 100);
+          if (v) { utm[n] = v; found = true; }
+        });
+        if (found) {
+          try { sessionStorage.setItem(KEY, JSON.stringify(utm)); } catch (e) {}
+        } else {
+          try { utm = JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { utm = {}; }
+        }
+        if (!NAMES.some(function (n) { return utm[n]; })) return;
+        document.querySelectorAll('a[href*="/register"]').forEach(function (a) {
+          try {
+            var h = new URL(a.href);
+            NAMES.forEach(function (n) {
+              if (utm[n] && !h.searchParams.get(n)) h.searchParams.set(n, utm[n]);
+            });
+            a.href = h.toString();
+          } catch (e) {}
+        });
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

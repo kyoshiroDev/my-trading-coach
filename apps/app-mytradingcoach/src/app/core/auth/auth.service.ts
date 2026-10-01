@@ -41,6 +41,13 @@ export interface AuthUser {
   discordId?: string | null;
 }
 
+/** UTM du lien d'inscription (landing → /register), transmis tels quels à l'API. */
+export interface Acquisition {
+  acquisitionSource?: string;
+  acquisitionMedium?: string;
+  acquisitionCampaign?: string;
+}
+
 interface AuthResponse {
   data: {
     access_token: string;
@@ -97,11 +104,12 @@ export class AuthService {
     name?: string,
     referralCode?: string,
     marketingConsent?: boolean,
+    acquisition?: Acquisition,
   ) {
     return this.http
       .post<AuthResponse>(
         `${environment.apiUrl}/auth/register`,
-        { email, password, name, referralCode, marketingConsent },
+        { email, password, name, referralCode, marketingConsent, ...acquisition },
         { withCredentials: true },
       )
       .pipe(tap((res) => this.handleAuthResponse(res)));

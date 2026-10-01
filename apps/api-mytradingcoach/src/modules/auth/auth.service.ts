@@ -111,6 +111,10 @@ export class AuthService {
           unsubToken: crypto.randomBytes(32).toString('hex'),
           marketingConsent: dto.marketingConsent === true,
           marketingConsentAt: dto.marketingConsent === true ? new Date() : null,
+          // null si absent : la catégorie « direct / non renseigné » se fait à l'agrégation.
+          acquisitionSource: dto.acquisitionSource ?? null,
+          acquisitionMedium: dto.acquisitionMedium ?? null,
+          acquisitionCampaign: dto.acquisitionCampaign ?? null,
         },
         select: {
           id: true,
