@@ -311,8 +311,10 @@ export class ResendService {
   /**
    * Compte les envois réussis du jour (UTC, comme le quota Resend) et prévient Sentry au seuil
    * RESEND_DAILY_WARN. Redis indisponible → on n'empêche jamais l'envoi.
+   * Propriété (pas méthode) : hors du prototype, donc hors du contrat que le double de test
+   * `createResendMock()` doit couvrir (resend-neutralized.int-spec.ts).
    */
-  private async countSent(): Promise<void> {
+  private readonly countSent = async (): Promise<void> => {
     try {
       const key = `resend:sent:${new Date().toISOString().slice(0, 10)}`;
       const sent = await this.redis.client.incr(key);
@@ -328,9 +330,9 @@ export class ResendService {
     } catch (err) {
       this.logger.warn(`Compteur d'envois indisponible : ${String(err)}`);
     }
-  }
+  };
 
-  protected sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  // Propriété remplaçable par les tests (pas d'attente réelle) ; hors prototype, comme countSent.
+  protected readonly sleep = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 }
