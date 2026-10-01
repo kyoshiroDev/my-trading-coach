@@ -571,3 +571,13 @@ gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
 les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), les `.env` dans
 `/tmp/restauration/apps/<env>/`, la crontab dans `/tmp/restauration/data/crontab.current`.
+
+## Tests de charge (SCA-B9, 2026-10-01)
+
+Procédure : `tools/load/README.md`. Variable **`LOAD_TEST_KEY`** (optionnelle, ≥ 32 caractères,
+**beta uniquement**, à retirer après le test) : une requête qui la présente (`x-load-test-key`)
+est limitée par client virtuel (`x-load-client`) au lieu de l'IP de l'injecteur. Le code
+l'**ignore si `DATABASE_URL` vise `mytradingcoach_prod`**. Jeu de données : `seed-beta.sql` /
+`purge-beta.sql` (refusent toute autre base que beta). Pendant un test : beta en format prod
+(`DB_POOL_MAX=5`, pool PgBouncer beta 20, API dev arrêtée), hors heures du marché US, purge
+avant la sauvegarde de 3 h.
