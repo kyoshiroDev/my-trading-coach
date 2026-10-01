@@ -17,12 +17,14 @@ import { RedisService } from '../infra/redis.service';
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 const PREFIX = `int-ipthrottle-${RUN}-`;
 const previousRedisPrefix = process.env['REDIS_PREFIX'];
+const LOAD_KEY = `itest-load-key-${RUN}-0123456789abcdef`;
 
 let app: INestApplication;
 let baseUrl: string;
 
 beforeAll(async () => {
   process.env['REDIS_PREFIX'] = `itest:${RUN}:`;
+  process.env['LOAD_TEST_KEY'] = LOAD_KEY; // sans effet sur les requêtes qui ne présentent pas la clé
   ({ app, baseUrl } = await createIntegrationApp({ throttle: true }));
 }, 120_000);
 
@@ -34,14 +36,15 @@ afterAll(async () => {
     if (keys.length > 0) await redis.client.del(...keys);
     await app.close();
   }
+  delete process.env['LOAD_TEST_KEY'];
   if (previousRedisPrefix === undefined) delete process.env['REDIS_PREFIX'];
   else process.env['REDIS_PREFIX'] = previousRedisPrefix;
 });
 
-const register = (i: number) =>
+const register = (i: number, extra: Record<string, string> = {}) =>
   fetch(`${baseUrl}/api/auth/register`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...extra },
     body: JSON.stringify({ email: `${PREFIX}${i}@test.local`, password: 'int-test-no-login-1234', name: 'Int IP' }),
   });
 
@@ -53,4 +56,20 @@ describe('Inscription — limite par IP, indépendante de l’e-mail', () => {
     expect(statuses.slice(0, 10).every((s) => s === 201)).toBe(true);
     expect(statuses[10]).toBe(429);
   }, 120_000);
+});
+
+describe('Test de charge (SCA-B9) — clé LOAD_TEST_KEY', () => {
+  const asClient = (client: string, key = LOAD_KEY) => ({ 'x-load-test-key': key, 'x-load-client': client });
+
+  it('avec la clé, chaque client virtuel a son propre compteur (même IP)', async () => {
+    const a: number[] = [];
+    for (let i = 100; i <= 110; i++) a.push((await register(i, asClient('vu-a'))).status);
+    expect(a.slice(0, 10).every((s) => s === 201)).toBe(true);
+    expect(a[10]).toBe(429); // la limite s'applique toujours, par client
+    expect((await register(200, asClient('vu-b'))).status).toBe(201);
+  }, 120_000);
+
+  it('mauvaise clé → comptée par IP, déjà épuisée par le premier test → 429', async () => {
+    expect((await register(300, asClient('vu-c', 'x'.repeat(LOAD_KEY.length)))).status).toBe(429);
+  }, 60_000);
 });

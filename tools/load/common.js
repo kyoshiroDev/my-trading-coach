@@ -11,8 +11,12 @@ if (/\/\/api\.mytradingcoach\.app/.test(BASE_URL) && __ENV.ALLOW_PROD !== 'oui-j
   throw new Error('Cible = PROD refusée. Tester contre beta (voir README).');
 }
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
-export const auth = (token) => ({ headers: { ...JSON_HEADERS, Authorization: `Bearer ${token}` } });
+// SCA-B9 : avec LOAD_TEST_KEY (= celle de .env.beta), l'API compte chaque VU comme un client
+// distinct au lieu de tout compter sur l'IP de l'injecteur. Sans elle : comptage par IP (README).
+const loadHeaders = () =>
+  __ENV.LOAD_TEST_KEY ? { 'x-load-test-key': __ENV.LOAD_TEST_KEY, 'x-load-client': `vu-${__VU}` } : {};
+const jsonHeaders = () => ({ 'Content-Type': 'application/json', ...loadHeaders() });
+export const auth = (token) => ({ headers: { ...jsonHeaders(), Authorization: `Bearer ${token}` } });
 
 /** Email unique par itération (préfixe reconnaissable, à purger après le test). */
 export function uniqueEmail(tag) {
@@ -21,7 +25,7 @@ export function uniqueEmail(tag) {
 
 export function register(email, password = 'LoadTest-2026!') {
   const res = http.post(`${BASE_URL}/auth/register`, JSON.stringify({ email, password, name: 'Load Test' }), {
-    headers: JSON_HEADERS,
+    headers: jsonHeaders(),
     tags: { name: 'POST /auth/register' },
   });
   check(res, { 'register 201': (r) => r.status === 201 });
@@ -30,7 +34,7 @@ export function register(email, password = 'LoadTest-2026!') {
 
 export function login(email, password) {
   const res = http.post(`${BASE_URL}/auth/login`, JSON.stringify({ email, password }), {
-    headers: JSON_HEADERS,
+    headers: jsonHeaders(),
     tags: { name: 'POST /auth/login' },
   });
   check(res, { 'login 2xx': (r) => r.status === 200 || r.status === 201 });
@@ -46,7 +50,7 @@ export function get(token, path, name = `GET ${path}`) {
 
 /** Ouverture du tableau de bord : les appels du dashboard Angular. */
 export function openDashboard(token) {
-  get(token, '/auth/me');
+  if (get(token, '/auth/me').status === 401) return 401; // jeton expiré : le VU se reconnecte
   get(token, '/analytics/summary');
   get(token, '/analytics/equity-curve');
   get(token, '/analytics/by-setup');
