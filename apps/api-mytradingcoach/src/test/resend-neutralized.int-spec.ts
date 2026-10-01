@@ -15,6 +15,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { ResendService } from '../modules/resend/resend.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../modules/infra/redis.service';
 import { REAL_RESEND_FORBIDDEN } from './integration.setup';
 import { createIntegrationApp, createResendMock, type ResendMock } from './integration-app.helper';
 
@@ -32,7 +33,7 @@ function intSpecs(dir: string): string[] {
 describe('Resend neutralisé — verrous statiques et d’exécution', () => {
   it('le VRAI ResendService ne peut pas être construit dans la suite d’intégration', () => {
     const config = { getOrThrow: () => 're_une_vraie_cle', get: () => undefined } as unknown as ConfigService;
-    expect(() => new ResendService(config)).toThrow(REAL_RESEND_FORBIDDEN);
+    expect(() => new ResendService(config, {} as RedisService)).toThrow(REAL_RESEND_FORBIDDEN);
   });
 
   it('aucun *.int-spec.ts ne démarre AppModule sans createIntegrationApp()', () => {

@@ -40,7 +40,8 @@ export class DebriefCron {
       ),
     );
 
-    this.logger.log(`Queued ${eligibleUsers.length} debrief jobs: ${eligibleUsers.map((u) => u.email).join(', ')}`);
+    // Le nombre seulement : la liste des e-mails de tous les éligibles n'a rien à faire dans les logs.
+    this.logger.log(`Queued ${eligibleUsers.length} debrief jobs`);
   }
 
   // Lundi 08h : filet de rattrapage. Génère le débrief de la semaine PASSÉE pour les éligibles

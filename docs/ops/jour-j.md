@@ -14,7 +14,7 @@
 | ☐ | État de la prod au vert | sur le VPS : `/opt/backups/etat-prod.sh` (aucune ligne ⚠️ hors « dev/beta en marche ») |
 | ☐ | Sauvegarde hors-site de la nuit OK | `tail -5 /opt/backups/offsite.log` → « sauvegarde OK » daté du jour |
 | ☐ | IA active en prod | `grep -c '^AI_ENABLED=true' /opt/apps/mytradingcoach/prod/.env.production` → `1` |
-| ☐ | **Quota d'e-mails Resend** suffisant pour le pic | chaque inscription envoie au moins un e-mail (bienvenue). Offre gratuite = **100/jour, 3 000/mois** : au-delà, les e-mails de bienvenue et de mot de passe oublié **ne partent plus**. Vérifier le plan dans Resend (question A-06 ouverte) |
+| ☐ | **Quota d'e-mails Resend** | plan gratuit = **100/jour, 3 000/mois** ; au-delà, bienvenue **et mot de passe oublié** ne partent plus. Règle : **passer au plan Pro (20 $/mois, 50 000/mois, sans limite/jour) dès qu'on dépasse 80 envois/jour** → alerte Sentry « Resend : 80 e-mails envoyés aujourd'hui ». Un quota dépassé remonte aussi dans Sentry (`Resend : daily_quota_exceeded`, fatal) |
 | ☐ | Palier Anthropic suffisant | console Anthropic → Limits (question A-06 ouverte) |
 | ☐ | Webhook Stripe live actif | Stripe → Developers → Webhooks → endpoint `api.mytradingcoach.app` sans échec récent |
 | ☐ | Supervision | UptimeRobot : 4 sondes « Up », appli mobile avec notifications push ; e-mails d'alerte reçus sur `hello@` (pas en spam) |

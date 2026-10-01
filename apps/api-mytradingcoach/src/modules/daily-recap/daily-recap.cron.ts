@@ -4,6 +4,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DailyRecapService } from './daily-recap.service';
 import { ResendService } from '../resend/resend.service';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
+import { mapWithConcurrency } from '../../common/utils/concurrency.util';
+
+const RECAP_CONCURRENCY = 4;
 
 @Injectable()
 export class DailyRecapCron {
@@ -32,8 +35,11 @@ export class DailyRecapCron {
       select: { id: true, email: true, name: true, plan: true },
     });
 
-    await Promise.all(
-      activeUsers.map(async (user) => {
+    // 4 à la fois : Resend plafonne à 10 requêtes/s, et chaque récap interroge la base.
+    await mapWithConcurrency(
+      activeUsers,
+      RECAP_CONCURRENCY,
+      async (user) => {
         try {
           const recap = await this.dailyRecapService.generateRecap(
             user.id,
@@ -45,7 +51,7 @@ export class DailyRecapCron {
         } catch (err) {
           this.logger.error(`Recap failed for user ${user.id}`, err);
         }
-      }),
+      },
     );
 
     this.logger.log(`Daily recaps done : ${activeUsers.length} users processed`);

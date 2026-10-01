@@ -1122,3 +1122,19 @@ timeout de 20 s, et referme toujours la page. Ne jamais revenir à `puppeteer.la
 150 à 300 Mo par instance, 3 ou 4 téléchargements simultanés suffisaient à l'OOM.
 Tout texte IA ou utilisateur injecté dans le HTML passe par `escapeHtml()`.
 Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files BullMQ.
+
+## E-mails Resend : débit, quotas, volume (2026-10-01)
+
+- **Tout envoi passe par `ResendService.send()`** (ou une méthode `send*` qui l'appelle) :
+  - `rate_limit_exceeded` (Resend : **10 requêtes/s par équipe**) → 3 nouveaux essais (1 s, 2 s, 4 s) ;
+  - tout autre échec → `logger.error` **et Sentry** (`fingerprint ['resend-send-failed', <erreur>]` :
+    un quota dépassé = une seule issue ; `daily_quota_exceeded` / `monthly_quota_exceeded` en `fatal`) ;
+  - jamais de throw (un e-mail raté ne fait pas échouer un job) ;
+  - compteur du jour `resend:sent:<AAAA-MM-JJ UTC>` dans Redis ; au **80e** envoi
+    (`RESEND_DAILY_WARN`), alerte Sentry `warning` : seuil décidé pour passer du plan gratuit
+    (100/jour) au plan Pro. Redis en panne → l'envoi part quand même.
+- **Pas de `Promise.all` sur une liste d'utilisateurs qui envoie des e-mails** :
+  `mapWithConcurrency(items, 4, fn)` (`common/utils/concurrency.util.ts`). Récap quotidien et
+  rappels de renouvellement corrigés (ils tiraient tous les envois en même temps → 429 perdus).
+- **Pas d'adresse e-mail complète dans les logs** : `maskEmail()` (`j***@gmail.com`) ; un cron
+  logue un **nombre**, pas la liste des destinataires.

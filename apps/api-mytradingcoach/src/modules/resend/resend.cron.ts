@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from './resend.service';
+import { mapWithConcurrency } from '../../common/utils/concurrency.util';
 
 @Injectable()
 export class ResendCron {
@@ -33,14 +34,13 @@ export class ResendCron {
 
     this.logger.log(`Sending renewal reminders to ${users.length} users`);
 
-    await Promise.all(
-      users.map((u) =>
-        this.resend.sendRenewalReminder({
-          to: u.email,
-          userName: u.name ?? 'Trader',
-          expiresAt: u.stripeCurrentPeriodEnd!,
-        }),
-      ),
+    // 4 à la fois : Resend plafonne à 10 requêtes/s par équipe.
+    await mapWithConcurrency(users, 4, (u) =>
+      this.resend.sendRenewalReminder({
+        to: u.email,
+        userName: u.name ?? 'Trader',
+        expiresAt: u.stripeCurrentPeriodEnd!,
+      }),
     );
   }
 }
