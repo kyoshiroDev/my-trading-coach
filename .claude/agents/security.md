@@ -298,3 +298,11 @@ passe) ; sans mot de passe ou avec un mauvais → refus, vérifié. Console admi
 `mtc_user`. Procédure de régénération si le mot de passe change : `deploy.md`.
 Leçon : une image configurée par variables d'environnement peut **ignorer en silence** des
 variables mal nommées — contrôler la config effective (`SHOW CONFIG`), jamais le compose.
+
+## Clé de test de charge `LOAD_TEST_KEY` (SCA-B9, 2026-10-01)
+
+`common/throttler/load-test-tracker.ts` : avec la clé (≥ 32 car., comparée en temps constant),
+le throttler compte par `x-load-client` (borné `[a-z0-9-]{1,64}`) au lieu de l'IP. Ne lève
+**aucune** limite (elles s'appliquent par client) mais permet à qui détient la clé de répartir
+ses requêtes sur des compteurs arbitraires : **jamais en prod** (désactivée par le code si la base
+est `mytradingcoach_prod`), et retirée de `.env.beta` après chaque test.
