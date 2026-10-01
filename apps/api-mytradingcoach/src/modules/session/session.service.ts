@@ -6,6 +6,7 @@ import { MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
 import type { SessionHistoryItem } from '@mtc/shared';
 
@@ -19,6 +20,7 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     private readonly accounts: AccountsService,
+    private readonly analytics: AnalyticsService,
   ) {}
 
   async startSession(userId: string, mood: MoodState, accountId?: string) {
@@ -313,7 +315,7 @@ export class SessionService {
         ? exitPrice - trade.entry
         : trade.entry - exitPrice;
 
-    return this.prisma.trade.update({
+    const closed = await this.prisma.trade.update({
       where: { id: tradeId },
       data: {
         exit: exitPrice,
@@ -321,5 +323,8 @@ export class SessionService {
         tags: { push: closeType },
       },
     });
+    // Le P&L change : les statistiques en cache (dashboard) doivent être recalculées.
+    await this.analytics.invalidateUserCache(userId);
+    return closed;
   }
 }

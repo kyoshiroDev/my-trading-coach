@@ -5,6 +5,7 @@ import { SessionService } from './session.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 const mockAccounts = {
   accountWhere: vi.fn().mockResolvedValue({ accountId: 'acc-1' }),
@@ -54,6 +55,8 @@ const mockRedisService = {
     keys: vi.fn().mockResolvedValue([]),
   },
 };
+const mockAnalytics = { invalidateUserCache: vi.fn().mockResolvedValue(undefined) };
+
 describe('SessionService', () => {
   let service: SessionService;
 
@@ -66,6 +69,7 @@ describe('SessionService', () => {
         SessionService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AccountsService, useValue: mockAccounts },
+        { provide: AnalyticsService, useValue: mockAnalytics },
       ],
     }).compile();
 
@@ -182,6 +186,16 @@ describe('SessionService', () => {
   });
 
   describe('closeTrade', () => {
+    it('vide le cache des statistiques de l’utilisateur (le P&L change)', async () => {
+      const trade = makeTrade({ entry: 100, stopLoss: 95, takeProfit: 110, side: 'LONG' });
+      mockPrisma.trade.findFirst.mockResolvedValue(trade);
+      mockPrisma.trade.update.mockResolvedValue({ ...trade, pnl: 2 });
+
+      await service.closeTrade('user-1', 'trade-1', 102);
+
+      expect(mockAnalytics.invalidateUserCache).toHaveBeenCalledWith('user-1');
+    });
+
     it('détecte SL pour un LONG (exitPrice <= stopLoss)', async () => {
       const trade = makeTrade({ entry: 100, stopLoss: 95, takeProfit: 110, side: 'LONG' });
       mockPrisma.trade.findFirst.mockResolvedValue(trade);
