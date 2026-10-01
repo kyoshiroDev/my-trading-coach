@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
 import { createHash } from 'node:crypto';
+import { loadTestTracker } from './load-test-tracker';
 
 /**
  * Second throttler, compté par **IP seule** (SCA-B0-04). La clé IP + compte ci-dessous se
@@ -34,13 +35,18 @@ export class EmailAwareThrottlerGuard extends ThrottlerGuard {
   protected override async handleRequest(props: ThrottlerRequest): Promise<boolean> {
     if (props.throttler.name !== IP_THROTTLER) return super.handleRequest(props);
     if (props.limit >= IP_THROTTLER_OFF) return true; // route sans limite par IP : rien à compter
-    return super.handleRequest({ ...props, getTracker: (req) => ThrottlerGuard.prototype['getTracker'].call(this, req) });
+    return super.handleRequest({ ...props, getTracker: (req) => this.clientTracker(req) });
   }
 
   protected override async getTracker(req: Record<string, unknown>): Promise<string> {
-    const ip = await super.getTracker(req);
+    const ip = await this.clientTracker(req);
     const account = accountFingerprint(req);
     return account ? `${ip}:${account}` : ip;
+  }
+
+  /** IP du client, ou client virtuel d'un test de charge autorisé (voir load-test-tracker.ts). */
+  private async clientTracker(req: Record<string, unknown>): Promise<string> {
+    return loadTestTracker(req) ?? ThrottlerGuard.prototype['getTracker'].call(this, req);
   }
 }
 

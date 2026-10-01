@@ -47,6 +47,8 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },
   { name: 'AI_ENABLED', level: 'optional', check: isBoolean },
   { name: 'BROKER_TOKEN_ENCRYPTION_KEY', level: 'optional', check: isBase64Key32 },
+  // SCA-B9 : test de charge depuis un seul injecteur (beta uniquement ; ignorée si base de prod).
+  { name: 'LOAD_TEST_KEY', level: 'optional', check: (v) => (v.length >= 32 ? undefined : 'au moins 32 caractères (openssl rand -hex 24)') },
 ];
 
 export interface EnvReport {
