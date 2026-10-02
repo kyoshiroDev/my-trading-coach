@@ -87,6 +87,20 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
     return { service, prisma, api, connecter, enregistre };
   }
 
+  it('connexion : apiHosts lus AVANT de lister les comptes, puis stockés', async () => {
+    const hosts = { live: 'live.tradovateapi.com', demo: 'apex-demo.tradovateapi.com' };
+    const { connecter, enregistre, api } = setup();
+    (api as unknown as { renewAccessToken: unknown }).renewAccessToken = vi.fn().mockResolvedValue({
+      accessToken: 'AT-1',
+      expirationTime: new Date(Date.now() + 80 * 60_000).toISOString(),
+      apiHosts: hosts,
+    });
+    await connecter();
+    expect(api.get).toHaveBeenCalledWith('demo', '/account/list', 'AT-1', undefined, hosts);
+    expect(enregistre[0].apiHosts).toEqual(hosts);
+    expect(enregistre[0].apiHostsAt).toBeInstanceOf(Date);
+  });
+
   it('stocke le trader authentifié, pas le propriétaire du compte', async () => {
     const { connecter, enregistre, api } = setup();
 
@@ -95,7 +109,8 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
     // 5751613 = le trader. 699523 = Apex, et l'écrire remettrait tous ses traders sur un verrou.
     expect(enregistre[0].externalUserId).toBe('5751613');
     expect(enregistre[0].externalUserId).not.toBe('699523');
-    expect(api.get).toHaveBeenCalledWith(expect.any(String), '/user/list', 'AT-1');
+    // Sans `renewAccessToken` exploitable, hôtes historiques (null) : la connexion aboutit quand même.
+    expect(api.get).toHaveBeenCalledWith(expect.any(String), '/user/list', 'AT-1', undefined, null);
   });
 
   it('`/user/list` en échec → connexion créée quand même, sans login', async () => {

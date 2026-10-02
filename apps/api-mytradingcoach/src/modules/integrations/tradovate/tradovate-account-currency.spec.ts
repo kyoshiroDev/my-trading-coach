@@ -32,6 +32,9 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
       externalAccountName: null,
       externalEnv: null,
       availableAccounts: [{ id: '64992914', name: 'TDFY-123', env: 'demo' }],
+      // Hôte demo propre à l'organisation : la devise doit être lue LÀ, pas sur l'hôte historique.
+      apiHosts: { live: 'live.tradovateapi.com', demo: 'demo-org.tradovateapi.com' },
+      apiHostsAt: new Date(),
       lastSyncAt: null,
       lastSyncError: null,
       tradesImported: 0,
@@ -75,7 +78,10 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
 
     await service.selectAccount('u1', 'a1', '64992914');
 
-    expect(api.get).toHaveBeenCalledWith('demo', '/currency/item', 'AT-1', { id: '2' });
+    expect(api.get).toHaveBeenCalledWith('demo', '/currency/item', 'AT-1', { id: '2' }, {
+      live: 'live.tradovateapi.com',
+      demo: 'demo-org.tradovateapi.com',
+    });
     expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
       where: { id: 'a1' },
       data: { currency: 'EUR' },

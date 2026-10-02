@@ -989,9 +989,17 @@ sont en direct.
 - **Aucun trade créé depuis l'événement** : `props` utile → regroupement 1,5 s →
   `TradovateSyncService.sync` (mapper, frais, dédup, verrou). `SYNC_IN_PROGRESS` → 3 essais / 3 s.
   Trades créés → `tradovate:trades { accountId, created, duplicates, total, source }`.
-- Hôtes WS : `wss://{live|demo}.tradovateapi.com/v1/websocket` (même hôte que le REST du compte ;
-  la doc NinjaTrader écrit `tradovateapi.com` sans `live.` pour le réel — à confirmer au 1er
-  compte réel). WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`, remplacé en test).
+- **Hôtes dynamiques (`apiHosts`, correctif du 2026-10-02, #286)** : JAMAIS d'hôte Tradovate en
+  dur. REST, WebSocket et reporting se construisent via `tradovate-hosts.ts` (`restBase`, `wsUrl`,
+  `reportingBase`) à partir de `BrokerConnection.apiHosts` (hôtes nus : `live`, `demo`,
+  `reportingLive`, `reportingDemo`…). L'hôte `demo` est propre à l'organisation (prop firm) et a
+  changé le 2026-10-03 : hôte périmé = WS `421` définitif, REST `307`. `/auth/oauthtoken` ne
+  renvoie PAS `apiHosts` → lu par `renewAccessToken` à la connexion (`exchangeWithHosts`), puis
+  relu dès qu'il a plus de 30 min (`API_HOSTS_TTL_MS`) dans `TradovateTokenManager.getSession`,
+  et diffusé aux connexions sœurs. Tout appel prend `getSession(conn)` → `{ token, apiHosts }`
+  (pas `conn.apiHosts` en mémoire, possiblement périmé). Le WS relit son URL à chaque reconnexion.
+  Repli : constantes historiques (`FALLBACK_HOSTS`) ; filet REST : `fetchFollowingRedirect` suit
+  une 307/308 https en gardant `Authorization`. WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`).
 - **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
   appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
   documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à
