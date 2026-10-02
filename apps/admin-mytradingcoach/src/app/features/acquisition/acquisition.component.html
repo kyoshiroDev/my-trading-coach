@@ -1,27 +1,58 @@
 <div class="screen">
   <div class="page-head">
     <div class="page-title">Acquisition</div>
-    <span class="page-meta">source = utm_source du lien d'inscription</span>
+    <span class="page-meta">visites landing sans cookie · source = utm_source, sinon site d'origine</span>
   </div>
 
   @if (data(); as d) {
-    <div class="kpi-strip cols-4">
-      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrits 7j</div><div class="kpi-value blue">{{ d.totals.signups7d }}</div><div class="kpi-sub">toutes sources</div></div>
-      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrits 30j</div><div class="kpi-value">{{ d.totals.signups30d }}</div><div class="kpi-sub">{{ d.totals.signupsTotal }} au total</div></div>
-      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Premium</div><div class="kpi-value teal">{{ d.totals.premium }}</div><div class="kpi-sub">dont {{ d.totals.trialing }} en essai</div></div>
-      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Conversion</div><div class="kpi-value purple">{{ d.totals.conversionRate }}%</div><div class="kpi-sub">Free → Premium</div></div>
+    <div class="kpi-strip cols-5">
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Visites 7j</div><div class="kpi-value teal">{{ d.totals.visits7d }}</div><div class="kpi-sub">landing, toutes sources</div></div>
+      <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Visites 30j</div><div class="kpi-value">{{ d.totals.visits30d }}</div><div class="kpi-sub">{{ d.totals.pageviews30d }} pages vues</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Inscrits 30j</div><div class="kpi-value blue">{{ d.totals.signups30d }}</div><div class="kpi-sub">{{ d.totals.signups7d }} sur 7j · {{ d.totals.signupsTotal }} au total</div></div>
+      <div class="kpi"><div class="kpi-top amber"></div><div class="kpi-label">Visite → inscription</div><div class="kpi-value amber">{{ d.totals.visitToSignupRate }}%</div><div class="kpi-sub">sur 30 jours</div></div>
+      <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Free → Premium</div><div class="kpi-value purple">{{ d.totals.conversionRate }}%</div><div class="kpi-sub">{{ d.totals.premium }} Premium · dont {{ d.totals.trialing }} en essai</div></div>
+    </div>
+
+    <div class="grid-2 uneven-right">
+      <div class="card">
+        <div class="card-head"><span class="card-label">Trafic landing · 30 jours</span><span class="card-label muted">visites et pages vues par jour</span></div>
+        <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="dailyConfig()" /></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-label">Pages les plus vues</span><span class="card-label muted">30 jours</span></div>
+        @if (d.topPages.length) {
+          <table class="tbl">
+            <caption class="sr-only">Pages de la landing les plus vues sur 30 jours</caption>
+            <thead><tr><th scope="col">Page</th><th scope="col" class="num">Visites</th><th scope="col" class="num">Vues</th></tr></thead>
+            <tbody>
+              @for (p of d.topPages; track p.path) {
+                <tr>
+                  <td data-label="Page" class="td-mono page-path">{{ p.path }}</td>
+                  <td data-label="Visites" class="td-mono num">{{ p.visits }}</td>
+                  <td data-label="Vues" class="td-mono num muted">{{ p.pageviews }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty">Aucune visite enregistrée</div>
+        }
+      </div>
     </div>
 
     <div class="card">
-      <div class="card-head"><span class="card-label">Par source</span><span class="card-label muted">tri : inscrits 30j</span></div>
+      <div class="card-head"><span class="card-label">Par source</span><span class="card-label muted">tri : visites 30j</span></div>
       @if (d.rows.length) {
         <table class="tbl">
-          <caption class="sr-only">Inscrits et conversion Premium par source d'acquisition</caption>
+          <caption class="sr-only">Visites, inscriptions et conversion Premium par source d'acquisition</caption>
           <thead><tr>
             <th scope="col">Source</th>
+            <th scope="col" class="num">Visites 7j</th>
+            <th scope="col" class="num">Visites 30j</th>
             <th scope="col" class="num">Inscrits 7j</th>
             <th scope="col" class="num">Inscrits 30j</th>
-            <th scope="col" class="num">Total</th>
+            <th scope="col" class="num">Visite → inscription</th>
+            <th scope="col" class="num">Inscrits total</th>
             <th scope="col" class="num">Premium</th>
             <th scope="col" class="num">% converti Premium</th>
           </tr></thead>
@@ -32,9 +63,12 @@
                   @if (r.source) { <span class="td-mono">{{ r.source }}</span> }
                   @else { <span class="muted">direct / non renseigné</span> }
                 </td>
+                <td data-label="Visites 7j" class="td-mono num">{{ r.visits7d }}</td>
+                <td data-label="Visites 30j" class="td-mono num">{{ r.visits30d }}</td>
                 <td data-label="Inscrits 7j" class="td-mono num">{{ r.signups7d }}</td>
                 <td data-label="Inscrits 30j" class="td-mono num">{{ r.signups30d }}</td>
-                <td data-label="Total" class="td-mono num muted">{{ r.signupsTotal }}</td>
+                <td data-label="Visite → inscription" class="td-mono num" [class.amber]="r.visitToSignupRate > 0">{{ r.visits30d ? r.visitToSignupRate + '%' : '-' }}</td>
+                <td data-label="Inscrits total" class="td-mono num muted">{{ r.signupsTotal }}</td>
                 <td data-label="Premium" class="td-mono num">{{ r.premium }}@if (r.trialing) {<span class="muted"> · {{ r.trialing }} essai</span>}</td>
                 <td data-label="% converti Premium" class="td-mono num" [class.teal]="r.conversionRate > 0">{{ r.conversionRate }}%</td>
               </tr>
@@ -42,10 +76,14 @@
           </tbody>
         </table>
       } @else {
-        <div class="empty">Aucun inscrit</div>
+        <div class="empty">Aucune donnée</div>
       }
     </div>
-    <p class="page-note">Premium = abonnement Stripe en cours (actif, essai ou impayé en relance). Hors compte démo et comptes admin.</p>
+    <p class="page-note">
+      <b>Visites</b> = 1re page vue d'une session, comptée par l'API sans cookie ni donnée personnelle (robots exclus) : 100 % des visiteurs, accepté ou refusé.
+      <b>Source</b> = utm_source du lien, sinon le site d'origine (ex. ninjatrader.com) ; « direct » si aucun des deux.
+      <b>Premium</b> = abonnement Stripe en cours. Inscrits hors compte démo et comptes admin.
+    </p>
   } @else if (error()) {
     <div class="card"><div class="empty">⚠ {{ error() }}</div></div>
   } @else {
