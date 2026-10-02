@@ -344,7 +344,7 @@
 
         <label class="fld">
           <span class="fld-lbl">Type</span>
-          <select class="inp" [ngModel]="form().type" (ngModelChange)="patch({ type: $event })">
+          <select class="inp" [ngModel]="form().type" (ngModelChange)="onTypeChange($event)">
             <option value="EVALUATION">Évaluation (prop firm)</option>
             <option value="FUNDED">Funded (prop firm)</option>
             <option value="PERSONAL">Personnel</option>
@@ -353,11 +353,25 @@
         </label>
 
         @if (isPropFirm(form().type)) {
-          <label class="fld">
-            <span class="fld-lbl">Prop firm</span>
-            <input class="inp" type="text" [ngModel]="form().broker"
-                   (ngModelChange)="patch({ broker: $event })" placeholder="Apex, Lucid, FTMO…" />
-          </label>
+          <!-- Plan du catalogue (firm → programme → taille) : pré-remplit les règles ci-dessous.
+               Catalogue vide ou injoignable : la saisie libre de la firm reste seule. -->
+          @if (catalog()?.length) {
+            <mtc-prop-firm-plan-picker
+              [catalog]="catalog()!"
+              [accountType]="form().type"
+              [planId]="form().propFirmPlanId"
+              [startOnOther]="firmChoice() === OTHER_FIRM"
+              (firmChange)="onFirmChoice($event)"
+              (planChange)="onPlanChoice($event)" />
+          }
+          @if (!catalog()?.length || firmChoice() === OTHER_FIRM) {
+            <label class="fld">
+              <span class="fld-lbl">{{ catalog()?.length ? 'Nom de la prop firm' : 'Prop firm' }}</span>
+              <input class="inp" type="text" [ngModel]="form().broker"
+                     (ngModelChange)="patch({ broker: $event })" placeholder="FTMO, Topstep, Tradeify…"
+                     data-testid="account-broker" />
+            </label>
+          }
         }
 
         <div class="fld-row">

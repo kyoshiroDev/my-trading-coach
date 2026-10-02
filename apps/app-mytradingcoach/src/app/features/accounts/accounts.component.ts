@@ -66,6 +66,14 @@ import {
   AccountsApi,
 } from '../../core/api/accounts.api';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
+import { PropFirmsApi, type PropFirmCatalogFirm } from '../../core/api/prop-firms.api';
+import type { PropFirmPlanSummary } from '@mtc/shared';
+import {
+  OTHER_FIRM,
+  PropFirmPlanPickerComponent,
+  type FirmChoice,
+} from './prop-firm-plan-picker/prop-firm-plan-picker.component';
+import { findPlan, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
 
 interface AccountFormState {
   label: string;
@@ -78,6 +86,7 @@ interface AccountFormState {
   maxDrawdown: number | null;
   drawdownType: DrawdownType;
   status: AccountStatus;
+  propFirmPlanId: string | null;
 }
 
 function emptyForm(): AccountFormState {
@@ -92,6 +101,7 @@ function emptyForm(): AccountFormState {
     maxDrawdown: null,
     drawdownType: 'TRAILING',
     status: 'ACTIVE',
+    propFirmPlanId: null,
   };
 }
 
@@ -103,7 +113,7 @@ function emptyForm(): AccountFormState {
   imports: [
     DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
-    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -112,6 +122,7 @@ export class AccountsComponent implements OnInit {
   protected readonly store = inject(SelectedAccountStore);
   protected readonly userStore = inject(UserStore);
   private readonly api = inject(AccountsApi);
+  private readonly propFirmsApi = inject(PropFirmsApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly tradesStore = inject(TradesStore);
@@ -138,6 +149,12 @@ export class AccountsComponent implements OnInit {
    */
   protected readonly expandedId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
+  /** Catalogue prop firm, null tant qu'il n'est pas chargé. */
+  protected readonly catalog = signal<PropFirmCatalogFirm[] | null>(null);
+  private catalogLoading = false;
+  /** Choix de firm du sélecteur : id du catalogue, `other` (saisie libre) ou ''. */
+  protected readonly firmChoice = signal<FirmChoice>('');
+  protected readonly OTHER_FIRM = OTHER_FIRM;
 
   // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
   // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
@@ -465,6 +482,8 @@ export class AccountsComponent implements OnInit {
     }
     this.editingId.set(null);
     this.form.set(emptyForm());
+    this.firmChoice.set('');
+    this.loadCatalog();
     this.menuOpenId.set(null);
     this.formOpen.set(true);
   }
@@ -481,7 +500,10 @@ export class AccountsComponent implements OnInit {
       maxDrawdown: a.maxDrawdown,
       drawdownType: a.drawdownType,
       status: a.status,
+      propFirmPlanId: a.propFirmPlanId,
     });
+    this.firmChoice.set(a.propFirmPlanId ? '' : a.broker ? OTHER_FIRM : '');
+    this.loadCatalog();
     this.menuOpenId.set(null);
     this.formOpen.set(true);
   }
@@ -491,6 +513,53 @@ export class AccountsComponent implements OnInit {
 
   protected patch(p: Partial<AccountFormState>): void {
     this.form.update((f) => ({ ...f, ...p }));
+  }
+
+  // ── Catalogue prop firm (choix du plan) ─────────────────────────────────
+  /** Chargé à la première ouverture du formulaire ; [] si l'appel échoue (saisie libre seule). */
+  private loadCatalog(): void {
+    if (this.catalog() !== null || this.catalogLoading) return;
+    this.catalogLoading = true;
+    this.propFirmsApi
+      .getCatalog()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.catalog.set(res.data),
+        error: () => this.catalog.set([]),
+        complete: () => (this.catalogLoading = false),
+      });
+  }
+
+  protected onFirmChoice(choice: FirmChoice): void {
+    this.firmChoice.set(choice);
+    const firm = this.catalog()?.find((f) => f.id === choice);
+    this.patch({ broker: firm ? firm.name : '', propFirmPlanId: null });
+  }
+
+  /** Plan choisi : relie le compte et pré-remplit ses règles (toujours modifiables). */
+  protected onPlanChoice(plan: PropFirmPlanSummary | null): void {
+    if (!plan) {
+      this.patch({ propFirmPlanId: null });
+      return;
+    }
+    const f = this.form();
+    const rules = rulesFromPlan(plan, f.type);
+    this.patch({
+      propFirmPlanId: plan.id,
+      accountSize: rules.accountSize,
+      startingBalance: rules.startingBalance,
+      currency: this.formSynced() ? f.currency : rules.currency,
+      profitTarget: rules.profitTarget,
+      maxDrawdown: rules.maxDrawdown,
+      drawdownType: rules.drawdownType ?? f.drawdownType,
+    });
+  }
+
+  /** Changer évaluation ↔ funded avec un plan choisi : les règles suivent la phase. */
+  protected onTypeChange(type: AccountType): void {
+    this.patch({ type });
+    const sel = findPlan(this.catalog() ?? [], this.form().propFirmPlanId);
+    if (sel && this.isPropFirm(type)) this.onPlanChoice(sel.plan);
   }
 
   protected canSubmit(): boolean {
@@ -513,6 +582,7 @@ export class AccountsComponent implements OnInit {
       profitTarget: propFirm ? f.profitTarget : null,
       maxDrawdown: propFirm ? f.maxDrawdown : null,
       drawdownType: f.drawdownType,
+      propFirmPlanId: propFirm ? f.propFirmPlanId : null,
     };
     this.saving.set(true);
     const id = this.editingId();

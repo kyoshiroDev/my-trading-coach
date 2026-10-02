@@ -23,6 +23,7 @@ function makePrisma() {
     trade: { count: vi.fn() },
     tradeSession: { count: vi.fn() },
     user: { findUnique: vi.fn() },
+    propFirmPlan: { count: vi.fn() },
   };
 }
 
@@ -223,6 +224,42 @@ describe('AccountsService', () => {
       await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('plan du catalogue prop firm (propFirmPlanId)', () => {
+    it('create — plan actif du catalogue → relie le compte', async () => {
+      prisma.propFirmPlan.count.mockResolvedValue(1);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
+      await svc.create('u1', { label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' } as never);
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true } });
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u1', label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' },
+      });
+    });
+
+    it('create — plan inconnu ou retiré → 400, rien de créé (pas de 500 sur la FK)', async () => {
+      prisma.propFirmPlan.count.mockResolvedValue(0);
+      await expect(
+        svc.create('u1', { label: 'X', propFirmPlanId: 'apex-legacy-50k' } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('update — même plan qu’avant → aucun contrôle (un plan retiré reste sur le compte)', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-legacy-50k' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { propFirmPlanId: 'apex-legacy-50k', label: 'Renommé' } as never);
+      expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('update — null détache le compte du plan', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-eod-50k' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { propFirmPlanId: null } as never);
+      expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({ where: { id: 'a1' }, data: { propFirmPlanId: null } });
     });
   });
 

@@ -198,6 +198,7 @@ export class AccountsService {
   ): Promise<TradingAccount> {
     // Un compte créé est ACTIVE par défaut → il consomme un slot.
     await this.assertActiveSlotAvailable(userId, ctx);
+    if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
     return this.prisma.tradingAccount.create({ data: { userId, ...dto } });
   }
 
@@ -223,7 +224,22 @@ export class AccountsService {
         );
       }
     }
+    if (dto.propFirmPlanId && dto.propFirmPlanId !== account.propFirmPlanId) {
+      await this.assertCatalogPlan(dto.propFirmPlanId);
+    }
     return this.prisma.tradingAccount.update({ where: { id }, data: dto });
+  }
+
+  /**
+   * Un compte ne se relie qu'à un plan ACTIF du catalogue. Sans ce contrôle, un id inconnu
+   * finirait en violation de FK (500) ; un plan retiré reste lisible sur les comptes qui le
+   * portaient déjà, mais ne se choisit plus.
+   */
+  private async assertCatalogPlan(planId: string): Promise<void> {
+    const found = await this.prisma.propFirmPlan.count({ where: { id: planId, active: true } });
+    if (!found) {
+      throw new BadRequestException("Ce plan n'existe pas ou n'est plus proposé par la prop firm.");
+    }
   }
 
   /**

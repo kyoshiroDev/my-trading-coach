@@ -25,7 +25,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
   return {
     id, label, broker: null, type: 'EVALUATION', status: 'ACTIVE',
     accountSize: null, currency: 'USD', startingBalance: 50000,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING',
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
