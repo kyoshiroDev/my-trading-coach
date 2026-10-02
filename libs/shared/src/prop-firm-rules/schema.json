@@ -231,11 +231,23 @@
           "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
         },
         "split_pct": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pct" }] },
+        "split_after": {
+          "description": "Ajout : partage qui change au-delà d'un cumul payé par compte (ex. Apex Legacy : 100 % sur les 25 000 premiers $, 90 % ensuite). split_pct = partage avant le seuil.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["paid_out_over", "split_pct"],
+              "properties": { "paid_out_over": { "$ref": "#/$defs/money" }, "split_pct": { "$ref": "#/$defs/pct" } }
+            }
+          ]
+        },
         "min_amount": { "$ref": "#/$defs/nullableMoney" },
         "max_amount": { "$ref": "#/$defs/nullableMoney", "description": "Plafond fixe par demande. null si absent ou s'il varie (voir max_amount_schedule)." },
         "max_amount_schedule": {
-          "description": "Ajout : plafond par numéro de payout. Index i = payout i+1, la dernière valeur vaut pour les suivants.",
-          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
+          "description": "Ajout : plafond par numéro de payout. Index i = payout i+1, la dernière valeur vaut pour les suivants. null dans le tableau = pas de plafond pour ce payout (ex. Apex Legacy : plafonné jusqu'au 5e, libre à partir du 6e).",
+          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nullableMoney" } }]
         },
         "max_payouts": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : nombre max de payouts avant fermeture ou passage en live." },
         "safety_net_balance": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : solde sous lequel aucun payout n'est possible (buffer / safety net)." },

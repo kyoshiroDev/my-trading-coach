@@ -241,15 +241,15 @@ describe('AccountsService', () => {
     it('create — plan inconnu ou retiré → 400, rien de créé (pas de 500 sur la FK)', async () => {
       prisma.propFirmPlan.count.mockResolvedValue(0);
       await expect(
-        svc.create('u1', { label: 'X', propFirmPlanId: 'apex-legacy-50k' } as never),
+        svc.create('u1', { label: 'X', propFirmPlanId: 'apex-retire-50k' } as never),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
     });
 
     it('update — même plan qu’avant → aucun contrôle (un plan retiré reste sur le compte)', async () => {
-      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-legacy-50k' });
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-retire-50k' });
       prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
-      await svc.update('u1', 'a1', { propFirmPlanId: 'apex-legacy-50k', label: 'Renommé' } as never);
+      await svc.update('u1', 'a1', { propFirmPlanId: 'apex-retire-50k', label: 'Renommé' } as never);
       expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalled();
     });

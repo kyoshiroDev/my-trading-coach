@@ -73,9 +73,12 @@ const payoutSchema = z.strictObject({
   min_cycle_profit: nullableMoney.optional(),
   min_cycle_profit_schedule: z.array(money).min(1).nullable().optional(),
   split_pct: pct.nullable(),
+  // Partage qui change au-delà d'un cumul payé (Apex Legacy : 100 % jusqu'à 25 000 $, puis 90 %).
+  split_after: z.strictObject({ paid_out_over: money, split_pct: pct }).nullable().optional(),
   min_amount: nullableMoney,
   max_amount: nullableMoney,
-  max_amount_schedule: z.array(money).min(1).nullable().optional(),
+  // null dans le tableau = pas de plafond pour ce payout (Apex Legacy : libre à partir du 6e).
+  max_amount_schedule: z.array(nullableMoney).min(1).nullable().optional(),
   max_payouts: positiveInt.nullable().optional(),
   safety_net_balance: nullableMoney.optional(),
   notes: nullableText,
