@@ -13,6 +13,7 @@
     "src/**/*.ts",
     "src/**/*.d.ts",
     "../../libs/shared/src/**/*.ts",
+    "../../libs/shared/src/prop-firm-rules/*.json",
     "../../libs/front/ui/src/**/*.ts",
     "../../libs/front/auth/src/**/*.ts"
   ]
