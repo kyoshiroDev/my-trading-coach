@@ -18,6 +18,8 @@ import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 import { netPnl } from '@mtc/shared';
+import { Prisma } from '@prisma/client';
+import { summarizeJournal } from './journal-stats.util';
 
 const mockTrade = {
   id: 'trade-123',
@@ -52,6 +54,7 @@ const createTradeDto: CreateTradeDto = {
 };
 
 const mockPrisma = {
+  $queryRaw: vi.fn(),
   trade: {
     findMany: vi.fn(),
     findUnique: vi.fn(),
@@ -705,34 +708,32 @@ describe('TradesService', () => {
   });
 
   describe('computeJournalStats', () => {
-    it('agrège count/winRate/pnlBrut/fees/pnlNet/best/worst sur tout l\'ensemble', async () => {
-      mockPrisma.trade.findMany.mockResolvedValue([
-        { pnl: 100, commission: 5 },   // net 95, gagnant
-        { pnl: -50, commission: 2 },   // net -52, perdant
-        { pnl: 200, commission: 0 },   // net 200, gagnant
-      ]);
+    // Calcul en base depuis SCA-B2-02 : ici le câblage (filtre transmis, mise en forme). Les
+    // valeurs réelles sont vérifiées sur Postgres contre l'ancien calcul (journal-stats-sql.int-spec.ts).
+    const sqlOf = () => {
+      const q = mockPrisma.$queryRaw.mock.calls.at(-1)?.[0] as Prisma.Sql;
+      return { text: q.text.replace(/\s+/g, ' '), values: q.values };
+    };
+
+    it('met en forme l’agrégat SQL : win rate sur les décisifs, net = brut − frais, best/worst', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ total: 3, wins: 2, losses: 1, brut: 250, fees: 7, best: 200, worst: -52 }]);
 
       const r = await service.computeJournalStats('user-123', {});
 
-      expect(r.totalTrades).toBe(3);
-      expect(r.pnlBrut).toBe(250);
-      expect(r.fees).toBe(7);
-      expect(r.pnlNet).toBe(243);
-      expect(r.winRate).toBeCloseTo((2 / 3) * 100);
-      expect(r.bestTrade).toBe(200);
-      expect(r.worstTrade).toBe(-52);
+      expect(r).toEqual({ totalTrades: 3, winRate: (2 / 3) * 100, pnlBrut: 250, fees: 7, pnlNet: 243, bestTrade: 200, worstTrade: -52 });
     });
 
     it('ensemble vide → tout à 0 (pas de best/worst aberrant)', async () => {
-      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ total: 0, wins: 0, losses: 0, brut: 0, fees: 0, best: null, worst: null }]);
 
       const r = await service.computeJournalStats('user-123', {});
 
       expect(r).toEqual({ totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 });
     });
 
-    it('répercute les filtres (date/side/setup) + ne sélectionne que pnl/commission', async () => {
-      mockPrisma.trade.findMany.mockResolvedValue([]);
+    it('répercute les filtres (date/side/setup) en paramètres liés, et ne charge plus les trades', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ total: 0 }]);
+      mockPrisma.trade.findMany.mockClear();
 
       await service.computeJournalStats('user-123', {
         dateFrom: '2026-06-01T00:00:00.000Z',
@@ -741,13 +742,19 @@ describe('TradesService', () => {
         setupId: 'setup-1',
       });
 
-      const arg = mockPrisma.trade.findMany.mock.calls[0][0];
-      expect(arg.where.userId).toBe('user-123');
-      expect(arg.where.side).toBe(TradeSide.LONG);
-      expect(arg.where.setupId).toBe('setup-1');
-      expect(arg.where.tradedAt.gte).toEqual(new Date('2026-06-01T00:00:00.000Z'));
-      expect(arg.where.tradedAt.lte).toEqual(new Date('2026-06-30T23:59:59.000Z'));
-      expect(arg.select).toEqual({ pnl: true, commission: true });
+      const { text, values } = sqlOf();
+      expect(text).toContain('t."userId" = $');
+      expect(text).toContain('t."side"::text = $');
+      expect(text).toContain('t."setupId" = $');
+      expect(text).toContain('t."tradedAt" >= $');
+      expect(values).toEqual(expect.arrayContaining(['user-123', TradeSide.LONG, 'setup-1', new Date('2026-06-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.000Z')]));
+      expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
+    });
+
+    it('l’étalon summarizeJournal garde ses règles (ouverts comptés, frais en valeur absolue)', () => {
+      expect(summarizeJournal([{ pnl: 100, commission: 5 }, { pnl: -50, commission: -2 }, { pnl: null, commission: 1 }])).toEqual({
+        totalTrades: 3, winRate: 50, pnlBrut: 50, fees: 8, pnlNet: 42, bestTrade: 95, worstTrade: -52,
+      });
     });
   });
 

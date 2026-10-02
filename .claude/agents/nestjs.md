@@ -1181,3 +1181,12 @@ fenêtres SQL), `cumulativeByTrade`. **Plus aucun calcul ne charge tous les trad
   piégeux, étalon figé `src/test/analytics-legacy.service.ts`, écart ≤ 0,01) et
   `analytics.service.scenarios.int-spec.ts` (scénarios métier sur vrai Postgres) doivent passer.
   Un changement VOLONTAIRE de règle → modifier aussi l'étalon, et le dire dans la PR.
+
+### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
+
+`GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
+**Le filtre existe en deux versions côte à côte** dans `trade-filters.util.ts` :
+`buildTradeWhere` (Prisma, liste paginée) et `buildTradeFilterSql` (SQL, stats). **Tout nouveau
+filtre ou changement de filtre se fait dans les deux** ; `journal-stats-sql.int-spec.ts` vérifie
+pour chaque filtre et 80 combinaisons que les deux sélectionnent les mêmes trades, et que les
+stats égalent l'étalon `summarizeJournal`.
