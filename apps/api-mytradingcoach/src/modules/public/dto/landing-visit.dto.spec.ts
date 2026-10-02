@@ -10,6 +10,15 @@ describe('LandingVisitDto', () => {
     expect(dto.source).toBe('ninjatrader.com');
   });
 
+  it('normalise medium et campagne comme la source', async () => {
+    const dto = plainToInstance(LandingVisitDto, { path: '/', source: 'X', medium: ' Post ', campaign: 'Revenge-Trading', entry: true });
+    expect(await validate(dto)).toHaveLength(0);
+    expect([dto.source, dto.medium, dto.campaign]).toEqual(['x', 'post', 'revenge-trading']);
+    const empty = plainToInstance(LandingVisitDto, { path: '/', campaign: '  ', entry: true });
+    expect(await validate(empty)).toHaveLength(0);
+    expect(empty.campaign).toBeUndefined();
+  });
+
   it('garde la racine telle quelle', async () => {
     const dto = plainToInstance(LandingVisitDto, { path: '/', entry: false });
     expect(await validate(dto)).toHaveLength(0);

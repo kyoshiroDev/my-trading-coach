@@ -119,8 +119,8 @@ const robots = noindex
   <!-- Acquisition : source de la visite = utm_* du lien, sinon site d'origine (referrer
        externe, medium « referral »), gardée en sessionStorage pour toute la session.
        1) propagée aux CTA d'inscription (→ User.acquisition* à l'inscription) ;
-       2) comptée par l'API (POST /public/visit) : compteur agrégé jour × page × source,
-          sans cookie, sans IP ni identifiant (exemption CNIL) → indépendant du bandeau.
+       2) comptée par l'API (POST /public/visit) : compteur agrégé jour × page × source
+          (+ medium, campagne), sans cookie, sans IP ni identifiant (exemption CNIL) → indépendant du bandeau.
        Données fonctionnelles et anonymes : aucune dépendance au consentement GA4. -->
   <script is:inline define:vars={{ apiUrl: API_URL }}>
     (function () {
@@ -164,7 +164,13 @@ const robots = noindex
           method: 'POST',
           keepalive: true,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: location.pathname, source: utm.utm_source || undefined, entry: entry })
+          body: JSON.stringify({
+            path: location.pathname,
+            source: utm.utm_source || undefined,
+            medium: utm.utm_medium || undefined,
+            campaign: utm.utm_campaign || undefined,
+            entry: entry
+          })
         }).catch(function () {});
       } catch (e) {}
     })();

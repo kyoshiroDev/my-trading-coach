@@ -171,10 +171,13 @@ export class AdminService {
   }
 
   /**
-   * Acquisition par source : visites de la landing (compteurs sans cookie), inscrits
-   * 7j / 30j / total et conversion Premium (abonnement Stripe en cours).
-   * Source = `User.acquisitionSource` côté inscrits, `LandingVisitDaily.source` côté
-   * visites (même normalisation) ; null / '' = direct. Inscrits hors démo et hors ADMIN.
+   * Acquisition : visites de la landing (compteurs sans cookie), inscrits 7j / 30j / total
+   * et conversion Premium (abonnement Stripe en cours), à deux niveaux :
+   * - `rows` : par source ;
+   * - `campaigns` : par source + medium + campagne (50 lignes max).
+   * Côté inscrits : `User.acquisition*` ; côté visites : `LandingVisitDaily` (même
+   * normalisation) ; null / '' = non renseigné. Inscrits hors démo et hors ADMIN.
+   * Les deux niveaux sortent des mêmes requêtes groupées par (source, medium, campagne).
    * Tri : visites 30j, puis inscrits 30j, puis total.
    */
   async getAcquisition(): Promise<AdminAcquisitionData> {
@@ -188,12 +191,15 @@ export class AdminService {
     const from7 = new Date(`${dayStr(6)}T00:00:00Z`);
     const from30 = new Date(`${dayStr(29)}T00:00:00Z`);
 
+    type Utm = { source: string | null; medium: string | null; campaign: string | null };
     const [signupRows, visitRows, dailyRows, pageRows] = await Promise.all([
       this.prisma.$queryRaw<
-        { source: string | null; d7: bigint; d30: bigint; total: bigint; premium: bigint; trialing: bigint }[]
+        (Utm & { d7: bigint; d30: bigint; total: bigint; premium: bigint; trialing: bigint })[]
       >`
         SELECT
           u."acquisitionSource" AS source,
+          u."acquisitionMedium" AS medium,
+          u."acquisitionCampaign" AS campaign,
           COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '7 days') AS d7,
           COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '30 days') AS d30,
           COUNT(*) AS total,
@@ -201,15 +207,15 @@ export class AdminService {
           COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
         FROM "User" u
         WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
-        GROUP BY u."acquisitionSource"
+        GROUP BY u."acquisitionSource", u."acquisitionMedium", u."acquisitionCampaign"
       `,
-      this.prisma.$queryRaw<{ source: string; v7: bigint; v30: bigint }[]>`
-        SELECT v."source",
+      this.prisma.$queryRaw<(Utm & { v7: bigint; v30: bigint })[]>`
+        SELECT v."source", v."medium", v."campaign",
           COALESCE(SUM(v."visits") FILTER (WHERE v."date" >= ${from7}::date), 0) AS v7,
           SUM(v."visits") AS v30
         FROM "LandingVisitDaily" v
         WHERE v."date" >= ${from30}::date
-        GROUP BY v."source"
+        GROUP BY v."source", v."medium", v."campaign"
       `,
       this.prisma.$queryRaw<{ date: Date; visits: bigint; pageviews: bigint }[]>`
         SELECT v."date", SUM(v."visits") AS visits, SUM(v."pageviews") AS pageviews
@@ -229,37 +235,57 @@ export class AdminService {
 
     const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
     const empty = () => ({ visits7d: 0, visits30d: 0, signups7d: 0, signups30d: 0, signupsTotal: 0, premium: 0, trialing: 0 });
-    // Clé '' = direct, des deux côtés.
-    const bySource = new Map<string, ReturnType<typeof empty>>();
-    const get = (key: string) => {
-      let row = bySource.get(key);
-      if (!row) bySource.set(key, (row = empty()));
+    type Counters = ReturnType<typeof empty>;
+    // '' et null = non renseigné, des deux côtés (visites en '' / inscrits en null).
+    const norm = (v: string | null) => v ?? '';
+    const bySource = new Map<string, Counters>();
+    const byCampaign = new Map<string, Counters>();
+    const get = (map: Map<string, Counters>, key: string) => {
+      let row = map.get(key);
+      if (!row) map.set(key, (row = empty()));
       return row;
     };
+    const targets = (u: Utm) => [
+      get(bySource, norm(u.source)),
+      get(byCampaign, JSON.stringify([norm(u.source), norm(u.medium), norm(u.campaign)])),
+    ];
     for (const r of signupRows) {
-      const row = get(r.source ?? '');
-      row.signups7d = Number(r.d7);
-      row.signups30d = Number(r.d30);
-      row.signupsTotal = Number(r.total);
-      row.premium = Number(r.premium);
-      row.trialing = Number(r.trialing);
+      for (const row of targets(r)) {
+        row.signups7d += Number(r.d7);
+        row.signups30d += Number(r.d30);
+        row.signupsTotal += Number(r.total);
+        row.premium += Number(r.premium);
+        row.trialing += Number(r.trialing);
+      }
     }
     for (const r of visitRows) {
-      const row = get(r.source);
-      row.visits7d = Number(r.v7);
-      row.visits30d = Number(r.v30);
+      for (const row of targets(r)) {
+        row.visits7d += Number(r.v7);
+        row.visits30d += Number(r.v30);
+      }
     }
 
-    const rows = [...bySource.entries()]
-      .map(([key, r]) => ({
-        source: key === '' ? null : key,
-        ...r,
-        visitToSignupRate: pct(r.signups30d, r.visits30d),
-        conversionRate: pct(r.premium, r.signupsTotal),
-      }))
-      .sort((a, b) => b.visits30d - a.visits30d || b.signups30d - a.signups30d || b.signupsTotal - a.signupsTotal);
+    const withRates = (r: Counters) => ({
+      ...r,
+      visitToSignupRate: pct(r.signups30d, r.visits30d),
+      conversionRate: pct(r.premium, r.signupsTotal),
+    });
+    const byVolume = (a: Counters, b: Counters) =>
+      b.visits30d - a.visits30d || b.signups30d - a.signups30d || b.signupsTotal - a.signupsTotal;
+    const orNull = (v: string) => (v === '' ? null : v);
 
-    const sum = (k: keyof ReturnType<typeof empty>) => rows.reduce((acc, r) => acc + r[k], 0);
+    const rows = [...bySource.entries()]
+      .map(([source, r]) => ({ source: orNull(source), ...withRates(r) }))
+      .sort(byVolume);
+    const campaigns = [...byCampaign.entries()]
+      .map(([key, r]) => {
+        const [source, medium, campaign] = JSON.parse(key) as [string, string, string];
+        return { source: orNull(source), medium: orNull(medium), campaign: orNull(campaign), ...withRates(r) };
+      })
+      .sort(byVolume)
+      .slice(0, 50);
+
+    const sum = (k: keyof Counters) => rows.reduce((acc, r) => acc + r[k], 0);
     const visitsByDay = new Map(
       dailyRows.map((d) => [d.date.toISOString().slice(0, 10), { visits: Number(d.visits), pageviews: Number(d.pageviews) }]),
     );
@@ -270,6 +296,7 @@ export class AdminService {
 
     return {
       rows,
+      campaigns,
       totals: {
         visits7d: sum('visits7d'),
         visits30d: sum('visits30d'),
