@@ -68,6 +68,7 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
     tryLock: vi.fn(async () => true),
     unlock: vi.fn(async () => undefined),
     getAccessToken: vi.fn(async () => 'AT-1'),
+    getSession: vi.fn(async () => ({ token: 'AT-1', apiHosts: null })),
   };
   const sync = {
     sync: vi.fn(async () => ({ created: 0, duplicates: 0, failed: 0, total: 0 })),

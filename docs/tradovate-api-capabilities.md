@@ -693,7 +693,17 @@ tous les traders d'une même prop firm derrière un unique verrou de renouvellem
 Même exigence qu'au §9 : **« accessible » veut dire que la doc l'autorise noir sur blanc ET que
 nos permissions le couvrent**. Rien de ce qui suit n'a été appelé avec un jeton utilisateur.
 
-#### 🔴 Avant toute feature — Les hôtes codés en dur ✅ documenté, risque réel
+#### ✅ CORRIGÉ le 2026-10-02 (#286) — Les hôtes codés en dur
+
+> NinjaTrader a annoncé le changement des hôtes « evaluation services » (demo) pour le
+> 2026-10-03. Correctif livré en urgence : `apiHosts` persisté par connexion (`BrokerConnection.apiHosts`
+> / `apiHostsAt`), relu via `renewAccessToken` à la connexion puis toutes les 30 min, REST / WebSocket
+> / reporting routés dessus (`tradovate-hosts.ts`), constantes historiques en repli, 307 suivie en
+> gardant le jeton. Forme réelle mesurée le 2026-10-02 (accessTokenRequest + renewAccessToken,
+> demo et live) : `{"live":"live.tradovateapi.com","demo":"demo.tradovateapi.com","mdLive":…,
+> "mdDemo":…,"replay":…,"reportingLive":"rpt-live.tradovateapi.com","reportingDemo":
+> "rpt-demo.tradovateapi.com","riskMonitorLive":…,"riskMonitorDemo":…,"userContext":…}`.
+> Le texte ci-dessous est l'analyse d'origine.
 
 `tradovate-api.client.ts`, `tradovate-live.protocol.ts` et `tradovate-reporting.client.ts` codent en
 dur `demo.tradovateapi.com`, `wss://demo.tradovateapi.com` et `rpt-demo.tradovateapi.com`. La doc

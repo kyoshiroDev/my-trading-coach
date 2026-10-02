@@ -1,12 +1,13 @@
 import type { Logger } from '@nestjs/common';
-import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
+import { BrokerConnection, BrokerConnectionStatus, BrokerProvider, Prisma } from '@prisma/client';
 import type { PrismaService } from '@api/prisma/prisma.service';
 import { decryptToken, encryptToken } from '@api/common/utils/token-cipher.util';
 import type { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
-import type { TradovateOAuthTokenResponse } from './tradovate.types';
+import type { TradovateApiHosts, TradovateOAuthTokenResponse } from './tradovate.types';
 import type { TradovateLocks } from './tradovate-locks';
 import { REFRESH_MARGIN_MS, REFRESH_RETRY_DELAY_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
+import { API_HOSTS_TTL_MS, describeHosts, parseApiHosts } from './tradovate-hosts';
 
 /** Colonnes de tokens chiffrés d'une connexion, prêtes à écrire en base. */
 export function buildTokenColumns(
@@ -32,6 +33,12 @@ previous?: Pick<BrokerConnection, 'refreshTokenEnc' | 'refreshTokenExpiresAt'>,
 
 export type TokenColumns = ReturnType<typeof buildTokenColumns>;
 
+/** Jeton + hôtes de la connexion (`apiHosts` null → hôtes historiques en repli). */
+export interface TradovateSession {
+  token: string;
+  apiHosts: TradovateApiHosts | null;
+}
+
 /** Ce que le gestionnaire emprunte à TradovateConnectionService (qui reste le point d'entrée). */
 export interface TokenManagerDeps {
   prisma: PrismaService;
@@ -56,8 +63,70 @@ export class TradovateTokenManager {
    * Access token valide pour cette connexion, renouvelé si besoin SANS repasser par l'écran
    * de consentement : refresh_token d'abord, puis `renewAccessToken` si l'access token vit
    * encore. Si tout échoue → connexion marquée NEEDS_RECONNECT et erreur claire.
+   *
+   * Au passage, `apiHosts` est relu s'il manque ou date de plus de 30 min (cf. ensureFreshHosts) :
+   * tout appelant qui demande un jeton puis relit la connexion a donc des hôtes frais.
    */
   async getAccessToken(conn: BrokerConnection): Promise<string> {
+    return (await this.getSession(conn)).token;
+  }
+
+  /** Jeton valide ET hôtes frais : ce dont un appel REST, reporting ou WebSocket a besoin. */
+  async getSession(conn: BrokerConnection): Promise<TradovateSession> {
+    const token = await this.validToken(conn);
+    return this.ensureFreshHosts(conn, token);
+  }
+
+  /**
+   * Relit `apiHosts` via `renewAccessToken` (l'OAuth ne le renvoie pas) quand il manque ou a plus
+   * de `API_HOSTS_TTL_MS` : l'hôte demo d'une prop firm peut changer à tout moment (bascule
+   * NinjaTrader du 2026-10-03), et un hôte périmé fait refuser le WebSocket en 421.
+   *
+   * Le jeton renouvelé est persisté et, avec les hôtes, diffusé aux connexions sœurs du login.
+   * JAMAIS bloquant : un échec garde le jeton courant et les hôtes connus (repli sur les hôtes
+   * historiques si aucun), la synchro ne doit pas tomber pour ça.
+   */
+  private async ensureFreshHosts(conn: BrokerConnection, token: string): Promise<TradovateSession> {
+    const previous = parseApiHosts(conn.apiHosts);
+    if (conn.apiHostsAt && Date.now() - conn.apiHostsAt.getTime() < API_HOSTS_TTL_MS) {
+      return { token, apiHosts: previous };
+    }
+    let renewed: Awaited<ReturnType<TradovateApiClient['renewAccessToken']>>;
+    try {
+      renewed = await this.deps.api.renewAccessToken(token);
+    } catch (err) {
+      this.deps.logger.warn(`apiHosts Tradovate non relus (connexion ${conn.id}) : ${(err as Error).message}`);
+      return { token, apiHosts: previous };
+    }
+    if (!renewed.apiHosts) {
+      this.deps.logger.warn(`renewAccessToken sans apiHosts (connexion ${conn.id}) : hôtes connus conservés (${describeHosts(previous)}).`);
+    } else if (describeHosts(renewed.apiHosts) !== describeHosts(previous)) {
+      this.deps.logger.log(`apiHosts Tradovate (connexion ${conn.id}) : ${describeHosts(renewed.apiHosts)}.`);
+    }
+    const data = {
+      accessTokenEnc: encryptToken(renewed.accessToken, this.deps.tokenKey()),
+      accessTokenExpiresAt: new Date(renewed.expirationTime),
+      // Horodaté même sans apiHosts : on ne redemande pas à chaque appel.
+      apiHostsAt: new Date(),
+      ...(renewed.apiHosts ? { apiHosts: renewed.apiHosts as Prisma.InputJsonValue } : {}),
+    };
+    await this.deps.prisma.brokerConnection.update({ where: { id: conn.id }, data });
+    if (conn.externalUserId) {
+      await this.deps.prisma.brokerConnection.updateMany({
+        where: {
+          id: { not: conn.id },
+          userId: conn.userId,
+          provider: BrokerProvider.TRADOVATE,
+          externalUserId: conn.externalUserId,
+          status: BrokerConnectionStatus.CONNECTED,
+        },
+        data,
+      });
+    }
+    return { token: renewed.accessToken, apiHosts: renewed.apiHosts ?? previous };
+  }
+
+  private async validToken(conn: BrokerConnection): Promise<string> {
     if (conn.status === BrokerConnectionStatus.NEEDS_RECONNECT) {
       throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
     }
@@ -171,6 +240,9 @@ export class TradovateTokenManager {
         data: {
           accessTokenEnc: encryptToken(renewed.accessToken, this.deps.tokenKey()),
           accessTokenExpiresAt: new Date(renewed.expirationTime),
+          ...(renewed.apiHosts
+            ? { apiHosts: renewed.apiHosts as Prisma.InputJsonValue, apiHostsAt: new Date() }
+            : {}),
         },
       });
       return renewed.accessToken;

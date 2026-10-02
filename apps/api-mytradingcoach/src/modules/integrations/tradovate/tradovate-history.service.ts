@@ -9,7 +9,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
-import type { TradovateAccount, TradovateEnv } from './tradovate.types';
+import type { TradovateAccount, TradovateApiHosts, TradovateEnv } from './tradovate.types';
 
 /**
  * Profondeur de l'import : **toute la vie du compte**, jusqu'à sa création.
@@ -104,8 +104,9 @@ export class TradovateHistoryService {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
     }
     const env = conn.externalEnv as TradovateEnv;
-    const token = await this.connections.getAccessToken(conn);
-    const account = await this.resolveAccount(env, token, conn);
+    // Hôtes frais avec le jeton : le reporting demo est propre à l'organisation (prop firm).
+    const { token, apiHosts } = await this.connections.getSession(conn);
+    const account = await this.resolveAccount(env, token, conn, apiHosts);
     const accountName = account.name;
 
     /**
@@ -133,7 +134,7 @@ export class TradovateHistoryService {
       if (stopOnEmpty && consecutiveEmpty >= EMPTY_WINDOWS_BEFORE_STOP) break;
       result.windows++;
       try {
-        const imported = await this.importWindow(userId, conn, env, token, window, setupId, result);
+        const imported = await this.importWindow(userId, conn, env, token, window, setupId, result, apiHosts);
         consecutiveEmpty = imported ? 0 : consecutiveEmpty + 1;
         if (!imported) result.empty++;
       } catch (err) {
@@ -189,8 +190,9 @@ export class TradovateHistoryService {
     window: ReportWindow,
     setupId: string | null,
     result: HistoryImportResult,
+    apiHosts: TradovateApiHosts | null,
   ): Promise<boolean> {
-    const performance = await this.reporting.fetchCsv(env, token, 'Performance', window);
+    const performance = await this.reporting.fetchCsv(env, token, 'Performance', window, apiHosts);
     // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
     if (!performance) return false;
 
@@ -203,7 +205,7 @@ export class TradovateHistoryService {
 
     // Les frais sont un bonus : leur absence donne un P&L brut, jamais un import raté.
     try {
-      result.feesExpected += await this.applyFees(env, token, window, dtos);
+      result.feesExpected += await this.applyFees(env, token, window, dtos, apiHosts);
     } catch (err) {
       this.logger.warn(`Frais indisponibles sur la fenêtre (${(err as Error).message}) : P&L brut.`);
     }
@@ -272,8 +274,9 @@ export class TradovateHistoryService {
     token: string,
     window: ReportWindow,
     dtos: ImportDto[],
+    apiHosts: TradovateApiHosts | null,
   ): Promise<number> {
-    const csv = await this.reporting.fetchCsv(env, token, 'Fills', window);
+    const csv = await this.reporting.fetchCsv(env, token, 'Fills', window, apiHosts);
     if (!csv) return 0;
     const lines = csv.split(/\r?\n/).filter((l) => l.trim());
     const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
@@ -310,8 +313,9 @@ export class TradovateHistoryService {
     env: TradovateEnv,
     token: string,
     conn: BrokerConnection,
+    apiHosts: TradovateApiHosts | null,
   ): Promise<TradovateAccount> {
-    const accounts = await this.api.get<TradovateAccount[]>(env, '/account/list', token);
+    const accounts = await this.api.get<TradovateAccount[]>(env, '/account/list', token, undefined, apiHosts);
     const account = (Array.isArray(accounts) ? accounts : []).find(
       (a) => String(a.id) === conn.externalAccountId,
     );
