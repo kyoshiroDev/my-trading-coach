@@ -24,7 +24,8 @@
     "db:reset": "prisma migrate reset --config=./prisma/prisma.config.ts",
     "db:studio": "prisma studio --config=./prisma/prisma.config.ts",
     "seed:demo": "tsx --env-file-if-exists=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/seed/demo-account.ts",
-    "seed:user": "tsx --env-file-if-exists=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/seed/user-account.ts"
+    "seed:user": "tsx --env-file-if-exists=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/seed/user-account.ts",
+    "prop-firms:validate": "tsx --tsconfig tools/scripts/tsconfig.check.json tools/scripts/validate-prop-firm-rules.ts"
   },
   "private": true,
   "packageManager": "pnpm@11.6.0",
@@ -66,6 +67,8 @@
     "@swc/helpers": "0.5.18",
     "@types/node": "25.8.0",
     "@typescript-eslint/utils": "^8.59.3",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "angular-eslint": "22.5.0",
     "astro-eslint-parser": "^3.2.0",
     "eslint": "^9.8.0",
