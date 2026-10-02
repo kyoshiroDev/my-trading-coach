@@ -79,9 +79,48 @@
         <div class="empty">Aucune donnée</div>
       }
     </div>
+    <div class="card">
+      <div class="card-head"><span class="card-label">Détail par campagne</span><span class="card-label muted">source · medium · campagne · 50 lignes max</span></div>
+      @if (d.campaigns.length) {
+        <table class="tbl">
+          <caption class="sr-only">Visites, inscriptions et conversion Premium par source, medium et campagne</caption>
+          <thead><tr>
+            <th scope="col">Source</th>
+            <th scope="col">Medium</th>
+            <th scope="col">Campagne</th>
+            <th scope="col" class="num">Visites 7j</th>
+            <th scope="col" class="num">Visites 30j</th>
+            <th scope="col" class="num">Inscrits 30j</th>
+            <th scope="col" class="num">Visite → inscription</th>
+            <th scope="col" class="num">Inscrits total</th>
+            <th scope="col" class="num">Premium</th>
+          </tr></thead>
+          <tbody>
+            @for (c of d.campaigns; track $index) {
+              <tr>
+                <td data-label="Source">
+                  @if (c.source) { <span class="td-mono">{{ c.source }}</span> }
+                  @else { <span class="muted">direct / non renseigné</span> }
+                </td>
+                <td data-label="Medium" class="td-mono" [class.muted]="!c.medium">{{ c.medium ?? '-' }}</td>
+                <td data-label="Campagne" class="td-mono" [class.muted]="!c.campaign">{{ c.campaign ?? '-' }}</td>
+                <td data-label="Visites 7j" class="td-mono num">{{ c.visits7d }}</td>
+                <td data-label="Visites 30j" class="td-mono num">{{ c.visits30d }}</td>
+                <td data-label="Inscrits 30j" class="td-mono num">{{ c.signups30d }}</td>
+                <td data-label="Visite → inscription" class="td-mono num" [class.amber]="c.visitToSignupRate > 0">{{ c.visits30d ? c.visitToSignupRate + '%' : '-' }}</td>
+                <td data-label="Inscrits total" class="td-mono num muted">{{ c.signupsTotal }}</td>
+                <td data-label="Premium" class="td-mono num" [class.teal]="c.premium > 0">{{ c.premium }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="empty">Aucune donnée</div>
+      }
+    </div>
     <p class="page-note">
       <b>Visites</b> = 1re page vue d'une session, comptée par l'API sans cookie ni donnée personnelle (robots exclus) : 100 % des visiteurs, accepté ou refusé.
-      <b>Source</b> = utm_source du lien, sinon le site d'origine (ex. ninjatrader.com) ; « direct » si aucun des deux.
+      <b>Source</b> = utm_source du lien, sinon le site d'origine (ex. ninjatrader.com) ; « direct » si aucun des deux. <b>Medium</b> / <b>Campagne</b> = utm_medium / utm_campaign (medium « referral » = source déduite du site d'origine).
       <b>Premium</b> = abonnement Stripe en cours. Inscrits hors compte démo et comptes admin.
     </p>
   } @else if (error()) {

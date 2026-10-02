@@ -1157,8 +1157,47 @@ vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTT
   `stripeSubscriptionStatus IN ('active','trialing','past_due')`, `trialing` renvoyé à part.
   `source: null` = direct / non renseigné. Page admin : `/acquisition` (nav Business).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
-  `topPages`) lues dans `LandingVisitDaily`. Le taux global visite → inscription ne compte que les
+  `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
+  campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,
+  campagne) ; `''` (visites) et `null` (inscrits) sont fusionnés en « non renseigné ». Le taux global visite → inscription ne compte que les
   sources ayant des visites (sinon les inscrits arrivés direct sur l'app le font dépasser 100 %).
-- `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, entry }`. Robots
+- `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, medium?, campaign?, entry }`. Robots
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
+
+## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
+
+`analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /
+heure / jour-heure / date de Paris), `summaryTotals` (sommes, drawdown max, série en cours en
+fenêtres SQL), `cumulativeByTrade`. **Plus aucun calcul ne charge tous les trades en mémoire.**
+- Règles reproduites à l'identique : net = `round(pnl − |commission|, 2)` (comme `netPnl`),
+  gagnant si net > 0 ; R:R compté s'il est renseigné et non nul ; heure / jour dans le **fuseau du
+  processus** (`processTimeZone()`, comme les anciens `getHours()` ; TZ=Europe/Paris en prod) ;
+  dates d'activité à Paris. Les sélections (meilleure session : strictement supérieur, égalités
+  au premier apparu → `bestByWinRate`) restent en JS.
+- Valeurs en **paramètres liés** (`Prisma.sql`) ; les seules expressions brutes viennent de la
+  liste blanche `GroupKey`. Jamais de `Prisma.raw` sur une entrée.
+- Gain mesuré (compte 50 000 trades) : CPU Node par appel divisé par 100 à 1 500 (courbe
+  journalière 12,6 s → 0,42 s).
+- **Toute modification d'un calcul** : `analytics-sql-equivalence.int-spec.ts` (5 000 trades
+  piégeux, étalon figé `src/test/analytics-legacy.service.ts`, écart ≤ 0,01) et
+  `analytics.service.scenarios.int-spec.ts` (scénarios métier sur vrai Postgres) doivent passer.
+  Un changement VOLONTAIRE de règle → modifier aussi l'étalon, et le dire dans la PR.
+
+### Métriques des comptes en SQL (SCA-B2-03, 2026-10-02)
+
+`AccountsService.list` → `ruleAggregatesSql` (accounts/account-rules.ts) : agrégats de tous les
+comptes en une requête, plus de chargement des trades. `computeRuleMetrics(compte, trades)` reste
+(= `aggregateRuleTrades` étalon JS + `ruleMetricsFromAgg`). ⚠️ Règle propre aux comptes,
+conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − commission`
+**signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
+tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
+`account-rules-sql.int-spec.ts`.
+### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
+
+`GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
+**Le filtre existe en deux versions côte à côte** dans `trade-filters.util.ts` :
+`buildTradeWhere` (Prisma, liste paginée) et `buildTradeFilterSql` (SQL, stats). **Tout nouveau
+filtre ou changement de filtre se fait dans les deux** ; `journal-stats-sql.int-spec.ts` vérifie
+pour chaque filtre et 80 combinaisons que les deux sélectionnent les mêmes trades, et que les
+stats égalent l'étalon `summarizeJournal`.

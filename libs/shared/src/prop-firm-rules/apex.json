@@ -1,0 +1,1606 @@
+{
+  "firm": {
+    "id": "apex",
+    "name": "Apex Trader Funding",
+    "website": "https://apextraderfunding.com",
+    "help_center": "https://apextraderfunding.com/help-center/",
+    "platforms": [
+      "rithmic",
+      "tradovate",
+      "wealthcharts"
+    ]
+  },
+  "verified_at": "2026-10-02",
+  "plans": [
+    {
+      "id": "apex-intraday-25k",
+      "plan_name": "Intraday Trail",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 167,
+        "billing": "one_time",
+        "activation_fee": 79,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 690 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 27500,
+                "locked_floor": 26500,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (26500) quand le pic atteint 27500."
+              },
+              "wealthcharts": {
+                "locks_at": 27500,
+                "locked_floor": 26500,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (26500) quand le pic atteint 27500."
+              }
+            },
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained) : le seuil suit le Peak Balance, gains latents inclus, ne redescend jamais, et est appliqué en temps réel ; le toucher liquide les positions et fait échouer l'évaluation. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "amount": 500
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "amount": 500
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "amount": 1250
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained / Intraday PA) : seuil sur le Peak Balance, réalisé et latent inclus, appliqué en temps réel ; en PA il cesse de monter à capital initial + 100 $ (25100), atteint quand le pic touche 26100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 2,
+                "micros": 20
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 26100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/intraday-trailing-drawdown-evaluations/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-intraday-50k",
+      "plan_name": "Intraday Trail",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 249,
+        "billing": "one_time",
+        "activation_fee": 89,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 490 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 55000,
+                "locked_floor": 53000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (53000) quand le pic atteint 55000."
+              },
+              "wealthcharts": {
+                "locks_at": 55000,
+                "locked_floor": 53000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (53000) quand le pic atteint 55000."
+              }
+            },
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained) : le seuil suit le Peak Balance, gains latents inclus, ne redescend jamais, et est appliqué en temps réel ; le toucher liquide les positions et fait échouer l'évaluation. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "amount": 1000
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999,
+                "amount": 1000
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 5999,
+                "amount": 2000
+              },
+              {
+                "min_profit": 6000,
+                "max_profit": null,
+                "amount": 3000
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective. Palier 4 du 50K : la page Scaling Levels indique « 5 999 $ et plus », la page Daily Loss Limit « 6 000 $ et plus » ; 6 000 retenu (cohérent avec le palier 3 qui s'arrête à 5 999)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained / Intraday PA) : seuil sur le Peak Balance, réalisé et latent inclus, appliqué en temps réel ; en PA il cesse de monter à capital initial + 100 $ (50100), atteint quand le pic touche 52100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 5999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 6000,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              2000,
+              2500,
+              2500,
+              3000,
+              3000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 52100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/intraday-trailing-drawdown-evaluations/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-intraday-100k",
+      "plan_name": "Intraday Trail",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 790,
+        "billing": "one_time",
+        "activation_fee": 109,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 590 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (106000) quand le pic atteint 109000."
+              },
+              "wealthcharts": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (106000) quand le pic atteint 109000."
+              }
+            },
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained) : le seuil suit le Peak Balance, gains latents inclus, ne redescend jamais, et est appliqué en temps réel ; le toucher liquide les positions et fait échouer l'évaluation. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "amount": 3500
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained / Intraday PA) : seuil sur le Peak Balance, réalisé et latent inclus, appliqué en temps réel ; en PA il cesse de monter à capital initial + 100 $ (100100), atteint quand le pic touche 103100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2500,
+              3000,
+              3000,
+              4000,
+              4000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 103100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/intraday-trailing-drawdown-evaluations/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-intraday-150k",
+      "plan_name": "Intraday Trail",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 1190,
+        "billing": "one_time",
+        "activation_fee": 139,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1890 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 163000,
+                "locked_floor": 159000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (159000) quand le pic atteint 163000."
+              },
+              "wealthcharts": {
+                "locks_at": 163000,
+                "locked_floor": 159000,
+                "notes": "Le seuil suit le pic en temps réel puis se fige au solde objectif (159000) quand le pic atteint 163000."
+              }
+            },
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained) : le seuil suit le Peak Balance, gains latents inclus, ne redescend jamais, et est appliqué en temps réel ; le toucher liquide les positions et fait échouer l'évaluation. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "amount": 3000
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "amount": 4000
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154100,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Intraday Trailing Drawdown Explained / Intraday PA) : seuil sur le Peak Balance, réalisé et latent inclus, appliqué en temps réel ; en PA il cesse de monter à capital initial + 100 $ (150100), atteint quand le pic touche 154100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              3000,
+              3000,
+              4000,
+              4000,
+              5000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 154100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/intraday-trailing-drawdown-evaluations/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/intraday-trailing-drawdown-accounts/intraday-trailing-drawdown-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-eod-25k",
+      "plan_name": "EOD Trail",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 490,
+        "billing": "one_time",
+        "activation_fee": 99,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1090 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixe pendant toute l'évaluation EOD, mesurée en temps réel sur l'equity (réalisé + latent). Atteinte = liquidation et pause jusqu'à 18:00 ET, l'évaluation reste active."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 27500,
+                "locked_floor": 26500,
+                "notes": "Le seuil se fige au solde objectif (26500) quand le plus haut solde de clôture dépasse 27500."
+              },
+              "wealthcharts": {
+                "locks_at": 27500,
+                "locked_floor": 26500,
+                "notes": "Le seuil se fige au solde objectif (26500) quand le plus haut solde de clôture dépasse 27500."
+              }
+            },
+            "basis_notes": "Source (EOD Drawdown Explained) : seuil recalculé une fois par jour à 16:59:59 ET sur le solde de clôture, suit le plus haut solde de clôture, ne redescend jamais ; appliqué en temps réel pendant la session suivante, P&L latent inclus. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "amount": 500
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "amount": 500
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "amount": 1250
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (EOD Drawdown Explained / EOD PA) : seuil sur le plus haut solde de clôture (16:59:59 ET), appliqué en temps réel P&L latent inclus ; en PA il cesse de monter à capital initial + 100 $ (25100), atteint quand le plus haut solde de clôture touche 26100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 2,
+                "micros": 20
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 26100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-evaluations/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-eod-50k",
+      "plan_name": "EOD Trail",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 590,
+        "billing": "one_time",
+        "activation_fee": 119,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1190 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixe pendant toute l'évaluation EOD, mesurée en temps réel sur l'equity (réalisé + latent). Atteinte = liquidation et pause jusqu'à 18:00 ET, l'évaluation reste active."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 55000,
+                "locked_floor": 53000,
+                "notes": "Le seuil se fige au solde objectif (53000) quand le plus haut solde de clôture dépasse 55000."
+              },
+              "wealthcharts": {
+                "locks_at": 55000,
+                "locked_floor": 53000,
+                "notes": "Le seuil se fige au solde objectif (53000) quand le plus haut solde de clôture dépasse 55000."
+              }
+            },
+            "basis_notes": "Source (EOD Drawdown Explained) : seuil recalculé une fois par jour à 16:59:59 ET sur le solde de clôture, suit le plus haut solde de clôture, ne redescend jamais ; appliqué en temps réel pendant la session suivante, P&L latent inclus. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "amount": 1000
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999,
+                "amount": 1000
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 5999,
+                "amount": 2000
+              },
+              {
+                "min_profit": 6000,
+                "max_profit": null,
+                "amount": 3000
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective. Palier 4 du 50K : la page Scaling Levels indique « 5 999 $ et plus », la page Daily Loss Limit « 6 000 $ et plus » ; 6 000 retenu (cohérent avec le palier 3 qui s'arrête à 5 999)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (EOD Drawdown Explained / EOD PA) : seuil sur le plus haut solde de clôture (16:59:59 ET), appliqué en temps réel P&L latent inclus ; en PA il cesse de monter à capital initial + 100 $ (50100), atteint quand le plus haut solde de clôture touche 52100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 5999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 6000,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              1500,
+              2000,
+              2500,
+              2500,
+              3000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 52100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-evaluations/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-eod-100k",
+      "plan_name": "EOD Trail",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 1190,
+        "billing": "one_time",
+        "activation_fee": 129,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : pas de carte affichée pour cette taille sur le sélecteur."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixe pendant toute l'évaluation EOD, mesurée en temps réel sur l'equity (réalisé + latent). Atteinte = liquidation et pause jusqu'à 18:00 ET, l'évaluation reste active."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Le seuil se fige au solde objectif (106000) quand le plus haut solde de clôture dépasse 109000."
+              },
+              "wealthcharts": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Le seuil se fige au solde objectif (106000) quand le plus haut solde de clôture dépasse 109000."
+              }
+            },
+            "basis_notes": "Source (EOD Drawdown Explained) : seuil recalculé une fois par jour à 16:59:59 ET sur le solde de clôture, suit le plus haut solde de clôture, ne redescend jamais ; appliqué en temps réel pendant la session suivante, P&L latent inclus. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "amount": 1750
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "amount": 3500
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (EOD Drawdown Explained / EOD PA) : seuil sur le plus haut solde de clôture (16:59:59 ET), appliqué en temps réel P&L latent inclus ; en PA il cesse de monter à capital initial + 100 $ (100100), atteint quand le plus haut solde de clôture touche 103100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2500,
+              2500,
+              3000,
+              4000,
+              4000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 103100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-evaluations/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-eod-150k",
+      "plan_name": "EOD Trail",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 2190,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : pas de carte affichée pour cette taille sur le sélecteur."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixe pendant toute l'évaluation EOD, mesurée en temps réel sur l'equity (réalisé + latent). Atteinte = liquidation et pause jusqu'à 18:00 ET, l'évaluation reste active."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le drawdown d'évaluation suit indéfiniment le pic, sans blocage."
+              },
+              "rithmic": {
+                "locks_at": 163000,
+                "locked_floor": 159000,
+                "notes": "Le seuil se fige au solde objectif (159000) quand le plus haut solde de clôture dépasse 163000."
+              },
+              "wealthcharts": {
+                "locks_at": 163000,
+                "locked_floor": 159000,
+                "notes": "Le seuil se fige au solde objectif (159000) quand le plus haut solde de clôture dépasse 163000."
+              }
+            },
+            "basis_notes": "Source (EOD Drawdown Explained) : seuil recalculé une fois par jour à 16:59:59 ET sur le solde de clôture, suit le plus haut solde de clôture, ne redescend jamais ; appliqué en temps réel pendant la session suivante, P&L latent inclus. locks_at = null car le blocage dépend de la plateforme (voir platform_overrides ; null = Tradovate, trail sans fin)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant toute l'évaluation, toutes positions confondues. 10 micros = 1 mini. Un ordre au-delà est rejeté sans pénalité."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "amount": 2500
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "amount": 3000
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "amount": 4000
+              }
+            ],
+            "scaling_rule": null,
+            "notes": "DLL par palier selon le profit au solde de clôture de la veille (16:59:59 ET), fixe pendant toute la session. Mesurée en temps réel sur l'equity (réalisé + latent) ; atteinte = liquidation et pause jusqu'à 18:00 ET, le PA reste actif. Ne descend jamais sous le palier 1. Certains paliers ont une DLL supérieure au drawdown max (ex. 25K palier 3 : 1250 $ pour 1000 $) : le drawdown reste alors la limite effective."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154100,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (EOD Drawdown Explained / EOD PA) : seuil sur le plus haut solde de clôture (16:59:59 ET), appliqué en temps réel P&L latent inclus ; en PA il cesse de monter à capital initial + 100 $ (150100), atteint quand le plus haut solde de clôture touche 154100. Toucher le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Le plus gros jour profitable doit rester STRICTEMENT sous 50 % du profit net depuis le dernier payout (ou depuis le début). Remis à zéro après chaque payout approuvé."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 9999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 10000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "minis / micros = palier maximum. Palier recalculé sur le solde de clôture (16:59:59 ET) et appliqué à la session suivante."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions doivent être fermées avant 16:59 ET (marchés agricoles plus tôt, clôtures anticipées les jours fériés). Garder une position à la clôture est une activité interdite. News : autorisées dans le cadre de la stratégie habituelle ; stratégies qui « jouent » l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              3000,
+              3000,
+              3000,
+              4000,
+              5000
+            ],
+            "max_payouts": 6,
+            "safety_net_balance": 154100,
+            "notes": "5 jours (non consécutifs) au profit minimum, consistency 50 %, solde au-dessus du safety net (drawdown + 100 $, à vie) et demande d'au moins 500 $. PA fermé après 6 payouts. Inactivité : au moins 2 jours à 50 $ net de profit par période glissante de 30 jours, sinon fermeture."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-evaluations/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-drawdown-explained/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/eod-trailing-drawdown-accounts/eod-payouts/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/daily-loss-limit-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/scaling-levels-pa-explained/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/position-sizing-evaluation/",
+        "https://apextraderfunding.com/help-center/additional-helpful-items/50-consistency-requirement/",
+        "https://apextraderfunding.com/help-center/billing/evaluation-plan-fees-and-access-explained/",
+        "https://apextraderfunding.com/help-center/uncategorized/no-activation-fee-evaluations/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/choosing-the-right-platform/",
+        "https://apextraderfunding.com/"
+      ],
+      "needs_review": false,
+      "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    }
+  ]
+}
