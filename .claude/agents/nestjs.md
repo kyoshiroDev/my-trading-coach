@@ -1181,3 +1181,13 @@ fenêtres SQL), `cumulativeByTrade`. **Plus aucun calcul ne charge tous les trad
   piégeux, étalon figé `src/test/analytics-legacy.service.ts`, écart ≤ 0,01) et
   `analytics.service.scenarios.int-spec.ts` (scénarios métier sur vrai Postgres) doivent passer.
   Un changement VOLONTAIRE de règle → modifier aussi l'étalon, et le dire dans la PR.
+
+### Métriques des comptes en SQL (SCA-B2-03, 2026-10-02)
+
+`AccountsService.list` → `ruleAggregatesSql` (accounts/account-rules.ts) : agrégats de tous les
+comptes en une requête, plus de chargement des trades. `computeRuleMetrics(compte, trades)` reste
+(= `aggregateRuleTrades` étalon JS + `ruleMetricsFromAgg`). ⚠️ Règle propre aux comptes,
+conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − commission`
+**signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
+tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
+`account-rules-sql.int-spec.ts`.
