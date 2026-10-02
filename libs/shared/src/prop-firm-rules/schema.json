@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mytradingcoach.app/schemas/prop-firm-rules.json",
+  "title": "Catalogue des règles d'une prop firm",
+  "description": "Un fichier par firm. null = la règle n'existe pas. Règle existante mais valeur inconnue : null + needs_review: true au niveau du plan + explication dans notes. Montants en devise du compte, pourcentages en décimales, fuseaux au format IANA.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["firm", "verified_at", "plans"],
+  "properties": {
+    "firm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "website", "platforms"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug", "description": "Slug stable, ne change jamais." },
+        "name": { "type": "string", "minLength": 1 },
+        "website": { "type": "string", "format": "uri" },
+        "help_center": { "type": ["string", "null"], "format": "uri", "description": "Ajout : help center officiel utilisé comme source principale." },
+        "platforms": { "type": "array", "items": { "$ref": "#/$defs/slug" }, "minItems": 1, "uniqueItems": true }
+      }
+    },
+    "verified_at": { "type": "string", "format": "date" },
+    "plans": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/plan" } }
+  },
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$" },
+    "money": { "type": "number", "minimum": 0 },
+    "nullableMoney": { "type": ["number", "null"], "minimum": 0 },
+    "pct": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "timeOfDay": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9] [A-Za-z]+(?:/[A-Za-z0-9_+-]+)+$",
+      "description": "HH:MM suivi d'un fuseau IANA, ex. \"18:00 America/New_York\"."
+    },
+    "nullableText": { "type": ["string", "null"] },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "plan_name", "account_size", "currency", "price", "phases", "source_urls", "needs_review", "notes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug", "description": "Slug stable : firm-plan[-options]-taille." },
+        "plan_name": { "type": "string", "minLength": 1 },
+        "account_size": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3,4}$" },
+        "availability": {
+          "enum": ["public", "invite_only"],
+          "description": "Ajout : invite_only = vendu seulement aux traders invités par la firm."
+        },
+        "configuration": {
+          "description": "Ajout : options choisies au checkout qui changent les règles. null = plan sans option.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["daily_loss_limit", "eval_drawdown"],
+              "properties": {
+                "daily_loss_limit": { "type": ["boolean", "null"] },
+                "eval_drawdown": { "enum": ["eod", "intraday", null] }
+              }
+            }
+          ]
+        },
+        "price": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount", "billing", "notes"],
+          "properties": {
+            "amount": { "$ref": "#/$defs/nullableMoney" },
+            "billing": { "enum": ["one_time", "monthly"] },
+            "activation_fee": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : frais pour activer le compte funded après l'évaluation. 0 = gratuit, null = inconnu." },
+            "notes": { "$ref": "#/$defs/nullableText" }
+          }
+        },
+        "phases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/phase" } },
+        "source_urls": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "format": "uri" } },
+        "needs_review": { "type": "boolean" },
+        "notes": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "profit_target", "daily_loss_limit", "max_drawdown", "consistency", "min_trading_days", "max_contracts", "time_rules", "payout"],
+      "properties": {
+        "phase": { "enum": ["evaluation", "funded", "direct"] },
+        "profit_target": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+        "daily_loss_limit": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/dailyLossLimit" }] },
+        "max_drawdown": { "$ref": "#/$defs/maxDrawdown" },
+        "consistency": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/consistency" }] },
+        "min_trading_days": { "type": ["integer", "null"], "minimum": 1 },
+        "max_duration_days": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : durée d'accès maximale de la phase en jours calendaires (null = illimitée)." },
+        "max_contracts": { "$ref": "#/$defs/maxContracts" },
+        "time_rules": { "$ref": "#/$defs/timeRules" },
+        "payout": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/payout" }] }
+      }
+    },
+    "dailyLossLimit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "basis", "resets_at", "breach"],
+      "properties": {
+        "amount": { "type": ["number", "null"], "exclusiveMinimum": 0, "description": "Montant de base (palier 1 si tiers). null = la DLL existe mais son montant n'est pas publié." },
+        "basis": { "enum": ["balance", "equity", null], "description": "equity = réalisé + latent. null = non documenté." },
+        "resets_at": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/timeOfDay" }] },
+        "breach": { "enum": ["account_failed", "trading_paused_for_day"] },
+        "tiers": {
+          "description": "Ajout : DLL par palier de profit (profit = solde de clôture - capital initial). max_profit null = sans borne haute.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["min_profit", "max_profit", "amount"],
+                "properties": {
+                  "min_profit": { "type": "number" },
+                  "max_profit": { "type": ["number", "null"] },
+                  "amount": { "type": "number", "exclusiveMinimum": 0 }
+                }
+              }
+            }
+          ]
+        },
+        "scaling_rule": { "$ref": "#/$defs/nullableText", "description": "Ajout : règle de DLL dynamique non tabulable (ex. LucidScale 60 % du pic de profit EOD)." },
+        "notes": { "$ref": "#/$defs/nullableText", "description": "Ajout." }
+      }
+    },
+    "maxDrawdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "type", "trails_on", "locks_at", "basis_notes"],
+      "properties": {
+        "amount": { "type": "number", "exclusiveMinimum": 0 },
+        "type": { "enum": ["static", "trailing_eod", "trailing_intraday"] },
+        "trails_on": { "enum": ["balance", "equity", null], "description": "Ce que suit le trailing : solde (de clôture pour trailing_eod) ou equity (P&L latent inclus). null pour static." },
+        "locks_at": { "$ref": "#/$defs/nullableMoney", "description": "Solde (pic ou clôture selon type) à partir duquel le trailing se fige. null = ne se fige pas, ou dépend de la plateforme (voir platform_overrides)." },
+        "locked_floor": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : niveau du seuil une fois figé (souvent capital initial + 100)." },
+        "enforced_on": {
+          "enum": ["equity_realtime", "balance_realtime", "eod_balance", null],
+          "description": "Ajout : comment la violation est détectée. equity_realtime = l'equity (latent inclus) ne doit jamais toucher le seuil en séance. null = non documenté."
+        },
+        "platform_overrides": {
+          "description": "Ajout : blocage du trailing différent selon la plateforme. Clé = slug de plateforme.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/slug" },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["locks_at", "locked_floor"],
+                "properties": {
+                  "locks_at": { "$ref": "#/$defs/nullableMoney" },
+                  "locked_floor": { "$ref": "#/$defs/nullableMoney" },
+                  "notes": { "$ref": "#/$defs/nullableText" }
+                }
+              }
+            }
+          ]
+        },
+        "basis_notes": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_single_day_pct", "applies_to", "notes"],
+      "properties": {
+        "max_single_day_pct": { "$ref": "#/$defs/pct" },
+        "applies_to": { "enum": ["profit_target", "payout"] },
+        "notes": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "maxContracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minis", "micros", "scaling", "notes"],
+      "properties": {
+        "minis": { "type": ["integer", "null"], "minimum": 1 },
+        "micros": { "type": ["integer", "null"], "minimum": 1 },
+        "scaling": { "type": "boolean" },
+        "tiers": {
+          "description": "Ajout : taille max par palier de profit (profit = solde de clôture - capital initial).",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["min_profit", "max_profit", "minis", "micros"],
+                "properties": {
+                  "min_profit": { "type": "number" },
+                  "max_profit": { "type": ["number", "null"] },
+                  "minis": { "type": "integer", "minimum": 1 },
+                  "micros": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          ]
+        },
+        "notes": { "$ref": "#/$defs/nullableText" }
+      }
+    },
+    "timeRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["must_close_by", "news_trading_allowed", "overnight_allowed"],
+      "properties": {
+        "must_close_by": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/timeOfDay" }] },
+        "news_trading_allowed": { "type": ["boolean", "null"] },
+        "overnight_allowed": { "type": ["boolean", "null"] },
+        "notes": { "$ref": "#/$defs/nullableText", "description": "Ajout." }
+      }
+    },
+    "payout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_days", "split_pct", "min_amount", "max_amount", "notes"],
+      "properties": {
+        "min_days": { "type": ["integer", "null"], "minimum": 1 },
+        "min_daily_profit": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : profit minimum pour qu'un jour compte dans min_days." },
+        "min_cycle_profit": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : profit minimum à réaliser entre deux payouts." },
+        "min_cycle_profit_schedule": {
+          "description": "Ajout : profit minimum par cycle quand il varie. Index i = cycle i+1, la dernière valeur vaut pour les suivants.",
+          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
+        },
+        "split_pct": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pct" }] },
+        "min_amount": { "$ref": "#/$defs/nullableMoney" },
+        "max_amount": { "$ref": "#/$defs/nullableMoney", "description": "Plafond fixe par demande. null si absent ou s'il varie (voir max_amount_schedule)." },
+        "max_amount_schedule": {
+          "description": "Ajout : plafond par numéro de payout. Index i = payout i+1, la dernière valeur vaut pour les suivants.",
+          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
+        },
+        "max_payouts": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : nombre max de payouts avant fermeture ou passage en live." },
+        "safety_net_balance": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : solde sous lequel aucun payout n'est possible (buffer / safety net)." },
+        "notes": { "$ref": "#/$defs/nullableText" }
+      }
+    }
+  }
+}

@@ -14,9 +14,12 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { computeTradeStats } from '@mtc/shared';
+import { aggregateRuleTrades, EMPTY_RULE_AGG, ruleAggregatesSql, type RuleAgg, type RuleTrade } from './account-rules';
 
-type RuleTrade = { pnl: number | null; commission?: number | null; tradedAt: Date };
+type RuleAccount = Pick<
+  TradingAccount,
+  'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
+>;
 
 /** Contexte plan du user pour le calcul du quota de comptes. */
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
@@ -70,27 +73,13 @@ export class AccountsService {
     });
     if (accounts.length === 0) return [];
 
-    // Une seule requête pour tous les trades fermés des comptes, groupés ensuite en mémoire.
-    const trades = await this.prisma.trade.findMany({
-      where: {
-        userId,
-        pnl: { not: null },
-        accountId: { in: accounts.map((a) => a.id) },
-      },
-      select: { accountId: true, pnl: true, commission: true, tradedAt: true },
-      orderBy: { tradedAt: 'asc' },
-    });
-    const byAccount = new Map<string, RuleTrade[]>();
-    for (const t of trades) {
-      if (!t.accountId) continue;
-      const list = byAccount.get(t.accountId);
-      if (list) list.push(t);
-      else byAccount.set(t.accountId, [t]);
-    }
+    // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
+    // fermés du user étaient chargés puis groupés en mémoire.
+    const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map((a) => a.id));
 
     return accounts.map((a) => ({
       ...a,
-      metrics: this.computeRuleMetrics(a, byAccount.get(a.id) ?? []),
+      metrics: this.ruleMetricsFromAgg(a, aggs.get(a.id) ?? EMPTY_RULE_AGG),
     }));
   }
 
@@ -106,42 +95,20 @@ export class AccountsService {
    * PASSED/FAILED positionné ici (piloté par l'user) : on se contente d'estimer.
    */
   computeRuleMetrics(
-    account: Pick<
-      TradingAccount,
-      'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
-    >,
+    account: RuleAccount,
     trades: RuleTrade[],
   ): AccountRuleMetrics {
+    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades));
+  }
+
+  /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
+  ruleMetricsFromAgg(account: RuleAccount, agg: RuleAgg): AccountRuleMetrics {
     const startingBalance = account.startingBalance ?? account.accountSize ?? 0;
-    const sorted = [...trades].sort(
-      (a, b) => a.tradedAt.getTime() - b.tradedAt.getTime(),
-    );
-    // P&L NET par trade = pnl − frais (commission). Le solde/objectif/drawdown sont nets des
-    // frais, cohérents avec le « P&L net » du dashboard et du journal.
-    const net = (t: RuleTrade) => (t.pnl ?? 0) - (t.commission ?? 0);
-    const realizedPnl = sorted.reduce((s, t) => s + net(t), 0);
+    const realizedPnl = agg.realized;
     const currentBalance = startingBalance + realizedPnl;
 
-    // Taux de réussite via le helper unique (BE exclus du dénominateur).
-    // Ce champ est un RATIO 0..1 (null si aucun trade décisif) ; le helper renvoie un %.
-    const accStats = computeTradeStats(sorted);
-    const winRate =
-      accStats.wins + accStats.losses > 0 ? accStats.winRate / 100 : null;
-
-    // PnL cumulé par jour (clé = date calendaire UTC du tradedAt) → meilleur / pire jour.
-    // Groupement UTC volontairement simple, cohérent avec le cadrage « estimé » (pas de fuseau user).
-    let bestDay: number | null = null;
-    let worstDay: number | null = null;
-    if (sorted.length > 0) {
-      const byDay = new Map<string, number>();
-      for (const t of sorted) {
-        const key = t.tradedAt.toISOString().slice(0, 10);
-        byDay.set(key, (byDay.get(key) ?? 0) + net(t));
-      }
-      const sums = [...byDay.values()];
-      bestDay = Math.max(...sums);
-      worstDay = Math.min(...sums);
-    }
+    // Taux de réussite (BE exclus du dénominateur) : RATIO 0..1, null si aucun trade décisif.
+    const winRate = agg.wins + agg.losses > 0 ? agg.wins / (agg.wins + agg.losses) : null;
 
     const objective =
       account.profitTarget != null && account.profitTarget > 0
@@ -154,20 +121,12 @@ export class AccountsService {
 
     let drawdown: AccountRuleMetrics['drawdown'] = null;
     if (account.maxDrawdown != null && account.maxDrawdown > 0) {
-      let floor: number;
-      if (account.drawdownType === DrawdownType.TRAILING) {
-        // Plancher glissant : suit le plus haut solde cumulé atteint (hwm).
-        let bal = startingBalance;
-        let hwm = startingBalance;
-        for (const t of sorted) {
-          bal += net(t);
-          if (bal > hwm) hwm = bal;
-        }
-        floor = hwm - account.maxDrawdown;
-      } else {
-        // STATIC : plancher fixe depuis le solde de départ.
-        floor = startingBalance - account.maxDrawdown;
-      }
+      // TRAILING : plancher glissant sous le plus haut solde atteint (hwm, qui part du solde de
+      // départ) ; STATIC : plancher fixe depuis le solde de départ.
+      const floor =
+        account.drawdownType === DrawdownType.TRAILING
+          ? startingBalance + Math.max(0, agg.maxCumulative) - account.maxDrawdown
+          : startingBalance - account.maxDrawdown;
       const margin = currentBalance - floor;
       drawdown = {
         type: account.drawdownType,
@@ -183,10 +142,10 @@ export class AccountsService {
       startingBalance,
       realizedPnl,
       currentBalance,
-      tradesCount: sorted.length,
+      tradesCount: agg.count,
       winRate,
-      bestDay,
-      worstDay,
+      bestDay: agg.count ? agg.bestDay : null,
+      worstDay: agg.count ? agg.worstDay : null,
       objective,
       drawdown,
       estimated: true,

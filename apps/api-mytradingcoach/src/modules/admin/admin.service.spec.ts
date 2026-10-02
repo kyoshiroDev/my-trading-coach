@@ -123,6 +123,33 @@ describe('AdminService.getAcquisition', () => {
     expect(res.totals.visitToSignupRate).toBe(100);
   });
 
+  it('détaille par source + medium + campagne et additionne au niveau source', async () => {
+    raw()
+      .mockResolvedValueOnce([
+        { source: 'instagram', medium: 'bio', campaign: null, d7: 1n, d30: 2n, total: 2n, premium: 1n, trialing: 0n },
+        { source: 'instagram', medium: 'story', campaign: 'lancement', d7: 0n, d30: 1n, total: 1n, premium: 0n, trialing: 0n },
+      ])
+      .mockResolvedValueOnce([
+        { source: 'instagram', medium: 'bio', campaign: '', v7: 10n, v30: 40n },
+        { source: 'instagram', medium: 'story', campaign: 'lancement', v7: 5n, v30: 10n },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    const res = await service.getAcquisition();
+
+    // Niveau source : bio + story.
+    expect(res.rows).toHaveLength(1);
+    expect(res.rows[0]).toMatchObject({ source: 'instagram', visits30d: 50, signups30d: 3, signupsTotal: 3, premium: 1 });
+    // Niveau détail : '' (visites) et null (inscrits) fusionnés en une seule ligne « bio ».
+    expect(res.campaigns.map((c) => [c.source, c.medium, c.campaign])).toEqual([
+      ['instagram', 'bio', null],
+      ['instagram', 'story', 'lancement'],
+    ]);
+    expect(res.campaigns[0]).toMatchObject({ visits30d: 40, signups30d: 2, visitToSignupRate: 5, conversionRate: 50 });
+    expect(res.campaigns[1]).toMatchObject({ visits30d: 10, signups30d: 1, visitToSignupRate: 10 });
+  });
+
   it('renvoie des totaux à zéro sans donnée', async () => {
     raw().mockResolvedValue([]);
     const res = await service.getAcquisition();
