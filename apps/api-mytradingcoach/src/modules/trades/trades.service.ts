@@ -24,10 +24,10 @@ import { CrossSourcePool } from './import-dedupe.util';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
-import { buildTradeWhere } from './trade-filters.util';
+import { buildTradeFilterSql, buildTradeWhere } from './trade-filters.util';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
-import { summarizeJournal, type JournalStats } from './journal-stats.util';
+import { journalStatsSql, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 
 // Réexports : les appelants existants importent ces types depuis le service.
@@ -287,15 +287,9 @@ export class TradesService {
     userId: string,
     filters: TradeFiltersDto,
   ): Promise<JournalStats> {
-    // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll.
-    const where = buildTradeWhere(userId, filters);
-
-    const trades = await this.prisma.trade.findMany({
-      where,
-      select: { pnl: true, commission: true },
-    });
-
-    return summarizeJournal(trades);
+    // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll. Calcul en
+    // base (SCA-B2-02) avec le même filtre que la liste (buildTradeFilterSql ≡ buildTradeWhere).
+    return journalStatsSql(this.prisma, buildTradeFilterSql(userId, filters));
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {

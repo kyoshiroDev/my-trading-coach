@@ -1,4 +1,6 @@
+import { Prisma } from '@prisma/client';
 import { computeTradeStats } from '@mtc/shared';
+import type { PrismaService } from '../../prisma/prisma.service';
 
 /** KPIs du journal agrégés sur l'ensemble filtré complet (hors pagination). */
 export interface JournalStats {
@@ -46,5 +48,46 @@ export function summarizeJournal(trades: { pnl: number | null; commission: numbe
     pnlNet: pnlBrut - fees,
     bestTrade,
     worstTrade,
+  };
+}
+
+/**
+ * Mêmes KPIs que `summarizeJournal`, calculés EN BASE (SCA-B2-02) : avant, tous les trades
+ * filtrés étaient chargés puis sommés en JavaScript (un journal sans filtre = tout l'historique).
+ * Règles identiques : total = tous les trades filtrés (ouverts compris) ; brut = Σ pnl (ouvert = 0) ;
+ * frais = Σ |commission| (ouverts compris) ; meilleur / pire trade sur pnl − |frais| ; win rate sur
+ * le net arrondi des trades clôturés (computeTradeStats). `summarizeJournal` reste l'étalon,
+ * vérifié par `journal-stats-sql.int-spec.ts`.
+ */
+export async function journalStatsSql(
+  prisma: PrismaService,
+  filter: Prisma.Sql,
+): Promise<JournalStats> {
+  const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::numeric, 2)`;
+  const RAW_NET = Prisma.sql`(coalesce(t."pnl", 0) - abs(coalesce(t."commission", 0)))`;
+  const [r] = await prisma.$queryRaw<
+    { total: number; wins: number; losses: number; brut: number; fees: number; best: number | null; worst: number | null }[]
+  >(Prisma.sql`
+    SELECT count(*)::int AS "total",
+           count(*) FILTER (WHERE t."pnl" IS NOT NULL AND ${NET} > 0)::int AS "wins",
+           count(*) FILTER (WHERE t."pnl" IS NOT NULL AND ${NET} < 0)::int AS "losses",
+           coalesce(sum(t."pnl"), 0)::float8 AS "brut",
+           coalesce(sum(abs(coalesce(t."commission", 0))), 0)::float8 AS "fees",
+           max(${RAW_NET})::float8 AS "best",
+           min(${RAW_NET})::float8 AS "worst"
+    FROM "Trade" t LEFT JOIN "TradeSession" s ON s."id" = t."sessionId"
+    WHERE ${filter}`);
+  if (!r || r.total === 0) {
+    return { totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 };
+  }
+  const decisive = r.wins + r.losses;
+  return {
+    totalTrades: r.total,
+    winRate: decisive > 0 ? (r.wins / decisive) * 100 : 0,
+    pnlBrut: r.brut,
+    fees: r.fees,
+    pnlNet: r.brut - r.fees,
+    bestTrade: r.best ?? 0,
+    worstTrade: r.worst ?? 0,
   };
 }
