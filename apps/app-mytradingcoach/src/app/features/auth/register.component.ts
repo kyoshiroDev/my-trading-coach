@@ -21,6 +21,16 @@ import { ToastService } from '../../core/services/toast.service';
 /** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
 const UTM_STORAGE_KEY = 'mtc_utm';
 
+/** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
+export function referrerHost(referrer: string): string {
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, '');
+    return /(^|\.)mytradingcoach\.app$/.test(host) || host === 'localhost' ? '' : host.slice(0, 100);
+  } catch {
+    return '';
+  }
+}
+
 @Component({
   selector: 'mtc-register',
   imports: [FormsModule, RouterLink, LucideDynamicIcon],
@@ -72,19 +82,25 @@ export class RegisterComponent {
       acquisitionMedium: pick('utm_medium'),
       acquisitionCampaign: pick('utm_campaign'),
     };
-    if (Object.values(fromUrl).some(Boolean)) {
+    const store = (a: Acquisition): Acquisition => {
       try {
-        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(fromUrl));
+        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(a));
       } catch {
         /* sessionStorage indisponible */
       }
-      return fromUrl;
-    }
+      return a;
+    };
+    if (Object.values(fromUrl).some(Boolean)) return store(fromUrl);
     try {
-      return JSON.parse(sessionStorage.getItem(UTM_STORAGE_KEY) ?? '{}') as Acquisition;
+      const stored = JSON.parse(sessionStorage.getItem(UTM_STORAGE_KEY) ?? '{}') as Acquisition;
+      if (Object.values(stored).some(Boolean)) return stored;
     } catch {
-      return {};
+      /* valeur illisible : on retombe sur le site d'origine */
     }
+    // Plan B : arrivée directe sur /register depuis un site externe (ex. lien de la fiche
+    // NinjaTrader) → l'hôte d'origine sert de source (même règle que la landing).
+    const host = referrerHost(document.referrer);
+    return host ? store({ acquisitionSource: host, acquisitionMedium: 'referral' }) : {};
   }
 
   /**

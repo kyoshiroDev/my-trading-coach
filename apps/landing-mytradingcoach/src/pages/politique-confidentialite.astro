@@ -41,7 +41,7 @@ import { GA_ID } from '../config';
         <li>Adresse email</li>
         <li>Mot de passe (hashé argon2, jamais stocké en clair)</li>
         <li>Date d'inscription</li>
-        <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi), pour mesurer quels canaux amènent des inscrits</li>
+        <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
       </ul>
 
       <h3>b) Données de trading (saisies par l'utilisateur)</h3>
@@ -142,6 +142,17 @@ import { GA_ID } from '../config';
       </p>
 
       <h2 id="cookies">6. Cookies</h2>
+      <p>
+        <strong>Mesure d'audience sans cookie.</strong> Le site vitrine compte ses visites avec
+        un outil interne : à chaque page vue, il n'enregistre qu'un compteur agrégé par jour,
+        par page et par site d'origine (ou paramètre <code>utm_source</code> du lien). Aucun
+        cookie, aucune adresse IP, aucun identifiant ni aucune donnée permettant de vous
+        reconnaître ne sont conservés, et ces chiffres ne sont croisés avec aucune autre donnée.
+        Seule une marque technique de session (stockage de session du navigateur, effacée à la
+        fermeture de l'onglet) évite de compter deux fois la même visite. Conformément aux
+        lignes directrices de la CNIL, cette mesure strictement statistique est exemptée de
+        consentement.
+      </p>
       {GA_ID ? (
         <>
           <p>

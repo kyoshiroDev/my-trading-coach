@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { DEFAULT_SCHEMA } from '../data/schema';
+import { API_URL } from '../config';
 import CookieConsent from '../components/CookieConsent.astro';
 import Analytics from '../components/Analytics.astro';
 
@@ -115,10 +116,13 @@ const robots = noindex
     })();
   </script>
 
-  <!-- Acquisition : propage utm_source/medium/campaign vers les CTA d'inscription.
-       sessionStorage pour survivre à la navigation interne (home → blog → CTA).
-       Donnée fonctionnelle de l'inscription, indépendante du bandeau cookies. -->
-  <script is:inline>
+  <!-- Acquisition : source de la visite = utm_* du lien, sinon site d'origine (referrer
+       externe, medium « referral »), gardée en sessionStorage pour toute la session.
+       1) propagée aux CTA d'inscription (→ User.acquisition* à l'inscription) ;
+       2) comptée par l'API (POST /public/visit) : compteur agrégé jour × page × source,
+          sans cookie, sans IP ni identifiant (exemption CNIL) → indépendant du bandeau.
+       Données fonctionnelles et anonymes : aucune dépendance au consentement GA4. -->
+  <script is:inline define:vars={{ apiUrl: API_URL }}>
     (function () {
       try {
         var KEY = 'mtc_utm', NAMES = ['utm_source', 'utm_medium', 'utm_campaign'];
@@ -127,21 +131,41 @@ const robots = noindex
           var v = (params.get(n) || '').trim().slice(0, 100);
           if (v) { utm[n] = v; found = true; }
         });
+        if (!found) {
+          try { utm = JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { utm = {}; }
+          found = NAMES.some(function (n) { return utm[n]; });
+        }
+        if (!found) {
+          // Plan B : hôte du site d'origine, hors nos propres domaines (navigation interne).
+          var host = '';
+          try { host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (e) {}
+          if (host && !/(^|\.)mytradingcoach\.app$/.test(host) && host !== 'localhost') {
+            utm = { utm_source: host.slice(0, 100), utm_medium: 'referral' };
+            found = true;
+          }
+        }
         if (found) {
           try { sessionStorage.setItem(KEY, JSON.stringify(utm)); } catch (e) {}
-        } else {
-          try { utm = JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { utm = {}; }
+          document.querySelectorAll('a[href*="/register"]').forEach(function (a) {
+            try {
+              var h = new URL(a.href);
+              NAMES.forEach(function (n) {
+                if (utm[n] && !h.searchParams.get(n)) h.searchParams.set(n, utm[n]);
+              });
+              a.href = h.toString();
+            } catch (e) {}
+          });
         }
-        if (!NAMES.some(function (n) { return utm[n]; })) return;
-        document.querySelectorAll('a[href*="/register"]').forEach(function (a) {
-          try {
-            var h = new URL(a.href);
-            NAMES.forEach(function (n) {
-              if (utm[n] && !h.searchParams.get(n)) h.searchParams.set(n, utm[n]);
-            });
-            a.href = h.toString();
-          } catch (e) {}
-        });
+
+        // Compteur de visite : 1re page de la session d'onglet = une visite.
+        var entry = false;
+        try { entry = !sessionStorage.getItem('mtc_visit'); sessionStorage.setItem('mtc_visit', '1'); } catch (e) {}
+        fetch(apiUrl + '/public/visit', {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: location.pathname, source: utm.utm_source || undefined, entry: entry })
+        }).catch(function () {});
       } catch (e) {}
     })();
   </script>

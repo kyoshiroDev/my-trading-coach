@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 
-const mockPrisma = { user: { count: vi.fn() } };
+const mockPrisma = { user: { count: vi.fn() }, $executeRaw: vi.fn() };
 const mockRedisService = {
   client: {
     get: vi.fn().mockResolvedValue(null),
@@ -86,6 +86,28 @@ describe('PublicService', () => {
       const arg = mockResend.sendAmbassadorApplication.mock.calls[0][0];
       expect(arg.socials).toBe('(non renseigné)');
       expect(arg.message).toBe('Société pour facturer : non / à confirmer');
+    });
+  });
+
+  describe('recordLandingVisit', () => {
+    const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1';
+
+    it('incrémente le compteur agrégé pour un vrai navigateur', async () => {
+      mockPrisma.$executeRaw.mockResolvedValueOnce(1);
+      await service.recordLandingVisit({ path: '/', source: 'ninjatrader.com', entry: true }, UA);
+      expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignore robots, aperçus de liens et UA absent', async () => {
+      await service.recordLandingVisit({ path: '/', entry: true }, 'Googlebot/2.1 (+http://www.google.com/bot.html)');
+      await service.recordLandingVisit({ path: '/', entry: true }, 'facebookexternalhit/1.1');
+      await service.recordLandingVisit({ path: '/', entry: true }, undefined);
+      expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
+    });
+
+    it('ne remonte jamais une erreur de base au visiteur', async () => {
+      mockPrisma.$executeRaw.mockRejectedValueOnce(new Error('db down'));
+      await expect(service.recordLandingVisit({ path: '/', entry: false }, UA)).resolves.toBeUndefined();
     });
   });
 });
