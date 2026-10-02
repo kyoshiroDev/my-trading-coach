@@ -699,3 +699,20 @@ model AnthropicCostDaily {
 
   @@id([date, model])
 }
+
+/// Mesure d'audience de la landing SANS cookie (exemption CNIL) : uniquement des compteurs
+/// agrégés par jour (Europe/Paris), page et source. Aucune IP, aucun identifiant, aucun
+/// lien avec un compte. `source` = utm_source, sinon hôte du site d'origine, sinon '' (direct).
+model LandingVisitDaily {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  path      String
+  source    String   @default("")
+  /// Pages vues.
+  pageviews Int      @default(0)
+  /// Visites = 1re page vue d'une session d'onglet (sessionStorage).
+  visits    Int      @default(0)
+
+  // L'unique (date en tête) sert aussi d'index pour les lectures par période.
+  @@unique([date, path, source])
+}

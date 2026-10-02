@@ -354,3 +354,9 @@ l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 > l'inscription depuis les `utm_*` du lien (landing → `/register` → `POST /auth/register`), normalisés
 > trim + minuscules par `RegisterDto`. **`null` = aucun UTM** : ne jamais écrire « direct » en base,
 > la catégorie « direct / non renseigné » est faite à l'agrégation (`GET /admin/acquisition`).
+
+> **Visites landing sans cookie** (migration `20261002160000_landing_visit_daily`, oct. 2026) :
+> `LandingVisitDaily` = compteurs agrégés `(date Paris, path, source)` → `pageviews`, `visits`.
+> **Aucune donnée personnelle** (ni IP, ni identifiant, ni lien User) : c'est la condition de
+> l'exemption CNIL, ne jamais y ajouter de colonne identifiante. `source = ''` = direct (pas NULL,
+> sinon l'unique ne déduplique pas). Écriture uniquement par `INSERT … ON CONFLICT` (PublicService).

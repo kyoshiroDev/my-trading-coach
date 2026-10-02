@@ -73,29 +73,61 @@ describe('AdminService.getAiCost', () => {
   });
 });
 describe('AdminService.getAcquisition', () => {
-  it('convertit les compteurs SQL, garde null pour « direct » et calcule les totaux', async () => {
-    (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw.mockResolvedValue([
-      { source: 'ninjatrader', d7: 3n, d30: 8n, total: 8n, premium: 2n, trialing: 1n },
-      { source: null, d7: 1n, d30: 4n, total: 40n, premium: 4n, trialing: 0n },
-    ]);
+  const raw = () => (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+  const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+
+  beforeEach(() => raw().mockReset());
+
+  it('fusionne visites et inscrits par source, direct = null, et calcule les taux', async () => {
+    raw()
+      .mockResolvedValueOnce([
+        { source: 'ninjatrader', d7: 3n, d30: 8n, total: 8n, premium: 2n, trialing: 1n },
+        { source: null, d7: 1n, d30: 4n, total: 40n, premium: 4n, trialing: 0n },
+      ])
+      .mockResolvedValueOnce([
+        { source: 'ninjatrader', v7: 40n, v30: 100n },
+        { source: '', v7: 10n, v30: 50n },
+        { source: 'google.com', v7: 5n, v30: 20n },
+      ])
+      .mockResolvedValueOnce([{ date: new Date(`${today}T00:00:00Z`), visits: 7n, pageviews: 12n }])
+      .mockResolvedValueOnce([{ path: '/', visits: 150n, pageviews: 300n }]);
 
     const res = await service.getAcquisition();
 
+    expect(res.rows.map((r) => r.source)).toEqual(['ninjatrader', null, 'google.com']);
     expect(res.rows[0]).toEqual({
-      source: 'ninjatrader', signups7d: 3, signups30d: 8, signupsTotal: 8,
-      premium: 2, trialing: 1, conversionRate: 25,
+      source: 'ninjatrader', visits7d: 40, visits30d: 100, signups7d: 3, signups30d: 8, signupsTotal: 8,
+      premium: 2, trialing: 1, visitToSignupRate: 8, conversionRate: 25,
     });
-    expect(res.rows[1].source).toBeNull();
-    expect(res.rows[1].conversionRate).toBe(10);
-    expect(res.totals).toEqual({
-      signups7d: 4, signups30d: 12, signupsTotal: 48, premium: 6, trialing: 1, conversionRate: 12.5,
-    });
+    // Source vue en visites mais sans inscrit : présente, à zéro.
+    expect(res.rows[2]).toMatchObject({ visits30d: 20, signupsTotal: 0, visitToSignupRate: 0 });
+    expect(res.totals).toMatchObject({ visits30d: 170, signups30d: 12, premium: 6, visitToSignupRate: 7.1, conversionRate: 12.5 });
+    // 30 jours complets, aujourd'hui en dernier.
+    expect(res.daily).toHaveLength(30);
+    expect(res.daily[29]).toEqual({ date: today, visits: 7, pageviews: 12 });
+    expect(res.daily[0]).toMatchObject({ visits: 0, pageviews: 0 });
+    expect(res.totals.pageviews30d).toBe(12);
+    expect(res.topPages).toEqual([{ path: '/', visits: 150, pageviews: 300 }]);
   });
 
-  it('renvoie des totaux à zéro sans inscrit', async () => {
-    (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw.mockResolvedValue([]);
+  it('le taux global ignore les inscrits des sources sans visite landing', async () => {
+    raw()
+      .mockResolvedValueOnce([
+        { source: 'x.com', d7: 1n, d30: 1n, total: 1n, premium: 0n, trialing: 0n },
+        { source: null, d7: 1n, d30: 1n, total: 10n, premium: 0n, trialing: 0n },
+      ])
+      .mockResolvedValueOnce([{ source: 'x.com', v7: 1n, v30: 1n }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const res = await service.getAcquisition();
+    expect(res.totals.visitToSignupRate).toBe(100);
+  });
+
+  it('renvoie des totaux à zéro sans donnée', async () => {
+    raw().mockResolvedValue([]);
     const res = await service.getAcquisition();
     expect(res.rows).toEqual([]);
     expect(res.totals.conversionRate).toBe(0);
+    expect(res.daily.every((d) => d.visits === 0)).toBe(true);
   });
 });
