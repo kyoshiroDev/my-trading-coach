@@ -311,6 +311,10 @@ les fiches vivant en base, ajouter un broker ne demande ni build ni déploiement
 de format. L'échantillon qui a servi à déduire la fiche n'est pas conservé ; seul l'en-tête brut
 l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 
+## Catalogue des règles prop firm (PROMPT-136, 2026-10-02)
+
+Le catalogue des règles officielles (Lucid, Apex) existe en JSON dans `libs/shared/src/prop-firm-rules/` (schéma + `pnpm prop-firms:validate`), **pas encore en base** : il sera seedé au prompt suivant, après relecture. Ne pas le confondre avec les règles saisies par l'utilisateur sur `TradingAccount`.
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`
