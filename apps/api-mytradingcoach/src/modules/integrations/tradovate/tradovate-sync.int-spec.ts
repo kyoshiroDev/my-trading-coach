@@ -384,8 +384,9 @@ describe('Tradovate — synchro', () => {
     expect(synced.setupId).toBeTruthy();
     expect(await prisma.trade.count({ where: { userId, entry: 29000 } })).toBe(0);
 
-    // Lecture seule : que des GET vers l'API de données, sur l'hôte du compte (demo).
-    const dataCalls = calls.filter((c) => !c.url.endsWith('/auth/oauthtoken'));
+    // Lecture seule : que des GET vers l'API de données, sur l'hôte du compte (demo). Les appels
+    // d'auth sont à part : `renewaccesstoken` (sur live) relit `apiHosts` à chaque synchro.
+    const dataCalls = calls.filter((c) => !new URL(c.url).pathname.includes('/auth/'));
     expect(dataCalls.every((c) => c.method === 'GET')).toBe(true);
     expect(dataCalls.every((c) => c.url.startsWith('https://demo.tradovateapi.com/v1/'))).toBe(true);
     expect(dataCalls.every((c) => c.auth === 'Bearer AT-1')).toBe(true);
