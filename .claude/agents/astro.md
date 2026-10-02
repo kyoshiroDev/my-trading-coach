@@ -119,6 +119,14 @@ Règles :
   balise GA statique dans le `<head>`.
 - Refuser = même taille et même poids que Accepter (CNIL). Retrait après acceptation : cookies
   `_ga*` effacés + rechargement.
+- **Source d'acquisition** (script UTM de `Base.astro`) : `utm_*` du lien, sinon **site d'origine**
+  (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
+  sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
+  si on arrive directement sur `/register` (`referrerHost` de `register.component.ts`).
+- **Compteur de visites sans cookie** : le même script envoie `POST {API_URL}/public/visit`
+  (`path`, `source`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
+  page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin
+  `/acquisition`. Si un hébergeur/CDN ajoute une CSP, autoriser `connect-src` vers l'API.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 
