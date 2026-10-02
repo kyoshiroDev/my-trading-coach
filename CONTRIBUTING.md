@@ -55,6 +55,15 @@ un sous-composant. Fichiers encore au-dessus, à découper quand on y retouche :
 - App : `accounts/accounts.component.ts`, `eco-calendar/eco-calendar.component.ts`,
   `onboarding/onboarding.component.ts`, `profile/profile.component.ts`
 
+## Branches
+
+| Tu fais… | Branche de départ | Livrée sur |
+|---|---|---|
+| Une nouvelle feature | `beta` | `beta` (test), puis `beta` → `dev` → `main` |
+| Tout le reste : bug, optimisation, perf, refactor, dette, docs, CI… | `dev` | `dev`, puis `dev` → `main` |
+
+`beta` est réservée aux nouvelles features. Jamais de push direct sur `main`.
+
 ## Commits
 
 Conventionnels, sujet en **minuscules** (vérifié par commitlint) :
