@@ -75,7 +75,7 @@ import {
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
 import { findPlan, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
-import { brokerBadge } from './broker-badge.util';
+import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
 interface AccountFormState {
   label: string;
@@ -160,6 +160,20 @@ export class AccountsComponent implements OnInit {
   protected readonly OTHER_FIRM = OTHER_FIRM;
   /** Pastille initiales + couleur de la prop firm (null si `broker` vide). */
   protected readonly brokerBadge = brokerBadge;
+  /**
+   * Couleur DISTINCTE par prop firm dans cette liste (assignBrokerTones). Ordre d'ancienneté :
+   * en cas de conflit, la firm dont le premier compte est le plus ancien garde sa couleur, donc
+   * ajouter un compte d'une nouvelle firm ne recolore jamais les autres. Un compte prop firm sans
+   * firm saisie est identifié par son libellé.
+   */
+  protected readonly brokerTones = computed(() =>
+    assignBrokerTones(
+      [...this.store.accounts()]
+        .filter((a) => a.type !== 'PERSONAL')
+        .sort((x, y) => x.createdAt.localeCompare(y.createdAt))
+        .map((a) => a.broker || a.label),
+    ),
+  );
   /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
   protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
@@ -438,7 +452,7 @@ export class AccountsComponent implements OnInit {
   // compte prop firm sans firm saisie → même palette, dérivée du libellé (stable au reorder).
   protected accentVar(a: TradingAccount): string {
     if (a.type === 'PERSONAL') return 'var(--green)';
-    return brokerBadge(a.broker)?.color ?? brokerBadge(a.label)?.color ?? 'var(--blue)';
+    return brokerBadge(a.broker || a.label, this.brokerTones())?.color ?? 'var(--blue)';
   }
 
   // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──

@@ -1,28 +1,40 @@
 /**
- * Pastille d'identité d'une prop firm (texte libre `broker`) : initiales + couleur stable.
- * Même nom → même pastille pour tous les utilisateurs, quelle que soit la casse, les accents
- * ou la ponctuation saisis (« Apex Trader Funding » = « apex trader funding. »).
+ * Pastille d'identité d'une prop firm (texte libre `broker`) : initiales + couleur.
+ *
+ * Règle : **deux firms différentes n'ont jamais la même couleur dans la liste d'un utilisateur**.
+ * Chaque firm a une couleur préférée stable (hash de son nom normalisé : casse, accents et
+ * ponctuation sans effet), identique pour tous les utilisateurs tant qu'elle n'entre pas en conflit.
+ * En cas de conflit, la firm dont le premier compte est le plus ancien garde sa couleur, l'autre
+ * prend la première teinte libre : ajouter une firm ne recolore jamais une firm déjà présente.
+ * Au-delà de la palette, des teintes supplémentaires sont générées (toujours hors rouge / vert).
  */
 
-export interface BrokerBadge {
-  initials: string;
-  /** Fond de la pastille (variable CSS du design system). */
+export interface BrokerTone {
+  /** Fond de la pastille et accent du compte (liseré, icône, tag). */
   color: string;
   /** Texte contrasté sur ce fond. */
   text: string;
 }
 
+export interface BrokerBadge extends BrokerTone {
+  initials: string;
+}
+
+const DARK_TEXT = '#0b1220';
+
 /**
- * Teintes du design system, sans rouge ni vert : dans l'app ils signifient perte et gain,
- * une firm ne doit pas avoir l'air « en perte » à cause de son nom.
+ * 8 teintes bien séparées, sans rouge ni vert (perte et gain dans l'app) ni l'orange du bouton
+ * « Connecter ». Ordre = ordre d'attribution des teintes libres : les plus contrastées d'abord.
  */
-const PALETTE: readonly { color: string; text: string }[] = [
+const PALETTE: readonly BrokerTone[] = [
   { color: 'var(--blue)', text: '#fff' },
+  { color: 'var(--yellow)', text: DARK_TEXT },
   { color: 'var(--purple)', text: '#fff' },
-  { color: 'var(--cyan)', text: '#0b1220' },
-  { color: 'var(--yellow)', text: '#0b1220' },
-  { color: 'var(--blue-bright)', text: '#0b1220' },
-  { color: 'var(--purple-bright)', text: '#0b1220' },
+  { color: 'var(--cyan)', text: DARK_TEXT },
+  { color: '#f472b6', text: DARK_TEXT }, // rose
+  { color: '#818cf8', text: DARK_TEXT }, // indigo
+  { color: '#e879f9', text: DARK_TEXT }, // fuchsia
+  { color: '#38bdf8', text: DARK_TEXT }, // bleu ciel
 ];
 
 /** Mots génériques des noms de firms : ils ne distinguent pas une firm d'une autre. */
@@ -52,6 +64,52 @@ function hash(s: string): number {
 }
 
 /**
+ * Teinte supplémentaire n° k (au-delà de la palette) : angle d'or dans les plages autorisées
+ * (jaune 40-60°, cyan → rose 180-330°), luminosité moyenne, texte sombre.
+ */
+function generatedTone(k: number): BrokerTone {
+  const ranges: [number, number][] = [[40, 60], [180, 330]];
+  const span = ranges.reduce((n, [a, b]) => n + (b - a), 0);
+  let pos = ((k + 1) * 137.508) % span;
+  let hue = 0;
+  for (const [a, b] of ranges) {
+    if (pos < b - a) { hue = a + pos; break; }
+    pos -= b - a;
+  }
+  return { color: `hsl(${Math.round(hue)} 70% 62%)`, text: DARK_TEXT };
+}
+
+/** Couleur préférée d'une firm, hors conflit (même valeur pour tous les utilisateurs). */
+export function preferredTone(broker: string | null | undefined): BrokerTone | null {
+  const normalized = normalizeBrokerName(broker ?? '');
+  return normalized ? PALETTE[hash(normalized) % PALETTE.length] : null;
+}
+
+/**
+ * Attribue une couleur DISTINCTE à chaque firm d'une liste de comptes. `firms` doit être dans
+ * l'ordre d'ancienneté (premier compte le plus ancien d'abord) : c'est l'ordre de priorité en
+ * cas de conflit. Clés de la map = noms normalisés.
+ */
+export function assignBrokerTones(firms: Iterable<string | null | undefined>): Map<string, BrokerTone> {
+  const tones = new Map<string, BrokerTone>();
+  const used = new Set<string>();
+  let extra = 0;
+  for (const firm of firms) {
+    const key = normalizeBrokerName(firm ?? '');
+    if (!key || tones.has(key)) continue;
+    const preferred = PALETTE[hash(key) % PALETTE.length];
+    let tone = used.has(preferred.color) ? PALETTE.find((t) => !used.has(t.color)) : preferred;
+    while (!tone) {
+      const candidate = generatedTone(extra++);
+      if (!used.has(candidate.color)) tone = candidate;
+    }
+    tones.set(key, tone);
+    used.add(tone.color);
+  }
+  return tones;
+}
+
+/**
  * Initiales : premières lettres des deux premiers mots significatifs, sinon les deux premières
  * lettres du seul mot significatif (« Take Profit Trader » → TP, « Apex Trader Funding » → AP,
  * « FTMO » → FT). Si tous les mots sont génériques, on les garde plutôt que de ne rien afficher.
@@ -64,9 +122,13 @@ function initialsOf(normalized: string): string {
   return letters.toUpperCase();
 }
 
-export function brokerBadge(broker: string | null | undefined): BrokerBadge | null {
+/**
+ * Pastille d'une firm. `tones` = attribution de la liste affichée (assignBrokerTones) ; sans elle,
+ * couleur préférée (hors gestion des conflits). Pas de firm → pas de pastille.
+ */
+export function brokerBadge(broker: string | null | undefined, tones?: Map<string, BrokerTone>): BrokerBadge | null {
   const normalized = normalizeBrokerName(broker ?? '');
   if (!normalized) return null;
-  const tone = PALETTE[hash(normalized) % PALETTE.length];
-  return { initials: initialsOf(normalized), color: tone.color, text: tone.text };
+  const tone = tones?.get(normalized) ?? preferredTone(normalized)!;
+  return { initials: initialsOf(normalized), ...tone };
 }

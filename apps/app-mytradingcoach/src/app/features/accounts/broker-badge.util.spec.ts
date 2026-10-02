@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { brokerBadge, normalizeBrokerName } from './broker-badge.util';
+import { assignBrokerTones, brokerBadge, normalizeBrokerName, preferredTone } from './broker-badge.util';
+
+const RED = /#ef4444|var\(--red\)/;
+const GREEN = /#10b981|var\(--green\)/;
 
 describe('brokerBadge', () => {
   it('pas de firm → pas de pastille', () => {
@@ -18,9 +21,6 @@ describe('brokerBadge', () => {
     expect(brokerBadge('My Funded Futures')?.initials).toBe('MF');
     expect(brokerBadge('Topstep')?.initials).toBe('TO');
     expect(brokerBadge('X')?.initials).toBe('X');
-  });
-
-  it('nom entièrement générique : on garde ses mots plutôt que rien', () => {
     expect(brokerBadge('Trading Funding')?.initials).toBe('TF');
   });
 
@@ -31,18 +31,56 @@ describe('brokerBadge', () => {
     expect(brokerBadge('Lucid Tràding')).toEqual(brokerBadge('Lucid Trading'));
   });
 
-  it('couleur déterministe, prise dans la palette, jamais rouge ni verte', () => {
-    const names = ['Apex Trader Funding', 'Lucid Trading', 'FTMO', 'Topstep', 'Tradeify', 'Take Profit Trader', 'Bulenox', 'Alpha Futures'];
-    for (const n of names) {
-      const b = brokerBadge(n)!;
-      expect(brokerBadge(n)!.color).toBe(b.color);
-      expect(b.color).toMatch(/^var\(--(blue|purple|cyan|yellow|blue-bright|purple-bright)\)$/);
-    }
-    // Des firms différentes ne tombent pas toutes sur la même teinte.
-    expect(new Set(names.map((n) => brokerBadge(n)!.color)).size).toBeGreaterThan(2);
+  it('avec une attribution, la pastille prend la couleur attribuée', () => {
+    const tones = assignBrokerTones(['Lucid Trading', 'FTMO']);
+    expect(brokerBadge('FTMO', tones)?.color).toBe(tones.get('ftmo')?.color);
   });
 
   it('normalizeBrokerName', () => {
     expect(normalizeBrokerName('  Éval   Prop-Firm!! ')).toBe('eval prop firm');
+  });
+});
+
+describe('assignBrokerTones : une couleur différente par prop firm', () => {
+  const FIRMS = ['Apex Trader Funding', 'Lucid Trading', 'FTMO', 'Topstep', 'Tradeify', 'Take Profit Trader',
+    'Bulenox', 'Alpha Futures', 'My Funded Futures', 'Earn2Trade', 'Elite Trader Funding', 'Funded Next'];
+
+  it('Lucid et FTMO, qui ont la même couleur préférée, sont séparées', () => {
+    expect(preferredTone('Lucid Trading')).toEqual(preferredTone('FTMO')); // le conflit existe bien
+    const tones = assignBrokerTones(['Lucid Trading', 'FTMO']);
+    expect(tones.get('lucid trading')?.color).not.toBe(tones.get('ftmo')?.color);
+  });
+
+  it('jamais deux firms avec la même couleur, quel que soit leur nombre (12 > 8 teintes)', () => {
+    for (let n = 1; n <= FIRMS.length; n++) {
+      const tones = assignBrokerTones(FIRMS.slice(0, n));
+      expect(new Set([...tones.values()].map((t) => t.color)).size).toBe(n);
+    }
+  });
+
+  it('jamais de rouge ni de vert, même pour les teintes générées', () => {
+    for (const t of assignBrokerTones(FIRMS).values()) {
+      expect(t.color).not.toMatch(RED);
+      expect(t.color).not.toMatch(GREEN);
+      const hue = /^hsl\((\d+)/.exec(t.color)?.[1];
+      if (hue) expect(Number(hue) >= 40 && Number(hue) <= 60 || Number(hue) >= 180 && Number(hue) <= 330).toBe(true);
+    }
+  });
+
+  it('la firm la plus ancienne garde sa couleur : ajouter une firm ne recolore pas les autres', () => {
+    const before = assignBrokerTones(['Lucid Trading']);
+    const after = assignBrokerTones(['Lucid Trading', 'FTMO']);
+    expect(after.get('lucid trading')).toEqual(before.get('lucid trading'));
+    expect(after.get('lucid trading')).toEqual(preferredTone('Lucid Trading'));
+  });
+
+  it('plusieurs comptes de la même firm (saisies différentes) → une seule couleur', () => {
+    const tones = assignBrokerTones(['Apex Trader Funding', 'apex trader funding', 'APEX Trader-Funding', 'FTMO']);
+    expect(tones.size).toBe(2);
+  });
+
+  it('sans conflit, chaque firm garde sa couleur préférée (identique pour tous les utilisateurs)', () => {
+    const tones = assignBrokerTones(['Apex Trader Funding']);
+    expect(tones.get('apex trader funding')).toEqual(preferredTone('Apex Trader Funding'));
   });
 });
