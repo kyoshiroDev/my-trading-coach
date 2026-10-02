@@ -90,15 +90,17 @@
         @let fb = tv.feedback()[a.id];
 
         <!-- `has-detail` : la ligne cache une info que les colonnes n'affichent pas (activité
-             d'un compte perso). Sans elle, le chevron n'a rien à déplier sur desktop, où les
+             d'un compte perso, règles du plan prop firm relié). Sans elle, le chevron n'a rien à déplier sur desktop, où les
              8 colonnes sont déjà à l'écran — il n'y sert qu'au repli mobile. -->
-        <div class="acct-block"
+        <!-- --ac sur le BLOC (et non la seule ligne) : les sous-lignes du dépli (règles du plan,
+             activité, synchro) héritent du même liseré que la ligne. -->
+        <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.has-detail]="!a.metrics.objective && !a.metrics.drawdown"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
-          <div class="acct-line" [style.--ac]="accentVar(a)"
+          <div class="acct-line"
                [attr.data-testid]="'account-card-' + a.id">
 
             <!-- 1 · Compte : icône, nom, badges, statut -->
@@ -111,14 +113,26 @@
                       [attr.data-testid]="'account-expand-' + a.id">
                 <svg [lucideIcon]="ChevronDownIcon" [size]="15"></svg>
               </button>
-              <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg></div>
+              <!-- Icône du TYPE de compte + pastille de la FIRM sur son coin : posée sur l'icône plutôt
+                   qu'à côté pour ne prendre aucune largeur dans la colonne Compte. -->
+              <div class="acct-ic">
+                <svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg>
+                @if (brokerBadge(a.broker, brokerTones()); as bb) {
+                  <span class="firm-dot" [style.background]="bb.color" [style.color]="bb.text"
+                        [attr.title]="a.broker" aria-hidden="true"
+                        [attr.data-testid]="'firm-dot-' + a.id">{{ bb.initials }}</span>
+                }
+              </div>
               <div class="acct-id">
                 <div class="acct-name">{{ a.label }}</div>
                 <div class="acct-meta">
-                  @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
-                  <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                  <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
-                    <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                  @if (a.broker) { <span class="tag firm" [attr.title]="a.broker">{{ a.broker }}</span> }
+                  <!-- Type + statut : un seul bloc insécable, le statut ne se retrouve jamais seul. -->
+                  <span class="meta-pair">
+                    <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
+                    <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
+                      <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -282,6 +296,20 @@
             </div>
           }
 
+          <!-- Règles officielles du plan relié (catalogue), chargées au premier dépli. -->
+          @if (a.propFirmPlanId && expandedId() === a.id) {
+            @let rules = rulesOf(a.propFirmPlanId);
+            <div class="acct-sub acct-rules" [attr.data-testid]="'account-rules-' + a.id">
+              @if (isPlanDetail(rules)) {
+                <mtc-prop-firm-rules [plan]="rules" [accountType]="a.type" />
+              } @else if (rules === 'error') {
+                <span class="tv-text">Règles du plan indisponibles pour le moment. Replie puis rouvre la ligne pour réessayer.</span>
+              } @else {
+                <span class="tv-text">Chargement des règles du plan…</span>
+              }
+            </div>
+          }
+
           @if (fb) {
             <div class="acct-sub tv-feedback" [attr.data-testid]="'tradovate-feedback-' + a.id" role="status">
               @if (fb.error) {
@@ -344,7 +372,7 @@
 
         <label class="fld">
           <span class="fld-lbl">Type</span>
-          <select class="inp" [ngModel]="form().type" (ngModelChange)="patch({ type: $event })">
+          <select class="inp" [ngModel]="form().type" (ngModelChange)="onTypeChange($event)">
             <option value="EVALUATION">Évaluation (prop firm)</option>
             <option value="FUNDED">Funded (prop firm)</option>
             <option value="PERSONAL">Personnel</option>
@@ -353,11 +381,25 @@
         </label>
 
         @if (isPropFirm(form().type)) {
-          <label class="fld">
-            <span class="fld-lbl">Prop firm</span>
-            <input class="inp" type="text" [ngModel]="form().broker"
-                   (ngModelChange)="patch({ broker: $event })" placeholder="Apex, Lucid, FTMO…" />
-          </label>
+          <!-- Plan du catalogue (firm → programme → taille) : pré-remplit les règles ci-dessous.
+               Catalogue vide ou injoignable : la saisie libre de la firm reste seule. -->
+          @if (catalog()?.length) {
+            <mtc-prop-firm-plan-picker
+              [catalog]="catalog()!"
+              [accountType]="form().type"
+              [planId]="form().propFirmPlanId"
+              [startOnOther]="firmChoice() === OTHER_FIRM"
+              (firmChange)="onFirmChoice($event)"
+              (planChange)="onPlanChoice($event)" />
+          }
+          @if (!catalog()?.length || firmChoice() === OTHER_FIRM) {
+            <label class="fld">
+              <span class="fld-lbl">{{ catalog()?.length ? 'Nom de la prop firm' : 'Prop firm' }}</span>
+              <input class="inp" type="text" [ngModel]="form().broker"
+                     (ngModelChange)="patch({ broker: $event })" placeholder="FTMO, Topstep, Tradeify…"
+                     data-testid="account-broker" />
+            </label>
+          }
         }
 
         <div class="fld-row">

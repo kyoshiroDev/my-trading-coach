@@ -1,0 +1,58 @@
+<div class="fld-row">
+  <label class="fld">
+    <span class="fld-lbl">Prop firm</span>
+    <select class="inp" [ngModel]="firmId()" (ngModelChange)="onFirm($event)" data-testid="pf-firm">
+      <option value="" disabled>Choisir…</option>
+      @for (f of catalog(); track f.id) {
+        <option [value]="f.id">{{ f.name }}</option>
+      }
+      <option [value]="OTHER">Autre (saisie libre)</option>
+    </select>
+  </label>
+
+  @if (firm()) {
+    <label class="fld">
+      <span class="fld-lbl">Programme</span>
+      <select class="inp" [ngModel]="programId()" (ngModelChange)="onProgram($event)" data-testid="pf-program">
+        <option value="" disabled>Choisir…</option>
+        @for (p of programs(); track p.key) {
+          <option [value]="p.key">{{ p.label }}{{ p.inviteOnly ? ' (sur invitation)' : '' }}</option>
+        }
+      </select>
+    </label>
+  }
+</div>
+
+@if (program(); as prog) {
+  <div class="fld">
+    <span class="fld-lbl">Taille</span>
+    <div class="pf-sizes" role="radiogroup" aria-label="Taille du compte">
+      @for (p of prog.plans; track p.id) {
+        <button type="button" class="pf-size" role="radio"
+                [class.active]="p.id === planId()" [attr.aria-checked]="p.id === planId()"
+                (click)="onSize(p)" [attr.data-testid]="'pf-size-' + p.accountSize">
+          {{ sizeLabel(p.accountSize) }}
+        </button>
+      }
+    </div>
+  </div>
+}
+
+@if (selected(); as sel) {
+  @if (sel.plan.needsReview) {
+    <p class="pf-note warn" data-testid="pf-needs-review">
+      <svg [lucideIcon]="AlertTriangleIcon" [size]="14"></svg>
+      <span>Certaines règles de ce plan ne sont pas publiées clairement par {{ sel.firm.name }} : vérifie les valeurs ci-dessous.</span>
+    </p>
+  } @else {
+    <p class="pf-note ok">
+      <svg [lucideIcon]="BadgeCheckIcon" [size]="14"></svg>
+      <span>Règles officielles {{ sel.firm.name }}, relevées le {{ verifiedLabel() }}. Tu peux les ajuster.</span>
+    </p>
+  }
+  @if (phaseMissing()) {
+    <p class="pf-note" data-testid="pf-phase-missing">
+      Ce plan n'a pas de phase {{ accountType() === 'FUNDED' ? 'funded' : "d'évaluation" }} : objectif et drawdown sont à saisir.
+    </p>
+  }
+}

@@ -62,7 +62,8 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | `time_rules.notes` | Exceptions (marchés agricoles, jours fériés, règles news). |
 | `payout.min_daily_profit` | Profit minimum pour qu'un jour compte dans `min_days`. |
 | `payout.min_cycle_profit`, `min_cycle_profit_schedule` | Profit minimum entre deux payouts, fixe ou par cycle. |
-| `payout.max_amount_schedule` | Plafond par numéro de payout (index i = payout i+1, la dernière valeur vaut pour les suivants). |
+| `payout.max_amount_schedule` | Plafond par numéro de payout (index i = payout i+1, la dernière valeur vaut pour les suivants ; `null` = pas de plafond pour ce payout). |
+| `payout.split_after` | Partage qui change au-delà d'un cumul payé par compte (`split_pct` = avant le seuil). |
 | `payout.max_payouts` | Nombre de payouts avant fermeture ou passage en live. |
 | `payout.safety_net_balance` | Solde sous lequel aucun payout n'est possible (buffer / safety net). |
 

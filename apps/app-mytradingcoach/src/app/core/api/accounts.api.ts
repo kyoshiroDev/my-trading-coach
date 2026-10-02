@@ -40,6 +40,8 @@ export interface TradingAccount {
   profitTarget: number | null;
   maxDrawdown: number | null;
   drawdownType: DrawdownType;
+  /** Plan du catalogue prop firm relié au compte (`PropFirmPlanSummary.id`), sinon null. */
+  propFirmPlanId: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -55,6 +57,7 @@ export interface CreateAccountPayload {
   profitTarget?: number | null;
   maxDrawdown?: number | null;
   drawdownType?: DrawdownType;
+  propFirmPlanId?: string | null;
 }
 
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {

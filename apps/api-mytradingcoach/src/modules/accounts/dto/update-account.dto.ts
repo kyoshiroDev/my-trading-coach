@@ -61,4 +61,10 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsEnum(DrawdownType, { message: 'Type de drawdown invalide (STATIC ou TRAILING).' })
   drawdownType?: DrawdownType;
+
+  // Plan du catalogue prop firm ; null détache le compte du plan (IsOptional laisse passer null).
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  propFirmPlanId?: string | null;
 }

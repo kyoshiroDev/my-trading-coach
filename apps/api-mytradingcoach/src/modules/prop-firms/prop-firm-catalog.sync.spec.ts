@@ -17,7 +17,7 @@ describe('parseCatalog', () => {
   it('accepte le catalogue livré (Lucid + Apex) : le Zod suit schema.json', () => {
     const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
     expect(catalog.map((f) => f.firm.id)).toEqual(['lucid', 'apex']);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(48);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(54);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -51,7 +51,7 @@ describe('toRows', () => {
 
   it('une ligne par firm et par plan, avec la date du relevé', () => {
     expect(firms.map((f) => f.id)).toEqual(['lucid', 'apex']);
-    expect(plans).toHaveLength(48);
+    expect(plans).toHaveLength(54);
     expect(firms[1].verifiedAt).toEqual(new Date('2026-10-02T00:00:00Z'));
   });
 
@@ -59,6 +59,14 @@ describe('toRows', () => {
     const plan = plans.find((p) => p.id === 'apex-eod-50k')!;
     expect(plan).toMatchObject({ firmId: 'apex', accountSize: 50_000, currency: 'USD', availability: 'public', active: true });
     expect(plan.phases).toEqual(expect.arrayContaining([expect.objectContaining({ phase: 'evaluation', profit_target: 3000 })]));
+  });
+
+  it('Apex Legacy : abonnement mensuel, plafond libre à partir du 6e payout', () => {
+    const legacy = plans.find((p) => p.id === 'apex-legacy-50k')!;
+    expect(legacy).toMatchObject({ planName: 'Legacy Full', accountSize: 50_000, needsReview: true });
+    expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
+    const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
+    expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
   });
 
   it('LucidMaxx reste invite_only et needs_review', () => {
@@ -85,10 +93,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 2 firms et les 48 plans', () => {
+  it('base vide : crée les 2 firms et les 54 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
     expect(plan.firmsToCreate).toHaveLength(2);
-    expect(plan.plansToCreate).toHaveLength(48);
+    expect(plan.plansToCreate).toHaveLength(54);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);
@@ -114,14 +122,14 @@ describe('planCatalogSync', () => {
 
   it('plan retiré du catalogue : désactivé, jamais supprimé', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.push({ id: 'apex-legacy-50k', contentHash: 'x', active: true });
+    state.plans.push({ id: 'apex-retire-50k', contentHash: 'x', active: true });
     const plan = planCatalogSync(catalog, state);
-    expect(plan.planIdsToDeactivate).toEqual(['apex-legacy-50k']);
+    expect(plan.planIdsToDeactivate).toEqual(['apex-retire-50k']);
   });
 
   it('plan déjà désactivé et toujours absent : rien à faire', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.push({ id: 'apex-legacy-50k', contentHash: 'x', active: false });
+    state.plans.push({ id: 'apex-retire-50k', contentHash: 'x', active: false });
     expect(isNoop(planCatalogSync(catalog, state))).toBe(true);
   });
 

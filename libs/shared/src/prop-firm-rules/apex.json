@@ -1601,6 +1601,855 @@
       ],
       "needs_review": false,
       "notes": "Évaluation 30 jours puis Performance Account (PA, funded simulé). Automatisation et algorithmes interdits ; utiliser tout le drawdown comme stop est interdit. Les comptes « Legacy » (achetés avant le 2026-03-01) suivent d'autres règles et ne sont pas couverts ici."
+    },
+    {
+      "id": "apex-legacy-25k",
+      "plan_name": "Legacy Full",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 177,
+        "billing": "monthly",
+        "activation_fee": 89,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 28000,
+                "locked_floor": 26500,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (26500) quand le plus haut solde, latent inclus, atteint 28000."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26600,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (25100) quand ce plus haut solde atteint le safety net (26600). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1599,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1600,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "Contract Scaling Legacy : moitié du maximum (2 minis) tant que le solde de clôture n'a pas dépassé le safety net (26600), maximum complet à partir de la session suivante, et conservé ensuite même si le solde redescend. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              1500,
+              1500,
+              1500,
+              1500,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26600,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 1500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (26600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
+    },
+    {
+      "id": "apex-legacy-50k",
+      "plan_name": "Legacy Full",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 197,
+        "billing": "monthly",
+        "activation_fee": 99,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 55500,
+                "locked_floor": 53000,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (53000) quand le plus haut solde, latent inclus, atteint 55500."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52600,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (50100) quand ce plus haut solde atteint le safety net (52600). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 2599,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 2600,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Contract Scaling Legacy : moitié du maximum (5 minis) tant que le solde de clôture n'a pas dépassé le safety net (52600), maximum complet à partir de la session suivante, et conservé ensuite même si le solde redescend. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              2000,
+              2000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52600,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2000 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (52600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
+    },
+    {
+      "id": "apex-legacy-100k",
+      "plan_name": "Legacy Full",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 397,
+        "billing": "monthly",
+        "activation_fee": 129,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (106000) quand le plus haut solde, latent inclus, atteint 109000."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (100100) quand ce plus haut solde atteint le safety net (103100). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 3099,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3100,
+                "max_profit": null,
+                "minis": 14,
+                "micros": 140
+              }
+            ],
+            "notes": "Contract Scaling Legacy : moitié du maximum (7 minis) tant que le solde de clôture n'a pas dépassé le safety net (103100), maximum complet à partir de la session suivante, et conservé ensuite même si le solde redescend. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              2500,
+              2500,
+              2500,
+              2500,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (103100) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
+    },
+    {
+      "id": "apex-legacy-150k",
+      "plan_name": "Legacy Full",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 597,
+        "billing": "monthly",
+        "activation_fee": 169,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 164000,
+                "locked_floor": 159000,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (159000) quand le plus haut solde, latent inclus, atteint 164000."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 155100,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (150100) quand ce plus haut solde atteint le safety net (155100). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Contract Scaling Legacy : moitié du maximum (8.5 minis) tant que le solde de clôture n'a pas dépassé le safety net (155100), puis maximum complet, conservé ensuite. Apex ne dit pas comment la moitié de 17 est arrondie : paliers non renseignés. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2750,
+              2750,
+              2750,
+              2750,
+              2750,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 155100,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 2750 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (155100) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
+    },
+    {
+      "id": "apex-legacy-250k",
+      "plan_name": "Legacy Full",
+      "account_size": 250000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 697,
+        "billing": "monthly",
+        "activation_fee": 179,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 15000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 271500,
+                "locked_floor": 265000,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (265000) quand le plus haut solde, latent inclus, atteint 271500."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 27,
+            "micros": 270,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 256600,
+            "locked_floor": 250100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (250100) quand ce plus haut solde atteint le safety net (256600). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 27,
+            "micros": 270,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Contract Scaling Legacy : moitié du maximum (13.5 minis) tant que le solde de clôture n'a pas dépassé le safety net (256600), puis maximum complet, conservé ensuite. Apex ne dit pas comment la moitié de 27 est arrondie : paliers non renseignés. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3000,
+              3000,
+              3000,
+              3000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 256600,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 3000 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (256600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
+    },
+    {
+      "id": "apex-legacy-300k",
+      "plan_name": "Legacy Full",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 797,
+        "billing": "monthly",
+        "activation_fee": 199,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 20000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 7500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": {
+              "tradovate": {
+                "locks_at": null,
+                "locked_floor": null,
+                "notes": "Sur Tradovate, le trailing d'évaluation Legacy ne s'arrête jamais."
+              },
+              "rithmic": {
+                "locks_at": 327500,
+                "locked_floor": 320000,
+                "notes": "Sur Rithmic, le seuil se fige au solde objectif (320000) quand le plus haut solde, latent inclus, atteint 327500."
+              }
+            },
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy (locks_at = null par prudence)."
+          },
+          "consistency": null,
+          "min_trading_days": 7,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 35,
+            "micros": 350,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe pendant l'évaluation, toutes positions confondues. Un ordre au-delà est rejeté."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 7500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 307600,
+            "locked_floor": 300100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (Legacy Trailing Drawdown Rule) : le seuil suit le plus haut solde latent et se fige à capital initial + 100 $ (300100) quand ce plus haut solde atteint le safety net (307600). Passer sous le seuil ferme le PA."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Aucun jour ne doit dépasser 30 % du profit au moment de la demande, remis à zéro après chaque payout. Ne s'applique plus à partir du 6e payout ou du passage en live."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 35,
+            "micros": 350,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Contract Scaling Legacy : moitié du maximum (17.5 minis) tant que le solde de clôture n'a pas dépassé le safety net (307600), puis maximum complet, conservé ensuite. Apex ne dit pas comment la moitié de 35 est arrondie : paliers non renseignés. La carte de vente Legacy affiche pourtant « Scaling: None » : contradiction, voir EXTRACTION-REPORT.md."
+          },
+          "time_rules": {
+            "must_close_by": "16:59 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées et les ordres en attente annulés avant 16:59 ET ; Apex ferme automatiquement à 16:59 ET en dernier recours, sans s'y fier. Marchés qui ferment plus tôt (agricoles, clôtures anticipées des jours fériés) : fermer à leur heure. News : autorisées dans la stratégie habituelle, stratégies qui jouent l'annonce (ordres des deux côtés) interdites. Journée de trading : 18:00 ET à 16:59 ET."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.9
+            },
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3500,
+              3500,
+              3500,
+              3500,
+              3500,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 307600,
+            "notes": "8 jours de trading depuis la dernière demande, dont au moins 5 avec 50 $ de profit ou plus. Plafond 3500 $ sur les 5 premiers payouts, sans plafond à partir du 6e. Safety net (307600) exigé pour les 3 premiers payouts seulement ; un payout de 500 $ reste possible dès qu'il est atteint."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://apextraderfunding.com/legacy-products/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-products-overview/",
+        "https://apextraderfunding.com/help-center/evaluation-accounts-ea/legacy-evaluation-rules/",
+        "https://apextraderfunding.com/help-center/legacy-products/legacy-performance-account-pa-trading-rules/",
+        "https://apextraderfunding.com/help-center/legacy-trailing-drawdown/legacy-trailing-drawdown-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-contract-scaling-rule/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-pa-payout-parameters/",
+        "https://apextraderfunding.com/help-center/legacy-payouts/legacy-safety-net-requirement-rule/",
+        "https://apextraderfunding.com/help-center/legacy-helpful-items/legacy-30-negative-p-l-rule-mae/",
+        "https://apextraderfunding.com/help-center/performance-accounts-pa/legacy-pa-inactivity-policy/",
+        "https://apextraderfunding.com/help-center/billing/inactivity-policy-on-performance-accounts-pa/",
+        "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
+        "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
+      ],
+      "needs_review": true,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 peuvent suivre la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : scaling PA (contradiction carte / help center), trailing d'évaluation sur WealthCharts non documenté."
     }
   ]
 }
