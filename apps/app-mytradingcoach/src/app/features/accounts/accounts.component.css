@@ -196,6 +196,7 @@
 .acct-expand:hover { color: var(--text); background: var(--bg-3); }
 .acct-block.is-open .acct-expand { transform: rotate(180deg); color: var(--text-2); }
 .acct-ic {
+  position: relative;
   width: 30px; height: 30px;
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
@@ -204,6 +205,18 @@
   border: 1px solid color-mix(in srgb, var(--ac, var(--blue)) 28%, transparent);
   color: var(--ac, var(--blue));
 }
+/* Pastille de la prop firm, sur le coin bas droit de l'icône de type : initiales + teinte stable
+   (brokerBadge). Liseré de la couleur du fond de ligne pour se détacher sans masquer l'icône. */
+.firm-dot {
+  position: absolute; right: -6px; bottom: -6px;
+  width: 17px; height: 17px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: -.2px; line-height: 1;
+  box-shadow: 0 0 0 2px var(--bg-card);
+  pointer-events: none;
+}
+.acct-block:hover .firm-dot { box-shadow: 0 0 0 2px var(--bg-2); }
+
 /* Prend toute la largeur restante de la colonne : le tag firm ne se tronque qu'en dernier recours.
    Conteneur de requête : la ligne de badges choisit sa disposition selon SA largeur réelle. */
 .acct-id { flex: 1 1 auto; min-width: 0; container-type: inline-size; }

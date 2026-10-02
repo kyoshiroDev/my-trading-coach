@@ -111,7 +111,16 @@
                       [attr.data-testid]="'account-expand-' + a.id">
                 <svg [lucideIcon]="ChevronDownIcon" [size]="15"></svg>
               </button>
-              <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg></div>
+              <!-- Icône du TYPE de compte + pastille de la FIRM sur son coin : posée sur l'icône plutôt
+                   qu'à côté pour ne prendre aucune largeur dans la colonne Compte. -->
+              <div class="acct-ic">
+                <svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg>
+                @if (brokerBadge(a.broker); as bb) {
+                  <span class="firm-dot" [style.background]="bb.color" [style.color]="bb.text"
+                        [attr.title]="a.broker" aria-hidden="true"
+                        [attr.data-testid]="'firm-dot-' + a.id">{{ bb.initials }}</span>
+                }
+              </div>
               <div class="acct-id">
                 <div class="acct-name">{{ a.label }}</div>
                 <div class="acct-meta">

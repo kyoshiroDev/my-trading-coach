@@ -75,6 +75,7 @@ import {
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
 import { findPlan, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { brokerBadge } from './broker-badge.util';
 
 interface AccountFormState {
   label: string;
@@ -157,6 +158,8 @@ export class AccountsComponent implements OnInit {
   /** Choix de firm du sélecteur : id du catalogue, `other` (saisie libre) ou ''. */
   protected readonly firmChoice = signal<FirmChoice>('');
   protected readonly OTHER_FIRM = OTHER_FIRM;
+  /** Pastille initiales + couleur de la prop firm (null si `broker` vide). */
+  protected readonly brokerBadge = brokerBadge;
   /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
   protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
