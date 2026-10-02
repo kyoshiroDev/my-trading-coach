@@ -1162,3 +1162,22 @@ vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTT
 - `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, entry }`. Robots
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
+
+## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
+
+`analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /
+heure / jour-heure / date de Paris), `summaryTotals` (sommes, drawdown max, série en cours en
+fenêtres SQL), `cumulativeByTrade`. **Plus aucun calcul ne charge tous les trades en mémoire.**
+- Règles reproduites à l'identique : net = `round(pnl − |commission|, 2)` (comme `netPnl`),
+  gagnant si net > 0 ; R:R compté s'il est renseigné et non nul ; heure / jour dans le **fuseau du
+  processus** (`processTimeZone()`, comme les anciens `getHours()` ; TZ=Europe/Paris en prod) ;
+  dates d'activité à Paris. Les sélections (meilleure session : strictement supérieur, égalités
+  au premier apparu → `bestByWinRate`) restent en JS.
+- Valeurs en **paramètres liés** (`Prisma.sql`) ; les seules expressions brutes viennent de la
+  liste blanche `GroupKey`. Jamais de `Prisma.raw` sur une entrée.
+- Gain mesuré (compte 50 000 trades) : CPU Node par appel divisé par 100 à 1 500 (courbe
+  journalière 12,6 s → 0,42 s).
+- **Toute modification d'un calcul** : `analytics-sql-equivalence.int-spec.ts` (5 000 trades
+  piégeux, étalon figé `src/test/analytics-legacy.service.ts`, écart ≤ 0,01) et
+  `analytics.service.scenarios.int-spec.ts` (scénarios métier sur vrai Postgres) doivent passer.
+  Un changement VOLONTAIRE de règle → modifier aussi l'étalon, et le dire dans la PR.
