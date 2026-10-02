@@ -89,7 +89,7 @@ export class PublicService {
   }
 
   /**
-   * Incrémente le compteur du jour (Europe/Paris) pour (page, source). Un seul
+   * Incrémente le compteur du jour (Europe/Paris) pour (page, source, medium, campagne). Un seul
    * `INSERT … ON CONFLICT` : atomique, sans course entre deux visites simultanées.
    * Robots et UA absents ignorés. Une erreur ne remonte jamais au visiteur.
    */
@@ -99,9 +99,10 @@ export class PublicService {
     const visits = dto.entry ? 1 : 0;
     try {
       await this.prisma.$executeRaw`
-        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "pageviews", "visits")
-        VALUES (gen_random_uuid()::text, ${date}::date, ${dto.path}, ${dto.source ?? ''}, 1, ${visits})
-        ON CONFLICT ("date", "path", "source") DO UPDATE SET
+        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "medium", "campaign", "pageviews", "visits")
+        VALUES (gen_random_uuid()::text, ${date}::date, ${dto.path}, ${dto.source ?? ''},
+          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, 1, ${visits})
+        ON CONFLICT ("date", "path", "source", "medium", "campaign") DO UPDATE SET
           "pageviews" = "LandingVisitDaily"."pageviews" + 1,
           "visits" = "LandingVisitDaily"."visits" + ${visits}
       `;

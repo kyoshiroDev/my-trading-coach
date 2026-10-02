@@ -124,7 +124,7 @@ Règles :
   sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
   si on arrive directement sur `/register` (`referrerHost` de `register.component.ts`).
 - **Compteur de visites sans cookie** : le même script envoie `POST {API_URL}/public/visit`
-  (`path`, `source`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
+  (`path`, `source`, `medium`, `campaign`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
   page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin
   `/acquisition`. Si un hébergeur/CDN ajoute une CSP, autoriser `connect-src` vers l'API.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,

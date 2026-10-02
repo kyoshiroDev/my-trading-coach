@@ -106,8 +106,17 @@ export interface AdminLandingPage {
   pageviews: number;
 }
 
+/** Détail par source + medium + campagne (null = non renseigné). */
+export interface AdminAcquisitionCampaignRow extends AdminAcquisitionRow {
+  /** `utm_medium` (ex. `bio`, `story`, `post`, `listing`) ou `referral` (plan B site d'origine). */
+  medium: string | null;
+  campaign: string | null;
+}
+
 export interface AdminAcquisitionData {
   rows: AdminAcquisitionRow[];
+  /** Même données détaillées par source + medium + campagne, 50 lignes max. */
+  campaigns: AdminAcquisitionCampaignRow[];
   totals: Omit<AdminAcquisitionRow, 'source'> & { pageviews30d: number };
   /** 30 derniers jours, du plus ancien au plus récent. */
   daily: AdminLandingDay[];
