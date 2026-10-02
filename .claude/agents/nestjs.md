@@ -1138,3 +1138,21 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   rappels de renouvellement corrigés (ils tiraient tous les envois en même temps → 429 perdus).
 - **Pas d'adresse e-mail complète dans les logs** : `maskEmail()` (`j***@gmail.com`) ; un cron
   logue un **nombre**, pas la liste des destinataires.
+
+## Contexte marché poussé (SCA-B4-03, 2026-10-01)
+
+`eco-calendar/market-context.cron.ts` : toutes les 15 s, **sur le worker cron**, diffuse
+`market:context` à tous les clients du namespace `/eco` (adaptateur Redis → tous les workers). Rien
+si aucun client connecté (`gateway.connectedCount()`), donc pas d'appel Yahoo la nuit. La donnée
+vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTTP
+`GET /market/context` reste pour le secours du front (5 min) et le premier affichage.
+
+## Acquisition UTM (oct. 2026)
+
+- `POST /auth/register` accepte `acquisitionSource` / `acquisitionMedium` / `acquisitionCampaign`
+  (optionnels, ≤ 100 car., trim + minuscules dans `RegisterDto`, vide → absent). **Déployer l'API
+  avant l'app** : `forbidNonWhitelisted` rejette en 400 tout champ inconnu.
+- `GET /admin/acquisition` (`AdminService.getAcquisition`, contrat `AdminAcquisitionData` de
+  `@mtc/shared`) : une requête SQL groupée par source, hors `isDemo` et hors ADMIN. Premium =
+  `stripeSubscriptionStatus IN ('active','trialing','past_due')`, `trialing` renvoyé à part.
+  `source: null` = direct / non renseigné. Page admin : `/acquisition` (nav Business).

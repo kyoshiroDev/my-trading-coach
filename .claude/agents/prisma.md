@@ -348,3 +348,9 @@ l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 > personne ne doit attendre ça devant son écran. Ne jamais le poser après un import d'un seul mois
 > ni quand une fenêtre a échoué : le trou ne serait plus jamais comblé. Cf. `nestjs.md`,
 > profondeur de l'historique.
+
+> **Acquisition UTM** (migration `20261002000000_user_acquisition_utm`, oct. 2026) : `User.acquisitionSource`,
+> `acquisitionMedium`, `acquisitionCampaign` (TEXT nullable, sans défaut ni backfill). Remplis à
+> l'inscription depuis les `utm_*` du lien (landing → `/register` → `POST /auth/register`), normalisés
+> trim + minuscules par `RegisterDto`. **`null` = aucun UTM** : ne jamais écrire « direct » en base,
+> la catégorie « direct / non renseigné » est faite à l'agrégation (`GET /admin/acquisition`).

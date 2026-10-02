@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
+import type { AdminAcquisitionData } from '@mtc/shared';
 
 @Injectable()
 export class AdminService {
@@ -167,6 +168,55 @@ export class AdminService {
       retentionD7: { rate: pct(retained, eligible), retained, eligible },
       ghostUsers,
     };
+  }
+
+  /**
+   * Acquisition par source UTM (`User.acquisitionSource`) : inscrits 7j / 30j / total et
+   * conversion Premium (abonnement Stripe en cours). `source: null` = direct / non renseigné.
+   * Une seule requête agrégée, hors démo et hors ADMIN. Tri : volume 30j puis total.
+   */
+  async getAcquisition(): Promise<AdminAcquisitionData> {
+    const rows = await this.prisma.$queryRaw<
+      { source: string | null; d7: bigint; d30: bigint; total: bigint; premium: bigint; trialing: bigint }[]
+    >`
+      SELECT
+        u."acquisitionSource" AS source,
+        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '7 days') AS d7,
+        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '30 days') AS d30,
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" IN ('active', 'trialing', 'past_due')) AS premium,
+        COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
+      FROM "User" u
+      WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+      GROUP BY u."acquisitionSource"
+      ORDER BY d30 DESC, total DESC
+    `;
+
+    const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
+    const mapped = rows.map((r) => {
+      const signupsTotal = Number(r.total);
+      const premium = Number(r.premium);
+      return {
+        source: r.source,
+        signups7d: Number(r.d7),
+        signups30d: Number(r.d30),
+        signupsTotal,
+        premium,
+        trialing: Number(r.trialing),
+        conversionRate: pct(premium, signupsTotal),
+      };
+    });
+    const sum = (k: 'signups7d' | 'signups30d' | 'signupsTotal' | 'premium' | 'trialing') =>
+      mapped.reduce((acc, r) => acc + r[k], 0);
+    const totals = {
+      signups7d: sum('signups7d'),
+      signups30d: sum('signups30d'),
+      signupsTotal: sum('signupsTotal'),
+      premium: sum('premium'),
+      trialing: sum('trialing'),
+      conversionRate: pct(sum('premium'), sum('signupsTotal')),
+    };
+    return { rows: mapped, totals };
   }
 
   /**

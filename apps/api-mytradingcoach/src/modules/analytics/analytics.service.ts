@@ -17,6 +17,39 @@ export interface EquityPoint {
   cumulativePnl: number;
 }
 
+/** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
+export function minuteKey(d?: Date): string {
+  return d ? d.toISOString().slice(0, 16) : '';
+}
+
+export const EQUITY_MAX_POINTS = 500;
+
+/**
+ * Réduit une courbe à ~`max` points sans en changer la lecture : le premier et le dernier point
+ * sont gardés, et chaque tranche garde son plus BAS et son plus HAUT (dans l'ordre du temps). Les
+ * extrêmes — donc le pic, le creux et le drawdown maximal — restent exacts.
+ */
+export function downsampleEquity<T extends { cumulativePnl: number }>(points: T[], max: number): T[] {
+  if (points.length <= max) return points;
+  const inner = points.slice(1, -1);
+  const buckets = Math.max(1, Math.floor((max - 2) / 2));
+  const size = Math.ceil(inner.length / buckets);
+  const out: T[] = [points[0]];
+  for (let b = 0; b < inner.length; b += size) {
+    const slice = inner.slice(b, b + size);
+    let lo = 0;
+    let hi = 0;
+    slice.forEach((p, k) => {
+      if (p.cumulativePnl < slice[lo].cumulativePnl) lo = k;
+      if (p.cumulativePnl > slice[hi].cumulativePnl) hi = k;
+    });
+    if (lo === hi) out.push(slice[lo]);
+    else out.push(slice[Math.min(lo, hi)], slice[Math.max(lo, hi)]);
+  }
+  out.push(points[points.length - 1]);
+  return out;
+}
+
 @Injectable()
 export class AnalyticsService {
 
@@ -51,8 +84,15 @@ export class AnalyticsService {
     if (!from && !to) return {};
     return { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
   }
+  /**
+   * Bornes de période dans la clé de cache, **arrondies à la minute**. Le dashboard envoie
+   * `to = maintenant` : à la milliseconde, chaque ouverture créait une clé neuve (0 % de cache,
+   * et une clé Redis de plus par ouverture ; mesuré au test de charge B9 du 2026-10-01).
+   * Seule la clé est arrondie, le calcul garde les vraies bornes. Fraîcheur : toute écriture de
+   * trade vide déjà `analytics:<user>:*` (invalidateUserCache).
+   */
   private rangeKey(from?: Date, to?: Date): string {
-    return from || to ? `:range:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}` : '';
+    return from || to ? `:range:${minuteKey(from)}:${minuteKey(to)}` : '';
   }
 
   async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
@@ -89,7 +129,7 @@ export class AnalyticsService {
     }));
   }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `analytics:${userId}:equity:daily:${from?.toISOString() ?? ''}:${to?.toISOString() ?? ''}${this.accKey(accountId)}`;
+    const key = `analytics:${userId}:equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
     return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
@@ -340,7 +380,9 @@ export class AnalyticsService {
       return { date: t.tradedAt, cumulativePnl: cumPnl };
     });
 
-    return { points, startingCapital };
+    // Un point par trade : 50 000 trades = 3,5 Mo de réponse et de cache (test B9). Aucun écran
+    // n'appelle cette route (le front utilise /equity-curve/daily) : garde-fou contre un appel lourd.
+    return { points: downsampleEquity(points, EQUITY_MAX_POINTS), startingCapital };
   }
 
   private async computeEquityCurveDaily(

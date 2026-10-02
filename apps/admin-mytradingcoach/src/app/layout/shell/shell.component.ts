@@ -8,6 +8,7 @@ import {
   LucideActivity as Activity,
   LucideDatabase as Database,
   LucideTrendingUp as TrendingUp,
+  LucideRadar as Radar,
   LucideBrain as Brain,
   LucideFileSpreadsheet as FileSpreadsheet,
   LucideMail as Mail,
@@ -39,6 +40,7 @@ export class ShellComponent {
   protected readonly ActivityIcon = Activity;
   protected readonly DatabaseIcon = Database;
   protected readonly TrendingUpIcon = TrendingUp;
+  protected readonly RadarIcon = Radar;
   protected readonly BrainIcon = Brain;
   protected readonly FileSpreadsheetIcon = FileSpreadsheet;
   protected readonly MailIcon      = Mail;

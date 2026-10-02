@@ -23,6 +23,10 @@ export function uniqueEmail(tag) {
   return `load-${tag}-${Date.now()}-${__VU}-${__ITER}-${Math.floor(Math.random() * 1e6)}@test.local`;
 }
 
+// Jeton expiré (15 min) : le VU se reconnecte à l'itération suivante. Sans ça, B9 du 2026-10-01
+// a compté 1 253 « erreurs » 401 qui n'étaient que des jetons périmés (le vrai front rafraîchit).
+export let tokenExpired = false;
+
 export function register(email, password = 'LoadTest-2026!') {
   const res = http.post(`${BASE_URL}/auth/register`, JSON.stringify({ email, password, name: 'Load Test' }), {
     headers: jsonHeaders(),
@@ -38,25 +42,36 @@ export function login(email, password) {
     tags: { name: 'POST /auth/login' },
   });
   check(res, { 'login 2xx': (r) => r.status === 200 || r.status === 201 });
+  if (res.status < 300) tokenExpired = false;
   return res.status < 300 ? res.json('data.access_token') : null;
 }
 
 /** GET authentifié, taggé par route (regroupement des métriques k6). */
 export function get(token, path, name = `GET ${path}`) {
   const res = http.get(`${BASE_URL}${path}`, { ...auth(token), tags: { name } });
+  if (res.status === 401) { tokenExpired = true; return res; }
   check(res, { [`${name} 200`]: (r) => r.status === 200 });
   return res;
 }
 
-/** Ouverture du tableau de bord : les appels du dashboard Angular. */
+/**
+ * Ouverture du tableau de bord : EXACTEMENT les appels de dashboard.component.ts (période par
+ * défaut « 1M » = 30 derniers jours, `to` = maintenant). Le scénario du 2026-10-01 appelait
+ * /analytics/equity-curve (un point par trade, sur tout l'historique) qu'aucun écran n'utilise.
+ */
 export function openDashboard(token) {
-  if (get(token, '/auth/me').status === 401) return 401; // jeton expiré : le VU se reconnecte
-  get(token, '/analytics/summary');
-  get(token, '/analytics/equity-curve');
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - 30);
+  from.setHours(0, 0, 0, 0);
+  const range = `?from=${from.toISOString()}&to=${to.toISOString()}`;
+  get(token, '/auth/me');
+  get(token, `/analytics/summary${range}`, 'GET /analytics/summary');
+  get(token, `/analytics/equity-curve/daily${range}`, 'GET /analytics/equity-curve/daily');
+  get(token, `/analytics/activity/range${range}`, 'GET /analytics/activity/range');
   get(token, '/analytics/by-setup');
+  get(token, '/analytics/by-emotion');
   get(token, '/analytics/top-assets');
-  get(token, '/analytics/activity/current-month');
-  get(token, '/session/active');
 }
 
 /** Ouverture du journal : première page + stats. */
@@ -65,8 +80,11 @@ export function openJournal(token) {
   get(token, '/trades/stats');
 }
 
-/** Un tour de polling en session active (stats 30 s, contexte marché 15 s). */
+/**
+ * Un tour de polling en session active, tel que le front le fait depuis SCA-B4 : stats live
+ * toutes les 30 s ; contexte marché et calendrier éco POUSSÉS par le socket /eco (plus interrogés,
+ * secours HTTP à 5 min seulement) ; /auth/me toutes les 5 min.
+ */
 export function sessionPoll(token) {
   get(token, '/session/today/stats');
-  get(token, '/market/context');
 }
