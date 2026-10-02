@@ -115,10 +115,13 @@
               <div class="acct-id">
                 <div class="acct-name">{{ a.label }}</div>
                 <div class="acct-meta">
-                  @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
-                  <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                  <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
-                    <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                  @if (a.broker) { <span class="tag firm" [attr.title]="a.broker">{{ a.broker }}</span> }
+                  <!-- Type + statut : un seul bloc insécable, le statut ne se retrouve jamais seul. -->
+                  <span class="meta-pair">
+                    <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
+                    <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
+                      <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                    </span>
                   </span>
                 </div>
               </div>
