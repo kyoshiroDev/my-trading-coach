@@ -360,6 +360,12 @@ model BrokerConnection {
   externalAccountName   String?
   /// Hôte du compte choisi : 'live' ou 'demo' (les comptes prop firm sont simulés).
   externalEnv           String?
+  /// Hôtes Tradovate du login (`apiHosts` de `renewAccessToken`) : { live, demo, reportingLive,
+  /// reportingDemo, … }, hôtes nus. L'hôte `demo` varie par organisation (prop firm) et peut
+  /// changer : REST, WebSocket et reporting s'y routent, repli sur les hôtes historiques si null.
+  apiHosts              Json?
+  /// Date de la dernière lecture de `apiHosts` : relu dès qu'il a plus de 30 min.
+  apiHostsAt            DateTime?
   /// Comptes vus à la connexion : [{ id, name, env }]. Sert au choix quand il y en a plusieurs.
   availableAccounts     Json?
   lastSyncAt            DateTime?

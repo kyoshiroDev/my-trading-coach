@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TradovateApiError } from './tradovate.errors';
+import { fetchFollowingRedirect, reportingBase } from './tradovate-hosts';
 import type { TradovateEnv } from './tradovate.types';
 
 /**
@@ -22,9 +23,13 @@ import type { TradovateEnv } from './tradovate.types';
  * Position History met 43 s, Account Balance History 60 s et Cash History dépasse 120 s ; avec
  * lui, tout répond en 150 à 270 ms. Facteur 200.
  */
+/**
+ * Bases de REPLI : la source de vérité est `apiHosts.reportingLive` / `reportingDemo` de la
+ * connexion (cf. tradovate-hosts.ts), propre à l'organisation pour demo.
+ */
 export const TRADOVATE_REPORT_BASE: Record<TradovateEnv, string> = {
-  live: 'https://rpt-live.tradovateapi.com',
-  demo: 'https://rpt-demo.tradovateapi.com',
+  live: reportingBase('live'),
+  demo: reportingBase('demo'),
 };
 
 /** Fenêtre maximale mesurée : 63 jours passent, 92 sont refusés (« Too long range »). */
@@ -64,6 +69,7 @@ export class TradovateReportingClient {
     accessToken: string,
     name: TradovateReportName,
     window: ReportWindow,
+    apiHosts?: unknown,
   ): Promise<string> {
     const body = {
       name,
@@ -79,16 +85,20 @@ export class TradovateReportingClient {
     let res: Response;
     const started = Date.now();
     try {
-      res = await fetch(`${TRADOVATE_REPORT_BASE[env]}/v1/reports/requestReport`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+      res = await fetchFollowingRedirect(
+        `${reportingBase(env, apiHosts)}/v1/reports/requestReport`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
         },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
+        (from, to) => this.logger.warn(`Rapport ${name} : redirection ${from} → ${to} (apiHosts périmé ?)`),
+      );
     } catch (err) {
       throw new TradovateApiError('unavailable', 0, `rapport ${name} : ${(err as Error).name}`);
     }

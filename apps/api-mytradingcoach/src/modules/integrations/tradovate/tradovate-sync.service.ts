@@ -161,9 +161,10 @@ export class TradovateSyncService {
   private async run(userId: string, conn: BrokerConnection, relinked = false): Promise<TradovateSyncResult> {
     const env = conn.externalEnv as TradovateEnv;
     const externalId = Number(conn.externalAccountId);
-    const token = await this.connections.getAccessToken(conn);
+    // Hôtes frais avec le jeton : l'hôte demo d'une prop firm est propre à son organisation.
+    const { token, apiHosts } = await this.connections.getSession(conn);
     const get = <T>(path: string, query?: Record<string, string>) =>
-      this.api.get<T>(env, path, token, query);
+      this.api.get<T>(env, path, token, query, apiHosts);
 
     // Le compte doit toujours être accessible avec cette connexion. Absent : jamais « reconnecte-toi »
     // (le token marche) — changé d'hôte, trou passager ou compte clôturé (cf. handleMissingAccount).
@@ -171,7 +172,7 @@ export class TradovateSyncService {
     const account = accounts.find((a) => a.id === externalId);
     if (!account) {
       if (relinked) throw new TradovateException('TRADOVATE_ACCOUNT_TEMPORARILY_MISSING');
-      return this.run(userId, await this.connections.handleMissingAccount(conn, token), true);
+      return this.run(userId, await this.connections.handleMissingAccount(conn, token, apiHosts), true);
     }
     // Rattrapage du login pour les connexions d'avant la correction (verrou + propagation).
     //

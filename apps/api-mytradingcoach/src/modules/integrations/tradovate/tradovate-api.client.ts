@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TradovateApiError } from './tradovate.errors';
-import type { TradovateEnv, TradovateOAuthTokenResponse } from './tradovate.types';
+import { FALLBACK_HOSTS, fetchFollowingRedirect, parseApiHosts, restBase } from './tradovate-hosts';
+import type { TradovateApiHosts, TradovateEnv, TradovateOAuthTokenResponse } from './tradovate.types';
 
 /**
  * L'OAuth Tradovate passe TOUJOURS par Live (vérifié lors de l'intégration : l'inscription
@@ -10,10 +11,14 @@ import type { TradovateEnv, TradovateOAuthTokenResponse } from './tradovate.type
  * de prop firm). D'où deux bases REST, choisies par compte.
  */
 export const TRADOVATE_AUTHORIZE_URL = 'https://trader.tradovate.com/oauth';
-export const TRADOVATE_TOKEN_URL = 'https://live.tradovateapi.com/auth/oauthtoken';
+export const TRADOVATE_TOKEN_URL = `https://${FALLBACK_HOSTS.live.api}/auth/oauthtoken`;
+/**
+ * Bases REST de REPLI : la source de vérité est `apiHosts` de la connexion (cf. tradovate-hosts.ts).
+ * Gardées pour une connexion dont les hôtes n'ont pas encore été lus.
+ */
 export const TRADOVATE_API_BASE: Record<TradovateEnv, string> = {
-  live: 'https://live.tradovateapi.com/v1',
-  demo: 'https://demo.tradovateapi.com/v1',
+  live: restBase('live'),
+  demo: restBase('demo'),
 };
 
 const TIMEOUT_MS = 20_000;
@@ -72,11 +77,14 @@ export class TradovateApiClient {
     return this.postToken({ grant_type: 'refresh_token', refresh_token: refreshToken });
   }
 
-  /** Renouvellement natif Tradovate (prolonge la session d'un token encore valide). */
+  /**
+   * Renouvellement natif Tradovate (prolonge la session d'un token encore valide). C'est aussi LA
+   * source de `apiHosts` pour un jeton OAuth : `/auth/oauthtoken` ne le renvoie pas.
+   */
   async renewAccessToken(
     accessToken: string,
-  ): Promise<{ accessToken: string; expirationTime: string }> {
-    const body = await this.get<{ accessToken?: string; expirationTime?: string }>(
+  ): Promise<{ accessToken: string; expirationTime: string; apiHosts: TradovateApiHosts | null }> {
+    const body = await this.get<{ accessToken?: string; expirationTime?: string; apiHosts?: unknown }>(
       'live',
       '/auth/renewaccesstoken',
       accessToken,
@@ -84,23 +92,35 @@ export class TradovateApiClient {
     if (!body.accessToken || !body.expirationTime) {
       throw new TradovateApiError('unauthorized', 200, 'renouvellement refusé');
     }
-    return { accessToken: body.accessToken, expirationTime: body.expirationTime };
+    return {
+      accessToken: body.accessToken,
+      expirationTime: body.expirationTime,
+      apiHosts: parseApiHosts(body.apiHosts),
+    };
   }
 
-  /** GET d'une ressource REST (`/account/list`, `/fillPair/list`…) sur l'hôte du compte. */
+  /**
+   * GET d'une ressource REST (`/account/list`, `/fillPair/list`…) sur l'hôte du compte : celui de
+   * `apiHosts` s'il est connu, sinon l'hôte historique.
+   */
   async get<T>(
     env: TradovateEnv,
     path: string,
     accessToken: string,
     query?: Record<string, string>,
+    apiHosts?: unknown,
   ): Promise<T> {
     const qs = query ? `?${new URLSearchParams(query).toString()}` : '';
     let res: Response;
     try {
-      res = await fetch(`${TRADOVATE_API_BASE[env]}${path}${qs}`, {
-        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
+      res = await fetchFollowingRedirect(
+        `${restBase(env, apiHosts)}${path}${qs}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        },
+        (from, to) => this.logger.warn(`Tradovate ${path} : redirection ${from} → ${to} (apiHosts périmé ?)`),
+      );
     } catch (err) {
       throw new TradovateApiError('unavailable', 0, `${path} : ${(err as Error).name}`);
     }
