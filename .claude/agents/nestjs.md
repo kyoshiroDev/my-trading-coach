@@ -1165,6 +1165,29 @@ vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTT
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
 
+## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
+
+`modules/prop-firms/` aligne les tables `PropFirm` / `PropFirmPlan` sur le catalogue JSON
+(`PROP_FIRM_CATALOG_FILES` de `@mtc/shared`, embarqué dans `main.js` par webpack) à chaque
+démarrage (`onApplicationBootstrap`). Relever les règles d'une firm = modifier son JSON, puis
+redéployer : rien à lancer sur le VPS.
+
+- `prop-firm-catalog.schema.ts` : calque **Zod** de `schema.json`, objets stricts. Les deux doivent
+  rester alignés (le test `prop-firm-catalog.sync.spec.ts` parse le catalogue livré avec Zod ; la CI
+  le valide avec ajv via `pnpm prop-firms:validate`). Sert aussi à relire les colonnes Json.
+- `prop-firm-catalog.sync.ts` : logique pure (validation, unicité des ids, diff par `contentHash`).
+  Catalogue invalide → exception avant toute écriture, **rien** n'est synchronisé.
+- `prop-firm-catalog-sync.service.ts` : une transaction, verrou `pg_try_advisory_xact_lock(136001)`
+  (non bloquant, compatible PgBouncer transaction) → sur les 8 workers du cluster, un seul écrit,
+  les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
+  Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
+- Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- Import de JSON : `resolveJsonModule` est activé dans `tsconfig.base.json`, et les projets
+  `composite` qui incluent `libs/shared` (API app + spec, spec de l'app) listent
+  `libs/shared/src/prop-firm-rules/*.json` dans `include` (sinon TS6307). Le catalogue est exporté
+  par l'index de `@mtc/shared` mais absent des bundles front tant qu'ils ne l'importent pas
+  (vérifié : 0 occurrence dans app, admin, landing).
+
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
 `analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /

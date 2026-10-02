@@ -2,7 +2,7 @@
 
 Règles de trading des prop firms (objectif, drawdown journalier, drawdown max, consistency, taille, horaires, payouts), maintenues à la main par MTC. L'API Tradovate ne les expose pas (401 sur `accountRiskStatus` et `userAccountPositionLimit`) : on croise ce catalogue avec les vrais soldes Tradovate (`getcashbalancesnapshot` : netLiq, openPnL, realizedPnL) pour afficher l'état d'un compte prop firm en temps réel.
 
-Statut : **données seulement**. Pas encore de seed Prisma, de modèle en base, d'UI ni de synchro (prompt suivant, après relecture). Lire `EXTRACTION-REPORT.md` avant d'utiliser un plan marqué `needs_review`.
+Statut : **en base**, tables `PropFirm` / `PropFirmPlan`, synchronisées depuis ces fichiers à chaque démarrage de l'API (`apps/api-mytradingcoach/src/modules/prop-firms/`). Pas encore d'UI ni de calcul de l'état du compte. Lire `EXTRACTION-REPORT.md` avant d'utiliser un plan marqué `needs_review`.
 
 ## Emplacement
 
@@ -10,7 +10,7 @@ Statut : **données seulement**. Pas encore de seed Prisma, de modèle en base, 
 
 - l'API NestJS (seed, calcul de l'état du compte) et l'app Angular (affichage des seuils) liront les mêmes règles : une seule copie, pas de dérive entre front et back ;
 - `libs/shared` est déjà la lib commune aux deux (`@mtc/shared`, cf. `pricing.ts`, `trade-stats.ts`) ; une lib dédiée aurait demandé un nouveau projet Nx, un alias et un tsconfig pour quatre fichiers de données ;
-- les fichiers sont sous `src/` pour pouvoir être importés plus tard (`resolveJsonModule`) sans déplacement. Ils ne sont pas encore exportés par `index.ts` : ce sera fait au prompt du seed.
+- les fichiers sont sous `src/` pour être importés (`resolveJsonModule`) : `catalog.ts` les expose sous `PROP_FIRM_CATALOG_FILES`, ré-exporté par `index.ts`.
 
 Le script de validation est dans `tools/scripts/` (et non dans un `scripts/` racine) : c'est la convention du dépôt pour les scripts ponctuels (`tools/scripts/README.md`), le typecheck `tools-scripts` le couvre et `scripts/` ne contient que le bot Discord.
 
@@ -78,7 +78,8 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 2. Créer `<firm-id>.json` avec `verified_at` = date du relevé. Un plan par combinaison d'options qui change les règles.
 3. Pour chaque drawdown, lire la définition exacte (clôture ou pic intraday, latent inclus ou non, blocage, contrôle en séance) et la résumer dans `basis_notes`.
 4. Lister toutes les pages utilisées dans `source_urls`. Marquer `needs_review` au moindre doute.
-5. `pnpm prop-firms:validate`, puis compléter `EXTRACTION-REPORT.md`.
+5. Ajouter le fichier à `PROP_FIRM_CATALOG_FILES` (`catalog.ts`).
+6. `pnpm prop-firms:validate`, puis compléter `EXTRACTION-REPORT.md`. Le déploiement suivant de l'API le met en base.
 
 ## Re-vérifier une firm
 
@@ -87,4 +88,4 @@ Les firms changent leurs règles souvent (Apex a remplacé toute sa gamme le 202
 1. Rouvrir chaque URL de `source_urls`. Les help centers Lucid (Intercom) et Apex (WordPress) affichent une date de mise à jour par article (`dateModified` dans le JSON-LD de la page) : comparer avec `verified_at`.
 2. Lucid : la liste complète des articles se lit depuis les collections de `https://support.lucidtrading.com/en/`. Apex : `https://apextraderfunding.com/help-center-sitemap.xml` liste les articles avec leur date. Les sites principaux bloquent les requêtes hors navigateur (403) : passer par un navigateur.
 3. Vérifier le sélecteur de plans des pages d'accueil (tailles, options, prix).
-4. Mettre à jour les valeurs, `verified_at`, puis `pnpm prop-firms:validate` et le rapport.
+4. Mettre à jour les valeurs, `verified_at`, puis `pnpm prop-firms:validate` et le rapport. Le déploiement suivant de l'API met la base à jour (plan retiré du JSON : `active = false`, jamais supprimé). Ne jamais changer l'`id` d'un plan publié.

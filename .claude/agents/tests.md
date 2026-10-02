@@ -123,6 +123,14 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > qui n'a rien à voir avec le test. Lancer
 > `pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts` avant la suite.
 
+> ⚠️ **Catalogue prop firm : tables globales, synchronisées au boot.** Chaque `createIntegrationApp()`
+> aligne `PropFirm` / `PropFirmPlan` sur le JSON livré. Un test qui synchronise un catalogue modifié
+> (`service.sync(files)`) doit remettre la base à l'état livré (`service.sync()` en `afterAll`), sinon
+> les autres specs voient un plan désactivé. Le verrou de la synchro se teste en le PRENANT depuis le
+> test (`$executeRaw` `pg_advisory_xact_lock`, `$queryRaw` ne sait pas lire le `void` renvoyé) :
+> des `sync()` lancés en parallèle dans un même process finissent l'un après l'autre et passent au
+> vert même sans verrou (constaté en retirant le verrou).
+
 > ⚠️ **Arrêter toute API lancée à côté avant de jouer la suite d'intégration.** Un autre
 > process branché sur le même Redis consomme la file BullMQ « stripe » et traite les jobs
 > du test avec SON code : les assertions passent au vert sans rien prouver. Constaté en
