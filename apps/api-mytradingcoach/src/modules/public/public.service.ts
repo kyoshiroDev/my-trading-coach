@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
+import { LandingVisitDto } from './dto/landing-visit.dto';
+import { todayParis } from '@mtc/shared';
 
 // Dev et prod partagent le Redis db0 du VPS sans préfixe : sans suffixe
 // d'environnement, la première API qui remplit la clé impose son chiffre à
@@ -12,8 +14,13 @@ import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 const CACHE_KEY_PREFIX = 'public:traders-count';
 const CACHE_TTL = 600; // 10 min
 
+// Robots, aperçus de liens et outils d'audit : ils fausseraient le trafic de la landing.
+const BOT_UA = /bot|crawl|spider|slurp|preview|headless|lighthouse|pagespeed|facebookexternalhit|embedly|curl|wget|python|axios|node-fetch/i;
+
 @Injectable()
 export class PublicService {
+  private readonly logger = new Logger(PublicService.name);
+
   private get redis() {
     return this.redisService.client;
   }
@@ -79,5 +86,27 @@ export class PublicService {
       // Redis indisponible : pas de cache, ce n'est pas bloquant
     }
     return count;
+  }
+
+  /**
+   * Incrémente le compteur du jour (Europe/Paris) pour (page, source). Un seul
+   * `INSERT … ON CONFLICT` : atomique, sans course entre deux visites simultanées.
+   * Robots et UA absents ignorés. Une erreur ne remonte jamais au visiteur.
+   */
+  async recordLandingVisit(dto: LandingVisitDto, userAgent?: string): Promise<void> {
+    if (!userAgent || BOT_UA.test(userAgent)) return;
+    const date = new Date(`${todayParis()}T00:00:00Z`);
+    const visits = dto.entry ? 1 : 0;
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "pageviews", "visits")
+        VALUES (gen_random_uuid()::text, ${date}::date, ${dto.path}, ${dto.source ?? ''}, 1, ${visits})
+        ON CONFLICT ("date", "path", "source") DO UPDATE SET
+          "pageviews" = "LandingVisitDaily"."pageviews" + 1,
+          "visits" = "LandingVisitDaily"."visits" + ${visits}
+      `;
+    } catch (err) {
+      this.logger.warn(`Landing visit non comptée : ${String(err)}`);
+    }
   }
 }

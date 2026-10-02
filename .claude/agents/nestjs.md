@@ -1156,3 +1156,9 @@ vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTT
   `@mtc/shared`) : une requête SQL groupée par source, hors `isDemo` et hors ADMIN. Premium =
   `stripeSubscriptionStatus IN ('active','trialing','past_due')`, `trialing` renvoyé à part.
   `source: null` = direct / non renseigné. Page admin : `/acquisition` (nav Business).
+- La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
+  `topPages`) lues dans `LandingVisitDaily`. Le taux global visite → inscription ne compte que les
+  sources ayant des visites (sinon les inscrits arrivés direct sur l'app le font dépasser 100 %).
+- `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, entry }`. Robots
+  filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
+  **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.

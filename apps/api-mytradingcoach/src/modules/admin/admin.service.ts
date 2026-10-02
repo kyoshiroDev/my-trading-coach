@@ -3,7 +3,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
-import type { AdminAcquisitionData } from '@mtc/shared';
+import { todayParis, type AdminAcquisitionData } from '@mtc/shared';
 
 @Injectable()
 export class AdminService {
@@ -171,52 +171,125 @@ export class AdminService {
   }
 
   /**
-   * Acquisition par source UTM (`User.acquisitionSource`) : inscrits 7j / 30j / total et
-   * conversion Premium (abonnement Stripe en cours). `source: null` = direct / non renseigné.
-   * Une seule requête agrégée, hors démo et hors ADMIN. Tri : volume 30j puis total.
+   * Acquisition par source : visites de la landing (compteurs sans cookie), inscrits
+   * 7j / 30j / total et conversion Premium (abonnement Stripe en cours).
+   * Source = `User.acquisitionSource` côté inscrits, `LandingVisitDaily.source` côté
+   * visites (même normalisation) ; null / '' = direct. Inscrits hors démo et hors ADMIN.
+   * Tri : visites 30j, puis inscrits 30j, puis total.
    */
   async getAcquisition(): Promise<AdminAcquisitionData> {
-    const rows = await this.prisma.$queryRaw<
-      { source: string | null; d7: bigint; d30: bigint; total: bigint; premium: bigint; trialing: bigint }[]
-    >`
-      SELECT
-        u."acquisitionSource" AS source,
-        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '7 days') AS d7,
-        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '30 days') AS d30,
-        COUNT(*) AS total,
-        COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" IN ('active', 'trialing', 'past_due')) AS premium,
-        COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
-      FROM "User" u
-      WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
-      GROUP BY u."acquisitionSource"
-      ORDER BY d30 DESC, total DESC
-    `;
+    // Fenêtres de visites en jours calendaires Paris (le compteur est journalier).
+    const today = todayParis();
+    const dayStr = (offset: number) => {
+      const d = new Date(`${today}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - offset);
+      return d.toISOString().slice(0, 10);
+    };
+    const from7 = new Date(`${dayStr(6)}T00:00:00Z`);
+    const from30 = new Date(`${dayStr(29)}T00:00:00Z`);
+
+    const [signupRows, visitRows, dailyRows, pageRows] = await Promise.all([
+      this.prisma.$queryRaw<
+        { source: string | null; d7: bigint; d30: bigint; total: bigint; premium: bigint; trialing: bigint }[]
+      >`
+        SELECT
+          u."acquisitionSource" AS source,
+          COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '7 days') AS d7,
+          COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '30 days') AS d30,
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" IN ('active', 'trialing', 'past_due')) AS premium,
+          COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
+        FROM "User" u
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+        GROUP BY u."acquisitionSource"
+      `,
+      this.prisma.$queryRaw<{ source: string; v7: bigint; v30: bigint }[]>`
+        SELECT v."source",
+          COALESCE(SUM(v."visits") FILTER (WHERE v."date" >= ${from7}::date), 0) AS v7,
+          SUM(v."visits") AS v30
+        FROM "LandingVisitDaily" v
+        WHERE v."date" >= ${from30}::date
+        GROUP BY v."source"
+      `,
+      this.prisma.$queryRaw<{ date: Date; visits: bigint; pageviews: bigint }[]>`
+        SELECT v."date", SUM(v."visits") AS visits, SUM(v."pageviews") AS pageviews
+        FROM "LandingVisitDaily" v
+        WHERE v."date" >= ${from30}::date
+        GROUP BY v."date"
+      `,
+      this.prisma.$queryRaw<{ path: string; visits: bigint; pageviews: bigint }[]>`
+        SELECT v."path", SUM(v."visits") AS visits, SUM(v."pageviews") AS pageviews
+        FROM "LandingVisitDaily" v
+        WHERE v."date" >= ${from30}::date
+        GROUP BY v."path"
+        ORDER BY pageviews DESC
+        LIMIT 10
+      `,
+    ]);
 
     const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
-    const mapped = rows.map((r) => {
-      const signupsTotal = Number(r.total);
-      const premium = Number(r.premium);
-      return {
-        source: r.source,
-        signups7d: Number(r.d7),
-        signups30d: Number(r.d30),
-        signupsTotal,
-        premium,
-        trialing: Number(r.trialing),
-        conversionRate: pct(premium, signupsTotal),
-      };
-    });
-    const sum = (k: 'signups7d' | 'signups30d' | 'signupsTotal' | 'premium' | 'trialing') =>
-      mapped.reduce((acc, r) => acc + r[k], 0);
-    const totals = {
-      signups7d: sum('signups7d'),
-      signups30d: sum('signups30d'),
-      signupsTotal: sum('signupsTotal'),
-      premium: sum('premium'),
-      trialing: sum('trialing'),
-      conversionRate: pct(sum('premium'), sum('signupsTotal')),
+    const empty = () => ({ visits7d: 0, visits30d: 0, signups7d: 0, signups30d: 0, signupsTotal: 0, premium: 0, trialing: 0 });
+    // Clé '' = direct, des deux côtés.
+    const bySource = new Map<string, ReturnType<typeof empty>>();
+    const get = (key: string) => {
+      let row = bySource.get(key);
+      if (!row) bySource.set(key, (row = empty()));
+      return row;
     };
-    return { rows: mapped, totals };
+    for (const r of signupRows) {
+      const row = get(r.source ?? '');
+      row.signups7d = Number(r.d7);
+      row.signups30d = Number(r.d30);
+      row.signupsTotal = Number(r.total);
+      row.premium = Number(r.premium);
+      row.trialing = Number(r.trialing);
+    }
+    for (const r of visitRows) {
+      const row = get(r.source);
+      row.visits7d = Number(r.v7);
+      row.visits30d = Number(r.v30);
+    }
+
+    const rows = [...bySource.entries()]
+      .map(([key, r]) => ({
+        source: key === '' ? null : key,
+        ...r,
+        visitToSignupRate: pct(r.signups30d, r.visits30d),
+        conversionRate: pct(r.premium, r.signupsTotal),
+      }))
+      .sort((a, b) => b.visits30d - a.visits30d || b.signups30d - a.signups30d || b.signupsTotal - a.signupsTotal);
+
+    const sum = (k: keyof ReturnType<typeof empty>) => rows.reduce((acc, r) => acc + r[k], 0);
+    const visitsByDay = new Map(
+      dailyRows.map((d) => [d.date.toISOString().slice(0, 10), { visits: Number(d.visits), pageviews: Number(d.pageviews) }]),
+    );
+    const daily = Array.from({ length: 30 }, (_, i) => {
+      const date = dayStr(29 - i);
+      return { date, ...(visitsByDay.get(date) ?? { visits: 0, pageviews: 0 }) };
+    });
+
+    return {
+      rows,
+      totals: {
+        visits7d: sum('visits7d'),
+        visits30d: sum('visits30d'),
+        pageviews30d: daily.reduce((acc, d) => acc + d.pageviews, 0),
+        signups7d: sum('signups7d'),
+        signups30d: sum('signups30d'),
+        signupsTotal: sum('signupsTotal'),
+        premium: sum('premium'),
+        trialing: sum('trialing'),
+        // Seules les sources ayant des visites landing comptent : sinon les inscrits arrivés
+        // directement sur l'app (sans passer par la landing) gonflent le taux au-delà de 100 %.
+        visitToSignupRate: pct(
+          rows.filter((r) => r.visits30d > 0).reduce((acc, r) => acc + r.signups30d, 0),
+          sum('visits30d'),
+        ),
+        conversionRate: pct(sum('premium'), sum('signupsTotal')),
+      },
+      daily,
+      topPages: pageRows.map((p) => ({ path: p.path, visits: Number(p.visits), pageviews: Number(p.pageviews) })),
+    };
   }
 
   /**
