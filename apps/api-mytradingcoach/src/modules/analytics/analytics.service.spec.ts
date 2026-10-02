@@ -137,4 +137,58 @@ describe('AnalyticsService', () => {
       expect(bestByWinRate([g('LONDON', 0, 3), g('ASIAN', 0, 0)])).toBeNull();
     });
   });
+
+  describe('règles conservées en JavaScript (agrégats SQL simulés)', () => {
+    const agg = (key: string, o: Partial<{ count: number; wins: number; losses: number; pnl: number; rrSum: number; rrCount: number }> = {}) => ({
+      key, count: 0, wins: 0, losses: 0, pnl: 0, rrSum: 0, rrCount: 0, firstAt: new Date(), ...o,
+    });
+    const svc = () => service as unknown as Record<string, (...a: unknown[]) => Promise<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
+    beforeEach(() => vi.mocked(groupTrades).mockReset().mockResolvedValue([]));
+
+    it('résumé : profit factor null sans perte, heure au format HH:00, meilleure session', async () => {
+      const { summaryTotals } = await import('./analytics.sql');
+      vi.mocked(summaryTotals).mockResolvedValueOnce({ count: 3, wins: 3, losses: 0, pnl: 300.004, grossProfit: 300, grossLoss: 0, maxDrawdown: 0, streak: 3 });
+      vi.mocked(groupTrades)
+        .mockResolvedValueOnce([agg('LONDON', { wins: 1, losses: 1 }), agg('ASIAN', { wins: 2 })])
+        .mockResolvedValueOnce([agg('9', { wins: 3 })]);
+      const r = await svc()['computeSummary']('u1');
+      expect(r).toMatchObject({ profitFactor: null, totalPnl: 300, topSession: 'ASIAN', topSessionWinRate: 100, topHour: '09:00', streak: 3, winRate: 100 });
+    });
+
+    it('par setup : actifs dans leur ordre (même à 0 trade), puis archivés avec trades', async () => {
+      mockPrisma.setup.findMany
+        .mockResolvedValueOnce([{ id: 'a', title: 'A', color: '#1' }, { id: 'b', title: 'B', color: '#2' }])
+        .mockResolvedValueOnce([{ id: 'z', title: 'Z', color: '#9' }]);
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('z', { count: 1, losses: 1, pnl: -5 }), agg('b', { count: 2, wins: 1, losses: 1, pnl: 10, rrSum: 3, rrCount: 2 })]);
+      const r = await svc()['computeBySetup']('u1');
+      expect(r.map((x: { setupId: string }) => x.setupId)).toEqual(['a', 'b', 'z']);
+      expect(r[0]).toMatchObject({ count: 0, pnl: 0, avgRR: null, winRate: null });
+      expect(r[1]).toMatchObject({ count: 2, avgRR: 1.5, winRate: 50 });
+      expect(r[2]).toMatchObject({ title: 'Z', color: '#9', winRate: 0 });
+    });
+
+    it('par heure : jour et heure décodés ; top actifs : tri par P&L, 10 au plus', async () => {
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('0:9', { count: 2, wins: 1, losses: 1 })]);
+      expect(await svc()['computeByHour']('u1')).toEqual([{ day: 'Dim', hour: 9, winRate: 50, count: 2 }]);
+      vi.mocked(groupTrades).mockResolvedValueOnce(Array.from({ length: 12 }, (_, i) => agg(`A${i}`, { pnl: i })));
+      const top = await svc()['computeTopAssets']('u1');
+      expect(top).toHaveLength(10);
+      expect(top[0].asset).toBe('A11');
+    });
+
+    it('par émotion : R:R moyen à 0 (et non null) sans R:R, comme avant', async () => {
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('FOCUSED', { count: 1, wins: 1 })]);
+      expect(await svc()['computeByEmotion']('u1')).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: 0, count: 1 }]);
+    });
+
+    it('équité journalière et activité : jours triés, P&L cumulé, totaux du mois', async () => {
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-05', { pnl: -50 }), agg('2026-05-04', { pnl: 100 })]);
+      const eq = await svc()['computeEquityCurveDaily']('u1');
+      expect(eq.points.map((p: { cumulativePnl: number }) => p.cumulativePnl)).toEqual([100, 50]);
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-04', { count: 2, wins: 1, losses: 1, pnl: 30 }), agg('2026-05-06', { count: 1, pnl: -10, losses: 1 })]);
+      const m = await svc()['computeMonthlyActivity']('u1', 2026, 5);
+      expect(m).toMatchObject({ totalPnl: 20, totalTrades: 3, tradingDays: 2 });
+      expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ before: new Date(2026, 5, 1) });
+    });
+  });
 });
