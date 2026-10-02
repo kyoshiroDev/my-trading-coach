@@ -121,6 +121,32 @@ describe('AuthService', () => {
       expect(mockResend.sendAdminAlert).not.toHaveBeenCalled();
     });
 
+    it('persiste les UTM d’acquisition, et null quand ils sont absents', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: null, plan: 'FREE', createdAt: mockUser.createdAt });
+
+      await service.register({
+        email: 'test@test.com',
+        password: 'password123',
+        acquisitionSource: 'ninjatrader',
+        acquisitionMedium: 'listing',
+        acquisitionCampaign: 'ecosystem',
+      });
+      expect(mockPrisma.user.create.mock.calls[0][0].data).toMatchObject({
+        acquisitionSource: 'ninjatrader',
+        acquisitionMedium: 'listing',
+        acquisitionCampaign: 'ecosystem',
+      });
+
+      await service.register({ email: 'other@test.com', password: 'password123' });
+      // Jamais de valeur par défaut type « direct » : la distinction se fait à l'agrégation.
+      expect(mockPrisma.user.create.mock.calls[1][0].data).toMatchObject({
+        acquisitionSource: null,
+        acquisitionMedium: null,
+        acquisitionCampaign: null,
+      });
+    });
+
     it('lance ConflictException si email déjà utilisé', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 

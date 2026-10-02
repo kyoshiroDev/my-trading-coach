@@ -13,7 +13,7 @@ function serviceWith(rows: unknown[], recaps: unknown[]) {
     tradeSession: { findMany: vi.fn().mockResolvedValue(rows) },
     dailyRecap: { findMany: recapFindMany },
   };
-  return { service: new SessionService(prisma as never, {} as never, {} as never), recapFindMany };
+  return { service: new SessionService(prisma as never, {} as never, {} as never, {} as never), recapFindMany };
 }
 
 describe('SessionService.getSessionHistory — résumé IA du jour', () => {

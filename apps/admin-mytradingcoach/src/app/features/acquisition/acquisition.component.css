@@ -1,0 +1,10 @@
+/* Acquisition — cartes, KPIs et .tbl : design system global. */
+
+.card-label.muted { color: var(--text3); }
+.muted { color: var(--text3); }
+.teal { color: var(--teal); }
+
+/* Colonnes chiffrées alignées à droite (desktop) ; en < 768px la table passe en cartes. */
+@media (min-width: 769px) {
+  .tbl .num { text-align: right; }
+}

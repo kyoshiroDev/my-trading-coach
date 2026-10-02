@@ -36,10 +36,13 @@ Machine partagée avec la prod : **hors heures du marché US** (15 h 30 – 22 h
    l'API beta. Ignorée si l'API vise la base de prod (garde-fou dans le code).
 2. **Beta au format prod** le temps du test : `DB_POOL_MAX=5` dans `.env.beta`, pool PgBouncer de
    beta à 20, API dev arrêtée (budget de connexions, voir `deploy.md`). Remettre 2 / 6 après.
-3. **Jeu de données** (≈ 4,1 M trades, ~5 Go) :
+3. **Jeu de données** (≈ 4,1 M trades, ~1,5 Go, ~11 min) :
    ```sh
    HASH=$(cd apps/api-mytradingcoach && node -e "require('argon2').hash('LoadTest-2026!',{type:2,memoryCost:19456,timeCost:2,parallelism:1}).then(console.log)")
-   ssh greg@VPS "docker exec -i mtc_postgres psql -U mtc_user -d mytradingcoach_beta -v users=2000 -v pwhash=\"'$HASH'\"" < tools/load/seed-beta.sql
+   # le hash contient des « $ » : il ne doit JAMAIS passer dans une commande ssh entre guillemets
+   # (le shell distant les interprète). On le transmet dans le SQL, par l'entrée standard :
+   { printf '\\set pwhash %s\n' "$HASH"; cat tools/load/seed-beta.sql; } |
+     ssh greg@VPS 'docker exec -i mtc_postgres psql -U mtc_user -d mytradingcoach_beta -v users=2000'
    ```
 4. **Mesures serveur** : `nohup /opt/backups/collect-metrics.sh /opt/backups/charge-<date>.csv &`
 5. **Injection** (le mot de passe des comptes est `LoadTest-2026!`) :

@@ -26,3 +26,7 @@ export const FEATURES = {
   // Publier UNIQUEMENT quand le système parrainage est shippé.
   referral: flag(import.meta.env.PUBLIC_FEATURE_REFERRAL),
 } as const;
+
+// ID de la propriété GA4 (ex. G-XXXXXXXXXX), injecté au build. Absent → ni bandeau
+// cookies ni GA4 : sans traceur, aucun consentement à demander.
+export const GA_ID: string = import.meta.env.PUBLIC_GA_ID ?? '';

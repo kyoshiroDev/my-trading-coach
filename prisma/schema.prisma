@@ -69,6 +69,14 @@ model User {
   referralCode String? @unique // code de parrainage unique
   referredBy   String? // code de l'ambassadeur qui a référé cet user
 
+  // ── Acquisition (UTM du lien d'inscription) ──────────────────────────────
+  // Capturés à l'inscription (landing → /register → POST /auth/register), normalisés
+  // en minuscules. null = aucun UTM (« direct / non renseigné » à l'agrégation admin) :
+  // jamais de valeur par défaut. Donnée fonctionnelle, indépendante du bandeau cookies.
+  acquisitionSource   String?
+  acquisitionMedium   String?
+  acquisitionCampaign String?
+
   // ── Calendrier économique ─────────────────────────────────────────────────
   // Sélection d'annonces du JOUR (rituel de prep). Format : "EventName:Currency".
   // Réinitialisée chaque jour : si pinnedEcoDate ≠ aujourd'hui (Europe/Paris), la

@@ -95,6 +95,12 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
+  /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */
+  @Get('acquisition')
+  getAcquisition() {
+    return this.adminService.getAcquisition();
+  }
+
   @Get('stripe/reconcile')
   async reconcileStripe() {
     return this.adminService.reconcileStripe();

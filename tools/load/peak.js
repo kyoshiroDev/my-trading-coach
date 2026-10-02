@@ -3,7 +3,7 @@
 // Depuis UNE IP : passer LOAD_TEST_KEY (voir README), sinon le throttler par IP plafonne tout.
 import { sleep } from 'k6';
 import http from 'k6/http';
-import { BASE_URL, auth, login, openDashboard, openJournal, sessionPoll } from './common.js';
+import { BASE_URL, auth, login, openDashboard, openJournal, sessionPoll, tokenExpired } from './common.js';
 
 const USERS = Number(__ENV.LOAD_USER_COUNT || 20);
 const PATTERN = __ENV.LOAD_EMAIL_PATTERN || 'load-{i}@test.local';
@@ -32,11 +32,12 @@ export default function () {
   if (!token) token = login(myEmail(), PASSWORD);
   if (!token) { sleep(5); return; }
   http.get(`${BASE_URL}/public/stats`, { tags: { name: 'GET /public/stats' }, headers: auth(token).headers });
-  if (openDashboard(token) === 401) { token = null; return; }
-  for (let i = 0; i < 4; i++) {
+  openDashboard(token);
+  for (let i = 0; i < 2 && !tokenExpired; i++) {
     sessionPoll(token);
-    sleep(15); // rythme réel du polling de session
+    sleep(30); // stats live toutes les 30 s (SCA-B4)
   }
-  openJournal(token);
+  if (!tokenExpired) openJournal(token);
+  if (tokenExpired) token = null; // reconnexion à l'itération suivante
   sleep(5 + Math.random() * 10);
 }

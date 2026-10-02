@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AdminAcquisitionData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
 export type { UserDetailData };
 
 export interface AdminUser {
@@ -187,6 +187,8 @@ export interface StripeReconcileData {
   };
 }
 
+export type AcquisitionData = AdminAcquisitionData;
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private readonly http = inject(HttpClient);
@@ -217,6 +219,7 @@ export class AdminApi {
   deletedAccounts() {
     return this.http.get<{ data: DeletedAccountsData }>(`${this.adminBase}/deleted-accounts`);
   }
+  acquisition()         { return this.http.get<{ data: AcquisitionData }>(`${this.adminBase}/acquisition`); }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
   referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }
 

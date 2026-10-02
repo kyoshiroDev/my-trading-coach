@@ -22,6 +22,7 @@ export const appRoutes: Routes = [
       { path: 'containers',    redirectTo: 'surveillance', pathMatch: 'full' },
       { path: 'logs',          redirectTo: 'surveillance', pathMatch: 'full' },
       { path: 'backups',       loadComponent: () => import('./features/backups/backups.component').then(m => m.BackupsComponent) },
+      { path: 'acquisition',   loadComponent: () => import('./features/acquisition/acquisition.component').then(m => m.AcquisitionComponent) },
       { path: 'revenue',       loadComponent: () => import('./features/revenue/revenue.component').then(m => m.RevenueComponent) },
       { path: 'ai-usage',      loadComponent: () => import('./features/ai-usage/ai-usage.component').then(m => m.AiUsageComponent) },
       { path: 'brokers',       loadComponent: () => import('./features/broker-mappings/broker-mappings.component').then(m => m.BrokerMappingsComponent) },
