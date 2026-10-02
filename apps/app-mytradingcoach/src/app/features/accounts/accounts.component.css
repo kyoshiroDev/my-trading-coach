@@ -306,6 +306,7 @@
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }
+.acct-rules { display: block; }
 .acct-block.is-open .acct-activity { display: flex; }
 .acct-activity .ai { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
 .acct-activity .ai b { font-weight: 600; font-size: 12px; margin-right: 4px; }

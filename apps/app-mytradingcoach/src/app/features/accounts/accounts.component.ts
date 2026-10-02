@@ -66,7 +66,8 @@ import {
   AccountsApi,
 } from '../../core/api/accounts.api';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
-import { PropFirmsApi, type PropFirmCatalogFirm } from '../../core/api/prop-firms.api';
+import { PropFirmsApi, type PropFirmCatalogFirm, type PropFirmPlanDetail } from '../../core/api/prop-firms.api';
+import { PropFirmRulesComponent } from './prop-firm-rules/prop-firm-rules.component';
 import type { PropFirmPlanSummary } from '@mtc/shared';
 import {
   OTHER_FIRM,
@@ -114,6 +115,7 @@ function emptyForm(): AccountFormState {
     DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
+    PropFirmRulesComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -155,6 +157,8 @@ export class AccountsComponent implements OnInit {
   /** Choix de firm du sélecteur : id du catalogue, `other` (saisie libre) ou ''. */
   protected readonly firmChoice = signal<FirmChoice>('');
   protected readonly OTHER_FIRM = OTHER_FIRM;
+  /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
+  protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
   // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
   // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
@@ -463,6 +467,8 @@ export class AccountsComponent implements OnInit {
   // ── Ligne dépliable (mobile) ────────────────────────────────────────────
   protected toggleExpand(id: string): void {
     this.expandedId.update((cur) => (cur === id ? null : id));
+    const planId = this.store.accounts().find((a) => a.id === id)?.propFirmPlanId;
+    if (this.expandedId() === id && planId) this.loadPlanRules(planId);
   }
 
   // ── Menu ligne ──────────────────────────────────────────────────────────
@@ -513,6 +519,28 @@ export class AccountsComponent implements OnInit {
 
   protected patch(p: Partial<AccountFormState>): void {
     this.form.update((f) => ({ ...f, ...p }));
+  }
+
+  /** Règles du plan relié : un appel par plan, réessayé au dépli suivant en cas d'échec. */
+  private loadPlanRules(planId: string): void {
+    const cur = this.planRules()[planId];
+    if (cur && cur !== 'error') return;
+    this.planRules.update((m) => ({ ...m, [planId]: 'loading' }));
+    this.propFirmsApi
+      .getPlan(planId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.planRules.update((m) => ({ ...m, [planId]: res.data })),
+        error: () => this.planRules.update((m) => ({ ...m, [planId]: 'error' })),
+      });
+  }
+
+  protected rulesOf(planId: string): PropFirmPlanDetail | 'loading' | 'error' | undefined {
+    return this.planRules()[planId];
+  }
+
+  protected isPlanDetail(v: PropFirmPlanDetail | 'loading' | 'error' | undefined): v is PropFirmPlanDetail {
+    return typeof v === 'object';
   }
 
   // ── Catalogue prop firm (choix du plan) ─────────────────────────────────

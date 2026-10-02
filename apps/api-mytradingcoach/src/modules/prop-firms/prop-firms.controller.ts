@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import type { PropFirmCatalogFirm } from '@mtc/shared';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import type { PropFirmCatalogFirm, PropFirmPlanDetail } from '@mtc/shared';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PropFirmCatalogService } from './prop-firm-catalog.service';
 
@@ -12,5 +12,11 @@ export class PropFirmsController {
   @Get()
   list(): Promise<PropFirmCatalogFirm[]> {
     return this.catalog.list();
+  }
+
+  /** Règles complètes d'un plan (détail d'un compte relié au catalogue). */
+  @Get('plans/:id')
+  getPlan(@Param('id') id: string): Promise<PropFirmPlanDetail> {
+    return this.catalog.getPlan(id);
   }
 }
