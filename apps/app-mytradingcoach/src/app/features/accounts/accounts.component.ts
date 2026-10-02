@@ -433,15 +433,12 @@ export class AccountsComponent implements OnInit {
     return a.type === 'FUNDED' ? 'Objectif payout' : 'Objectif';
   }
 
-  // Couleur d'accent stable par compte (identité visuelle, pas l'état). Perso → vert ;
-  // sinon dérivée d'un hash du broker/label (même firm = même couleur, stable au reorder).
-  private readonly ACCENT_VARS = ['--blue', '--yellow', '--purple', '--cyan', '--green', '--red', '--blue-bright'];
+  // Couleur d'accent du compte (liseré, icône, tag firm, sous-lignes du dépli) = couleur de la
+  // pastille de sa prop firm : une firm a UNE couleur partout, quel que soit le compte. Perso → vert ;
+  // compte prop firm sans firm saisie → même palette, dérivée du libellé (stable au reorder).
   protected accentVar(a: TradingAccount): string {
     if (a.type === 'PERSONAL') return 'var(--green)';
-    const key = a.broker ?? a.label ?? a.id;
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-    return `var(${this.ACCENT_VARS[h % this.ACCENT_VARS.length]})`;
+    return brokerBadge(a.broker)?.color ?? brokerBadge(a.label)?.color ?? 'var(--blue)';
   }
 
   // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──
