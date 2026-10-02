@@ -7,7 +7,7 @@ import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateException } from './tradovate.errors';
 import type { TradovateEnv } from './tradovate.types';
-import { TRADOVATE_WS_URL } from './tradovate-live.protocol';
+import { wsUrl } from './tradovate-hosts';
 import {
   LiveFatalError,
   TradovateLiveConnection,
@@ -86,6 +86,8 @@ export class TradovateLiveService implements OnModuleDestroy {
   /** Clients connectés SUR CE WORKER, par user. */
   private readonly clients = new Map<string, Set<string>>();
   private readonly users = new Map<string, UserLive>();
+  /** Derniers `apiHosts` lus par connexion (mis à jour à chaque demande de jeton). */
+  private readonly hosts = new Map<string, unknown>();
   private readonly pending = new Set<ReturnType<typeof setTimeout>>();
   private emitter: LiveEmitter = () => undefined;
 
@@ -226,7 +228,8 @@ export class TradovateLiveService implements OnModuleDestroy {
   private openConnections(userId: string, u: UserLive, conns: BrokerConnection[]): void {
     for (const c of conns) {
       const live = new TradovateLiveConnection({
-        url: TRADOVATE_WS_URL[c.externalEnv as TradovateEnv],
+        // Relu à chaque (re)connexion : `tokenFor` vient de rafraîchir les hôtes de la connexion.
+        url: () => wsUrl(c.externalEnv as TradovateEnv, this.hosts.get(c.id) ?? c.apiHosts),
         externalAccountId: Number(c.externalAccountId),
         getToken: () => this.tokenFor(c.id),
         onTradeEvent: () => this.onTradeEvent(userId, c.accountId, u),
@@ -262,7 +265,11 @@ export class TradovateLiveService implements OnModuleDestroy {
     }
     if (!(await this.connections.tryLock(conn.id))) throw new Error('verrou occupé');
     try {
-      return await this.connections.getAccessToken(conn);
+      // Hôtes relus avec le jeton (hôte demo propre à la prop firm) : l'URL du WebSocket est
+      // construite juste après, et un hôte périmé la ferait refuser en 421.
+      const session = await this.connections.getSession(conn);
+      this.hosts.set(connectionId, session.apiHosts);
+      return session.token;
     } catch (err) {
       if (err instanceof TradovateException && err.code === 'TRADOVATE_RECONNECT_REQUIRED') {
         throw new LiveFatalError(err.message);
@@ -284,6 +291,7 @@ export class TradovateLiveService implements OnModuleDestroy {
   }
 
   private closeConnections(u: UserLive): void {
+    for (const id of u.conns.keys()) this.hosts.delete(id);
     for (const c of u.conns.values()) c.stop();
     u.conns.clear();
   }

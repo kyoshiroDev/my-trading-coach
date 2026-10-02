@@ -53,6 +53,7 @@ function setup(csvByReport: Record<string, string | Error> = {}) {
   };
   const connections = {
     getAccessToken: vi.fn().mockResolvedValue('AT-1'),
+    getSession: vi.fn().mockResolvedValue({ token: 'AT-1', apiHosts: null }),
     getConnection: vi.fn().mockResolvedValue(conn()),
   };
   const reporting = {

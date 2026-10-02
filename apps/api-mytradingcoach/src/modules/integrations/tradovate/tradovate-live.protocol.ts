@@ -1,3 +1,4 @@
+import { wsUrl } from './tradovate-hosts';
 import type { TradovateEnv } from './tradovate.types';
 
 /**
@@ -9,10 +10,13 @@ import type { TradovateEnv } from './tradovate.types';
  * sinon Tradovate coupe (≈ 15 s d'inactivité).
  */
 
-/** Même hôte que le REST du compte (`live.` / `demo.`) : les comptes prop firm vivent sur demo. */
+/**
+ * URLs de REPLI : le WebSocket se construit sur `apiHosts` de la connexion (`wsUrl`, cf.
+ * tradovate-hosts.ts). Un hôte demo périmé = `421` définitif, sans redirection possible.
+ */
 export const TRADOVATE_WS_URL: Record<TradovateEnv, string> = {
-  live: 'wss://live.tradovateapi.com/v1/websocket',
-  demo: 'wss://demo.tradovateapi.com/v1/websocket',
+  live: wsUrl('live'),
+  demo: wsUrl('demo'),
 };
 
 export const HEARTBEAT_MS = 2_500;

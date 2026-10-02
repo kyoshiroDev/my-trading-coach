@@ -16,6 +16,7 @@ import type { OAuthOrigin } from './oauth-state.util';
 import type {
   ExternalAccountRef,
   TradovateAccount,
+  TradovateApiHosts,
   TradovateOAuthTokenResponse,
   TradovateUser,
 } from './tradovate.types';
@@ -29,8 +30,10 @@ import {
   type TradovateConnectionView,
 } from './tradovate-connection.view';
 import { resolveAccountCurrency } from './tradovate-account-currency';
+import { describeHosts, parseApiHosts } from './tradovate-hosts';
 import { TradovateLocks } from './tradovate-locks';
 import { TradovateTokenManager, buildTokenColumns } from './tradovate-token-manager';
+import type { TradovateSession } from './tradovate-token-manager';
 
 // Réexports : les appelants existants importent ces noms depuis le service.
 export { ACCOUNT_GONE_GRACE_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
@@ -114,8 +117,8 @@ export class TradovateConnectionService {
 
     try {
       this.assertConfigured();
-      const tokens = await this.api.exchangeCode(query.code);
-      const available = await this.discoverAccounts(tokens.access_token as string);
+      const { tokens, apiHosts } = await this.exchangeWithHosts(query.code);
+      const available = await this.discoverAccounts(tokens.access_token as string, apiHosts);
       // Garde-fou : on ne propose JAMAIS un compte déjà relié par un autre utilisateur MTC.
       // Filtré avant le choix, donc ni choisi automatiquement, ni offert à l'écran de sélection.
       const libres = await this.dropAlreadyLinked(userId, available);
@@ -123,8 +126,8 @@ export class TradovateConnectionService {
       if (libres.length === 0) {
         return { status: 'error', reason: 'account_already_linked', accountId, origin };
       }
-      const login = await this.discoverLogin(tokens.access_token as string, libres);
-      const conn = await this.saveConnection(userId, accountId, tokens, libres, login);
+      const login = await this.discoverLogin(tokens.access_token as string, libres, apiHosts);
+      const conn = await this.saveConnection(userId, accountId, tokens, libres, login, apiHosts);
       return conn.externalAccountId
         ? { status: 'connected', accountId, userId, origin }
         : { status: 'select_account', accountId, userId, origin };
@@ -140,13 +143,45 @@ export class TradovateConnectionService {
     }
   }
 
+  /**
+   * Échange du code + hôtes du login. `/auth/oauthtoken` ne renvoie pas `apiHosts` : on les lit
+   * par un `renewAccessToken` immédiat, AVANT de lister les comptes — l'hôte demo d'une prop firm
+   * est propre à son organisation, et l'hôte historique ne répond plus depuis le 2026-10-03.
+   * Jamais bloquant : sans hôtes, on retombe sur les hôtes historiques.
+   */
+  private async exchangeWithHosts(
+    code: string,
+  ): Promise<{ tokens: TradovateOAuthTokenResponse; apiHosts: TradovateApiHosts | null }> {
+    const tokens = await this.api.exchangeCode(code);
+    const direct = parseApiHosts(tokens.apiHosts);
+    if (direct) {
+      this.logger.log(`apiHosts Tradovate (oauthtoken) : ${describeHosts(direct)}.`);
+      return { tokens, apiHosts: direct };
+    }
+    try {
+      const renewed = await this.api.renewAccessToken(tokens.access_token as string);
+      this.logger.log(`apiHosts Tradovate (renewAccessToken) : ${describeHosts(renewed.apiHosts)}.`);
+      const expiresIn = Math.max(0, Math.round((new Date(renewed.expirationTime).getTime() - Date.now()) / 1000));
+      return {
+        tokens: { ...tokens, access_token: renewed.accessToken, expires_in: expiresIn || tokens.expires_in },
+        apiHosts: renewed.apiHosts,
+      };
+    } catch (err) {
+      this.logger.warn(`apiHosts Tradovate non lus à la connexion (${(err as Error).message}) : hôtes historiques.`);
+      return { tokens, apiHosts: null };
+    }
+  }
+
   /** Comptes accessibles avec ce token, sur les deux hôtes (réels + simulés). */
-  private async discoverAccounts(accessToken: string): Promise<ExternalAccountRef[]> {
+  private async discoverAccounts(
+    accessToken: string,
+    apiHosts?: TradovateApiHosts | null,
+  ): Promise<ExternalAccountRef[]> {
     const found: ExternalAccountRef[] = [];
     let lastError: unknown = null;
     for (const env of ENVS) {
       try {
-        const list = await this.api.get<TradovateAccount[]>(env, '/account/list', accessToken);
+        const list = await this.api.get<TradovateAccount[]>(env, '/account/list', accessToken, undefined, apiHosts);
         for (const a of Array.isArray(list) ? list : []) {
           if (a.closed) continue; // compte fermé : plus rien à synchroniser
           found.push({ id: String(a.id), name: a.name, env, userId: a.userId != null ? String(a.userId) : undefined });
@@ -209,12 +244,13 @@ export class TradovateConnectionService {
   private async discoverLogin(
     accessToken: string,
     available: ExternalAccountRef[],
+    apiHosts?: TradovateApiHosts | null,
   ): Promise<string | null> {
     // Les hôtes où ce jeton a effectivement répondu, sinon les deux.
     const envs = available.length ? [...new Set(available.map((a) => a.env))] : [...ENVS];
     for (const env of envs) {
       try {
-        const users = await this.api.get<TradovateUser[]>(env, '/user/list', accessToken);
+        const users = await this.api.get<TradovateUser[]>(env, '/user/list', accessToken, undefined, apiHosts);
         const id = (Array.isArray(users) ? users : [])[0]?.id;
         if (id != null) return String(id);
       } catch (err) {
@@ -230,6 +266,7 @@ export class TradovateConnectionService {
     tokens: TradovateOAuthTokenResponse,
     available: ExternalAccountRef[],
     login: string | null,
+    apiHosts: TradovateApiHosts | null,
   ): Promise<BrokerConnection> {
     const where = { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } };
     const previous = await this.prisma.brokerConnection.findUnique({ where });
@@ -250,6 +287,9 @@ export class TradovateConnectionService {
       // Il sert à sérialiser les renouvellements et à propager le jeton aux connexions sœurs.
       externalUserId: login,
       availableAccounts: available as unknown as Prisma.InputJsonValue,
+      // Sans hôtes lus, `apiHostsAt` null : le prochain jeton demandé les relira.
+      apiHosts: apiHosts ? (apiHosts as Prisma.InputJsonValue) : Prisma.DbNull,
+      apiHostsAt: apiHosts ? new Date() : null,
       lastSyncError: null,
     };
     const saved = await this.prisma.brokerConnection.upsert({
@@ -261,7 +301,10 @@ export class TradovateConnectionService {
     // selectAccount, sa devise doit donc être alignée ici — sinon elle resterait celle saisie à la
     // main à la création du compte MTC, souvent EUR pour un compte broker en USD.
     if (chosen) {
-      await this.syncAccountCurrency(accountId, saved, chosen, tokens.access_token as string);
+      await this.syncAccountCurrency(accountId, saved, chosen, {
+        token: tokens.access_token as string,
+        apiHosts,
+      });
     }
     return saved;
   }
@@ -317,14 +360,14 @@ export class TradovateConnectionService {
     accountId: string,
     conn: BrokerConnection,
     target: ExternalAccountRef,
-    knownToken?: string,
+    known?: TradovateSession,
   ): Promise<void> {
-    const accessToken = knownToken ?? (await this.getAccessToken(conn).catch(() => null));
-    if (!accessToken) {
+    const session = known ?? (await this.getSession(conn).catch(() => null));
+    if (!session) {
       this.logger.warn(`Devise du compte ${target.id} non relue : aucun token exploitable.`);
       return;
     }
-    const currency = await resolveAccountCurrency(this.api, this.logger, target, accessToken);
+    const currency = await resolveAccountCurrency(this.api, this.logger, target, session.token, session.apiHosts);
     await this.prisma.tradingAccount.update({ where: { id: accountId }, data: { currency } });
   }
 
@@ -359,6 +402,11 @@ export class TradovateConnectionService {
     return this.tokens.getAccessToken(conn);
   }
 
+  /** Jeton + `apiHosts` frais de la connexion (cf. TradovateTokenManager.getSession). */
+  getSession(conn: BrokerConnection): Promise<TradovateSession> {
+    return this.tokens.getSession(conn);
+  }
+
   /** Renouvellement immédiat (cron de maintien) : 'refreshed' | 'reconnect' | 'retry'. */
   refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'reconnect' | 'retry'> {
     return this.tokens.refreshNow(conn);
@@ -388,8 +436,12 @@ export class TradovateConnectionService {
    *   compte, la liste des comptes du login est relue : l'utilisateur choisit le suivant, sans
    *   refaire le consentement.
    */
-  async handleMissingAccount(conn: BrokerConnection, accessToken: string): Promise<BrokerConnection> {
-    const available = await this.discoverAccounts(accessToken);
+  async handleMissingAccount(
+    conn: BrokerConnection,
+    accessToken: string,
+    apiHosts?: TradovateApiHosts | null,
+  ): Promise<BrokerConnection> {
+    const available = await this.discoverAccounts(accessToken, apiHosts);
     const moved = available.find((a) => a.id === conn.externalAccountId);
     if (moved) {
       this.logger.warn(

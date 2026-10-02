@@ -29,6 +29,8 @@ describe('TradovateConnectionService.getAccessToken', () => {
       // 2 h : au-delà de la marge de renouvellement (40 min), donc « encore valide ».
       accessTokenExpiresAt: new Date(Date.now() + 120 * 60_000),
       refreshTokenExpiresAt: null,
+      // Hôtes lus à l'instant : pas de relecture `apiHosts` (testée à part).
+      apiHostsAt: new Date(),
       ...overrides,
     } as BrokerConnection;
   }

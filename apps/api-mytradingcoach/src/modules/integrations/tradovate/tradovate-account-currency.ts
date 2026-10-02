@@ -17,12 +17,15 @@ api: TradovateApiClient,
 logger: Logger,
 target: ExternalAccountRef,
 accessToken: string,
+apiHosts?: unknown,
 ): Promise<AccountCurrency> {
   try {
     const balances = await api.get<TradovateCashBalance[]>(
       target.env,
       '/cashBalance/list',
       accessToken,
+      undefined,
+      apiHosts,
     );
     const balance = (Array.isArray(balances) ? balances : []).find(
       (b) => String(b.accountId) === target.id,
@@ -36,6 +39,7 @@ accessToken: string,
       '/currency/item',
       accessToken,
       { id: String(balance.currencyId) },
+      apiHosts,
     );
     const code = normalizeCurrencyCode(currency?.name);
     if (!isAccountCurrency(code)) {

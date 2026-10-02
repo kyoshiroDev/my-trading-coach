@@ -103,8 +103,27 @@ export interface TradovateProduct {
   tickSize: number;
 }
 
+/**
+ * `apiHosts` des réponses d'authentification (doc « Dynamic API Hosts »). Hôtes NUS, sans schéma
+ * ni chemin. Mesuré le 2026-10-02 (accessTokenRequest + renewAccessToken, demo et live) :
+ * `{"live":"live.tradovateapi.com","demo":"demo.tradovateapi.com","mdLive":"md.tradovateapi.com",
+ * "mdDemo":"md-demo.tradovateapi.com","replay":"replay.tradovateapi.com","reportingLive":
+ * "rpt-live.tradovateapi.com","reportingDemo":"rpt-demo.tradovateapi.com","riskMonitorLive":…,
+ * "riskMonitorDemo":…,"userContext":…}`. `demo` et `reportingDemo` varient par organisation
+ * (prop firm) : c'est ce qui change le 2026-10-03. Tout est optionnel : absent sur erreur ou MFA.
+ */
+export interface TradovateApiHosts {
+  live?: string;
+  demo?: string;
+  reportingLive?: string;
+  reportingDemo?: string;
+  [key: string]: string | undefined;
+}
+
 /** Réponse de POST /auth/oauthtoken (vérifiée en réel : plus riche que la doc). */
 export interface TradovateOAuthTokenResponse {
+  /** Absent en pratique de l'OAuth (non listé par la doc) : relu via `renewAccessToken`. */
+  apiHosts?: TradovateApiHosts;
   access_token?: string;
   expires_in?: number;
   refresh_token?: string;

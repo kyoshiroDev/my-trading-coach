@@ -31,7 +31,11 @@ export class LiveFatalError extends Error {}
 const OPEN = 1;
 
 export interface LiveConnectionOptions {
-  url: string;
+  /**
+   * URL du WebSocket, ou fonction relue à CHAQUE (re)connexion, après `getToken` : l'hôte vient de
+   * `apiHosts`, qui peut changer pendant la vie de la connexion (bascule d'infra NinjaTrader).
+   */
+  url: string | (() => string);
   externalAccountId: number;
   /** Jeton d'accès courant (renouvelé si besoin). Lève `LiveFatalError` si la connexion est morte. */
   getToken: () => Promise<string>;
@@ -111,7 +115,8 @@ export class TradovateLiveConnection {
 
     let socket: LiveSocket;
     try {
-      socket = (this.opts.socketFactory ?? nativeSocketFactory)(this.opts.url);
+      const url = typeof this.opts.url === 'function' ? this.opts.url() : this.opts.url;
+      socket = (this.opts.socketFactory ?? nativeSocketFactory)(url);
     } catch (err) {
       this.opts.logger?.warn(`Tradovate WS : ouverture impossible (${(err as Error).message})`);
       this.scheduleReconnect();
