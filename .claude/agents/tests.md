@@ -422,3 +422,13 @@ comme la CI : `pnpm nx run-many -t typecheck -p api-mytradingcoach` (ou `tsconfi
 `resend-neutralized.int-spec.ts` compare les méthodes du **prototype** de `ResendService` au double
 `createResendMock()` : un helper interne ajouté au service doit être une propriété
 (`private readonly x = () => …`), sinon le test échoue.
+
+## Test d'équivalence avant / après une réécriture (SCA-B2, 2026-10-02)
+
+Pour réécrire un calcul sans changer ses résultats : figer l'ancienne implémentation dans
+`src/test/<nom>-legacy.service.ts` (copie, commentaire « NE PAS MODIFIER »), générer un jeu
+aléatoire **à graine fixe** et piégeux sur un vrai Postgres, comparer champ par champ (montants
+≤ 0,01). Appeler les méthodes de calcul directement, **pas les `get*` en cache** (les deux versions
+partageraient le cache Redis : test vrai par construction). Vérifier que le test **mord** en
+sabotant volontairement le nouveau code une fois. Les tests unitaires qui simulaient
+`prisma.trade.findMany` deviennent des scénarios d'intégration (`*.scenarios.int-spec.ts`).

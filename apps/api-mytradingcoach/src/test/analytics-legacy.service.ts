@@ -1,0 +1,560 @@
+/**
+ * RÉFÉRENCE FIGÉE (SCA-B2-01) : copie exacte d'AnalyticsService AVANT le passage des agrégats
+ * en SQL (calculs en JavaScript sur tous les trades chargés). Ne sert qu'au test d'équivalence
+ * `analytics-sql-equivalence.int-spec.ts`. NE PAS MODIFIER : c'est l'étalon.
+ */
+/* eslint-disable */
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../modules/infra/redis.service';
+import { CACHE_TTL } from '../common/constants/cache-ttl.const';
+import { effectiveEmotion } from '../common/utils/effective-emotion.util';
+import { computeTradeStats, netPnl } from '@mtc/shared';
+
+/**
+ * P&L NET d'un trade (frais déduits), 0 pour un trade ouvert. CONVENTION UNIQUE :
+ * chaque agrégat ci-dessous (KPI, courbe, drawdown, calendrier, top actifs, setups, heatmap)
+ * lit ce même net, et sélectionne donc toujours `commission` avec `pnl`.
+ */
+const net = (t: { pnl?: number | null; commission?: number | null }): number => netPnl(t) ?? 0;
+
+interface EquityPoint {
+  date: Date;
+  cumulativePnl: number;
+}
+
+/** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
+function minuteKey(d?: Date): string {
+  return d ? d.toISOString().slice(0, 16) : '';
+}
+
+const EQUITY_MAX_POINTS = 500;
+
+/**
+ * Réduit une courbe à ~`max` points sans en changer la lecture : le premier et le dernier point
+ * sont gardés, et chaque tranche garde son plus BAS et son plus HAUT (dans l'ordre du temps). Les
+ * extrêmes — donc le pic, le creux et le drawdown maximal — restent exacts.
+ */
+function downsampleEquity<T extends { cumulativePnl: number }>(points: T[], max: number): T[] {
+  if (points.length <= max) return points;
+  const inner = points.slice(1, -1);
+  const buckets = Math.max(1, Math.floor((max - 2) / 2));
+  const size = Math.ceil(inner.length / buckets);
+  const out: T[] = [points[0]];
+  for (let b = 0; b < inner.length; b += size) {
+    const slice = inner.slice(b, b + size);
+    let lo = 0;
+    let hi = 0;
+    slice.forEach((p, k) => {
+      if (p.cumulativePnl < slice[lo].cumulativePnl) lo = k;
+      if (p.cumulativePnl > slice[hi].cumulativePnl) hi = k;
+    });
+    if (lo === hi) out.push(slice[lo]);
+    else out.push(slice[Math.min(lo, hi)], slice[Math.max(lo, hi)]);
+  }
+  out.push(points[points.length - 1]);
+  return out;
+}
+
+@Injectable()
+export class LegacyAnalyticsService {
+
+  constructor(
+    private prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
+
+  private async withCache<T>(key: string, ttl: number, compute: () => Promise<T>): Promise<T> {
+    try {
+      const cached = await this.redisService.client.get(key);
+      if (cached) return JSON.parse(cached) as T;
+    } catch { /* Redis indisponible */ }
+    const result = await compute();
+    try { await this.redisService.client.setex(key, ttl, JSON.stringify(result)); } catch { /* ignore */ }
+    return result;
+  }
+
+  async invalidateUserCache(userId: string): Promise<void> {
+    try {
+      const keys = await this.redisService.scanKeys(`analytics:${userId}:*`);
+      if (keys.length > 0) await this.redisService.client.del(...keys);
+    } catch { /* Redis indisponible */ }
+  }
+
+  // Filtre multi-comptes : fragment `where` + suffixe de clé de cache. Absent → agrégé (inchangé).
+  private accCond(accountId?: string): { accountId?: string } { return accountId ? { accountId } : {}; }
+  private accKey(accountId?: string): string { return accountId ? `:acc:${accountId}` : ''; }
+
+  // Filtre de plage de dates (période glissante du dashboard) : fragment `where` + suffixe de clé.
+  private dateCond(from?: Date, to?: Date): { tradedAt?: { gte?: Date; lte?: Date } } {
+    if (!from && !to) return {};
+    return { tradedAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } };
+  }
+  /**
+   * Bornes de période dans la clé de cache, **arrondies à la minute**. Le dashboard envoie
+   * `to = maintenant` : à la milliseconde, chaque ouverture créait une clé neuve (0 % de cache,
+   * et une clé Redis de plus par ouverture ; mesuré au test de charge B9 du 2026-10-01).
+   * Seule la clé est arrondie, le calcul garde les vraies bornes. Fraîcheur : toute écriture de
+   * trade vide déjà `analytics:<user>:*` (invalidateUserCache).
+   */
+  private rangeKey(from?: Date, to?: Date): string {
+    return from || to ? `:range:${minuteKey(from)}:${minuteKey(to)}` : '';
+  }
+
+  async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
+    const key = `analytics:${userId}:summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
+  }
+  async getBySetup(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
+  }
+  async getByEmotion(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:emotion${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId, accountId));
+  }
+  async getByHour(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:hour${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId, accountId));
+  }
+  async getEquityCurve(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:equity${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId, accountId));
+  }
+  async getEquityCurveCurrentMonth(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:equity:month${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId, accountId));
+  }
+  async getTopAssets(userId: string, accountId?: string) {
+    return this.withCache(`analytics:${userId}:topassets${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId, accountId));
+  }
+  async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+    return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
+  }
+  // Activité journalière (P&L par jour) sur une plage glissante : l'agrégation jour/semaine/mois
+  // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
+  async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
+    const key = `analytics:${userId}:activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, async () => ({
+      days: await this.computeDailyActivity(userId, this.dateCond(from, to), accountId),
+    }));
+  }
+  async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
+    const key = `analytics:${userId}:equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
+  }
+
+  private async computeSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, ...this.accCond(accountId), ...this.dateCond(from, to), pnl: { not: null } },
+      select: { pnl: true, commission: true, tradedAt: true, session: true },
+      orderBy: { tradedAt: 'asc' },
+    });
+
+    if (!trades.length) {
+      return {
+        winRate: 0,
+        totalPnl: 0,
+        totalTrades: 0,
+        maxDrawdown: 0,
+        profitFactor: null,
+        streak: 0,
+        topSession: '-',
+        topSessionWinRate: 0,
+        topHour: '-',
+      };
+    }
+
+    const totalTrades = trades.length;
+    // Win rate et P&L via le helper unique, sur le NET (frais déduits) ; BE exclus du
+    // dénominateur. Toutes les mesures ci-dessous lisent ce même net.
+    const stats = computeTradeStats(trades);
+    const winRate = stats.winRate;
+    const totalPnl = stats.totalPnl;
+
+    // Profit factor = gains nets / pertes nettes. null si aucune perte (∞ → géré côté front).
+    const grossProfit = trades.reduce((a, t) => a + Math.max(0, net(t)), 0);
+    const grossLoss = trades.reduce((a, t) => a + Math.max(0, -net(t)), 0);
+    const profitFactor = grossLoss > 0 ? Math.round((grossProfit / grossLoss) * 100) / 100 : null;
+
+    let peak = 0;
+    let cumPnl = 0;
+    let maxDrawdown = 0;
+    for (const t of trades) {
+      cumPnl += net(t);
+      if (cumPnl > peak) peak = cumPnl;
+      const drawdown = peak - cumPnl;
+      if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+    }
+
+    let streak = 0;
+    const last = trades[trades.length - 1];
+    const isWin = (t: (typeof trades)[number]) => net(t) > 0;
+    const direction = isWin(last);
+    for (let i = trades.length - 1; i >= 0; i--) {
+      if (isWin(trades[i]) === direction) streak++;
+      else break;
+    }
+    if (!direction) streak = -streak;
+
+    // Top session
+    const sessionMap = new Map<string, { wins: number; losses: number; count: number }>();
+    for (const t of trades) {
+      const s = t.session as string;
+      const g = sessionMap.get(s) ?? { wins: 0, losses: 0, count: 0 };
+      g.count++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      sessionMap.set(s, g);
+    }
+    let topSession = '-';
+    let topSessionWinRate = 0;
+    for (const [session, g] of sessionMap.entries()) {
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
+      if (wr > topSessionWinRate) {
+        topSessionWinRate = wr;
+        topSession = session;
+      }
+    }
+
+    // Top hour
+    const hourMap = new Map<number, { wins: number; losses: number; count: number }>();
+    for (const t of trades) {
+      const h = new Date(t.tradedAt).getHours();
+      const g = hourMap.get(h) ?? { wins: 0, losses: 0, count: 0 };
+      g.count++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      hourMap.set(h, g);
+    }
+    let topHourNum = -1;
+    let topHourWr = 0;
+    for (const [h, g] of hourMap.entries()) {
+      const wr = (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0;
+      if (wr > topHourWr) {
+        topHourWr = wr;
+        topHourNum = h;
+      }
+    }
+    const topHour =
+      topHourNum >= 0 ? `${String(topHourNum).padStart(2, '0')}:00` : '-';
+
+    return {
+      winRate,
+      totalPnl,
+      totalTrades,
+      maxDrawdown,
+      profitFactor,
+      streak,
+      topSession,
+      topSessionWinRate: Math.round(topSessionWinRate),
+      topHour,
+    };
+  }
+
+  private async computeBySetup(userId: string, accountId?: string) {
+    // Setups actifs (inclus même à 0 trade) + agrégats de trades par setupId.
+    // Les setups archivés n'apparaissent que s'ils ont des trades (historique préservé).
+    const [activeSetups, trades] = await Promise.all([
+      this.prisma.setup.findMany({
+        where: { userId, archived: false },
+        orderBy: { sortOrder: 'asc' },
+        select: { id: true, title: true, color: true },
+      }),
+      this.prisma.trade.findMany({
+        where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+        select: {
+          setupId: true,
+          pnl: true,
+          commission: true,
+          riskReward: true,
+          setup: { select: { title: true, color: true } },
+        },
+      }),
+    ]);
+
+    type Agg = { title: string; color: string; pnl: number; rr: number[]; count: number; wins: number; losses: number };
+    const grouped = new Map<string, Agg>();
+    // Setups actifs d'abord (ordre stable, présents même à 0 trade).
+    for (const s of activeSetups) {
+      grouped.set(s.id, { title: s.title, color: s.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0 });
+    }
+    for (const t of trades) {
+      const g = grouped.get(t.setupId) ?? {
+        title: t.setup.title, color: t.setup.color, pnl: 0, rr: [], count: 0, wins: 0, losses: 0,
+      };
+      g.count++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      if (t.riskReward) g.rr.push(t.riskReward);
+      grouped.set(t.setupId, g);
+    }
+
+    return Array.from(grouped.entries()).map(([setupId, g]) => ({
+      setupId,
+      title: g.title,
+      color: g.color,
+      count: g.count,
+      pnl: g.pnl,
+      // null quand aucun trade du setup n'a de R:R (sans stop ni objectif, cas des trades
+      // synchronisés) : un « 0.00 » laisserait croire à un R:R nul mesuré.
+      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : null,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : null,
+    }));
+  }
+
+  private async computeByEmotion(userId: string, accountId?: string) {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+      // Émotion effective : override du trade, sinon humeur de la session.
+      select: {
+        emotion: true,
+        tradeSession: { select: { moodStart: true } },
+        pnl: true,
+        commission: true,
+        riskReward: true,
+      },
+    });
+
+    const grouped = new Map<
+      string,
+      { pnl: number; rr: number[]; count: number; wins: number; losses: number }
+    >();
+    for (const t of trades) {
+      const emotion = effectiveEmotion(t);
+      if (!emotion) continue; // non renseignée → exclue des répartitions
+      const g = grouped.get(emotion) ?? { pnl: 0, rr: [], count: 0, wins: 0, losses: 0 };
+      g.count++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      if (t.riskReward) g.rr.push(t.riskReward);
+      grouped.set(emotion, g);
+    }
+
+    return Array.from(grouped.entries()).map(([emotion, g]) => ({
+      emotion,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+      avgRR: g.rr.length ? g.rr.reduce((a, b) => a + b, 0) / g.rr.length : 0,
+      count: g.count,
+    }));
+  }
+
+  private async computeByHour(userId: string, accountId?: string) {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+      select: { tradedAt: true, pnl: true, commission: true },
+    });
+
+    const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    const grouped = new Map<
+      string,
+      { count: number; wins: number; losses: number; day: string; hour: number }
+    >();
+    for (const t of trades) {
+      const d = new Date(t.tradedAt);
+      const day = DAY_LABELS[d.getDay()];
+      const hour = d.getHours();
+      const key = `${day}:${hour}`;
+      const g = grouped.get(key) ?? { count: 0, wins: 0, losses: 0, day, hour };
+      g.count++;
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      grouped.set(key, g);
+    }
+
+    return Array.from(grouped.values()).map((g) => ({
+      day: g.day,
+      hour: g.hour,
+      winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+      count: g.count,
+    }));
+  }
+
+  private async computeEquityCurve(userId: string, accountId?: string) {
+    const [trades, user] = await Promise.all([
+      this.prisma.trade.findMany({
+        where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+        select: { tradedAt: true, pnl: true, commission: true },
+        orderBy: { tradedAt: 'asc' },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { startingCapital: true },
+      }),
+    ]);
+
+    const startingCapital =
+      user?.startingCapital && user.startingCapital > 0
+        ? user.startingCapital
+        : null;
+
+    let cumPnl = 0;
+    const points = trades.map((t) => {
+      cumPnl += net(t);
+      return { date: t.tradedAt, cumulativePnl: cumPnl };
+    });
+
+    // Un point par trade : 50 000 trades = 3,5 Mo de réponse et de cache (test B9). Aucun écran
+    // n'appelle cette route (le front utilise /equity-curve/daily) : garde-fou contre un appel lourd.
+    return { points: downsampleEquity(points, EQUITY_MAX_POINTS), startingCapital };
+  }
+
+  private async computeEquityCurveDaily(
+    userId: string,
+    from?: Date,
+    to?: Date,
+    accountId?: string,
+  ): Promise<{ points: EquityPoint[]; startingCapital: number | null }> {
+    const [user, trades] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { startingCapital: true },
+      }),
+      this.prisma.trade.findMany({
+        where: {
+          userId,
+          ...this.accCond(accountId),
+          pnl: { not: null },
+          ...(from || to
+            ? {
+                tradedAt: {
+                  ...(from ? { gte: from } : {}),
+                  ...(to ? { lte: to } : {}),
+                },
+              }
+            : {}),
+        },
+        select: { tradedAt: true, pnl: true, commission: true },
+        orderBy: { tradedAt: 'asc' },
+      }),
+    ]);
+
+    const startingCapital =
+      user?.startingCapital && user.startingCapital > 0
+        ? user.startingCapital
+        : null;
+
+    if (trades.length === 0) return { points: [], startingCapital };
+
+    const byDay = new Map<string, number>();
+    for (const t of trades) {
+      const key = new Date(t.tradedAt)
+        .toLocaleDateString('fr-FR', {
+          timeZone: 'Europe/Paris',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .split('/')
+        .reverse()
+        .join('-'); // YYYY-MM-DD
+      byDay.set(key, (byDay.get(key) ?? 0) + net(t));
+    }
+
+    const sortedDays = [...byDay.entries()].sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    let cumPnl = 0;
+    const points: EquityPoint[] = sortedDays.map(([date, pnl]) => {
+      cumPnl += pnl;
+      return { date: new Date(date), cumulativePnl: cumPnl };
+    });
+
+    return { points, startingCapital };
+  }
+
+  private async computeEquityCurveCurrentMonth(userId: string, accountId?: string) {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
+    return this.computeEquityCurveDaily(userId, from, to, accountId);
+  }
+
+  /**
+   * Buckets journaliers (date `YYYY-MM-DD` fuseau Paris → P&L net, nombre de trades, win rate)
+   * pour un `where` de dates arbitraire. SOURCE UNIQUE partagée par l'activité mensuelle et la
+   * plage glissante : le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
+   */
+  private async computeDailyActivity(
+    userId: string,
+    dateCond: { tradedAt?: { gte?: Date; lte?: Date; lt?: Date } },
+    accountId?: string,
+  ) {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, ...this.accCond(accountId), pnl: { not: null }, ...dateCond },
+      select: { tradedAt: true, pnl: true, commission: true },
+      orderBy: { tradedAt: 'asc' },
+    });
+
+    const byDate = new Map<string, { pnl: number; count: number; wins: number; losses: number }>();
+    for (const t of trades) {
+      const d = new Date(t.tradedAt);
+      const key = d.toLocaleDateString('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const [day, mon, yr] = key.split('/');
+      const dateKey = `${yr}-${mon}-${day}`;
+      const g = byDate.get(dateKey) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
+      g.count++;
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      byDate.set(dateKey, g);
+    }
+
+    return Array.from(byDate.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, g]) => ({
+        date,
+        pnl: g.pnl,
+        tradesCount: g.count,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+      }));
+  }
+
+  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+    const days = await this.computeDailyActivity(userId, { tradedAt: { gte: start, lt: end } }, accountId);
+
+    return {
+      year,
+      month,
+      days,
+      totalPnl: days.reduce((acc, d) => acc + d.pnl, 0),
+      totalTrades: days.reduce((acc, d) => acc + d.tradesCount, 0),
+      tradingDays: days.length,
+    };
+  }
+
+  private async computeTopAssets(userId: string, accountId?: string) {
+    const trades = await this.prisma.trade.findMany({
+      where: { userId, ...this.accCond(accountId), pnl: { not: null } },
+      select: { asset: true, pnl: true, commission: true },
+    });
+
+    const grouped = new Map<
+      string,
+      { pnl: number; count: number; wins: number; losses: number }
+    >();
+    for (const t of trades) {
+      const g = grouped.get(t.asset) ?? { pnl: 0, count: 0, wins: 0, losses: 0 };
+      g.count++;
+      // P&L NET par instrument, classé gagnant/perdant sur ce même net.
+      g.pnl += net(t);
+      if (net(t) > 0) g.wins++; else if (net(t) < 0) g.losses++;
+      grouped.set(t.asset, g);
+    }
+
+    return Array.from(grouped.entries())
+      .map(([asset, g]) => ({
+        asset,
+        winRate: (g.wins + g.losses) > 0 ? (g.wins / (g.wins + g.losses)) * 100 : 0,
+        pnl: g.pnl,
+        count: g.count,
+      }))
+      .sort((a, b) => b.pnl - a.pnl)
+      .slice(0, 10);
+  }
+}
