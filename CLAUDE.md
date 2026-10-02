@@ -52,6 +52,12 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ## 🚦 Workflow obligatoire
 
+### Branche de départ (demander avant toute tâche de code)
+Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise déjà)
+- **Nouvelle feature** → branche depuis `beta`, testée sur beta, puis `beta` → `dev` → `main`.
+- **Tout le reste** (bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `dev`, livrée sur `dev`. Ne passe pas par beta.
+- Les PR vers `dev` et `main` sont ouvertes par Greg, jamais par Claude.
+
 ### Avant de coder
 1. Lire l'agent pertinent dans `.claude/agents/`
 2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
