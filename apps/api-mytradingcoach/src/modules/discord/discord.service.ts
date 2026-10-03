@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isPremiumAccess } from './discord-access.util';
+import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 
 @Injectable()
 export class DiscordService {
@@ -35,10 +36,10 @@ export class DiscordService {
     const headers = { Authorization: `Bot ${botToken}` };
     const base = `https://discord.com/api/v10/guilds/${guildId}/members/${user.discordId}/roles`;
 
-    await fetch(`${base}/${roleToRemove}`, { method: 'DELETE', headers }).catch(
+    await fetchWithTimeout(`${base}/${roleToRemove}`, { method: 'DELETE', headers }).catch(
       () => undefined,
     );
-    await fetch(`${base}/${roleToAdd}`, { method: 'PUT', headers }).catch(
+    await fetchWithTimeout(`${base}/${roleToAdd}`, { method: 'PUT', headers }).catch(
       (err) => {
         this.logger.error(`Discord role sync échoué | user: ${userId}`, err);
       },

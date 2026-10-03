@@ -1231,3 +1231,14 @@ aller-retour par requête :
 - `ActivityTrackingService.markActive` : filtre local à la journée (plus d'appel Redis à chaque
   requête) ; marqué seulement après succès ; si l'écriture en base échoue, la clé Redis du jour est
   retirée pour que la journée soit retentée.
+
+### Appels externes : délai maximal et single-flight (SCA-B3-04, 2026-10-03)
+
+- **Tout `fetch` vers un service tiers passe par `fetchWithTimeout`** (`common/utils/fetch-timeout.ts`,
+  5 s par défaut) : sans délai, un fournisseur muet fait attendre la requête indéfiniment. Fait pour
+  market-data (Yahoo, Binance, FMP), eco-calendar (FMP), discord. **Reste à faire** (hors B3-04) :
+  `integrations/tradovate/*` et `admin/anthropic-cost.service.ts`.
+- **Donnée commune mise en cache → `singleFlight`** (`common/utils/single-flight.ts`) : sur une clé
+  froide, une seule requête (tous workers) appelle le fournisseur, les autres attendent le cache
+  (verrou `sf:<clé>`, `SET NX PX 5000`). Fait pour `getMarketContext` et `getLivePrice`. Le
+  `compute` doit remplir le cache lui-même ; s'il échoue, les autres calculent après le délai.

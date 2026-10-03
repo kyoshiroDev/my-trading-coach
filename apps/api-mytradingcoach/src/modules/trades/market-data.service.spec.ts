@@ -128,3 +128,30 @@ describe('MarketDataService — ensureNewsTextFr (lazy)', () => {
     });
   });
 });
+
+describe('MarketDataService — single-flight du contexte marché (SCA-B3-04)', () => {
+  it('50 ouvertures simultanées sur un cache vide → 4 appels sortants (1 par fournisseur), pas 200', async () => {
+    const store = new Map<string, string>();
+    const redisService = {
+      client: {
+        get: vi.fn(async (k: string) => store.get(k) ?? null),
+        set: vi.fn(async (k: string, v: string, ...args: unknown[]) => (args.includes('NX') && store.has(k) ? null : (store.set(k, v), 'OK'))),
+        setex: vi.fn(async (k: string, _ttl: number, v: string) => { store.set(k, v); return 'OK'; }),
+        del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+      },
+    };
+    const fetchMock = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+      return { ok: true, json: async () => ({ chart: { result: [{ meta: { regularMarketPrice: 100, previousClose: 99 } }] } }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const config = { get: vi.fn((k: string) => (k === 'FMP_API_KEY' ? 'test-key' : undefined)) };
+    const svc = new MarketDataService(config as never, redisService as never, {} as never, {} as never);
+
+    const results = await Promise.all(Array.from({ length: 50 }, () => svc.getMarketContext()));
+
+    expect(fetchMock).toHaveBeenCalledTimes(4); // NQ, S&P 500, DXY, taux US
+    expect(results.every((r) => r.nq.value === 100)).toBe(true);
+    vi.unstubAllGlobals();
+  });
+});

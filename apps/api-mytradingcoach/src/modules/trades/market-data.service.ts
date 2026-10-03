@@ -7,6 +7,8 @@ import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
 import { AI_MODELS } from '../infra/ai-pricing.const';
+import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
+import { singleFlight } from '../../common/utils/single-flight';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -48,11 +50,19 @@ export class MarketDataService {
 
   async getMarketContext(): Promise<MarketContextDto> {
     const cacheKey = 'market:context';
-    try {
-      const cached = await this.redisService.client.get(cacheKey);
-      if (cached) return JSON.parse(cached) as MarketContextDto;
-    } catch { /* Redis indisponible */ }
+    // Clé froide : un seul appel aux fournisseurs, les autres attendent le cache (SCA-B3-04).
+    return singleFlight(
+      this.redisService,
+      cacheKey,
+      async () => {
+        const cached = await this.redisService.client.get(cacheKey);
+        return cached ? (JSON.parse(cached) as MarketContextDto) : null;
+      },
+      () => this.fetchMarketContext(cacheKey),
+    );
+  }
 
+  private async fetchMarketContext(cacheKey: string): Promise<MarketContextDto> {
     const empty = { price: null, changePct: null };
     const [nq, spx, dxy, treasury] = await Promise.allSettled([
       this.fetchYahooQuote('NQ=F'),
@@ -111,7 +121,7 @@ export class MarketDataService {
     const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${symbols}&limit=30&apikey=${apiKey}`;
     let raw: NewsItem[] = [];
     try {
-      const res = await fetch(url);
+      const res = await fetchWithTimeout(url);
       if (!res.ok) return 0;
       raw = await res.json() as NewsItem[];
     } catch (err) {
@@ -204,11 +214,24 @@ export class MarketDataService {
   async getLivePrice(symbol: string): Promise<{ price: number | null; cached: boolean }> {
     const sym = symbol.trim().toUpperCase();
     const cacheKey = `price:${sym}`;
-    try {
-      const cached = await this.redisService.client.get(cacheKey);
-      if (cached) return { price: parseFloat(cached), cached: true };
-    } catch { /* Redis indisponible */ }
+    let fromCache = true;
+    const price = await singleFlight(
+      this.redisService,
+      cacheKey,
+      async () => {
+        const cached = await this.redisService.client.get(cacheKey);
+        return cached ? parseFloat(cached) : null;
+      },
+      async () => {
+        fromCache = false;
+        return this.fetchLivePrice(sym, cacheKey);
+      },
+    );
+    return { price, cached: fromCache };
+  }
 
+  /** Appel au fournisseur du symbole ; met le prix en cache s'il est connu. */
+  private async fetchLivePrice(sym: string, cacheKey: string): Promise<number | null> {
     let price: number | null = null;
     if (INSTRUMENTS.some(i => i.symbol.toUpperCase() === sym && i.category === 'FUTURES_US')) {
       price = await this.fetchYahooPrice(`${sym}=F`);
@@ -221,7 +244,7 @@ export class MarketDataService {
     if (price !== null) {
       try { await this.redisService.client.setex(cacheKey, CACHE_TTL.PRICE, String(price)); } catch { /* ignore */ }
     }
-    return { price, cached: false };
+    return price;
   }
 
   async searchSymbols(query: string): Promise<Array<{ symbol: string; label: string; category: string }>> {
@@ -229,7 +252,7 @@ export class MarketDataService {
     if (!apiKey || !query.trim()) return [];
     try {
       const url = `https://financialmodelingprep.com/stable/search?query=${encodeURIComponent(query)}&limit=12&apikey=${apiKey}`;
-      const res = await fetch(url);
+      const res = await fetchWithTimeout(url);
       if (!res.ok) return [];
       const data = await res.json() as Array<{ symbol: string; name: string; exchangeShortName: string }>;
       return data.filter(r => r.symbol && r.name)
@@ -250,7 +273,7 @@ export class MarketDataService {
   async fetchYahooQuote(yahooSymbol: string): Promise<{ price: number | null; changePct: number | null }> {
     try {
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1m&range=1d`;
-      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const res = await fetchWithTimeout(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!res.ok) return { price: null, changePct: null };
       const data = await res.json() as {
         chart: { result?: Array<{ meta: { regularMarketPrice?: number; previousClose?: number; chartPreviousClose?: number } }> };
@@ -268,7 +291,7 @@ export class MarketDataService {
 
   async fetchBinancePrice(symbol: string): Promise<number | null> {
     try {
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`);
+      const res = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/price?symbol=${encodeURIComponent(symbol)}`);
       if (!res.ok) return null;
       const data = await res.json() as { price: string };
       return data?.price ? parseFloat(data.price) : null;
@@ -285,7 +308,7 @@ export class MarketDataService {
     const apiKey = this.config.get<string>('FMP_API_KEY');
     if (!apiKey) return { price: null, changePct: null };
     try {
-      const res = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`);
+      const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`);
       if (!res.ok) return { price: null, changePct: null };
       const data = await res.json() as Array<{ price?: number; changePercentage?: number; changesPercentage?: number }>;
       const row = data?.[0];
@@ -318,7 +341,7 @@ export class MarketDataService {
     const apiKey = this.config.get<string>('FMP_API_KEY');
     if (!apiKey) return TREASURY_EMPTY;
     try {
-      const res = await fetch(`https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`);
+      const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/treasury-rates?apikey=${apiKey}`);
       if (!res.ok) return TREASURY_EMPTY;
       const data = await res.json() as Array<Record<string, number>>;
       const latest = data?.[0];
