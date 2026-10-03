@@ -56,6 +56,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Prisma generate
         run: pnpm exec prisma generate --config=./prisma/prisma.config.ts
+      # Catalogue prop firm : schema.json (ajv) + contrôles métier. Synchronisé en base au
+      # démarrage de l'API : un JSON invalide y serait refusé, autant le savoir avant.
+      - name: Catalogue prop firm
+        run: pnpm prop-firms:validate
       - name: Lint
         run: pnpm nx $NX_SCOPE --target=lint --parallel=3 || pnpm nx run-many --target=lint --all --parallel=3
       - name: Typecheck
@@ -234,6 +238,11 @@ jobs:
       # sans jamais lancer un seul test, pour 6 minutes facturees. `serve-static` sert l'app
       # compilee (repli SPA inclus) : plus rapide et deterministe.
       #
+      # Build `local` (pas la configuration par defaut `development`) : `development` remplace
+      # environment.ts par environment.dev.ts, et l'app appelait alors l'API de DEV du VPS au
+      # lieu de l'API demarree ici. API dev tombee = smoke rouge sans rapport avec la branche
+      # (2026-10-03). `local` garde environment.ts → http://localhost:3001/api.
+      #
       # Les deux services sont attendus SEPAREMENT : « API ou app non demarree » ne disait
       # pas laquelle, et le `tail -50` echouait (« option used in invalid context »), donc
       # aucun journal ne remontait. On ne pouvait pas diagnostiquer.
@@ -248,7 +257,7 @@ jobs:
           echo "::error::API non démarrée après 120 s"; tail -n 80 api.log; exit 1
       - name: Démarrer l'app (compilée)
         run: |
-          nohup pnpm nx serve-static app-mytradingcoach > app.log 2>&1 &
+          nohup pnpm nx serve-static app-mytradingcoach --buildTarget=app-mytradingcoach:build:local > app.log 2>&1 &
           for i in $(seq 1 120); do
             curl -sf localhost:4200 > /dev/null && exit 0
             sleep 2

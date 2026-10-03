@@ -1173,6 +1173,38 @@ vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTT
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
 
+## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
+
+`modules/prop-firms/` aligne les tables `PropFirm` / `PropFirmPlan` sur le catalogue JSON
+(`PROP_FIRM_CATALOG_FILES` de `@mtc/shared`, embarqué dans `main.js` par webpack) à chaque
+démarrage (`onApplicationBootstrap`). Relever les règles d'une firm = modifier son JSON, puis
+redéployer : rien à lancer sur le VPS.
+
+- `prop-firm-catalog.schema.ts` : calque **Zod** de `schema.json`, objets stricts. Les deux doivent
+  rester alignés (le test `prop-firm-catalog.sync.spec.ts` parse le catalogue livré avec Zod ; la CI
+  le valide avec ajv via `pnpm prop-firms:validate`). Sert aussi à relire les colonnes Json.
+- `prop-firm-catalog.sync.ts` : logique pure (validation, unicité des ids, diff par `contentHash`).
+  Catalogue invalide → exception avant toute écriture, **rien** n'est synchronisé.
+- `prop-firm-catalog-sync.service.ts` : une transaction, verrou `pg_try_advisory_xact_lock(136001)`
+  (non bloquant, compatible PgBouncer transaction) → sur les 8 workers du cluster, un seul écrit,
+  les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
+  Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
+- Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
+  le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
+  si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,
+  drawdown, statique / trailing : `matchPlans` de `@mtc/shared`). Jamais un compte modifié depuis
+  `PLAN_PICKER_RELEASED_AT` (il a pu être laissé sans plan exprès), jamais un user `isDemo`.
+  En pratique c'est rare : les programmes d'une firm (EOD / intraday, DLL, payout) partagent
+  objectif et drawdown (Lucid 50K = 9 plans). Les autres comptes reçoivent dans l'app une bannière
+  « Relie ce compte à son plan » (masquable, `localStorage`) qui ouvre le formulaire sur la firm
+  reconnue et la taille du compte.
+- Import de JSON : `resolveJsonModule` est activé dans `tsconfig.base.json`, et les projets
+  `composite` qui incluent `libs/shared` (API app + spec, spec de l'app) listent
+  `libs/shared/src/prop-firm-rules/*.json` dans `include` (sinon TS6307). Le catalogue est exporté
+  par l'index de `@mtc/shared` mais absent des bundles front tant qu'ils ne l'importent pas
+  (vérifié : 0 occurrence dans app, admin, landing).
+
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
 `analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /
@@ -1201,6 +1233,43 @@ conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − co
 **signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
 tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
 `account-rules-sql.int-spec.ts`.
+
+### Solde et equity lus chez le broker (2026-10-03)
+
+`TradovateBalanceService` (`integrations/tradovate/tradovate-balance.service.ts`) remplit les colonnes
+`BrokerConnection.broker*` : solde réalisé officiel, equity (`netLiq`), latent, positions ouvertes.
+- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`) ;
+  chaque variation → `recordCashBalance` → événement front `tradovate:balance`, **sans** synchro
+  REST. L'état initial (réponse du `user/syncrequest`, id `SYNC_REQUEST_ID`) donne solde + positions.
+- **Equity + latent** : `POST /cashBalance/getcashbalancesnapshot`, seule lecture en POST, via
+  `TradovateApiClient.postRead` (liste blanche `READ_ONLY_POST_PATHS`, toute autre route levée
+  avant le réseau). ⚠️ La doc NinjaTrader qualifie de **anti-pattern** l'interrogation répétée de
+  cette route : appelée **sur événement uniquement** — fin de chaque synchro (trade poussé, cron,
+  rattrapage) et `GET /integrations/tradovate/accounts/:accountId/balance` (ouverture de « Mes
+  comptes », bouton « Actualiser »), bridé à 20 s par compte (`BALANCE_REFRESH_MIN_MS`). Jamais de
+  `setInterval`. Best-effort : un échec ne casse ni la synchro ni la page.
+- **Métriques** (`AccountsService.ruleMetricsFromAgg(…, broker)`) : le solde broker fait foi
+  (`currentBalance`, `realizedPnl`, objectif) et la marge de drawdown se calcule sur l'**equity**
+  (latent compris tant qu'une position est ouverte ; sans position, equity = solde). Trailing
+  intraday : un nouveau plus haut d'equity relève le seuil. Écart solde broker ↔ solde MTC
+  > max(2 000 $, 25 % de la taille) = référentiel incompatible (`brokerReferenceMismatch`, ex.
+  funded saisi à 0 $) → calcul MTC + latent, `broker.referenceMismatch` affiché à l'utilisateur.
+- Le plus haut de clôture reste tiré des trades (le rapport `Account Balance History` le donnera).
+
+### Drawdown selon le plan prop firm relié (2026-10-03)
+
+Compte relié à un plan du catalogue (`propFirmPlanId`) **et** de type EVALUATION (phase
+`evaluation`) ou FUNDED (`funded`, sinon `direct`) : `ruleMetricsFromAgg(compte, agg, plan)`
+prend montant, type, verrouillage et solde de départ dans la phase, **pas** la saisie manuelle.
+- `trailing_eod` → plus haut P&L de fin de **journée de trading CME** (`maxEodCumulative`,
+  `tradingDay()` : date de « heure de Chicago + 7 h », 17:00 CT = 18:00 ET ; même règle en SQL).
+  `trailing_intraday` → plus haut après chaque trade (`maxCumulative`, pics en position inconnus).
+- `locks_at` / `locked_floor` décalés de `solde du compte − starting_balance de la phase`.
+  `locks_at` null (verrouillage déclenché par un payout) → le seuil continue de suivre.
+- Montant null → `drawdown: null` + `drawdownUnconfirmed: true` (jamais de chiffre inventé).
+- `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
+  (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
+- Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).
 ### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
 
 `GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.

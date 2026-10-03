@@ -10,7 +10,7 @@ function setup(removeBrokerImported = vi.fn().mockResolvedValue(4)) {
   const connections = { disconnect: vi.fn().mockResolvedValue({ disconnected: true }) };
   const trades = { removeBrokerImported };
   const service = new TradovateSyncService(
-    {} as never, {} as never, connections as never, {} as never, trades as never, {} as never,
+    {} as never, {} as never, connections as never, {} as never, {} as never, trades as never, {} as never,
   );
   return { service, connections, trades };
 }

@@ -48,7 +48,7 @@
     @if (hasPropAccount()) {
       <div class="global-note">
         <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
-        <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach, pas l'equity temps réel ni le calcul officiel des firms (positions ouvertes, fuseau, trailing intraday). Le statut de chaque compte reste piloté par toi.</span>
+        <span><b>Règles prop firm estimées.</b> Compte connecté au broker (pastille verte) : solde et positions ouvertes lus chez lui. Sinon, d'après tes trades loggés, positions ouvertes non incluses. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm. Le statut de chaque compte reste piloté par toi.</span>
       </div>
     }
 
@@ -90,15 +90,17 @@
         @let fb = tv.feedback()[a.id];
 
         <!-- `has-detail` : la ligne cache une info que les colonnes n'affichent pas (activité
-             d'un compte perso). Sans elle, le chevron n'a rien à déplier sur desktop, où les
+             d'un compte perso, règles du plan prop firm relié). Sans elle, le chevron n'a rien à déplier sur desktop, où les
              8 colonnes sont déjà à l'écran — il n'y sert qu'au repli mobile. -->
-        <div class="acct-block"
+        <!-- --ac sur le BLOC (et non la seule ligne) : les sous-lignes du dépli (règles du plan,
+             activité, synchro) héritent du même liseré que la ligne. -->
+        <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.has-detail]="!a.metrics.objective && !a.metrics.drawdown"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
-          <div class="acct-line" [style.--ac]="accentVar(a)"
+          <div class="acct-line"
                [attr.data-testid]="'account-card-' + a.id">
 
             <!-- 1 · Compte : icône, nom, badges, statut -->
@@ -111,21 +113,40 @@
                       [attr.data-testid]="'account-expand-' + a.id">
                 <svg [lucideIcon]="ChevronDownIcon" [size]="15"></svg>
               </button>
-              <div class="acct-ic"><svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg></div>
+              <!-- Icône du TYPE de compte + pastille de la FIRM sur son coin : posée sur l'icône plutôt
+                   qu'à côté pour ne prendre aucune largeur dans la colonne Compte. -->
+              <div class="acct-ic">
+                <svg [lucideIcon]="typeIcon(a.type)" [size]="16"></svg>
+                @if (brokerBadge(a.broker, brokerTones()); as bb) {
+                  <span class="firm-dot" [style.background]="bb.color" [style.color]="bb.text"
+                        [attr.title]="a.broker" aria-hidden="true"
+                        [attr.data-testid]="'firm-dot-' + a.id">{{ bb.initials }}</span>
+                }
+              </div>
               <div class="acct-id">
                 <div class="acct-name">{{ a.label }}</div>
                 <div class="acct-meta">
-                  @if (a.broker) { <span class="tag firm">{{ a.broker }}</span> }
-                  <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                  <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
-                    <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                  @if (a.broker) { <span class="tag firm" [attr.title]="a.broker">{{ a.broker }}</span> }
+                  <!-- Type + statut : un seul bloc insécable, le statut ne se retrouve jamais seul. -->
+                  <span class="meta-pair">
+                    <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
+                    <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
+                      <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
+                    </span>
                   </span>
                 </div>
               </div>
             </div>
 
             <!-- 2 · Solde -->
-            <div class="cell num right cell-balance" data-label="Solde">{{ money(a.metrics.currentBalance, a.currency) }}</div>
+            <div class="cell num right cell-balance" data-label="Solde">
+              @if (a.metrics.broker; as b) {
+                <span class="live-dot" [class.is-stale]="b.referenceMismatch"
+                      [attr.title]="b.referenceMismatch ? 'Solde de départ incompatible avec le solde du broker' : 'Solde lu chez le broker, ' + brokerAge(b)"
+                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span>
+              }
+              {{ money(a.metrics.currentBalance, a.currency) }}
+            </div>
 
             <!-- 3 · P&L -->
             <div class="cell num right strong cell-pnl" data-label="P&amp;L"
@@ -170,6 +191,8 @@
                 <div class="bar-track xs">
                   <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
                 </div>
+              } @else if (a.metrics.drawdownUnconfirmed) {
+                <span class="cell-none" title="Montant non publié par la firm">non confirmé</span>
               } @else {
                 <span class="cell-none" title="Compte sans drawdown prop firm">—</span>
               }
@@ -256,6 +279,21 @@
             </div>
           </div>
 
+          <!-- Compte saisi avant le catalogue : le relier à son plan officiel. Plusieurs programmes
+               de la firm partagent ses règles, seul l'utilisateur sait lequel il a acheté. -->
+          @if (linkSuggestions().get(a.id); as firmName) {
+            <div class="acct-sub plan-link" [attr.data-testid]="'plan-link-' + a.id">
+              <svg [lucideIcon]="BadgeCheckIcon" [size]="14"></svg>
+              <span class="tv-text">Relie ce compte à son plan {{ firmName }} pour suivre les règles officielles (drawdown EOD ou intraday, limite journalière…).</span>
+              <button type="button" class="tv-btn sm sync" (click)="openEdit(a)"
+                      [attr.data-testid]="'plan-link-open-' + a.id">Choisir le programme</button>
+              <button type="button" class="plan-link-close" (click)="dismissLinkSuggestion(a.id)"
+                      aria-label="Ne plus proposer pour ce compte" title="Ne plus proposer">
+                <svg [lucideIcon]="XIcon" [size]="13"></svg>
+              </button>
+            </div>
+          }
+
           <!-- Sous-ligne : seulement ce qui a besoin de TOUTE la largeur — message d'erreur
                de connexion et sélecteur de compte broker. Le détail de synchro, lui, est
                remonté dans la colonne Synchro. -->
@@ -304,6 +342,63 @@
               <span class="ai"><b class="text-green">{{ bestDayLabel(a) }}</b> meilleur jour</span>
               <span class="ai"><b class="text-red">{{ worstDayLabel(a) }}</b> pire jour</span>
               <span class="ai"><b>{{ winRateLabel(a) }}</b> win rate</span>
+            </div>
+          }
+
+          <!-- Solde et equity lus chez le broker (compte connecté), au dépli. -->
+          @if (expandedId() === a.id && a.metrics.broker; as b) {
+            <div class="acct-sub acct-broker" [attr.data-testid]="'account-broker-' + a.id">
+              <p class="broker-line">
+                <span class="live-dot" [class.is-stale]="b.referenceMismatch" aria-hidden="true"></span>
+                <b>Chez le broker</b> : solde <b>{{ money(b.cashBalance, a.currency) }}</b>
+                · equity <b>{{ money(b.equity, a.currency) }}</b>
+                @if (b.openPositions > 0) {
+                  (latent <b [class.text-green]="b.openPnl > 0" [class.text-red]="b.openPnl < 0">{{ money(b.openPnl, a.currency, true) }}</b>,
+                  {{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }})
+                } @else {
+                  · aucune position ouverte
+                }
+                <span class="broker-age">· relevé {{ brokerAge(b) }}</span>
+                @if (!userStore.isDemo()) {
+                  <button class="broker-refresh" type="button" (click)="refreshBrokerBalances([a.id])"
+                          [disabled]="balanceBusy().has(a.id)" [attr.data-testid]="'broker-refresh-' + a.id">
+                    <svg [lucideIcon]="RefreshIcon" [size]="12"></svg>
+                    {{ balanceBusy().has(a.id) ? 'Actualisation…' : 'Actualiser' }}
+                  </button>
+                }
+              </p>
+              @if (b.referenceMismatch) {
+                <p class="broker-warn" data-testid="broker-reference-mismatch">
+                  Ton solde de départ ({{ money(a.metrics.startingBalance, a.currency) }}) ne correspond pas au solde du broker :
+                  la marge reste calculée depuis tes trades. Corrige le solde de départ du compte pour utiliser celui du broker.
+                </p>
+              }
+            </div>
+          }
+
+          <!-- Règles officielles du plan relié (catalogue), chargées au premier dépli. -->
+          @if (a.propFirmPlanId && expandedId() === a.id) {
+            @let rules = rulesOf(a.propFirmPlanId);
+            <div class="acct-sub acct-rules" [attr.data-testid]="'account-rules-' + a.id">
+              @if (a.metrics.drawdown?.rule; as r) {
+                <p class="dd-basis" data-testid="dd-basis">
+                  <b>Marge calculée avec ces règles</b> ({{ phaseLabel(r.phase) }}) :
+                  seuil actuel <b>{{ money(a.metrics.drawdown!.floor, a.currency) }}</b>
+                  @if (r.locksAt !== null) {
+                    · {{ r.locked ? 'figé' : 'se fige à ' + money(r.lockedFloor, a.currency) + ' quand le solde atteint ' + money(r.locksAt, a.currency) }}
+                  }
+                  <span class="dd-disclaimer">{{ a.metrics.disclaimer }}</span>
+                </p>
+              } @else if (a.metrics.drawdownUnconfirmed) {
+                <p class="dd-basis" data-testid="dd-basis">Montant de drawdown <b>non confirmé</b> par la firm pour ce plan : aucune marge calculée.</p>
+              }
+              @if (isPlanDetail(rules)) {
+                <mtc-prop-firm-rules [plan]="rules" [accountType]="a.type" />
+              } @else if (rules === 'error') {
+                <span class="tv-text">Règles du plan indisponibles pour le moment. Replie puis rouvre la ligne pour réessayer.</span>
+              } @else {
+                <span class="tv-text">Chargement des règles du plan…</span>
+              }
             </div>
           }
 
@@ -369,7 +464,7 @@
 
         <label class="fld">
           <span class="fld-lbl">Type</span>
-          <select class="inp" [ngModel]="form().type" (ngModelChange)="patch({ type: $event })">
+          <select class="inp" [ngModel]="form().type" (ngModelChange)="onTypeChange($event)">
             <option value="EVALUATION">Évaluation (prop firm)</option>
             <option value="FUNDED">Funded (prop firm)</option>
             <option value="PERSONAL">Personnel</option>
@@ -378,11 +473,26 @@
         </label>
 
         @if (isPropFirm(form().type)) {
-          <label class="fld">
-            <span class="fld-lbl">Prop firm</span>
-            <input class="inp" type="text" [ngModel]="form().broker"
-                   (ngModelChange)="patch({ broker: $event })" placeholder="Apex, Lucid, FTMO…" />
-          </label>
+          <!-- Plan du catalogue (firm → programme → taille) : pré-remplit les règles ci-dessous.
+               Catalogue vide ou injoignable : la saisie libre de la firm reste seule. -->
+          @if (catalog()?.length) {
+            <mtc-prop-firm-plan-picker
+              [catalog]="catalog()!"
+              [accountType]="form().type"
+              [planId]="form().propFirmPlanId"
+              [startFirm]="firmChoice()"
+              [preferredSize]="form().accountSize"
+              (firmChange)="onFirmChoice($event)"
+              (planChange)="onPlanChoice($event)" />
+          }
+          @if (!catalog()?.length || firmChoice() === OTHER_FIRM) {
+            <label class="fld">
+              <span class="fld-lbl">{{ catalog()?.length ? 'Nom de la prop firm' : 'Prop firm' }}</span>
+              <input class="inp" type="text" [ngModel]="form().broker"
+                     (ngModelChange)="patch({ broker: $event })" placeholder="FTMO, Topstep, Tradeify…"
+                     data-testid="account-broker" />
+            </label>
+          }
         }
 
         <div class="fld-row">

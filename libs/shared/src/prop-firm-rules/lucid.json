@@ -630,13 +630,13 @@
           "phase": "funded",
           "profit_target": null,
           "daily_loss_limit": {
-            "amount": null,
+            "amount": 600,
             "basis": null,
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). L'option DLL s'applique aussi au funded (article Customization), mais aucun montant funded n'est publié."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 600 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (26100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -706,7 +706,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON. À revoir : montant de DLL en funded non publié ; base de la DLL et contrôle temps réel du MLL non documentés."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
     },
     {
       "id": "lucid-flex-dll-50k",
@@ -773,13 +773,13 @@
           "phase": "funded",
           "profit_target": null,
           "daily_loss_limit": {
-            "amount": null,
+            "amount": 1200,
             "basis": null,
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). L'option DLL s'applique aussi au funded (article Customization), mais aucun montant funded n'est publié."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1200 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (52100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -855,7 +855,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON. À revoir : montant de DLL en funded non publié ; base de la DLL et contrôle temps réel du MLL non documentés."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
     },
     {
       "id": "lucid-flex-dll-100k",
@@ -922,13 +922,13 @@
           "phase": "funded",
           "profit_target": null,
           "daily_loss_limit": {
-            "amount": null,
+            "amount": 1800,
             "basis": null,
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). L'option DLL s'applique aussi au funded (article Customization), mais aucun montant funded n'est publié."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1800 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (103100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1010,7 +1010,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON. À revoir : montant de DLL en funded non publié ; base de la DLL et contrôle temps réel du MLL non documentés."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
     },
     {
       "id": "lucid-flex-dll-150k",
@@ -1077,13 +1077,13 @@
           "phase": "funded",
           "profit_target": null,
           "daily_loss_limit": {
-            "amount": null,
+            "amount": 2700,
             "basis": null,
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). L'option DLL s'applique aussi au funded (article Customization), mais aucun montant funded n'est publié."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 2700 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (154600) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1171,7 +1171,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON. À revoir : montant de DLL en funded non publié ; base de la DLL et contrôle temps réel du MLL non documentés."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
     },
     {
       "id": "lucid-pro-25k",
@@ -1257,7 +1257,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 250,
             "min_cycle_profit_schedule": null,
@@ -1270,7 +1270,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -1375,7 +1375,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
@@ -1388,7 +1388,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -1493,7 +1493,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 750,
             "min_cycle_profit_schedule": null,
@@ -1506,7 +1506,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -1611,7 +1611,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 1000,
             "min_cycle_profit_schedule": null,
@@ -1624,7 +1624,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -1745,7 +1745,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 250,
             "min_cycle_profit_schedule": null,
@@ -1758,7 +1758,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -1879,7 +1879,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
@@ -1892,7 +1892,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -2013,7 +2013,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 750,
             "min_cycle_profit_schedule": null,
@@ -2026,7 +2026,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -2147,7 +2147,7 @@
             "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Pro."
           },
           "payout": {
-            "min_days": null,
+            "min_days": 3,
             "min_daily_profit": null,
             "min_cycle_profit": 1000,
             "min_cycle_profit_schedule": null,
@@ -2160,7 +2160,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
           }
         }
       ],
@@ -2229,8 +2229,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2261,8 +2261,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2343,8 +2343,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2375,8 +2375,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2457,8 +2457,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2489,8 +2489,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2571,8 +2571,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2603,8 +2603,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2685,8 +2685,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2717,8 +2717,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2799,8 +2799,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2831,8 +2831,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2913,8 +2913,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2945,8 +2945,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3027,8 +3027,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3059,8 +3059,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3149,8 +3149,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3189,8 +3189,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3279,8 +3279,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3319,8 +3319,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3409,8 +3409,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3449,8 +3449,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3539,8 +3539,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3579,8 +3579,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3669,8 +3669,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3709,8 +3709,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3799,8 +3799,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3839,8 +3839,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3929,8 +3929,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3969,8 +3969,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -4059,8 +4059,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -4099,8 +4099,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": false,
-            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce. L'article Allowed Trading Times ne cite pas LucidDaily pour l'heure de clôture."
+            "overnight_allowed": null,
+            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,

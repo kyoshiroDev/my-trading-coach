@@ -10,6 +10,7 @@ import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
+import { TradovateApi } from '../../core/api/tradovate.api';
 import { TradovateStore, TradovateFeedback, TradovateBusy } from '../../core/stores/tradovate.store';
 import type { TradovateConnection } from '../../core/api/tradovate.api';
 import { ToastService } from '../../core/services/toast.service';
@@ -25,12 +26,12 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
   return {
     id, label, broker: null, type: 'EVALUATION', status: 'ACTIVE',
     accountSize: null, currency: 'USD', startingBalance: 50000,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING',
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };
@@ -72,13 +73,15 @@ function setup(opts: {
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
+  const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
 
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: { create: vi.fn(() => of({ data: {} })) } },
       { provide: SelectedAccountStore, useValue: store },
-      { provide: UserStore, useValue: { isPremium: () => true, maxAccounts: signal(null) } },
+      { provide: UserStore, useValue: { isDemo: () => false, isPremium: () => true, maxAccounts: signal(null) } },
       { provide: TradovateStore, useValue: tv },
+      { provide: TradovateApi, useValue: tvApi },
       { provide: TradesStore, useValue: tradesStore },
       { provide: Router, useValue: router },
     ],
@@ -96,7 +99,7 @@ function setup(opts: {
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
   const click = (id: string) => { q(id)!.click(); fixture.detectChanges(); };
-  return { fixture, el, q, click, tv, router, store, tradesStore };
+  return { fixture, el, q, click, tv, router, store, tradesStore, tvApi };
 }
 
 describe('Mes comptes — connexion Tradovate par compte', () => {
@@ -312,3 +315,46 @@ describe('Mes comptes — retour du consentement Tradovate (toasts)', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 });
+
+describe('Mes comptes — solde lu chez le broker', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withBroker = (id: string, broker: NonNullable<TradingAccount['metrics']['broker']>) =>
+    acct(id, 'Apex 50k', {
+      metrics: { ...acct(id, '').metrics, currentBalance: broker.cashBalance, broker },
+    });
+  const live = {
+    cashBalance: 50_500, equity: 48_700, openPnl: -1_800, openPositions: 1,
+    balanceAt: new Date().toISOString(), equityAt: new Date().toISOString(), referenceMismatch: false,
+  };
+
+  it('ouverture de la page : solde relu UNE fois pour chaque compte connecté, puis liste rechargée', () => {
+    const { tvApi, store } = setup({
+      accounts: [acct('a', 'Apex 50k'), acct('b', 'Lucid'), acct('c', 'TPT')],
+      connections: [conn('a'), conn('b', { status: 'NEEDS_RECONNECT' }), conn('c', { needsAccountSelection: true })],
+    });
+    expect(tvApi.refreshBalance).toHaveBeenCalledTimes(1);
+    expect(tvApi.refreshBalance).toHaveBeenCalledWith('a');
+    expect(store.load).toHaveBeenCalled();
+  });
+
+  it('dépli : solde, equity et latent du broker, avec « Actualiser » sur CE compte', () => {
+    const { q, click, tvApi } = setup({ accounts: [withBroker('a', live)], connections: [conn('a')] });
+    click('account-expand-a');
+    const line = q('account-broker-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(line).toContain('Chez le broker');
+    expect(line).toContain('$50,500');
+    expect(line).toContain('$48,700');
+    expect(line).toContain('1 position ouverte');
+    tvApi.refreshBalance.mockClear();
+    click('broker-refresh-a');
+    expect(tvApi.refreshBalance).toHaveBeenCalledWith('a');
+  });
+
+  it('solde de départ incompatible avec le broker : avertissement explicite', () => {
+    const { q, click } = setup({ accounts: [withBroker('a', { ...live, referenceMismatch: true })], connections: [conn('a')] });
+    click('account-expand-a');
+    expect(q('broker-reference-mismatch')!.textContent).toContain('ne correspond pas au solde du broker');
+  });
+});
+

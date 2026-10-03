@@ -313,7 +313,25 @@ l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 
 ## Catalogue des règles prop firm (PROMPT-136, 2026-10-02)
 
-Le catalogue des règles officielles (Lucid, Apex) existe en JSON dans `libs/shared/src/prop-firm-rules/` (schéma + `pnpm prop-firms:validate`), **pas encore en base** : il sera seedé au prompt suivant, après relecture. Ne pas le confondre avec les règles saisies par l'utilisateur sur `TradingAccount`.
+Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 6 firms, 116 plans au 2026-10-03 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay) :
+**miroir** du catalogue JSON `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
+vérité. Ne jamais les modifier à la main ni par une migration de données : la synchro au démarrage
+de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modification.
+
+- **Ids = slugs du catalogue** (`apex`, `apex-eod-50k`), pas de cuid : stables par contrat
+  (un id publié ne change jamais), ils servent de clé à la synchro et de valeur de FK.
+- **Modèle hybride** : colonnes pour ce qui se filtre (`firmId`, `accountSize`, `currency`,
+  `availability`, `needsReview`, `active`), règles détaillées en Json au format du catalogue
+  (`phases`, `price`, `configuration`), relues avec `propFirmPhaseSchema` / `propFirmPriceSchema`
+  (Zod, `modules/prop-firms/prop-firm-catalog.schema.ts`). Un champ ajouté au JSON = aucune migration.
+- `contentHash` (sha256 du contenu écrit) : la synchro n'écrit que les lignes dont l'empreinte change.
+- **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
+  `PropFirmPlan.firmId` en `onDelete: Restrict`.
+- `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.
+- `TradingAccount.propFirmPlanId` : FK **nullable**, `onDelete: SetNull`, indexée. Aucune UI ni
+  logique ne la lit encore : les règles saisies par l'utilisateur sur `TradingAccount`
+  (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
+  pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
 
 ## Migrations — bonnes pratiques
 
@@ -344,6 +362,11 @@ Le catalogue des règles officielles (Lucid, Apex) existe en JSON dans `libs/sha
 > `account.userId` (= le propriétaire du compte, donc la **firme** sur un compte prop firm : deux
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
+>
+> `brokerCashBalance`/`brokerCashBalanceAt`, `brokerNetLiq`, `brokerOpenPnl`, `brokerEquityAt`,
+> `brokerOpenPositions` (migration `20261003200000_broker_live_balance`, purement additive) = solde,
+> equity et positions ouvertes lus chez le broker (cf. `nestjs.md`, « Solde et equity lus chez le
+> broker »). Le seed démo les remplit sur la connexion vitrine, cohérents avec ses trades.
 >
 > `historyImportedAt` (migration `20260926230000_broker_history_imported_at`, nullable, ajout
 > additif) = date du premier import RÉUSSI de tout l'historique du compte, remonté jusqu'à sa

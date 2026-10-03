@@ -6,6 +6,18 @@ import type { AccountStatus, AccountType, DrawdownType } from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
 
+/** Règle officielle appliquée au drawdown (compte relié à un plan du catalogue). */
+export interface DrawdownPlanRule {
+  firmName: string;
+  planName: string;
+  phase: 'evaluation' | 'funded' | 'direct';
+  kind: 'static' | 'trailing_eod' | 'trailing_intraday';
+  locksAt: number | null;
+  lockedFloor: number | null;
+  locked: boolean;
+  realtimeEquity: boolean;
+}
+
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -23,6 +35,24 @@ export interface AccountRuleMetrics {
     maxDrawdown: number;
     pct: number;
     breached: boolean;
+    /** `plan` : règles officielles du plan relié ; `manual` : montant et type saisis. */
+    source: 'plan' | 'manual';
+    rule: DrawdownPlanRule | null;
+  } | null;
+  /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
+  drawdownUnconfirmed: boolean;
+  /**
+   * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
+   * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).
+   */
+  broker: {
+    cashBalance: number;
+    equity: number;
+    openPnl: number;
+    openPositions: number;
+    balanceAt: string | null;
+    equityAt: string | null;
+    referenceMismatch: boolean;
   } | null;
   estimated: true;
   disclaimer: string;
@@ -40,6 +70,8 @@ export interface TradingAccount {
   profitTarget: number | null;
   maxDrawdown: number | null;
   drawdownType: DrawdownType;
+  /** Plan du catalogue prop firm relié au compte (`PropFirmPlanSummary.id`), sinon null. */
+  propFirmPlanId: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -55,6 +87,7 @@ export interface CreateAccountPayload {
   profitTarget?: number | null;
   maxDrawdown?: number | null;
   drawdownType?: DrawdownType;
+  propFirmPlanId?: string | null;
 }
 
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {

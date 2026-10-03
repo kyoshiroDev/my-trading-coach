@@ -1,0 +1,1595 @@
+{
+  "firm": {
+    "id": "myfundedfutures",
+    "name": "MyFundedFutures",
+    "website": "https://myfundedfutures.com",
+    "help_center": "https://help.myfundedfutures.com/en/",
+    "platforms": [
+      "tradovate",
+      "tradingview",
+      "volumetrica",
+      "deepchart",
+      "ninjatrader",
+      "atas",
+      "quantower"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "myfundedfutures-rapid-25k",
+      "plan_name": "Rapid",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 145,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 1100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 1000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 1100,
+            "notes": "Buffer : 1100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid",
+        "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+    },
+    {
+      "id": "myfundedfutures-rapid-50k",
+      "plan_name": "Rapid",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 209,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 2100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 2000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 2100,
+            "notes": "Buffer : 2100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid",
+        "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+    },
+    {
+      "id": "myfundedfutures-rapid-100k",
+      "plan_name": "Rapid",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 356,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 3100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 3000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3100,
+            "notes": "Buffer : 3100 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid",
+        "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+    },
+    {
+      "id": "myfundedfutures-rapid-150k",
+      "plan_name": "Rapid",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 463,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 4600,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 4500 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 4600,
+            "notes": "Buffer : 4600 $ de profits réalisés avant le premier payout. Puis payout possible toutes les 24 h, sans consistency. Premier payout 24 h après le premier trade."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid",
+        "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+    },
+    {
+      "id": "myfundedfutures-rapid-eod-25k",
+      "plan_name": "Rapid EOD",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 145,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 4,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 1100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss qui monte à chaque nouveau plus haut de fin de séance (1000 $ de distance), jamais à la baisse, verrouillé à 100 $ ; garder au moins 100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": 250,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 1100,
+            "notes": "Buffer : 1100 $ de profits réalisés avant le premier payout, puis 250 $ de profit net depuis le dernier payout pour chaque demande suivante. Payout quotidien, pas de plafond."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid-eod",
+        "https://help.myfundedfutures.com/en/articles/16727601-rapid-eod-25k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Disponible en 25K et 50K seulement."
+    },
+    {
+      "id": "myfundedfutures-rapid-eod-50k",
+      "plan_name": "Rapid EOD",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 225,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 4,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max Loss qui monte à chaque nouveau plus haut de fin de séance (2000 $ de distance), jamais à la baisse, verrouillé à 100 $ ; garder au moins 100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": 500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 2100,
+            "notes": "Buffer : 2100 $ de profits réalisés avant le premier payout, puis 500 $ de profit net depuis le dernier payout pour chaque demande suivante. Payout quotidien, pas de plafond."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/rapid-eod",
+        "https://help.myfundedfutures.com/en/articles/16158363-rapid-eod-50k-a-comprehensive-look",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Disponible en 25K et 50K seulement."
+    },
+    {
+      "id": "myfundedfutures-pro-50k",
+      "plan_name": "Pro",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 265,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (50100 $), puis statique. Avant le premier payout, il continue de suivre."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1000,
+            "max_amount": 100000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (52100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/pro",
+        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+    },
+    {
+      "id": "myfundedfutures-pro-100k",
+      "plan_name": "Pro",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 401,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (100100 $), puis statique. Avant le premier payout, il continue de suivre."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1000,
+            "max_amount": 100000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (103100 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/pro",
+        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+    },
+    {
+      "id": "myfundedfutures-pro-150k",
+      "plan_name": "Pro",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 557,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Évaluation seulement."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 15,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions ouvertes fermées automatiquement à 16:10 ET les jours normaux (sans échec). Jours fériés : pas de fermeture automatique, rester en position à la clôture = échec. News Tier 1 autorisées en évaluation."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD sur le plus haut de fin de journée. Verrouillage APRÈS LE PREMIER PAYOUT approuvé, à capital + 100 $ (150100 $), puis statique. Avant le premier payout, il continue de suivre."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 15,
+            "scaling": false,
+            "tiers": null,
+            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 ET à 16:10 ET ; positions fermées automatiquement à 16:10 ET les jours normaux. Jours fériés : pas de fermeture automatique. News Tier 1 (FOMC, minutes FOMC, emploi, CPI ; EIA et rapports agricoles selon les produits) interdites : aucune position ni ordre de 2 minutes avant à 2 minutes après."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1000,
+            "max_amount": 100000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payout possible 14 jours calendaires après le premier trade ET buffer franchi (154600 $). Retrait unique possible avant le buffer complet : jusqu'à 60 % des profits (minimum 1 000 $). Plafond 100 000 $ par utilisateur. Passage en live étudié après 3 payouts consécutifs."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/pro",
+        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": false,
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+    },
+    {
+      "id": "myfundedfutures-builder-25k",
+      "plan_name": "Builder",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 105,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 1100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max EOD trailing (1000 $), verrouillé à 100 $ (« MLL Lock Level $100 »)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Sur chaque cycle de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées sur Builder."
+          },
+          "payout": {
+            "min_days": 2,
+            "min_daily_profit": null,
+            "min_cycle_profit": 250,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 250,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": 1100,
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 250 $ au-dessus du buffer (1100 $) ; ensuite 250 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/builder",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+    },
+    {
+      "id": "myfundedfutures-builder-50k",
+      "plan_name": "Builder",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 153,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max EOD trailing (2000 $), verrouillé à 100 $ (« MLL Lock Level $100 »)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Sur chaque cycle de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées sur Builder."
+          },
+          "payout": {
+            "min_days": 2,
+            "min_daily_profit": null,
+            "min_cycle_profit": 500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": 2100,
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (2100 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/builder",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+    },
+    {
+      "id": "myfundedfutures-builder-dd1500-50k",
+      "plan_name": "Builder",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": null,
+        "addon": "drawdown 1 500 $"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix de l'option drawdown 1 500 $ non affiché."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 51600,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 1600,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max EOD trailing (1500 $), verrouillé à 100 $ (« MLL Lock Level $100 »)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Sur chaque cycle de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées sur Builder."
+          },
+          "payout": {
+            "min_days": 2,
+            "min_daily_profit": null,
+            "min_cycle_profit": 500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": 1600,
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 500 $ au-dessus du buffer (1600 $) ; ensuite 500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/builder",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+    },
+    {
+      "id": "myfundedfutures-builder-100k",
+      "plan_name": "Builder",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 282,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 3100,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max EOD trailing (3000 $), verrouillé à 100 $ (« MLL Lock Level $100 »)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Sur chaque cycle de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées sur Builder."
+          },
+          "payout": {
+            "min_days": 2,
+            "min_daily_profit": null,
+            "min_cycle_profit": 1000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1000,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": 3100,
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1000 $ au-dessus du buffer (3100 $) ; ensuite 1000 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/builder",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+    },
+    {
+      "id": "myfundedfutures-builder-150k",
+      "plan_name": "Builder",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 398,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique ; promotion en cours sur la page d'accueil."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Max Loss EOD : suit le plus haut solde de fin de journée et se verrouille à capital + 100 $. Les pertes latentes comptent : une position ouverte qui passe sous le seuil fait échouer l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 9,
+            "micros": 90,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": null,
+            "resets_at": null,
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 4600,
+            "locked_floor": 100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Solde de départ 0 $. Max EOD trailing (4500 $), verrouillé à 100 $ (« MLL Lock Level $100 »)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "payout",
+            "notes": "Sur chaque cycle de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 9,
+            "micros": 90,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Fermeture automatique à 16:10 ET les jours normaux. News autorisées sur Builder."
+          },
+          "payout": {
+            "min_days": 2,
+            "min_daily_profit": null,
+            "min_cycle_profit": 1500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 1500,
+            "max_amount": 3500,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": 4600,
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://myfundedfutures.com/plans/builder",
+        "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
+        "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+      ],
+      "needs_review": true,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+    }
+  ]
+}

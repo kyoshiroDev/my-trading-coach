@@ -66,6 +66,8 @@ export class TradovateLiveSocketService {
     });
     socket.on('connect_error', () => this.connected.set(false));
     socket.on('tradovate:trades', (e: TradovateLiveTrades) => this.onTrades(e));
+    // Solde / equity poussés par le broker : marges et soldes de « Mes comptes » à jour.
+    socket.on('tradovate:balance', () => this.accounts.reloadSoon());
     // Connexion Tradovate à refaire : la carte « Mes comptes » l'affiche.
     socket.on('tradovate:status', () => this.tradovate.load());
   }

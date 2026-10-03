@@ -26,12 +26,12 @@ function acct(id: string, tradesCount = 0, status: 'ACTIVE' | 'ARCHIVED' = 'ACTI
   return {
     id, label: `Compte ${id}`, broker: null, type: 'PERSONAL', status,
     accountSize: null, currency: 'USD', startingBalance: null,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING',
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 5000, realizedPnl: 0, currentBalance: 5000, tradesCount,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
     },
   };
 }
@@ -48,7 +48,7 @@ function setup(comptes: TradingAccount[], removeImpl: () => unknown) {
     providers: [
       { provide: AccountsApi, useValue: api },
       { provide: SelectedAccountStore, useValue: store },
-      { provide: UserStore, useValue: { isPremium: () => true, maxAccounts: signal(null) } },
+      { provide: UserStore, useValue: { isDemo: () => false, isPremium: () => true, maxAccounts: signal(null) } },
       // L'utilisateur confirme la suppression dans le dialogue.
       { provide: ConfirmService, useValue: { ask: vi.fn(() => Promise.resolve(true)) } },
     ],

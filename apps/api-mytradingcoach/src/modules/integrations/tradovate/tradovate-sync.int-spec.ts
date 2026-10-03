@@ -151,6 +151,12 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
   if (path === '/contract/items') return json([{ id: CONTRACT, name: 'MNQU6', contractMaturityId: 5001 }]);
   if (path === '/contractMaturity/items') return json([{ id: 5001, productId: 6001 }]);
   if (path === '/product/items') return json([{ id: 6001, name: 'MNQ', valuePerPoint: 2, tickSize: 0.25 }]);
+  if (path === '/cashBalance/getcashbalancesnapshot') {
+    // Lecture exposée en POST par Tradovate : le compte vient du corps.
+    const accountId = body ? (JSON.parse(body) as { accountId?: number }).accountId : undefined;
+    if (accountId !== EXT_ACCOUNT) return json({ errorText: 'account not found' }, 404);
+    return json({ totalCashValue: 50_123.5, netLiq: 50_098.5, openPnL: -25, realizedPnL: 40 });
+  }
   return json({ errorText: `route non simulée ${path}` }, 404);
 }
 
@@ -385,12 +391,19 @@ describe('Tradovate — synchro', () => {
     expect(synced.setupId).toBeTruthy();
     expect(await prisma.trade.count({ where: { userId, entry: 29000 } })).toBe(0);
 
-    // Lecture seule : que des GET vers l'API de données, sur l'hôte du compte (demo). Les appels
-    // d'auth sont à part : `renewaccesstoken` (sur live) relit `apiHosts` à chaque synchro.
+    // Lecture seule : que des GET vers l'API de données, sur l'hôte du compte (demo), plus la SEULE
+    // lecture que Tradovate expose en POST (instantané de solde). Les appels d'auth sont à part :
+    // `renewaccesstoken` (sur live) relit `apiHosts` à chaque synchro.
     const dataCalls = calls.filter((c) => !new URL(c.url).pathname.includes('/auth/'));
-    expect(dataCalls.every((c) => c.method === 'GET')).toBe(true);
+    expect(dataCalls.filter((c) => c.method !== 'GET').map((c) => new URL(c.url).pathname))
+      .toEqual(expect.arrayContaining(['/v1/cashBalance/getcashbalancesnapshot']));
+    expect(dataCalls.every((c) => c.method === 'GET' || c.url.endsWith('/cashBalance/getcashbalancesnapshot'))).toBe(true);
     expect(dataCalls.every((c) => c.url.startsWith('https://demo.tradovateapi.com/v1/'))).toBe(true);
     expect(dataCalls.every((c) => c.auth === 'Bearer AT-1')).toBe(true);
+    // Solde et equity relus chez le broker en fin de synchro ; une position ouverte sur le compte.
+    expect(await prisma.brokerConnection.findFirst({ where: { userId }, select: {
+      brokerCashBalance: true, brokerNetLiq: true, brokerOpenPnl: true, brokerOpenPositions: true,
+    } })).toEqual({ brokerCashBalance: 50_123.5, brokerNetLiq: 50_098.5, brokerOpenPnl: -25, brokerOpenPositions: 1 });
 
     expect(await prisma.trade.count({ where: { userId } })).toBe(21);
 

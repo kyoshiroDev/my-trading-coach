@@ -54,4 +54,11 @@ export class CreateAccountDto {
   @IsOptional()
   @IsEnum(DrawdownType, { message: 'Type de drawdown invalide (STATIC ou TRAILING).' })
   drawdownType?: DrawdownType;
+
+  // Plan du catalogue prop firm (PropFirmPlan.id). Les règles ci-dessus restent celles du
+  // compte : le plan sert à les pré-remplir côté app, il ne les remplace pas.
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  propFirmPlanId?: string;
 }

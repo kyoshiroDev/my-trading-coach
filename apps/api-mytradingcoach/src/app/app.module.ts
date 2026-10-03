@@ -27,6 +27,7 @@ import { ReferralModule } from '../modules/referral/referral.module';
 import { PublicModule } from '../modules/public/public.module';
 import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
+import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DemoReadOnlyGuard } from '../common/guards/demo-read-only.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
@@ -100,6 +101,7 @@ import { RedisService } from '../modules/infra/redis.service';
     PublicModule,
     ActivityTrackingModule,
     TradovateModule,
+    PropFirmsModule,
   ],
   providers: [
     // JwtAuthGuard AVANT le throttler (SCA-B3-03) : un utilisateur connecté est compté par son
