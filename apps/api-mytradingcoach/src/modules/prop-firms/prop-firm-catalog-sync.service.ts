@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PropFirmPlanBackfillService } from './prop-firm-plan-backfill.service';
 import { isNoop, parseCatalog, planCatalogSync } from './prop-firm-catalog.sync';
 
 /** Clé du verrou Postgres de la synchro (arbitraire, propre à ce service). */
@@ -30,7 +31,10 @@ export type CatalogSyncOutcome =
 export class PropFirmCatalogSyncService implements OnApplicationBootstrap {
   private readonly logger = new Logger(PropFirmCatalogSyncService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly backfill: PropFirmPlanBackfillService,
+  ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     try {
@@ -40,6 +44,11 @@ export class PropFirmCatalogSyncService implements OnApplicationBootstrap {
           `Catalogue prop firm synchronisé : ${outcome.firms} firm(s) écrite(s), ${outcome.created} plan(s) créé(s), ` +
             `${outcome.updated} mis à jour, ${outcome.deactivated} retiré(s)`,
         );
+      }
+      // Seul le worker qui a tenu le verrou relie les comptes : le catalogue en base est alors à jour.
+      if (outcome.status !== 'locked') {
+        const { examined, linked } = await this.backfill.run();
+        if (linked > 0) this.logger.log(`Comptes reliés à leur plan du catalogue : ${linked} sur ${examined} sans plan`);
       }
     } catch (e) {
       this.logger.error(`Synchro du catalogue prop firm ignorée : ${(e as Error).message}`);

@@ -1,8 +1,8 @@
+import { phaseFor } from '@mtc/shared';
 import type {
   AccountType,
   DrawdownType,
   PropFirmCatalogFirm,
-  PropFirmPhaseSummary,
   PropFirmPlanSummary,
 } from '@mtc/shared';
 
@@ -94,16 +94,8 @@ export function sizeLabel(size: number): string {
   return size >= 1000 ? `${+(size / 1000).toFixed(1)}K` : String(size);
 }
 
-/**
- * Phase du plan qui correspond au type de compte : évaluation pour un compte en évaluation,
- * funded (ou direct, pour les plans sans évaluation) pour un compte funded.
- */
-export function phaseFor(plan: PropFirmPlanSummary, type: AccountType): PropFirmPhaseSummary | null {
-  const find = (k: PropFirmPhaseSummary['phase']) => plan.phases.find((p) => p.phase === k) ?? null;
-  if (type === 'EVALUATION') return find('evaluation');
-  if (type === 'FUNDED') return find('funded') ?? find('direct');
-  return null;
-}
+// `phaseFor` vit dans `@mtc/shared` : l'API s'en sert aussi pour relier les comptes existants.
+export { phaseFor };
 
 export interface PlanRules {
   accountSize: number;

@@ -266,6 +266,21 @@
             </div>
           </div>
 
+          <!-- Compte saisi avant le catalogue : le relier à son plan officiel. Plusieurs programmes
+               de la firm partagent ses règles, seul l'utilisateur sait lequel il a acheté. -->
+          @if (linkSuggestions().get(a.id); as firmName) {
+            <div class="acct-sub plan-link" [attr.data-testid]="'plan-link-' + a.id">
+              <svg [lucideIcon]="BadgeCheckIcon" [size]="14"></svg>
+              <span class="tv-text">Relie ce compte à son plan {{ firmName }} pour suivre les règles officielles (drawdown EOD ou intraday, limite journalière…).</span>
+              <button type="button" class="tv-btn sm sync" (click)="openEdit(a)"
+                      [attr.data-testid]="'plan-link-open-' + a.id">Choisir le programme</button>
+              <button type="button" class="plan-link-close" (click)="dismissLinkSuggestion(a.id)"
+                      aria-label="Ne plus proposer pour ce compte" title="Ne plus proposer">
+                <svg [lucideIcon]="XIcon" [size]="13"></svg>
+              </button>
+            </div>
+          }
+
           <!-- Sous-ligne : seulement ce qui a besoin de TOUTE la largeur — message d'erreur
                de connexion et sélecteur de compte broker. Le détail de synchro, lui, est
                remonté dans la colonne Synchro. -->
@@ -402,7 +417,8 @@
               [catalog]="catalog()!"
               [accountType]="form().type"
               [planId]="form().propFirmPlanId"
-              [startOnOther]="firmChoice() === OTHER_FIRM"
+              [startFirm]="firmChoice()"
+              [preferredSize]="form().accountSize"
               (firmChange)="onFirmChoice($event)"
               (planChange)="onPlanChoice($event)" />
           }

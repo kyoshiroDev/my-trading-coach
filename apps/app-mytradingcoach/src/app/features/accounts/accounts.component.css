@@ -343,6 +343,15 @@
 .acct-sub .tv-text { min-width: 0; }
 .acct-sub .tv-reselect { flex-basis: 100%; }
 .acct-sub .tv-ext { font-family: var(--font-mono); color: var(--text-2); }
+/* Proposition de relier un compte saisi avant le catalogue à son plan officiel. */
+.plan-link { color: var(--text-2); }
+.plan-link > svg { color: var(--blue-bright); flex-shrink: 0; }
+.plan-link .tv-text { flex: 1 1 220px; }
+.plan-link-close {
+  display: inline-flex; padding: 4px; border: none; border-radius: 6px;
+  background: none; color: var(--text-3); cursor: pointer;
+}
+.plan-link-close:hover { color: var(--text); background: var(--bg-3); }
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }

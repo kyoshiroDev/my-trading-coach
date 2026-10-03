@@ -36,6 +36,7 @@ import {
   LucideAlertCircle as AlertCircle,
   LucideLink2 as Link2,
   LucideRefreshCw as RefreshCw,
+  LucideBadgeCheck as BadgeCheck,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -56,7 +57,7 @@ import {
 } from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
-import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney } from '@mtc/shared';
+import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney, matchPlans } from '@mtc/shared';
 import {
   AccountType,
   AccountStatus,
@@ -105,6 +106,17 @@ function emptyForm(): AccountFormState {
     status: 'ACTIVE',
     propFirmPlanId: null,
   };
+}
+
+const DISMISSED_LINKS_KEY = 'mtc.accounts.planLinkDismissed';
+
+function readDismissedLinks(): string[] {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(DISMISSED_LINKS_KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 // « Mes comptes » (PREMIUM) : CRUD des comptes + barres de règles prop firm
@@ -174,6 +186,26 @@ export class AccountsComponent implements OnInit {
         .map((a) => a.broker || a.label),
     ),
   );
+  /** Comptes dont l'utilisateur a écarté la proposition de plan (ce navigateur seulement). */
+  private readonly dismissedLinks = signal<string[]>(readDismissedLinks());
+  /**
+   * Comptes prop firm saisis avant le catalogue, dont la firm y figure : on propose de les relier
+   * à leur plan (id du compte → nom de la firm). L'API relie seule ceux qu'un plan unique désigne ;
+   * pour les autres, plusieurs programmes partagent les mêmes règles et seul l'utilisateur sait
+   * lequel il a acheté.
+   */
+  protected readonly linkSuggestions = computed(() => {
+    const catalog = this.catalog();
+    const out = new Map<string, string>();
+    if (!catalog?.length) return out;
+    const dismissed = this.dismissedLinks();
+    for (const a of this.store.accounts()) {
+      if (a.propFirmPlanId || a.status === 'ARCHIVED' || dismissed.includes(a.id)) continue;
+      const match = matchPlans(catalog, a);
+      if (match?.plans.length) out.set(a.id, match.firm.name);
+    }
+    return out;
+  });
   /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
   protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
@@ -273,6 +305,12 @@ export class AccountsComponent implements OnInit {
       this.store.selectedAccountId();
       untracked(() => this.deleteError.set(null));
     });
+    // Un compte prop firm sans plan : le catalogue sert à lui proposer le sien.
+    effect(() => {
+      if (this.store.accounts().some((a) => this.isPropFirm(a.type) && !a.propFirmPlanId)) {
+        untracked(() => this.loadCatalog());
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -371,6 +409,7 @@ export class AccountsComponent implements OnInit {
   protected readonly BriefcaseIcon = Briefcase;
   protected readonly LinkIcon = Link2;
   protected readonly RefreshIcon = RefreshCw;
+  protected readonly BadgeCheckIcon = BadgeCheck;
 
   // ── Helpers d'affichage ─────────────────────────────────────────────────
   // Icône lucide selon le type de compte.
@@ -525,11 +564,27 @@ export class AccountsComponent implements OnInit {
       status: a.status,
       propFirmPlanId: a.propFirmPlanId,
     });
-    this.firmChoice.set(a.propFirmPlanId ? '' : a.broker ? OTHER_FIRM : '');
+    this.firmChoice.set(this.startFirmOf(a));
     this.loadCatalog();
     this.menuOpenId.set(null);
     this.formOpen.set(true);
   }
+  /** Firm sur laquelle ouvrir le sélecteur d'un compte sans plan : celle du catalogue qu'il désigne, sinon « Autre ». */
+  private startFirmOf(a: TradingAccount): FirmChoice {
+    if (a.propFirmPlanId) return '';
+    const firm = matchPlans(this.catalog() ?? [], a)?.firm;
+    return firm ? firm.id : a.broker ? OTHER_FIRM : '';
+  }
+
+  protected dismissLinkSuggestion(id: string): void {
+    this.dismissedLinks.update((ids) => [...ids, id]);
+    try {
+      localStorage.setItem(DISMISSED_LINKS_KEY, JSON.stringify(this.dismissedLinks()));
+    } catch {
+      // Stockage indisponible (navigation privée) : la proposition reviendra au prochain chargement.
+    }
+  }
+
   protected closeForm(): void {
     this.formOpen.set(false);
   }
