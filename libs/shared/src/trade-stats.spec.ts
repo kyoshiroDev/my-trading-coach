@@ -4,6 +4,7 @@ import {
   classifyTrade,
   netPnl,
   BREAKEVEN_EPSILON,
+  roundCents,
 } from './trade-stats';
 
 const t = (pnl: number | null) => ({ pnl });
@@ -88,5 +89,30 @@ describe('netPnl', () => {
     expect(netPnl({ pnl: 50 })).toBe(50);
     expect(netPnl({ pnl: 50, commission: null })).toBe(50);
     expect(netPnl({ pnl: null, commission: 3 })).toBeNull();
+  });
+});
+
+describe('roundCents — arrondi décimal unique (≡ Postgres round(x::text::numeric, 2))', () => {
+  it('demi-centime : au plus loin de zéro, sur la valeur décimale', () => {
+    expect(roundCents(10.575)).toBe(10.58); // toFixed(2) donnait 10.57 (valeur binaire 10.57499…)
+    expect(roundCents(-3.545)).toBe(-3.55);
+    expect(roundCents(-0.015)).toBe(-0.02);
+    expect(roundCents(1.005)).toBe(1.01);
+  });
+  it('bruit de calcul flottant : suit la représentation décimale', () => {
+    expect(roundCents(8.03 - 3.015)).toBe(5.01); // 5.014999999999999 : sous le demi
+    expect(roundCents(1.1 - 0.095)).toBe(1.01); // 1.0050000000000001 : au-dessus du demi
+    expect(roundCents(1397.02 - 0.755)).toBe(1396.26); // 1396.2649999999999 (une mise à l'échelle flottante donnait 1396.27)
+    expect(roundCents(0.1 + 0.2)).toBe(0.3);
+  });
+  it('cas limites : zéro sans signe, très petits nombres, non finis', () => {
+    expect(Object.is(roundCents(-0.004), 0)).toBe(true);
+    expect(roundCents(1e-7)).toBe(0);
+    expect(roundCents(Number.NaN)).toBeNaN();
+    expect(roundCents(1234567.891)).toBe(1234567.89);
+  });
+  it('netPnl applique la même règle', () => {
+    expect(netPnl({ pnl: 12.48, commission: 1.905 })).toBe(10.58); // 10.575
+    expect(netPnl({ pnl: 1, commission: 1.9 })).toBe(-0.9);
   });
 });

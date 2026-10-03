@@ -40,7 +40,34 @@ export interface TradeStatInput {
  */
 export function netPnl(t: TradeStatInput): number | null {
   if (t.pnl == null) return null;
-  return +(t.pnl - Math.abs(t.commission ?? 0)).toFixed(2);
+  return roundCents(t.pnl - Math.abs(t.commission ?? 0));
+}
+
+/**
+ * Arrondi au centime, au demi LE PLUS LOIN DE ZÉRO, sur la valeur DÉCIMALE du nombre (sa
+ * représentation la plus courte, celle qu'affiche `String(x)`) : 10,575 → 10,58 · −3,545 → −3,55.
+ *
+ * RÈGLE UNIQUE de l'app (décision du 2026-10-03, SCA-B2) : c'est exactement ce que fait Postgres
+ * avec `round(x::text::numeric, 2)`, utilisé par tous les agrégats SQL. L'ancien `toFixed(2)`
+ * arrondissait selon la valeur BINAIRE (10,575 est stocké 10,57499… → 10,57), si bien que le
+ * total d'un dashboard calculé en SQL pouvait différer de quelques centimes de la somme des lignes.
+ */
+export function roundCents(x: number): number {
+  if (!Number.isFinite(x)) return x;
+  const abs = Math.abs(x);
+  const s = String(abs);
+  // Notation exponentielle (|x| < 1e-6 ou > 1e21) : hors des montants réels, arrondi direct.
+  if (s.includes('e')) {
+    const r = Math.round(abs * 100) / 100;
+    return x < 0 && r !== 0 ? -r : r;
+  }
+  // Arithmétique DÉCIMALE sur les chiffres (pas de multiplication flottante, qui arrondit :
+  // Number('1396.2649999999999e2') vaut 139626.5). 3ᵉ décimale ≥ 5 → on s'éloigne de zéro.
+  const [intPart, frac = ''] = s.split('.');
+  let cents = Number(intPart) * 100 + Number((frac + '00').slice(0, 2));
+  if (frac.length > 2 && frac[2] >= '5') cents += 1;
+  const r = cents / 100;
+  return x < 0 && r !== 0 ? -r : r;
 }
 
 /** Forme minimale d'un trade pour la variation de prix. */
@@ -122,5 +149,5 @@ export function computeTradeStats<T extends TradeStatInput>(
   const decisive = wins + losses;
   const winRate = decisive > 0 ? (wins / decisive) * 100 : 0;
 
-  return { total: trades.length, closed, wins, losses, breakeven, winRate, totalPnl: +totalPnl.toFixed(2) };
+  return { total: trades.length, closed, wins, losses, breakeven, winRate, totalPnl: roundCents(totalPnl) };
 }

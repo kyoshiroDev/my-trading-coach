@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { roundCents } from '@mtc/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -9,7 +10,8 @@ import type { PrismaService } from '../../prisma/prisma.service';
  *
  * Règle d'exactitude : ce module ne fait QUE des sommes et des comptages. Les règles métier
  * restent celles d'avant, à l'identique :
- * - P&L net = `round(pnl − |commission|, 2)` (comme `netPnl`, libs/shared/trade-stats.ts) ;
+ * - P&L net = `round((pnl − |commission|)::text::numeric, 2)` = `netPnl` (même arrondi décimal au
+ *   demi le plus loin de zéro, sur la même représentation du nombre : voir `roundCents`) ;
  * - gagnant si net > 0, perdant si net < 0, break-even sinon (BREAKEVEN_EPSILON = 0) ;
  * - R:R compté seulement s'il est renseigné et non nul (`if (t.riskReward)` d'avant) ;
  * - heure et jour de la semaine dans le fuseau du PROCESSUS Node (`getHours()` / `getDay()`
@@ -21,7 +23,7 @@ import type { PrismaService } from '../../prisma/prisma.service';
 /** Fuseau du processus : celui qu'utilisaient `getHours()` / `getDay()`. */
 export const processTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::numeric, 2)`;
+const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)`;
 const localTs = (tz: string) => Prisma.sql`((t."tradedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`;
 
 export interface TradeFilter {
@@ -161,4 +163,30 @@ export async function cumulativeByTrade(
            (sum(${NET}) OVER (ORDER BY t."tradedAt", t."id" ROWS UNBOUNDED PRECEDING))::float8 AS "cumulativePnl"
     FROM "Trade" t WHERE ${where(f)}
     ORDER BY t."tradedAt", t."id"`;
+}
+
+/**
+ * P&L total et win rate des trades clôturés d'un utilisateur, EN BASE (SCA-B2-04), aux règles de
+ * `computeTradeStats` : net arrondi au centime, gagnant si net > 0, perdant si < 0, BE exclus du
+ * win rate, total arrondi au centime. Pour les fiches utilisateur de l'admin, qui chargeaient
+ * tous les trades pour ces deux chiffres. Équivalence : `closed-trade-stats.int-spec.ts`.
+ */
+export async function closedTradeStats(
+  prisma: PrismaService,
+  userId: string,
+): Promise<{ closed: number; wins: number; losses: number; totalPnl: number; winRate: number }> {
+  const [r] = await prisma.$queryRaw<{ closed: number; wins: number; losses: number; pnl: number }[]>`
+    SELECT count(*)::int AS "closed",
+           count(*) FILTER (WHERE ${NET} > 0)::int AS "wins",
+           count(*) FILTER (WHERE ${NET} < 0)::int AS "losses",
+           coalesce(sum(${NET}), 0)::float8 AS "pnl"
+    FROM "Trade" t WHERE ${where({ userId })}`;
+  const decisive = r.wins + r.losses;
+  return {
+    closed: r.closed,
+    wins: r.wins,
+    losses: r.losses,
+    totalPnl: roundCents(r.pnl),
+    winRate: decisive > 0 ? (r.wins / decisive) * 100 : 0,
+  };
 }

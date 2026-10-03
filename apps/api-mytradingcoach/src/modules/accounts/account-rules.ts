@@ -66,7 +66,7 @@ export async function ruleAggregatesSql(
     WITH tr AS (
       SELECT t."accountId", t."tradedAt", t."id",
              (t."pnl" - coalesce(t."commission", 0)) AS raw,
-             round((t."pnl" - abs(coalesce(t."commission", 0)))::numeric, 2) AS net
+             round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2) AS net
       FROM "Trade" t
       WHERE t."userId" = ${userId} AND t."pnl" IS NOT NULL AND t."accountId" IN (${Prisma.join(accountIds)})
     ), cum AS (
