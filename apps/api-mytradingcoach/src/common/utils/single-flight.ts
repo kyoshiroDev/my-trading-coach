@@ -7,7 +7,8 @@ import type { RedisService } from '../../modules/infra/redis.service';
  *
  * - `readCache` : lit le cache (null si absent). `compute` : appelle le fournisseur ET remplit le cache.
  * - Verrou `sf:<clé>` posé par `SET NX PX lockMs` ; relâché à la fin du calcul.
- * - Celui qui détient le verrou échoue ou traîne (> lockMs) : les autres calculent eux-mêmes.
+ * - Celui qui détient le verrou échoue ou traîne (> lockMs) : les autres calculent eux-mêmes, ou
+ *   appellent `onTimeout` s'il est fourni (ex. ne PAS relancer chacun un appel IA payant).
  *   Redis indisponible : chacun calcule (comportement d'avant). Jamais bloquant au-delà de lockMs.
  */
 export async function singleFlight<T>(
@@ -15,7 +16,11 @@ export async function singleFlight<T>(
   key: string,
   readCache: () => Promise<T | null>,
   compute: () => Promise<T>,
-  { lockMs = 5_000, pollMs = 100 }: { lockMs?: number; pollMs?: number } = {},
+  {
+    lockMs = 5_000,
+    pollMs = 100,
+    onTimeout,
+  }: { lockMs?: number; pollMs?: number; onTimeout?: () => Promise<T> } = {},
 ): Promise<T> {
   const cached = await readCache().catch(() => null);
   if (cached !== null) return cached;
@@ -35,11 +40,15 @@ export async function singleFlight<T>(
     }
   }
 
+  const fallback = () => (onTimeout ? onTimeout() : compute());
   const deadline = Date.now() + lockMs;
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, pollMs));
     const ready = await readCache().catch(() => null);
     if (ready !== null) return ready;
+    // Verrou relâché sans cache rempli : le calcul a échoué, inutile d'attendre la fin du délai.
+    const stillComputing = await redis.client.exists(lockKey).catch(() => 1);
+    if (!stillComputing) return fallback();
   }
-  return compute(); // celui qui calculait a échoué ou trop lent
+  return fallback(); // celui qui calculait est trop lent
 }

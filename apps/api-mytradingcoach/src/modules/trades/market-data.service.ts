@@ -191,15 +191,33 @@ export class MarketDataService {
     // Interrupteur fin (NEWS_TRANSLATION / hors prod) → renvoyer le texte tel quel.
     if (!this.translationEnabled) return news.textFr ?? news.text;
 
+    // Une seule traduction IA par news, même ouverte par 30 personnes en même temps (SCA-B3-05) :
+    // les autres attendent la ligne traduite ; si la traduction échoue ou traîne, ils renvoient le
+    // texte d'origine au lieu de relancer chacun un appel payant.
+    const original = news.textFr ?? news.text;
+    return singleFlight(
+      this.redisService,
+      `news-fr:${id}`,
+      async () => {
+        const row = await this.prisma.marketNews.findUnique({ where: { id }, select: { textFr: true, textTranslated: true } });
+        return row?.textTranslated ? row.textFr : null;
+      },
+      () => this.translateNewsText(id, news.text as string, original),
+      { lockMs: 30_000, pollMs: 500, onTimeout: async () => original },
+    );
+  }
+
+  /** Appel IA de traduction, puis écriture en base. En cas d'échec : texte d'origine. */
+  private async translateNewsText(id: string, text: string, original: string | null): Promise<string | null> {
     try {
       const msg = await this.anthropicClient.create({
         model: AI_MODELS.fast,
         max_tokens: 700,
         messages: [{ role: 'user', content:
-          `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${news.text}` }],
+          `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${text}` }],
       }, { feature: 'news_translation', userId: null });
       const fr = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '';
-      if (!fr) return news.textFr ?? news.text;
+      if (!fr) return original;
       await this.prisma.marketNews.update({
         where: { id },
         data: { textFr: fr, textTranslated: true },
@@ -207,7 +225,7 @@ export class MarketDataService {
       return fr;
     } catch (err) {
       this.logger.warn(`News text translation failed: ${(err as Error).message}`);
-      return news.textFr ?? news.text;
+      return original;
     }
   }
 

@@ -155,3 +155,40 @@ describe('MarketDataService — single-flight du contexte marché (SCA-B3-04)', 
     vi.unstubAllGlobals();
   });
 });
+
+describe('MarketDataService — une seule traduction IA par news (SCA-B3-05)', () => {
+  function setup(create: ReturnType<typeof vi.fn>) {
+    const store = new Map<string, string>();
+    const redisService = { client: {
+      get: vi.fn(async (k: string) => store.get(k) ?? null),
+      set: vi.fn(async (k: string, v: string, ...a: unknown[]) => (a.includes('NX') && store.has(k) ? null : (store.set(k, v), 'OK'))),
+      del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+      exists: vi.fn(async (k: string) => (store.has(k) ? 1 : 0)),
+    } };
+    let row = { id: 'n1', text: 'Fed holds rates', textFr: null as string | null, textTranslated: false };
+    const prisma = { marketNews: {
+      findUnique: vi.fn(async () => ({ ...row })),
+      update: vi.fn(async ({ data }: { data: { textFr: string } }) => { row = { ...row, textFr: data.textFr, textTranslated: true }; return row; }),
+    } };
+    const config = { get: vi.fn((k: string) => (k === 'NEWS_TRANSLATION' ? 'true' : k === 'NODE_ENV' ? 'production' : undefined)) };
+    const svc = new MarketDataService(config as never, redisService as never, prisma as never, { create } as never);
+    Object.defineProperty(svc, 'translationEnabled', { get: () => true });
+    return svc;
+  }
+
+  it('30 ouvertures simultanées d’une news → 1 seul appel IA, tous reçoivent la traduction', async () => {
+    const create = vi.fn(async () => { await new Promise((r) => setTimeout(r, 30)); return { content: [{ type: 'text', text: 'La Fed maintient ses taux' }] }; });
+    const svc = setup(create);
+    const texts = await Promise.all(Array.from({ length: 30 }, () => svc.ensureNewsTextFr('n1')));
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(texts.every((t) => t === 'La Fed maintient ses taux')).toBe(true);
+  });
+
+  it('IA en échec → 1 seul appel, les autres reçoivent le texte d’origine sans relancer l’IA', async () => {
+    const create = vi.fn(async () => { await new Promise((r) => setTimeout(r, 20)); throw new Error('529 overloaded'); });
+    const svc = setup(create);
+    const texts = await Promise.all(Array.from({ length: 10 }, () => svc.ensureNewsTextFr('n1')));
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(texts.every((t) => t === 'Fed holds rates')).toBe(true);
+  });
+});

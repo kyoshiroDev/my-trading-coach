@@ -1240,5 +1240,8 @@ aller-retour par requête :
   `integrations/tradovate/*` et `admin/anthropic-cost.service.ts`.
 - **Donnée commune mise en cache → `singleFlight`** (`common/utils/single-flight.ts`) : sur une clé
   froide, une seule requête (tous workers) appelle le fournisseur, les autres attendent le cache
-  (verrou `sf:<clé>`, `SET NX PX 5000`). Fait pour `getMarketContext` et `getLivePrice`. Le
-  `compute` doit remplir le cache lui-même ; s'il échoue, les autres calculent après le délai.
+  (verrou `sf:<clé>`, `SET NX PX 5000`). Fait pour `getMarketContext`, `getLivePrice` et la
+  traduction IA d'une news (`ensureNewsTextFr`, SCA-B3-05 : verrou 30 s). Le `compute` doit remplir
+  le cache lui-même ; s'il échoue (verrou relâché, cache vide), les autres réagissent aussitôt :
+  `onTimeout` s'il est fourni (**appel payant : ne pas relancer**, renvoyer un repli), sinon ils
+  recalculent.
