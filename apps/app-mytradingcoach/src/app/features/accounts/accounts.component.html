@@ -362,6 +362,15 @@
                   @if (r.locksAt !== null) {
                     · {{ r.locked ? 'figé' : 'se fige à ' + money(r.lockedFloor, a.currency) + ' quand le solde atteint ' + money(r.locksAt, a.currency) }}
                   }
+                  @if (r.platform) {
+                    <span class="dd-platform">(règle {{ platformLabel(r.platform) }})</span>
+                  }
+                  @if (r.platformChoices.length) {
+                    <span class="dd-platform-warn" data-testid="dd-platform-unknown">
+                      Le verrouillage dépend de ta plateforme ({{ platformList(r.platformChoices) }}) : indique-la via « Modifier ».
+                      En attendant, le seuil ne se fige jamais (le cas le plus prudent).
+                    </span>
+                  }
                   <span class="dd-disclaimer">{{ a.metrics.disclaimer }}</span>
                 </p>
               } @else if (a.metrics.drawdownUnconfirmed) {
@@ -459,6 +468,19 @@
               [preferredSize]="form().accountSize"
               (firmChange)="onFirmChoice($event)"
               (planChange)="onPlanChoice($event)" />
+            @if (formPlatformChoices().length) {
+              <label class="fld">
+                <span class="fld-lbl">Plateforme de trading</span>
+                <select class="inp" data-testid="account-platform" [ngModel]="form().platform"
+                        (ngModelChange)="patch({ platform: $event })">
+                  <option [ngValue]="null">Je ne sais pas</option>
+                  @for (p of formPlatformChoices(); track p) {
+                    <option [ngValue]="p">{{ platformLabel(p) }}</option>
+                  }
+                </select>
+                <span class="fld-hint">Le verrouillage du drawdown de ce plan dépend de la plateforme.</span>
+              </label>
+            }
           }
           @if (!catalog()?.length || firmChoice() === OTHER_FIRM) {
             <label class="fld">
