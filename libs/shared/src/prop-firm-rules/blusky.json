@@ -1,0 +1,1632 @@
+{
+  "firm": {
+    "id": "blusky",
+    "name": "BluSky Trading",
+    "website": "https://blusky.pro",
+    "help_center": "https://help.blusky.pro/en/",
+    "platforms": [
+      "tradovate",
+      "ninjatrader",
+      "rithmic",
+      "rtrader_pro",
+      "volumetrica",
+      "atas",
+      "quantower",
+      "tradesea"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "blusky-launch-50k",
+      "plan_name": "Launch",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 99,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 99 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 49 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3000,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2900,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3000,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300846-launch-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-launch-100k",
+      "plan_name": "Launch",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 149 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 59 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3500,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3400,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3500,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300846-launch-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-launch-200k",
+      "plan_name": "Launch",
+      "account_size": 200000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 179,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 179 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 69 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 198000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil fixe à 198000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3000,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2900,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3000,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300846-launch-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-25k",
+      "plan_name": "Propel",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1200,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1200 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.34,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 1500,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1400,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 1500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 1500,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 1500 $, plafond 1500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-50k",
+      "plan_name": "Propel",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.34,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3000,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2900,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3000,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-100k",
+      "plan_name": "Propel",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.34,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3500,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3400,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3500,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-150k",
+      "plan_name": "Propel",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 149000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil fixe à 149000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.34,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 2000,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1900,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 2000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 2000,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 2000 $, plafond 1500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 2000 $, drawdown 1000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-200k",
+      "plan_name": "Propel",
+      "account_size": 200000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 198000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil fixe à 198000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.34,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3000,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2900,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3000,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-propel-300k",
+      "plan_name": "Propel",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 20000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 295000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil fixe à 295000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.21,
+            "applies_to": "profit_target",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 3500,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3400,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille Sim Funded du tableau Buffer Stage (noms d'anciens plans) ; peut évoluer avec la marge broker (Tradovate) ou sur revue."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3500,
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ static, consistency 21 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+    },
+    {
+      "id": "blusky-orbit-50k",
+      "plan_name": "Orbit",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 99 $ (ne prolonge pas les 30 jours)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (50000 $) une fois 2000 $ de profit net cumulé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "Payout tous les 3 jours de trading au-dessus de 52000 $, minimum 500 $, plafond 2000 $ par période de 7 jours. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+    },
+    {
+      "id": "blusky-orbit-100k",
+      "plan_name": "Orbit",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 109 $ (ne prolonge pas les 30 jours)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 3000 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (100000 $) une fois 3000 $ de profit net cumulé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103000,
+            "notes": "Payout tous les 3 jours de trading au-dessus de 103000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+    },
+    {
+      "id": "blusky-orbit-150k",
+      "plan_name": "Orbit",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4500 $ sous le plus haut solde de clôture (journée à partir de 18:00), ne redescend pas. Toucher le seuil à n'importe quel moment fait échouer (c'est la seule cause d'échec de l'évaluation). Pas de blocage publié en évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (150000 $) une fois 4500 $ de profit net cumulé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Payout tous les 3 jours de trading au-dessus de 154500 $, minimum 500 $, plafond 3000 $ par période de 7 jours. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+    },
+    {
+      "id": "blusky-orbit-200k",
+      "plan_name": "Orbit",
+      "account_size": 200000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 8000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 197000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil fixe à 197000 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 203000,
+            "locked_floor": 200000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (200000 $) une fois 3000 $ de profit net cumulé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 203000,
+            "notes": "Payout tous les 3 jours de trading au-dessus de 203000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+    },
+    {
+      "id": "blusky-instant-50k",
+      "plan_name": "Instant Sim Funded",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé). Pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Montant publié sans précision sur le calcul, l'heure de reset ni la sanction (échec retenu, cas prudent)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 53000,
+            "locked_floor": 51000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing intraday sur le plus haut solde de séance, 2 000 $ en dessous ; le compte ferme sous le seuil. Se fige à 51 000 $ quand le solde dépasse 53 000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.21,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 53000,
+            "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300869-instant-funding-direct-to-funded-and-instant-sim-funded",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation. Prix non relevé."
+    },
+    {
+      "id": "blusky-direct-3500",
+      "plan_name": "Direct to Funded",
+      "account_size": 3500,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique (prix sur blusky.pro, non relevé). Pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Montant publié sans précision sur le calcul, l'heure de reset ni la sanction (échec retenu, cas prudent)."
+          },
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 1000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : le compte de 3 500 $ ferme sous 1 000 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.21,
+            "applies_to": "payout",
+            "notes": "Calculée sur la somme des jours GAGNANTS (les jours perdants sont exclus du dénominateur). Pas un échec : vérifiée au passage de phase ou à la demande de payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "BluSky conseille de tout fermer avant 16:45 heure de New York et tente une liquidation automatique environ 15 minutes avant la clôture, sans garantie. Aucun ajustement pour une position encore ouverte après 17:00. Les news ne font pas échouer."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 3500,
+            "notes": "Payouts au-dessus de 3 500 $, plafond 3 000 $ par semaine. Partage 50 % pendant les 30 premiers jours de trading, puis 80 %. Règle des jours perdants : au plus 3 jours négatifs sur 10 jours tradés glissants, un 4e ferme le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.blusky.pro/en/articles/16300869-instant-funding-direct-to-funded-and-instant-sim-funded",
+        "https://help.blusky.pro/en/articles/12434059-evaluation-rules",
+        "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule",
+        "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage",
+        "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules",
+        "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts",
+        "https://help.blusky.pro/en/articles/12434092-resets",
+        "https://blusky.pro/"
+      ],
+      "needs_review": true,
+      "notes": "Compte financé de 3 500 $ sans évaluation. Prix non relevé."
+    }
+  ]
+}
