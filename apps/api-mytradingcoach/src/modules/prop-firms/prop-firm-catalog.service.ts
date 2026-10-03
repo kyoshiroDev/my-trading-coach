@@ -48,10 +48,13 @@ export class PropFirmCatalogService {
               configuration: configuration && {
                 dailyLossLimit: configuration.daily_loss_limit,
                 evalDrawdown: configuration.eval_drawdown,
+                payoutPath: configuration.payout_path ?? null,
+                addon: configuration.addon ?? null,
               },
               needsReview: plan.needsReview,
               phases: phases.map((p) => ({
                 phase: p.phase,
+                startingBalance: p.starting_balance ?? plan.accountSize,
                 profitTarget: p.profit_target,
                 maxDrawdown: p.max_drawdown.amount,
                 drawdownType: p.max_drawdown.type,

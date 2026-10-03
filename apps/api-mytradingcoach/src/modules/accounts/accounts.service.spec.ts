@@ -1,10 +1,11 @@
+import type { PropFirmPhaseRules } from '@mtc/shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountsService } from './accounts.service';
+import { AccountsService, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
@@ -269,6 +270,7 @@ describe('AccountsService', () => {
     expect(prisma.tradingAccount.findMany).toHaveBeenCalledWith({
       where: { userId: 'u1' },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      include: { propFirmPlan: { select: expect.objectContaining({ phases: true }) } },
     });
   });
 
@@ -362,6 +364,89 @@ describe('AccountsService', () => {
         data: { userId: 'u1', label: 'Compte principal', startingBalance: null },
         select: { id: true },
       });
+    });
+  });
+
+  describe('computeRuleMetrics — règles du plan du catalogue', () => {
+    // Trades à 15:00 UTC (= 10:00 heure de Chicago) : une journée de trading CME par jour.
+    const d = (pnl: number, day: number, h = 15) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
+    const md = (o: Partial<PropFirmPhaseRules['max_drawdown']>) =>
+      ({ amount: 2000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null,
+        enforced_on: 'equity_realtime', basis_notes: null, ...o }) as PropFirmPhaseRules['max_drawdown'];
+    const ph = (phase: PropFirmPhaseRules['phase'], m: PropFirmPhaseRules['max_drawdown'], starting?: number) =>
+      ({ phase, starting_balance: starting, max_drawdown: m }) as PropFirmPhaseRules;
+    const manual = { accountSize: 50000, profitTarget: null, maxDrawdown: 9999, drawdownType: 'STATIC' as const };
+    const topstep: RulePlan = {
+      firmName: 'Topstep', planName: 'Trading Combine', accountSize: 50000,
+      phases: [
+        ph('evaluation', md({ locks_at: 52000, locked_floor: 50000 })),
+        ph('funded', md({ locks_at: 2000, locked_floor: 0 }), 0),
+      ],
+    };
+
+    it('évaluation : le plan remplace la saisie manuelle (montant, type)', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(500, 1), d(700, 2)], topstep);
+      expect(m.drawdown).toMatchObject({ source: 'plan', type: 'TRAILING', maxDrawdown: 2000, floor: 49200, margin: 2000, breached: false });
+      expect(m.drawdown?.rule).toMatchObject({ firmName: 'Topstep', phase: 'evaluation', kind: 'trailing_eod', locked: false, realtimeEquity: true });
+      expect(m.disclaimer).toContain('positions ouvertes comprises : elles ne sont pas incluses ici');
+    });
+
+    it('trailing EOD : seul le solde de clôture de la journée de trading fait monter le seuil', () => {
+      // Jour 1 : +1 500 puis -1 000 → clôture +500. Le pic intraday (+1 500) ne compte pas.
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(1500, 1, 14), d(-1000, 1, 19)], topstep);
+      expect(m.drawdown?.floor).toBe(48500); // 50 000 + 500 − 2 000
+    });
+
+    it('trailing intraday : le plus haut atteint après chaque trade fait monter le seuil', () => {
+      const intraday: RulePlan = { ...topstep, phases: [ph('evaluation', md({ type: 'trailing_intraday', trails_on: 'equity' }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(1500, 1, 14), d(-1000, 1, 19)], intraday);
+      expect(m.drawdown?.floor).toBe(49500); // 50 000 + 1 500 − 2 000
+      expect(m.disclaimer).toContain('pics atteints pendant un trade ouvert');
+    });
+
+    it('verrouillage : une fois le seuil de déclenchement atteint, le plancher est figé', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(2500, 1), d(1000, 2)], topstep);
+      expect(m.drawdown).toMatchObject({ floor: 50000, margin: 3500 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true, locksAt: 52000, lockedFloor: 50000 });
+    });
+
+    it('funded qui démarre à 0 $ (XFA Topstep) : seuil à −2 000 $, figé à 0 $', () => {
+      const xfa = { ...manual, startingBalance: 0, type: 'FUNDED' as const };
+      expect(svc.computeRuleMetrics(xfa, [d(300, 1)], topstep).drawdown).toMatchObject({ floor: -1700, margin: 2000 });
+      expect(svc.computeRuleMetrics(xfa, [d(2100, 1)], topstep).drawdown).toMatchObject({ floor: 0, margin: 2100 });
+    });
+
+    it('solde de départ saisi différent : les seuils du plan sont décalés d\'autant', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 51000, type: 'EVALUATION' }, [d(2000, 1)], topstep);
+      expect(m.drawdown?.rule).toMatchObject({ locksAt: 53000, lockedFloor: 51000, locked: true });
+      expect(m.drawdown?.floor).toBe(51000);
+    });
+
+    it('plan sans verrouillage chiffré (déclenché par un payout) : le seuil continue de suivre', () => {
+      const pro: RulePlan = { ...topstep, phases: [ph('funded', md({ locks_at: null, locked_floor: 50100 }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'FUNDED' }, [d(5000, 1)], pro);
+      expect(m.drawdown).toMatchObject({ floor: 53000 });
+      expect(m.drawdown?.rule).toMatchObject({ locksAt: null, lockedFloor: null, locked: false });
+    });
+
+    it('statique : plancher fixe sous le solde de départ', () => {
+      const st: RulePlan = { ...topstep, phases: [ph('direct', md({ type: 'static', trails_on: null, enforced_on: null }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'FUNDED' }, [d(3000, 1)], st);
+      expect(m.drawdown).toMatchObject({ type: 'STATIC', floor: 48000 });
+      expect(m.disclaimer).not.toContain('positions ouvertes comprises');
+    });
+
+    it('montant non publié : aucun chiffre, drawdownUnconfirmed', () => {
+      const unk: RulePlan = { ...topstep, phases: [ph('evaluation', md({ amount: null as unknown as number }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(100, 1)], unk);
+      expect(m.drawdown).toBeNull();
+      expect(m.drawdownUnconfirmed).toBe(true);
+    });
+
+    it('type de compte sans phase correspondante (perso) → saisie manuelle', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
+      expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
+      expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
     });
   });
 

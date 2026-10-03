@@ -4,8 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
 import {
   AccountStatus,
+  AccountType,
   DrawdownType,
   Plan,
   Role,
@@ -19,7 +21,22 @@ import { aggregateRuleTrades, EMPTY_RULE_AGG, ruleAggregatesSql, type RuleAgg, t
 type RuleAccount = Pick<
   TradingAccount,
   'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
->;
+> & { type?: AccountType };
+
+/** Plan du catalogue relié au compte : ses règles de drawdown remplacent la saisie manuelle. */
+export interface RulePlan {
+  firmName: string;
+  planName: string;
+  accountSize: number;
+  phases: PropFirmPhaseRules[];
+}
+
+const PLAN_SELECT = {
+  planName: true,
+  accountSize: true,
+  phases: true,
+  firm: { select: { name: true } },
+} as const;
 
 /** Contexte plan du user pour le calcul du quota de comptes. */
 type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
@@ -33,6 +50,20 @@ const RULE_DISCLAIMER =
   "Estimation basée uniquement sur les trades loggés dans MyTradingCoach, pas " +
   "l'equity temps réel ni le calcul officiel de la prop firm (positions ouvertes, " +
   "fuseau, trailing intraday). Le statut du compte reste piloté par toi.";
+
+/** Règle officielle appliquée au drawdown (compte relié à un plan du catalogue). */
+export interface DrawdownPlanRule {
+  firmName: string;
+  planName: string;
+  phase: PropFirmPhaseRules['phase'];
+  kind: PropFirmDrawdownKind;
+  /** Solde (référentiel du compte) qui fige le seuil ; null = pas de verrouillage chiffré. */
+  locksAt: number | null;
+  lockedFloor: number | null;
+  locked: boolean;
+  /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
+  realtimeEquity: boolean;
+}
 
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -50,7 +81,12 @@ export interface AccountRuleMetrics {
     maxDrawdown: number;
     pct: number;
     breached: boolean;
+    /** `plan` : règles officielles du plan relié ; `manual` : montant et type saisis. */
+    source: 'plan' | 'manual';
+    rule: DrawdownPlanRule | null;
   } | null;
+  /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
+  drawdownUnconfirmed: boolean;
   estimated: true;
   disclaimer: string;
 }
@@ -67,19 +103,21 @@ export class AccountsService {
     userId: string,
   ): Promise<(TradingAccount & { metrics: AccountRuleMetrics })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
-    const accounts = await this.prisma.tradingAccount.findMany({
+    const rows = await this.prisma.tradingAccount.findMany({
       where: { userId },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      include: { propFirmPlan: { select: PLAN_SELECT } },
     });
-    if (accounts.length === 0) return [];
+    if (rows.length === 0) return [];
+    const accounts = rows.map(({ propFirmPlan, ...a }) => ({ account: a, plan: toRulePlan(propFirmPlan) }));
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
-    const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map((a) => a.id));
+    const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map(({ account }) => account.id));
 
-    return accounts.map((a) => ({
-      ...a,
-      metrics: this.ruleMetricsFromAgg(a, aggs.get(a.id) ?? EMPTY_RULE_AGG),
+    return accounts.map(({ account, plan }) => ({
+      ...account,
+      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan),
     }));
   }
 
@@ -97,13 +135,16 @@ export class AccountsService {
   computeRuleMetrics(
     account: RuleAccount,
     trades: RuleTrade[],
+    plan: RulePlan | null = null,
   ): AccountRuleMetrics {
-    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades));
+    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan);
   }
 
   /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
-  ruleMetricsFromAgg(account: RuleAccount, agg: RuleAgg): AccountRuleMetrics {
-    const startingBalance = account.startingBalance ?? account.accountSize ?? 0;
+  ruleMetricsFromAgg(account: RuleAccount, agg: RuleAgg, plan: RulePlan | null = null): AccountRuleMetrics {
+    const phase = plan ? phaseFor(plan, account.type) : null;
+    const startingBalance =
+      account.startingBalance ?? account.accountSize ?? (phase && plan ? phase.starting_balance ?? plan.accountSize : 0);
     const realizedPnl = agg.realized;
     const currentBalance = startingBalance + realizedPnl;
 
@@ -120,7 +161,47 @@ export class AccountsService {
         : null;
 
     let drawdown: AccountRuleMetrics['drawdown'] = null;
-    if (account.maxDrawdown != null && account.maxDrawdown > 0) {
+    let drawdownUnconfirmed = false;
+    if (phase && plan) {
+      const md = phase.max_drawdown;
+      if (md.amount == null || !(md.amount > 0)) {
+        drawdownUnconfirmed = true;
+      } else {
+        // Seuils du catalogue exprimés depuis le solde de départ de la phase : on les décale sur
+        // celui du compte (reprise du suivi en cours de route, solde saisi différent).
+        const shift = startingBalance - (phase.starting_balance ?? plan.accountSize);
+        const peakProfit =
+          md.type === 'trailing_eod' ? Math.max(0, agg.maxEodCumulative)
+          : md.type === 'trailing_intraday' ? Math.max(0, agg.maxCumulative)
+          : 0;
+        const locksAt = md.locks_at != null ? md.locks_at + shift : null;
+        const lockedFloor = md.locked_floor != null ? md.locked_floor + shift : null;
+        const locked = md.type !== 'static' && locksAt != null && startingBalance + peakProfit >= locksAt;
+        const floor = locked
+          ? lockedFloor ?? locksAt! - md.amount
+          : startingBalance + peakProfit - md.amount;
+        const margin = currentBalance - floor;
+        drawdown = {
+          type: md.type === 'static' ? DrawdownType.STATIC : DrawdownType.TRAILING,
+          floor,
+          margin,
+          maxDrawdown: md.amount,
+          pct: this.clamp01(margin / md.amount),
+          breached: margin <= 0,
+          source: 'plan',
+          rule: {
+            firmName: plan.firmName,
+            planName: plan.planName,
+            phase: phase.phase,
+            kind: md.type,
+            locksAt,
+            lockedFloor: locksAt != null ? lockedFloor ?? locksAt - md.amount : null,
+            locked,
+            realtimeEquity: md.enforced_on === 'equity_realtime',
+          },
+        };
+      }
+    } else if (account.maxDrawdown != null && account.maxDrawdown > 0) {
       // TRAILING : plancher glissant sous le plus haut solde atteint (hwm, qui part du solde de
       // départ) ; STATIC : plancher fixe depuis le solde de départ.
       const floor =
@@ -135,6 +216,8 @@ export class AccountsService {
         maxDrawdown: account.maxDrawdown,
         pct: this.clamp01(margin / account.maxDrawdown),
         breached: margin <= 0,
+        source: 'manual',
+        rule: null,
       };
     }
 
@@ -148,8 +231,9 @@ export class AccountsService {
       worstDay: agg.count ? agg.worstDay : null,
       objective,
       drawdown,
+      drawdownUnconfirmed,
       estimated: true,
-      disclaimer: RULE_DISCLAIMER,
+      disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule) : RULE_DISCLAIMER,
     };
   }
 
@@ -351,3 +435,36 @@ export class AccountsService {
     return account;
   }
 }
+
+/** Phase du plan qui s'applique au type de compte : évaluation, ou funded (sinon direct). */
+function phaseFor(plan: RulePlan, type: AccountType | undefined): PropFirmPhaseRules | null {
+  if (type === AccountType.EVALUATION) return plan.phases.find((p) => p.phase === 'evaluation') ?? null;
+  if (type === AccountType.FUNDED) {
+    return plan.phases.find((p) => p.phase === 'funded') ?? plan.phases.find((p) => p.phase === 'direct') ?? null;
+  }
+  return null;
+}
+
+function toRulePlan(
+  row: { planName: string; accountSize: number; phases: unknown; firm: { name: string } } | null,
+): RulePlan | null {
+  if (!row || !Array.isArray(row.phases)) return null;
+  return { firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize, phases: row.phases as PropFirmPhaseRules[] };
+}
+
+function planDisclaimer(rule: DrawdownPlanRule): string {
+  const kind =
+    rule.kind === 'trailing_eod' ? 'trailing sur le plus haut solde de fin de journée'
+    : rule.kind === 'trailing_intraday' ? 'trailing sur le plus haut atteint en séance'
+    : 'statique';
+  return (
+    `Drawdown calculé avec les règles officielles ${rule.firmName} · ${rule.planName} (${kind}), ` +
+    'appliquées à tes trades loggés dans MyTradingCoach.' +
+    (rule.realtimeEquity
+      ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
+      : '') +
+    (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas connus : le seuil réel peut être plus haut.' : '') +
+    ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
+  );
+}
+

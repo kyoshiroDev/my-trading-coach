@@ -9,5 +9,9 @@
  */
 import apex from './apex.json';
 import lucid from './lucid.json';
+import myfundedfutures from './myfundedfutures.json';
+import topstep from './topstep.json';
+import tradeday from './tradeday.json';
+import tradeify from './tradeify.json';
 
-export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex];
+export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday];

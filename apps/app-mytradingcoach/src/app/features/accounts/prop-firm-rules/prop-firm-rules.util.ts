@@ -5,9 +5,12 @@ import { formatMoney, type AccountType, type PropFirmPhaseRules, type PropFirmPl
  * Les textes restent courts : les précisions de la firm sont dans les `notes`, affichées au dépli.
  */
 
-/** Montant sans signe ni décimales : 2 000 $ s'écrit « $2,000 ». */
+/**
+ * Montant sans signe : « $2,000 ». Les centimes ne sont gardés que s'il y en a, pour que des bornes
+ * de paliers comme 1 499,99 / 1 500 ne s'affichent pas toutes deux « $1,500 ».
+ */
 export function amount(value: number, currency: string): string {
-  return formatMoney(value, currency, { sign: false, decimals: 0 });
+  return formatMoney(value, currency, { sign: false, decimals: Number.isInteger(value) ? 0 : 2 });
 }
 
 const PARIS = 'Europe/Paris';
@@ -152,6 +155,11 @@ export function scheduleLabel(values: readonly (number | null)[], currency: stri
   // Des payouts restent possibles au-delà du tableau : la dernière valeur vaut pour eux aussi.
   const more = maxPayouts == null || maxPayouts > values.length;
   return values.map((v, i) => `P${i + 1}${more && i === values.length - 1 ? ' et suivants' : ''} ${fmt(v)}`).join(' · ');
+}
+
+/** [0.2, 0.25, 0.3] → « P1 20 % · P2 25 % · P3 et suivants 30 % ». */
+export function pctScheduleLabel(values: readonly number[]): string {
+  return values.map((v, i) => `P${i + 1}${i === values.length - 1 ? ' et suivants' : ''} ${pctLabel(v)}`).join(' · ');
 }
 
 /** Oui / Non / non documenté, pour les règles booléennes nullables. */

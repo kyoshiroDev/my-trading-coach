@@ -474,6 +474,9 @@ export class AccountsComponent implements OnInit {
   }
 
   /** Libellé de la colonne marge : « trailing » n'est affiché que s'il s'applique. */
+  protected phaseLabel(phase: 'evaluation' | 'funded' | 'direct'): string {
+    return phase === 'evaluation' ? 'évaluation' : phase === 'funded' ? 'compte funded' : 'compte funded direct';
+  }
   protected ddLabel(a: TradingAccount): string {
     return a.metrics.drawdown?.type === 'TRAILING' ? 'Marge trailing drawdown' : 'Marge drawdown';
   }

@@ -11,7 +11,8 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AccountsService } from './accounts.service';
+import { AccountsService, type RulePlan } from './accounts.service';
+import { aggregateRuleTrades, ruleAggregatesSql } from './account-rules';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 
@@ -54,11 +55,13 @@ beforeAll(async () => {
     { label: 'Trailing', accountSize: 50000, profitTarget: 3000, maxDrawdown: 2500, drawdownType: 'TRAILING' },
     { label: 'Trailing départ', startingBalance: 25000, maxDrawdown: 1500, drawdownType: 'TRAILING' },
     { label: 'Sans règle', accountSize: 10000 },
+    // Plan du catalogue (synchronisé au démarrage de l'app) : drawdown EOD sur journées de trading CME.
+    { label: 'Plan Topstep', type: 'EVALUATION', startingBalance: 50000, propFirmPlanId: 'topstep-standard-50k' },
     { label: 'Vide', accountSize: 100000, maxDrawdown: 3000, drawdownType: 'TRAILING', profitTarget: 6000 },
   ];
   const ids: string[] = [];
   for (const c of configs) ids.push((await prisma.tradingAccount.create({ data: { userId, ...c } as never })).id);
-  const withTrades = ids.slice(0, 4);
+  const withTrades = ids.slice(0, 5);
   const t0 = Date.UTC(2025, 0, 2, 13);
   await prisma.trade.createMany({
     data: Array.from({ length: 4000 }, (_, i) => {
@@ -88,18 +91,35 @@ afterAll(async () => {
 describe('B2-03 — métriques des comptes : SQL ≡ calcul JavaScript d’avant', () => {
   it('list() égale computeRuleMetrics(trades chargés) pour chaque compte', async () => {
     const listed = await service.list(userId);
-    expect(listed).toHaveLength(5);
+    expect(listed).toHaveLength(6);
+    const row = await prisma.propFirmPlan.findUniqueOrThrow({ where: { id: 'topstep-standard-50k' }, include: { firm: true } });
+    const topstep: RulePlan = { firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize, phases: row.phases as never };
     for (const a of listed) {
       const trades = await prisma.trade.findMany({
         where: { userId, accountId: a.id, pnl: { not: null } },
         select: { pnl: true, commission: true, tradedAt: true },
         orderBy: { tradedAt: 'asc' },
       });
-      close(a.metrics, service.computeRuleMetrics(a, trades), a.label);
+      close(a.metrics, service.computeRuleMetrics(a, trades, a.propFirmPlanId ? topstep : null), a.label);
     }
+    const plan = listed.find((a) => a.label === 'Plan Topstep')!;
+    expect(plan.metrics.drawdown).toMatchObject({ source: 'plan', maxDrawdown: 2000, rule: { kind: 'trailing_eod', phase: 'evaluation' } });
     const empty = listed.find((a) => a.label === 'Vide')!;
     expect(empty.metrics).toMatchObject({ tradesCount: 0, winRate: null, bestDay: null, worstDay: null, realizedPnl: 0 });
     const trailing = listed.find((a) => a.label === 'Trailing')!;
     expect(trailing.metrics.tradesCount).toBeGreaterThan(500); // le jeu exerce vraiment les comptes
+  });
+
+  it('agrégats SQL ≡ étalon JS, dont le plus haut de fin de journée de trading (passage à l\'heure d\'été inclus)', async () => {
+    const listed = await service.list(userId);
+    const sql = await ruleAggregatesSql(prisma, userId, listed.map((a) => a.id));
+    for (const a of listed) {
+      const trades = await prisma.trade.findMany({
+        where: { userId, accountId: a.id, pnl: { not: null } },
+        select: { pnl: true, commission: true, tradedAt: true },
+      });
+      if (trades.length === 0) continue;
+      close(sql.get(a.id), aggregateRuleTrades(trades), a.label);
+    }
   });
 });

@@ -11,8 +11,8 @@ function plan(p: Partial<PropFirmPlanSummary> & { id: string }): PropFirmPlanSum
     configuration: null,
     needsReview: false,
     phases: [
-      { phase: 'evaluation', profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
-      { phase: 'funded', profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: 1200 },
+      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
+      { phase: 'funded', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: 1200 },
     ],
     ...p,
   };
@@ -23,7 +23,7 @@ const daily = (eod: boolean, dll: boolean, size = 50_000) =>
     id: `lucid-daily-${dll ? 'dll-' : ''}${eod ? 'eod' : 'intraday'}-${size / 1000}k`,
     planName: 'LucidDaily',
     accountSize: size,
-    configuration: { dailyLossLimit: dll, evalDrawdown: eod ? 'eod' : 'intraday' },
+    configuration: { dailyLossLimit: dll, evalDrawdown: eod ? 'eod' : 'intraday', payoutPath: null, addon: null },
   });
 
 const lucid: PropFirmCatalogFirm = {
@@ -61,6 +61,24 @@ describe('programsOf', () => {
 });
 
 describe('libellés', () => {
+  it('programLabel : parcours de payout et option payante', () => {
+    expect(programLabel(plan({ id: 'topstep-consistency-dll-50k', planName: 'Trading Combine',
+      configuration: { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'consistency', addon: null } })))
+      .toBe('Trading Combine · avec DLL · payout Consistency');
+    expect(programLabel(plan({ id: 'tradeify-select-daily-c50-50k', planName: 'Select',
+      configuration: { dailyLossLimit: true, evalDrawdown: null, payoutPath: 'daily', addon: 'consistency 50 %' } })))
+      .toBe('Select · avec DLL · payout Daily · option consistency 50 %');
+  });
+
+  it('funded qui démarre à 0 $ : le solde de départ pré-rempli suit la phase', () => {
+    const xfa = plan({ id: 'topstep-standard-50k', phases: [
+      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
+      { phase: 'funded', startingBalance: 0, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
+    ] });
+    expect(rulesFromPlan(xfa, 'FUNDED')).toMatchObject({ accountSize: 50_000, startingBalance: 0 });
+    expect(rulesFromPlan(xfa, 'EVALUATION')).toMatchObject({ startingBalance: 50_000 });
+  });
+
   it('programLabel sans options = nom seul', () => {
     expect(programLabel(plan({ id: 'apex-eod-50k', planName: 'EOD Trail' }))).toBe('EOD Trail');
   });
@@ -101,7 +119,7 @@ describe('phaseFor / rulesFromPlan', () => {
   it('plan direct : la phase direct sert de funded', () => {
     const direct = plan({
       id: 'lucid-direct-50k',
-      phases: [{ phase: 'direct', profitTarget: null, maxDrawdown: 2500, drawdownType: 'static', dailyLossLimit: null }],
+      phases: [{ phase: 'direct', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2500, drawdownType: 'static', dailyLossLimit: null }],
     });
     expect(phaseFor(direct, 'FUNDED')?.phase).toBe('direct');
     expect(rulesFromPlan(direct, 'FUNDED')).toMatchObject({ maxDrawdown: 2500, drawdownType: 'STATIC' });

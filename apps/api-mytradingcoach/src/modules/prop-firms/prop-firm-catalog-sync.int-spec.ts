@@ -34,8 +34,9 @@ afterAll(async () => {
 describe('PropFirmCatalogSyncService (base réelle)', () => {
   it('le démarrage a déjà aligné la base : un second passage n’écrit rien', async () => {
     expect(await service.sync()).toEqual({ status: 'unchanged' });
-    expect(await prisma.propFirm.count({ where: { id: { in: ['lucid', 'apex'] } } })).toBe(2);
-    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: ['lucid', 'apex'] }, active: true } })).toBe(54);
+    const firmIds = ['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday'];
+    expect(await prisma.propFirm.count({ where: { id: { in: firmIds } } })).toBe(6);
+    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: firmIds }, active: true } })).toBe(116);
   });
 
   it('les règles relues depuis le Json repassent le schéma Zod', async () => {

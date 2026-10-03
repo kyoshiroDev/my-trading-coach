@@ -22,6 +22,7 @@ import {
   enforcementLabel,
   lockLabel,
   pctLabel,
+  pctScheduleLabel,
   scheduleLabel,
   tierRange,
   timeLabel,
@@ -48,7 +49,7 @@ export class PropFirmRulesComponent {
   };
   protected readonly PHASE_LABELS = PHASE_LABELS;
   protected readonly fmt = {
-    amount, breachLabel, contractsLabel, drawdownKindLabel, enforcementLabel, lockLabel, pctLabel, scheduleLabel, tierRange, timeLabel, yesNo,
+    amount, breachLabel, contractsLabel, drawdownKindLabel, enforcementLabel, lockLabel, pctLabel, pctScheduleLabel, scheduleLabel, tierRange, timeLabel, yesNo,
   };
 
   /** Valeur renseignée (ni null ni absente) : les templates n'acceptent pas `!= null`. */

@@ -36,6 +36,7 @@ function acct(
       worstDay: null,
       objective: null,
       drawdown: null,
+      drawdownUnconfirmed: false,
       estimated: true,
       disclaimer: 'estimé',
       ...(p.metrics ?? {}),
@@ -104,7 +105,7 @@ describe('AccountsComponent — logique', () => {
   });
 
   it('compte « à surveiller » les comptes dont la marge drawdown est dépassée ou ≤ 25 %', () => {
-    const dd = (pct: number, breached: boolean) => ({ type: 'TRAILING' as const, floor: 0, margin: 0, maxDrawdown: 2500, pct, breached });
+    const dd = (pct: number, breached: boolean) => ({ type: 'TRAILING' as const, floor: 0, margin: 0, maxDrawdown: 2500, pct, breached, source: 'manual' as const, rule: null });
     const c = setup({
       premium: true,
       accounts: [
@@ -151,7 +152,7 @@ describe('AccountsComponent — logique', () => {
 
   it('couleur marge drawdown : rouge si critique, vert si confortable', () => {
     const c = setup({ premium: true, accounts: [] });
-    const mk = (pct: number, breached: boolean) => acct({ id: 'x', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: { type: 'TRAILING', floor: 0, margin: 0, maxDrawdown: 2500, pct, breached }, estimated: true, disclaimer: '' } });
+    const mk = (pct: number, breached: boolean) => acct({ id: 'x', metrics: { startingBalance: 0, realizedPnl: 0, currentBalance: 0, tradesCount: 0, objective: null, drawdown: { type: 'TRAILING', floor: 0, margin: 0, maxDrawdown: 2500, pct, breached, source: 'manual', rule: null }, estimated: true, disclaimer: '' } });
     const ddColor = c['ddColor'] as (x: TradingAccount) => string;
     expect(ddColor(mk(0.8, false))).toBe('var(--green)');
     expect(ddColor(mk(0.4, false))).toBe('var(--yellow)');

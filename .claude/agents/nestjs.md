@@ -1224,6 +1224,21 @@ conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − co
 **signée, sans arrondi** (une commission négative augmente le solde), alors que le win rate et
 tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
 `account-rules-sql.int-spec.ts`.
+
+### Drawdown selon le plan prop firm relié (2026-10-03)
+
+Compte relié à un plan du catalogue (`propFirmPlanId`) **et** de type EVALUATION (phase
+`evaluation`) ou FUNDED (`funded`, sinon `direct`) : `ruleMetricsFromAgg(compte, agg, plan)`
+prend montant, type, verrouillage et solde de départ dans la phase, **pas** la saisie manuelle.
+- `trailing_eod` → plus haut P&L de fin de **journée de trading CME** (`maxEodCumulative`,
+  `tradingDay()` : date de « heure de Chicago + 7 h », 17:00 CT = 18:00 ET ; même règle en SQL).
+  `trailing_intraday` → plus haut après chaque trade (`maxCumulative`, pics en position inconnus).
+- `locks_at` / `locked_floor` décalés de `solde du compte − starting_balance de la phase`.
+  `locks_at` null (verrouillage déclenché par un payout) → le seuil continue de suivre.
+- Montant null → `drawdown: null` + `drawdownUnconfirmed: true` (jamais de chiffre inventé).
+- `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
+  (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
+- Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).
 ### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
 
 `GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
