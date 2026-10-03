@@ -383,3 +383,18 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > **Aucune donnée personnelle** (ni IP, ni identifiant, ni lien User) : c'est la condition de
 > l'exemption CNIL, ne jamais y ajouter de colonne identifiante. `source = ''` = direct (pas NULL,
 > sinon l'unique ne déduplique pas). Écriture uniquement par `INSERT … ON CONFLICT` (PublicService).
+
+## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
+
+Migration `20261003160000_b2_index_cleanup` :
+- **Ajoutés** : `Trade(accountId, tradedAt)` (stats filtrées par compte et période, B2-01 à 03),
+  `User(isDemo, lastSeenAt)` (utilisateurs actifs hors démo), `User(createdAt)` (inscriptions).
+- **Supprimés car redondants** : `Trade(accountId)` (préfixe du nouvel index),
+  `DailyRecap(userId, date)`, `UserDailyActivity(userId, date)`, `EcoCalendarCache(date)`,
+  `MetricsSnapshot(date)` (identiques à leur contrainte unique), `EcoAnalysisCache(date)`
+  (préfixe de l'unique `(date, assetsKey)`).
+- Règle : **pas de `@@index` qui duplique un `@@unique` / `@unique`** (Postgres crée déjà un index
+  pour l'unicité) ni le préfixe d'un autre index. Sur une table > 1 M lignes, créer l'index à la
+  main en `CREATE INDEX CONCURRENTLY` (hors transaction), puis migration vide qui le constate.
+- Avant un `DROP INDEX` en migration : vérifier sa présence sous ce nom exact sur prod, beta et dev
+  (un index absent fait échouer la migration au déploiement).
