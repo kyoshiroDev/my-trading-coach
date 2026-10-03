@@ -12,6 +12,7 @@ import * as compression from 'compression';
 import { AppModule } from './app/app.module';
 import { checkEnv } from './config/env';
 import { webConcurrency } from './config/web-concurrency';
+import { appRole, runsCrons, runsQueueProcessors } from './config/app-role';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 import { applyKeepAlive } from './config/http-keepalive';
 import { configureBodyParsers } from './config/body-parsers';
@@ -102,7 +103,10 @@ async function bootstrap() {
   await app.listen(port);
   // Keep-alive plus long que celui de Traefik (90 s) : sinon 502 sporadiques sous charge (#301).
   applyKeepAlive(app.getHttpServer());
-  logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
+  logger.log(
+    `Worker ${process.pid} running on: http://localhost:${port}/api ` +
+      `[APP_ROLE=${appRole()} · crons ${runsCrons() ? 'oui' : 'non'} · files ${runsQueueProcessors() ? 'oui' : 'non'}]`,
+  );
 }
 
 // Clustering uniquement en production : en dev, process unique pour le debug
@@ -110,7 +114,7 @@ if (cluster.isPrimary && process.env['NODE_ENV'] === 'production') {
   const numWorkers = webConcurrency(process.env['WEB_CONCURRENCY'], availableParallelism());
   const heapMb = Math.round(getHeapStatistics().heap_size_limit / 1024 / 1024);
   logger.log(
-    `Primary ${process.pid} starting ${numWorkers} workers (WEB_CONCURRENCY=${process.env['WEB_CONCURRENCY'] ?? 'défaut'}, ` +
+    `Primary ${process.pid} [APP_ROLE=${appRole()}] starting ${numWorkers} workers (WEB_CONCURRENCY=${process.env['WEB_CONCURRENCY'] ?? 'défaut'}, ` +
       `${availableParallelism()} cœurs, plafond de tas ${heapMb} Mo par process)...`,
   );
 

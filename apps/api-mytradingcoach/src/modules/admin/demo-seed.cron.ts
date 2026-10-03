@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DemoSeedService } from './demo-seed.service';
 import { DEMO_EMAIL } from './demo-seed';
+import { runsCrons } from '../../config/app-role';
 
 /**
  * Garantit l'invariant vitrine : **le compte démo n'est jamais vide et ses trades
@@ -42,7 +43,7 @@ export class DemoSeedCron implements OnModuleInit {
    * concurrentes sur le même user.
    */
   async onModuleInit(): Promise<void> {
-    if (process.env['IS_CRON_WORKER'] !== 'true') return;
+    if (!runsCrons()) return;
     try {
       if (await this.isStale()) await this.reseed('boot (démo vide ou périmée)');
     } catch (e) {

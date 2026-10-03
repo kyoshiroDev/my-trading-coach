@@ -1269,3 +1269,20 @@ l'ajouter dans `configureBodyParsers`, pas `rawBody: true` global.
 (`PUBLIC_STATS_CACHE_CONTROL`). Aucun middleware global ne pose de `Cache-Control` (vérifié :
 Helmet ne le fait pas) ; verrouillé par `public-stats-cache.int-spec.ts`. Une donnée publique et
 peu changeante → même traitement ; jamais sur une route authentifiée ou personnelle.
+
+### Rôle du process : APP_ROLE (SCA-B6-01, 2026-10-03)
+
+`config/app-role.ts` — `APP_ROLE=web|worker|all` (absent → `all`, comportement historique ;
+valeur inconnue → refus au boot).
+- `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
+  aucun processeur BullMQ** : les files sont alimentées, pas consommées.
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`).
+- Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
+  doit donc jamais tourner dans le web.
+
+Règles :
+- Nouveau cron / code « une seule fois au boot » → garde `runsCrons()` (jamais
+  `process.env['IS_CRON_WORKER']` en direct).
+- Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
+  et l'ajouter à `app-role-wiring.spec.ts`.
+- Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
