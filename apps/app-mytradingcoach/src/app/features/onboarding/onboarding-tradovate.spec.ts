@@ -203,7 +203,7 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
     connections.set([{
       accountId: 'acc-1', status: 'CONNECTED', externalAccountId: null, externalAccountName: null,
       externalEnv: null, needsAccountSelection: true, lastSyncAt: null, lastSyncError: null,
-      tradesImported: 0, connectedAt: '2026-09-12T00:00:00Z',
+      tradesImported: 0, brokerTradesCount: 0, connectedAt: '2026-09-12T00:00:00Z',
       availableAccounts: [{ id: '1', name: 'LIVE-1', env: 'live' }, { id: '2', name: 'DEMO-2', env: 'demo' }],
     }]);
     fixture.detectChanges();

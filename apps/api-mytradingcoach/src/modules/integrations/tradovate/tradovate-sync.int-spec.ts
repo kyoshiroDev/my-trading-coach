@@ -17,6 +17,7 @@ import { BrokerConnectionStatus } from '@prisma/client';
 import { createIntegrationApp } from '@api/test/integration-app.helper';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
+import { AuthUserCacheService } from '../../infra/auth-user-cache.service';
 
 const PREFIX = 'int-tradovate-';
 const uid = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
@@ -611,6 +612,9 @@ describe('Tradovate — synchro', () => {
     const account = await createAccount(userId, 'Compte');
     await connect(token, account.id);
     await prisma.user.update({ where: { id: userId }, data: { isDemo: true } });
+    // Écriture directe d'un champ relu par le JWT : invalider le cache utilisateur (SCA-B3-01),
+    // comme doit le faire tout code qui modifie plan, rôle, isDemo…
+    await app.get(AuthUserCacheService).invalidate(userId);
 
     expect((await api(token, '/connections')).status).toBe(200);
     expect((await api(token, `/accounts/${account.id}/sync`, 'POST')).status).toBe(403);
@@ -632,6 +636,47 @@ describe('Tradovate — synchro', () => {
     const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
     expect(res.status).toBe(404);
     expect(((await res.json()) as { code: string }).code).toBe('TRADOVATE_NOT_CONNECTED');
+  });
+
+  it('déconnexion avec suppression : seuls les trades importés de CE compte partent, saisies et CSV restent', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Mauvais compte');
+    const other = await createAccount(userId, 'Autre compte');
+    await connect(token, account.id);
+    expect(await prisma.trade.count({ where: { accountId: account.id, source: 'BROKER_SYNC' } })).toBe(3);
+
+    // Copies d'un trade synchronisé : une saisie manuelle et un import CSV sur le MÊME compte,
+    // plus un trade broker sur un AUTRE compte du user. Aucun ne doit être touché.
+    const { id: _id, createdAt: _c, importHash: _h, ...tpl } = await prisma.trade.findFirstOrThrow({
+      where: { accountId: account.id },
+    });
+    const manual = await prisma.trade.create({ data: { ...tpl, source: 'MANUAL' } });
+    const csv = await prisma.trade.create({ data: { ...tpl, source: 'CSV_IMPORT' } });
+    const history = await prisma.trade.create({ data: { ...tpl, source: 'BROKER_HISTORY' } });
+    const elsewhere = await prisma.trade.create({ data: { ...tpl, accountId: other.id, source: 'BROKER_SYNC' } });
+
+    // Le nombre affiché AVANT confirmation : 3 synchronisés + 1 historique.
+    const list = (await (await api(token, '/connections')).json()) as { data: { accountId: string; brokerTradesCount: number }[] };
+    expect(list.data.find((c) => c.accountId === account.id)?.brokerTradesCount).toBe(4);
+
+    expect((await api(token, `/accounts/${account.id}?deleteTrades=oui`, 'DELETE')).status).toBe(400);
+
+    const res = await api(token, `/accounts/${account.id}?deleteTrades=true`, 'DELETE');
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { data: unknown }).data).toEqual({ disconnected: true, tradesDeleted: 4 });
+    expect(await prisma.brokerConnection.count({ where: { accountId: account.id } })).toBe(0);
+    const left = await prisma.trade.findMany({ where: { userId }, select: { id: true } });
+    expect(left.map((t) => t.id).sort()).toEqual([manual.id, csv.id, elsewhere.id].sort());
+    expect(left.some((t) => t.id === history.id)).toBe(false);
+  });
+
+  it('déconnexion sans suppression (deleteTrades=false) : comportement par défaut, trades conservés', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    await connect(token, account.id);
+    const res = await api(token, `/accounts/${account.id}?deleteTrades=false`, 'DELETE');
+    expect(((await res.json()) as { data: unknown }).data).toEqual({ disconnected: true, tradesDeleted: 0 });
+    expect(await prisma.trade.count({ where: { userId } })).toBe(3);
   });
 
   it('deux comptes MTC, deux connexions indépendantes (Apex + Lucid)', async () => {

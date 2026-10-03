@@ -122,11 +122,11 @@ PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │
 POST   /api/admin/ambassadors/promote|revoke ADMIN                          │
 GET    /api/admin/referral/overview    ADMIN                                ┘
 
-GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
+GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token) · `brokerTradesCount` = trades broker ENCORE présents (≠ `tradesImported`, cumul jamais décrémenté)
 POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
 POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
 POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
-DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
+DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés) · `?deleteTrades=true` → supprime AUSSI les trades BROKER_SYNC/BROKER_HISTORY de ce compte (jamais MANUAL/CSV_IMPORT) → { disconnected, tradesDeleted } ; suppression hors transaction, en échec → connexion quand même coupée, `tradesDeleted: null` + log
 GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
 GET    /api/health
@@ -1289,3 +1289,28 @@ flottante). SQL : `round((pnl - abs(coalesce(commission,0)))::text::numeric, 2)`
 flottant). Vérifié identique sur 200 000 paires aléatoires. L'ancien `toFixed(2)` arrondissait selon
 la valeur binaire (10,575 → 10,57) : 7 trades sur 979 en prod changent d'1 centime.
 Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (demi-centimes).
+
+### Présence et activité : écritures bornées (SCA-B3-02, 2026-10-03)
+
+Deux intercepteurs tournent à CHAQUE requête authentifiée ; ils ne doivent jamais coûter un
+aller-retour par requête :
+- `PresenceInterceptor` : filtre local par worker (60 s) puis `SET presence:<id> NX EX 60` dans
+  Redis → **une seule écriture de `lastSeenAt` par minute et par utilisateur, tous workers
+  confondus** (avant : jusqu'à 1/min par worker). Redis en panne → écriture limitée par le filtre local.
+- `ActivityTrackingService.markActive` : filtre local à la journée (plus d'appel Redis à chaque
+  requête) ; marqué seulement après succès ; si l'écriture en base échoue, la clé Redis du jour est
+  retirée pour que la journée soit retentée.
+
+### Appels externes : délai maximal et single-flight (SCA-B3-04, 2026-10-03)
+
+- **Tout `fetch` vers un service tiers passe par `fetchWithTimeout`** (`common/utils/fetch-timeout.ts`,
+  5 s par défaut) : sans délai, un fournisseur muet fait attendre la requête indéfiniment. Fait pour
+  market-data (Yahoo, Binance, FMP), eco-calendar (FMP), discord. **Reste à faire** (hors B3-04) :
+  `integrations/tradovate/*` et `admin/anthropic-cost.service.ts`.
+- **Donnée commune mise en cache → `singleFlight`** (`common/utils/single-flight.ts`) : sur une clé
+  froide, une seule requête (tous workers) appelle le fournisseur, les autres attendent le cache
+  (verrou `sf:<clé>`, `SET NX PX 5000`). Fait pour `getMarketContext`, `getLivePrice` et la
+  traduction IA d'une news (`ensureNewsTextFr`, SCA-B3-05 : verrou 30 s). Le `compute` doit remplir
+  le cache lui-même ; s'il échoue (verrou relâché, cache vide), les autres réagissent aussitôt :
+  `onTimeout` s'il est fourni (**appel payant : ne pas relancer**, renvoyer un repli), sinon ils
+  recalculent.

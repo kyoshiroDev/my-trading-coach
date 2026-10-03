@@ -140,6 +140,8 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       availableAccounts: [{ id: '40570856', name: 'PAAPEX136790000011', env: 'demo', userId: '699523' }],
     } as unknown as BrokerConnection;
     const prisma = {
+      // Compteur des trades importés renvoyé avec la vue (aucun ici).
+      trade: { groupBy: vi.fn().mockResolvedValue([]) },
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
         findMany: vi.fn().mockResolvedValue([]), // aucun autre utilisateur sur ce compte

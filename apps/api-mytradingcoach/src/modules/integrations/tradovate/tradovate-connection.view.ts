@@ -15,6 +15,12 @@ export interface TradovateConnectionView {
   lastSyncAt: Date | null;
   lastSyncError: string | null;
   tradesImported: number;
+  /**
+   * Trades de ce compte importés par le broker ET encore présents (BROKER_SYNC / BROKER_HISTORY).
+   * Distinct de `tradesImported` (cumul jamais décrémenté) : c'est le nombre exact que
+   * supprimerait une déconnexion « avec suppression des trades importés ».
+   */
+  brokerTradesCount: number;
   connectedAt: Date;
 }
 
@@ -42,7 +48,7 @@ export function availableAccountsOf(conn: BrokerConnection): ExternalAccountRef[
     : [];
 }
 
-export function toConnectionView(conn: BrokerConnection): TradovateConnectionView {
+export function toConnectionView(conn: BrokerConnection, brokerTradesCount = 0): TradovateConnectionView {
   const availableAccounts = availableAccountsOf(conn);
   return {
     accountId: conn.accountId,
@@ -58,6 +64,7 @@ export function toConnectionView(conn: BrokerConnection): TradovateConnectionVie
     lastSyncAt: conn.lastSyncAt,
     lastSyncError: conn.lastSyncError,
     tradesImported: conn.tradesImported,
+    brokerTradesCount,
     connectedAt: conn.createdAt,
   };
 }

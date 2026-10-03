@@ -56,3 +56,32 @@ describe('ActivityTrackingService', () => {
     await expect(service.markActive('user-1')).resolves.toBeUndefined();
   });
 });
+
+describe('ActivityTrackingService — filtre local et reprise (SCA-B3-02)', () => {
+  it('après un premier comptage, plus aucun appel Redis du jour pour cet utilisateur', async () => {
+    const set = vi.fn().mockResolvedValue('OK');
+    const upsert = vi.fn().mockResolvedValue({});
+    const svc = new ActivityTrackingService(
+      { userDailyActivity: { upsert } } as unknown as PrismaService,
+      { client: { set } } as unknown as RedisService,
+    );
+    for (let i = 0; i < 20; i++) await svc.markActive('u1');
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('écriture en base en échec : clé du jour retirée, la journée est retentée ensuite', async () => {
+    const keys = new Set<string>();
+    const set = vi.fn(async (k: string) => (keys.has(k) ? null : (keys.add(k), 'OK')));
+    const del = vi.fn(async (k: string) => (keys.delete(k) ? 1 : 0));
+    const upsert = vi.fn().mockRejectedValueOnce(new Error('pool exhausted')).mockResolvedValueOnce({});
+    const svc = new ActivityTrackingService(
+      { userDailyActivity: { upsert } } as unknown as PrismaService,
+      { client: { set, del } } as unknown as RedisService,
+    );
+    await svc.markActive('u1'); // échec avalé
+    await svc.markActive('u1'); // retenté
+    expect(del).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledTimes(2);
+  });
+});

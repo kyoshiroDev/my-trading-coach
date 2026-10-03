@@ -34,6 +34,13 @@ import { recomputeBehavioralGrades } from './behavioral-grades';
 export type { JournalStats } from './journal-stats.util';
 export type { UserAssetItem } from './user-assets.service';
 
+/**
+ * Trades importés par un broker connecté (synchro live + rattrapage d'historique). Seuls eux
+ * peuvent être supprimés en lot à la déconnexion : `MANUAL` et `CSV_IMPORT` sont des saisies de
+ * l'utilisateur, jamais touchées.
+ */
+export const BROKER_TRADE_SOURCES: TradeSource[] = [TradeSource.BROKER_SYNC, TradeSource.BROKER_HISTORY];
+
 /** Violation d'unicité Prisma (P2002) : ici, un import concurrent a déjà écrit ce trade. */
 function isUniqueConstraintError(err: unknown): boolean {
   return (
@@ -433,6 +440,23 @@ export class TradesService {
     await this.analyticsService.invalidateUserCache(userId);
     // La suppression modifie les médianes du compte → recalcul comportemental.
     if (existing.accountId) await this.recomputeBehavioralGrades(existing.accountId);
+  }
+
+  /**
+   * Supprime les trades importés par le broker sur CE compte (cf. BROKER_TRADE_SOURCES), à la
+   * demande explicite de l'utilisateur qui déconnecte un compte broker branché par erreur.
+   * Le `userId` dans le `where` garantit qu'on ne touche que ses trades (anti-IDOR).
+   */
+  async removeBrokerImported(userId: string, accountId: string): Promise<number> {
+    const { count } = await this.prisma.trade.deleteMany({
+      where: { userId, accountId, source: { in: BROKER_TRADE_SOURCES } },
+    });
+    if (count > 0) {
+      await this.analyticsService.invalidateUserCache(userId);
+      // Les médianes du compte changent → recalcul comportemental (cf. remove).
+      await this.recomputeBehavioralGrades(accountId);
+    }
+    return count;
   }
 
   /**

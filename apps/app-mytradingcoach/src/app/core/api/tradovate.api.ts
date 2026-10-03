@@ -25,6 +25,8 @@ export interface TradovateConnection {
   lastSyncAt: string | null;
   lastSyncError: string | null;
   tradesImported: number;
+  /** Trades importés par Tradovate ENCORE présents sur ce compte (ce que supprimerait la déconnexion). */
+  brokerTradesCount: number;
   connectedAt: string;
 }
 
@@ -87,7 +89,18 @@ export class TradovateApi {
     return this.http.get<{ data: unknown }>(`${this.base}/accounts/${accountId}/balance`);
   }
 
-  disconnect(accountId: string): Observable<{ data: { disconnected: true } }> {
-    return this.http.delete<{ data: { disconnected: true } }>(`${this.base}/accounts/${accountId}`);
+  /**
+   * `deleteTrades` → supprime aussi les trades importés par Tradovate sur ce compte (jamais les
+   * saisies manuelles ni les imports CSV). `tradesDeleted: null` = connexion coupée mais
+   * suppression échouée.
+   */
+  disconnect(
+    accountId: string,
+    deleteTrades = false,
+  ): Observable<{ data: { disconnected: true; tradesDeleted: number | null } }> {
+    return this.http.delete<{ data: { disconnected: true; tradesDeleted: number | null } }>(
+      `${this.base}/accounts/${accountId}`,
+      deleteTrades ? { params: { deleteTrades: 'true' } } : {},
+    );
   }
 }

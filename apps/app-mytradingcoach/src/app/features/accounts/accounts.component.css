@@ -541,6 +541,11 @@
 .tv-btn .spin { animation: tv-spin 0.9s linear infinite; }
 @keyframes tv-spin { to { transform: rotate(360deg); } }
 
+/* Choix garder / supprimer à la déconnexion : texte au-dessus, actions côte à côte. */
+.tv-disconnect-choice { flex-direction: column; align-items: flex-start; gap: 6px; }
+.tv-disconnect-choice b { color: var(--text-2); }
+.tv-choice-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
 .tv-feedback { flex-direction: column; align-items: flex-start; gap: 3px; }
 .tv-fb { font-size: 11.5px; color: var(--text-2); line-height: 1.45; }
 .tv-fb.warn { color: var(--yellow); }
