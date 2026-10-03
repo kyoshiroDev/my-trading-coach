@@ -78,6 +78,7 @@ import {
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
 import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
 interface AccountFormState {
@@ -93,6 +94,8 @@ interface AccountFormState {
   status: AccountStatus;
   propFirmPlanId: string | null;
   platform: string | null;
+  /** `AAAA-MM-JJ` (champ date), null = aucun payout reçu. */
+  lastPayoutAt: string | null;
 }
 
 function emptyForm(): AccountFormState {
@@ -109,6 +112,7 @@ function emptyForm(): AccountFormState {
     status: 'ACTIVE',
     propFirmPlanId: null,
     platform: null,
+    lastPayoutAt: null,
   };
 }
 
@@ -283,6 +287,9 @@ export class AccountsComponent implements OnInit {
     return sel?.plan.platformDependent ?? [];
   });
   protected readonly platformLabel = platformLabel;
+  protected readonly progressTitle = progressTitle;
+  protected readonly requirementLabel = requirementLabel;
+
   /** `2026-10-01` → « 01/10 » (date de séance, sans fuseau : c'est une date, pas un instant). */
   protected sessionDate(day: string | null): string {
     return day ? `${day.slice(8, 10)}/${day.slice(5, 7)}` : '';
@@ -637,6 +644,7 @@ export class AccountsComponent implements OnInit {
       status: a.status,
       propFirmPlanId: a.propFirmPlanId,
       platform: a.platform,
+      lastPayoutAt: a.lastPayoutAt ? a.lastPayoutAt.slice(0, 10) : null,
     });
     this.firmChoice.set(this.startFirmOf(a));
     this.loadCatalog();
@@ -758,6 +766,8 @@ export class AccountsComponent implements OnInit {
       drawdownType: f.drawdownType,
       propFirmPlanId: propFirm ? f.propFirmPlanId : null,
       platform: propFirm && f.propFirmPlanId ? f.platform : null,
+      // Le cycle de payout ne concerne qu'un compte funded relié à un plan.
+      lastPayoutAt: f.type === 'FUNDED' && f.propFirmPlanId ? f.lastPayoutAt || null : null,
     };
     this.saving.set(true);
     const id = this.editingId();

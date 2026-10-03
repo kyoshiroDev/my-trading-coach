@@ -413,6 +413,31 @@
               } @else if (a.metrics.drawdownUnconfirmed) {
                 <p class="dd-basis" data-testid="dd-basis">Montant de drawdown <b>non confirmé</b> par la firm pour ce plan : aucune marge calculée.</p>
               }
+              @if (a.metrics.progress; as pg) {
+                <div class="acct-progress" [class.is-done]="pg.done" [attr.data-testid]="'account-progress-' + a.id">
+                  <p class="pg-title">{{ progressTitle(pg, a.currency) }}</p>
+                  <ul class="pg-reqs">
+                    @for (r of pg.requirements; track r.key) {
+                      <li [class.is-met]="r.met" [attr.data-req]="r.key">
+                        <span class="pg-mark" aria-hidden="true">{{ r.met ? '✓' : '○' }}</span>
+                        {{ requirementLabel(r, a.currency) }}
+                      </li>
+                    }
+                  </ul>
+                  @if (pg.kind === 'payout') {
+                    <p class="pg-note">
+                      @if (pg.cycleAfter) {
+                        Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}.
+                      } @else {
+                        Cycle compté depuis le début du compte : si tu as déjà reçu un payout, indique sa date via « Modifier ».
+                      }
+                    </p>
+                  }
+                  @if (pg.unconfirmed) {
+                    <p class="pg-note pg-warn">Certaines règles de ce plan sont à revoir au catalogue : progression estimée.</p>
+                  }
+                </div>
+              }
               @if (isPlanDetail(rules)) {
                 <mtc-prop-firm-rules [plan]="rules" [accountType]="a.type" />
               } @else if (rules === 'error') {
@@ -505,6 +530,14 @@
               [preferredSize]="form().accountSize"
               (firmChange)="onFirmChoice($event)"
               (planChange)="onPlanChoice($event)" />
+            @if (form().type === 'FUNDED' && form().propFirmPlanId) {
+              <label class="fld">
+                <span class="fld-lbl">Dernier payout reçu le</span>
+                <input class="inp" type="date" data-testid="account-last-payout" [ngModel]="form().lastPayoutAt"
+                       (ngModelChange)="patch({ lastPayoutAt: $event || null })" />
+                <span class="fld-hint">Le cycle de payout repart de cette date. Laisse vide si tu n'en as jamais reçu.</span>
+              </label>
+            }
             @if (formPlatformChoices().length) {
               <label class="fld">
                 <span class="fld-lbl">Plateforme de trading</span>

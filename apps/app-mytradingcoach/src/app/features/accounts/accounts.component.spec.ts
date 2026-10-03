@@ -25,6 +25,7 @@ function acct(
     drawdownType: p.drawdownType ?? 'TRAILING',
     propFirmPlanId: p.propFirmPlanId ?? null,
     platform: p.platform ?? null,
+    lastPayoutAt: p.lastPayoutAt ?? null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
@@ -37,7 +38,7 @@ function acct(
       worstDay: null,
       objective: null,
       drawdown: null,
-      drawdownUnconfirmed: false, broker: null,
+      drawdownUnconfirmed: false, progress: null, broker: null,
       estimated: true,
       disclaimer: 'estimé',
       ...(p.metrics ?? {}),

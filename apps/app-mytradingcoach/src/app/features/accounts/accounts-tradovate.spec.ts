@@ -26,12 +26,12 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
   return {
     id, label, broker: null, type: 'EVALUATION', status: 'ACTIVE',
     accountSize: null, currency: 'USD', startingBalance: 50000,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null,
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null, lastPayoutAt: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };
@@ -423,6 +423,36 @@ describe('Mes comptes — plus haut de clôture', () => {
     const { q, click } = setup({ accounts: [withPeak({})] });
     click('account-expand-a');
     expect(q('dd-peak')!.textContent).toContain('reconstitué depuis tes trades');
+  });
+});
+
+describe('Mes comptes — progression objectif / payout', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withProgress = (progress: NonNullable<TradingAccount['metrics']['progress']>) =>
+    acct('a', 'Lucid 50k', { propFirmPlanId: 'lucid-flex-50k', metrics: { ...acct('a', '').metrics, progress } });
+
+  it('payout : exigences, cycle compté depuis le début et invitation à saisir le dernier payout', () => {
+    const { q, click } = setup({ accounts: [withProgress({
+      kind: 'payout', remaining: 0, done: false, cycleAfter: null, unconfirmed: false,
+      requirements: [{ key: 'winning_days', met: false, current: 3, required: 5, unit: 'days', threshold: 150 }],
+    })] });
+    click('account-expand-a');
+    const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('Jours ≥ $150 : 3 / 5');
+    expect(t).toContain('depuis le début du compte');
+  });
+
+  it('objectif atteint : bloc marqué comme fait', () => {
+    const { q, click } = setup({ accounts: [withProgress({
+      kind: 'objective', remaining: 0, done: true, cycleAfter: null, unconfirmed: true,
+      requirements: [{ key: 'profit', met: true, current: 3_200, required: 3_000, unit: 'usd' }],
+    })] });
+    click('account-expand-a');
+    const block = q('account-progress-a')!;
+    expect(block.classList.contains('is-done')).toBe(true);
+    expect(block.textContent).toContain('Objectif atteint');
+    expect(block.textContent).toContain('à revoir');
   });
 });
 

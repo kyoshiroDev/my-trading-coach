@@ -28,6 +28,29 @@ export interface DrawdownPlanRule {
   platformChoices: string[];
 }
 
+export type ProgressRequirementKey =
+  | 'profit' | 'trading_days' | 'consistency' | 'winning_days' | 'cycle_profit' | 'safety_net';
+
+export interface ProgressRequirement {
+  key: ProgressRequirementKey;
+  met: boolean;
+  current: number;
+  required: number;
+  unit: 'usd' | 'days' | 'pct';
+  threshold?: number | null;
+}
+
+/** Progression vers l'objectif (évaluation) ou le prochain payout (funded), d'après le plan. */
+export interface AccountProgress {
+  kind: 'objective' | 'payout';
+  remaining: number;
+  done: boolean;
+  requirements: ProgressRequirement[];
+  /** Séance du dernier payout saisi (le cycle commence après), null = depuis le début. */
+  cycleAfter: string | null;
+  unconfirmed: boolean;
+}
+
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -51,6 +74,8 @@ export interface AccountRuleMetrics {
   } | null;
   /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
   drawdownUnconfirmed: boolean;
+  /** Progression vers l'objectif ou le prochain payout (plan relié), sinon null. */
+  progress: AccountProgress | null;
   /**
    * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
    * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).
@@ -84,6 +109,8 @@ export interface TradingAccount {
   propFirmPlanId: string | null;
   /** Plateforme de trading (clé du catalogue : `tradovate`, `rithmic`…), sinon null. */
   platform: string | null;
+  /** Séance du dernier payout reçu (`AAAA-MM-JJ…`), sinon null. */
+  lastPayoutAt: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -101,6 +128,7 @@ export interface CreateAccountPayload {
   drawdownType?: DrawdownType;
   propFirmPlanId?: string | null;
   platform?: string | null;
+  lastPayoutAt?: string | null;
 }
 
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {
