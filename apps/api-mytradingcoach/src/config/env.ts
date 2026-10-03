@@ -40,6 +40,8 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'PORT', level: 'optional', check: isPort },
   // Nombre de workers du cluster (config/web-concurrency.ts). Défaut : min(cœurs, 3).
   { name: 'WEB_CONCURRENCY', level: 'optional', check: (v) => (/^[1-9]\d*$/.test(v) ? undefined : 'doit être un entier >= 1') },
+  // Rôle du process (config/app-role.ts) : web, worker ou all (défaut). Valeur inconnue → refus au boot.
+  { name: 'APP_ROLE', level: 'optional', check: (v) => (['web', 'worker', 'all'].includes(v) ? undefined : 'doit valoir web, worker ou all') },
   // Connexions Postgres par process (prisma/pool-config.ts). Défaut : 5.
   { name: 'DB_POOL_MAX', level: 'optional', check: (v) => (/^[1-9]\d*$/.test(v) ? undefined : 'doit être un entier >= 1') },
   // Isolation Redis par environnement (redis-config.ts). Défauts : base 0, aucun préfixe.
