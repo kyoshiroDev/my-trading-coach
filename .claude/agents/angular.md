@@ -325,6 +325,13 @@ les enfermer dans un menu `@if` casse les specs qui les interrogent au rendu.
 (aucun gate front) ; la profondeur d'analyse + l'IA personnelle (analytics avancés, Weekly
 Debrief, IA Insights, chat coach, score, recap 17h30) sont **PREMIUM** (`isPremium`).
 
+**Premium offert par l'admin** (`UserStore.isOfferedPremium()`) : `trialEndsAt` futur **sans**
+abonnement Stripe `active`/`trialing` (`AuthUser.stripeSubscriptionStatus`). Aucun prélèvement
+prévu et pas de client Stripe → **jamais** de bouton portail ni de texte « premier prélèvement »
+(Profil > Abonnement affiche « 🎁 Premium offert » + « Continuer en Premium → » qui ouvre la
+modale de plans). `UserStore.trialAvailable()` (= `!trialUsed`) : la modale de plans ne promet
+« 1 mois offert » que si l'essai est encore disponible, sinon le checkout facture tout de suite.
+
 **Pattern dans les composants qui gate une feature PREMIUM :**
 
 ```typescript
