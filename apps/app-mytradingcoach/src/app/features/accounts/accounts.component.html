@@ -426,7 +426,14 @@
                   </ul>
                   @if (pg.kind === 'payout') {
                     <p class="pg-note">
-                      @if (pg.cycleSource === 'broker') {
+                      @if (pg.cycleSource === 'broker' && pg.lastPayout?.confidence === 'probable') {
+                        Cycle compté depuis ton payout <b>probable</b> du {{ sessionDate(pg.cycleAfter) }}
+                        (retrait de {{ money(pg.lastPayout!.amount, a.currency) }} relevé chez le broker, sans type « payout » explicite).
+                        @if (!userStore.isDemo()) {
+                          <button class="pg-dismiss" type="button" [attr.data-testid]="'payout-dismiss-' + a.id"
+                                  (click)="dismissPayout(a, pg.lastPayout!.id, pg.lastPayout!.amount)">Ce n'était pas un payout</button>
+                        }
+                      } @else if (pg.cycleSource === 'broker') {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, détecté chez le broker
                         @if (pg.payoutsReceived) { ({{ pg.payoutsReceived }} payout{{ pg.payoutsReceived > 1 ? 's' : '' }} reçu{{ pg.payoutsReceived > 1 ? 's' : '' }}) }.
                       } @else if (pg.cycleAfter) {

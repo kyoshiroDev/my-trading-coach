@@ -52,6 +52,8 @@ export interface AccountProgress {
   cycleSource: 'broker' | 'user' | null;
   /** Payouts déjà reçus d'après le broker, null si inconnu. */
   payoutsReceived: number | null;
+  /** Payout détecté qui fixe le cycle : `probable` = ajustement du broker, à confirmer ou écarter. */
+  lastPayout: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;
   unconfirmed: boolean;
 }
 
@@ -154,6 +156,11 @@ export class AccountsApi {
 
   update(id: string, payload: UpdateAccountPayload): Observable<{ data: TradingAccount }> {
     return this.http.patch<{ data: TradingAccount }>(`${this.base}/${id}`, payload);
+  }
+
+  /** « Ce n'était pas un payout » : écarte un payout détecté du cycle de payout. */
+  dismissPayout(accountId: string, payoutId: string): Observable<{ data: { dismissed: true } }> {
+    return this.http.post<{ data: { dismissed: true } }>(`${this.base}/${accountId}/payouts/${payoutId}/dismiss`, {});
   }
 
   remove(id: string): Observable<{ data: { deleted?: boolean; archived?: boolean } }> {

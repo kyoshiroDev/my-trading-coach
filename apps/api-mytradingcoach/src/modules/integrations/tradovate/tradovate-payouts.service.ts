@@ -18,8 +18,14 @@ export function normalizeChangeType(raw: string | undefined): string {
   return (raw ?? '').replace(/[^a-z]/gi, '').toLowerCase();
 }
 
+export type PayoutConfidence = 'certain' | 'probable';
+
+/** Ajustement manuel en dessous : frais ou correction, pas un payout. */
+export const PROBABLE_PAYOUT_MIN = 100;
+
 export interface DetectedPayout {
   transactionId: string;
+  confidence: PayoutConfidence;
   /** `AAAA-MM-JJ` */
   tradeDate: string;
   /** Montant retiré, positif. */
@@ -35,23 +41,27 @@ export interface CashHistoryScan {
 }
 
 /**
- * Un payout = un RETRAIT certain :
- * - `ChallengePayout` (type dédié aux payouts de prop firm), quel que soit le signe écrit ;
- * - `FundTransaction` NÉGATIF (sortie d'argent ; positif = dépôt, ignoré).
- * `ManualAdjustment` et `Debit` sont exclus : ils servent aussi aux resets et aux corrections, et un
- * faux payout ferait repartir le cycle à tort. À revoir sur données réelles (cf. `typeCounts`).
+ * Un payout, et à quel point on en est sûr :
+ * - CERTAIN : `ChallengePayout` (type dédié, quel que soit le signe écrit), `FundTransaction`
+ *   NÉGATIF (sortie d'argent ; positif = dépôt, ignoré) ;
+ * - PROBABLE : `ManualAdjustment` NÉGATIF d'au moins `PROBABLE_PAYOUT_MIN`, sur un compte FUNDED.
+ *   Constaté chez Apex (beta, 2026-10-04) : 3 ajustements = les 3 seules baisses de solde que le P&L
+ *   n'explique pas sur 146 séances. Mais un ajustement peut aussi être une correction : affiché comme
+ *   « probable », et l'utilisateur peut l'écarter. En évaluation (resets), jamais.
+ * `Debit` reste exclu.
  */
-export function isPayout(changeType: string, delta: number): boolean {
-  if (changeType === 'challengepayout') return delta !== 0;
-  if (changeType === 'fundtransaction') return delta < 0;
-  return false;
+export function payoutConfidence(changeType: string, delta: number, funded: boolean): PayoutConfidence | null {
+  if (changeType === 'challengepayout') return delta !== 0 ? 'certain' : null;
+  if (changeType === 'fundtransaction') return delta < 0 ? 'certain' : null;
+  if (changeType === 'manualadjustment') return funded && delta <= -PROBABLE_PAYOUT_MIN ? 'probable' : null;
+  return null;
 }
 
 /**
  * CSV du rapport `Cash History` → payouts. Colonnes (export réel) : `Account, Transaction ID,
  * Timestamp, Date, Delta, Amount, Cash Change Type, Currency, Contract`, lues par leur nom.
  */
-export function scanCashHistory(csv: string, accountName: string): CashHistoryScan {
+export function scanCashHistory(csv: string, accountName: string, funded = false): CashHistoryScan {
   const scan: CashHistoryScan = { payouts: [], typeCounts: {} };
   const lines = csv.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return scan;
@@ -68,10 +78,11 @@ export function scanCashHistory(csv: string, accountName: string): CashHistorySc
     scan.typeCounts[type] = (scan.typeCounts[type] ?? 0) + 1;
     const delta = parseReportAmount(cells[iDelta]);
     const transactionId = cells[iTxn]?.trim() ?? '';
-    if (Number.isNaN(delta) || !transactionId || !isPayout(type, delta)) continue;
+    const confidence = Number.isNaN(delta) || !transactionId ? null : payoutConfidence(type, delta, funded);
+    if (!confidence) continue;
     const tradeDate = sessionOf(cells[iDate], cells[iTs]);
     if (!tradeDate) continue;
-    scan.payouts.push({ transactionId, tradeDate, amount: Math.abs(delta), changeType: type });
+    scan.payouts.push({ transactionId, tradeDate, amount: Math.abs(delta), changeType: type, confidence });
   }
   return scan;
 }
@@ -113,6 +124,9 @@ export class TradovatePayoutsService {
     const account = (Array.isArray(accounts) ? accounts : []).find((a) => String(a.id) === conn.externalAccountId);
     if (!account) return 0;
 
+    // Un ajustement manuel n'est un payout probable que sur un compte funded (cycle de payout).
+    const mtcAccount = await this.prisma.tradingAccount.findUnique({ where: { id: conn.accountId }, select: { type: true } });
+    const funded = mtcAccount?.type === 'FUNDED';
     const created = account.timestamp ? new Date(account.timestamp) : null;
     const start = conn.payoutsCheckedThrough
       ?? (created && !Number.isNaN(created.getTime()) && created < now ? created : new Date(now.getTime() - PAYOUTS_FALLBACK_DAYS * DAY_MS));
@@ -126,6 +140,7 @@ export class TradovatePayoutsService {
         const scan = scanCashHistory(
           await this.reporting.fetchCsv(env, token, 'Cash History', { from, to, accountName: account.name }, apiHosts),
           account.name,
+          funded,
         );
         payouts.push(...scan.payouts);
         for (const [t, n] of Object.entries(scan.typeCounts)) typeCounts[t] = (typeCounts[t] ?? 0) + n;
@@ -139,7 +154,10 @@ export class TradovatePayoutsService {
     let created_ = 0;
     for (const p of payouts) {
       const res = await this.prisma.brokerPayout.createMany({
-        data: [{ accountId: conn.accountId, transactionId: p.transactionId, tradeDate: new Date(`${p.tradeDate}T00:00:00.000Z`), amount: p.amount, changeType: p.changeType }],
+        data: [{
+          accountId: conn.accountId, transactionId: p.transactionId, tradeDate: new Date(`${p.tradeDate}T00:00:00.000Z`),
+          amount: p.amount, changeType: p.changeType, confidence: p.confidence,
+        }],
         skipDuplicates: true,
       });
       created_ += res.count;

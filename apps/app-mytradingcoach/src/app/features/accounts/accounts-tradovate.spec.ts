@@ -434,7 +434,7 @@ describe('Mes comptes — progression objectif / payout', () => {
 
   it('payout : exigences, cycle compté depuis le début et invitation à saisir le dernier payout', () => {
     const { q, click } = setup({ accounts: [withProgress({
-      kind: 'payout', remaining: 0, done: false, cycleAfter: null, cycleSource: null, payoutsReceived: null, unconfirmed: false,
+      kind: 'payout', remaining: 0, done: false, cycleAfter: null, cycleSource: null, payoutsReceived: null, lastPayout: null, unconfirmed: false,
       requirements: [{ key: 'winning_days', met: false, current: 3, required: 5, unit: 'days', threshold: 150 }],
     })] });
     click('account-expand-a');
@@ -445,7 +445,7 @@ describe('Mes comptes — progression objectif / payout', () => {
 
   it('objectif atteint : bloc marqué comme fait', () => {
     const { q, click } = setup({ accounts: [withProgress({
-      kind: 'objective', remaining: 0, done: true, cycleAfter: null, cycleSource: null, payoutsReceived: null, unconfirmed: true,
+      kind: 'objective', remaining: 0, done: true, cycleAfter: null, cycleSource: null, payoutsReceived: null, lastPayout: null, unconfirmed: true,
       requirements: [{ key: 'profit', met: true, current: 3_200, required: 3_000, unit: 'usd' }],
     })] });
     click('account-expand-a');
@@ -461,13 +461,30 @@ describe('Mes comptes — payout détecté chez le broker', () => {
 
   it('cycle fixé par un payout détecté : date, origine et nombre reçus', () => {
     const { q, click } = setup({ accounts: [acct('a', 'Lucid 50k', { propFirmPlanId: 'lucid-flex-50k', metrics: { ...acct('a', '').metrics, progress: {
-      kind: 'payout', remaining: 0, done: false, cycleAfter: '2026-10-02', cycleSource: 'broker', payoutsReceived: 2, unconfirmed: false,
+      kind: 'payout', remaining: 0, done: false, cycleAfter: '2026-10-02', cycleSource: 'broker', payoutsReceived: 2, lastPayout: null, unconfirmed: false,
       requirements: [{ key: 'winning_days', met: false, current: 1, required: 5, unit: 'days', threshold: 150 }],
     } } })] });
     click('account-expand-a');
     const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
     expect(t).toContain('depuis ton payout du 02/10, détecté chez le broker');
     expect(t).toContain('2 payouts reçus');
+  });
+});
+
+describe('Mes comptes — payout probable', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('ajustement du broker : « probable », montant, et bouton pour l\'écarter', () => {
+    const { q, click } = setup({ accounts: [acct('a', 'Apex PA', { propFirmPlanId: 'apex-eod-50k', metrics: { ...acct('a', '').metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, cycleAfter: '2026-10-01', cycleSource: 'broker', payoutsReceived: 3,
+      lastPayout: { id: 'p3', amount: 1_085, confidence: 'probable' }, unconfirmed: false,
+      requirements: [{ key: 'winning_days', met: false, current: 1, required: 8, unit: 'days', threshold: 50 }],
+    } } })] });
+    click('account-expand-a');
+    const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('payout probable du 01/10');
+    expect(t).toContain('retrait de $1,085');
+    expect(q('payout-dismiss-a')).not.toBeNull();
   });
 });
 

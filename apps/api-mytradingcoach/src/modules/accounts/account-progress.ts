@@ -41,6 +41,8 @@ export interface AccountProgress {
   cycleSource: 'broker' | 'user' | null;
   /** Payouts déjà reçus d'après le broker (rang du prochain), null si inconnu. */
   payoutsReceived: number | null;
+  /** Payout qui fixe le cycle, s'il vient du broker : à confirmer s'il n'est que « probable ». */
+  lastPayout: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;
   /** Plan marqué « à revoir » au catalogue : à présenter comme une estimation. */
   unconfirmed: boolean;
 }
@@ -57,6 +59,7 @@ export interface ProgressInput {
   cycleSource?: 'broker' | 'user' | null;
   /** Payouts détectés chez le broker : choisit le palier exact ; null → 1er si aucun payout connu, sinon le suivant. */
   payoutsReceived?: number | null;
+  lastPayout?: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;
   unconfirmed: boolean;
 }
 
@@ -96,6 +99,7 @@ function objectiveProgress(input: ProgressInput, target: number): AccountProgres
     cycleAfter: null,
     cycleSource: null,
     payoutsReceived: null,
+    lastPayout: null,
     unconfirmed: input.unconfirmed,
   };
 }
@@ -148,6 +152,7 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
     cycleAfter: lastPayoutDay,
     cycleSource: lastPayoutDay ? input.cycleSource ?? 'user' : null,
     payoutsReceived: input.payoutsReceived ?? null,
+    lastPayout: lastPayoutDay ? input.lastPayout ?? null : null,
     unconfirmed: input.unconfirmed,
   };
 }

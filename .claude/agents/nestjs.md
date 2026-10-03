@@ -1297,8 +1297,13 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
 - **Une règle null ne crée aucune exigence.** Plan `needsReview` → `progress.unconfirmed`.
 - **Payouts détectés** (`TradovatePayoutsService`, rapport `Cash History`, même cadence que les
   clôtures, curseur `BrokerConnection.payoutsCheckedThrough` qui n'avance que si toutes les
-  fenêtres ont abouti) → table `BrokerPayout`. Payout = `ChallengePayout` (tout signe) ou
-  `FundTransaction` NÉGATIF ; `ManualAdjustment` / `Debit` exclus (resets, corrections). Types en
+  fenêtres ont abouti) → table `BrokerPayout`. Payout **certain** = `ChallengePayout` (tout signe)
+  ou `FundTransaction` NÉGATIF ; payout **probable** = `ManualAdjustment` NÉGATIF ≥ 100 $ sur un
+  compte FUNDED (`PROBABLE_PAYOUT_MIN`) — c'est ainsi qu'Apex inscrit ses payouts (beta,
+  2026-10-04 : 3 ajustements = les 3 seules baisses de solde inexpliquées par le P&L sur 146
+  séances). Jamais en évaluation (resets) ; `Debit` exclu. Un payout probable est affiché comme tel,
+  avec son montant, et l'utilisateur peut l'écarter (`POST /accounts/:id/payouts/:payoutId/dismiss`
+  → `dismissedAt`, jamais supprimé pour ne pas être recréé). Types en
   libellés lisibles (`" Trade Paired"`) → `normalizeChangeType`. Chaque passage journalise les
   types lus avec leur nombre (jamais de montant) : **vérifier sur beta, avec de vrais comptes payés,
   que les payouts passent bien par ces types** avant d'en dépendre.

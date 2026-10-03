@@ -21,7 +21,7 @@ import {
   aggregateRuleTrades, EMPTY_RULE_AGG, previousSession, ruleAggregatesSql, sessionPnls, sessionPnlsSql, tradingDay,
   type RuleAgg, type RuleTrade, type SessionPnl,
 } from './account-rules';
-import { computeProgress, type AccountProgress } from './account-progress';
+import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 
 type RuleAccount = Pick<
   TradingAccount,
@@ -42,6 +42,10 @@ export interface RulePlan {
 export interface RulePayouts {
   last: string;
   count: number;
+  /** Dernier payout : identifiant (pour l'écarter), montant, certitude de la détection. */
+  lastId?: string;
+  lastAmount?: number;
+  lastConfidence?: 'certain' | 'probable';
 }
 
 /**
@@ -51,12 +55,17 @@ export interface RulePayouts {
 function lastPayout(
   userDate: Date | null | undefined,
   broker: RulePayouts | null,
-): { lastPayoutDay: string | null; cycleSource: 'broker' | 'user' | null; payoutsReceived: number | null } {
+): Pick<ProgressInput, 'lastPayoutDay' | 'cycleSource' | 'payoutsReceived' | 'lastPayout'> {
   const user = userDate ? userDate.toISOString().slice(0, 10) : null;
   if (broker && (!user || broker.last >= user)) {
-    return { lastPayoutDay: broker.last, cycleSource: 'broker', payoutsReceived: broker.count };
+    return {
+      lastPayoutDay: broker.last, cycleSource: 'broker', payoutsReceived: broker.count,
+      lastPayout: broker.lastId
+        ? { id: broker.lastId, amount: broker.lastAmount ?? 0, confidence: broker.lastConfidence ?? 'certain' }
+        : null,
+    };
   }
-  return { lastPayoutDay: user, cycleSource: user ? 'user' : null, payoutsReceived: null };
+  return { lastPayoutDay: user, cycleSource: user ? 'user' : null, payoutsReceived: null, lastPayout: null };
 }
 
 /** Clôtures officielles du compte (rapport du broker) : plus haut et dernière séance couverte. */
@@ -226,15 +235,22 @@ export class AccountsService {
           lastTradeDate: c._max.tradeDate!.toISOString().slice(0, 10),
         } satisfies RuleOfficialCloses]),
     );
-    const payoutRows = await this.prisma.brokerPayout.groupBy({
-      by: ['accountId'],
-      where: { accountId: { in: rows.map((r) => r.id) } },
-      _max: { tradeDate: true },
-      _count: { _all: true },
+    // Payouts détectés (hors écartés par l'utilisateur), du plus récent au plus ancien : quelques
+    // lignes par compte au plus.
+    const payoutRows = await this.prisma.brokerPayout.findMany({
+      where: { accountId: { in: rows.map((r) => r.id) }, dismissedAt: null },
+      orderBy: [{ tradeDate: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true, accountId: true, tradeDate: true, amount: true, confidence: true },
     });
-    const payoutsByAccount = new Map(payoutRows
-      .filter((p) => p._max.tradeDate)
-      .map((p) => [p.accountId, { last: p._max.tradeDate!.toISOString().slice(0, 10), count: p._count._all } satisfies RulePayouts]));
+    const payoutsByAccount = new Map<string, RulePayouts>();
+    for (const p of payoutRows) {
+      const known = payoutsByAccount.get(p.accountId);
+      if (known) known.count++;
+      else payoutsByAccount.set(p.accountId, {
+        last: p.tradeDate.toISOString().slice(0, 10), count: 1,
+        lastId: p.id, lastAmount: p.amount, lastConfidence: p.confidence === 'probable' ? 'probable' : 'certain',
+      });
+    }
     const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
       account: a,
       plan: toRulePlan(propFirmPlan),
@@ -643,6 +659,20 @@ export class AccountsService {
   }
 
   /** Vérifie que le compte existe ET appartient au user (sinon 404, sans fuite d'existence). */
+  /**
+   * « Ce n'était pas un payout » : le payout détecté est écarté du cycle (jamais supprimé, pour
+   * qu'une relecture du broker ne le recrée pas).
+   */
+  async dismissPayout(userId: string, accountId: string, payoutId: string): Promise<{ dismissed: true }> {
+    await this.assertOwner(userId, accountId);
+    const { count } = await this.prisma.brokerPayout.updateMany({
+      where: { id: payoutId, accountId, dismissedAt: null },
+      data: { dismissedAt: new Date() },
+    });
+    if (count === 0) throw new NotFoundException('Payout introuvable.');
+    return { dismissed: true };
+  }
+
   private async assertOwner(
     userId: string,
     id: string,

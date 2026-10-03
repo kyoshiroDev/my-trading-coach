@@ -789,6 +789,28 @@ export class AccountsComponent implements OnInit {
     });
   }
 
+  /** « Ce n'était pas un payout » : le cycle repart alors du payout précédent, ou du début. */
+  protected async dismissPayout(a: TradingAccount, payoutId: string, amount: number): Promise<void> {
+    const confirmed = await this.confirm.ask({
+      title: 'Ce retrait n\'était pas un payout ?',
+      message:
+        `Le retrait de ${this.money(amount, a.currency)} ne sera plus compté comme payout : ` +
+        'le cycle de payout repartira du payout précédent, ou du début du compte.',
+      confirmLabel: 'Ce n\'était pas un payout',
+    });
+    if (!confirmed) return;
+    this.api
+      .dismissPayout(a.id, payoutId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.store.load();
+          this.toast.success('Retrait écarté du cycle de payout');
+        },
+        error: (err) => this.toast.error(apiErrorMessage(err, "Le retrait n'a pas pu être écarté.")),
+      });
+  }
+
   // ── Suppression / archivage ──────────────────────────────────────────────
   protected async confirmDelete(a: TradingAccount): Promise<void> {
     this.menuOpenId.set(null);

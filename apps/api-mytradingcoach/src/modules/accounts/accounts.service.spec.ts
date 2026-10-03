@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { aggregateRuleTrades, previousSession, sessionPnls } from './account-rules';
-import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePlan } from './accounts.service';
+import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePayouts, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
@@ -27,7 +27,7 @@ function makePrisma() {
     user: { findUnique: vi.fn() },
     propFirmPlan: { count: vi.fn() },
     brokerDailyClose: { groupBy: vi.fn(async () => []) },
-    brokerPayout: { groupBy: vi.fn(async () => []) },
+    brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
   };
 }
 
@@ -458,6 +458,29 @@ describe('AccountsService', () => {
     });
   });
 
+  describe('dismissPayout — « ce n\'était pas un payout »', () => {
+    it('compte d\'un autre utilisateur → 404, rien modifié', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'autre' });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.brokerPayout.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('écarte le payout de CE compte, jamais supprimé', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1' });
+      prisma.brokerPayout.updateMany.mockResolvedValue({ count: 1 });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).resolves.toEqual({ dismissed: true });
+      expect(prisma.brokerPayout.updateMany).toHaveBeenCalledWith({
+        where: { id: 'p1', accountId: 'a1', dismissedAt: null }, data: { dismissedAt: expect.any(Date) },
+      });
+    });
+
+    it('payout inconnu ou déjà écarté → 404', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1' });
+      prisma.brokerPayout.updateMany.mockResolvedValue({ count: 0 });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
   describe('computeRuleMetrics — cycle de payout : détecté chez le broker ou saisi', () => {
     const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
     const funded: RulePlan = { firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [
@@ -468,7 +491,7 @@ describe('AccountsService', () => {
     ] };
     const acc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'FUNDED' as const };
     const trades = [at(200, '2026-09-28T15:00:00Z'), at(200, '2026-09-29T15:00:00Z'), at(200, '2026-09-30T15:00:00Z')];
-    const progressOf = (lastPayoutAt: Date | null, payouts: { last: string; count: number } | null) =>
+    const progressOf = (lastPayoutAt: Date | null, payouts: RulePayouts | null) =>
       svc.ruleMetricsFromAgg({ ...acc, lastPayoutAt }, aggregateRuleTrades(trades), funded, null, null, null, new Date(), sessionPnls(trades), payouts).progress!;
 
     it('payout détecté plus récent que la date saisie : il fixe le cycle et donne le rang', () => {
@@ -480,6 +503,11 @@ describe('AccountsService', () => {
     it('date saisie plus récente que le dernier payout détecté : la saisie l\'emporte, rang inconnu', () => {
       expect(progressOf(new Date('2026-09-29T00:00:00Z'), { last: '2026-09-10', count: 1 }))
         .toMatchObject({ cycleAfter: '2026-09-29', cycleSource: 'user', payoutsReceived: null });
+    });
+
+    it('payout probable qui fixe le cycle : exposé (id, montant, certitude) pour être confirmé ou écarté', () => {
+      expect(progressOf(null, { last: '2026-10-01', count: 3, lastId: 'p3', lastAmount: 1_085, lastConfidence: 'probable' }))
+        .toMatchObject({ cycleSource: 'broker', lastPayout: { id: 'p3', amount: 1_085, confidence: 'probable' } });
     });
 
     it('ni détecté ni saisi : cycle depuis le début', () => {
