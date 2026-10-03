@@ -13,6 +13,7 @@ import {
 } from '@lucide/angular';
 import { PRICING } from '@app/core/constants/pricing.const';
 import { BillingService } from '@app/core/services/billing.service';
+import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective } from '@mtc/front-ui';
 
 type Interval = 'monthly' | 'yearly';
@@ -42,6 +43,8 @@ export class PlanModalComponent {
   protected interval = signal<Interval>('monthly');
   private readonly billing = inject(BillingService);
   protected readonly isLoading = this.billing.starting;
+  /** Essai déjà consommé (ou Premium offert reçu) : le checkout facture tout de suite, ne rien promettre. */
+  protected readonly trialAvailable = inject(UserStore).trialAvailable;
 
   protected setInterval(value: Interval) {
     this.interval.set(value);

@@ -14,7 +14,8 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { UsersService } from '../users/users.service';
-import { AdminListQueryDto, AdminUpdateUserDto, SetRoleDto } from '../users/dto/admin-user.dto';
+import { AdminListQueryDto, AdminUpdateUserDto, OfferPremiumDto, SetRoleDto } from '../users/dto/admin-user.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserDetailService } from './user-detail.service';
 
 /**
@@ -72,6 +73,17 @@ export class AdminUsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.usersService.adminDelete(id);
+  }
+
+  /** Offre N jours de Premium (défaut 30) sans abonnement Stripe ; prolonge un mois en cours. */
+  @Post(':id/offer-premium')
+  @HttpCode(HttpStatus.OK)
+  offerPremium(
+    @Param('id') id: string,
+    @Body() dto: OfferPremiumDto,
+    @CurrentUser() admin: { id: string },
+  ) {
+    return this.usersService.offerPremium(id, dto.days, admin.id);
   }
 
   @Post(':id/beta')

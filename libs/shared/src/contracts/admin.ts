@@ -11,6 +11,11 @@ export interface AdminUserDetail {
     plan: Plan;
     role: Role;
     subscriptionStatus: string | null;
+    /** Fin d'accès Premium hors plan (mois offert par l'admin, ou essai historique). */
+    trialEndsAt: string | null;
+    /** Premium offert par l'admin en cours : `trialEndsAt` futur ET aucun abonnement Stripe. */
+    offeredPremium: boolean;
+    isDemo: boolean;
     ambassadorRefCode: string | null;
     createdAt: string;
     lastActivityAt: string | null;

@@ -88,6 +88,15 @@
         <div class="card-body">
           <div class="slist">
             <div class="srow"><span class="s-l">Plan</span><span class="s-v" [class.purple]="d.identity.plan !== 'FREE'">{{ d.identity.plan }} · {{ planSub() }}</span></div>
+            <div class="srow ud-offer">
+              <span class="s-l">
+                @if (offeredUntil(); as until) { Premium offert jusqu'au <span class="s-v purple">{{ until | date:'dd/MM/yyyy' }}</span> } @else { Mois Premium offert }
+              </span>
+              <button type="button" class="btn" data-testid="offer-premium"
+                [disabled]="!!offerBlocked() || offering()"
+                [attr.title]="offerBlocked()"
+                (click)="offerPremium()">{{ offering() ? 'En cours…' : offerLabel() }}</button>
+            </div>
             <div class="srow"><span class="s-l">Rôle / Source</span><span class="s-v">{{ d.identity.role }} · {{ sourceLabel() }}</span></div>
             <div class="srow"><span class="s-l">Inscrit</span><span class="s-v">{{ d.identity.createdAt | date:'dd/MM/yyyy' }} · J+{{ d.kpis.daysSinceSignup }}</span></div>
             <div class="srow"><span class="s-l">Dernière activité</span><span class="s-v" [class.teal]="status() === 'actif'">{{ d.identity.lastActivityAt ? lastActivity() : 'jamais' }}</span></div>
@@ -167,3 +176,7 @@
     }
   }
 </div>
+
+@if (toast(); as t) {
+  <div class="toast" role="status" [class.toast-error]="t.error">{{ t.message }}</div>
+}

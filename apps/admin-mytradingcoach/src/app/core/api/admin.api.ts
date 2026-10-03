@@ -205,6 +205,10 @@ export class AdminApi {
     return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }
+  /** Premium offert sans abonnement Stripe (défaut 30 j côté API) ; prolonge un mois en cours. */
+  offerPremium(id: string, days?: number) {
+    return this.http.post<{ data: { trialEndsAt: string } }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
+  }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
