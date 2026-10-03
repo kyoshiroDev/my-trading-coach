@@ -8,6 +8,7 @@
  * Ajouter une firm = ajouter son fichier ici, puis redéployer l'API (synchro au démarrage).
  */
 import apex from './apex.json';
+import earn2trade from './earn2trade.json';
 import lucid from './lucid.json';
 import myfundedfutures from './myfundedfutures.json';
 import phidias from './phidias.json';
@@ -16,4 +17,4 @@ import topstep from './topstep.json';
 import tradeday from './tradeday.json';
 import tradeify from './tradeify.json';
 
-export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias];
+export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias, earn2trade];
