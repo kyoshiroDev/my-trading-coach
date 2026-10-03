@@ -1266,6 +1266,12 @@ prend montant, type, verrouillage et solde de départ dans la phase, **pas** la 
   `trailing_intraday` → plus haut après chaque trade (`maxCumulative`, pics en position inconnus).
 - `locks_at` / `locked_floor` décalés de `solde du compte − starting_balance de la phase`.
   `locks_at` null (verrouillage déclenché par un payout) → le seuil continue de suivre.
+- **Verrouillage propre à la plateforme** (`max_drawdown.platform_overrides`, Apex seulement :
+  figé sur Rithmic / Wealthcharts, jamais sur Tradovate). Plateforme = `tradovate` si le compte a
+  une connexion Tradovate, sinon `TradingAccount.platform` (saisi dans le formulaire, proposé
+  seulement si `PropFirmPlanSummary.platformDependent` est non vide). Connue → `locks_at` /
+  `locked_floor` de l'override, `rule.platform` ; inconnue → règle par défaut (jamais figée, la
+  plus prudente) et `rule.platformChoices` pour l'avertir.
 - Montant null → `drawdown: null` + `drawdownUnconfirmed: true` (jamais de chiffre inventé).
 - `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
   (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).

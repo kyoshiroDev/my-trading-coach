@@ -8,6 +8,7 @@ import type { PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
+  BrokerProvider,
   DrawdownType,
   Plan,
   Role,
@@ -21,7 +22,7 @@ import { aggregateRuleTrades, EMPTY_RULE_AGG, ruleAggregatesSql, type RuleAgg, t
 type RuleAccount = Pick<
   TradingAccount,
   'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
-> & { type?: AccountType };
+> & { type?: AccountType; platform?: string | null };
 
 /** Plan du catalogue relié au compte : ses règles de drawdown remplacent la saisie manuelle. */
 export interface RulePlan {
@@ -96,6 +97,13 @@ export interface DrawdownPlanRule {
   locked: boolean;
   /** La firm contrôle le seuil en temps réel, positions ouvertes comprises. */
   realtimeEquity: boolean;
+  /** Plateforme dont la règle a été appliquée (verrouillage propre à la plateforme), sinon null. */
+  platform: string | null;
+  /**
+   * Plateformes dont le verrouillage diffère, quand celle du compte est inconnue : la règle par
+   * défaut (la plus prudente) est appliquée. Vide si la plateforme est connue ou sans effet.
+   */
+  platformChoices: string[];
 }
 
 export interface AccountRuleMetrics {
@@ -155,23 +163,25 @@ export class AccountsService {
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
       include: {
         propFirmPlan: { select: PLAN_SELECT },
-        brokerConnections: { where: { brokerCashBalance: { not: null } }, select: BROKER_SELECT, take: 1 },
+        brokerConnections: { select: { provider: true, ...BROKER_SELECT } },
       },
     });
     if (rows.length === 0) return [];
     const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
       account: a,
       plan: toRulePlan(propFirmPlan),
-      broker: toRuleBroker(brokerConnections[0] ?? null),
+      broker: toRuleBroker(brokerConnections.find((c) => c.brokerCashBalance != null) ?? null),
+      // Compte connecté via Tradovate : la plateforme est connue, quoi qu'ait saisi l'utilisateur.
+      connectedPlatform: brokerConnections.some((c) => c.provider === BrokerProvider.TRADOVATE) ? 'tradovate' : null,
     }));
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
     const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map(({ account }) => account.id));
 
-    return accounts.map(({ account, plan, broker }) => ({
+    return accounts.map(({ account, plan, broker, connectedPlatform }) => ({
       ...account,
-      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker),
+      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform),
     }));
   }
 
@@ -191,8 +201,9 @@ export class AccountsService {
     trades: RuleTrade[],
     plan: RulePlan | null = null,
     broker: RuleBroker | null = null,
+    connectedPlatform: string | null = null,
   ): AccountRuleMetrics {
-    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker);
+    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker, connectedPlatform);
   }
 
   /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
@@ -201,6 +212,7 @@ export class AccountsService {
     agg: RuleAgg,
     plan: RulePlan | null = null,
     brokerData: RuleBroker | null = null,
+    connectedPlatform: string | null = null,
   ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
@@ -250,7 +262,14 @@ export class AccountsService {
     let drawdown: AccountRuleMetrics['drawdown'] = null;
     let drawdownUnconfirmed = false;
     if (phase && plan) {
-      const md = phase.max_drawdown;
+      // Verrouillage propre à la plateforme (ex. Apex : figé sur Rithmic, jamais sur Tradovate).
+      // Plateforme connue (connexion, sinon saisie) → sa règle ; inconnue → règle par défaut.
+      const platform = connectedPlatform ?? account.platform ?? null;
+      const overrides = phase.max_drawdown.platform_overrides ?? null;
+      const override = platform && overrides ? overrides[platform] ?? null : null;
+      const md = override
+        ? { ...phase.max_drawdown, locks_at: override.locks_at, locked_floor: override.locked_floor }
+        : phase.max_drawdown;
       if (md.amount == null || !(md.amount > 0)) {
         drawdownUnconfirmed = true;
       } else {
@@ -286,6 +305,8 @@ export class AccountsService {
             lockedFloor: locksAt != null ? lockedFloor ?? locksAt - md.amount : null,
             locked,
             realtimeEquity: md.enforced_on === 'equity_realtime',
+            platform: override ? platform : null,
+            platformChoices: !override && overrides ? Object.keys(overrides).sort() : [],
           },
         };
       }
