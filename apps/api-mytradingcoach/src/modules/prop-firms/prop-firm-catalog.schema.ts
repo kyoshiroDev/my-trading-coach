@@ -48,6 +48,8 @@ const maxDrawdownSchema = z.strictObject({
 
 const consistencySchema = z.strictObject({
   max_single_day_pct: pct,
+  // Seuil par numéro de payout quand il varie (Tradeify Lightning 20 / 25 / 30 %).
+  max_single_day_pct_schedule: z.array(pct).min(1).nullable().optional(),
   applies_to: z.enum(['profit_target', 'payout']),
   notes: nullableText,
 });
@@ -75,6 +77,8 @@ const payoutSchema = z.strictObject({
   split_pct: pct.nullable(),
   // Partage qui change au-delà d'un cumul payé (Apex Legacy : 100 % jusqu'à 25 000 $, puis 90 %).
   split_after: z.strictObject({ paid_out_over: money, split_pct: pct }).nullable().optional(),
+  // Partage selon le profit présent sur le compte (TradeDay Quick Pay : 50 % sous 4 000 $, 80 % au-delà).
+  split_by_profit: z.strictObject({ profit_over: money, split_pct: pct }).nullable().optional(),
   min_amount: nullableMoney,
   max_amount: nullableMoney,
   // null dans le tableau = pas de plafond pour ce payout (Apex Legacy : libre à partir du 6e).
@@ -86,6 +90,8 @@ const payoutSchema = z.strictObject({
 
 export const propFirmPhaseSchema = z.strictObject({
   phase: z.enum(['evaluation', 'funded', 'direct']),
+  // Solde de départ quand il diffère de account_size (Topstep XFA, funded MyFundedFutures : 0).
+  starting_balance: nullableMoney.optional(),
   profit_target: z.number().gt(0).nullable(),
   daily_loss_limit: dailyLossLimitSchema.nullable(),
   max_drawdown: maxDrawdownSchema,
@@ -107,6 +113,8 @@ export const propFirmPriceSchema = z.strictObject({
 export const propFirmConfigurationSchema = z.strictObject({
   daily_loss_limit: z.boolean().nullable(),
   eval_drawdown: z.enum(['eod', 'intraday']).nullable(),
+  payout_path: z.enum(['standard', 'consistency', 'flex', 'daily']).nullable().optional(),
+  addon: z.string().nullable().optional(),
 });
 
 export const propFirmPlanSchema = z.strictObject({

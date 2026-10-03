@@ -9,6 +9,8 @@ export type PropFirmDrawdownKind = 'static' | 'trailing_eod' | 'trailing_intrada
 
 export interface PropFirmPhaseSummary {
   phase: PropFirmPhaseKind;
+  /** Solde de départ de la phase (taille du compte, ou 0 sur certains funded). */
+  startingBalance: number;
   /** Objectif de profit en montant, null si la phase n'en a pas (funded). */
   profitTarget: number | null;
   maxDrawdown: number;
@@ -25,7 +27,12 @@ export interface PropFirmPlanSummary {
   currency: string;
   availability: 'public' | 'invite_only';
   /** Options du checkout qui distinguent deux plans de même taille, null s'il n'y en a pas. */
-  configuration: { dailyLossLimit: boolean | null; evalDrawdown: 'eod' | 'intraday' | null } | null;
+  configuration: {
+    dailyLossLimit: boolean | null;
+    evalDrawdown: 'eod' | 'intraday' | null;
+    payoutPath: 'standard' | 'consistency' | 'flex' | 'daily' | null;
+    addon: string | null;
+  } | null;
   /** Au moins une règle non publiée ou contradictoire : à afficher comme estimation. */
   needsReview: boolean;
   phases: PropFirmPhaseSummary[];
@@ -85,6 +92,8 @@ export interface PropFirmMaxDrawdown {
 export interface PropFirmConsistency {
   /** Décimale : 0.5 = 50 %. */
   max_single_day_pct: number;
+  /** Seuil par numéro de payout quand il varie ; la dernière valeur vaut pour les suivants. */
+  max_single_day_pct_schedule?: number[] | null;
   applies_to: 'profit_target' | 'payout';
   notes: string | null;
 }
@@ -112,6 +121,8 @@ export interface PropFirmPayout {
   split_pct: number | null;
   /** Partage appliqué une fois `paid_out_over` payés sur le compte ; `split_pct` vaut avant. */
   split_after?: { paid_out_over: number; split_pct: number } | null;
+  /** Partage appliqué quand le profit présent sur le compte dépasse `profit_over` ; `split_pct` vaut en dessous. */
+  split_by_profit?: { profit_over: number; split_pct: number } | null;
   min_amount: number | null;
   max_amount: number | null;
   /** Plafond par numéro de payout ; null dans le tableau = sans plafond pour ce payout. */
@@ -123,6 +134,8 @@ export interface PropFirmPayout {
 
 export interface PropFirmPhaseRules {
   phase: PropFirmPhaseKind;
+  /** Solde de départ de la phase quand il diffère de la taille du compte (0 sur certains funded). */
+  starting_balance?: number | null;
   profit_target: number | null;
   daily_loss_limit: PropFirmDailyLossLimit | null;
   max_drawdown: PropFirmMaxDrawdown;

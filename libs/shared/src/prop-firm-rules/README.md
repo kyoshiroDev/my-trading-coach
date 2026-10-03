@@ -19,7 +19,7 @@ Le script de validation est dans `tools/scripts/` (et non dans un `scripts/` rac
 | Fichier | Rôle |
 |---|---|
 | `schema.json` | JSON Schema (draft 2020-12) qui valide chaque fichier firm. |
-| `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` (`lucid.json`, `apex.json`). |
+| `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` : `lucid`, `apex`, `topstep`, `tradeify`, `myfundedfutures`, `tradeday`. |
 | `EXTRACTION-REPORT.md` | Sources, tableau récap, plans à revoir, contradictions. |
 | `tools/scripts/validate-prop-firm-rules.ts` | Validation ajv + contrôles métier. |
 
@@ -63,6 +63,10 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | `payout.min_daily_profit` | Profit minimum pour qu'un jour compte dans `min_days`. |
 | `payout.min_cycle_profit`, `min_cycle_profit_schedule` | Profit minimum entre deux payouts, fixe ou par cycle. |
 | `payout.max_amount_schedule` | Plafond par numéro de payout (index i = payout i+1, la dernière valeur vaut pour les suivants ; `null` = pas de plafond pour ce payout). |
+| `phase.starting_balance` | Solde de départ de la phase quand il diffère de la taille (funded à 0 $ : Topstep XFA, MyFundedFutures). Seuils exprimés dans ce référentiel. |
+| `configuration.payout_path`, `configuration.addon` | Parcours de payout choisi (Standard / Consistency / Flex / Daily) et option payante qui change une règle. |
+| `consistency.max_single_day_pct_schedule` | Seuil par numéro de payout (Tradeify Lightning). |
+| `payout.split_by_profit` | Partage selon le profit présent sur le compte (TradeDay Quick Pay). |
 | `payout.split_after` | Partage qui change au-delà d'un cumul payé par compte (`split_pct` = avant le seuil). |
 | `payout.max_payouts` | Nombre de payouts avant fermeture ou passage en live. |
 | `payout.safety_net_balance` | Solde sous lequel aucun payout n'est possible (buffer / safety net). |
