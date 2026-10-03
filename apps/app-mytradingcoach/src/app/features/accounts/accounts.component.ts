@@ -50,6 +50,7 @@ import { TradovateApi, type TradovateSyncResult } from '../../core/api/tradovate
 import { catchError, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
+  excludedAccountsMessage,
   feesLine,
   parseTradovateReturn,
   relativeTime,
@@ -397,7 +398,7 @@ export class AccountsComponent implements OnInit {
     if (ret.status === 'error') {
       this.toast.error(tradovateErrorMessage(ret.reason, false));
     } else if (ret.status === 'select_account') {
-      this.toast.info('Compte Tradovate connecté : choisis ci-dessous le compte à synchroniser.');
+      this.toast.info('Compte Tradovate connecté : confirme ci-dessous le compte à synchroniser.');
     } else if (ret.syncFailed) {
       this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».");
     } else {
@@ -406,6 +407,9 @@ export class AccountsComponent implements OnInit {
       if (fees) this.toast.warning(fees.text);
       if ((ret.trades ?? 0) > 0) this.refreshAfterImport();
     }
+
+    const excluded = excludedAccountsMessage(ret.excluded);
+    if (excluded) this.toast.warning(excluded);
 
     const cleared = Object.fromEntries(TRADOVATE_RETURN_PARAMS.map((k) => [k, null]));
     // Commandes vides : même chemin, seuls les paramètres Tradovate disparaissent.

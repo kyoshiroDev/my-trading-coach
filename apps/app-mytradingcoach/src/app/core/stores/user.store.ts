@@ -21,6 +21,20 @@ export class UserStore {
   });
 
   /**
+   * Premium offert par l'admin : `trialEndsAt` futur SANS abonnement Stripe en cours.
+   * Aucun prélèvement prévu, retour en gratuit automatique (≠ essai Stripe, qui a un abonnement).
+   */
+  readonly isOfferedPremium = computed(() => {
+    const user = this.user();
+    if (!user?.trialEndsAt || new Date() >= new Date(user.trialEndsAt)) return false;
+    const status = user.stripeSubscriptionStatus;
+    return status !== 'active' && status !== 'trialing';
+  });
+
+  /** L'essai Stripe de 30 j est encore disponible au checkout (miroir de `trialUsed` côté API). */
+  readonly trialAvailable = computed(() => !this.user()?.trialUsed);
+
+  /**
    * Quota de comptes de trading du plan courant : `null` = illimité.
    * Premium / trial / admin → illimité · Free → 1. Aligné backend.
    */

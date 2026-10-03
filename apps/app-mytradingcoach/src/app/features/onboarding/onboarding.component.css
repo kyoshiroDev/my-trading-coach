@@ -468,6 +468,8 @@
 }
 .ob-tv-pick-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--text); }
 .ob-tv-pick-loading { margin: 0; font-size: 12px; color: var(--text-3); }
+/* Comptes du login écartés (déjà reliés ailleurs) : à savoir, pas une erreur. */
+.ob-tv-excluded { margin: 0; font-size: 12px; line-height: 1.5; color: var(--yellow); }
 
 /* Recherche d'instrument : aucun résultat / service indisponible (APP-03) */
 .asset-search-hint { margin: 6px 0 12px; font-size: var(--fs-xs); color: var(--text-3); }

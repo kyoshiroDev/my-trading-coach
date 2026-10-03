@@ -21,6 +21,10 @@ export interface AuthUser {
   plan: Plan;
   role?: UserRole;
   trialEndsAt?: string | null;
+  /** Essai Stripe déjà consommé (ou Premium offert reçu) : plus d'essai de 30 j au checkout. */
+  trialUsed?: boolean;
+  /** Statut de l'abonnement Stripe (`active`, `trialing`, `canceled`…), jamais d'identifiant. */
+  stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd?: string | null;
   isDemo?: boolean;
   onboardingCompleted?: boolean;

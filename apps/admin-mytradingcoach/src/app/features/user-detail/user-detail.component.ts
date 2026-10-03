@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
-import { UserDetailData } from '../../core/api/admin.api';
+import { ConfirmService } from '@mtc/front-ui';
+import { apiErrorMessage } from '@mtc/shared';
+import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
 /** Libellés courts/longs des features IA (clés réelles d'AiUsageLog). */
@@ -39,6 +41,23 @@ const MARKET_LABELS: Record<string, string> = { CRYPTO: 'Crypto', FOREX: 'Forex'
 const GOAL_LABELS: Record<string, string> = { DISCIPLINE: 'Discipline', PERFORMANCE: 'Performance', PSYCHOLOGIE: 'Psychologie' };
 const STYLE_LABELS: Record<string, string> = { SCALPING: 'Scalping', DAY_TRADING: 'Day trading', SWING: 'Swing', POSITION: 'Long terme' };
 const SESSION_LABELS: Record<string, string> = { LONDON: 'Londres', NEW_YORK: 'New York', ASIAN: 'Asie' };
+/** Durée d'un Premium offert (jours) : défaut de l'API. */
+const OFFER_DAYS = 30;
+const DAY_MS = 86_400_000;
+const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/**
+ * Raison pour laquelle l'API refuserait d'offrir le Premium (miroir de `UsersService.offerPremium`),
+ * `null` si l'offre est possible. Pure, testable.
+ */
+export function offerBlockReason(i: UserDetailData['identity']): string | null {
+  if (i.subscriptionStatus === 'active' || i.subscriptionStatus === 'trialing') return 'Abonnement Stripe en cours';
+  if (i.plan === 'PREMIUM') return 'Déjà Premium (accès manuel)';
+  if (i.role === 'ADMIN' || i.role === 'BETA_TESTER') return 'Premium déjà inclus par le rôle';
+  if (i.isDemo) return 'Compte démo';
+  return null;
+}
+
 function lbl(map: Record<string, string>, v: string | null | undefined): string {
   return v ? (map[v] ?? v) : '-';
 }
@@ -96,6 +115,9 @@ export function buildSignals(
 })
 export class UserDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly api = inject(AdminApi);
+  private readonly confirm = inject(ConfirmService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly id = toSignal(
     this.route.paramMap.pipe(map((p) => p.get('id') ?? '')),
@@ -133,9 +155,56 @@ export class UserDetailComponent {
   protected readonly planSub = computed(() => {
     const d = this.data();
     if (!d) return '';
+    if (d.identity.offeredPremium) return 'offert';
     if (d.identity.subscriptionStatus) return 'payant';
     return d.identity.plan === 'FREE' ? 'gratuit' : 'accès manuel';
   });
+  // ── Premium offert ──
+  /** Fin du Premium offert en cours, sinon null. */
+  protected readonly offeredUntil = computed(() => {
+    const i = this.data()?.identity;
+    return i?.offeredPremium && i.trialEndsAt ? i.trialEndsAt : null;
+  });
+  protected readonly offerBlocked = computed(() => {
+    const i = this.data()?.identity;
+    return i ? offerBlockReason(i) : null;
+  });
+  protected readonly offerLabel = computed(() =>
+    this.offeredUntil() ? 'Prolonger d’1 mois' : 'Offrir 1 mois de Premium',
+  );
+  protected readonly offering = signal(false);
+  protected readonly toast = signal<{ message: string; error?: boolean } | null>(null);
+
+  protected async offerPremium(): Promise<void> {
+    const i = this.data()?.identity;
+    if (!i || this.offerBlocked() || this.offering()) return;
+    const from = Math.max(Date.now(), this.offeredUntil() ? Date.parse(this.offeredUntil()!) : 0);
+    const end = frDate(new Date(from + OFFER_DAYS * DAY_MS));
+    const confirmed = await this.confirm.ask({
+      title: this.offeredUntil() ? 'Prolonger le Premium offert ?' : 'Offrir 1 mois de Premium ?',
+      message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email} ? Fin le ${end}. Aucun prélèvement.`,
+      confirmLabel: 'Confirmer',
+    });
+    if (!confirmed) return;
+    this.offering.set(true);
+    this.api.offerPremium(i.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (res) => {
+        this.offering.set(false);
+        this.showToast(`Premium offert jusqu’au ${frDate(new Date(res.data.trialEndsAt))}`);
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.offering.set(false);
+        this.showToast(apiErrorMessage(err, 'Le Premium n’a pas pu être offert. Réessaie.'), true);
+      },
+    });
+  }
+
+  private showToast(message: string, error = false): void {
+    this.toast.set({ message, error });
+    setTimeout(() => this.toast.set(null), 4000);
+  }
+
   /** Présence = jours connectés / jours depuis inscription. NE PAS confondre
    *  avec l'activation (= a-t-il loggé des trades), basée sur l'usage réel. */
   protected readonly engagementPct = computed(() => {

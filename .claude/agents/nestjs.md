@@ -115,7 +115,9 @@ GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) �
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
 GET    /api/admin/users/:id            ADMIN → fiche utilisateur complète   │
-PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  ┘
+PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  │
+POST   /api/admin/users/:id/offer-premium ADMIN → Premium offert {days?} 1-90 │
+                                       (défaut 30, prolonge, 409 si Stripe/PREMIUM/rôle/démo) ┘
 GET    /api/admin/ambassadors          ADMIN → liste                        ┐
 GET    /api/admin/ambassadors/:id/stats ADMIN                               │ AdminAmbassadorsController
 PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │
@@ -163,7 +165,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   DTO create/update : `@Transform(normalizeCurrencyCode)` + `@IsIn`). Compte synchronisé : devise
   **lue chez le broker** par `TradovateConnectionService.resolveAccountCurrency`
   (`/cashBalance/list` → `currencyId` du compte, puis `/currency/item?id=` pour le code), posée à la
-  sélection du compte ET à la connexion quand le compte est choisi automatiquement ; **refusée** en
+  sélection du compte ET à la reconnexion quand le compte déjà choisi est gardé ; **refusée** en
   update (`AccountsService.update`, 400). ⚠️ **`currencyId` est un identifiant INTERNE Tradovate**
   (1 = USD, 2 = EUR…), **pas un code ISO 4217** : jamais de table en dur, toujours `/currency/item`
   (mesuré le 2026-09-20, cf. `docs/tradovate-api-capabilities.md` §2). Lecture best-effort : token
@@ -877,9 +879,9 @@ sont en direct.
       firme ». `discoverLogin` lit donc `/user/list` (un seul élément, son `id`) ; échec ou réponse
       vide → login `null`, verrou par connexion, aucune propagation : dégradé, jamais bloquant.
     - **Un compte broker ne se relie qu'à UN seul compte MTC.** `dropAlreadyLinked` écarte, au
-      consentement, tout compte déjà relié par un **autre utilisateur** MTC : il n'est ni choisi
-      automatiquement ni offert à l'écran de sélection, et si c'était le seul, le retour est
-      `reason=account_already_linked`. `selectAccount` refuse explicitement
+      consentement, tout compte déjà relié par un **autre utilisateur** MTC : il n'est pas offert
+      à l'écran de sélection, son nombre part dans le retour (`excluded=N`, message côté front),
+      et si c'était le seul, le retour est `reason=account_already_linked`. `selectAccount` refuse explicitement
       (`TRADOVATE_ACCOUNT_ALREADY_LINKED`) — l'utilisateur a désigné ce compte, il doit savoir
       pourquoi. Sans filtre de statut : une connexion « à reconnecter » garde son refresh_token et
       le cron peut la ressusciter, donc elle reste un voleur en sommeil. Contrepartie assumée : un
@@ -914,12 +916,18 @@ sont en direct.
   victime avec SON lien et recevoir les trades de la victime. La doc ne dit pas si Tradovate
   renvoie `state` : s'il le renvoie, il doit égaler le cookie. Côté front, l'appel `authorize`
   doit partir **avec credentials** pour que le cookie soit posé.
+- **Jamais de choix d'office à la première connexion** (#332, 2026-10-03) : même avec UN seul
+  compte, `saveConnection` laisse `externalAccountId` vide → `select_account`, et rien n'est
+  importé avant que l'utilisateur confirme (mauvais login, compte voisin écarté). Seule une
+  **reconnexion** garde le compte déjà choisi (→ `connected` + première synchro). Le premier
+  `POST …/select` d'une connexion sans `historyImportedAt` lance l'historique complet en fond
+  (`TradovateHistoryService.launchFullImport`, comme le callback) ; le front enchaîne `sync`.
 - **Retour au point de départ** (PROMPT-208) : l'origine (`wizard` | `settings`) est signée
-  dans le `state`. Le callback lance une **première synchro** (jamais bloquante : échec →
-  `sync=error`, la connexion reste faite) puis redirige : wizard → `/dashboard?…&from=wizard`
+  dans le `state`. Sur `connected` (reconnexion), le callback lance une **première synchro**
+  (jamais bloquante : échec → `sync=error`, la connexion reste faite) puis redirige : wizard → `/dashboard?…&from=wizard`
   (l'overlay d'onboarding s'y rouvre), réglages → `/accounts?…`. Query params : `tradovate`
   (`connected`|`select_account`|`error`), `accountId`, `reason`, `trades`, `fees`
-  (`ok`|`partial`|`none`), `sync`, `from`. Un `state` illisible renvoie vers les réglages,
+  (`ok`|`partial`|`none`), `sync`, `from`, `excluded` (comptes écartés, absent si 0). Un `state` illisible renvoie vers les réglages,
   jamais sur une page morte.
 - Chaîne de lecture : `position/list` (seul lien fill → compte) → `fillPair/list` (paires =
   lignes de l'export Performance) → `fill/list` + `fillFee/list` (fills et frais exacts de la
@@ -1339,3 +1347,12 @@ aller-retour par requête :
   le cache lui-même ; s'il échoue (verrou relâché, cache vide), les autres réagissent aussitôt :
   `onTimeout` s'il est fourni (**appel payant : ne pas relancer**, renvoyer un repli), sinon ils
   recalculent.
+
+### Corps de requête : brut seulement pour le webhook Stripe (SCA-B3-06, 2026-10-03)
+
+L'app est créée avec `bodyParser: false` ; `config/body-parsers.ts` (`configureBodyParsers`) installe
+un parseur JSON qui garde `req.rawBody` **uniquement** sur `POST /api/billing/webhook` (signature
+Stripe sur les octets exacts), puis les parseurs JSON / urlencoded standard ailleurs (plus de copie
+brute de chaque corps). **Utilisé par `main.ts` ET par `test/integration-app.helper.ts`** : la même
+configuration est testée. Une nouvelle route qui a besoin du corps brut (autre webhook signé) →
+l'ajouter dans `configureBodyParsers`, pas `rawBody: true` global.

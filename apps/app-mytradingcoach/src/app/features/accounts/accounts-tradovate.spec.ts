@@ -295,6 +295,14 @@ describe('Mes comptes — retour du consentement Tradovate (toasts)', () => {
     expect(toasts()[0].message).toContain('Synchroniser');
   });
 
+  it('choix du compte à confirmer + compte écarté : info puis avertissement explicite', () => {
+    setup({ accounts: [acct('a', 'A')], query: { tradovate: 'select_account', accountId: 'a', excluded: '1' } });
+    const t = toasts();
+    expect(t[0]).toEqual({ type: 'info', message: 'Compte Tradovate connecté : confirme ci-dessous le compte à synchroniser.' });
+    expect(t[1].type).toBe('warning');
+    expect(t[1].message).toContain('déjà relié à un autre compte MyTradingCoach');
+  });
+
   it('échec : toast d’erreur clair', () => {
     setup({ accounts: [acct('a', 'A')], query: { tradovate: 'error', reason: 'denied', accountId: 'a' } });
     expect(toasts()).toEqual([{ type: 'error', message: "Tu as refusé l'accès sur Tradovate : aucune donnée n'a été lue." }]);

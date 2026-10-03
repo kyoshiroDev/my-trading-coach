@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
+import { isOfferedPremium } from '../users/premium-offer.util';
 
 const DAY_MS = 86_400_000;
 
@@ -19,6 +20,7 @@ export class UserDetailService {
       select: {
         id: true, name: true, email: true, plan: true, role: true,
         stripeSubscriptionStatus: true, referralCode: true,
+        trialEndsAt: true, isDemo: true,
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,
         tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
@@ -118,6 +120,9 @@ export class UserDetailService {
         plan: user.plan,
         role: user.role,
         subscriptionStatus: user.stripeSubscriptionStatus ?? null,
+        trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+        offeredPremium: isOfferedPremium(user),
+        isDemo: user.isDemo,
         ambassadorRefCode: user.role === 'AMBASSADOR' ? user.referralCode : null,
         createdAt: user.createdAt.toISOString(),
         lastActivityAt: user.lastSeenAt?.toISOString() ?? null,

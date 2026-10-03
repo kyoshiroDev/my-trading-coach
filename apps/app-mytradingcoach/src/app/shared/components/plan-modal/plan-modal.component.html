@@ -11,7 +11,7 @@
     <!-- Header -->
     <div class="plan-modal-header">
       <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
-      <p>1 mois offert · carte requise · annulable en un clic</p>
+      <p>{{ trialAvailable() ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}</p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
         <svg [lucideIcon]="XIcon" [size]="13"></svg>
       </button>
@@ -68,12 +68,12 @@
       @if (isLoading()) {
         <span class="btn-spinner"></span> Redirection...
       } @else {
-        @if (interval() === 'monthly') { Essayer Premium · 1 mois offert → }
+        @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium mensuel →' }} }
         @else { Passer à Premium annuel → }
       }
     </button>
     <p class="plan-modal-hint">
-      @if (interval() === 'monthly') {
+      @if (interval() === 'monthly' && trialAvailable()) {
         Puis {{ ctaPriceLabel() }} · carte requise · annulable en un clic
       } @else {
         {{ ctaPriceLabel() }} · facturé aujourd'hui · annulable en un clic

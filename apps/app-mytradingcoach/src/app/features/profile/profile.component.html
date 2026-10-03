@@ -397,7 +397,14 @@
                   PREMIUM
                 </div>
                 <p class="plan-desc">Accès à tout : Insights IA, Chat coach IA, Débrief hebdo, analytics avancés, comptes illimités.</p>
-                @if (isInTrial()) {
+                @if (userStore.isOfferedPremium()) {
+                  <div class="trial-status" data-testid="offered-premium">
+                    <p class="trial-status-title">🎁 Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-sub">
+                      Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
+                    </p>
+                  </div>
+                } @else if (isInTrial()) {
                   <div class="trial-status">
                     <p class="trial-status-title">🎁 Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
@@ -409,7 +416,11 @@
                     Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
                   </p>
                 }
-                @if (!userStore.isDemo()) {
+                @if (userStore.isOfferedPremium()) {
+                  <div class="plan-actions">
+                    <button class="btn btn-primary" (click)="showPlanModal.set(true)">Continuer en Premium →</button>
+                  </div>
+                } @else if (!userStore.isDemo()) {
                   <div class="plan-actions">
                     <button class="btn btn-secondary" (click)="openPortal()">
                       {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}

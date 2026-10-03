@@ -85,6 +85,23 @@ export class TradovateHistoryService {
     private readonly trades: TradesService,
   ) {}
 
+  /**
+   * Historique complet lancé en arrière-plan, dès que le compte Tradovate est connu (retour de
+   * connexion, ou premier choix du compte) : Tradovate archive un compte inactif au bout de
+   * 10 jours et son passé devient illisible. Volontairement NON attendu : remonter toute la vie
+   * du compte ne doit retarder ni la redirection ni la réponse. Les trades apparaissent au
+   * rafraîchissement ; en cas d'échec, le cron de fond rattrape (`historyImportedAt` vide).
+   */
+  launchFullImport(userId: string, accountId: string): void {
+    void this.importForAccount(userId, accountId)
+      .then((r) =>
+        this.logger.log(`Historique Tradovate importé : ${r.created} trade(s) créé(s), ${r.duplicates} doublon(s).`),
+      )
+      .catch((err: unknown) =>
+        this.logger.warn(`Import de l'historique Tradovate en échec : ${(err as Error).message}`),
+      );
+  }
+
   /** Entrée par compte MTC : résout la connexion puis importe. */
   async importForAccount(
     userId: string,
