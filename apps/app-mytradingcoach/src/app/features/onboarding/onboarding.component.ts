@@ -38,6 +38,7 @@ import { ToastService } from '../../core/services/toast.service';
 import {
   FeesState,
   TRADOVATE_RETURN_PARAMS,
+  excludedAccountsMessage,
   feesLine,
   feesState,
   parseTradovateReturn,
@@ -100,6 +101,8 @@ export class OnboardingComponent {
   protected readonly tvError = signal<string | null>(null);
   /** Login Tradovate à plusieurs comptes : choix à faire pour ce compte MTC. */
   protected readonly tvPickAccountId = signal<string | null>(null);
+  /** Comptes du login écartés (déjà reliés ailleurs), annoncés au-dessus du sélecteur. */
+  protected readonly tvExcludedMsg = signal<string | null>(null);
   protected readonly tvPickAccounts = computed(() => {
     const id = this.tvPickAccountId();
     return id ? (this.tvStore.byAccount().get(id)?.availableAccounts ?? []) : [];
@@ -298,6 +301,7 @@ export class OnboardingComponent {
       this.tradeChoice.set('choice');
       if (ret.status === 'select_account' && ret.accountId) {
         this.tvPickAccountId.set(ret.accountId);
+        this.tvExcludedMsg.set(excludedAccountsMessage(ret.excluded));
         this.tvStore.load();
       } else {
         this.tvError.set(tradovateErrorMessage(ret.reason, true));

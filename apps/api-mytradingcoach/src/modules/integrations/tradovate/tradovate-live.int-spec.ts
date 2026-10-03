@@ -148,7 +148,7 @@ async function registerUser(): Promise<{ id: string; token: string }> {
   return { id: body.data.user.id, token: body.data.access_token };
 }
 
-/** Consentement + retour Tradovate (1re synchro comprise), comme tradovate-sync.int-spec. */
+/** Consentement + retour Tradovate + choix du compte + 1re synchro (comme le front et tradovate-sync.int-spec). */
 async function connectTradovate(token: string, accountId: string): Promise<void> {
   const res = await realFetch(`${baseUrl}/api/integrations/tradovate/accounts/${accountId}/authorize`, {
     method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -159,7 +159,19 @@ async function connectTradovate(token: string, accountId: string): Promise<void>
   const cb = await realFetch(`${baseUrl}/integrations/tradovate/callback?${new URLSearchParams({ code: 'good-code', state })}`, {
     redirect: 'manual', headers: { cookie },
   });
-  expect(cb.headers.get('location')).toContain('tradovate=connected');
+  // Le compte n'est jamais choisi d'office : l'utilisateur le confirme.
+  expect(cb.headers.get('location')).toContain('tradovate=select_account');
+  const sel = await realFetch(`${baseUrl}/api/integrations/tradovate/accounts/${accountId}/select`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ externalAccountId: String(EXT_ACCOUNT) }),
+  });
+  expect(sel.status, await sel.clone().text()).toBeLessThan(300);
+  // Puis la première synchro, que le front enchaîne après le choix (selectThenSync).
+  const sync = await realFetch(`${baseUrl}/api/integrations/tradovate/accounts/${accountId}/sync`, {
+    method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+  });
+  expect(sync.status, await sync.clone().text()).toBeLessThan(300);
 }
 
 function openApp(token: string): Socket {

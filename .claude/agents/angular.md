@@ -561,11 +561,15 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
   le pose déjà partout ; `TradovateApi.authorize` le redemande explicitement).
 - **Retour OAuth** : tout ce qui se lit et s'affiche est dans
   `core/utils/tradovate-return.util.ts` (pur, testé) : `parseTradovateReturn`,
-  `tradovateErrorMessage`, `tradesLine`, `feesLine`, `syncResultLines`, `relativeTime`.
+  `tradovateErrorMessage`, `tradesLine`, `feesLine`, `syncResultLines`, `relativeTime`,
+  `excludedAccountsMessage` (comptes du login écartés car reliés à un autre compte MTC).
+  Sélecteur `mtc-tradovate-account-picker` : compte unique présélectionné et texte « rien n'est
+  importé avant ta confirmation » ; plusieurs comptes → aucun présélectionné.
   - `from=wizard` → lu par l'**onboarding** dans `window.location.search`, APRÈS
     `restoreProgress()` : réussite → étape 9 avec le récap (classe `ob-import-recap`, comme le
     CSV) ; échec → étape 8 + message non bloquant (« tu peux réessayer ou importer un CSV ») ;
-    plusieurs comptes → sélecteur à l'étape 8. **Jamais l'étape 1**, même si le localStorage a
+    `select_account` (toute première connexion, même à compte unique) → sélecteur à l'étape 8,
+    avec `excludedAccountsMessage` si `excluded > 0`. **Jamais l'étape 1**, même si le localStorage a
     disparu.
   - sinon → lu par « Mes comptes » (`router.routerState.snapshot.root.queryParams`).
   - Dans les deux cas, paramètres retirés aussitôt : `router.navigate([], { queryParams:

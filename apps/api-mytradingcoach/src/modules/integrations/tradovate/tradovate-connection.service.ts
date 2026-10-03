@@ -129,9 +129,12 @@ export class TradovateConnectionService {
       }
       const login = await this.discoverLogin(tokens.access_token as string, libres, apiHosts);
       const conn = await this.saveConnection(userId, accountId, tokens, libres, login, apiHosts);
+      // Comptes écartés : annoncés au retour, sinon l'utilisateur ne comprend pas pourquoi un
+      // compte de son login manque au sélecteur.
+      const excluded = available.length - libres.length;
       return conn.externalAccountId
-        ? { status: 'connected', accountId, userId, origin }
-        : { status: 'select_account', accountId, userId, origin };
+        ? { status: 'connected', accountId, userId, origin, excluded }
+        : { status: 'select_account', accountId, userId, origin, excluded };
     } catch (err) {
       const reason =
         err instanceof TradovateApiError && err.kind === 'rate_limited'
@@ -272,11 +275,11 @@ export class TradovateConnectionService {
     const where = { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } };
     const previous = await this.prisma.brokerConnection.findUnique({ where });
     // Reconnexion : on garde le compte choisi s'il est toujours accessible. Sinon, choix
-    // automatique quand il n'y a qu'un compte, choix explicite (front) quand il y en a plusieurs.
-    const kept = previous?.externalAccountId
+    // EXPLICITE (front), même s'il n'y a qu'un compte : rien n'est importé avant que
+    // l'utilisateur ait confirmé le compte (mauvais login Tradovate, compte voisin écarté…).
+    const chosen = previous?.externalAccountId
       ? available.find((a) => a.id === previous.externalAccountId && a.env === previous.externalEnv)
       : undefined;
-    const chosen = kept ?? (available.length === 1 ? available[0] : undefined);
 
     const data = {
       status: BrokerConnectionStatus.CONNECTED,
@@ -298,7 +301,7 @@ export class TradovateConnectionService {
       create: { userId, accountId, provider: BrokerProvider.TRADOVATE, ...data },
       update: data,
     });
-    // Compte choisi automatiquement (un seul compte, ou reconnexion) : il ne passe jamais par
+    // Compte gardé à la reconnexion : il ne passe jamais par
     // selectAccount, sa devise doit donc être alignée ici — sinon elle resterait celle saisie à la
     // main à la création du compte MTC, souvent EUR pour un compte broker en USD.
     if (chosen) {

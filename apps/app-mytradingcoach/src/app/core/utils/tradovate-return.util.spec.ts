@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  excludedAccountsMessage,
   feesLine,
   feesState,
   parseTradovateReturn,
@@ -25,7 +26,7 @@ describe('parseTradovateReturn — query params posés par le callback API', () 
       parseTradovateReturn({ tradovate: 'connected', accountId: 'a1', trades: '34', fees: 'ok', from: 'wizard' }),
     ).toEqual({
       status: 'connected', accountId: 'a1', reason: null, trades: 34,
-      syncFailed: false, fees: 'ok', fromWizard: true,
+      syncFailed: false, fees: 'ok', fromWizard: true, excluded: 0,
     });
   });
 
@@ -123,5 +124,19 @@ describe('messages', () => {
     expect(relativeTime('2026-09-12T10:00:00Z', now)).toBe('il y a 2 h');
     expect(relativeTime('2026-09-10T12:00:00Z', now)).toBe('il y a 2 j');
     expect(relativeTime('2026-08-01T12:00:00Z', now)).toBe('le 01/08');
+  });
+});
+
+describe('comptes écartés (déjà reliés à un autre compte MyTradingCoach)', () => {
+  it('lus dans le retour, 0 par défaut ou si invalide', () => {
+    expect(parseTradovateReturn({ tradovate: 'select_account', excluded: '2' })?.excluded).toBe(2);
+    expect(parseTradovateReturn({ tradovate: 'select_account' })?.excluded).toBe(0);
+    expect(parseTradovateReturn({ tradovate: 'select_account', excluded: 'x' })?.excluded).toBe(0);
+  });
+
+  it('message seulement s’il y en a, au singulier comme au pluriel', () => {
+    expect(excludedAccountsMessage(0)).toBeNull();
+    expect(excludedAccountsMessage(1)).toContain("1 compte Tradovate de ce login n'est pas proposé");
+    expect(excludedAccountsMessage(2)).toContain('2 comptes Tradovate de ce login ne sont pas proposés');
   });
 });

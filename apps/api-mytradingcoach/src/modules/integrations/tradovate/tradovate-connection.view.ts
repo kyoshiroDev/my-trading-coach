@@ -30,7 +30,14 @@ export interface TradovateConnectionView {
  * `origin` décide de la page de retour : l'utilisateur revient là d'où il est parti.
  */
 export type CallbackOutcome =
-  | { status: 'connected' | 'select_account'; accountId: string; userId: string; origin: OAuthOrigin }
+  | {
+      status: 'connected' | 'select_account';
+      accountId: string;
+      userId: string;
+      origin: OAuthOrigin;
+      /** Comptes du login écartés car déjà reliés à un autre utilisateur MTC. */
+      excluded?: number;
+    }
   | { status: 'error'; reason: string; accountId?: string; origin: OAuthOrigin };
 
 /** Résumé de la première synchro, ajouté à l'URL de retour (jamais bloquant). */
@@ -57,9 +64,8 @@ export function toConnectionView(conn: BrokerConnection, brokerTradesCount = 0):
     externalAccountName: conn.externalAccountName,
     externalEnv: conn.externalEnv,
     availableAccounts,
-    // ≥ 1 et non > 1 : au consentement, un compte unique est choisi d'office (jamais ici) ; mais
-    // un compte disparu détache la connexion, et le suivant doit être choisi explicitement même
-    // s'il est seul — on ne verse pas les trades d'un autre compte broker sans le demander.
+    // ≥ 1 et non > 1 : le compte est toujours choisi explicitement, même seul (première connexion,
+    // compte disparu) — on ne verse pas les trades d'un compte broker sans le demander.
     needsAccountSelection: !conn.externalAccountId && availableAccounts.length >= 1,
     lastSyncAt: conn.lastSyncAt,
     lastSyncError: conn.lastSyncError,
@@ -78,6 +84,7 @@ export function frontendRedirectUrl(base: string, outcome: CallbackOutcome, sync
   const params = new URLSearchParams({ tradovate: outcome.status });
   if (outcome.accountId) params.set('accountId', outcome.accountId);
   if (outcome.status === 'error') params.set('reason', outcome.reason);
+  else if (outcome.excluded) params.set('excluded', String(outcome.excluded));
   if (sync) {
     if (sync.created === null) params.set('sync', 'error');
     else params.set('trades', String(sync.created));
