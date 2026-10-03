@@ -1,0 +1,3546 @@
+{
+  "firm": {
+    "id": "toponefutures",
+    "name": "Top One Futures",
+    "website": "https://www.toponefutures.com",
+    "help_center": "https://help.toponefutures.com/en/",
+    "platforms": [
+      "tradovate",
+      "ninjatrader",
+      "tradingview"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "toponefutures-elite-25k",
+      "plan_name": "Elite",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 625,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 1000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 625,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 1000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 25 % du profit total du cycle (journée close à 17:00 heure de New York) ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial pour le 1er payout, 5 % du nouveau solde pour le 2e, 4 % ensuite. Minimum 2 % de la taille, plafond 1500 $ par retrait jusqu'au Live, 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020730-overview-of-the-elite-evaluation",
+        "https://help.toponefutures.com/en/articles/10907134-understanding-the-drawdown-in-elite-accounts",
+        "https://help.toponefutures.com/en/articles/12717928-elite-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907263-consistency-rule-in-elite-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/10907249-activation-fee-for-your-elite-sim-funded-account",
+        "https://help.toponefutures.com/en/articles/10907208-evaluation-account-reset-fee",
+        "https://help.toponefutures.com/en/articles/10907891-elite-sim-funded-account-reset-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Reset évaluation 29 $, reset funded 199 $ (dans les 14 jours suivant l'échec). Gamme absente de la page d'accueil au relevé : prix non relevé."
+    },
+    {
+      "id": "toponefutures-elite-50k",
+      "plan_name": "Elite",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 2000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 2000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 25 % du profit total du cycle (journée close à 17:00 heure de New York) ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial pour le 1er payout, 5 % du nouveau solde pour le 2e, 4 % ensuite. Minimum 2 % de la taille, plafond 2500 $ par retrait jusqu'au Live, 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020730-overview-of-the-elite-evaluation",
+        "https://help.toponefutures.com/en/articles/10907134-understanding-the-drawdown-in-elite-accounts",
+        "https://help.toponefutures.com/en/articles/12717928-elite-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907263-consistency-rule-in-elite-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/10907249-activation-fee-for-your-elite-sim-funded-account",
+        "https://help.toponefutures.com/en/articles/10907208-evaluation-account-reset-fee",
+        "https://help.toponefutures.com/en/articles/10907891-elite-sim-funded-account-reset-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Reset évaluation 39 $, reset funded 299 $ (dans les 14 jours suivant l'échec). Gamme absente de la page d'accueil au relevé : prix non relevé."
+    },
+    {
+      "id": "toponefutures-elite-100k",
+      "plan_name": "Elite",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 3000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 3000 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 25 % du profit total du cycle (journée close à 17:00 heure de New York) ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 2000,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial pour le 1er payout, 5 % du nouveau solde pour le 2e, 4 % ensuite. Minimum 2 % de la taille, plafond 3000 $ par retrait jusqu'au Live, 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020730-overview-of-the-elite-evaluation",
+        "https://help.toponefutures.com/en/articles/10907134-understanding-the-drawdown-in-elite-accounts",
+        "https://help.toponefutures.com/en/articles/12717928-elite-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907263-consistency-rule-in-elite-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/10907249-activation-fee-for-your-elite-sim-funded-account",
+        "https://help.toponefutures.com/en/articles/10907208-evaluation-account-reset-fee",
+        "https://help.toponefutures.com/en/articles/10907891-elite-sim-funded-account-reset-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Reset évaluation 79 $, reset funded 399 $ (dans les 14 jours suivant l'échec). Gamme absente de la page d'accueil au relevé : prix non relevé."
+    },
+    {
+      "id": "toponefutures-elite-150k",
+      "plan_name": "Elite",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 4500 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 154600 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "2,5 % du compte, calculé sur le solde de clôture de la veille ; pertes latentes comprises. Soft breach : pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : suit le plus haut solde de clôture, 4500 $ en dessous. Passer sous le seuil, même un instant en séance, fait échouer (rattraper ensuite n'annule pas la faute). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 154600 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 25 % du profit total du cycle (journée close à 17:00 heure de New York) ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille fixe, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 3000,
+            "max_amount": 3500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial pour le 1er payout, 5 % du nouveau solde pour le 2e, 4 % ensuite. Minimum 2 % de la taille, plafond 3500 $ par retrait jusqu'au Live, 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020730-overview-of-the-elite-evaluation",
+        "https://help.toponefutures.com/en/articles/10907134-understanding-the-drawdown-in-elite-accounts",
+        "https://help.toponefutures.com/en/articles/12717928-elite-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10907263-consistency-rule-in-elite-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/10907249-activation-fee-for-your-elite-sim-funded-account",
+        "https://help.toponefutures.com/en/articles/10907208-evaluation-account-reset-fee",
+        "https://help.toponefutures.com/en/articles/10907891-elite-sim-funded-account-reset-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Reset évaluation 119 $, reset funded 499 $ (dans les 14 jours suivant l'échec). Gamme absente de la page d'accueil au relevé : prix non relevé."
+    },
+    {
+      "id": "toponefutures-elite-daily-25k",
+      "plan_name": "Elite Daily",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 178,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 178 $ hors promo (98 $ avec le code du moment). Pas d'activation. Reset évaluation 93 $ (fiche) mais 75 $ sur la page d'accueil ; reset funded 299 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total, en évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": null,
+                "minis": 1,
+                "micros": 10
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, appliqué le lendemain."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 750,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "Payout quotidien (toutes les 24 h). Buffer 1500 $ à laisser sur le compte (solde minimum après payout 26500 $). Dès le 2e payout, au moins 50 % du montant doit venir de profits faits depuis le précédent."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview",
+        "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll",
+        "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase",
+        "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase",
+        "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules",
+        "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only",
+        "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Daily V2 (5 comptes funded max)."
+    },
+    {
+      "id": "toponefutures-elite-daily-50k",
+      "plan_name": "Elite Daily",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 218,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 218 $ hors promo (120 $ avec le code du moment). Pas d'activation. Reset évaluation 115 $ (fiche) mais 93 $ sur la page d'accueil ; reset funded 499 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total, en évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, appliqué le lendemain."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52500,
+            "notes": "Payout quotidien (toutes les 24 h). Buffer 2500 $ à laisser sur le compte (solde minimum après payout 52500 $). Dès le 2e payout, au moins 50 % du montant doit venir de profits faits depuis le précédent."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview",
+        "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll",
+        "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase",
+        "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase",
+        "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules",
+        "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only",
+        "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Daily V2 (5 comptes funded max)."
+    },
+    {
+      "id": "toponefutures-elite-daily-100k",
+      "plan_name": "Elite Daily",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 398,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 398 $ hors promo (219 $ avec le code du moment). Pas d'activation. Reset évaluation 214 $ (fiche) mais non affiché $ sur la page d'accueil ; reset funded 849 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total, en évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 102600,
+            "locked_floor": 100100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 102600 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, appliqué le lendemain."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103500,
+            "notes": "Payout quotidien (toutes les 24 h). Buffer 3500 $ à laisser sur le compte (solde minimum après payout 103500 $). Dès le 2e payout, au moins 50 % du montant doit venir de profits faits depuis le précédent."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview",
+        "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll",
+        "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase",
+        "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase",
+        "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules",
+        "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only",
+        "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Daily V2 (5 comptes funded max)."
+    },
+    {
+      "id": "toponefutures-elite-daily-150k",
+      "plan_name": "Elite Daily",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 549,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 549 $ hors promo (302 $ avec le code du moment). Pas d'activation. Reset évaluation 297 $ (fiche) mais non affiché $ sur la page d'accueil ; reset funded 1250 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 1850,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K publié dans la fiche V2 mais « n/a » dans le tableau général des DLL."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 4500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 154600 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total, en évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1850,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de clôture de la veille ; pertes latentes et frais compris. Soft breach : positions liquidées, pause jusqu'à la session suivante. Montant 150K publié dans la fiche V2 mais « n/a » dans le tableau général des DLL."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 153600,
+            "locked_floor": 150100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, ne suit pas l'intraday et n'est contrôlé qu'à la clôture (échec si la journée clôture au niveau ou en dessous). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, appliqué le lendemain."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2250,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Payout quotidien (toutes les 24 h). Buffer 4500 $ à laisser sur le compte (solde minimum après payout 154500 $). Dès le 2e payout, au moins 50 % du montant doit venir de profits faits depuis le précédent."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview",
+        "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll",
+        "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase",
+        "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase",
+        "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules",
+        "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only",
+        "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Elite Daily V2 (5 comptes funded max). DLL 150K contradictoire entre deux articles."
+    },
+    {
+      "id": "toponefutures-elite-access-25k",
+      "plan_name": "Elite Access",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 139,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 139 $. Reset évaluation 35 $, reset funded 299 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": null,
+                "minis": 1,
+                "micros": 10
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 200 $ avant chaque payout. Buffer 1500 $ à garder : il faut 2000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview",
+        "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod",
+        "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements",
+        "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40",
+        "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule",
+        "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-50k",
+      "plan_name": "Elite Access",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 189,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 189 $. Reset évaluation 35 $, reset funded 499 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "5 jours gagnants d'au moins 250 $ avant chaque payout. Buffer 2000 $ à garder : il faut 2500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview",
+        "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod",
+        "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements",
+        "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40",
+        "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule",
+        "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-100k",
+      "plan_name": "Elite Access",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 259,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 259 $. Reset évaluation 35 $, reset funded 849 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103000,
+            "notes": "5 jours gagnants d'au moins 300 $ avant chaque payout. Buffer 3000 $ à garder : il faut 3500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview",
+        "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod",
+        "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements",
+        "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40",
+        "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule",
+        "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-150k",
+      "plan_name": "Elite Access",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 359,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 359 $. Reset évaluation 35 $, reset funded 1349 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154100,
+            "locked_floor": 150100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 4000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 154100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 153600,
+            "locked_floor": 150100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3500 $ sous le plus haut solde de clôture, contrôlé à la clôture seulement. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 153600 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2500,
+                "max_profit": 3500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3500,
+                "max_profit": 4500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "5 jours gagnants d'au moins 350 $ avant chaque payout. Buffer 4500 $ à garder : il faut 5000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview",
+        "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod",
+        "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan",
+        "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements",
+        "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40",
+        "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule",
+        "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-intraday-25k",
+      "plan_name": "Elite Access Intraday",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 69,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 69 $. Reset évaluation 35 $, reset funded 149 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 1000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 1000 $ en dessous. Ne se fige à 25100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": null,
+                "minis": 1,
+                "micros": 10
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 200 $ avant chaque payout. Buffer 1500 $ à garder : il faut 2000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod",
+        "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday",
+        "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access Intraday : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-intraday-50k",
+      "plan_name": "Elite Access Intraday",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 94,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 94 $. Reset évaluation 35 $, reset funded 249 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 2000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 2000 $ en dessous. Ne se fige à 50100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52000,
+            "notes": "5 jours gagnants d'au moins 250 $ avant chaque payout. Buffer 2000 $ à garder : il faut 2500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod",
+        "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday",
+        "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access Intraday : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-intraday-100k",
+      "plan_name": "Elite Access Intraday",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 129,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 129 $. Reset évaluation 35 $, reset funded 449 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 103100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3000 $ en dessous. Ne se fige à 100100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 300,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103000,
+            "notes": "5 jours gagnants d'au moins 300 $ avant chaque payout. Buffer 3000 $ à garder : il faut 3500 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod",
+        "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday",
+        "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access Intraday : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-elite-access-intraday-150k",
+      "plan_name": "Elite Access Intraday",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 179,
+        "notes": "Évaluation à 39 $ (paiement unique, toutes tailles), 30 jours pour réussir. Activation 179 $. Reset évaluation 35 $, reset funded 649 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154100,
+            "locked_floor": 150100,
+            "enforced_on": "eod_balance",
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 4000 $ sous le plus haut solde de clôture ; seule la clôture compte (une baisse intraday sous le niveau n'échoue pas si la journée clôture au-dessus). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 154100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour en évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1750,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Calculé sur le solde de début de journée ; pertes latentes et frais compris. Soft breach : positions fermées, pause jusqu'au rollover."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Funded : trailing intraday tick par tick sur le plus haut equity (latent compris), 3500 $ en dessous. Ne se fige à 150100 $ qu'au premier payout demandé, pas au franchissement d'un solde."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour au plus 40 % du profit du cycle (trades clôturés), recalculé après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2500,
+                "max_profit": 3500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3500,
+                "max_profit": 4500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture, mis à jour une fois par jour."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Funded : aucune exécution (ouverture, clôture, ordre, modification de stop ou d'objectif) de 2 minutes avant à 2 minutes après une annonce à fort impact ; pas un échec automatique, mais profits retirés et payout refusé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 350,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "5 jours gagnants d'au moins 350 $ avant chaque payout. Buffer 4500 $ à garder : il faut 5000 $ de profit pour demander. Dès le 2e payout, 50 % au moins doivent venir de nouveaux profits. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod",
+        "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday",
+        "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained",
+        "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": false,
+      "notes": "Elite Access Intraday : 10 comptes maximum."
+    },
+    {
+      "id": "toponefutures-instant-25k",
+      "plan_name": "Instant Sim Funded 2.0",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 419,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 419 $ hors promo (230 $ avec le code du moment). Pas d'évaluation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 625,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD (17:00 heure de New York) : 1000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 20 % du profit total au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial, puis 5 %, puis 4 % du nouveau solde. Plafond 1000 $ par retrait (version 2.0, comptes achetés depuis le 27/07/2026). 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program",
+        "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works",
+        "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
+    },
+    {
+      "id": "toponefutures-instant-50k",
+      "plan_name": "Instant Sim Funded 2.0",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 679,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 679 $ hors promo (306 $ avec le code du moment). Pas d'évaluation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1250,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD (17:00 heure de New York) : 2000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 20 % du profit total au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial, puis 5 %, puis 4 % du nouveau solde. Plafond 2000 $ par retrait (version 2.0, comptes achetés depuis le 27/07/2026). 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program",
+        "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works",
+        "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
+    },
+    {
+      "id": "toponefutures-instant-100k",
+      "plan_name": "Instant Sim Funded 2.0",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 821,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 821 $ hors promo (452 $ avec le code du moment). Pas d'évaluation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD (17:00 heure de New York) : 4000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 20 % du profit total au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial, puis 5 %, puis 4 % du nouveau solde. Plafond 2500 $ par retrait (version 2.0, comptes achetés depuis le 27/07/2026). 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program",
+        "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works",
+        "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
+    },
+    {
+      "id": "toponefutures-instant-150k",
+      "plan_name": "Instant Sim Funded 2.0",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 939,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 939 $ hors promo (516 $ avec le code du moment). Pas d'évaluation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+          },
+          "max_drawdown": {
+            "amount": 5250,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 155350,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD (17:00 heure de New York) : 5250 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 155350 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 20 % du profit total au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Objectif par cycle : 6 % du solde initial, puis 5 %, puis 4 % du nouveau solde. Plafond 3000 $ par retrait (version 2.0, comptes achetés depuis le 27/07/2026). 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program",
+        "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works",
+        "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements",
+        "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
+    },
+    {
+      "id": "toponefutures-ignite-25k",
+      "plan_name": "Ignite",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 218,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 218 $ hors promo (109 $ avec le code du moment). Pas d'évaluation, pas d'activation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : pause jusqu'à la réouverture à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.15,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 15 % du profit total au moment du payout (comptes ouverts sous les conditions actuelles)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:00 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 % de profit par cycle (du solde initial, puis du solde après le payout précédent). Minimum 250 $, plafond 500 $ par retrait, pas de jours minimum. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview",
+        "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements",
+        "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
+    },
+    {
+      "id": "toponefutures-ignite-50k",
+      "plan_name": "Ignite",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 398,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 398 $ hors promo (199 $ avec le code du moment). Pas d'évaluation, pas d'activation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : pause jusqu'à la réouverture à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.15,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 15 % du profit total au moment du payout (comptes ouverts sous les conditions actuelles)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:00 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 % de profit par cycle (du solde initial, puis du solde après le payout précédent). Minimum 250 $, plafond 1000 $ par retrait, pas de jours minimum. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview",
+        "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements",
+        "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
+    },
+    {
+      "id": "toponefutures-ignite-100k",
+      "plan_name": "Ignite",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 563,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 563 $ hors promo (281 $ avec le code du moment). Pas d'évaluation, pas d'activation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : pause jusqu'à la réouverture à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.15,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 15 % du profit total au moment du payout (comptes ouverts sous les conditions actuelles)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:00 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 % de profit par cycle (du solde initial, puis du solde après le payout précédent). Minimum 250 $, plafond 1500 $ par retrait, pas de jours minimum. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview",
+        "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements",
+        "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
+    },
+    {
+      "id": "toponefutures-ignite-150k",
+      "plan_name": "Ignite",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 799,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique 799 $ hors promo (399 $ avec le code du moment). Pas d'évaluation, pas d'activation, pas de reset."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : pause jusqu'à la réouverture à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 156100,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 6000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.15,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 15 % du profit total au moment du payout (comptes ouverts sous les conditions actuelles)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:00 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 250,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 % de profit par cycle (du solde initial, puis du solde après le payout précédent). Minimum 250 $, plafond 2000 $ par retrait, pas de jours minimum. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview",
+        "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements",
+        "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
+    },
+    {
+      "id": "toponefutures-x-ultra-50k",
+      "plan_name": "X-Ultra",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 54100,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 4000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 54100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 53100,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 53100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1000,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 5000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours gagnants d'au moins 250 $ avant chaque payout (4 avec l'option payante). Pas de buffer ni de consistency. 50 % au moins de chaque payout doivent venir de nouveaux profits. Live après 3 payouts."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17244414-x-ultra-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17244455-x-ultra-evaluation-profit-target-consistency-50",
+        "https://help.toponefutures.com/en/articles/17244484-x-ultra-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17244517-x-ultra-maximum-drawdown-mll-eod",
+        "https://help.toponefutures.com/en/articles/17244610-x-ultra-contract-limits-scaling",
+        "https://help.toponefutures.com/en/articles/17244734-x-ultra-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17244856-x-ultra-activation-fee-resets-account-limits",
+        "https://help.toponefutures.com/en/articles/17244951-x-ultra-other-trading-rules",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+    },
+    {
+      "id": "toponefutures-x-ultra-100k",
+      "plan_name": "X-Ultra",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 8000,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 8000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 108100,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 8000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 108100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 104600,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 4500 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104600 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 2000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 8,
+                "micros": 80
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 500,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 7000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours gagnants d'au moins 500 $ avant chaque payout (4 avec l'option payante). Pas de buffer ni de consistency. 50 % au moins de chaque payout doivent venir de nouveaux profits. Live après 3 payouts."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17244414-x-ultra-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17244455-x-ultra-evaluation-profit-target-consistency-50",
+        "https://help.toponefutures.com/en/articles/17244484-x-ultra-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17244517-x-ultra-maximum-drawdown-mll-eod",
+        "https://help.toponefutures.com/en/articles/17244610-x-ultra-contract-limits-scaling",
+        "https://help.toponefutures.com/en/articles/17244734-x-ultra-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17244856-x-ultra-activation-fee-resets-account-limits",
+        "https://help.toponefutures.com/en/articles/17244951-x-ultra-other-trading-rules",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+    },
+    {
+      "id": "toponefutures-x-ultra-150k",
+      "plan_name": "X-Ultra",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 12000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 12000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 162100,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 12000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 162100 $, et dès le premier payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour au plus 50 % du profit total au moment de réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach sur X-Ultra : atteindre la DLL fait échouer. Calculée sur le solde de début de journée, pertes latentes et frais compris, reset à 18:00 heure de New York."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 156100,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "MLL EOD : 6000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 3000,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Scaling funded selon le profit au solde de clôture."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions de 18:00 à 16:10 heure de New York (vendredi 16:00), pause 17:00-18:00, pas de week-end. Toute position encore ouverte à 16:10 est liquidée ; pas d'overnight. Durée minimale d'un trade : 10 secondes. Pas de règle news sur X-Ultra. Inactivité de 14 jours : compte fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 750,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 50,
+            "max_amount": 9000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours gagnants d'au moins 750 $ avant chaque payout (4 avec l'option payante). Pas de buffer ni de consistency. 50 % au moins de chaque payout doivent venir de nouveaux profits. Live après 3 payouts."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.toponefutures.com/en/articles/17244414-x-ultra-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17244455-x-ultra-evaluation-profit-target-consistency-50",
+        "https://help.toponefutures.com/en/articles/17244484-x-ultra-daily-loss-limit-dll",
+        "https://help.toponefutures.com/en/articles/17244517-x-ultra-maximum-drawdown-mll-eod",
+        "https://help.toponefutures.com/en/articles/17244610-x-ultra-contract-limits-scaling",
+        "https://help.toponefutures.com/en/articles/17244734-x-ultra-payout-requirements",
+        "https://help.toponefutures.com/en/articles/17244856-x-ultra-activation-fee-resets-account-limits",
+        "https://help.toponefutures.com/en/articles/17244951-x-ultra-other-trading-rules",
+        "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures",
+        "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news",
+        "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight",
+        "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know",
+        "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock",
+        "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained",
+        "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained",
+        "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
+        "https://www.toponefutures.com/"
+      ],
+      "needs_review": true,
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+    }
+  ]
+}

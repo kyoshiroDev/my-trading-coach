@@ -1,0 +1,1115 @@
+{
+  "firm": {
+    "id": "phidias",
+    "name": "Phidias Propfirm",
+    "website": "https://phidiaspropfirm.com",
+    "help_center": "https://helpcenter.phidiaspropfirm.com/help",
+    "platforms": [
+      "rithmic",
+      "rtrader_pro",
+      "tradovate",
+      "ninjatrader",
+      "tradingview",
+      "deepchart"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "phidias-e2l-25k",
+      "plan_name": "Express to Live",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 55,
+        "billing": "one_time",
+        "activation_fee": 83,
+        "notes": "Évaluation à paiement unique 55 $ hors promo, plus 83 $ d'activation CASH à vie. Option paiement unique tout compris 277 $ hors promo, sans activation. Codes promo fréquents (jusqu'à -80 %). Site FR en euros (activation 80/139/139/159 €)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": 1,
+            "safety_net_balance": null,
+            "notes": "Pas de retrait classique : en atteignant 1500 $ de profit sur le compte CASH, « Switch to Live » crédite un bonus fixe de 1000 $ (split 80/20) sur le Phidias Wallet, plus 500 $ de crédit LIVE, et le compte passe en LIVE chez Dorman Trading (payouts quotidiens, 500 $ minimum)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-e2l-50k",
+      "plan_name": "Express to Live",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 89,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Évaluation à paiement unique 89 $ hors promo, plus 149 $ d'activation CASH à vie. Option paiement unique tout compris 723 $ hors promo, sans activation. Codes promo fréquents (jusqu'à -80 %). Site FR en euros (activation 80/139/139/159 €)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 650,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 49350,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 2500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 650,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 49350,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": 1,
+            "safety_net_balance": null,
+            "notes": "Pas de retrait classique : en atteignant 2500 $ de profit sur le compte CASH, « Switch to Live » crédite un bonus fixe de 2000 $ (split 80/20) sur le Phidias Wallet, plus 1000 $ de crédit LIVE, et le compte passe en LIVE chez Dorman Trading (payouts quotidiens, 500 $ minimum)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-e2l-100k",
+      "plan_name": "Express to Live",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 119,
+        "billing": "one_time",
+        "activation_fee": 149,
+        "notes": "Évaluation à paiement unique 119 $ hors promo, plus 149 $ d'activation CASH à vie. Option paiement unique tout compris 900 $ hors promo, sans activation. Codes promo fréquents (jusqu'à -80 %). Site FR en euros (activation 80/139/139/159 €)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 800,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 99200,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 3500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 800,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 99200,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": 1,
+            "safety_net_balance": null,
+            "notes": "Pas de retrait classique : en atteignant 3500 $ de profit sur le compte CASH, « Switch to Live » crédite un bonus fixe de 3000 $ (split 80/20) sur le Phidias Wallet, plus 1500 $ de crédit LIVE, et le compte passe en LIVE chez Dorman Trading (payouts quotidiens, 500 $ minimum)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-e2l-150k",
+      "plan_name": "Express to Live",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 149,
+        "billing": "one_time",
+        "activation_fee": 169,
+        "notes": "Évaluation à paiement unique 149 $ hors promo, plus 169 $ d'activation CASH à vie. Option paiement unique tout compris 1125 $ hors promo, sans activation. Codes promo fréquents (jusqu'à -80 %). Site FR en euros (activation 80/139/139/159 €)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 149000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 9,
+            "micros": 90,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": 4500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 149000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 9,
+            "micros": 90,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 4500,
+            "max_amount_schedule": null,
+            "max_payouts": 1,
+            "safety_net_balance": null,
+            "notes": "Pas de retrait classique : en atteignant 4500 $ de profit sur le compte CASH, « Switch to Live » crédite un bonus fixe de 4500 $ (split 80/20) sur le Phidias Wallet, plus 2000 $ de crédit LIVE, et le compte passe en LIVE chez Dorman Trading (payouts quotidiens, 500 $ minimum)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-fundamental-50k",
+      "plan_name": "Fundamental",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 90,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Abonnement mensuel 90 $ hors promo jusqu'à validation, puis 149 $ d'activation CASH à vie. Option paiement unique 225 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52600,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52600,
+            "notes": "Un jour ne compte que s'il fait au moins 150 $ de PnL positif. Retrait possible au-dessus de 52600 $, le solde ne peut pas redescendre sous 50100 $. Plafond 2000 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/cest-quoi-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-fundamental-100k",
+      "plan_name": "Fundamental",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 145,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Abonnement mensuel 145 $ hors promo jusqu'à validation, puis 149 $ d'activation CASH à vie. Option paiement unique 361 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103700,
+            "notes": "Un jour ne compte que s'il fait au moins 200 $ de PnL positif. Retrait possible au-dessus de 103700 $, le solde ne peut pas redescendre sous 100100 $. Plafond 2500 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/cest-quoi-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-fundamental-150k",
+      "plan_name": "Fundamental",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 175,
+        "billing": "monthly",
+        "activation_fee": 169,
+        "notes": "Abonnement mensuel 175 $ hors promo jusqu'à validation, puis 169 $ d'activation CASH à vie. Option paiement unique 437 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "21:59 Etc/UTC",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2750,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Un jour ne compte que s'il fait au moins 250 $ de PnL positif. Retrait possible au-dessus de 154500 $, le solde ne peut pas redescendre sous 150100 $. Plafond 2750 $ par période, 500 $ minimum, via Riseworks. Split 80/20. Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/cest-quoi-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-premium-50k",
+      "plan_name": "Premium",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 110,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Abonnement mensuel 110 $ hors promo jusqu'à validation, puis 149 $ d'activation CASH à vie. Option paiement unique 275 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours. Cash Account Reset 399 $, une fois par compte CASH."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52600,
+            "locked_floor": 50100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.75,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52600,
+            "notes": "Un jour ne compte que s'il fait au moins 150 $ de PnL positif. Retrait possible au-dessus de 52600 $, le solde ne peut pas redescendre sous 50100 $. Plafond 2000 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/regles-compte-premium",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-premium-100k",
+      "plan_name": "Premium",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 180,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Abonnement mensuel 180 $ hors promo jusqu'à validation, puis 149 $ d'activation CASH à vie. Option paiement unique 450 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours. Cash Account Reset 499 $, une fois par compte CASH."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.75,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103700,
+            "notes": "Un jour ne compte que s'il fait au moins 200 $ de PnL positif. Retrait possible au-dessus de 103700 $, le solde ne peut pas redescendre sous 100100 $. Plafond 2500 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/regles-compte-premium",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    },
+    {
+      "id": "phidias-premium-150k",
+      "plan_name": "Premium",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 220,
+        "billing": "monthly",
+        "activation_fee": 169,
+        "notes": "Abonnement mensuel 220 $ hors promo jusqu'à validation, puis 169 $ d'activation CASH à vie. Option paiement unique 550 $ hors promo, sans activation. Codes promo fréquents. Échec : reset payant ou reset automatique au bout de 30 jours. Cash Account Reset 599 $, une fois par compte CASH."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "payout",
+            "notes": "Comptes CASH : aucune journée au-delà de 30 % du profit total, calculé sur 4 jours de trading minimum. Pas un échec : il suffit d'augmenter le profit total."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 17,
+            "micros": 170,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées, taille selon le compte."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.75,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 2750,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154500,
+            "notes": "Un jour ne compte que s'il fait au moins 250 $ de PnL positif. Retrait possible au-dessus de 154500 $, le solde ne peut pas redescendre sous 150100 $. Plafond 2750 $ par période, 500 $ minimum, via Riseworks. Split progressif selon le numéro de payout : 75 %, 80 %, 85 %, 90 %, puis 100 % dès le 5e (split_pct = 1er payout). Passage en LIVE discrétionnaire (5 payouts validés ou 100 000 $ de profits cumulés)."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://helpcenter.phidiaspropfirm.com/help/regles-compte-premium",
+        "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait",
+        "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm",
+        "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales",
+        "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod",
+        "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week",
+        "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental",
+        "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques",
+        "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
+        "https://phidiaspropfirm.com/accounts"
+      ],
+      "needs_review": true,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+    }
+  ]
+}
