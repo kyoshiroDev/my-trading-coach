@@ -393,10 +393,13 @@
             <p class="ob-tv-error" role="alert" data-testid="onboarding-tradovate-error">{{ msg }}</p>
           }
 
-          <!-- Login Tradovate à plusieurs comptes : choisir celui de ce compte MTC. -->
+          <!-- Retour Tradovate : l'utilisateur confirme le compte à synchroniser, même seul. -->
           @if (tvPickAccountId(); as pickId) {
             <div class="ob-tv-pick" data-testid="onboarding-tradovate-pick">
               <div class="ob-tv-pick-title">Compte <span class="nt-word">Tradovate</span> connecté</div>
+              @if (tvExcludedMsg(); as excludedMsg) {
+                <p class="ob-tv-excluded" data-testid="onboarding-tradovate-excluded">{{ excludedMsg }}</p>
+              }
               @if (tvPickAccounts().length > 0) {
                 <mtc-tradovate-account-picker
                   [accounts]="tvPickAccounts()"

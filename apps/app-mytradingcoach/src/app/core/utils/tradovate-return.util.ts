@@ -20,11 +20,13 @@ export interface TradovateReturn {
   syncFailed: boolean;
   fees: FeesState | null;
   fromWizard: boolean;
+  /** Comptes du login écartés car déjà reliés à un autre compte MyTradingCoach. */
+  excluded: number;
 }
 
 /** Paramètres posés par l'API au retour : à retirer de l'URL une fois lus. */
 export const TRADOVATE_RETURN_PARAMS = [
-  'tradovate', 'accountId', 'reason', 'trades', 'sync', 'fees', 'from',
+  'tradovate', 'accountId', 'reason', 'trades', 'sync', 'fees', 'from', 'excluded',
 ] as const;
 
 export function parseTradovateReturn(params: Record<string, string | undefined>): TradovateReturn | null {
@@ -32,6 +34,7 @@ export function parseTradovateReturn(params: Record<string, string | undefined>)
   if (status !== 'connected' && status !== 'select_account' && status !== 'error') return null;
   const trades = params['trades'] != null ? parseInt(params['trades'], 10) : NaN;
   const fees = params['fees'];
+  const excluded = params['excluded'] != null ? parseInt(params['excluded'], 10) : NaN;
   return {
     status,
     accountId: params['accountId'] || null,
@@ -40,7 +43,19 @@ export function parseTradovateReturn(params: Record<string, string | undefined>)
     syncFailed: params['sync'] === 'error',
     fees: fees === 'ok' || fees === 'partial' || fees === 'none' ? fees : null,
     fromWizard: params['from'] === 'wizard',
+    excluded: Number.isFinite(excluded) && excluded > 0 ? excluded : 0,
   };
+}
+
+/**
+ * Comptes du login écartés : sans ce message, l'utilisateur voit un sélecteur incomplet sans
+ * savoir pourquoi un de ses comptes manque. null = rien d'écarté.
+ */
+export function excludedAccountsMessage(excluded: number): string | null {
+  if (excluded <= 0) return null;
+  return excluded > 1
+    ? `${excluded} comptes Tradovate de ce login ne sont pas proposés : ils sont déjà reliés à un autre compte MyTradingCoach. Délie-les là-bas pour pouvoir les choisir ici.`
+    : "1 compte Tradovate de ce login n'est pas proposé : il est déjà relié à un autre compte MyTradingCoach. Délie-le là-bas pour pouvoir le choisir ici.";
 }
 
 const REASONS: Record<string, string> = {

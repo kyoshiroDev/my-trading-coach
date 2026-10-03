@@ -192,6 +192,20 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
     expect(router.navigate).toHaveBeenCalled();
   });
 
+  it('compte écarté (déjà relié ailleurs) : expliqué au-dessus du sélecteur', () => {
+    saveProgress(8);
+    returnUrl('tradovate=select_account&accountId=acc-1&from=wizard&excluded=1');
+    const { q } = mount();
+    expect(q('onboarding-tradovate-excluded')!.textContent).toContain('déjà relié à un autre compte MyTradingCoach');
+  });
+
+  it('rien d’écarté : pas de message', () => {
+    saveProgress(8);
+    returnUrl('tradovate=select_account&accountId=acc-1&from=wizard');
+    const { q } = mount();
+    expect(q('onboarding-tradovate-excluded')).toBeNull();
+  });
+
   it('plusieurs comptes Tradovate : choix à l’étape 8, puis synchro et écran final', () => {
     saveProgress(8);
     returnUrl('tradovate=select_account&accountId=acc-1&from=wizard');
