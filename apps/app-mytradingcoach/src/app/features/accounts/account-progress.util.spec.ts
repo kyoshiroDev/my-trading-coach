@@ -3,7 +3,7 @@ import { progressTitle, requirementLabel } from './account-progress.util';
 import type { AccountProgress, ProgressRequirement } from '../../core/api/accounts.api';
 
 const p = (o: Partial<AccountProgress>): AccountProgress =>
-  ({ kind: 'objective', remaining: 0, done: false, requirements: [], cycleAfter: null, unconfirmed: false, ...o });
+  ({ kind: 'objective', remaining: 0, done: false, requirements: [], cycleAfter: null, cycleSource: null, payoutsReceived: null, unconfirmed: false, ...o });
 const r = (o: Partial<ProgressRequirement>): ProgressRequirement =>
   ({ key: 'profit', met: false, current: 0, required: 0, unit: 'usd', ...o });
 

@@ -426,7 +426,10 @@
                   </ul>
                   @if (pg.kind === 'payout') {
                     <p class="pg-note">
-                      @if (pg.cycleAfter) {
+                      @if (pg.cycleSource === 'broker') {
+                        Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, détecté chez le broker
+                        @if (pg.payoutsReceived) { ({{ pg.payoutsReceived }} payout{{ pg.payoutsReceived > 1 ? 's' : '' }} reçu{{ pg.payoutsReceived > 1 ? 's' : '' }}) }.
+                      } @else if (pg.cycleAfter) {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}.
                       } @else {
                         Cycle compté depuis le début du compte : si tu as déjà reçu un payout, indique sa date via « Modifier ».
