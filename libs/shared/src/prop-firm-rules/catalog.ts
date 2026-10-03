@@ -13,8 +13,9 @@ import lucid from './lucid.json';
 import myfundedfutures from './myfundedfutures.json';
 import phidias from './phidias.json';
 import takeprofittrader from './takeprofittrader.json';
+import toponefutures from './toponefutures.json';
 import topstep from './topstep.json';
 import tradeday from './tradeday.json';
 import tradeify from './tradeify.json';
 
-export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias, earn2trade];
+export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias, earn2trade, toponefutures];
