@@ -102,15 +102,30 @@ export class TradovateStore {
     });
   }
 
-  disconnect(accountId: string): void {
+  /**
+   * `deleteTrades` → supprime aussi les trades importés par Tradovate sur ce compte. `done` reçoit
+   * le nombre supprimé (0 si gardés, null si la suppression a échoué) pour recharger les métriques.
+   */
+  disconnect(
+    accountId: string,
+    opts: { deleteTrades?: boolean } = {},
+    done?: (tradesDeleted: number | null) => void,
+  ): void {
     if (this.busy()[accountId]) return;
+    const deleteTrades = !!opts.deleteTrades;
     this.setBusy(accountId, 'disconnect');
-    this.api.disconnect(accountId).subscribe({
-      next: () => this.afterDisconnect(accountId),
+    this.api.disconnect(accountId, deleteTrades).subscribe({
+      next: (res) => {
+        this.afterDisconnect(accountId, deleteTrades, res.data.tradesDeleted);
+        done?.(res.data.tradesDeleted);
+      },
       error: (err) => {
-        // 404 = déjà déconnecté : c'est l'objectif, pas une erreur (cf. angular.md).
+        // 404 = déjà déconnecté : c'est l'objectif, pas une erreur (cf. angular.md). Aucune
+        // suppression n'a eu lieu : si elle était demandée, on le dit (tradesDeleted null).
         if (err instanceof HttpErrorResponse && err.status === 404) {
-          this.afterDisconnect(accountId);
+          const deleted = deleteTrades ? null : 0;
+          this.afterDisconnect(accountId, deleteTrades, deleted);
+          done?.(deleted);
           return;
         }
         this.setBusy(accountId, undefined);
@@ -123,11 +138,21 @@ export class TradovateStore {
     this.feedback.update((m) => ({ ...m, [accountId]: fb }));
   }
 
-  private afterDisconnect(accountId: string): void {
+  private afterDisconnect(accountId: string, deleteTrades: boolean, tradesDeleted: number | null): void {
     this.setBusy(accountId, undefined);
     this.connections.update((list) => list.filter((c) => c.accountId !== accountId));
     this.setFeedback(accountId, undefined);
-    this.toast.success('Compte Tradovate déconnecté. Tes trades déjà importés restent dans ton journal.');
+    if (!deleteTrades) {
+      this.toast.success('Compte Tradovate déconnecté. Tes trades déjà importés restent dans ton journal.');
+    } else if (tradesDeleted === null) {
+      // La déconnexion est faite : on ne l'annule pas, on dit comment finir le nettoyage.
+      this.toast.warning(
+        "Compte Tradovate déconnecté, mais les trades importés n'ont pas pu être supprimés. Tu peux les supprimer depuis le journal.",
+      );
+    } else {
+      const s = tradesDeleted > 1 ? 's' : '';
+      this.toast.success(`Compte Tradovate déconnecté · ${tradesDeleted} trade${s} importé${s} supprimé${s}.`);
+    }
   }
 
   private upsert(conn: TradovateConnection): void {

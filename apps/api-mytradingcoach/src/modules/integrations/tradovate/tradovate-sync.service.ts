@@ -70,6 +70,30 @@ export class TradovateSyncService {
     private readonly setups: SetupsService,
   ) {}
 
+  /**
+   * Déconnexion, avec suppression optionnelle des trades importés par Tradovate sur ce compte.
+   * Deux étapes volontairement HORS transaction : la déconnexion est ce que l'utilisateur veut
+   * d'abord (couper l'accès au broker). Si la suppression échoue ensuite, la connexion reste
+   * coupée et `tradesDeleted: null` dit au front d'inviter à supprimer depuis le journal.
+   */
+  async disconnect(
+    userId: string,
+    accountId: string,
+    opts: { deleteTrades?: boolean } = {},
+  ): Promise<{ disconnected: true; tradesDeleted: number | null }> {
+    await this.connections.disconnect(userId, accountId);
+    if (!opts.deleteTrades) return { disconnected: true, tradesDeleted: 0 };
+    try {
+      const tradesDeleted = await this.trades.removeBrokerImported(userId, accountId);
+      return { disconnected: true, tradesDeleted };
+    } catch (err) {
+      this.logger.error(
+        `Déconnexion Tradovate faite, mais suppression des trades importés échouée (compte ${accountId}) : ${(err as Error).message}`,
+      );
+      return { disconnected: true, tradesDeleted: null };
+    }
+  }
+
   async sync(
     userId: string,
     accountId: string,

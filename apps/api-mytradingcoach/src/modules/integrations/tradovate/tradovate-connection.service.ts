@@ -7,6 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
+import { BROKER_TRADE_SOURCES } from '../../trades/trades.service';
 import { RedisService } from '../../infra/redis.service';
 import { loadTokenKey } from '@api/common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
@@ -316,7 +317,8 @@ export class TradovateConnectionService {
       where: { userId, provider: BrokerProvider.TRADOVATE },
       orderBy: { createdAt: 'asc' },
     });
-    return rows.map((r) => this.toView(r));
+    const counts = await this.brokerTradesCounts(userId, rows.map((r) => r.accountId));
+    return rows.map((r) => this.toView(r, counts.get(r.accountId) ?? 0));
   }
 
   /** Choix du compte Tradovate à synchroniser vers ce TradingAccount. */
@@ -348,7 +350,8 @@ export class TradovateConnectionService {
     });
     // La devise du compte suit le broker, lue chez lui (cf. resolveAccountCurrency).
     await this.syncAccountCurrency(accountId, conn, target);
-    return this.toView(updated);
+    const counts = await this.brokerTradesCounts(userId, [accountId]);
+    return this.toView(updated, counts.get(accountId) ?? 0);
   }
 
   /**
@@ -374,7 +377,8 @@ export class TradovateConnectionService {
   /**
    * Déconnexion : les tokens sont SUPPRIMÉS de la base (pas seulement désactivés). La Trade API
    * n'expose pas d'endpoint de révocation documenté ; sans token stocké, MTC ne peut plus rien
-   * lire. Les trades déjà importés restent (ce sont ceux de l'utilisateur).
+   * lire. Les trades déjà importés restent (ce sont ceux de l'utilisateur) ; leur suppression
+   * optionnelle est orchestrée par `TradovateSyncService.disconnect`.
    */
   async disconnect(userId: string, accountId: string): Promise<{ disconnected: true }> {
     const { count } = await this.prisma.brokerConnection.deleteMany({
@@ -516,8 +520,19 @@ export class TradovateConnectionService {
     if (!account) throw new NotFoundException('Compte introuvable.');
   }
 
-  private toView(conn: BrokerConnection): TradovateConnectionView {
-    return toConnectionView(conn);
+  private toView(conn: BrokerConnection, brokerTradesCount = 0): TradovateConnectionView {
+    return toConnectionView(conn, brokerTradesCount);
+  }
+
+  /** Trades importés par le broker, par compte : affichés AVANT de proposer leur suppression. */
+  private async brokerTradesCounts(userId: string, accountIds: string[]): Promise<Map<string, number>> {
+    if (accountIds.length === 0) return new Map();
+    const groups = await this.prisma.trade.groupBy({
+      by: ['accountId'],
+      where: { userId, accountId: { in: accountIds }, source: { in: BROKER_TRADE_SOURCES } },
+      _count: { _all: true },
+    });
+    return new Map(groups.map((g) => [g.accountId as string, g._count._all] as const));
   }
 
   /** URL de retour dans l'app après le consentement (cf. frontendRedirectUrl). */

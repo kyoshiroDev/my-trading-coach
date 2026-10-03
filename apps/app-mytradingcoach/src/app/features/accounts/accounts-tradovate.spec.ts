@@ -41,7 +41,7 @@ function conn(accountId: string, p: Partial<TradovateConnection> = {}): Tradovat
     accountId, status: 'CONNECTED', externalAccountId: '65040981', externalAccountName: 'APEX-1234-01',
     externalEnv: 'demo', availableAccounts: [{ id: '65040981', name: 'APEX-1234-01', env: 'demo' }],
     needsAccountSelection: false, lastSyncAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
-    lastSyncError: null, tradesImported: 34, connectedAt: '2026-09-01T00:00:00.000Z',
+    lastSyncError: null, tradesImported: 34, brokerTradesCount: 0, connectedAt: '2026-09-01T00:00:00.000Z',
     ...p,
   };
 }
@@ -151,7 +151,51 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     expect(q('tradovate-row-a')!.textContent).toContain('Déconnecter ce compte');
 
     click('tradovate-disconnect-confirm-a');
-    expect(tv.disconnect).toHaveBeenCalledWith('a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: false }, expect.any(Function));
+  });
+
+  it('déconnexion d’un compte sans trade importé : simple « Oui », pas de choix de suppression', () => {
+    const { q, click } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { brokerTradesCount: 0 })] });
+    click('tradovate-disconnect-a');
+    expect(q('tradovate-disconnect-confirm-a')).not.toBeNull();
+    expect(q('tradovate-disconnect-choice-a')).toBeNull();
+  });
+
+  it('déconnexion avec trades importés : nombre affiché AVANT, choix garder (défaut) ou supprimer', () => {
+    const { q, click, tv } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { brokerTradesCount: 12 })] });
+    click('tradovate-disconnect-a');
+    expect(q('tradovate-disconnect-confirm-a'), 'plus de « Oui » ambigu').toBeNull();
+    const count = q('tradovate-disconnect-count-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(count).toContain('12 trades importés');
+    expect(count).toContain('saisis à la main');
+    // Garder vient en premier : c'est le choix par défaut.
+    const actions = [...q('tradovate-disconnect-choice-a')!.querySelectorAll('button')].map((b) => b.getAttribute('data-testid'));
+    expect(actions).toEqual(['tradovate-disconnect-keep-a', 'tradovate-disconnect-delete-a']);
+    expect(q('tradovate-disconnect-delete-a')!.textContent).toContain('supprimer les 12 trades importés');
+    expect(tv.disconnect).not.toHaveBeenCalled();
+
+    click('tradovate-disconnect-keep-a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: false }, expect.any(Function));
+  });
+
+  it('déconnexion « supprimer les trades importés » : suppression demandée, métriques rechargées', () => {
+    const { click, tv, store, tradesStore } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { brokerTradesCount: 12 })] });
+    click('tradovate-disconnect-a');
+    click('tradovate-disconnect-delete-a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: true }, expect.any(Function));
+
+    const done = tv.disconnect.mock.calls[0][2] as (n: number | null) => void;
+    done(12);
+    expect(store.load).toHaveBeenCalled();
+    expect(tradesStore.reset).toHaveBeenCalled();
+  });
+
+  it('déconnexion : Annuler referme le choix sans rien déconnecter', () => {
+    const { q, click, tv } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { brokerTradesCount: 3 })] });
+    click('tradovate-disconnect-a');
+    click('tradovate-disconnect-cancel-a');
+    expect(q('tradovate-disconnect-choice-a')).toBeNull();
+    expect(tv.disconnect).not.toHaveBeenCalled();
   });
 
   it('connexion expirée : « À reconnecter » + message du back + bouton qui rouvre la réassurance', () => {
@@ -173,6 +217,21 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     });
     expect(el.querySelector('mtc-tradovate-account-picker')).not.toBeNull();
     expect(q('tradovate-sync-a')).toBeNull();
+  });
+
+  it('choix du compte en attente (mauvais login) : Déconnecter reste rendu et cliquable', () => {
+    const { q, click, tv, el } = setup({
+      accounts: [acct('a', 'A')],
+      connections: [conn('a', { externalAccountId: null, externalAccountName: null, needsAccountSelection: true })],
+    });
+    expect(el.querySelector('mtc-tradovate-account-picker')).not.toBeNull();
+    const btn = q('tradovate-disconnect-a') as HTMLButtonElement | null;
+    expect(btn, 'sans ce bouton, l’utilisateur est coincé sur le mauvais login').not.toBeNull();
+    expect(btn!.disabled).toBe(false);
+
+    click('tradovate-disconnect-a');
+    click('tradovate-disconnect-confirm-a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: false }, expect.any(Function));
   });
 
   it('résultat de synchro : lignes + avertissements, et erreur claire', () => {

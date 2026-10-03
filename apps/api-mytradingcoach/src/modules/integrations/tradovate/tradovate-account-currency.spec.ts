@@ -42,6 +42,8 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     } as unknown as BrokerConnection;
 
     const prisma = {
+      // Compteur des trades importés renvoyé avec la vue (aucun ici).
+      trade: { groupBy: vi.fn().mockResolvedValue([]) },
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
         // Garde-fou « déjà relié ailleurs » : personne d'autre sur ce compte ici.
