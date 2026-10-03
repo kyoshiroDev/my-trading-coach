@@ -54,4 +54,5 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 USER nestjs
 EXPOSE 3000
-CMD ["sh", "entrypoint.sh"]
+# ENTRYPOINT (pas CMD) : `docker compose run --rm api migrate` passe « migrate » au script (SCA-B8-02).
+ENTRYPOINT ["sh", "entrypoint.sh"]
