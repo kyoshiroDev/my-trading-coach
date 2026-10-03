@@ -45,7 +45,8 @@ import { TradovateStore } from '../../core/stores/tradovate.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import type { TradovateSyncResult } from '../../core/api/tradovate.api';
+import { TradovateApi, type TradovateSyncResult } from '../../core/api/tradovate.api';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
   feesLine,
@@ -266,7 +267,44 @@ export class AccountsComponent implements OnInit {
     return limit !== null && this.activeAccountsCount() >= limit;
   });
 
+  private readonly tradovateApi = inject(TradovateApi);
+  /** Comptes dont le solde broker est en cours de relecture (bouton « Actualiser »). */
+  protected readonly balanceBusy = signal<ReadonlySet<string>>(new Set());
+  private brokerRefreshed = false;
+
+  /**
+   * Relit solde et equity chez le broker pour les comptes connectés, puis recharge la liste.
+   * À l'ouverture de la page et sur « Actualiser » seulement : jamais en boucle (le serveur bride
+   * en plus à 20 s par compte). Le temps réel, lui, arrive par le WebSocket (`tradovate:balance`).
+   */
+  protected refreshBrokerBalances(accountIds?: string[]): void {
+    if (this.userStore.isDemo()) return;
+    const ids = (accountIds ?? this.tv.connections()
+      .filter((c) => c.status === 'CONNECTED' && c.externalAccountId && !c.needsAccountSelection)
+      .map((c) => c.accountId));
+    if (ids.length === 0) return;
+    this.balanceBusy.update((s) => new Set([...s, ...ids]));
+    forkJoin(ids.map((id) => this.tradovateApi.refreshBalance(id).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.balanceBusy.update((s) => new Set([...s].filter((id) => !ids.includes(id))));
+        this.store.load();
+      });
+  }
+
+  /** Relevé broker affiché : « il y a 2 min », sur la date la plus récente (equity ou solde). */
+  protected brokerAge(b: NonNullable<TradingAccount['metrics']['broker']>): string {
+    const at = [b.equityAt, b.balanceAt].filter((x): x is string => !!x).sort().at(-1) ?? null;
+    return relativeTime(at);
+  }
+
   constructor() {
+    // Une fois les connexions connues : solde et equity à jour pour chaque compte connecté.
+    effect(() => {
+      if (!this.tv.loaded() || this.brokerRefreshed) return;
+      this.brokerRefreshed = true;
+      untracked(() => this.refreshBrokerBalances());
+    });
     // Changement de vue (sélecteur de compte) : le message ne décrit plus la liste
     // affichée, on le retire. `untracked` pour ne pas se réveiller sur sa propre écriture.
     effect(() => {

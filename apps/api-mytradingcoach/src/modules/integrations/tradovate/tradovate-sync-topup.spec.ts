@@ -27,7 +27,7 @@ function setup(relu: BrokerConnection | null) {
   const prisma = { brokerConnection: { findUnique: vi.fn().mockResolvedValue(relu) } };
   const history = { importHistory: vi.fn().mockResolvedValue({ created: 3 }) };
   const service = new TradovateSyncService(
-    prisma as never, {} as never, {} as never, history as never, {} as never, {} as never,
+    prisma as never, {} as never, {} as never, history as never, {} as never, {} as never, {} as never,
   );
   // `topUpCurrentMonth` est privée : c'est le comportement qu'on verrouille, pas la signature.
   const topUp = (c: BrokerConnection) =>

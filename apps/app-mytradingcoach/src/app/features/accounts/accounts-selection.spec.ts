@@ -16,7 +16,7 @@ function acct(id: string, label: string): TradingAccount {
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
     },
   };
 }
@@ -38,7 +38,7 @@ function setup(selectedId: string | 'all') {
     selectedAccountId: signal<string | 'all'>(selectedId),
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
-  const userStore = { isPremium: () => true, maxAccounts: signal(null) };
+  const userStore = { isDemo: () => false, isPremium: () => true, maxAccounts: signal(null) };
 
   TestBed.configureTestingModule({
     providers: [

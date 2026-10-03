@@ -5,6 +5,8 @@ import {
   QUOTA_BACKOFF_MS,
   TRADOVATE_WS_URL,
   backoffDelay,
+  cashBalanceUpdate,
+  initialAccountState,
   isTradeEvent,
   parseFrame,
   syncRequestMessage,
@@ -71,7 +73,7 @@ describe('Protocole Tradovate — fonctions pures', () => {
   it('user/syncrequest : le seul compte synchronisé, entityTypes renseignés (obligatoires)', () => {
     const [endpoint, id, query, body] = syncRequestMessage(1, EXT).split('\n');
     expect([endpoint, id, query]).toEqual(['user/syncrequest', '1', '']);
-    expect(JSON.parse(body)).toEqual({ accounts: [EXT], entityTypes: ['fill', 'fillPair', 'position'] });
+    expect(JSON.parse(body)).toEqual({ accounts: [EXT], entityTypes: ['fill', 'fillPair', 'position', 'cashBalance'] });
   });
 
   it('événements utiles : fill / fillPair / position créés ou modifiés, du bon compte', () => {
@@ -218,3 +220,30 @@ describe('Connexion WebSocket Tradovate', () => {
     expect(sockets).toHaveLength(1);
   });
 });
+
+describe('Protocole live — solde du compte', () => {
+  const props = (entityType: string, entity: object, eventType = 'Updated') =>
+    ({ e: 'props', d: { entityType, eventType, entity } });
+
+  it('cashBalance du compte suivi → montant + date ; autre compte, suppression ou montant absent → null', () => {
+    expect(cashBalanceUpdate(props('cashBalance', { accountId: EXT, amount: 50120.25, timestamp: '2026-10-03T15:00:00Z' }), EXT))
+      .toEqual({ amount: 50120.25, at: new Date('2026-10-03T15:00:00Z') });
+    expect(cashBalanceUpdate(props('cashBalance', { accountId: EXT + 1, amount: 1 }), EXT)).toBeNull();
+    expect(cashBalanceUpdate(props('cashBalance', { accountId: EXT, amount: 1 }, 'Deleted'), EXT)).toBeNull();
+    expect(cashBalanceUpdate(props('cashBalance', { accountId: EXT }), EXT)).toBeNull();
+    expect(cashBalanceUpdate(props('position', { accountId: EXT, amount: 1 }), EXT)).toBeNull();
+  });
+
+  it('un solde n\'est pas un événement de trade (pas de synchro REST à chaque variation)', () => {
+    expect(isTradeEvent(props('cashBalance', { accountId: EXT, amount: 1 }) as never, EXT)).toBe(false);
+  });
+
+  it('état initial : uniquement la réponse 200 du syncrequest (id 1)', () => {
+    const d = { cashBalances: [{ accountId: EXT, amount: 10, timestamp: '2026-10-03T10:00:00Z' }], positions: [] };
+    expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toEqual({ balance: { amount: 10, at: new Date('2026-10-03T10:00:00Z') }, openPositions: 0 });
+    expect(initialAccountState({ s: 200, i: 0, d }, EXT)).toBeNull();
+    expect(initialAccountState({ s: 401, i: 1, d }, EXT)).toBeNull();
+    expect(initialAccountState({ s: 200, i: 1, d: {} }, EXT)).toEqual({ balance: null, openPositions: 0 });
+  });
+});
+

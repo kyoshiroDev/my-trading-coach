@@ -5,9 +5,11 @@ import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateBalanceService, toBalanceView, type BrokerBalanceView } from './tradovate-balance.service';
 import { TradovateException } from './tradovate.errors';
 import type { TradovateEnv } from './tradovate.types';
 import { wsUrl } from './tradovate-hosts';
+import type { InitialAccountState } from './tradovate-live.protocol';
 import {
   LiveFatalError,
   TradovateLiveConnection,
@@ -56,7 +58,11 @@ export interface LiveStatusEvent {
   status: 'NEEDS_RECONNECT';
 }
 
-export type LiveEmitter = (userId: string, event: string, payload: LiveTradesEvent | LiveStatusEvent) => void;
+export type LiveEmitter = (
+  userId: string,
+  event: string,
+  payload: LiveTradesEvent | LiveStatusEvent | BrokerBalanceView,
+) => void;
 
 interface UserLive {
   owner: boolean;
@@ -96,6 +102,7 @@ export class TradovateLiveService implements OnModuleDestroy {
     private readonly redis: RedisService,
     private readonly connections: TradovateConnectionService,
     private readonly sync: TradovateSyncService,
+    private readonly balance: TradovateBalanceService,
     @Optional() @Inject(LIVE_SOCKET_FACTORY) private readonly socketFactory?: LiveSocketFactory,
   ) {}
 
@@ -181,6 +188,11 @@ export class TradovateLiveService implements OnModuleDestroy {
           accountId, created: r.created, duplicates: r.duplicates, total: r.total, source,
         });
       }
+      // La synchro vient de relire solde et equity chez le broker (instantané) : on les pousse.
+      const conn = await this.prisma.brokerConnection.findUnique({
+        where: { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } },
+      });
+      if (conn) this.emitter(userId, 'tradovate:balance', toBalanceView(conn));
     } catch (err) {
       const code = err instanceof TradovateException ? err.code : null;
       if (code === 'TRADOVATE_SYNC_IN_PROGRESS' && attempt < BUSY_RETRIES) {
@@ -233,12 +245,30 @@ export class TradovateLiveService implements OnModuleDestroy {
         externalAccountId: Number(c.externalAccountId),
         getToken: () => this.tokenFor(c.id),
         onTradeEvent: () => this.onTradeEvent(userId, c.accountId, u),
+        onBalance: (b) => void this.pushBalance(userId, c.id, b.amount, b.at),
+        onInitialState: (s) => void this.applyInitialState(userId, c.id, s),
         onFatal: () => this.emitter(userId, 'tradovate:status', { accountId: c.accountId, status: 'NEEDS_RECONNECT' }),
         socketFactory: this.socketFactory,
         logger: this.logger,
       });
       u.conns.set(c.id, live);
       live.start();
+    }
+  }
+
+  /** État initial de la souscription : positions ouvertes d'abord (l'equity en dépend), puis solde. */
+  private async applyInitialState(userId: string, connectionId: string, s: InitialAccountState): Promise<void> {
+    await this.balance.recordOpenPositions(connectionId, s.openPositions);
+    if (s.balance) await this.pushBalance(userId, connectionId, s.balance.amount, s.balance.at);
+  }
+
+  /** Solde réalisé poussé par Tradovate → base, puis front (sans appel REST au broker). */
+  private async pushBalance(userId: string, connectionId: string, amount: number, at: Date): Promise<void> {
+    try {
+      const view = await this.balance.recordCashBalance(connectionId, amount, at);
+      if (view) this.emitter(userId, 'tradovate:balance', view);
+    } catch (err) {
+      this.logger.warn(`Solde live non enregistré (connexion ${connectionId}) : ${(err as Error).message}`);
     }
   }
 

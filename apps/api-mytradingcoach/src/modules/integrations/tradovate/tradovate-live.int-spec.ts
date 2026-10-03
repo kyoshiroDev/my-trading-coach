@@ -206,7 +206,7 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     const ws = wsSockets[wsSockets.length - 1];
     expect(ws.url).toBe('wss://demo.tradovateapi.com/v1/websocket');
     expect(ws.sent[0]).toBe('authorize\n0\n\nAT-1');
-    expect(JSON.parse(ws.sent[1].split('\n')[3])).toEqual({ accounts: [EXT_ACCOUNT], entityTypes: ['fill', 'fillPair', 'position'] });
+    expect(JSON.parse(ws.sent[1].split('\n')[3])).toEqual({ accounts: [EXT_ACCOUNT], entityTypes: ['fill', 'fillPair', 'position', 'cashBalance'] });
 
     // 3. Trade en direct : Tradovate pousse la nouvelle paire → trade créé via la synchro existante.
     PAIRS.push(pair(3, 3001, 3002));

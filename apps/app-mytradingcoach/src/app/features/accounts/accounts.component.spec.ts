@@ -36,7 +36,7 @@ function acct(
       worstDay: null,
       objective: null,
       drawdown: null,
-      drawdownUnconfirmed: false,
+      drawdownUnconfirmed: false, broker: null,
       estimated: true,
       disclaimer: 'estimé',
       ...(p.metrics ?? {}),
@@ -57,6 +57,7 @@ function setup(opts: { premium: boolean; accounts: TradingAccount[]; limit?: num
   };
   // limit: null = illimité (Premium par défaut dans les tests existants).
   const userStore = {
+    isDemo: () => false,
     isPremium: () => opts.premium,
     maxAccounts: signal(opts.limit ?? null),
   };

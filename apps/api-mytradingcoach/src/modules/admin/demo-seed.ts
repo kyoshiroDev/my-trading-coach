@@ -287,6 +287,14 @@ export async function seedTradingData(
       externalEnv: demoTradovateAccount.env, availableAccounts: [demoTradovateAccount],
       lastSyncAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       tradesImported: stats.byAccount['apex'].trades,
+      // Solde « lu chez le broker » : cohérent avec les trades seedés (aucun écart), sans position
+      // ouverte → equity = solde. Montre le suivi en direct sans inventer de latent.
+      brokerCashBalance: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerCashBalanceAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerNetLiq: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerOpenPnl: 0,
+      brokerEquityAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerOpenPositions: 0,
     },
   });
 

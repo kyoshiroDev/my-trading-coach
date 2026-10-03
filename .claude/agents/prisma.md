@@ -363,6 +363,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
 >
+> `brokerCashBalance`/`brokerCashBalanceAt`, `brokerNetLiq`, `brokerOpenPnl`, `brokerEquityAt`,
+> `brokerOpenPositions` (migration `20261003200000_broker_live_balance`, purement additive) = solde,
+> equity et positions ouvertes lus chez le broker (cf. `nestjs.md`, « Solde et equity lus chez le
+> broker »). Le seed démo les remplit sur la connexion vitrine, cohérents avec ses trades.
+>
 > `historyImportedAt` (migration `20260926230000_broker_history_imported_at`, nullable, ajout
 > additif) = date du premier import RÉUSSI de tout l'historique du compte, remonté jusqu'à sa
 > création. Vide = le passé n'a jamais été remonté entièrement : le **cron de fond** le rattrape

@@ -1225,6 +1225,28 @@ conservée : solde / objectif / drawdown / meilleur-pire jour lisent `pnl − co
 tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équivalence :
 `account-rules-sql.int-spec.ts`.
 
+### Solde et equity lus chez le broker (2026-10-03)
+
+`TradovateBalanceService` (`integrations/tradovate/tradovate-balance.service.ts`) remplit les colonnes
+`BrokerConnection.broker*` : solde réalisé officiel, equity (`netLiq`), latent, positions ouvertes.
+- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`) ;
+  chaque variation → `recordCashBalance` → événement front `tradovate:balance`, **sans** synchro
+  REST. L'état initial (réponse du `user/syncrequest`, id `SYNC_REQUEST_ID`) donne solde + positions.
+- **Equity + latent** : `POST /cashBalance/getcashbalancesnapshot`, seule lecture en POST, via
+  `TradovateApiClient.postRead` (liste blanche `READ_ONLY_POST_PATHS`, toute autre route levée
+  avant le réseau). ⚠️ La doc NinjaTrader qualifie de **anti-pattern** l'interrogation répétée de
+  cette route : appelée **sur événement uniquement** — fin de chaque synchro (trade poussé, cron,
+  rattrapage) et `GET /integrations/tradovate/accounts/:accountId/balance` (ouverture de « Mes
+  comptes », bouton « Actualiser »), bridé à 20 s par compte (`BALANCE_REFRESH_MIN_MS`). Jamais de
+  `setInterval`. Best-effort : un échec ne casse ni la synchro ni la page.
+- **Métriques** (`AccountsService.ruleMetricsFromAgg(…, broker)`) : le solde broker fait foi
+  (`currentBalance`, `realizedPnl`, objectif) et la marge de drawdown se calcule sur l'**equity**
+  (latent compris tant qu'une position est ouverte ; sans position, equity = solde). Trailing
+  intraday : un nouveau plus haut d'equity relève le seuil. Écart solde broker ↔ solde MTC
+  > max(2 000 $, 25 % de la taille) = référentiel incompatible (`brokerReferenceMismatch`, ex.
+  funded saisi à 0 $) → calcul MTC + latent, `broker.referenceMismatch` affiché à l'utilisateur.
+- Le plus haut de clôture reste tiré des trades (le rapport `Account Balance History` le donnera).
+
 ### Drawdown selon le plan prop firm relié (2026-10-03)
 
 Compte relié à un plan du catalogue (`propFirmPlanId`) **et** de type EVALUATION (phase

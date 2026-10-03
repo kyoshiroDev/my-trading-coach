@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountsService, type RulePlan } from './accounts.service';
+import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
@@ -270,7 +270,11 @@ describe('AccountsService', () => {
     expect(prisma.tradingAccount.findMany).toHaveBeenCalledWith({
       where: { userId: 'u1' },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
-      include: { propFirmPlan: { select: expect.objectContaining({ phases: true }) } },
+      include: {
+        propFirmPlan: { select: expect.objectContaining({ phases: true }) },
+        // Solde du broker : seulement une connexion qui en a un.
+        brokerConnections: { where: { brokerCashBalance: { not: null } }, select: expect.objectContaining({ brokerNetLiq: true }), take: 1 },
+      },
     });
   });
 
@@ -447,6 +451,53 @@ describe('AccountsService', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
       expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+  });
+
+  describe('computeRuleMetrics — solde et equity lus chez le broker', () => {
+    const d = (pnl: number, day: number) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, 15)) });
+    const manual = { startingBalance: 50_000, accountSize: 50_000, profitTarget: 3_000, maxDrawdown: 2_000, drawdownType: 'STATIC' as const };
+    const broker = (o: Partial<RuleBroker> = {}): RuleBroker => ({
+      cashBalance: 50_400, cashBalanceAt: new Date(), netLiq: null, openPnl: null, equityAt: null, openPositions: 0, ...o,
+    });
+
+    it('le solde du broker fait foi (trade ou frais manquant côté MTC) : solde, P&L et objectif', () => {
+      // MTC ne voit que +500 ; le broker dit 50 400 (un trade de -100 n'a pas été loggé).
+      const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker());
+      expect(m.currentBalance).toBe(50_400);
+      expect(m.realizedPnl).toBe(400);
+      expect(m.objective?.current).toBe(400);
+      expect(m.broker).toMatchObject({ cashBalance: 50_400, equity: 50_400, openPnl: 0, referenceMismatch: false });
+      expect(m.disclaimer).toContain('lus chez le broker');
+    });
+
+    it('position ouverte : la marge se calcule sur l\'equity du broker, latent compris', () => {
+      const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker({ cashBalance: 50_500, netLiq: 48_700, openPnl: -1_800, openPositions: 1 }));
+      expect(m.currentBalance).toBe(50_500);
+      expect(m.broker?.equity).toBe(48_700);
+      expect(m.drawdown).toMatchObject({ floor: 48_000, margin: 700 }); // et non 2 500 sur le seul solde
+    });
+
+    it('trailing intraday : un nouveau plus haut en direct fait monter le seuil', () => {
+      const intraday: RulePlan = { firmName: 'F', planName: 'P', accountSize: 50_000, phases: [
+        { phase: 'evaluation', max_drawdown: { amount: 2_000, type: 'trailing_intraday', trails_on: 'equity', locks_at: null, locked_floor: null, enforced_on: 'equity_realtime', basis_notes: null } } as PropFirmPhaseRules,
+      ] };
+      const m = svc.computeRuleMetrics({ ...manual, type: 'EVALUATION' }, [d(500, 1)], intraday,
+        broker({ cashBalance: 50_500, netLiq: 51_200, openPnl: 700, openPositions: 1 }));
+      expect(m.drawdown).toMatchObject({ floor: 49_200, margin: 2_000 });
+    });
+
+    it('référentiel incompatible (funded saisi à 0 $, broker à 50 000 $) : calcul MTC + latent, signalé', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 0, accountSize: null }, [d(300, 1)], null,
+        broker({ cashBalance: 50_300, openPnl: -200, openPositions: 1, netLiq: 50_100 }));
+      expect(m.currentBalance).toBe(300);
+      expect(m.broker).toMatchObject({ referenceMismatch: true, equity: 100 });
+    });
+
+    it('brokerReferenceMismatch : petit écart = trades manquants, gros écart = autre référentiel', () => {
+      expect(brokerReferenceMismatch(-1_500, 50_000)).toBe(false);
+      expect(brokerReferenceMismatch(50_000, 0)).toBe(true);
+      expect(brokerReferenceMismatch(15_000, 50_000)).toBe(true);
     });
   });
 
