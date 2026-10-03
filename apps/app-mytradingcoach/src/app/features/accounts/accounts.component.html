@@ -208,13 +208,15 @@
                     <svg [lucideIcon]="RefreshIcon" [size]="13" [class]="(busy === 'sync') ? 'spin' : ''"></svg>
                     <span class="tv-icon-lbl">{{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}</span>
                   </button>
-                  <button class="tv-icon danger" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
-                          [attr.title]="busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter'"
-                          [attr.data-testid]="'tradovate-disconnect-' + a.id">
-                    <svg [lucideIcon]="UnlinkIcon" [size]="13"></svg>
-                    <span class="tv-icon-lbl">{{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}</span>
-                  </button>
                 }
+                <!-- Hors du @if : pendant le choix du compte (mauvais login Tradovate), c'est la
+                     seule échappatoire pour repartir de zéro et se reconnecter. -->
+                <button class="tv-icon danger" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
+                        [attr.title]="busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter'"
+                        [attr.data-testid]="'tradovate-disconnect-' + a.id">
+                  <svg [lucideIcon]="UnlinkIcon" [size]="13"></svg>
+                  <span class="tv-icon-lbl">{{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}</span>
+                </button>
               }
               </div>
 

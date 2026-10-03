@@ -175,6 +175,21 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     expect(q('tradovate-sync-a')).toBeNull();
   });
 
+  it('choix du compte en attente (mauvais login) : Déconnecter reste rendu et cliquable', () => {
+    const { q, click, tv, el } = setup({
+      accounts: [acct('a', 'A')],
+      connections: [conn('a', { externalAccountId: null, externalAccountName: null, needsAccountSelection: true })],
+    });
+    expect(el.querySelector('mtc-tradovate-account-picker')).not.toBeNull();
+    const btn = q('tradovate-disconnect-a') as HTMLButtonElement | null;
+    expect(btn, 'sans ce bouton, l’utilisateur est coincé sur le mauvais login').not.toBeNull();
+    expect(btn!.disabled).toBe(false);
+
+    click('tradovate-disconnect-a');
+    click('tradovate-disconnect-confirm-a');
+    expect(tv.disconnect).toHaveBeenCalledWith('a');
+  });
+
   it('résultat de synchro : lignes + avertissements, et erreur claire', () => {
     const { q } = setup({
       accounts: [acct('a', 'A'), acct('b', 'B')],
