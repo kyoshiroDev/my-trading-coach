@@ -1245,3 +1245,12 @@ aller-retour par requête :
   le cache lui-même ; s'il échoue (verrou relâché, cache vide), les autres réagissent aussitôt :
   `onTimeout` s'il est fourni (**appel payant : ne pas relancer**, renvoyer un repli), sinon ils
   recalculent.
+
+### Corps de requête : brut seulement pour le webhook Stripe (SCA-B3-06, 2026-10-03)
+
+L'app est créée avec `bodyParser: false` ; `config/body-parsers.ts` (`configureBodyParsers`) installe
+un parseur JSON qui garde `req.rawBody` **uniquement** sur `POST /api/billing/webhook` (signature
+Stripe sur les octets exacts), puis les parseurs JSON / urlencoded standard ailleurs (plus de copie
+brute de chaque corps). **Utilisé par `main.ts` ET par `test/integration-app.helper.ts`** : la même
+configuration est testée. Une nouvelle route qui a besoin du corps brut (autre webhook signé) →
+l'ajouter dans `configureBodyParsers`, pas `rawBody: true` global.
