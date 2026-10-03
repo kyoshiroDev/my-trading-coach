@@ -37,6 +37,10 @@ const rows: Row[] = [
   { label: 'Session live + trade rapide', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Calendrier éco IA filtré', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
   { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true , premium: true },
+  // Verifie le 2026-10-03 : TradesViz (presets par firme, blog prop-firm-compliance-tracking) et
+  // Edgely (Prop Firm Manager, regles de drawdown par firme) le proposent ; rien trouve chez TraderSync.
+  // Non gate : le catalogue prop-firms n'a pas de PremiumGuard, le compte Gratuit y a acces.
+  { label: 'Règles de drawdown par prop firm (6 firmes)', isNew: true, mtc: true, rivals: [false, true, true] },
   { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
   { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
     // Les deux paliers : « dès 0 € » seul laissait croire que toutes les coches MTC
