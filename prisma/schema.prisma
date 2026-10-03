@@ -340,6 +340,7 @@ model TradingAccount {
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]
   brokerDailyCloses BrokerDailyClose[]
+  brokerPayouts     BrokerPayout[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -365,6 +366,28 @@ model BrokerDailyClose {
   updatedAt      DateTime       @updatedAt
 
   @@unique([accountId, tradeDate])
+}
+
+/// Payout (retrait) détecté dans l'historique de trésorerie du broker (rapport `Cash History`) :
+/// type `ChallengePayout`, ou `FundTransaction` négatif. Fait repartir le cycle de payout et donne
+/// le rang du prochain (paliers). `ManualAdjustment` / `Debit` volontairement exclus (resets,
+/// corrections) : un faux payout fausserait le cycle.
+model BrokerPayout {
+  id            String         @id @default(cuid())
+  accountId     String
+  account       TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// `Transaction ID` du broker : une transaction n'est comptée qu'une fois.
+  transactionId String
+  /// Journée de trading de l'opération.
+  tradeDate     DateTime       @db.Date
+  /// Montant retiré, positif.
+  amount        Float
+  /// Type tel que lu chez le broker, normalisé (`challengepayout`, `fundtransaction`).
+  changeType    String
+  createdAt     DateTime       @default(now())
+
+  @@unique([accountId, transactionId])
+  @@index([accountId, tradeDate])
 }
 
 /// Connexion API d'un broker, portée par UN `TradingAccount`.
@@ -423,6 +446,9 @@ model BrokerConnection {
   brokerEquityAt        DateTime?
   /// Positions ouvertes sur le compte au dernier relevé (latent non nul possible).
   brokerOpenPositions   Int                    @default(0)
+  /// Dernière séance couverte par la détection des payouts (historique de trésorerie) : la
+  /// relecture suivante repart de là au lieu de toute la vie du compte.
+  payoutsCheckedThrough DateTime?              @db.Date
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 

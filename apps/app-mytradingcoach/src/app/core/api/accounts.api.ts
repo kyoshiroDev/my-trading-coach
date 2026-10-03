@@ -46,8 +46,12 @@ export interface AccountProgress {
   remaining: number;
   done: boolean;
   requirements: ProgressRequirement[];
-  /** Séance du dernier payout saisi (le cycle commence après), null = depuis le début. */
+  /** Séance du dernier payout (le cycle commence après), null = depuis le début. */
   cycleAfter: string | null;
+  /** Payout détecté chez le broker, ou date saisie par l'utilisateur. */
+  cycleSource: 'broker' | 'user' | null;
+  /** Payouts déjà reçus d'après le broker, null si inconnu. */
+  payoutsReceived: number | null;
   unconfirmed: boolean;
 }
 

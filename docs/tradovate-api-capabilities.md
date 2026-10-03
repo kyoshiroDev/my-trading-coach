@@ -513,6 +513,14 @@ Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : 
   `Expired Access Token` — message différent, à ne pas confondre.
 - **CSV avec guillemets** : `"123,714.00"` — un `split(',')` naïf découpe faux.
 
+### Payouts dans `Cash History` (2026-10-04, non mesuré sur un compte payé)
+
+L'énumération `cashChangeType` (doc `cash-balance-log-item`) contient `ChallengePayout`,
+`FundTransaction`, `ManualAdjustment`, `Debit`… Le rapport écrit ces types en libellés lisibles avec
+espaces (`" Trade Paired"`, `" Commission"` mesurés sur un export réel). MTC compte comme payout
+`ChallengePayout` et `FundTransaction` négatif, rien d'autre. **Aucun compte payé n'a encore été
+lu** : les logs `Payouts (compte …) : types lus : …` de beta diront quel type les firmes utilisent.
+
 ### `Account Balance History` : les clôtures officielles (2026-10-03)
 
 Catalogue complet relevé par `GET /v1/reports/requestReportDefinitions` : `Performance`, `Orders`,
