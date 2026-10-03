@@ -369,9 +369,9 @@ model BrokerDailyClose {
 }
 
 /// Payout (retrait) détecté dans l'historique de trésorerie du broker (rapport `Cash History`) :
-/// type `ChallengePayout`, ou `FundTransaction` négatif. Fait repartir le cycle de payout et donne
-/// le rang du prochain (paliers). `ManualAdjustment` / `Debit` volontairement exclus (resets,
-/// corrections) : un faux payout fausserait le cycle.
+/// `ChallengePayout` ou `FundTransaction` négatif (certain) ; `ManualAdjustment` négatif ≥ 100 $ sur un
+/// compte funded (probable : constaté chez Apex, 3 ajustements = 3 retraits inexpliqués par le P&L,
+/// beta 2026-10-04). Fait repartir le cycle de payout et donne le rang du prochain. `Debit` exclu.
 model BrokerPayout {
   id            String         @id @default(cuid())
   accountId     String
@@ -382,8 +382,13 @@ model BrokerPayout {
   tradeDate     DateTime       @db.Date
   /// Montant retiré, positif.
   amount        Float
-  /// Type tel que lu chez le broker, normalisé (`challengepayout`, `fundtransaction`).
+  /// Type tel que lu chez le broker, normalisé (`challengepayout`, `fundtransaction`, `manualadjustment`).
   changeType    String
+  /// `certain` (ChallengePayout, FundTransaction négatif) ou `probable` (ajustement manuel négatif
+  /// sur un compte funded : Apex inscrit ses payouts ainsi, mais un ajustement peut être autre chose).
+  confidence    String         @default("certain")
+  /// L'utilisateur a indiqué que ce n'était pas un payout : ignoré pour le cycle, jamais recréé.
+  dismissedAt   DateTime?
   createdAt     DateTime       @default(now())
 
   @@unique([accountId, transactionId])

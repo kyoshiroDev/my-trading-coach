@@ -517,9 +517,12 @@ Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : 
 
 L'énumération `cashChangeType` (doc `cash-balance-log-item`) contient `ChallengePayout`,
 `FundTransaction`, `ManualAdjustment`, `Debit`… Le rapport écrit ces types en libellés lisibles avec
-espaces (`" Trade Paired"`, `" Commission"` mesurés sur un export réel). MTC compte comme payout
-`ChallengePayout` et `FundTransaction` négatif, rien d'autre. **Aucun compte payé n'a encore été
-lu** : les logs `Payouts (compte …) : types lus : …` de beta diront quel type les firmes utilisent.
+espaces (`" Trade Paired"`, `" Commission"` mesurés sur un export réel). Mesuré sur beta le 2026-10-04,
+compte Apex PA (seul compte payé lu) : `commission×470, tradepaired×315, manualadjustment×3`, aucun
+`ChallengePayout` ni `FundTransaction`. Les 3 ajustements tombent sur les 3 seules séances (sur 146)
+où le solde de clôture baisse sans que le P&L l'explique (−1 182 $, −3 500 $ sans trade, −1 085 $) :
+**Apex inscrit ses payouts en `ManualAdjustment` négatif.** MTC les compte comme payouts
+« probables » (compte funded, ≥ 100 $), affichés comme tels et écartables par l'utilisateur.
 
 ### `Account Balance History` : les clôtures officielles (2026-10-03)
 

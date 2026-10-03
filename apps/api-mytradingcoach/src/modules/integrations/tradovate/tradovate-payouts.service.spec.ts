@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { TradovatePayoutsService, isPayout, normalizeChangeType, scanCashHistory } from './tradovate-payouts.service';
+import { TradovatePayoutsService, normalizeChangeType, payoutConfidence, scanCashHistory } from './tradovate-payouts.service';
 import { TradovateApiError } from './tradovate.errors';
 
 /**
@@ -12,21 +12,27 @@ import { TradovateApiError } from './tradovate.errors';
 
 const HEADER = 'Account,Transaction ID,Timestamp,Date,Delta,Amount,Cash Change Type,Currency,Contract';
 
-describe('normalizeChangeType / isPayout', () => {
+describe('normalizeChangeType / payoutConfidence', () => {
   it('libellés du rapport → type normalisé', () => {
     expect(normalizeChangeType(' Trade Paired')).toBe('tradepaired');
     expect(normalizeChangeType('Challenge Payout')).toBe('challengepayout');
     expect(normalizeChangeType('FundTransaction')).toBe('fundtransaction');
   });
 
-  it('retrait certain uniquement', () => {
-    expect(isPayout('challengepayout', -1_500)).toBe(true);
-    expect(isPayout('challengepayout', 1_500)).toBe(true); // signe écrit par la firme : le type suffit
-    expect(isPayout('fundtransaction', -2_000)).toBe(true);
-    expect(isPayout('fundtransaction', 2_000)).toBe(false); // dépôt
-    expect(isPayout('manualadjustment', -2_000)).toBe(false); // reset, correction : ambigu
-    expect(isPayout('debit', -2_000)).toBe(false);
-    expect(isPayout('commission', -1.04)).toBe(false);
+  it('certain : ChallengePayout (tout signe), FundTransaction négatif', () => {
+    expect(payoutConfidence('challengepayout', -1_500, false)).toBe('certain');
+    expect(payoutConfidence('challengepayout', 1_500, false)).toBe('certain'); // signe écrit par la firme : le type suffit
+    expect(payoutConfidence('fundtransaction', -2_000, false)).toBe('certain');
+    expect(payoutConfidence('fundtransaction', 2_000, true)).toBeNull(); // dépôt
+  });
+
+  it('probable : ajustement manuel négatif ≥ 100 $ sur un compte funded (Apex), jamais en évaluation', () => {
+    expect(payoutConfidence('manualadjustment', -1_085, true)).toBe('probable');
+    expect(payoutConfidence('manualadjustment', -1_085, false)).toBeNull(); // évaluation : reset, correction
+    expect(payoutConfidence('manualadjustment', -99, true)).toBeNull(); // frais, correction
+    expect(payoutConfidence('manualadjustment', 3_500, true)).toBeNull(); // crédit
+    expect(payoutConfidence('debit', -2_000, true)).toBeNull();
+    expect(payoutConfidence('commission', -1.04, true)).toBeNull();
   });
 });
 
@@ -48,9 +54,17 @@ describe('scanCashHistory', () => {
       'AUTRE,900005,10/03/2026 16:00:00,2026-10-03,"-9.00","1.00",Challenge Payout,USD,',
     ].join('\r\n');
     expect(scanCashHistory(csv, 'APEX-1').payouts).toEqual([
-      { transactionId: '900001', tradeDate: '2026-10-02', amount: 1_500, changeType: 'challengepayout' },
-      { transactionId: '900002', tradeDate: '2026-10-03', amount: 2_000, changeType: 'fundtransaction' },
+      { transactionId: '900001', tradeDate: '2026-10-02', amount: 1_500, changeType: 'challengepayout', confidence: 'certain' },
+      { transactionId: '900002', tradeDate: '2026-10-03', amount: 2_000, changeType: 'fundtransaction', confidence: 'certain' },
     ]);
+  });
+
+  it('compte funded : l\'ajustement manuel négatif devient un payout probable', () => {
+    const csv = [HEADER, 'APEX-1,900004,10/01/2026 16:00:00,2026-10-01,"-1,085.00","48,000.00",Manual Adjustment,USD,'].join('\r\n');
+    expect(scanCashHistory(csv, 'APEX-1', true).payouts).toEqual([
+      { transactionId: '900004', tradeDate: '2026-10-01', amount: 1_085, changeType: 'manualadjustment', confidence: 'probable' },
+    ]);
+    expect(scanCashHistory(csv, 'APEX-1', false).payouts).toEqual([]);
   });
 
   it('sans colonne Date : journée de trading tirée de l\'horodatage (UTC)', () => {
@@ -64,6 +78,7 @@ function setup(opts: { checked?: string | null; csv?: string } = {}) {
     payoutsCheckedThrough: opts.checked ? new Date(`${opts.checked}T00:00:00Z`) : null };
   const prisma = {
     brokerPayout: { createMany: vi.fn(async ({ data }: { data: unknown[] }) => ({ count: data.length })) },
+    tradingAccount: { findUnique: vi.fn(async () => ({ type: 'FUNDED' })) },
     brokerConnection: { update: vi.fn(async () => ({})) },
   };
   const api = { get: vi.fn(async () => [{ id: 7, name: 'APEX-1', timestamp: '2026-05-01T00:00:00Z' }]) };
@@ -91,7 +106,7 @@ describe('TradovatePayoutsService.refresh', () => {
     const { service, prisma, conn } = setup({ checked: '2026-09-30', csv });
     expect(await service.refresh(conn as never, 'AT', null, now)).toBe(1);
     expect(prisma.brokerPayout.createMany).toHaveBeenCalledWith({
-      data: [{ accountId: 'acc-1', transactionId: '900001', tradeDate: new Date('2026-10-02T00:00:00Z'), amount: 1_500, changeType: 'challengepayout' }],
+      data: [{ accountId: 'acc-1', transactionId: '900001', tradeDate: new Date('2026-10-02T00:00:00Z'), amount: 1_500, changeType: 'challengepayout', confidence: 'certain' }],
       skipDuplicates: true,
     });
   });
