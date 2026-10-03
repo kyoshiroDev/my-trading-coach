@@ -347,6 +347,24 @@
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }
 .acct-rules { display: block; }
+.acct-broker { display: block; }
+.broker-line { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-2); }
+.broker-line b { color: var(--text); font-weight: 600; }
+.broker-age { color: var(--text-3); }
+.broker-refresh {
+  display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 3px 9px;
+  font: 600 11px var(--font-body); color: var(--text-2); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.broker-refresh:hover:not(:disabled) { color: var(--text); border-color: var(--border-hover); }
+.broker-refresh:disabled { opacity: .6; cursor: default; }
+.broker-warn { margin: 6px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--yellow); }
+/* Pastille « en direct » : solde lu chez le broker. Jaune quand on ne peut pas s'y fier. */
+.live-dot {
+  display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%;
+  background: var(--green); vertical-align: middle;
+}
+.live-dot.is-stale { background: var(--yellow); }
 .dd-basis { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
 .dd-basis b { color: var(--text); font-weight: 600; }
 .dd-disclaimer { display: block; margin-top: 2px; font-size: 11.5px; color: var(--text-3); }

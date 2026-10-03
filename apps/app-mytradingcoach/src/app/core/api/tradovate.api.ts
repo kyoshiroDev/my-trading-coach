@@ -82,6 +82,11 @@ export class TradovateApi {
     return this.http.post<{ data: TradovateSyncResult }>(`${this.base}/accounts/${accountId}/sync`, {});
   }
 
+  /** Relit solde et equity chez le broker (bridé côté serveur : 20 s). Jamais en boucle. */
+  refreshBalance(accountId: string): Observable<{ data: unknown }> {
+    return this.http.get<{ data: unknown }>(`${this.base}/accounts/${accountId}/balance`);
+  }
+
   disconnect(accountId: string): Observable<{ data: { disconnected: true } }> {
     return this.http.delete<{ data: { disconnected: true } }>(`${this.base}/accounts/${accountId}`);
   }

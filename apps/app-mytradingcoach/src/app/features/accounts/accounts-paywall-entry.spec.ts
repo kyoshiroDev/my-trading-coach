@@ -32,7 +32,7 @@ function acct(id: string): TradingAccount {
     metrics: {
       startingBalance: 5000, realizedPnl: 0, currentBalance: 5000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
     },
   };
 }
@@ -63,7 +63,7 @@ function setup(nbComptes: number, limite: number | null, vue: string | 'all') {
     selectedAccountId: signal<string | 'all'>(vue),
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
-  const userStore = { isPremium: () => limite === null, maxAccounts: signal(limite) };
+  const userStore = { isDemo: () => false, isPremium: () => limite === null, maxAccounts: signal(limite) };
 
   TestBed.configureTestingModule({
     providers: [

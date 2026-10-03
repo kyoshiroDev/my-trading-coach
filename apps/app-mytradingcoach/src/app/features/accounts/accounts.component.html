@@ -48,7 +48,7 @@
     @if (hasPropAccount()) {
       <div class="global-note">
         <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
-        <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm, mais les positions ouvertes ne sont pas incluses alors que la plupart des firms contrôlent le seuil en temps réel. Le statut de chaque compte reste piloté par toi.</span>
+        <span><b>Règles prop firm estimées.</b> Compte connecté au broker (pastille verte) : solde et positions ouvertes lus chez lui. Sinon, d'après tes trades loggés, positions ouvertes non incluses. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm. Le statut de chaque compte reste piloté par toi.</span>
       </div>
     }
 
@@ -96,7 +96,7 @@
              activité, synchro) héritent du même liseré que la ligne. -->
         <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
-             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
@@ -139,7 +139,14 @@
             </div>
 
             <!-- 2 · Solde -->
-            <div class="cell num right cell-balance" data-label="Solde">{{ money(a.metrics.currentBalance, a.currency) }}</div>
+            <div class="cell num right cell-balance" data-label="Solde">
+              @if (a.metrics.broker; as b) {
+                <span class="live-dot" [class.is-stale]="b.referenceMismatch"
+                      [attr.title]="b.referenceMismatch ? 'Solde de départ incompatible avec le solde du broker' : 'Solde lu chez le broker, ' + brokerAge(b)"
+                      [attr.aria-label]="'Solde lu chez le broker, ' + brokerAge(b)"></span>
+              }
+              {{ money(a.metrics.currentBalance, a.currency) }}
+            </div>
 
             <!-- 3 · P&L -->
             <div class="cell num right strong cell-pnl" data-label="P&amp;L"
@@ -295,6 +302,37 @@
               <span class="ai"><b class="text-green">{{ bestDayLabel(a) }}</b> meilleur jour</span>
               <span class="ai"><b class="text-red">{{ worstDayLabel(a) }}</b> pire jour</span>
               <span class="ai"><b>{{ winRateLabel(a) }}</b> win rate</span>
+            </div>
+          }
+
+          <!-- Solde et equity lus chez le broker (compte connecté), au dépli. -->
+          @if (expandedId() === a.id && a.metrics.broker; as b) {
+            <div class="acct-sub acct-broker" [attr.data-testid]="'account-broker-' + a.id">
+              <p class="broker-line">
+                <span class="live-dot" [class.is-stale]="b.referenceMismatch" aria-hidden="true"></span>
+                <b>Chez le broker</b> : solde <b>{{ money(b.cashBalance, a.currency) }}</b>
+                · equity <b>{{ money(b.equity, a.currency) }}</b>
+                @if (b.openPositions > 0) {
+                  (latent <b [class.text-green]="b.openPnl > 0" [class.text-red]="b.openPnl < 0">{{ money(b.openPnl, a.currency, true) }}</b>,
+                  {{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }})
+                } @else {
+                  · aucune position ouverte
+                }
+                <span class="broker-age">· relevé {{ brokerAge(b) }}</span>
+                @if (!userStore.isDemo()) {
+                  <button class="broker-refresh" type="button" (click)="refreshBrokerBalances([a.id])"
+                          [disabled]="balanceBusy().has(a.id)" [attr.data-testid]="'broker-refresh-' + a.id">
+                    <svg [lucideIcon]="RefreshIcon" [size]="12"></svg>
+                    {{ balanceBusy().has(a.id) ? 'Actualisation…' : 'Actualiser' }}
+                  </button>
+                }
+              </p>
+              @if (b.referenceMismatch) {
+                <p class="broker-warn" data-testid="broker-reference-mismatch">
+                  Ton solde de départ ({{ money(a.metrics.startingBalance, a.currency) }}) ne correspond pas au solde du broker :
+                  la marge reste calculée depuis tes trades. Corrige le solde de départ du compte pour utiliser celui du broker.
+                </p>
+              }
             </div>
           }
 

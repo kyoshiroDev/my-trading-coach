@@ -41,6 +41,19 @@ export interface AccountRuleMetrics {
   } | null;
   /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
   drawdownUnconfirmed: boolean;
+  /**
+   * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
+   * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).
+   */
+  broker: {
+    cashBalance: number;
+    equity: number;
+    openPnl: number;
+    openPositions: number;
+    balanceAt: string | null;
+    equityAt: string | null;
+    referenceMismatch: boolean;
+  } | null;
   estimated: true;
   disclaimer: string;
 }
