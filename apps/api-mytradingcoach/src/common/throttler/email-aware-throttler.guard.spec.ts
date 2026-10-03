@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF } from './email-aware-throttler.guard';
+import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF, defaultThrottleLimit, USER_THROTTLE_LIMIT, ANON_THROTTLE_LIMIT } from './email-aware-throttler.guard';
 
 /**
  * Le rate limiting des routes d'authentification doit compter par IP **et** par compte visé.
@@ -90,5 +90,30 @@ describe('EmailAwareThrottlerGuard — throttler « ip » (SCA-B0-04)', () => {
     await guard.handleRequest({ throttler: { name: 'default' }, limit: 5, getTracker });
     expect(spy.mock.calls[0][0].getTracker).toBe(getTracker);
     spy.mockRestore();
+  });
+});
+
+describe('SCA-B3-03 — compteur par utilisateur une fois connecté', () => {
+  const tracker = (req: Record<string, unknown>) =>
+    (
+      new EmailAwareThrottlerGuard({} as never, {} as never, {} as never) as unknown as {
+        getTracker: (r: Record<string, unknown>) => Promise<string>;
+      }
+    ).getTracker(req);
+
+  it('connecté → user:<id>, quelle que soit l’IP', async () => {
+    expect(await tracker({ ip: '1.2.3.4', user: { id: 'u1' }, headers: {} })).toBe('user:u1');
+    expect(await tracker({ ip: '9.9.9.9', user: { id: 'u1' }, headers: {} })).toBe('user:u1');
+  });
+
+  it('anonyme → IP (inchangé)', async () => {
+    expect(await tracker({ ip: '1.2.3.4', headers: {} })).toBe('1.2.3.4');
+  });
+
+  it('limite par défaut : 300 connecté, 60 anonyme', () => {
+    const ctx = (user?: unknown) => ({ switchToHttp: () => ({ getRequest: () => ({ user }) }) }) as never;
+    expect(defaultThrottleLimit(ctx({ id: 'u1' }))).toBe(USER_THROTTLE_LIMIT);
+    expect(defaultThrottleLimit(ctx(undefined))).toBe(ANON_THROTTLE_LIMIT);
+    expect([USER_THROTTLE_LIMIT, ANON_THROTTLE_LIMIT]).toEqual([300, 60]);
   });
 });

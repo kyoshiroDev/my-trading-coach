@@ -207,8 +207,12 @@ const user = await prisma.user.findUnique({
 
 ## Rate Limiting
 
-- **Défaut** : 60 requêtes / minute / IP (`ThrottlerModule.forRootAsync` dans `app.module.ts`,
-  `ThrottlerGuard` en APP_GUARD). Surcharge par route : `@Throttle({ default: { ttl, limit } })`.
+- **Défaut** (SCA-B3-03) : **300 requêtes / minute par utilisateur connecté** (compteur
+  `user:<id>`), **60 / minute / IP** pour un anonyme (`defaultThrottleLimit`). Deux utilisateurs
+  derrière la même IP ne partagent plus de compteur. **`JwtAuthGuard` passe AVANT le throttler**
+  (`app.module.ts`) pour que `req.user` soit connu ; les routes `@Public` restent comptées par IP
+  (+ empreinte d'e-mail). Surcharge par route : `@Throttle({ default: { ttl, limit } })` — sur une
+  route authentifiée, elle compte désormais par utilisateur.
 - **IP réelle** : `app.set('trust proxy', 1)` dans `main.ts` (un seul saut : Traefik). Sans lui,
   `req.ip` = IP du proxy → tous les users dans le même compteur. Ne jamais monter à `true`
   (le client pourrait forger `X-Forwarded-For`).
@@ -306,3 +310,17 @@ le throttler compte par `x-load-client` (borné `[a-z0-9-]{1,64}`) au lieu de l'
 **aucune** limite (elles s'appliquent par client) mais permet à qui détient la clé de répartir
 ses requêtes sur des compteurs arbitraires : **jamais en prod** (désactivée par le code si la base
 est `mytradingcoach_prod`), et retirée de `.env.beta` après chaque test.
+
+## Cache de l'utilisateur authentifié (SCA-B3-01, 2026-10-03)
+
+`JwtStrategy.validate` lit l'utilisateur via `AuthUserCacheService` (modules/infra, global) :
+Redis 60 s, clé **versionnée** `authuser:<id>:<version>` (la version `authuser:v:<id>` est
+incrémentée par `invalidate`, ce qui ferme la course lecture-avant / écriture-après). Redis en panne
+→ lecture en base.
+**Règle : après TOUTE écriture d'un champ relu par le JWT (plan, rôle, essai, `isDemo`, nom,
+e-mail, suppression), appeler `userCache.invalidate(id)`.** Déjà fait dans `users.service`
+(admin, rôle, essai, Premium, `updateMe`, suppression), `stripe-subscription.service` (sync de
+l'abonnement), `stripe-webhook.service` (résiliation, client supprimé), `ambassador.service`.
+Un oubli = jusqu'à 60 s de plan / rôle périmé (ex. Premium payé mais refusé). Les tests qui
+modifient ces champs directement en base doivent aussi invalider. Verrouillé par
+`auth-user-cache.int-spec.ts` (plan changé → effet immédiat, compte supprimé → 401 immédiat).

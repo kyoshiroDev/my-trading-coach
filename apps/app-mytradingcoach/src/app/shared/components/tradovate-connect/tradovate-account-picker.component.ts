@@ -1,17 +1,22 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, linkedSignal, output } from '@angular/core';
 import type { TradovateExternalAccount } from '@app/core/api/tradovate.api';
 
 /**
- * Choix du compte Tradovate à synchroniser quand un même login en porte plusieurs (cas réel
- * vérifié en beta : un compte réel + un compte simulé). Un TradingAccount MTC = UN compte
- * Tradovate : l'utilisateur choisit lequel alimente ce compte.
+ * Choix du compte Tradovate à synchroniser. Toujours affiché à la première connexion, même
+ * pour un compte unique : rien n'est importé avant confirmation (mauvais login, compte voisin
+ * écarté…). Un TradingAccount MTC = UN compte Tradovate : l'utilisateur choisit lequel
+ * alimente ce compte. Un compte unique est présélectionné.
  */
 @Component({
   selector: 'mtc-tradovate-account-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="tvp" data-testid="tradovate-account-picker">
-      <p class="tvp-q">Plusieurs comptes Tradovate sont liés à ces identifiants. Lequel synchroniser ici&nbsp;?</p>
+      @if (accounts().length > 1) {
+        <p class="tvp-q">Plusieurs comptes Tradovate sont liés à ces identifiants. Lequel synchroniser ici&nbsp;?</p>
+      } @else {
+        <p class="tvp-q">Vérifie que c'est bien le compte Tradovate à synchroniser ici&nbsp;: rien n'est importé avant ta confirmation.</p>
+      }
       <div class="tvp-list" role="radiogroup">
         @for (a of accounts(); track a.id) {
           <label class="tvp-opt" [class.sel]="choice() === a.id">
@@ -34,5 +39,9 @@ export class TradovateAccountPickerComponent {
   readonly accounts = input.required<TradovateExternalAccount[]>();
   readonly busy = input(false);
   readonly picked = output<string>();
-  protected readonly choice = signal<string | null>(null);
+  // Compte unique présélectionné : confirmer reste un geste explicite, sans clic inutile.
+  protected readonly choice = linkedSignal<string | null>(() => {
+    const list = this.accounts();
+    return list.length === 1 ? list[0].id : null;
+  });
 }

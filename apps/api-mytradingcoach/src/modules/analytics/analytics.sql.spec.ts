@@ -66,9 +66,9 @@ describe('groupTrades', () => {
     }
   });
 
-  it('net = round(pnl − |commission|, 2) ; R:R compté seulement s’il est renseigné et non nul', async () => {
+  it('net = round((pnl − |commission|)::text::numeric, 2) (≡ netPnl / roundCents) ; R:R compté seulement s’il est renseigné et non nul', async () => {
     await groupTrades(prisma, { userId: 'u1' }, 'asset');
-    expect(text()).toContain('round((t."pnl" - abs(coalesce(t."commission", 0)))::numeric, 2)');
+    expect(text()).toContain('round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)'); // ≡ roundCents
     expect(text()).toContain(`t."riskReward" IS NOT NULL AND t."riskReward" <> 0 AND t."riskReward" <> 'NaN'`);
   });
 });

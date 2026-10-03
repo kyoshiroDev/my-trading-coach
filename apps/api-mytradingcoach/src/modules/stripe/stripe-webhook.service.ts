@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nestjs';
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -13,6 +13,7 @@ import { STRIPE_QUEUE, extractId, isUniqueConstraintError } from './stripe.helpe
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { StripeWebhookJobPayload } from './stripe.types';
+import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 /**
  * Webhooks Stripe, en deux temps :
@@ -33,6 +34,7 @@ export class StripeWebhookService {
     @InjectQueue(STRIPE_QUEUE)
     private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
+    @Optional() private readonly userCache?: AuthUserCacheService,
   ) {}
 
   // ── Validation + enqueue async ──────────────────────────────────────────────
@@ -183,6 +185,7 @@ export class StripeWebhookService {
         subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
       },
     });
+    await this.userCache?.invalidate(...(user ? [user.id] : [])); // retour en FREE effectif tout de suite (SCA-B3-01)
 
     // Invalider le cache de tous les users concernés (updateMany ne retourne pas les IDs)
     // On invalide via le customerId qui est unique
@@ -234,6 +237,7 @@ export class StripeWebhookService {
         subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
       },
     });
+    await this.userCache?.invalidate(...(user ? [user.id] : [])); // retour en FREE effectif tout de suite (SCA-B3-01)
     await this.subscriptions.invalidateBillingCache(user.id);
     await this.discord.syncDiscordRole(user.id).catch(() => undefined);
     this.logger.log(

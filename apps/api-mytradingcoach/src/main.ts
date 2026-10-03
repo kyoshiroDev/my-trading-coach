@@ -13,6 +13,8 @@ import { AppModule } from './app/app.module';
 import { checkEnv } from './config/env';
 import { webConcurrency } from './config/web-concurrency';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
+import { applyKeepAlive } from './config/http-keepalive';
+import { configureBodyParsers } from './config/body-parsers';
 
 const logger = new Logger('Bootstrap');
 
@@ -29,12 +31,14 @@ function validateEnv() {
 async function bootstrap() {
   validateEnv();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
+    // Parseurs installés à la main : corps brut pour le seul webhook Stripe (SCA-B3-06).
+    bodyParser: false,
     logger:
       process.env['NODE_ENV'] === 'production'
         ? new ConsoleLogger({ json: true })
         : new ConsoleLogger(),
   });
+  configureBodyParsers(app);
 
   // L'API est derrière UN reverse proxy (Traefik). Sans ce réglage, `req.ip` vaut l'IP du proxy
   // pour toutes les requêtes : le rate limiting mettait alors tous les utilisateurs dans le même
@@ -96,6 +100,8 @@ async function bootstrap() {
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
+  // Keep-alive plus long que celui de Traefik (90 s) : sinon 502 sporadiques sous charge (#301).
+  applyKeepAlive(app.getHttpServer());
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 

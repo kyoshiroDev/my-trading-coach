@@ -140,6 +140,8 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       availableAccounts: [{ id: '40570856', name: 'PAAPEX136790000011', env: 'demo', userId: '699523' }],
     } as unknown as BrokerConnection;
     const prisma = {
+      // Compteur des trades importés renvoyé avec la vue (aucun ici).
+      trade: { groupBy: vi.fn().mockResolvedValue([]) },
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
         findMany: vi.fn().mockResolvedValue([]), // aucun autre utilisateur sur ce compte
@@ -231,19 +233,30 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
   it('plusieurs comptes, un seul pris → le pris n’est ni choisi ni même proposé', async () => {
     const { connecter, enregistre } = contexte({ comptes: [COMPTE, AUTRE], pris: ['40517838'] });
 
-    await connecter();
+    const issue = await connecter();
 
-    // Choix automatique sur le seul compte restant, et la liste stockée ne contient plus l'autre.
-    expect(enregistre[0].externalAccountId).toBe('40570856');
+    // Le seul compte restant n'est PAS choisi d'office : l'utilisateur confirme, et apprend
+    // qu'un compte de son login a été écarté. La liste stockée ne contient plus l'autre.
+    expect(enregistre[0].externalAccountId).toBeNull();
     expect(enregistre[0].availableAccounts).toEqual([
       expect.objectContaining({ id: '40570856' }),
     ]);
+    expect(issue).toMatchObject({ status: 'select_account', excluded: 1 });
   });
 
-  it('aucun compte pris → comportement inchangé', async () => {
+  it('aucun compte pris : un compte unique est quand même à confirmer, rien d’écarté', async () => {
     const { connecter, enregistre } = contexte({ comptes: [COMPTE], pris: [] });
-    await connecter();
-    expect(enregistre[0].externalAccountId).toBe('40517838');
+    const issue = await connecter();
+    expect(enregistre[0].externalAccountId).toBeNull();
+    expect(issue).toMatchObject({ status: 'select_account', excluded: 0 });
+  });
+
+  it('reconnexion : le compte déjà choisi est gardé, pas de nouveau sélecteur', async () => {
+    const { connecter, enregistre, prisma } = contexte({ comptes: [COMPTE, AUTRE], pris: [] });
+    prisma.brokerConnection.findUnique.mockResolvedValue({ externalAccountId: '40570856', externalEnv: 'demo' });
+    const issue = await connecter();
+    expect(enregistre[0].externalAccountId).toBe('40570856');
+    expect(issue).toMatchObject({ status: 'connected', excluded: 0 });
   });
 
   it('la recherche ne regarde que les AUTRES utilisateurs : se reconnecter reste possible', async () => {

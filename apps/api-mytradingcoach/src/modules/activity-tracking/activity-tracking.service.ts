@@ -12,6 +12,11 @@ import { todayParis } from '@mtc/shared';
 @Injectable()
 export class ActivityTrackingService {
   private readonly logger = new Logger(ActivityTrackingService.name);
+  /**
+   * Filtre LOCAL au worker (SCA-B3-02) : utilisateurs déjà comptés aujourd'hui par ce worker.
+   * Évite un aller-retour Redis à CHAQUE requête authentifiée ; vidé au changement de jour.
+   */
+  private seenToday = { date: '', ids: new Set<string>() };
 
   constructor(
     private readonly prisma: PrismaService,
@@ -21,6 +26,8 @@ export class ActivityTrackingService {
   async markActive(userId: string): Promise<void> {
     try {
       const dateStr = todayParis(); // YYYY-MM-DD (Europe/Paris)
+      if (this.seenToday.date !== dateStr) this.seenToday = { date: dateStr, ids: new Set() };
+      if (this.seenToday.ids.has(userId)) return; // déjà vu aujourd'hui par ce worker
       const key = `activity:${userId}:${dateStr}`;
 
       // SET NX : ne pose la clé que si absente → 'OK'. Si déjà posée aujourd'hui → null.
@@ -31,15 +38,26 @@ export class ActivityTrackingService {
         this.secondsUntilParisMidnight(),
         'NX',
       );
-      if (set !== 'OK') return; // déjà compté aujourd'hui
+      if (set !== 'OK') {
+        this.seenToday.ids.add(userId); // déjà compté aujourd'hui (par un autre worker)
+        return;
+      }
 
       // Date à minuit (jour calendaire Paris), stockée en colonne @db.Date.
       const date = new Date(`${dateStr}T00:00:00.000Z`);
-      await this.prisma.userDailyActivity.upsert({
-        where: { userId_date: { userId, date } },
-        create: { userId, date },
-        update: {}, // no-op : la ligne du jour existe déjà
-      });
+      try {
+        await this.prisma.userDailyActivity.upsert({
+          where: { userId_date: { userId, date } },
+          create: { userId, date },
+          update: {}, // no-op : la ligne du jour existe déjà
+        });
+      } catch (dbErr) {
+        // Clé posée mais ligne non écrite : on la retire pour que la journée soit retentée.
+        await this.redis.client.del(key).catch(() => undefined);
+        throw dbErr;
+      }
+      // Marqué seulement après succès : un échec (Redis, base) sera retenté à la requête suivante.
+      this.seenToday.ids.add(userId);
     } catch (err) {
       this.logger.warn(
         `markActive(${userId}) a échoué (ignoré) : ${(err as Error).message}`,

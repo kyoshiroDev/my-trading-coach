@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
 import { createHash } from 'node:crypto';
 import { loadTestTracker } from './load-test-tracker';
@@ -12,6 +12,16 @@ import { loadTestTracker } from './load-test-tracker';
  * plus) ; il ne s'active que sur les routes qui le resserrent avec `@Throttle({ ip: … })`.
  */
 export const IP_THROTTLER = 'ip';
+
+/**
+ * Limite par défaut (SCA-B3-03) : un utilisateur CONNECTÉ est compté par son identifiant (vérifié
+ * par JwtAuthGuard, qui passe donc AVANT ce guard), un anonyme par son IP. Deux utilisateurs
+ * derrière la même IP (bureau, université, opérateur mobile) ne partagent plus de compteur.
+ */
+export const USER_THROTTLE_LIMIT = 300;
+export const ANON_THROTTLE_LIMIT = 60;
+export const defaultThrottleLimit = (ctx: ExecutionContext): number =>
+  ctx.switchToHttp().getRequest<{ user?: { id?: string } }>().user?.id ? USER_THROTTLE_LIMIT : ANON_THROTTLE_LIMIT;
 export const IP_THROTTLER_OFF = Number.MAX_SAFE_INTEGER;
 
 /**
@@ -39,6 +49,9 @@ export class EmailAwareThrottlerGuard extends ThrottlerGuard {
   }
 
   protected override async getTracker(req: Record<string, unknown>): Promise<string> {
+    // Connecté : compteur par utilisateur (identifiant déjà vérifié par JwtAuthGuard).
+    const userId = (req['user'] as { id?: string } | undefined)?.id;
+    if (userId) return `user:${userId}`;
     const ip = await this.clientTracker(req);
     const account = accountFingerprint(req);
     return account ? `${ip}:${account}` : ip;

@@ -7,6 +7,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
+import { BROKER_TRADE_SOURCES } from '../../trades/trades.service';
 import { RedisService } from '../../infra/redis.service';
 import { loadTokenKey } from '@api/common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
@@ -128,9 +129,12 @@ export class TradovateConnectionService {
       }
       const login = await this.discoverLogin(tokens.access_token as string, libres, apiHosts);
       const conn = await this.saveConnection(userId, accountId, tokens, libres, login, apiHosts);
+      // Comptes écartés : annoncés au retour, sinon l'utilisateur ne comprend pas pourquoi un
+      // compte de son login manque au sélecteur.
+      const excluded = available.length - libres.length;
       return conn.externalAccountId
-        ? { status: 'connected', accountId, userId, origin }
-        : { status: 'select_account', accountId, userId, origin };
+        ? { status: 'connected', accountId, userId, origin, excluded }
+        : { status: 'select_account', accountId, userId, origin, excluded };
     } catch (err) {
       const reason =
         err instanceof TradovateApiError && err.kind === 'rate_limited'
@@ -271,11 +275,11 @@ export class TradovateConnectionService {
     const where = { accountId_provider: { accountId, provider: BrokerProvider.TRADOVATE } };
     const previous = await this.prisma.brokerConnection.findUnique({ where });
     // Reconnexion : on garde le compte choisi s'il est toujours accessible. Sinon, choix
-    // automatique quand il n'y a qu'un compte, choix explicite (front) quand il y en a plusieurs.
-    const kept = previous?.externalAccountId
+    // EXPLICITE (front), même s'il n'y a qu'un compte : rien n'est importé avant que
+    // l'utilisateur ait confirmé le compte (mauvais login Tradovate, compte voisin écarté…).
+    const chosen = previous?.externalAccountId
       ? available.find((a) => a.id === previous.externalAccountId && a.env === previous.externalEnv)
       : undefined;
-    const chosen = kept ?? (available.length === 1 ? available[0] : undefined);
 
     const data = {
       status: BrokerConnectionStatus.CONNECTED,
@@ -297,7 +301,7 @@ export class TradovateConnectionService {
       create: { userId, accountId, provider: BrokerProvider.TRADOVATE, ...data },
       update: data,
     });
-    // Compte choisi automatiquement (un seul compte, ou reconnexion) : il ne passe jamais par
+    // Compte gardé à la reconnexion : il ne passe jamais par
     // selectAccount, sa devise doit donc être alignée ici — sinon elle resterait celle saisie à la
     // main à la création du compte MTC, souvent EUR pour un compte broker en USD.
     if (chosen) {
@@ -316,7 +320,8 @@ export class TradovateConnectionService {
       where: { userId, provider: BrokerProvider.TRADOVATE },
       orderBy: { createdAt: 'asc' },
     });
-    return rows.map((r) => this.toView(r));
+    const counts = await this.brokerTradesCounts(userId, rows.map((r) => r.accountId));
+    return rows.map((r) => this.toView(r, counts.get(r.accountId) ?? 0));
   }
 
   /** Choix du compte Tradovate à synchroniser vers ce TradingAccount. */
@@ -348,7 +353,8 @@ export class TradovateConnectionService {
     });
     // La devise du compte suit le broker, lue chez lui (cf. resolveAccountCurrency).
     await this.syncAccountCurrency(accountId, conn, target);
-    return this.toView(updated);
+    const counts = await this.brokerTradesCounts(userId, [accountId]);
+    return this.toView(updated, counts.get(accountId) ?? 0);
   }
 
   /**
@@ -374,7 +380,8 @@ export class TradovateConnectionService {
   /**
    * Déconnexion : les tokens sont SUPPRIMÉS de la base (pas seulement désactivés). La Trade API
    * n'expose pas d'endpoint de révocation documenté ; sans token stocké, MTC ne peut plus rien
-   * lire. Les trades déjà importés restent (ce sont ceux de l'utilisateur).
+   * lire. Les trades déjà importés restent (ce sont ceux de l'utilisateur) ; leur suppression
+   * optionnelle est orchestrée par `TradovateSyncService.disconnect`.
    */
   async disconnect(userId: string, accountId: string): Promise<{ disconnected: true }> {
     const { count } = await this.prisma.brokerConnection.deleteMany({
@@ -516,8 +523,19 @@ export class TradovateConnectionService {
     if (!account) throw new NotFoundException('Compte introuvable.');
   }
 
-  private toView(conn: BrokerConnection): TradovateConnectionView {
-    return toConnectionView(conn);
+  private toView(conn: BrokerConnection, brokerTradesCount = 0): TradovateConnectionView {
+    return toConnectionView(conn, brokerTradesCount);
+  }
+
+  /** Trades importés par le broker, par compte : affichés AVANT de proposer leur suppression. */
+  private async brokerTradesCounts(userId: string, accountIds: string[]): Promise<Map<string, number>> {
+    if (accountIds.length === 0) return new Map();
+    const groups = await this.prisma.trade.groupBy({
+      by: ['accountId'],
+      where: { userId, accountId: { in: accountIds }, source: { in: BROKER_TRADE_SOURCES } },
+      _count: { _all: true },
+    });
+    return new Map(groups.map((g) => [g.accountId as string, g._count._all] as const));
   }
 
   /** URL de retour dans l'app après le consentement (cf. frontendRedirectUrl). */

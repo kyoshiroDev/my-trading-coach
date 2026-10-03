@@ -11,6 +11,7 @@ import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
 import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
 import * as dates from './eco-calendar.dates';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
+import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 
 // Réexport : les appelants existants importent ces types depuis le service.
 export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
@@ -59,7 +60,7 @@ export class EcoCalendarService {
         `https://financialmodelingprep.com/stable/economic-calendar` +
         `?from=${fromU}&to=${toU}&apikey=${apiKey}`;
 
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url);
 
       if (response.status === 402) {
         this.logger.error('❌ FMP 402 : plan Starter requis pour le calendrier économique');

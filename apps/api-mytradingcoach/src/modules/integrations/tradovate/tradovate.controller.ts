@@ -16,9 +16,10 @@ import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { Public } from '@api/common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
-import { TradovateHistoryService, type HistoryImportResult } from './tradovate-history.service';
+import { TradovateHistoryService } from './tradovate-history.service';
 import { SelectTradovateAccountDto } from './dto/select-tradovate-account.dto';
 import { AuthorizeTradovateDto } from './dto/authorize-tradovate.dto';
+import { DisconnectTradovateDto } from './dto/disconnect-tradovate.dto';
 import type { FirstSyncSummary } from './tradovate-connection.service';
 import type { TradovateSyncResult } from './tradovate-sync.service';
 
@@ -76,13 +77,20 @@ export class TradovateController {
     return { url };
   }
 
+  /**
+   * Choix du compte Tradovate. Première fois (passé jamais remonté) → l'historique complet part
+   * aussitôt, comme au retour d'une connexion : c'est désormais ici que se fait le premier choix.
+   */
   @Post('accounts/:accountId/select')
-  select(
+  async select(
     @CurrentUser() user: { id: string },
     @Param('accountId') accountId: string,
     @Body() dto: SelectTradovateAccountDto,
   ) {
-    return this.connections.selectAccount(user.id, accountId, dto.externalAccountId);
+    const view = await this.connections.selectAccount(user.id, accountId, dto.externalAccountId);
+    const conn = await this.connections.getConnection(user.id, accountId);
+    if (!conn.historyImportedAt) this.historyService.launchFullImport(user.id, accountId);
+    return view;
   }
 
   /**
@@ -108,9 +116,17 @@ export class TradovateController {
     return this.historyService.importForAccount(user.id, accountId);
   }
 
+  /**
+   * Déconnexion. `?deleteTrades=true` supprime en plus les trades importés par Tradovate sur ce
+   * compte (jamais les saisies manuelles ni les imports CSV) — cas d'un mauvais compte branché.
+   */
   @Delete('accounts/:accountId')
-  disconnect(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
-    return this.connections.disconnect(user.id, accountId);
+  disconnect(
+    @CurrentUser() user: { id: string },
+    @Param('accountId') accountId: string,
+    @Query() dto: DisconnectTradovateDto,
+  ) {
+    return this.syncService.disconnect(user.id, accountId, { deleteTrades: dto.deleteTrades === 'true' });
   }
 }
 
@@ -157,21 +173,8 @@ export class TradovateCallbackController {
       }
     }
 
-    // Historique (Reporting API) : lancé DÈS la connexion, car Tradovate archive un compte
-    // inactif au bout de 10 jours et son passé devient alors illisible. Volontairement NON
-    // attendu : remonter toute la vie du compte ne doit pas retarder la redirection de l'utilisateur.
-    // Ses trades passés apparaissent quelques secondes plus tard, au rafraîchissement.
-    if (outcome.status === 'connected') {
-      const { userId, accountId } = outcome;
-      void this.historyService
-        .importForAccount(userId, accountId)
-        .then((r: HistoryImportResult) =>
-          this.logger.log(`Historique Tradovate importé : ${r.created} trade(s) créé(s), ${r.duplicates} doublon(s).`),
-        )
-        .catch((err: unknown) =>
-          this.logger.warn(`Import de l'historique Tradovate en échec : ${(err as Error).message}`),
-        );
-    }
+    // Historique complet (Reporting API) lancé DÈS que le compte est connu (cf. launchFullImport).
+    if (outcome.status === 'connected') this.historyService.launchFullImport(outcome.userId, outcome.accountId);
 
     res.clearCookie(TRADOVATE_STATE_COOKIE, { path: `/${TRADOVATE_CALLBACK_PATH}` });
     res.redirect(302, this.connections.frontendRedirect(outcome, summary));

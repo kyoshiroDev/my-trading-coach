@@ -48,6 +48,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 import type { TradovateSyncResult } from '../../core/api/tradovate.api';
 import {
   TRADOVATE_RETURN_PARAMS,
+  excludedAccountsMessage,
   feesLine,
   parseTradovateReturn,
   relativeTime,
@@ -261,7 +262,7 @@ export class AccountsComponent implements OnInit {
     if (ret.status === 'error') {
       this.toast.error(tradovateErrorMessage(ret.reason, false));
     } else if (ret.status === 'select_account') {
-      this.toast.info('Compte Tradovate connecté : choisis ci-dessous le compte à synchroniser.');
+      this.toast.info('Compte Tradovate connecté : confirme ci-dessous le compte à synchroniser.');
     } else if (ret.syncFailed) {
       this.toast.warning("Compte Tradovate connecté, mais la première synchronisation n'a pas abouti : relance-la avec « Synchroniser ».");
     } else {
@@ -270,6 +271,9 @@ export class AccountsComponent implements OnInit {
       if (fees) this.toast.warning(fees.text);
       if ((ret.trades ?? 0) > 0) this.refreshAfterImport();
     }
+
+    const excluded = excludedAccountsMessage(ret.excluded);
+    if (excluded) this.toast.warning(excluded);
 
     const cleared = Object.fromEntries(TRADOVATE_RETURN_PARAMS.map((k) => [k, null]));
     // Commandes vides : même chemin, seuls les paramètres Tradovate disparaissent.
@@ -296,16 +300,25 @@ export class AccountsComponent implements OnInit {
     this.confirmDisconnectId.set(a.id);
   }
 
-  protected confirmDisconnect(a: TradingAccount): void {
+  /** `deleteTrades` : supprime aussi les trades importés par Tradovate (jamais manuels ni CSV). */
+  protected confirmDisconnect(a: TradingAccount, deleteTrades = false): void {
     this.confirmDisconnectId.set(null);
-    this.tv.disconnect(a.id);
+    this.tv.disconnect(a.id, { deleteTrades }, (deleted) => {
+      if (deleted) this.refreshAfterImport();
+    });
+  }
+
+  /** « 12 trades importés » : nombre affiché AVANT de proposer la suppression. */
+  protected brokerTradesLabel(n: number): string {
+    const s = n > 1 ? 's' : '';
+    return `${n} trade${s} importé${s}`;
   }
 
   private onSynced(r: TradovateSyncResult | null): void {
     if (r && r.created > 0) this.refreshAfterImport();
   }
 
-  /** Nouveaux trades : métriques des comptes et journal/dashboard repartent du serveur. */
+  /** Trades ajoutés ou supprimés : métriques des comptes et journal/dashboard repartent du serveur. */
   private refreshAfterImport(): void {
     this.store.load();
     this.tradesStore.reset();

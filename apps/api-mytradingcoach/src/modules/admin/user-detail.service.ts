@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { computeTradeStats } from '@mtc/shared';
+import { closedTradeStats } from '../analytics/analytics.sql';
 import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
+import { isOfferedPremium } from '../users/premium-offer.util';
 
 const DAY_MS = 86_400_000;
 
@@ -19,6 +20,7 @@ export class UserDetailService {
       select: {
         id: true, name: true, email: true, plan: true, role: true,
         stripeSubscriptionStatus: true, referralCode: true,
+        trialEndsAt: true, isDemo: true,
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,
         tradingSessions: true, tradesPerDayMin: true, tradesPerDayMax: true,
@@ -93,10 +95,11 @@ export class UserDetailService {
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
-    const [totalTrades, tradesThisMonth, pnlRows, topAssetRows] = await Promise.all([
+    const [totalTrades, tradesThisMonth, uStats, topAssetRows] = await Promise.all([
       this.prisma.trade.count({ where: { userId: id } }),
       this.prisma.trade.count({ where: { userId: id, createdAt: { gte: startOfMonth } } }),
-      this.prisma.trade.findMany({ where: { userId: id, pnl: { not: null } }, select: { pnl: true, commission: true } }),
+      // P&L et win rate calculés en base (SCA-B2-04) : plus de chargement de tous les trades.
+      closedTradeStats(this.prisma, id),
       this.prisma.trade.groupBy({
         by: ['asset'],
         where: { userId: id },
@@ -105,8 +108,6 @@ export class UserDetailService {
         take: 3,
       }),
     ]);
-    // Stats via le helper unique (BE exclus du win rate).
-    const uStats = computeTradeStats(pnlRows);
     const totalPnl = uStats.totalPnl;
     const winRate = Math.round(uStats.winRate);
     const topAssets = topAssetRows.map((a) => ({ asset: a.asset, count: a._count.asset }));
@@ -119,6 +120,9 @@ export class UserDetailService {
         plan: user.plan,
         role: user.role,
         subscriptionStatus: user.stripeSubscriptionStatus ?? null,
+        trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+        offeredPremium: isOfferedPremium(user),
+        isDemo: user.isDemo,
         ambassadorRefCode: user.role === 'AMBASSADOR' ? user.referralCode : null,
         createdAt: user.createdAt.toISOString(),
         lastActivityAt: user.lastSeenAt?.toISOString() ?? null,

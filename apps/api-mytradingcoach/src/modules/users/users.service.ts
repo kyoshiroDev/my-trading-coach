@@ -1,16 +1,21 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
-import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
+import { PRICING_EUR } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { computeTradeStats } from '@mtc/shared';
+import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 
 const USER_SELECT = {
   id: true,
@@ -54,9 +59,12 @@ const ADMIN_USER_SELECT = {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly ambassador: AmbassadorService,
+    @Optional() private readonly userCache?: AuthUserCacheService,
   ) {}
 
   async findById(id: string) {
@@ -162,11 +170,13 @@ export class UsersService {
         'Promotion au rôle ADMIN impossible via API',
       );
     }
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: targetId },
       data: dto,
       select: ADMIN_USER_SELECT,
     });
+    await this.userCache?.invalidate(targetId); // plan / rôle relus par le JWT (SCA-B3-01)
+    return updated;
   }
 
   // ── Admin : suppression ───────────────────────────────────────────────────
@@ -229,6 +239,7 @@ export class UsersService {
       }),
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
+    await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
   }
 
   async adminStats() {
@@ -337,6 +348,7 @@ export class UsersService {
       if (role !== Role.USER) {
         await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
       }
+      await this.userCache?.invalidate(targetUserId);
       return;
     }
 
@@ -344,24 +356,63 @@ export class UsersService {
       where: { id: targetUserId },
       data: { role },
     });
+    await this.userCache?.invalidate(targetUserId);
   }
 
-  async activateTrial(userId: string) {
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_PERIOD_DAYS);
-    return this.prisma.user.update({
+  /**
+   * Premium offert par l'admin, sans carte ni abonnement Stripe : `trialEndsAt` dans le futur
+   * (reconnu partout comme accès Premium), le plan reste FREE et l'accès tombe tout seul à la
+   * date de fin. `trialUsed = true` : pas de second essai Stripe de 30 j au checkout.
+   * Un mois déjà en cours est prolongé à partir de sa date de fin.
+   */
+  async offerPremium(
+    userId: string,
+    days = OFFER_PREMIUM_DEFAULT_DAYS,
+    adminId?: string,
+  ): Promise<{ trialEndsAt: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true, role: true, isDemo: true, trialEndsAt: true,
+        stripeSubscriptionId: true, stripeSubscriptionStatus: true,
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.stripeSubscriptionId && hasActiveStripeSubscription(user.stripeSubscriptionStatus)) {
+      throw new ConflictException('Cet utilisateur a déjà un abonnement Stripe.');
+    }
+    if (user.plan === Plan.PREMIUM) {
+      throw new ConflictException('Cet utilisateur est déjà Premium.');
+    }
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new ConflictException('Cet utilisateur a déjà le Premium par son rôle.');
+    }
+    if (user.isDemo) {
+      throw new ConflictException('Impossible d\'offrir le Premium au compte démo.');
+    }
+
+    const now = Date.now();
+    const from = Math.max(now, user.trialEndsAt?.getTime() ?? 0);
+    const trialEndsAt = new Date(from + days * 86_400_000);
+    await this.prisma.user.update({
       where: { id: userId },
       data: { trialEndsAt, trialUsed: true },
-      select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId); // le Premium doit s'ouvrir immédiatement
+    this.logger.log(
+      `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
+    );
+    return { trialEndsAt: trialEndsAt.toISOString() };
   }
 
   async upgradeToPremium(userId: string) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { plan: 'PREMIUM' },
       select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId);
+    return user;
   }
 
   async countMonthlyTrades(userId: string): Promise<number> {
@@ -408,11 +459,13 @@ export class UsersService {
   }
 
   async updateMe(userId: string, dto: UpdateMeDto) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { name: dto.name },
       select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId); // nom relu par le JWT
+    return user;
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {
@@ -501,17 +554,15 @@ export class UsersService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [totalTrades, tradesThisMonth, aiLogs, pnlData, topAssets] =
+    const [totalTrades, tradesThisMonth, aiLogs, stats, topAssets] =
       await Promise.all([
         this.prisma.trade.count({ where: { userId } }),
         this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
         this.prisma.aiUsageLog
           .findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100 })
           .catch(() => []),
-        this.prisma.trade.findMany({
-          where: { userId, pnl: { not: null } },
-          select: { pnl: true, commission: true, asset: true },
-        }),
+        // P&L et win rate calculés en base (SCA-B2-04) : plus de chargement de tous les trades.
+        closedTradeStats(this.prisma, userId),
         this.prisma.trade.groupBy({
           by: ['asset'],
           where: { userId },
@@ -521,8 +572,6 @@ export class UsersService {
         }),
       ]);
 
-    // Stats via le helper unique (BE exclus du win rate).
-    const stats         = computeTradeStats(pnlData);
     const totalPnl      = stats.totalPnl;
     const winRate       = Math.round(stats.winRate);
     const totalTokens   = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);

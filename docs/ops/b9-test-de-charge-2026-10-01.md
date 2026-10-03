@@ -159,3 +159,37 @@ dashboard rouvert toutes les ~5 min + stats live → ~0,07 req/s/utilisateur →
 
 Nettoyage : comptes purgés (base beta 31 Mo), clés Redis supprimées, clé de test retirée,
 `DB_POOL_MAX=2` et pool 6 rétablis, API dev relancée, trois API saines (00 h 46).
+
+## Test n°4 (2026-10-03, 11 h 07) — après la phase B2 (#299)
+
+Même données (4,12 M trades), même machine, même scénario que le test n°3. B2 complet sur beta :
+statistiques en SQL (#276 #278 #280 #295), arrondi unique (#293), index (#297). Test mené **à son
+terme**, palier de 15 min à 1 500 compris, sans déclenchement du garde-fou.
+
+| Utilisateurs | Req/min | p50 | p95 | p99 | Test n°3 au même palier (p50 / p95) |
+|---|---|---|---|---|---|
+| 200 | 2 100 | 10 ms | 21 ms | 33 ms | 10 / 45 ms |
+| 500 | 5 300 | 11 ms | 23-32 ms | 34-74 ms | 12 / 55 ms |
+| **1 000** | **10 300** | **15 ms** | **44-64 ms** | 100-127 ms | **40-66 ms / 190-490 ms** |
+| 1 250 (montée) | 13 200 | 28 ms | 250 ms | 430 ms | **1,3 s / 3 s** (rupture) |
+| **1 500 (15 min)** | **~15 400** | **22-34 ms** | **108-188 ms** | 187-337 ms | arrêté avant |
+
+- **Le point de rupture n'est plus atteint** : 1 500 utilisateurs simultanés tenus 15 min dans le
+  scénario pire cas (dashboard complet rouvert toutes les ~75 s), ~257 req/s (test n°3 : plafond
+  ~190 req/s, rupture vers 1 100).
+- À 1 000 utilisateurs : CPU de l'API ~100 % (test n°3 : ~275 %, saturée), Postgres ~44 %,
+  0 attente PgBouncer. À 1 500 : machine chargée (charge ~8 sur 4 cœurs, API ~180 %, Postgres
+  60-80 %), prod partagée à 0,2 s avec quelques pics isolés à ~1,1 s.
+- **Mesure isolée, compte de 50 000 trades, sans cache** : courbe journalière 0,46 s (12,6 s avant
+  B2), by-setup / by-emotion / top actifs ~0,2 s, stats du journal 0,2 s, comptes 0,37 s.
+- Erreurs : **0 erreur de l'API**, aucun redémarrage ni OOM. 3 881 × 401 = jetons de 15 min
+  expirés (artefact du scénario). 1 093 × 404 = robots scannant beta.api (`/wp-json/…`).
+  **225 × 502** groupés sur 2 instants, sans crash : délai keep-alive Node (5 s) < Traefik → #301.
+
+### Conclusion
+
+B2 a supprimé le goulot du test n°3 (CPU de l'API sur les statistiques). Sur ce VPS unique et
+partagé, le scénario pire cas tient **au moins 1 500 utilisateurs simultanés** ; avec un usage réel
+(dashboard rouvert moins souvent), la marge pour 10 000 inscrits est confortable. Le prochain
+plafond sera la machine elle-même (CPU partagé avec la prod) : leviers suivants B3 (coût fixe par
+requête), le correctif keep-alive (#301), et le jour J 4 workers une fois dev/beta arrêtés.

@@ -196,9 +196,13 @@
                 </button>
               } @else if (confirmDisconnectId() === a.id) {
                 <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
-                <button class="tv-btn danger sm" type="button" (click)="confirmDisconnect(a)"
-                        [attr.data-testid]="'tradovate-disconnect-confirm-' + a.id">Oui</button>
-                <button class="tv-btn ghost sm" type="button" (click)="confirmDisconnectId.set(null)">Annuler</button>
+                <!-- Des trades importés : le choix garder / supprimer s'affiche en sous-ligne. -->
+                @if (!conn.brokerTradesCount) {
+                  <button class="tv-btn danger sm" type="button" (click)="confirmDisconnect(a)"
+                          [attr.data-testid]="'tradovate-disconnect-confirm-' + a.id">Oui</button>
+                }
+                <button class="tv-btn ghost sm" type="button" (click)="confirmDisconnectId.set(null)"
+                        [attr.data-testid]="'tradovate-disconnect-cancel-' + a.id">Annuler</button>
               } @else {
                 <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
                 @if (!conn.needsAccountSelection) {
@@ -208,13 +212,15 @@
                     <svg [lucideIcon]="RefreshIcon" [size]="13" [class]="(busy === 'sync') ? 'spin' : ''"></svg>
                     <span class="tv-icon-lbl">{{ busy === 'sync' ? 'Synchronisation…' : 'Synchroniser' }}</span>
                   </button>
-                  <button class="tv-icon danger" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
-                          [attr.title]="busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter'"
-                          [attr.data-testid]="'tradovate-disconnect-' + a.id">
-                    <svg [lucideIcon]="UnlinkIcon" [size]="13"></svg>
-                    <span class="tv-icon-lbl">{{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}</span>
-                  </button>
                 }
+                <!-- Hors du @if : pendant le choix du compte (mauvais login Tradovate), c'est la
+                     seule échappatoire pour repartir de zéro et se reconnecter. -->
+                <button class="tv-icon danger" type="button" (click)="askDisconnect(a)" [disabled]="!!busy"
+                        [attr.title]="busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter'"
+                        [attr.data-testid]="'tradovate-disconnect-' + a.id">
+                  <svg [lucideIcon]="UnlinkIcon" [size]="13"></svg>
+                  <span class="tv-icon-lbl">{{ busy === 'disconnect' ? 'Déconnexion…' : 'Déconnecter' }}</span>
+                </button>
               }
               </div>
 
@@ -270,6 +276,25 @@
                   (picked)="pickTradovateAccount(a, $event)" />
               </div>
             }
+          }
+
+          <!-- Déconnexion d'un compte qui a importé des trades : garder (défaut, en premier) ou
+               supprimer les seuls trades importés par Tradovate. Le nombre est affiché AVANT. -->
+          @if (conn && conn.brokerTradesCount > 0 && confirmDisconnectId() === a.id) {
+            <div class="acct-sub tv-disconnect-choice" [attr.data-testid]="'tradovate-disconnect-choice-' + a.id">
+              <span class="tv-text" [attr.data-testid]="'tradovate-disconnect-count-' + a.id">
+                <b>{{ brokerTradesLabel(conn.brokerTradesCount) }}</b> depuis ce compte Tradovate.
+                Si tu les supprimes, tes trades saisis à la main et importés en CSV restent.
+              </span>
+              <div class="tv-choice-actions">
+                <button class="tv-btn sync sm" type="button" (click)="confirmDisconnect(a)"
+                        [attr.data-testid]="'tradovate-disconnect-keep-' + a.id">Déconnecter et garder les trades</button>
+                <button class="tv-btn danger sm" type="button" (click)="confirmDisconnect(a, true)"
+                        [attr.data-testid]="'tradovate-disconnect-delete-' + a.id">
+                  Déconnecter et supprimer les {{ brokerTradesLabel(conn.brokerTradesCount) }}
+                </button>
+              </div>
+            </div>
           }
 
           <!-- Compte perso : pas de règles prop firm, mais son activité reste utile.

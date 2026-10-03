@@ -4,6 +4,8 @@ import { getStorageToken } from '@nestjs/throttler';
 import { vi, type Mock } from 'vitest';
 import { AppModule } from '../app/app.module';
 import { ResendService } from '../modules/resend/resend.service';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { configureBodyParsers } from '../config/body-parsers';
 
 /**
  * Bootstrap UNIQUE des tests d'intégration. Tout `*.int-spec.ts` qui démarre
@@ -73,7 +75,9 @@ export async function createIntegrationApp(opts: IntegrationAppOptions = {}): Pr
   if (opts.configure) builder = opts.configure(builder);
 
   const moduleRef = await builder.compile();
-  const app = moduleRef.createNestApplication({ rawBody: true });
+  // Mêmes parseurs que main.ts (corps brut pour le seul webhook Stripe, SCA-B3-06).
+  const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });
+  configureBodyParsers(app);
   if (opts.setup) opts.setup(app);
   else app.setGlobalPrefix('api');
   await app.init();

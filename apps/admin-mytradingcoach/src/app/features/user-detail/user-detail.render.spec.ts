@@ -14,6 +14,7 @@ function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
       id: 'u1', name: 'Maxime', email: 'maxime@test.com',
       plan: 'PREMIUM', role: 'USER',
       subscriptionStatus: null, ambassadorRefCode: null,
+      trialEndsAt: null, offeredPremium: false, isDemo: false,
       createdAt: '2026-06-18T00:00:00.000Z', lastActivityAt: '2026-06-19T10:00:00.000Z',
     },
     kpis: {

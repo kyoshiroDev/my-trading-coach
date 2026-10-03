@@ -105,6 +105,10 @@ model User {
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+
+  // SCA-B2-05 : utilisateurs actifs (hors démo) et inscriptions par date (admin, digest).
+  @@index([isDemo, lastSeenAt])
+  @@index([createdAt])
 }
 
 model ReferralCommission {
@@ -214,7 +218,8 @@ model Trade {
   @@index([userId, emotion])
   @@index([userId, setupId])
   @@index([sessionId])
-  @@index([accountId])
+  // SCA-B2-05 : stats filtrées par compte (accountId + période) ; couvre aussi l'ancien @@index([accountId]).
+  @@index([accountId, tradedAt])
 }
 
 /// Setup de trading défini par l'utilisateur (remplace l'ancien enum SetupType).
@@ -393,7 +398,6 @@ model DailyRecap {
   generatedAt     DateTime @default(now())
 
   @@unique([userId, date])
-  @@index([userId, date])
 }
 
 model EcoCalendarCache {
@@ -404,7 +408,6 @@ model EcoCalendarCache {
   generatedAt DateTime @default(now())
 
   @@unique([date])
-  @@index([date])
 }
 
 /// Analyse IA du calendrier éco mutualisée par (date, signature d'actifs).
@@ -462,7 +465,6 @@ model EcoAnalysisCache {
   createdAt    DateTime @default(now())
 
   @@unique([date, assetsKey])
-  @@index([date])
 }
 
 enum MoodState {
@@ -659,7 +661,6 @@ model MetricsSnapshot {
   ambassadors  Int
   createdAt    DateTime @default(now())
 
-  @@index([date])
 }
 
 /// Un jour d'activité par utilisateur (≥1 requête authentifiée dans la journée).
@@ -672,7 +673,6 @@ model UserDailyActivity {
   date   DateTime @db.Date
 
   @@unique([userId, date])
-  @@index([userId, date])
 }
 
 /// Trace analytique d'un compte supprimé (RGPD). Identité (name/email)

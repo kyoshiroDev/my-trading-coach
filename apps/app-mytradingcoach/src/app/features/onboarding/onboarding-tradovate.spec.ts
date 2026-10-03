@@ -192,6 +192,20 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
     expect(router.navigate).toHaveBeenCalled();
   });
 
+  it('compte écarté (déjà relié ailleurs) : expliqué au-dessus du sélecteur', () => {
+    saveProgress(8);
+    returnUrl('tradovate=select_account&accountId=acc-1&from=wizard&excluded=1');
+    const { q } = mount();
+    expect(q('onboarding-tradovate-excluded')!.textContent).toContain('déjà relié à un autre compte MyTradingCoach');
+  });
+
+  it('rien d’écarté : pas de message', () => {
+    saveProgress(8);
+    returnUrl('tradovate=select_account&accountId=acc-1&from=wizard');
+    const { q } = mount();
+    expect(q('onboarding-tradovate-excluded')).toBeNull();
+  });
+
   it('plusieurs comptes Tradovate : choix à l’étape 8, puis synchro et écran final', () => {
     saveProgress(8);
     returnUrl('tradovate=select_account&accountId=acc-1&from=wizard');
@@ -203,7 +217,7 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
     connections.set([{
       accountId: 'acc-1', status: 'CONNECTED', externalAccountId: null, externalAccountName: null,
       externalEnv: null, needsAccountSelection: true, lastSyncAt: null, lastSyncError: null,
-      tradesImported: 0, connectedAt: '2026-09-12T00:00:00Z',
+      tradesImported: 0, brokerTradesCount: 0, connectedAt: '2026-09-12T00:00:00Z',
       availableAccounts: [{ id: '1', name: 'LIVE-1', env: 'live' }, { id: '2', name: 'DEMO-2', env: 'demo' }],
     }]);
     fixture.detectChanges();
