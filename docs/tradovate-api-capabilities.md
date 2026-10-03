@@ -513,6 +513,16 @@ Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : 
   `Expired Access Token` — message différent, à ne pas confondre.
 - **CSV avec guillemets** : `"123,714.00"` — un `split(',')` naïf découpe faux.
 
+### `Account Balance History` : les clôtures officielles (2026-10-03)
+
+Catalogue complet relevé par `GET /v1/reports/requestReportDefinitions` : `Performance`, `Orders`,
+`Position History`, `Cash History`, `Order Details`, `Chat History`, `Fills`, `Account Balance
+History`. Ce dernier renvoie `Account ID, Account Name, Trade Date, Total Amount, Total Realized PNL`
+(date de séance en ISO, montants entre guillemets avec séparateur de milliers), **une ligne par
+séance où le solde a bougé**. « Total Amount » = solde de clôture, d'après la doc partenaire, si le
+rapport est demandé après la fermeture (17-18 h ET). Mêmes pièges que les autres rapports en entrée
+(dates `M/D/YYYY`, compte par NOM). Utilisé pour le plus haut de clôture des règles EOD.
+
 ### ⚠️ Les frais viennent de `Fills`, pas de `Cash History`
 
 L'import CSV manuel relie une commission à son fill par la convention **`txnId − 1 = fillId`**.

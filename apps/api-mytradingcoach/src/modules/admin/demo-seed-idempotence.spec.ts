@@ -22,6 +22,7 @@ import { describe, it, expect, vi } from 'vitest';
 // régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
 vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
+import { tradingDay } from '../accounts/account-rules';
 import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 
 /** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
@@ -98,6 +99,7 @@ function fakePrisma(calls: Call[]) {
     ecoEvent: model('ecoEvent'),
     tradingAccount: model('tradingAccount'),
     brokerConnection: model('brokerConnection'),
+    brokerDailyClose: model('brokerDailyClose'),
     // Catalogue synchronisé : les deux plans des comptes démo existent.
     propFirmPlan: { findMany: vi.fn(async () => [{ id: 'apex-eod-50k' }, { id: 'tradeify-select-flex-50k' }]) },
   };
@@ -554,4 +556,24 @@ describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => 
     expect(recapDates).toContain(yesterday.getTime());
     expect(Math.max(...recapDates)).toBe(yesterday.getTime());
   });
+
+  it('clôtures officielles du compte connecté : une par séance close, cohérentes avec son solde broker', async () => {
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
+    await seedDemo(prisma);
+    const closes = (calls.find((c) => c.model === 'brokerDailyClose' && c.op === 'createMany')!.args['data'] as Record<string, unknown>[]);
+    expect(closes.length).toBeGreaterThan(5);
+    const apexId = calls.find((c) => c.model === 'brokerConnection' && c.op === 'create')!.args['data'] as Record<string, unknown>;
+    expect(closes.every((c) => c['accountId'] === apexId['accountId'])).toBe(true);
+    // Séance en cours jamais close ; dates strictement croissantes, une par séance.
+    const dates = closes.map((c) => (c['tradeDate'] as Date).toISOString().slice(0, 10));
+    expect(new Set(dates).size).toBe(dates.length);
+    expect([...dates].sort()).toEqual(dates);
+    expect(dates.at(-1)! < tradingDay(new Date())).toBe(true);
+    // Le plus haut officiel ne dépasse jamais ce que les trades rendent possible (≤ solde max).
+    const cash = apexId['brokerCashBalance'] as number;
+    expect(Math.abs((closes.at(-1)!['closingBalance'] as number) - cash)).toBeLessThan(5_000);
+    expect(created['tradingAccount']).toBeTruthy();
+  });
 });
+
