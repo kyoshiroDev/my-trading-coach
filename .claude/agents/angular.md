@@ -567,7 +567,12 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 - **Après une synchro qui crée des trades** : `SelectedAccountStore.load()` +
   `TradesStore.reset()`, sinon dashboard et métriques restent sur l'ancien cache.
 - **Déconnexion** : confirmation en ligne (pas de `confirm()` natif), `404` = déjà
-  déconnecté = succès.
+  déconnecté = succès. Le bouton reste rendu **pendant le choix du compte**
+  (`needsAccountSelection`) : c'est la seule sortie après un mauvais login Tradovate.
+  Si `brokerTradesCount > 0`, la confirmation affiche le nombre puis deux choix
+  (garder = défaut, en premier · supprimer les seuls trades importés, `?deleteTrades=true`).
+  `tradesDeleted: null` = connexion coupée mais suppression échouée → toast d'avertissement
+  qui renvoie vers le journal, jamais de rollback de la déconnexion.
 - **Synchro = option principale, CSV = repli (PROMPT-211).** Dans `csv-import`, source
   « Tradovate » hors onboarding (`allowFeesFile()`) → encart `import-tradovate-reco` d'abord
   (connecter → `mtc-tradovate-connect-modal` origin `settings` pour le compte choisi ; déjà
