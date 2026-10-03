@@ -35,6 +35,11 @@ export interface PropFirmPlanSummary {
   } | null;
   /** Au moins une règle non publiée ou contradictoire : à afficher comme estimation. */
   needsReview: boolean;
+  /**
+   * Plateformes pour lesquelles une règle de drawdown change (ex. Apex : verrouillage sur Rithmic
+   * et Wealthcharts, jamais sur Tradovate). Vide : la plateforme n'a pas d'effet.
+   */
+  platformDependent: string[];
   phases: PropFirmPhaseSummary[];
 }
 

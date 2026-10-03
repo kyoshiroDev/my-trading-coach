@@ -16,6 +16,10 @@ export interface DrawdownPlanRule {
   lockedFloor: number | null;
   locked: boolean;
   realtimeEquity: boolean;
+  /** Plateforme dont la règle de verrouillage a été appliquée, sinon null. */
+  platform: string | null;
+  /** Plateforme inconnue alors que le verrouillage en dépend : choix à proposer. */
+  platformChoices: string[];
 }
 
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
@@ -72,6 +76,8 @@ export interface TradingAccount {
   drawdownType: DrawdownType;
   /** Plan du catalogue prop firm relié au compte (`PropFirmPlanSummary.id`), sinon null. */
   propFirmPlanId: string | null;
+  /** Plateforme de trading (clé du catalogue : `tradovate`, `rithmic`…), sinon null. */
+  platform: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -88,6 +94,7 @@ export interface CreateAccountPayload {
   maxDrawdown?: number | null;
   drawdownType?: DrawdownType;
   propFirmPlanId?: string | null;
+  platform?: string | null;
 }
 
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {

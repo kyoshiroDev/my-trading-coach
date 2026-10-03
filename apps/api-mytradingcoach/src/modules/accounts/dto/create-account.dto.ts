@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -55,10 +56,17 @@ export class CreateAccountDto {
   @IsEnum(DrawdownType, { message: 'Type de drawdown invalide (STATIC ou TRAILING).' })
   drawdownType?: DrawdownType;
 
-  // Plan du catalogue prop firm (PropFirmPlan.id). Les règles ci-dessus restent celles du
-  // compte : le plan sert à les pré-remplir côté app, il ne les remplace pas.
+  // Plan du catalogue prop firm (PropFirmPlan.id). Il pré-remplit les règles ci-dessus côté app,
+  // et ses règles officielles priment pour la marge de drawdown (AccountsService).
   @IsOptional()
   @IsString()
   @MaxLength(80)
   propFirmPlanId?: string;
+
+  // Plateforme de trading (clé du catalogue, ex. `rithmic`) : certaines règles en dépendent.
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  @Matches(/^[a-z0-9_]+$/, { message: 'Plateforme invalide.' })
+  platform?: string;
 }

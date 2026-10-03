@@ -10,6 +10,7 @@ function plan(p: Partial<PropFirmPlanSummary> & { id: string }): PropFirmPlanSum
     availability: 'public',
     configuration: null,
     needsReview: false,
+    platformDependent: [],
     phases: [
       { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
       { phase: 'funded', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: 1200 },

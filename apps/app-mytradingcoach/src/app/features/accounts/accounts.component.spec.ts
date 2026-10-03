@@ -24,6 +24,7 @@ function acct(
     maxDrawdown: p.maxDrawdown ?? null,
     drawdownType: p.drawdownType ?? 'TRAILING',
     propFirmPlanId: p.propFirmPlanId ?? null,
+    platform: p.platform ?? null,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {

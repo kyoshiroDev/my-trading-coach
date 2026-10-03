@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -67,4 +68,11 @@ export class UpdateAccountDto {
   @IsString()
   @MaxLength(80)
   propFirmPlanId?: string | null;
+
+  // Plateforme de trading (clé du catalogue, ex. `rithmic`) : certaines règles en dépendent.
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  @Matches(/^[a-z0-9_]+$/, { message: 'Plateforme invalide.' })
+  platform?: string | null;
 }

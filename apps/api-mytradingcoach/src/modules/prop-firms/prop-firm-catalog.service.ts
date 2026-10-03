@@ -52,6 +52,7 @@ export class PropFirmCatalogService {
                 addon: configuration.addon ?? null,
               },
               needsReview: plan.needsReview,
+              platformDependent: [...new Set(phases.flatMap((p) => Object.keys(p.max_drawdown.platform_overrides ?? {})))].sort(),
               phases: phases.map((p) => ({
                 phase: p.phase,
                 startingBalance: p.starting_balance ?? plan.accountSize,
