@@ -60,7 +60,8 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
   const prisma = {
     brokerConnection: {
       findMany: vi.fn(async () => conns),
-      findUnique: vi.fn(async ({ where }: { where: { id: string } }) => conns.find((c) => c.id === where.id) ?? null),
+      findUnique: vi.fn(async ({ where }: { where: { id?: string; accountId_provider?: { accountId: string } } }) =>
+        conns.find((c) => (where.id ? c.id === where.id : c.accountId === where.accountId_provider?.accountId)) ?? null),
     },
   };
   const connections = {
@@ -73,13 +74,17 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
   const sync = {
     sync: vi.fn(async () => ({ created: 0, duplicates: 0, failed: 0, total: 0 })),
   };
+  const balance = {
+    recordCashBalance: vi.fn(async (_id: string, amount: number, at: Date) => ({ accountId: 'acc-1', cashBalance: amount, cashBalanceAt: at })),
+    recordOpenPositions: vi.fn(async () => undefined),
+  };
   const service = new TradovateLiveService(
-    prisma as never, redis as never, connections as never, sync as never,
+    prisma as never, redis as never, connections as never, sync as never, balance as never,
     (url) => { const s = new FakeSocket(url); sockets.push(s); return s; },
   );
   const emitted: { userId: string; event: string; payload: unknown }[] = [];
   service.bindEmitter((userId, event, payload) => emitted.push({ userId, event, payload }));
-  return { service, prisma, redis, connections, sync, sockets, emitted };
+  return { service, prisma, redis, connections, sync, balance, sockets, emitted };
 }
 
 const settle = () => vi.advanceTimersByTimeAsync(0);
@@ -210,17 +215,19 @@ describe('Tradovate live — événements → synchro existante', () => {
     expect(sync.sync).toHaveBeenCalledTimes(1);
     // Trade en direct : la séance suffit, pas de rapport mensuel à chaque fill.
     expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', {});
-    expect(emitted).toEqual([
+    expect(emitted[0]).toEqual(
       { userId: 'u1', event: 'tradovate:trades', payload: { accountId: 'acc-1', created: 1, duplicates: 0, total: 1, source: 'live' } },
-    ]);
+    );
+    // La synchro a relu solde et equity chez le broker : relayés au front juste après.
+    expect(emitted[1]).toMatchObject({ userId: 'u1', event: 'tradovate:balance', payload: { accountId: 'acc-1' } });
     await service.onModuleDestroy();
   });
 
-  it('rien de nouveau (doublons) → aucun événement vers l’app', async () => {
+  it('rien de nouveau (doublons) → aucun événement « trades », seulement le solde relu', async () => {
     const { service, emitted, push } = await live(0);
     push('fillPair');
     await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS);
-    expect(emitted).toEqual([]);
+    expect(emitted.map((e) => e.event)).toEqual(['tradovate:balance']);
     await service.onModuleDestroy();
   });
 
@@ -250,6 +257,60 @@ describe('Tradovate live — événements → synchro existante', () => {
     const { service, connections } = await live(0);
     expect(connections.tryLock).toHaveBeenCalledWith('bc-1');
     expect(connections.unlock).toHaveBeenCalledWith('bc-1');
+    await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — solde du compte poussé par le broker', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  async function opened() {
+    const ctx = setup({ conns: [conn({ lastSyncAt: new Date() })] });
+    await ctx.service.attach('u1', 'tab-1');
+    await settle();
+    const s = ctx.sockets[0];
+    s.server('o');
+    s.server('a[{"s":200,"i":0}]');
+    return { ...ctx, s };
+  }
+
+  it('souscription : le solde fait partie des entités demandées', async () => {
+    const { s, service } = await opened();
+    const sub = s.sent.find((m) => m.startsWith('user/syncrequest'))!;
+    expect(JSON.parse(sub.split('\n')[3])).toMatchObject({ accounts: [777], entityTypes: expect.arrayContaining(['cashBalance', 'fill']) });
+    await service.onModuleDestroy();
+  });
+
+  it('état initial : solde le plus récent + positions ouvertes du compte, enregistrés puis relayés', async () => {
+    const { s, balance, emitted, service } = await opened();
+    s.server(`a[{"s":200,"i":1,"d":{"cashBalances":[
+      {"accountId":777,"amount":50100,"timestamp":"2026-10-03T13:00:00Z"},
+      {"accountId":777,"amount":50250.5,"timestamp":"2026-10-03T14:00:00Z"},
+      {"accountId":999,"amount":1,"timestamp":"2026-10-03T15:00:00Z"}],
+      "positions":[{"accountId":777,"netPos":2},{"accountId":777,"netPos":0},{"accountId":999,"netPos":1}]}}]`);
+    await settle();
+    expect(balance.recordOpenPositions).toHaveBeenCalledWith('bc-1', 1);
+    expect(balance.recordCashBalance).toHaveBeenCalledWith('bc-1', 50250.5, new Date('2026-10-03T14:00:00Z'));
+    expect(emitted).toContainEqual(expect.objectContaining({ event: 'tradovate:balance', payload: expect.objectContaining({ cashBalance: 50250.5 }) }));
+    await service.onModuleDestroy();
+  });
+
+  it('variation du solde : enregistrée et relayée SANS synchro REST ni appel au broker', async () => {
+    const { s, balance, sync, emitted, service } = await opened();
+    s.server('a[{"e":"props","d":{"entityType":"cashBalance","eventType":"Updated","entity":{"accountId":777,"amount":49800,"timestamp":"2026-10-03T15:30:00Z"}}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_EVENT_DEBOUNCE_MS * 2);
+    expect(balance.recordCashBalance).toHaveBeenCalledWith('bc-1', 49800, new Date('2026-10-03T15:30:00Z'));
+    expect(sync.sync).not.toHaveBeenCalled();
+    expect(emitted).toEqual([expect.objectContaining({ event: 'tradovate:balance' })]);
+    await service.onModuleDestroy();
+  });
+
+  it('solde d\'un autre compte du login : ignoré', async () => {
+    const { s, balance, service } = await opened();
+    s.server('a[{"e":"props","d":{"entityType":"cashBalance","eventType":"Updated","entity":{"accountId":999,"amount":1}}}]');
+    await settle();
+    expect(balance.recordCashBalance).not.toHaveBeenCalled();
     await service.onModuleDestroy();
   });
 });

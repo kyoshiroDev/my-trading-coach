@@ -8,6 +8,7 @@ import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
 import type { FeesReport } from '../../trades/csv-import.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { TradovateBalanceService } from './tradovate-balance.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
@@ -66,6 +67,7 @@ export class TradovateSyncService {
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
     private readonly history: TradovateHistoryService,
+    private readonly balance: TradovateBalanceService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
   ) {}
@@ -231,6 +233,9 @@ export class TradovateSyncService {
     });
 
     const imported = await this.trades.importTrades(userId, dtos, TradeSource.BROKER_SYNC);
+    // Solde et equity du broker : une synchro = un événement (trade, cron, rattrapage), jamais
+    // une boucle. Best-effort, n'échoue pas la synchro.
+    await this.balance.captureSnapshot(conn, token, apiHosts, openPositions);
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(

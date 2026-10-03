@@ -383,6 +383,18 @@ model BrokerConnection {
   /// du cron : une connexion créée avant cette feature, ou dont l'import initial a échoué,
   /// récupère donc son passé sans que l'utilisateur ait quoi que ce soit à faire.
   historyImportedAt     DateTime?
+  /// Solde RÉALISÉ officiel du compte chez le broker (`cashBalance.amount`), poussé en temps réel
+  /// par le WebSocket quand l'app est ouverte, relu à chaque synchro sinon.
+  brokerCashBalance     Float?
+  brokerCashBalanceAt   DateTime?
+  /// Instantané `getcashbalancesnapshot` : equity (`netLiq`) et latent (`openPnL`) calculés par le
+  /// broker avec ses cotations. Lu sur événement (trade, synchro, ouverture de la page), JAMAIS en
+  /// boucle : la doc NinjaTrader qualifie l'interrogation répétée d'anti-pattern.
+  brokerNetLiq          Float?
+  brokerOpenPnl         Float?
+  brokerEquityAt        DateTime?
+  /// Positions ouvertes sur le compte au dernier relevé (latent non nul possible).
+  brokerOpenPositions   Int                    @default(0)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
