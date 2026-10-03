@@ -17,7 +17,9 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { aggregateRuleTrades, EMPTY_RULE_AGG, ruleAggregatesSql, type RuleAgg, type RuleTrade } from './account-rules';
+import {
+  aggregateRuleTrades, EMPTY_RULE_AGG, previousSession, ruleAggregatesSql, tradingDay, type RuleAgg, type RuleTrade,
+} from './account-rules';
 
 type RuleAccount = Pick<
   TradingAccount,
@@ -30,6 +32,13 @@ export interface RulePlan {
   planName: string;
   accountSize: number;
   phases: PropFirmPhaseRules[];
+}
+
+/** Clôtures officielles du compte (rapport du broker) : plus haut et dernière séance couverte. */
+export interface RuleOfficialCloses {
+  peakClose: number;
+  /** Dernière journée de trading couverte, `AAAA-MM-JJ`. */
+  lastTradeDate: string;
 }
 
 /** Solde et equity du compte lus chez le broker (connexion API), quand il y en a une. */
@@ -100,6 +109,15 @@ export interface DrawdownPlanRule {
   /** Plateforme dont la règle a été appliquée (verrouillage propre à la plateforme), sinon null. */
   platform: string | null;
   /**
+   * Origine du plus haut retenu (règles trailing EOD) : `broker` = clôtures officielles à jour,
+   * `trades` = reconstitué depuis les trades loggés (ou le plus prudent des deux). null hors EOD.
+   */
+  peakSource: 'broker' | 'trades' | null;
+  /** Plus haut solde de clôture retenu (référentiel du compte), null hors EOD. */
+  peakBalance: number | null;
+  /** Dernière séance couverte par les clôtures officielles, `AAAA-MM-JJ`, sinon null. */
+  officialThrough: string | null;
+  /**
    * Plateformes dont le verrouillage diffère, quand celle du compte est inconnue : la règle par
    * défaut (la plus prudente) est appliquée. Vide si la plateforme est connue ou sans effet.
    */
@@ -167,21 +185,35 @@ export class AccountsService {
       },
     });
     if (rows.length === 0) return [];
+    const closes = await this.prisma.brokerDailyClose.groupBy({
+      by: ['accountId'],
+      where: { accountId: { in: rows.map((r) => r.id) } },
+      _max: { closingBalance: true, tradeDate: true },
+    });
+    const officialByAccount = new Map(
+      closes
+        .filter((c) => c._max.closingBalance != null && c._max.tradeDate != null)
+        .map((c) => [c.accountId, {
+          peakClose: c._max.closingBalance!,
+          lastTradeDate: c._max.tradeDate!.toISOString().slice(0, 10),
+        } satisfies RuleOfficialCloses]),
+    );
     const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
       account: a,
       plan: toRulePlan(propFirmPlan),
       broker: toRuleBroker(brokerConnections.find((c) => c.brokerCashBalance != null) ?? null),
       // Compte connecté via Tradovate : la plateforme est connue, quoi qu'ait saisi l'utilisateur.
       connectedPlatform: brokerConnections.some((c) => c.provider === BrokerProvider.TRADOVATE) ? 'tradovate' : null,
+      official: officialByAccount.get(a.id) ?? null,
     }));
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
     const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map(({ account }) => account.id));
 
-    return accounts.map(({ account, plan, broker, connectedPlatform }) => ({
+    return accounts.map(({ account, plan, broker, connectedPlatform, official }) => ({
       ...account,
-      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform),
+      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official),
     }));
   }
 
@@ -202,8 +234,10 @@ export class AccountsService {
     plan: RulePlan | null = null,
     broker: RuleBroker | null = null,
     connectedPlatform: string | null = null,
+    official: RuleOfficialCloses | null = null,
+    now = new Date(),
   ): AccountRuleMetrics {
-    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker, connectedPlatform);
+    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker, connectedPlatform, official, now);
   }
 
   /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
@@ -213,6 +247,8 @@ export class AccountsService {
     plan: RulePlan | null = null,
     brokerData: RuleBroker | null = null,
     connectedPlatform: string | null = null,
+    official: RuleOfficialCloses | null = null,
+    now = new Date(),
   ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
@@ -276,9 +312,17 @@ export class AccountsService {
         // Seuils du catalogue exprimés depuis le solde de départ de la phase : on les décale sur
         // celui du compte (reprise du suivi en cours de route, solde saisi différent).
         const shift = startingBalance - (phase.starting_balance ?? plan.accountSize);
+        // EOD : plus haut des clôtures OFFICIELLES quand elles couvrent la séance précédente (et que
+        // le solde du broker est dans le référentiel du compte) ; sinon le plus prudent des deux.
         // Intraday : un nouveau plus haut en direct (equity du broker) fait monter le seuil.
+        const usable = md.type === 'trailing_eod' && official && broker && !broker.referenceMismatch ? official : null;
+        const officialProfit = usable ? usable.peakClose - startingBalance : null;
+        const fresh = !!usable && usable.lastTradeDate >= previousSession(tradingDay(now));
         const peakProfit =
-          md.type === 'trailing_eod' ? Math.max(0, agg.maxEodCumulative)
+          md.type === 'trailing_eod'
+            ? fresh
+              ? Math.max(0, officialProfit!)
+              : Math.max(0, agg.maxEodCumulative, officialProfit ?? 0)
           : md.type === 'trailing_intraday' ? Math.max(0, agg.maxCumulative, equity - startingBalance)
           : 0;
         const locksAt = md.locks_at != null ? md.locks_at + shift : null;
@@ -305,6 +349,9 @@ export class AccountsService {
             lockedFloor: locksAt != null ? lockedFloor ?? locksAt - md.amount : null,
             locked,
             realtimeEquity: md.enforced_on === 'equity_realtime',
+            peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
+            peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,
+            officialThrough: usable?.lastTradeDate ?? null,
             platform: override ? platform : null,
             platformChoices: !override && overrides ? Object.keys(overrides).sort() : [],
           },
