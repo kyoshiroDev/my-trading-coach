@@ -127,3 +127,45 @@ export async function ruleAggregatesSql(
     GROUP BY tr."accountId"`);
   return new Map(rows.map(({ accountId, ...agg }) => [accountId, agg]));
 }
+
+/** P&L d'une journée de trading (CME, cf. `tradingDay`), même règle que le solde : `pnl − commission`. */
+export interface SessionPnl {
+  /** `AAAA-MM-JJ` */
+  day: string;
+  pnl: number;
+}
+
+/** Étalon JavaScript : P&L par journée de trading, dans l'ordre chronologique. */
+export function sessionPnls(trades: RuleTrade[]): SessionPnl[] {
+  const byDay = new Map<string, number>();
+  for (const t of [...trades].sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime())) {
+    const day = tradingDay(t.tradedAt);
+    byDay.set(day, (byDay.get(day) ?? 0) + (t.pnl ?? 0) - (t.commission ?? 0));
+  }
+  return [...byDay].map(([day, pnl]) => ({ day, pnl }));
+}
+
+/** P&L par journée de trading de plusieurs comptes, en une requête (mêmes règles que `sessionPnls`). */
+export async function sessionPnlsSql(
+  prisma: PrismaService,
+  userId: string,
+  accountIds: string[],
+): Promise<Map<string, SessionPnl[]>> {
+  if (accountIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<{ accountId: string; day: string; pnl: number }[]>(Prisma.sql`
+    SELECT t."accountId",
+           to_char(((t."tradedAt" AT TIME ZONE 'UTC') AT TIME ZONE 'America/Chicago' + interval '7 hours')::date, 'YYYY-MM-DD') AS day,
+           sum(t."pnl" - coalesce(t."commission", 0))::float8 AS pnl
+    FROM "Trade" t
+    WHERE t."userId" = ${userId} AND t."pnl" IS NOT NULL AND t."accountId" IN (${Prisma.join(accountIds)})
+    GROUP BY 1, 2
+    ORDER BY 1, 2`);
+  const map = new Map<string, SessionPnl[]>();
+  for (const r of rows) {
+    const list = map.get(r.accountId) ?? [];
+    list.push({ day: r.day, pnl: r.pnl });
+    map.set(r.accountId, list);
+  }
+  return map;
+}
+

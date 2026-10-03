@@ -18,13 +18,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import {
-  aggregateRuleTrades, EMPTY_RULE_AGG, previousSession, ruleAggregatesSql, tradingDay, type RuleAgg, type RuleTrade,
+  aggregateRuleTrades, EMPTY_RULE_AGG, previousSession, ruleAggregatesSql, sessionPnls, sessionPnlsSql, tradingDay,
+  type RuleAgg, type RuleTrade, type SessionPnl,
 } from './account-rules';
+import { computeProgress, type AccountProgress } from './account-progress';
 
 type RuleAccount = Pick<
   TradingAccount,
   'accountSize' | 'startingBalance' | 'profitTarget' | 'maxDrawdown' | 'drawdownType'
-> & { type?: AccountType; platform?: string | null };
+> & { type?: AccountType; platform?: string | null; lastPayoutAt?: Date | null };
 
 /** Plan du catalogue relié au compte : ses règles de drawdown remplacent la saisie manuelle. */
 export interface RulePlan {
@@ -32,6 +34,8 @@ export interface RulePlan {
   planName: string;
   accountSize: number;
   phases: PropFirmPhaseRules[];
+  /** Plan marqué « à revoir » au catalogue. */
+  needsReview?: boolean;
 }
 
 /** Clôtures officielles du compte (rapport du broker) : plus haut et dernière séance couverte. */
@@ -74,6 +78,7 @@ const PLAN_SELECT = {
   planName: true,
   accountSize: true,
   phases: true,
+  needsReview: true,
   firm: { select: { name: true } },
 } as const;
 
@@ -146,6 +151,8 @@ export interface AccountRuleMetrics {
   } | null;
   /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
   drawdownUnconfirmed: boolean;
+  /** Progression vers l'objectif ou le prochain payout (plan du catalogue relié), sinon null. */
+  progress: AccountProgress | null;
   /**
    * Solde et equity lus chez le broker. Présent → `currentBalance` est le solde du broker et la
    * marge de drawdown se calcule sur l'equity (latent compris), sauf `referenceMismatch`.
@@ -209,11 +216,19 @@ export class AccountsService {
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
-    const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map(({ account }) => account.id));
+    const ids = accounts.map(({ account }) => account.id);
+    const [aggs, sessions] = await Promise.all([
+      ruleAggregatesSql(this.prisma, userId, ids),
+      // P&L par séance : seulement utile aux comptes reliés à un plan (progression).
+      sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
+    ]);
 
     return accounts.map(({ account, plan, broker, connectedPlatform, official }) => ({
       ...account,
-      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official),
+      metrics: this.ruleMetricsFromAgg(
+        account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
+        sessions.get(account.id) ?? [],
+      ),
     }));
   }
 
@@ -237,7 +252,9 @@ export class AccountsService {
     official: RuleOfficialCloses | null = null,
     now = new Date(),
   ): AccountRuleMetrics {
-    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker, connectedPlatform, official, now);
+    return this.ruleMetricsFromAgg(
+      account, aggregateRuleTrades(trades), plan, broker, connectedPlatform, official, now, sessionPnls(trades),
+    );
   }
 
   /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
@@ -249,6 +266,7 @@ export class AccountsService {
     connectedPlatform: string | null = null,
     official: RuleOfficialCloses | null = null,
     now = new Date(),
+    sessions: SessionPnl[] = [],
   ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
@@ -389,6 +407,18 @@ export class AccountsService {
       drawdown,
       drawdownUnconfirmed,
       broker,
+      // Progression vers l'objectif (évaluation) ou le prochain payout (funded), d'après le plan.
+      progress: phase && plan
+        ? computeProgress({
+          phase,
+          startingBalance,
+          phaseStartingBalance: phase.starting_balance ?? plan.accountSize,
+          currentBalance,
+          sessions,
+          lastPayoutDay: account.lastPayoutAt ? account.lastPayoutAt.toISOString().slice(0, 10) : null,
+          unconfirmed: plan.needsReview ?? false,
+        })
+        : null,
       estimated: true,
       disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule, broker) : broker ? BROKER_DISCLAIMER : RULE_DISCLAIMER,
     };
@@ -440,7 +470,7 @@ export class AccountsService {
     // Un compte créé est ACTIVE par défaut → il consomme un slot.
     await this.assertActiveSlotAvailable(userId, ctx);
     if (dto.propFirmPlanId) await this.assertCatalogPlan(dto.propFirmPlanId);
-    return this.prisma.tradingAccount.create({ data: { userId, ...dto } });
+    return this.prisma.tradingAccount.create({ data: { userId, ...withDates(dto) } });
   }
 
   async update(
@@ -468,7 +498,7 @@ export class AccountsService {
     if (dto.propFirmPlanId && dto.propFirmPlanId !== account.propFirmPlanId) {
       await this.assertCatalogPlan(dto.propFirmPlanId);
     }
-    return this.prisma.tradingAccount.update({ where: { id }, data: dto });
+    return this.prisma.tradingAccount.update({ where: { id }, data: withDates(dto) });
   }
 
   /**
@@ -603,10 +633,13 @@ function phaseFor(plan: RulePlan, type: AccountType | undefined): PropFirmPhaseR
 }
 
 function toRulePlan(
-  row: { planName: string; accountSize: number; phases: unknown; firm: { name: string } } | null,
+  row: { planName: string; accountSize: number; phases: unknown; needsReview?: boolean; firm: { name: string } } | null,
 ): RulePlan | null {
   if (!row || !Array.isArray(row.phases)) return null;
-  return { firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize, phases: row.phases as PropFirmPhaseRules[] };
+  return {
+    firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize,
+    phases: row.phases as PropFirmPhaseRules[], needsReview: row.needsReview ?? false,
+  };
 }
 
 function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['broker']): string {
@@ -641,5 +674,12 @@ function toRuleBroker(row: {
     equityAt: row.brokerEquityAt,
     openPositions: row.brokerOpenPositions,
   };
+}
+
+/** `lastPayoutAt` arrive en `AAAA-MM-JJ` (date de séance) : Prisma attend un Date pour un `@db.Date`. */
+function withDates<T extends { lastPayoutAt?: string | null }>(dto: T): Omit<T, 'lastPayoutAt'> & { lastPayoutAt?: Date | null } {
+  const { lastPayoutAt, ...rest } = dto;
+  if (lastPayoutAt === undefined) return rest;
+  return { ...rest, lastPayoutAt: lastPayoutAt === null ? null : new Date(`${lastPayoutAt.slice(0, 10)}T00:00:00.000Z`) };
 }
 

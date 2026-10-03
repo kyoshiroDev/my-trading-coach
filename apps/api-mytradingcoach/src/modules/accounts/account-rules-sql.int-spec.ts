@@ -12,7 +12,7 @@ import type { INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsService, type RulePlan } from './accounts.service';
-import { aggregateRuleTrades, ruleAggregatesSql } from './account-rules';
+import { aggregateRuleTrades, ruleAggregatesSql, sessionPnls, sessionPnlsSql } from './account-rules';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 
@@ -122,4 +122,20 @@ describe('B2-03 — métriques des comptes : SQL ≡ calcul JavaScript d’avant
       close(sql.get(a.id), aggregateRuleTrades(trades), a.label);
     }
   });
+
+  it('P&L par journée de trading : SQL ≡ étalon JS, au centime', async () => {
+    const listed = await service.list(userId);
+    const sql = await sessionPnlsSql(prisma, userId, listed.map((a) => a.id));
+    for (const a of listed) {
+      const trades = await prisma.trade.findMany({
+        where: { userId, accountId: a.id, pnl: { not: null } },
+        select: { pnl: true, commission: true, tradedAt: true },
+      });
+      const js = sessionPnls(trades);
+      const got = sql.get(a.id) ?? [];
+      expect(got.map((d) => d.day), a.label).toEqual(js.map((d) => d.day));
+      got.forEach((d, i) => expect(Math.abs(d.pnl - js[i].pnl), `${a.label} ${d.day}`).toBeLessThanOrEqual(0.01));
+    }
+  });
 });
+
