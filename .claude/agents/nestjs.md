@@ -1220,3 +1220,14 @@ flottante). SQL : `round((pnl - abs(coalesce(commission,0)))::text::numeric, 2)`
 flottant). Vérifié identique sur 200 000 paires aléatoires. L'ancien `toFixed(2)` arrondissait selon
 la valeur binaire (10,575 → 10,57) : 7 trades sur 979 en prod changent d'1 centime.
 Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (demi-centimes).
+
+### Présence et activité : écritures bornées (SCA-B3-02, 2026-10-03)
+
+Deux intercepteurs tournent à CHAQUE requête authentifiée ; ils ne doivent jamais coûter un
+aller-retour par requête :
+- `PresenceInterceptor` : filtre local par worker (60 s) puis `SET presence:<id> NX EX 60` dans
+  Redis → **une seule écriture de `lastSeenAt` par minute et par utilisateur, tous workers
+  confondus** (avant : jusqu'à 1/min par worker). Redis en panne → écriture limitée par le filtre local.
+- `ActivityTrackingService.markActive` : filtre local à la journée (plus d'appel Redis à chaque
+  requête) ; marqué seulement après succès ; si l'écriture en base échoue, la clé Redis du jour est
+  retirée pour que la journée soit retentée.
