@@ -131,3 +131,20 @@ export function rulesFromPlan(plan: PropFirmPlanSummary, type: AccountType): Pla
     drawdownType: phase ? (phase.drawdownType === 'static' ? 'STATIC' : 'TRAILING') : null,
   };
 }
+
+const PLATFORM_LABELS: Record<string, string> = {
+  tradovate: 'Tradovate',
+  rithmic: 'Rithmic',
+  wealthcharts: 'Wealthcharts',
+  ninjatrader: 'NinjaTrader',
+  tradingview: 'TradingView',
+  quantower: 'Quantower',
+  topstepx: 'TopstepX',
+  sierra_chart: 'Sierra Chart',
+};
+
+/** Libellé d'une clé de plateforme du catalogue (`sierra_chart` → « Sierra Chart »). */
+export function platformLabel(key: string): string {
+  return PLATFORM_LABELS[key] ?? key.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+

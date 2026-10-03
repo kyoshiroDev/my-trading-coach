@@ -26,7 +26,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
   return {
     id, label, broker: null, type: 'EVALUATION', status: 'ACTIVE',
     accountSize: null, currency: 'USD', startingBalance: 50000,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null,
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
@@ -296,6 +296,37 @@ describe('Mes comptes — solde lu chez le broker', () => {
     const { q, click } = setup({ accounts: [withBroker('a', { ...live, referenceMismatch: true })], connections: [conn('a')] });
     click('account-expand-a');
     expect(q('broker-reference-mismatch')!.textContent).toContain('ne correspond pas au solde du broker');
+  });
+});
+
+describe('Mes comptes — verrouillage selon la plateforme', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const rule = (over: Partial<NonNullable<NonNullable<TradingAccount['metrics']['drawdown']>['rule']>>) => ({
+    firmName: 'Apex Trader Funding', planName: 'EOD Trail', phase: 'evaluation' as const, kind: 'trailing_eod' as const,
+    locksAt: null, lockedFloor: null, locked: false, realtimeEquity: true, platform: null, platformChoices: [], ...over,
+  });
+  const withRule = (r: ReturnType<typeof rule>) => acct('a', 'Apex 50k', {
+    propFirmPlanId: 'apex-eod-50k',
+    metrics: {
+      ...acct('a', '').metrics,
+      drawdown: { type: 'TRAILING', floor: 53_500, margin: 1_000, maxDrawdown: 2_000, pct: 0.5, breached: false, source: 'plan', rule: r },
+    },
+  });
+
+  it('plateforme inconnue alors que le verrouillage en dépend : avertissement et plateformes citées', () => {
+    const { q, click } = setup({ accounts: [withRule(rule({ platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] }))] });
+    click('account-expand-a');
+    const warn = q('dd-platform-unknown')!.textContent!.replace(/\s+/g, ' ');
+    expect(warn).toContain('Rithmic, Tradovate, Wealthcharts');
+    expect(warn).toContain('le plus prudent');
+  });
+
+  it('plateforme connue : règle appliquée affichée, pas d\'avertissement', () => {
+    const { q, click } = setup({ accounts: [withRule(rule({ platform: 'rithmic', locksAt: 55_000, lockedFloor: 53_000, locked: true }))] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent).toContain('règle Rithmic');
+    expect(q('dd-platform-unknown')).toBeNull();
   });
 });
 

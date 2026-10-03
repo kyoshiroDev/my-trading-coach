@@ -75,7 +75,7 @@ import {
   PropFirmPlanPickerComponent,
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
-import { findPlan, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
 interface AccountFormState {
@@ -90,6 +90,7 @@ interface AccountFormState {
   drawdownType: DrawdownType;
   status: AccountStatus;
   propFirmPlanId: string | null;
+  platform: string | null;
 }
 
 function emptyForm(): AccountFormState {
@@ -105,6 +106,7 @@ function emptyForm(): AccountFormState {
     drawdownType: 'TRAILING',
     status: 'ACTIVE',
     propFirmPlanId: null,
+    platform: null,
   };
 }
 
@@ -237,6 +239,22 @@ export class AccountsComponent implements OnInit {
   protected readonly totalsCurrency = computed(() =>
     commonCurrency(this.visibleAccounts().map((a) => a.currency)),
   );
+  /**
+   * Plateformes du plan choisi dont le verrouillage du drawdown diffère (Apex : Rithmic,
+   * Tradovate, Wealthcharts). Vide → pas de choix à proposer. Un compte connecté via Tradovate
+   * n'en a pas besoin : la plateforme est connue.
+   */
+  protected readonly formPlatformChoices = computed(() => {
+    if (this.formSynced()) return [];
+    const sel = findPlan(this.catalog() ?? [], this.form().propFirmPlanId);
+    return sel?.plan.platformDependent ?? [];
+  });
+  protected readonly platformLabel = platformLabel;
+  /** « Rithmic, Tradovate, Wealthcharts » */
+  protected platformList(keys: readonly string[]): string {
+    return keys.map(platformLabel).join(', ');
+  }
+
   /** Compte synchronisé en édition : sa devise vient du broker, non modifiable. */
   protected readonly formSynced = computed(() => {
     const id = this.editingId();
@@ -562,6 +580,7 @@ export class AccountsComponent implements OnInit {
       drawdownType: a.drawdownType,
       status: a.status,
       propFirmPlanId: a.propFirmPlanId,
+      platform: a.platform,
     });
     this.firmChoice.set(a.propFirmPlanId ? '' : a.broker ? OTHER_FIRM : '');
     this.loadCatalog();
@@ -666,6 +685,7 @@ export class AccountsComponent implements OnInit {
       maxDrawdown: propFirm ? f.maxDrawdown : null,
       drawdownType: f.drawdownType,
       propFirmPlanId: propFirm ? f.propFirmPlanId : null,
+      platform: propFirm && f.propFirmPlanId ? f.platform : null,
     };
     this.saving.set(true);
     const id = this.editingId();

@@ -367,6 +367,8 @@
 .live-dot.is-stale { background: var(--yellow); }
 .dd-basis { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
 .dd-basis b { color: var(--text); font-weight: 600; }
+.dd-platform { color: var(--text-3); }
+.dd-platform-warn { display: block; margin-top: 2px; color: var(--yellow); }
 .dd-disclaimer { display: block; margin-top: 2px; font-size: 11.5px; color: var(--text-3); }
 .acct-block.is-open .acct-activity { display: flex; }
 .acct-activity .ai { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
@@ -415,6 +417,7 @@
 .fld-row { display: flex; gap: 12px; }
 .fld-row .fld { flex: 1; }
 .fld-row .fld-sm { flex: 0 0 90px; }
+.fld-hint { font-size: 11.5px; color: var(--text-3); line-height: 1.4; }
 .fld-lbl { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
 .inp {
   background: var(--bg-3);
