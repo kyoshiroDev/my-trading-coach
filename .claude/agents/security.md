@@ -306,3 +306,17 @@ le throttler compte par `x-load-client` (borné `[a-z0-9-]{1,64}`) au lieu de l'
 **aucune** limite (elles s'appliquent par client) mais permet à qui détient la clé de répartir
 ses requêtes sur des compteurs arbitraires : **jamais en prod** (désactivée par le code si la base
 est `mytradingcoach_prod`), et retirée de `.env.beta` après chaque test.
+
+## Cache de l'utilisateur authentifié (SCA-B3-01, 2026-10-03)
+
+`JwtStrategy.validate` lit l'utilisateur via `AuthUserCacheService` (modules/infra, global) :
+Redis 60 s, clé **versionnée** `authuser:<id>:<version>` (la version `authuser:v:<id>` est
+incrémentée par `invalidate`, ce qui ferme la course lecture-avant / écriture-après). Redis en panne
+→ lecture en base.
+**Règle : après TOUTE écriture d'un champ relu par le JWT (plan, rôle, essai, `isDemo`, nom,
+e-mail, suppression), appeler `userCache.invalidate(id)`.** Déjà fait dans `users.service`
+(admin, rôle, essai, Premium, `updateMe`, suppression), `stripe-subscription.service` (sync de
+l'abonnement), `stripe-webhook.service` (résiliation, client supprimé), `ambassador.service`.
+Un oubli = jusqu'à 60 s de plan / rôle périmé (ex. Premium payé mais refusé). Les tests qui
+modifient ces champs directement en base doivent aussi invalider. Verrouillé par
+`auth-user-cache.int-spec.ts` (plan changé → effet immédiat, compte supprimé → 401 immédiat).

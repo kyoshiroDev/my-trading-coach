@@ -1,10 +1,11 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Plan } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { STRIPE_CLIENT } from './stripe.client';
 import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
+import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 /** État d'abonnement : synchro DB ← Stripe et invalidation du cache de facturation. */
 @Injectable()
@@ -16,6 +17,7 @@ export class StripeSubscriptionService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
+    @Optional() private readonly userCache?: AuthUserCacheService,
   ) {}
 
   /**
@@ -94,6 +96,8 @@ export class StripeSubscriptionService {
         subscriptionCanceledAt: isActive ? null : undefined,
       },
     });
+    // Plan relu par le JWT : un abonné qui vient de payer doit être Premium tout de suite (SCA-B3-01).
+    await this.userCache?.invalidate(user.id);
 
     await this.invalidateBillingCache(user.id);
 
