@@ -13,6 +13,7 @@ import { AppModule } from './app/app.module';
 import { checkEnv } from './config/env';
 import { webConcurrency } from './config/web-concurrency';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
+import { applyKeepAlive } from './config/http-keepalive';
 
 const logger = new Logger('Bootstrap');
 
@@ -96,6 +97,8 @@ async function bootstrap() {
 
   const port = process.env['PORT'] ?? 3000;
   await app.listen(port);
+  // Keep-alive plus long que celui de Traefik (90 s) : sinon 502 sporadiques sous charge (#301).
+  applyKeepAlive(app.getHttpServer());
   logger.log(`Worker ${process.pid} running on: http://localhost:${port}/api`);
 }
 
