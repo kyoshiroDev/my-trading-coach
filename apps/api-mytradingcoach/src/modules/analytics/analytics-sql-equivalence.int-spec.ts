@@ -106,14 +106,15 @@ beforeAll(async () => {
     while (used.has(ts)) ts += 1000; // dates distinctes : l'ordre chronologique est sans ambiguïté
     used.add(ts);
     const roll = r();
-    const pnl = roll < 0.04 ? null : roll < 0.08 ? 0 : Math.round((r() - 0.45) * 60000) / 100;
+    // Un trade sur deux à 3 décimales : demi-centimes (10,575…), arrondis identiques JS ≡ SQL.
+    const pnl = roll < 0.04 ? null : roll < 0.08 ? 0 : Math.round((r() - 0.45) * 600000) / (i % 2 ? 100 : 1000);
     return {
       userId,
       asset: pick(['NQ', 'ES', 'MNQ', 'EURUSD', 'BTCUSD', 'GC', 'CL', 'YM', 'RTY', 'SI', 'ZB', 'MES']),
       side: pick(['LONG', 'SHORT'] as const),
       entry: 100,
       pnl,
-      commission: pick([null, 0, 2.5, 4.08, 1.9, -1.25]),
+      commission: pick([null, 0, 2.5, 4.08, 1.9, -1.25, 1.905, 0.755]),
       riskReward: pick([null, 0, 1.5, 2, 0.75, 3.2]),
       emotion: pick([null, null, 'CONFIDENT', 'STRESSED', 'REVENGE', 'FEAR', 'FOCUSED', 'NEUTRAL'] as const),
       sessionId: r() < 0.5 ? pick(sessions).id : null,

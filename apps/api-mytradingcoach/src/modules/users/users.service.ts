@@ -5,12 +5,12 @@ import {
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import { computeTradeStats } from '@mtc/shared';
 
 const USER_SELECT = {
   id: true,
@@ -501,17 +501,15 @@ export class UsersService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [totalTrades, tradesThisMonth, aiLogs, pnlData, topAssets] =
+    const [totalTrades, tradesThisMonth, aiLogs, stats, topAssets] =
       await Promise.all([
         this.prisma.trade.count({ where: { userId } }),
         this.prisma.trade.count({ where: { userId, createdAt: { gte: startOfMonth } } }),
         this.prisma.aiUsageLog
           .findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100 })
           .catch(() => []),
-        this.prisma.trade.findMany({
-          where: { userId, pnl: { not: null } },
-          select: { pnl: true, commission: true, asset: true },
-        }),
+        // P&L et win rate calculés en base (SCA-B2-04) : plus de chargement de tous les trades.
+        closedTradeStats(this.prisma, userId),
         this.prisma.trade.groupBy({
           by: ['asset'],
           where: { userId },
@@ -521,8 +519,6 @@ export class UsersService {
         }),
       ]);
 
-    // Stats via le helper unique (BE exclus du win rate).
-    const stats         = computeTradeStats(pnlData);
     const totalPnl      = stats.totalPnl;
     const winRate       = Math.round(stats.winRate);
     const totalTokens   = aiLogs.reduce((a, l) => a + l.inputTokens + l.outputTokens, 0);

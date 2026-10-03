@@ -1232,3 +1232,14 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
 filtre ou changement de filtre se fait dans les deux** ; `journal-stats-sql.int-spec.ts` vérifie
 pour chaque filtre et 80 combinaisons que les deux sélectionnent les mêmes trades, et que les
 stats égalent l'étalon `summarizeJournal`.
+
+### Arrondi unique du P&L net : `roundCents` (2026-10-03, #293)
+
+**Une seule règle dans toute l'app** : arrondi au centime, au demi **le plus loin de zéro**, sur la
+valeur **décimale** du nombre (10,575 → 10,58 · −3,545 → −3,55). JS : `netPnl` / `roundCents`
+(`libs/shared/trade-stats.ts`, arithmétique sur les chiffres, jamais de mise à l'échelle
+flottante). SQL : `round((pnl - abs(coalesce(commission,0)))::text::numeric, 2)` — **toujours
+`::text::numeric`**, jamais `::numeric` seul (conversion à 15 chiffres, qui diverge sur le bruit
+flottant). Vérifié identique sur 200 000 paires aléatoires. L'ancien `toFixed(2)` arrondissait selon
+la valeur binaire (10,575 → 10,57) : 7 trades sur 979 en prod changent d'1 centime.
+Les tests d'équivalence SQL doivent contenir des montants à **3 décimales** (demi-centimes).

@@ -8,6 +8,7 @@ const DAY = 86_400_000;
 describe('UserDetailService', () => {
   let service: UserDetailService;
   let prisma: {
+    $queryRaw: ReturnType<typeof vi.fn>;
     user: { findUnique: ReturnType<typeof vi.fn> };
     userDailyActivity: { findMany: ReturnType<typeof vi.fn> };
     aiUsageLog: { groupBy: ReturnType<typeof vi.fn> };
@@ -21,6 +22,8 @@ describe('UserDetailService', () => {
 
   beforeEach(() => {
     prisma = {
+      // Agrégat P&L / win rate calculé en base (closedTradeStats, SCA-B2-04).
+      $queryRaw: vi.fn().mockResolvedValue([{ closed: 0, wins: 0, losses: 0, pnl: 0 }]),
       user: { findUnique: vi.fn() },
       userDailyActivity: { findMany: vi.fn().mockResolvedValue([]) },
       aiUsageLog: { groupBy: vi.fn().mockResolvedValue([]) },
@@ -66,7 +69,8 @@ describe('UserDetailService', () => {
         { startedAt: new Date('2026-06-05T09:00:00Z'), endedAt: new Date('2026-06-05T10:30:00Z') },
       ]);
     prisma.trade.count.mockResolvedValueOnce(42).mockResolvedValueOnce(7);
-    prisma.trade.findMany.mockResolvedValue([{ pnl: 100 }, { pnl: -40 }, { pnl: 60 }]);
+    // Trades +100, −40, +60 : 2 gagnants, 1 perdant, P&L 120.
+    prisma.$queryRaw.mockResolvedValue([{ closed: 3, wins: 2, losses: 1, pnl: 120 }]);
     prisma.trade.groupBy.mockResolvedValue([
       { asset: 'BTC/USDT', _count: { asset: 30 } },
       { asset: 'ETH/USDT', _count: { asset: 12 } },

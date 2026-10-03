@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
+import { roundCents } from '@mtc/shared';
 import { cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
 
 // P&L NET (frais déduits) partout : les agrégats sont calculés en SQL (analytics.sql.ts), avec la
@@ -172,7 +173,7 @@ export class AnalyticsService {
     return {
       // Mêmes règles que computeTradeStats : sur le NET, BE exclus du dénominateur.
       winRate: AnalyticsService.winRate(totals) as number,
-      totalPnl: +totals.pnl.toFixed(2),
+      totalPnl: roundCents(totals.pnl),
       totalTrades: totals.count,
       maxDrawdown: totals.maxDrawdown,
       profitFactor,
