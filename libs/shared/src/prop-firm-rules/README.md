@@ -19,7 +19,7 @@ Le script de validation est dans `tools/scripts/` (et non dans un `scripts/` rac
 | Fichier | Rôle |
 |---|---|
 | `schema.json` | JSON Schema (draft 2020-12) qui valide chaque fichier firm. |
-| `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` : `lucid`, `apex`, `topstep`, `tradeify`, `myfundedfutures`, `tradeday`. |
+| `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` : `lucid`, `apex`, `topstep`, `tradeify`, `myfundedfutures`, `tradeday`, `takeprofittrader`, `phidias`, `earn2trade`, `toponefutures`, `blusky`, `fundedfuturesfamily`, `oneuptrader`, `uprofit`, `bulenox`, `elitetraderfunding`. |
 | `EXTRACTION-REPORT.md` | Sources, tableau récap, plans à revoir, contradictions. |
 | `tools/scripts/validate-prop-firm-rules.ts` | Validation ajv + contrôles métier. |
 
@@ -91,6 +91,14 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 Les firms changent leurs règles souvent (Apex a remplacé toute sa gamme le 2026-03-01, Lucid a changé la consistency Pro le 2025-11-28). À refaire au moins une fois par mois et avant chaque mise en avant d'un plan :
 
 1. Rouvrir chaque URL de `source_urls`. Les help centers Lucid (Intercom) et Apex (WordPress) affichent une date de mise à jour par article (`dateModified` dans le JSON-LD de la page) : comparer avec `verified_at`.
-2. Lucid : la liste complète des articles se lit depuis les collections de `https://support.lucidtrading.com/en/`. Apex : `https://apextraderfunding.com/help-center-sitemap.xml` liste les articles avec leur date. Les sites principaux bloquent les requêtes hors navigateur (403) : passer par un navigateur.
-3. Vérifier le sélecteur de plans des pages d'accueil (tailles, options, prix).
-4. Mettre à jour les valeurs, `verified_at`, puis `pnpm prop-firms:validate` et le rapport. Le déploiement suivant de l'API met la base à jour (plan retiré du JSON : `active = false`, jamais supprimé). Ne jamais changer l'`id` d'un plan publié.
+2. Où lire les sources des firms ajoutées le 2026-10-04 (beaucoup de sites principaux bloquent les requêtes hors navigateur ou chargent leurs règles en JavaScript) :
+   - Take Profit Trader : API publique Zendesk `https://takeprofittraderhelp.zendesk.com/api/v2/help_center/en-us/articles.json` (corps et date de chaque article) ; prix sur la page d'accueil, à lire dans un navigateur.
+   - Phidias : API du centre d'aide `https://helpcenter.phidiaspropfirm.com/api/portal/phidias-prop-firm/knowledge/<slug>` ; prix en USD dans `SITE_CONFIG`/`DATA` du script `shared-scripts-3.js` de `phidiaspropfirm.com/accounts` (la version `-fr-` est en euros).
+   - Earn2Trade, Top One Futures, BluSky, Funded Futures Family : help centers Intercom, rendus côté serveur ; tailles Earn2Trade dans les onglets des pages programme (navigateur).
+   - OneUp Trader : Help Scout (`oneuptrader.helpscoutdocs.com`) ; tableau par taille sur la page d'accueil (HTML).
+   - UProfit : `uprofit.com/help/<slug>` (HTML).
+   - Bulenox : CMS Directus public `https://bulenox.com/cms/items/help_items?...` (requête copiée du module `HelpCenter-*.js`, `curl -g`) ; tableau Qualification (`ki`) dans le bundle `index-*.js`.
+   - Elite Trader Funding : `elitetraderfunding.app` (le `.com` redirige) ; tailles et FAQ dans le JSON-LD de chaque page programme.
+3. Lucid : la liste complète des articles se lit depuis les collections de `https://support.lucidtrading.com/en/`. Apex : `https://apextraderfunding.com/help-center-sitemap.xml` liste les articles avec leur date. Les sites principaux bloquent les requêtes hors navigateur (403) : passer par un navigateur.
+4. Vérifier le sélecteur de plans des pages d'accueil (tailles, options, prix).
+5. Mettre à jour les valeurs, `verified_at`, puis `pnpm prop-firms:validate` et le rapport. Le déploiement suivant de l'API met la base à jour (plan retiré du JSON : `active = false`, jamais supprimé). Ne jamais changer l'`id` d'un plan publié.

@@ -14,10 +14,13 @@ function syncedState(files: readonly unknown[]) {
 }
 
 describe('parseCatalog', () => {
-  it('accepte le catalogue livré (6 firms) : le Zod suit schema.json', () => {
+  it('accepte le catalogue livré (16 firms) : le Zod suit schema.json', () => {
     const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
-    expect(catalog.map((f) => f.firm.id)).toEqual(['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday']);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(116);
+    expect(catalog.map((f) => f.firm.id)).toEqual([
+      'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
+      'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
+    ]);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(255);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -50,8 +53,11 @@ describe('toRows', () => {
   const { firms, plans } = toRows(parseCatalog(PROP_FIRM_CATALOG_FILES));
 
   it('une ligne par firm et par plan, avec la date du relevé', () => {
-    expect(firms.map((f) => f.id)).toEqual(['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday']);
-    expect(plans).toHaveLength(116);
+    expect(firms.map((f) => f.id)).toEqual([
+      'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
+      'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
+    ]);
+    expect(plans).toHaveLength(255);
     expect(firms[1].verifiedAt).toEqual(new Date('2026-10-02T00:00:00Z'));
   });
 
@@ -118,10 +124,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 6 firms et les 116 plans', () => {
+  it('base vide : crée les 16 firms et les 255 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
-    expect(plan.firmsToCreate).toHaveLength(6);
-    expect(plan.plansToCreate).toHaveLength(116);
+    expect(plan.firmsToCreate).toHaveLength(16);
+    expect(plan.plansToCreate).toHaveLength(255);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);

@@ -359,3 +359,48 @@ Exclus volontairement : Tradeify Select 300K et « Level Up » (éditions limit�
 - MyFundedFutures Builder : heure de reprise et base de la DLL ; prix de l'option drawdown 1 500 $.
 - TradeDay Fast Pass funded : taille maximale (scaling « +1 contrat par 2 000 $ », maximum publié seulement pour le 25K).
 
+
+## Dix firms ajoutées (relevé des 2026-10-03 et 2026-10-04)
+
+Objectif : couvrir les firms futures que TradesViz ou Edgely proposent et que nous n'avions pas (issue #354). Sources : sites et help centers officiels uniquement ; où les lire est décrit dans le README (« Re-vérifier une firm »).
+
+| Firm | Fichier | Plans | `needs_review` | Programmes |
+|---|---|---|---|---|
+| Take Profit Trader | `takeprofittrader.json` | 5 | 0 | Test (+ PRO) |
+| Phidias Propfirm | `phidias.json` | 10 | 10 | Express to Live, Fundamental, Premium |
+| Earn2Trade | `earn2trade.json` | 7 | 7 | Trader Career Path, Gauntlet Mini |
+| Top One Futures | `toponefutures.json` | 27 | 12 | Elite, Elite Daily, Elite Access, Elite Access Intraday, Instant Sim Funded 2.0, Ignite, X-Ultra |
+| BluSky Trading | `blusky.json` | 15 | 15 | Launch, Propel, Orbit, Instant Sim Funded, Direct to Funded |
+| Funded Futures Family | `fundedfuturesfamily.json` | 21 | 21 | Prime, Premier+ (EOD / intraday), Velocity, Straight to Funded, Accelerate S2F |
+| OneUp Trader | `oneuptrader.json` | 10 | 10 | Evaluation, Pro Evaluation |
+| UProfit | `uprofit.json` | 6 | 0 | Day Soft, Day Flex |
+| Bulenox | `bulenox.json` | 24 | 8 | Qualification + Master, Fast Track, Momentum (Option 1 trailing / Option 2 EOD) |
+| Elite Trader Funding | `elitetraderfunding.json` | 14 | 14 | 1 Step, End of Day, Diamond Hands, Static, Fast Track, Direct to Funded |
+
+### Pourquoi `needs_review`
+
+- **Contrôle en séance non documenté** (`enforced_on: null`) : Phidias (tous), Top One Instant / Ignite / X-Ultra, BluSky Sim Funded et Orbit funded, Funded Futures Family (Prime, Premier+ EOD, S2F). Le calcul MTC compare l'equity, cas prudent.
+- **Prix non publiés hors navigateur** (`price.amount: null`) : BluSky (abonnements), Funded Futures Family (sauf Velocity 25K, « à partir de 16 $ »), Top One Elite et X-Ultra, Elite Trader Funding (toutes les évaluations, tarif calculé dans l'app).
+- **Drawdown funded non chiffré séparément** : Elite Trader Funding (repris de l'évaluation), Bulenox Momentum Master, OneUp Trader.
+- **Règles hors schéma** :
+  - OneUp Trader : consistency « les 3 autres meilleurs jours font au moins 80 % du meilleur jour », non exprimable en pourcentage maximal ; grille de scaling funded publiée en image.
+  - Earn2Trade : paliers de la Progression Ladder publiés en image ; phase funded modélisée en LiveSim (EOD), le Live passe en trailing intraday.
+  - BluSky : la Buffer Zone (entre l'évaluation et le Sim Funded) n'est pas une phase du schéma ; elle est décrite dans `notes`. Le Sim Funded démarre au profit construit en Buffer Zone (`starting_balance`), avec un solde minimum de 100 $.
+  - Phidias : heure de clôture publiée en UTC fixe (21:59) dans un article, à 22:00 UTC+2 dans un autre.
+
+### Écarts et choix
+
+| Sujet | Source A | Source B | Retenu |
+|---|---|---|---|
+| Phidias, frais d'activation | Site FR : 80 / 139 / 139 / 159 € | Article 17 et site EN : 83 / 149 / 149 / 169 $ | Dollars (devise du compte) |
+| Phidias E2L, jours minimum | Comparatif du site : 1 | Fiche taille : 0, article E2L : « aucun » | Aucun |
+| Phidias, plancher CASH 150K | Article EOD : 50K et 100K seulement | Article retraits : 150 100 $ | 150 100 $ |
+| Top One Elite Daily, DLL 150K | Fiche V2 : 1 850 $ | Tableau général des DLL : « n/a » | 1 850 $, `needs_review` |
+| Top One Elite Daily, reset évaluation | Article : 93 / 115 / 214 / 297 $ | Page d'accueil : 75 / 93 $ (25K / 50K) | Les deux en notes |
+| Top One Instant, DLL | Fiche Instant : « account breach » | Article général : soft breach sauf X-Ultra | Échec (prudent) |
+| Top One Ignite, clôture | Fiche Ignite : 16:00 ET | Règle générale : 16:10 ET | 16:00 |
+| FFF S2F 25K, contrats | Fiche : 1 mini | Grille de scaling : jusqu'à 3 | 1 mini en max, grille en `tiers` |
+
+### Non modélisés
+
+- Take Profit Trader PRO+ (live sur invitation), Phidias 10K Drawdown Challenge (compétition), Earn2Trade comptes Live du growth plan, Top One S2F Sim Pro (absent des pages actuelles), BluSky Stocks, FFF Prestige (sur invitation, bascule directement en live) et Base 2K (drawdown égal à la taille du compte, chiffres ambigus), UProfit Day / One (gammes historiques), Elite Trader Funding LIVE ELITE.
