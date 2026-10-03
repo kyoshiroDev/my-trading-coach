@@ -40,6 +40,12 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
   analytics sur une base Postgres éphémère (migrations + `pnpm seed:demo`), API et app lancées dans
   le job. Échoue sur toute réponse API 5xx ou erreur console. **Non bloquant**
   (`continue-on-error`) : le rendre bloquant après deux semaines sans flake.
+  L'app est servie en build **`local`** (`serve-static --buildTarget=app-mytradingcoach:build:local`
+  → `environment.ts`, API `localhost:3001`) : le build par défaut `development` appelle l'API de
+  dev du VPS. Le smoke échoue sur tout appel à `*api.mytradingcoach.app`.
+  En local : `playwright test src/smoke.spec.ts` (le filtre `smoke` porte sur le chemin complet :
+  dans un dossier dont le nom contient « smoke », il lance TOUTE la suite, inscriptions comprises)
+  et `RESEND_API_KEY=re_placeholder` sur l'API, sinon les inscriptions envoient de vrais e-mails.
 
 ---
 
