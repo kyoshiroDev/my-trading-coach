@@ -79,6 +79,14 @@ export async function seedTradingData(
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
 
   const accountIdByKey = new Map<AccountKey, string>();
+  // Plans du catalogue (synchronisé au démarrage de l'API) : seed lancé sur une base pas encore
+  // synchronisée → compte non relié, la marge retombe sur les champs manuels.
+  const catalogPlans = new Set(
+    (await prisma.propFirmPlan.findMany({
+      where: { id: { in: DEMO_ACCOUNTS.map((a) => a.propFirmPlanId) }, active: true },
+      select: { id: true },
+    })).map((p) => p.id),
+  );
   for (const a of DEMO_ACCOUNTS) {
     const created = await prisma.tradingAccount.create({
       data: {
@@ -86,6 +94,7 @@ export async function seedTradingData(
         status: AccountStatus.ACTIVE, accountSize: a.accountSize,
         startingBalance: a.startingBalance, profitTarget: a.profitTarget,
         maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+        propFirmPlanId: catalogPlans.has(a.propFirmPlanId) ? a.propFirmPlanId : null,
       },
     });
     accountIdByKey.set(a.key, created.id);
