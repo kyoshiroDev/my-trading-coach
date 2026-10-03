@@ -37,7 +37,7 @@ import { AppController } from './app.controller';
 
 import { RedisThrottlerStorage } from '../common/throttler/redis-throttler.storage';
 import { bullPrefix, redisSettings } from '../modules/infra/redis-config';
-import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF } from '../common/throttler/email-aware-throttler.guard';
+import { EmailAwareThrottlerGuard, IP_THROTTLER, IP_THROTTLER_OFF, defaultThrottleLimit } from '../common/throttler/email-aware-throttler.guard';
 import { RedisService } from '../modules/infra/redis.service';
 
 @Module({
@@ -50,14 +50,14 @@ import { RedisService } from '../modules/infra/redis.service';
           ? '.env.development'
           : '.env.local',
     }),
-    // Limite par défaut : 60 requêtes / minute / IP (IP réelle : `trust proxy` dans main.ts).
-    // Compteurs dans Redis pour être communs aux workers du cluster.
+    // Limite par défaut : 300 requêtes / minute par UTILISATEUR connecté, 60 / minute / IP sinon
+    // (SCA-B3-03 ; IP réelle : `trust proxy` dans main.ts). Compteurs Redis communs aux workers.
     ThrottlerModule.forRootAsync({
       imports: [InfraModule],
       inject: [RedisService],
       useFactory: (redis: RedisService) => ({
         throttlers: [
-          { ttl: 60_000, limit: 60 },
+          { ttl: 60_000, limit: defaultThrottleLimit },
           // Par IP seule, neutre sauf sur les routes qui le resserrent (inscription, connexion…).
           { name: IP_THROTTLER, ttl: 60_000, limit: IP_THROTTLER_OFF },
         ],
@@ -102,10 +102,11 @@ import { RedisService } from '../modules/infra/redis.service';
     TradovateModule,
   ],
   providers: [
-    // Compte par IP ET par compte visé : l'IP seule bloque les voisins d'un même NAT et laisse
-    // passer une attaque distribuée sur un seul compte.
-    { provide: APP_GUARD, useClass: EmailAwareThrottlerGuard },
+    // JwtAuthGuard AVANT le throttler (SCA-B3-03) : un utilisateur connecté est compté par son
+    // identifiant vérifié (300/min), un anonyme par IP + compte visé (60/min ; l'IP seule
+    // bloquerait les voisins d'un même NAT). Les routes @Public passent sans identifier personne.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: EmailAwareThrottlerGuard },
     // Après JwtAuthGuard (besoin de request.user) : bloque les écritures du compte démo.
     { provide: APP_GUARD, useClass: DemoReadOnlyGuard },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
