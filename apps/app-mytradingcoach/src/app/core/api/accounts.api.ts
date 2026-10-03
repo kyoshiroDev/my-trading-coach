@@ -16,6 +16,12 @@ export interface DrawdownPlanRule {
   lockedFloor: number | null;
   locked: boolean;
   realtimeEquity: boolean;
+  /** Origine du plus haut retenu (trailing EOD) : clôtures officielles ou trades ; null hors EOD. */
+  peakSource: 'broker' | 'trades' | null;
+  /** Plus haut solde de clôture retenu, null hors EOD. */
+  peakBalance: number | null;
+  /** Dernière séance couverte par les clôtures officielles (`AAAA-MM-JJ`), sinon null. */
+  officialThrough: string | null;
   /** Plateforme dont la règle de verrouillage a été appliquée, sinon null. */
   platform: string | null;
   /** Plateforme inconnue alors que le verrouillage en dépend : choix à proposer. */

@@ -282,6 +282,10 @@ export class AccountsComponent implements OnInit {
     return sel?.plan.platformDependent ?? [];
   });
   protected readonly platformLabel = platformLabel;
+  /** `2026-10-01` → « 01/10 » (date de séance, sans fuseau : c'est une date, pas un instant). */
+  protected sessionDate(day: string | null): string {
+    return day ? `${day.slice(8, 10)}/${day.slice(5, 7)}` : '';
+  }
   /** « Rithmic, Tradovate, Wealthcharts » */
   protected platformList(keys: readonly string[]): string {
     return keys.map(platformLabel).join(', ');
