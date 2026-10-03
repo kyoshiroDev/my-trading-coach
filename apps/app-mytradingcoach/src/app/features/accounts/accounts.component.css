@@ -386,6 +386,12 @@
 .pg-mark { display: inline-block; width: 12px; }
 .pg-note { margin: 6px 0 0; font-size: 11.5px; color: var(--text-3); }
 .pg-warn { color: var(--yellow); }
+.pg-note b { color: var(--yellow); font-weight: 600; }
+.pg-dismiss {
+  margin-left: 6px; padding: 2px 8px; font: 600 11px var(--font-body); color: var(--text-2);
+  background: transparent; border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.pg-dismiss:hover { color: var(--text); border-color: var(--border-hover); }
 .dd-peak { display: block; margin-top: 2px; color: var(--text-2); }
 .dd-platform-warn { display: block; margin-top: 2px; color: var(--yellow); }
 .dd-disclaimer { display: block; margin-top: 2px; font-size: 11.5px; color: var(--text-3); }
