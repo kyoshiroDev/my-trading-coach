@@ -1,6 +1,8 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -8,11 +10,12 @@ import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
-import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
+import { PRICING_EUR } from '../../common/constants/pricing.const';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 
 const USER_SELECT = {
   id: true,
@@ -56,6 +59,8 @@ const ADMIN_USER_SELECT = {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly ambassador: AmbassadorService,
@@ -354,16 +359,50 @@ export class UsersService {
     await this.userCache?.invalidate(targetUserId);
   }
 
-  async activateTrial(userId: string) {
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_PERIOD_DAYS);
-    const user = await this.prisma.user.update({
+  /**
+   * Premium offert par l'admin, sans carte ni abonnement Stripe : `trialEndsAt` dans le futur
+   * (reconnu partout comme accès Premium), le plan reste FREE et l'accès tombe tout seul à la
+   * date de fin. `trialUsed = true` : pas de second essai Stripe de 30 j au checkout.
+   * Un mois déjà en cours est prolongé à partir de sa date de fin.
+   */
+  async offerPremium(
+    userId: string,
+    days = OFFER_PREMIUM_DEFAULT_DAYS,
+    adminId?: string,
+  ): Promise<{ trialEndsAt: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true, role: true, isDemo: true, trialEndsAt: true,
+        stripeSubscriptionId: true, stripeSubscriptionStatus: true,
+      },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (user.stripeSubscriptionId && hasActiveStripeSubscription(user.stripeSubscriptionStatus)) {
+      throw new ConflictException('Cet utilisateur a déjà un abonnement Stripe.');
+    }
+    if (user.plan === Plan.PREMIUM) {
+      throw new ConflictException('Cet utilisateur est déjà Premium.');
+    }
+    if (user.role === Role.ADMIN || user.role === Role.BETA_TESTER) {
+      throw new ConflictException('Cet utilisateur a déjà le Premium par son rôle.');
+    }
+    if (user.isDemo) {
+      throw new ConflictException('Impossible d\'offrir le Premium au compte démo.');
+    }
+
+    const now = Date.now();
+    const from = Math.max(now, user.trialEndsAt?.getTime() ?? 0);
+    const trialEndsAt = new Date(from + days * 86_400_000);
+    await this.prisma.user.update({
       where: { id: userId },
       data: { trialEndsAt, trialUsed: true },
-      select: USER_SELECT,
     });
-    await this.userCache?.invalidate(userId); // l'essai Premium doit s'ouvrir immédiatement
-    return user;
+    await this.userCache?.invalidate(userId); // le Premium doit s'ouvrir immédiatement
+    this.logger.log(
+      `Premium offert | admin: ${adminId ?? 'inconnu'}, user: ${userId}, fin: ${trialEndsAt.toISOString()}`,
+    );
+    return { trialEndsAt: trialEndsAt.toISOString() };
   }
 
   async upgradeToPremium(userId: string) {

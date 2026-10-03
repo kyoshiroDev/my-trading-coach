@@ -115,7 +115,9 @@ GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) �
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
 GET    /api/admin/users/:id            ADMIN → fiche utilisateur complète   │
-PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  ┘
+PATCH  /api/admin/users/:id(/role)     ADMIN · DELETE /api/admin/users/:id  │
+POST   /api/admin/users/:id/offer-premium ADMIN → Premium offert {days?} 1-90 │
+                                       (défaut 30, prolonge, 409 si Stripe/PREMIUM/rôle/démo) ┘
 GET    /api/admin/ambassadors          ADMIN → liste                        ┐
 GET    /api/admin/ambassadors/:id/stats ADMIN                               │ AdminAmbassadorsController
 PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │

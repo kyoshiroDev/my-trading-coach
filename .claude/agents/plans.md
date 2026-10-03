@@ -173,6 +173,15 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 
 ## Gating — qui gouverne quoi
 - **PremiumGuard** passe : ADMIN, BETA_TESTER, essai actif (`trialEndsAt`), PREMIUM.
+- **Premium offert par l'admin** (2026-10-03) : `POST /admin/users/:id/offer-premium` écrit
+  `trialEndsAt = max(now, trialEndsAt) + N j` (défaut 30, max 90) et `trialUsed = true` ; **le plan reste
+  FREE**. Aucun abonnement Stripe, aucun prélèvement : l'accès retombe seul à la date de fin. C'est la
+  **seule** source réelle de `trialEndsAt` aujourd'hui : l'essai Stripe, lui, ne l'écrit pas (il passe par
+  `plan = PREMIUM` + `stripeSubscriptionStatus = trialing`). « Offert » = `trialEndsAt` futur **et** pas
+  d'abonnement Stripe actif/trialing (`isOfferedPremium`, `users/premium-offer.util.ts`). Refusé (409) si
+  abonnement Stripe en cours, plan PREMIUM, rôle ADMIN/BETA_TESTER ou compte démo. `trialUsed = true` →
+  pas de second essai de 30 j au checkout. Stats admin : ces comptes sont comptés en `freeUsers`, **pas**
+  en `trials` (qui exige `plan = PREMIUM`) ni dans le MRR.
 - **IA mutualisée (contexte marché, news, calendrier éco bull/bear)** : **FREE** — aucun guard (juste `JwtAuthGuard`).
 - **Analytics avancés** (`by-setup`, `by-hour`) : `PremiumGuard`.
 - **Activité / calendrier** (`activity/:year/:month`, `activity/range`, `activity/current-month`) : **FREE**, aucun guard. Ce sont les données propres de l'utilisateur (le *quoi*) — on ne verrouille pas la vue de ses propres données. Le guard qui vivait sur `:year/:month` était en plus contournable via `activity/range`, qui sert la même donnée (PROMPT-185). Contrat verrouillé par `analytics.controller.spec.ts`.
