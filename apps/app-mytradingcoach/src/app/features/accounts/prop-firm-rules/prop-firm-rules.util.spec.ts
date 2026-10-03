@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PropFirmPhaseRules } from '@mtc/shared';
-import { breachLabel, parisTime, contractsLabel, enforcementLabel, lockLabel, pctLabel, scheduleLabel, tierRange, timeLabel, yesNo } from './prop-firm-rules.util';
+import { breachLabel, parisTime, pctScheduleLabel, contractsLabel, enforcementLabel, lockLabel, pctLabel, scheduleLabel, tierRange, timeLabel, yesNo } from './prop-firm-rules.util';
 
 describe('prop-firm-rules.util', () => {
   describe('heure de Paris (changements d’heure automatiques)', () => {
@@ -30,6 +30,10 @@ describe('prop-firm-rules.util', () => {
     });
   });
 
+  it('pctScheduleLabel : seuil par numéro de payout', () => {
+    expect(pctScheduleLabel([0.2, 0.25, 0.3])).toBe('P1 20 % · P2 25 % · P3 et suivants 30 %');
+  });
+
   it('pctLabel', () => {
     expect(pctLabel(0.5)).toBe('50 %');
     expect(pctLabel(0.4)).toBe('40 %');
@@ -50,6 +54,11 @@ describe('prop-firm-rules.util', () => {
     expect(breachLabel({ amount: 1000, basis: 'equity', resets_at: '18:00 America/New_York', breach: 'trading_paused_for_day' }))
       .toMatch(/^Dépasser cette perte suspend le trading jusqu'à \d\d:00 \(heure de Paris\), le compte reste actif$/);
     expect(breachLabel({ amount: 1000, basis: null, resets_at: null, breach: 'account_failed' })).toBe('Dépasser cette perte fait échouer le compte');
+  });
+
+  it('amount : centimes gardés seulement quand il y en a (bornes de paliers)', () => {
+    expect(tierRange(0, 1499.99, 'USD')).toBe('$0 à $1,499.99');
+    expect(tierRange(2000.01, null, 'USD')).toBe('$2,000.01 et plus');
   });
 
   it('tierRange / contractsLabel / yesNo', () => {

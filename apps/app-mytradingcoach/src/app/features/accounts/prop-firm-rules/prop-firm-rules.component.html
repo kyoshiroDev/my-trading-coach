@@ -46,6 +46,9 @@
       <h4 class="pfr-lbl"><svg [lucideIcon]="icons.TrendingDown" [size]="13"></svg>Drawdown max</h4>
       <div class="pfr-val">{{ fmt.amount(ph.max_drawdown.amount, cur) }}</div>
       <ul class="pfr-facts">
+        @if (has(ph.starting_balance) && ph.starting_balance !== p.accountSize) {
+          <li>Solde de départ : <b>{{ fmt.amount(ph.starting_balance, cur) }}</b> (seuils exprimés depuis ce solde)</li>
+        }
         <li>{{ fmt.drawdownKindLabel(ph.max_drawdown) }}</li>
         <li [class.unknown]="!ph.max_drawdown.enforced_on">{{ fmt.enforcementLabel(ph.max_drawdown) }}</li>
         @if (fmt.lockLabel(ph.max_drawdown.locked_floor, ph.max_drawdown.locks_at, cur); as lock) { <li>{{ lock }}</li> }
@@ -95,6 +98,9 @@
         <ul class="pfr-facts">
           <!-- Pas de « ≤ » : Lucid accepte 50 % pile, Apex exige strictement moins. La nuance est dans les précisions. -->
           <li>Part maximale du profit faite sur ton meilleur jour, {{ c.applies_to === 'payout' ? 'pour demander un payout' : "pour valider l'objectif" }}</li>
+          @if (c.max_single_day_pct_schedule?.length) {
+            <li>Selon le payout : <b>{{ fmt.pctScheduleLabel(c.max_single_day_pct_schedule!) }}</b></li>
+          }
         </ul>
         @if (c.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ c.notes }}</p></details> }
       } @else {
@@ -139,6 +145,9 @@
         <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Wallet" [size]="13"></svg>Payout</h4>
         <div class="pfr-val">{{ has(po.split_pct) ? fmt.pctLabel(po.split_pct) + ' pour toi' : 'Partage non documenté' }}</div>
         <ul class="pfr-facts">
+          @if (po.split_by_profit; as sp) {
+            <li><b>{{ fmt.pctLabel(sp.split_pct) }}</b> sur la part qui laisse plus de <b>{{ fmt.amount(sp.profit_over, cur) }}</b> de profit sur le compte</li>
+          }
           @if (po.split_after; as sa) {
             <li>Puis <b>{{ fmt.pctLabel(sa.split_pct) }}</b> une fois <b>{{ fmt.amount(sa.paid_out_over, cur) }}</b> payés sur le compte</li>
           }

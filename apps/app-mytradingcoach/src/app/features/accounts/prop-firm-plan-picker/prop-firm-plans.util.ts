@@ -20,21 +20,37 @@ export interface PropFirmProgram {
 
 export function programKey(plan: PropFirmPlanSummary): string {
   const c = plan.configuration;
-  return [plan.planName, c?.evalDrawdown ?? '', c?.dailyLossLimit == null ? '' : String(c.dailyLossLimit)].join('|');
+  return [
+    plan.planName,
+    c?.evalDrawdown ?? '',
+    c?.dailyLossLimit == null ? '' : String(c.dailyLossLimit),
+    c?.payoutPath ?? '',
+    c?.addon ?? '',
+  ].join('|');
 }
+
+const PAYOUT_PATH_LABELS: Record<NonNullable<NonNullable<PropFirmPlanSummary['configuration']>['payoutPath']>, string> = {
+  standard: 'payout Standard',
+  consistency: 'payout Consistency',
+  flex: 'payout Flex',
+  daily: 'payout Daily',
+};
 
 export function programLabel(plan: PropFirmPlanSummary): string {
   const c = plan.configuration;
   const parts = [plan.planName];
   if (c?.evalDrawdown) parts.push(`drawdown ${c.evalDrawdown === 'eod' ? 'EOD' : 'intraday'}`);
   if (c?.dailyLossLimit != null) parts.push(c.dailyLossLimit ? 'avec DLL' : 'sans DLL');
+  if (c?.payoutPath) parts.push(PAYOUT_PATH_LABELS[c.payoutPath]);
+  if (c?.addon) parts.push(`option ${c.addon}`);
   return parts.join(' · ');
 }
 
-/** Rang d'affichage des options : drawdown EOD avant intraday, sans DLL avant avec. */
+/** Rang d'affichage des options : drawdown EOD avant intraday, sans DLL avant avec, sans option avant avec. */
 function optionRank(plan: PropFirmPlanSummary): number {
   const c = plan.configuration;
-  return (c?.evalDrawdown === 'intraday' ? 2 : 0) + (c?.dailyLossLimit ? 1 : 0);
+  const path = c?.payoutPath ? ['standard', 'flex', 'consistency', 'daily'].indexOf(c.payoutPath) : 0;
+  return path * 8 + (c?.evalDrawdown === 'intraday' ? 4 : 0) + (c?.dailyLossLimit ? 2 : 0) + (c?.addon ? 1 : 0);
 }
 
 /** Programmes d'une firm par nom, puis options ; les plans sur invitation en dernier. */
@@ -107,7 +123,8 @@ export function rulesFromPlan(plan: PropFirmPlanSummary, type: AccountType): Pla
   const phase = phaseFor(plan, type);
   return {
     accountSize: plan.accountSize,
-    startingBalance: plan.accountSize,
+    // Certains comptes funded démarrent à 0 $ (Topstep XFA, funded MyFundedFutures) : on reprend le solde de la phase.
+    startingBalance: phase?.startingBalance ?? plan.accountSize,
     currency: plan.currency,
     profitTarget: phase?.profitTarget ?? null,
     maxDrawdown: phase?.maxDrawdown ?? null,
