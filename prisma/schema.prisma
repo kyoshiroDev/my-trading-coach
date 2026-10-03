@@ -331,6 +331,9 @@ model TradingAccount {
   /// Certaines règles en dépendent (verrouillage du drawdown Apex). Ignorée si le compte est
   /// connecté via Tradovate : la plateforme est alors connue.
   platform          String?
+  /// Date (séance) du dernier payout reçu, saisie par l'utilisateur : le cycle de payout repart de
+  /// là (jours gagnants, profit du cycle). Null = aucun payout, cycle compté depuis le début.
+  lastPayoutAt      DateTime?      @db.Date
   propFirmPlanId    String?
   propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
   trades          Trade[]

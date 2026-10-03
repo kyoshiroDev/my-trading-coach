@@ -363,6 +363,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
 >
+> `TradingAccount.lastPayoutAt` (migration `20261004090000_trading_account_last_payout`, `DATE`
+> nullable, additive) = séance du dernier payout reçu, saisie par l'utilisateur : début du cycle de
+> payout (cf. `nestjs.md`, « Progression objectif / payout »). Le DTO reçoit `AAAA-MM-JJ`,
+> converti en Date dans `AccountsService` (Prisma refuse une date seule pour un DateTime).
+>
 > `BrokerDailyClose` (migration `20261003230000_broker_daily_close`, table nouvelle, cascade sur
 > `TradingAccount`, `@@unique([accountId, tradeDate])`, `tradeDate` en `@db.Date` = date de SÉANCE)
 > = soldes de clôture officiels lus chez le broker (cf. `nestjs.md`, « Clôtures officielles »).

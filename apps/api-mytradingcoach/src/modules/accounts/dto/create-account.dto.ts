@@ -1,6 +1,7 @@
 import {
   IsEnum,
   IsIn,
+  IsISO8601,
   IsNumber,
   IsOptional,
   IsString,
@@ -69,4 +70,9 @@ export class CreateAccountDto {
   @MaxLength(40)
   @Matches(/^[a-z0-9_]+$/, { message: 'Plateforme invalide.' })
   platform?: string;
+
+  // Date du dernier payout reçu (AAAA-MM-JJ) : début du cycle de payout en cours.
+  @IsOptional()
+  @IsISO8601({ strict: true }, { message: 'Date du dernier payout invalide (AAAA-MM-JJ).' })
+  lastPayoutAt?: string;
 }

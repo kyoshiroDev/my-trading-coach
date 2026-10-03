@@ -1283,6 +1283,20 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`
   (`broker` | `trades`), `rule.peakBalance`, `rule.officialThrough` affichés sous la marge.
 
+### Progression objectif / payout (2026-10-04)
+
+`metrics.progress` (`accounts/account-progress.ts`, fonctions pures) pour un compte relié à un plan :
+- **Évaluation** (`profit_target`) : profit = solde courant (broker si connu) − solde de départ ;
+  consistency `applies_to: profit_target` → objectif effectif = max(objectif, meilleur jour ÷ X %) ;
+  `min_trading_days` = séances tradées.
+- **Funded / direct** (`payout`) : cycle = séances après `TradingAccount.lastPayoutAt` (saisi par
+  l'utilisateur, sinon depuis le début — affiché) ; `min_days` + `min_daily_profit` (jours
+  gagnants), `min_cycle_profit` ou palier de `min_cycle_profit_schedule` (1er payout, sinon le
+  suivant), consistency `applies_to: payout` (plancher meilleur jour ÷ X %, palier idem),
+  `safety_net_balance` décalé sur le solde de départ du compte.
+- **Une règle null ne crée aucune exigence.** Plan `needsReview` → `progress.unconfirmed`.
+- Séances : `sessionPnlsSql` (liste) ≡ `sessionPnls` (étalon JS), journée CME, `pnl − commission`.
+
 ### Drawdown selon le plan prop firm relié (2026-10-03)
 
 Compte relié à un plan du catalogue (`propFirmPlanId`) **et** de type EVALUATION (phase

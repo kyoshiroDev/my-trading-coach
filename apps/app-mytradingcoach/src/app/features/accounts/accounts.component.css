@@ -377,6 +377,15 @@
 .dd-basis { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
 .dd-basis b { color: var(--text); font-weight: 600; }
 .dd-platform { color: var(--text-3); }
+.acct-progress { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; }
+.acct-progress.is-done { border-color: var(--green); }
+.pg-title { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--text); }
+.pg-reqs { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.pg-reqs li { font-size: 12px; color: var(--text-2); }
+.pg-reqs li.is-met { color: var(--green); }
+.pg-mark { display: inline-block; width: 12px; }
+.pg-note { margin: 6px 0 0; font-size: 11.5px; color: var(--text-3); }
+.pg-warn { color: var(--yellow); }
 .dd-peak { display: block; margin-top: 2px; color: var(--text-2); }
 .dd-platform-warn { display: block; margin-top: 2px; color: var(--yellow); }
 .dd-disclaimer { display: block; margin-top: 2px; font-size: 11.5px; color: var(--text-3); }

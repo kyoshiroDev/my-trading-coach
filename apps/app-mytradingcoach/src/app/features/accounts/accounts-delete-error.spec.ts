@@ -26,12 +26,12 @@ function acct(id: string, tradesCount = 0, status: 'ACTIVE' | 'ARCHIVED' = 'ACTI
   return {
     id, label: `Compte ${id}`, broker: null, type: 'PERSONAL', status,
     accountSize: null, currency: 'USD', startingBalance: null,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null,
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null, lastPayoutAt: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 5000, realizedPnl: 0, currentBalance: 5000, tradesCount,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, drawdownUnconfirmed: false, broker: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },
   };
 }
