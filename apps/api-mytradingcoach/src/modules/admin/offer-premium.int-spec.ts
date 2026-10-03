@@ -3,7 +3,7 @@
  * Route admin uniquement, ouvre le Premium tout de suite, et il retombe à la date de fin.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
@@ -37,7 +37,13 @@ const premiumRoute = () =>
   fetch(`${baseUrl}/api/analytics/by-setup`, { headers: { authorization: `Bearer ${userToken}` } }).then((r) => r.status);
 
 beforeAll(async () => {
-  ({ app, baseUrl } = await createIntegrationApp());
+  // Même ValidationPipe global que main.ts (le helper ne le monte pas) : le DTO borne `days`.
+  ({ app, baseUrl } = await createIntegrationApp({
+    setup: (a) => {
+      a.setGlobalPrefix('api');
+      a.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+    },
+  }));
   prisma = app.get(PrismaService);
   adminToken = await register(ADMIN_EMAIL);
   userToken = await register(USER_EMAIL);
