@@ -51,7 +51,20 @@ describe('assignBrokerTones : une couleur différente par prop firm', () => {
     expect(tones.get('lucid trading')?.color).not.toBe(tones.get('ftmo')?.color);
   });
 
-  it('jamais deux firms avec la même couleur, quel que soit leur nombre (12 > 8 teintes)', () => {
+  it('les 6 firms du catalogue ont 6 couleurs franches, sans nuances voisines', () => {
+    const catalog = ['Lucid Trading', 'Apex Trader Funding', 'Topstep', 'Tradeify', 'MyFundedFutures', 'TradeDay'];
+    const colors = [...assignBrokerTones(catalog).values()].map((t) => t.color);
+    expect(new Set(colors).size).toBe(6);
+    expect(colors).not.toContain('#e879f9'); // fuchsia, trop proche du rose
+  });
+
+  it('teintes générées : au moins 25° d\'écart entre elles', () => {
+    const hues = [...assignBrokerTones(FIRMS).values()]
+      .map((t) => Number(/^hsl\((\d+)/.exec(t.color)?.[1] ?? NaN)).filter((h) => !Number.isNaN(h));
+    for (const a of hues) for (const b of hues) if (a !== b) expect(Math.min(Math.abs(a - b), 360 - Math.abs(a - b))).toBeGreaterThanOrEqual(25);
+  });
+
+  it('jamais deux firms avec la même couleur, quel que soit leur nombre (12 > 6 teintes)', () => {
     for (let n = 1; n <= FIRMS.length; n++) {
       const tones = assignBrokerTones(FIRMS.slice(0, n));
       expect(new Set([...tones.values()].map((t) => t.color)).size).toBe(n);

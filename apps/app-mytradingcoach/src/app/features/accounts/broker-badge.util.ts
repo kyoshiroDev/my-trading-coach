@@ -22,20 +22,33 @@ export interface BrokerBadge extends BrokerTone {
 
 const DARK_TEXT = '#0b1220';
 
+interface PaletteTone extends BrokerTone {
+  /** Teinte HSL (°), null pour un neutre : sert à écarter les couleurs trop proches. */
+  hue: number | null;
+}
+
 /**
- * 8 teintes bien séparées, sans rouge ni vert (perte et gain dans l'app) ni l'orange du bouton
- * « Connecter ». Ordre = ordre d'attribution des teintes libres : les plus contrastées d'abord.
+ * 6 teintes nettement distinctes, sans rouge ni vert (perte et gain dans l'app) ni l'orange du
+ * bouton « Connecter ». Pas de nuances voisines (rose / fuchsia, bleu / indigo / bleu ciel) : deux
+ * firms côte à côte doivent se distinguer d'un coup d'œil. Ordre = ordre d'attribution des
+ * teintes libres : les plus contrastées d'abord.
  */
-const PALETTE: readonly BrokerTone[] = [
-  { color: 'var(--blue)', text: '#fff' },
-  { color: 'var(--yellow)', text: DARK_TEXT },
-  { color: 'var(--purple)', text: '#fff' },
-  { color: 'var(--cyan)', text: DARK_TEXT },
-  { color: '#f472b6', text: DARK_TEXT }, // rose
-  { color: '#818cf8', text: DARK_TEXT }, // indigo
-  { color: '#e879f9', text: DARK_TEXT }, // fuchsia
-  { color: '#38bdf8', text: DARK_TEXT }, // bleu ciel
+const PALETTE: readonly PaletteTone[] = [
+  { color: 'var(--blue)', text: '#fff', hue: 217 },
+  { color: 'var(--yellow)', text: DARK_TEXT, hue: 45 },
+  { color: 'var(--purple)', text: '#fff', hue: 258 },
+  { color: 'var(--cyan)', text: DARK_TEXT, hue: 188 },
+  { color: '#f472b6', text: DARK_TEXT, hue: 330 }, // rose
+  { color: '#cbd5e1', text: DARK_TEXT, hue: null }, // ardoise claire
 ];
+
+/** Écart minimal entre une teinte générée et les teintes déjà utilisées. */
+const MIN_HUE_GAP = 25;
+
+function hueGap(a: number, b: number): number {
+  const d = Math.abs(a - b) % 360;
+  return Math.min(d, 360 - d);
+}
 
 /** Mots génériques des noms de firms : ils ne distinguent pas une firm d'une autre. */
 const GENERIC_WORDS = new Set([
@@ -67,7 +80,7 @@ function hash(s: string): number {
  * Teinte supplémentaire n° k (au-delà de la palette) : angle d'or dans les plages autorisées
  * (jaune 40-60°, cyan → rose 180-330°), luminosité moyenne, texte sombre.
  */
-function generatedTone(k: number): BrokerTone {
+function generatedTone(k: number): PaletteTone {
   const ranges: [number, number][] = [[40, 60], [180, 330]];
   const span = ranges.reduce((n, [a, b]) => n + (b - a), 0);
   let pos = ((k + 1) * 137.508) % span;
@@ -76,13 +89,17 @@ function generatedTone(k: number): BrokerTone {
     if (pos < b - a) { hue = a + pos; break; }
     pos -= b - a;
   }
-  return { color: `hsl(${Math.round(hue)} 70% 62%)`, text: DARK_TEXT };
+  return { color: `hsl(${Math.round(hue)} 70% 62%)`, text: DARK_TEXT, hue: Math.round(hue) };
+}
+
+function toneOf({ color, text }: PaletteTone): BrokerTone {
+  return { color, text };
 }
 
 /** Couleur préférée d'une firm, hors conflit (même valeur pour tous les utilisateurs). */
 export function preferredTone(broker: string | null | undefined): BrokerTone | null {
   const normalized = normalizeBrokerName(broker ?? '');
-  return normalized ? PALETTE[hash(normalized) % PALETTE.length] : null;
+  return normalized ? toneOf(PALETTE[hash(normalized) % PALETTE.length]) : null;
 }
 
 /**
@@ -92,19 +109,23 @@ export function preferredTone(broker: string | null | undefined): BrokerTone | n
  */
 export function assignBrokerTones(firms: Iterable<string | null | undefined>): Map<string, BrokerTone> {
   const tones = new Map<string, BrokerTone>();
-  const used = new Set<string>();
+  const used: PaletteTone[] = [];
+  const free = (t: PaletteTone) => !used.some((u) => u.color === t.color);
+  // Teinte générée : loin de toutes celles déjà prises ; après 60 essais, seule l'unicité compte.
+  const farEnough = (t: PaletteTone, attempt: number) =>
+    attempt > 60 || used.every((u) => u.hue == null || t.hue == null || hueGap(u.hue, t.hue) >= MIN_HUE_GAP);
   let extra = 0;
   for (const firm of firms) {
     const key = normalizeBrokerName(firm ?? '');
     if (!key || tones.has(key)) continue;
     const preferred = PALETTE[hash(key) % PALETTE.length];
-    let tone = used.has(preferred.color) ? PALETTE.find((t) => !used.has(t.color)) : preferred;
-    while (!tone) {
+    let tone = free(preferred) ? preferred : PALETTE.find(free);
+    for (let attempt = 0; !tone; attempt++) {
       const candidate = generatedTone(extra++);
-      if (!used.has(candidate.color)) tone = candidate;
+      if (free(candidate) && farEnough(candidate, attempt)) tone = candidate;
     }
-    tones.set(key, tone);
-    used.add(tone.color);
+    tones.set(key, toneOf(tone));
+    used.push(tone);
   }
   return tones;
 }
