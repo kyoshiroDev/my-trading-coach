@@ -16,6 +16,7 @@ function fakeRedis() {
       return 'OK';
     }),
     del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+    exists: vi.fn(async (k: string) => (store.has(k) ? 1 : 0)),
   };
   return { store, redis: { client } as unknown as RedisService, client };
 }
@@ -56,8 +57,23 @@ describe('singleFlight (SCA-B3-04)', () => {
   });
 
   it('Redis indisponible : appel direct (comportement d’avant)', async () => {
-    const redis = { client: { set: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')), del: vi.fn() } } as unknown as RedisService;
+    const redis = { client: { set: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')), del: vi.fn(), exists: vi.fn() } } as unknown as RedisService;
     expect(await singleFlight(redis, 'k', async () => null, async () => 3)).toBe(3);
+  });
+});
+
+describe('singleFlight — échec rapide et onTimeout (SCA-B3-05)', () => {
+  it('calcul en échec rapide : les autres n’attendent pas la fin du délai, et onTimeout évite de recalculer', async () => {
+    const { redis } = fakeRedis();
+    const compute = vi.fn(async () => { await new Promise((r) => setTimeout(r, 20)); throw new Error('IA indisponible'); });
+    const onTimeout = vi.fn(async () => 'texte original');
+    const t0 = Date.now();
+    const results = await Promise.allSettled(
+      Array.from({ length: 10 }, () => singleFlight(redis, 'news', async () => null, compute, { lockMs: 30_000, pollMs: 10, onTimeout })),
+    );
+    expect(Date.now() - t0).toBeLessThan(2_000); // pas 30 s
+    expect(compute).toHaveBeenCalledTimes(1); // un seul appel « IA », pas 10
+    expect(results.filter((r) => r.status === 'fulfilled' && r.value === 'texte original')).toHaveLength(9);
   });
 });
 
