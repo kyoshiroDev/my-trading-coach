@@ -63,7 +63,7 @@ export async function journalStatsSql(
   prisma: PrismaService,
   filter: Prisma.Sql,
 ): Promise<JournalStats> {
-  const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::numeric, 2)`;
+  const NET = Prisma.sql`round((t."pnl" - abs(coalesce(t."commission", 0)))::text::numeric, 2)`;
   const RAW_NET = Prisma.sql`(coalesce(t."pnl", 0) - abs(coalesce(t."commission", 0)))`;
   const [r] = await prisma.$queryRaw<
     { total: number; wins: number; losses: number; brut: number; fees: number; best: number | null; worst: number | null }[]
