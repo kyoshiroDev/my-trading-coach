@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -11,6 +12,7 @@ import { PRICING_EUR, TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.c
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 const USER_SELECT = {
   id: true,
@@ -57,6 +59,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ambassador: AmbassadorService,
+    @Optional() private readonly userCache?: AuthUserCacheService,
   ) {}
 
   async findById(id: string) {
@@ -162,11 +165,13 @@ export class UsersService {
         'Promotion au rôle ADMIN impossible via API',
       );
     }
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: targetId },
       data: dto,
       select: ADMIN_USER_SELECT,
     });
+    await this.userCache?.invalidate(targetId); // plan / rôle relus par le JWT (SCA-B3-01)
+    return updated;
   }
 
   // ── Admin : suppression ───────────────────────────────────────────────────
@@ -229,6 +234,7 @@ export class UsersService {
       }),
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
+    await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
   }
 
   async adminStats() {
@@ -337,6 +343,7 @@ export class UsersService {
       if (role !== Role.USER) {
         await this.prisma.user.update({ where: { id: targetUserId }, data: { role } });
       }
+      await this.userCache?.invalidate(targetUserId);
       return;
     }
 
@@ -344,24 +351,29 @@ export class UsersService {
       where: { id: targetUserId },
       data: { role },
     });
+    await this.userCache?.invalidate(targetUserId);
   }
 
   async activateTrial(userId: string) {
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_PERIOD_DAYS);
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { trialEndsAt, trialUsed: true },
       select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId); // l'essai Premium doit s'ouvrir immédiatement
+    return user;
   }
 
   async upgradeToPremium(userId: string) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { plan: 'PREMIUM' },
       select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId);
+    return user;
   }
 
   async countMonthlyTrades(userId: string): Promise<number> {
@@ -408,11 +420,13 @@ export class UsersService {
   }
 
   async updateMe(userId: string, dto: UpdateMeDto) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { name: dto.name },
       select: USER_SELECT,
     });
+    await this.userCache?.invalidate(userId); // nom relu par le JWT
+    return user;
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto) {

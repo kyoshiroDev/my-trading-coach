@@ -17,6 +17,7 @@ import { BrokerConnectionStatus } from '@prisma/client';
 import { createIntegrationApp } from '@api/test/integration-app.helper';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
+import { AuthUserCacheService } from '../../infra/auth-user-cache.service';
 
 const PREFIX = 'int-tradovate-';
 const uid = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
@@ -598,6 +599,9 @@ describe('Tradovate — synchro', () => {
     const account = await createAccount(userId, 'Compte');
     await connect(token, account.id);
     await prisma.user.update({ where: { id: userId }, data: { isDemo: true } });
+    // Écriture directe d'un champ relu par le JWT : invalider le cache utilisateur (SCA-B3-01),
+    // comme doit le faire tout code qui modifie plan, rôle, isDemo…
+    await app.get(AuthUserCacheService).invalidate(userId);
 
     expect((await api(token, '/connections')).status).toBe(200);
     expect((await api(token, `/accounts/${account.id}/sync`, 'POST')).status).toBe(403);

@@ -2,9 +2,11 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 // Lien de parrainage : même format que celui affiché par le dashboard ambassadeur.
 const REFERRAL_BASE = 'https://mytradingcoach.app';
@@ -49,7 +51,10 @@ export interface AmbassadorStats {
 
 @Injectable()
 export class AmbassadorService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly userCache?: AuthUserCacheService,
+  ) {}
 
   /** Marque toutes les commissions en attente d'un ambassadeur comme payées. */
   markAllPaid(ambassadorId: string) {
@@ -94,6 +99,7 @@ export class AmbassadorService {
         data: { role: Role.AMBASSADOR, referralCode: code },
         select: { email: true, name: true, role: true, referralCode: true },
       });
+      await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
       return {
         email: updated.email,
         name: updated.name,
@@ -130,6 +136,7 @@ export class AmbassadorService {
       data: { role: Role.USER, referralCode: null },
       select: { email: true, name: true, role: true },
     });
+    await this.userCache?.invalidate(user.id); // rôle relu par le JWT (SCA-B3-01)
     return updated;
   }
 
