@@ -327,6 +327,10 @@ model TradingAccount {
   drawdownType    DrawdownType   @default(STATIC)
   /// Plan du catalogue prop firm (`PropFirmPlan.id`), optionnel. Les règles saisies ci-dessus
   /// restent la référence tant que l'UI ne s'appuie pas sur le catalogue.
+  /// Plateforme de trading du compte (clé du catalogue : `tradovate`, `rithmic`, `wealthcharts`…).
+  /// Certaines règles en dépendent (verrouillage du drawdown Apex). Ignorée si le compte est
+  /// connecté via Tradovate : la plateforme est alors connue.
+  platform          String?
   propFirmPlanId    String?
   propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
   trades          Trade[]

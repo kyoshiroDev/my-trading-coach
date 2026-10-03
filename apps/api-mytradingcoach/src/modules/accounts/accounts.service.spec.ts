@@ -273,7 +273,8 @@ describe('AccountsService', () => {
       include: {
         propFirmPlan: { select: expect.objectContaining({ phases: true }) },
         // Solde du broker : seulement une connexion qui en a un.
-        brokerConnections: { where: { brokerCashBalance: { not: null } }, select: expect.objectContaining({ brokerNetLiq: true }), take: 1 },
+        // Toutes les connexions : solde du broker, et plateforme connue si Tradovate.
+        brokerConnections: { select: expect.objectContaining({ provider: true, brokerNetLiq: true }) },
       },
     });
   });
@@ -451,6 +452,48 @@ describe('AccountsService', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
       expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+  });
+
+  describe('computeRuleMetrics — verrouillage propre à la plateforme', () => {
+    const d = (pnl: number, day: number) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, 15)) });
+    // Apex EOD 50K : pas de verrouillage par défaut ni sur Tradovate, figé à 53 000 $ sur Rithmic
+    // quand le solde de clôture atteint 55 000 $.
+    const apex: RulePlan = { firmName: 'Apex Trader Funding', planName: 'EOD Trail', accountSize: 50_000, phases: [
+      { phase: 'evaluation', max_drawdown: {
+        amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null,
+        enforced_on: 'equity_realtime', basis_notes: null,
+        platform_overrides: {
+          tradovate: { locks_at: null, locked_floor: null },
+          rithmic: { locks_at: 55_000, locked_floor: 53_000 },
+          wealthcharts: { locks_at: 55_000, locked_floor: 53_000 },
+        },
+      } } as unknown as PropFirmPhaseRules,
+    ] };
+    const evalAcc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'EVALUATION' as const };
+    const trades = [d(5_500, 1), d(-1_000, 2)]; // clôtures 55 500 puis 54 500
+
+    it('Rithmic (saisi) : seuil figé à 53 000 $ une fois 55 000 $ atteints', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'rithmic' }, trades, apex);
+      expect(m.drawdown).toMatchObject({ floor: 53_000, margin: 1_500 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true, platform: 'rithmic', platformChoices: [] });
+    });
+
+    it('connecté via Tradovate : jamais figé, même si une autre plateforme a été saisie', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'rithmic' }, trades, apex, null, 'tradovate');
+      expect(m.drawdown).toMatchObject({ floor: 53_500, margin: 1_000 }); // 55 500 − 2 000
+      expect(m.drawdown?.rule).toMatchObject({ locked: false, platform: 'tradovate' });
+    });
+
+    it('plateforme inconnue : règle par défaut (la plus prudente) et choix proposés', () => {
+      const m = svc.computeRuleMetrics(evalAcc, trades, apex);
+      expect(m.drawdown?.floor).toBe(53_500);
+      expect(m.drawdown?.rule).toMatchObject({ platform: null, platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] });
+    });
+
+    it('plateforme sans règle particulière (ex. NinjaTrader) : règle par défaut, choix toujours proposés', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'ninjatrader' }, trades, apex);
+      expect(m.drawdown?.rule).toMatchObject({ platform: null, platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] });
     });
   });
 

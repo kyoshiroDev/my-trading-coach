@@ -363,6 +363,10 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
 >
+> `TradingAccount.platform` (migration `20261003220000_trading_account_platform`, TEXT nullable,
+> additive) = plateforme de trading saisie (`rithmic`, `tradovate`…), pour les règles qui en
+> dépendent (verrouillage Apex). Ignorée quand le compte a une connexion Tradovate.
+>
 > `brokerCashBalance`/`brokerCashBalanceAt`, `brokerNetLiq`, `brokerOpenPnl`, `brokerEquityAt`,
 > `brokerOpenPositions` (migration `20261003200000_broker_live_balance`, purement additive) = solde,
 > equity et positions ouvertes lus chez le broker (cf. `nestjs.md`, « Solde et equity lus chez le
