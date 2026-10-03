@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { previousSession } from './account-rules';
+import { aggregateRuleTrades, previousSession, sessionPnls } from './account-rules';
 import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
@@ -27,6 +27,7 @@ function makePrisma() {
     user: { findUnique: vi.fn() },
     propFirmPlan: { count: vi.fn() },
     brokerDailyClose: { groupBy: vi.fn(async () => []) },
+    brokerPayout: { groupBy: vi.fn(async () => []) },
   };
 }
 
@@ -454,6 +455,35 @@ describe('AccountsService', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
       expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+  });
+
+  describe('computeRuleMetrics — cycle de payout : détecté chez le broker ou saisi', () => {
+    const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
+    const funded: RulePlan = { firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [
+      { phase: 'funded', profit_target: null, consistency: null, min_trading_days: null,
+        max_drawdown: { amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null, basis_notes: null },
+        payout: { min_days: 5, min_daily_profit: 150, min_cycle_profit: null, min_cycle_profit_schedule: null, safety_net_balance: null, min_amount: 500 },
+      } as unknown as PropFirmPhaseRules,
+    ] };
+    const acc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'FUNDED' as const };
+    const trades = [at(200, '2026-09-28T15:00:00Z'), at(200, '2026-09-29T15:00:00Z'), at(200, '2026-09-30T15:00:00Z')];
+    const progressOf = (lastPayoutAt: Date | null, payouts: { last: string; count: number } | null) =>
+      svc.ruleMetricsFromAgg({ ...acc, lastPayoutAt }, aggregateRuleTrades(trades), funded, null, null, null, new Date(), sessionPnls(trades), payouts).progress!;
+
+    it('payout détecté plus récent que la date saisie : il fixe le cycle et donne le rang', () => {
+      const p = progressOf(new Date('2026-09-20T00:00:00Z'), { last: '2026-09-28', count: 3 });
+      expect(p).toMatchObject({ cycleAfter: '2026-09-28', cycleSource: 'broker', payoutsReceived: 3 });
+      expect(p.requirements[0]).toMatchObject({ key: 'winning_days', current: 2 });
+    });
+
+    it('date saisie plus récente que le dernier payout détecté : la saisie l\'emporte, rang inconnu', () => {
+      expect(progressOf(new Date('2026-09-29T00:00:00Z'), { last: '2026-09-10', count: 1 }))
+        .toMatchObject({ cycleAfter: '2026-09-29', cycleSource: 'user', payoutsReceived: null });
+    });
+
+    it('ni détecté ni saisi : cycle depuis le début', () => {
+      expect(progressOf(null, null)).toMatchObject({ cycleAfter: null, cycleSource: null });
     });
   });
 

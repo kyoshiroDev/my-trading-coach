@@ -10,6 +10,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateBalanceService } from './tradovate-balance.service';
 import { TradovateClosingsService } from './tradovate-closings.service';
+import { TradovatePayoutsService } from './tradovate-payouts.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
@@ -70,6 +71,7 @@ export class TradovateSyncService {
     private readonly history: TradovateHistoryService,
     private readonly balance: TradovateBalanceService,
     private readonly closings: TradovateClosingsService,
+    private readonly payouts: TradovatePayoutsService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
   ) {}
@@ -196,6 +198,13 @@ export class TradovateSyncService {
       await this.closings.refresh(conn, token, apiHosts);
     } catch (err) {
       this.logger.warn(`Clôtures officielles non relues (connexion ${conn.id}) : ${(err as Error).message}`);
+    }
+    // Payouts reçus (historique de trésorerie) : début du cycle et rang du prochain payout.
+    try {
+      const { token, apiHosts } = await this.connections.getSession(conn);
+      await this.payouts.refresh(conn, token, apiHosts);
+    } catch (err) {
+      this.logger.warn(`Payouts non relus (connexion ${conn.id}) : ${(err as Error).message}`);
     }
   }
 

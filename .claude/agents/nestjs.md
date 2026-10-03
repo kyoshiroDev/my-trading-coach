@@ -1295,6 +1295,15 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   suivant), consistency `applies_to: payout` (plancher meilleur jour ÷ X %, palier idem),
   `safety_net_balance` décalé sur le solde de départ du compte.
 - **Une règle null ne crée aucune exigence.** Plan `needsReview` → `progress.unconfirmed`.
+- **Payouts détectés** (`TradovatePayoutsService`, rapport `Cash History`, même cadence que les
+  clôtures, curseur `BrokerConnection.payoutsCheckedThrough` qui n'avance que si toutes les
+  fenêtres ont abouti) → table `BrokerPayout`. Payout = `ChallengePayout` (tout signe) ou
+  `FundTransaction` NÉGATIF ; `ManualAdjustment` / `Debit` exclus (resets, corrections). Types en
+  libellés lisibles (`" Trade Paired"`) → `normalizeChangeType`. Chaque passage journalise les
+  types lus avec leur nombre (jamais de montant) : **vérifier sur beta, avec de vrais comptes payés,
+  que les payouts passent bien par ces types** avant d'en dépendre.
+- Cycle = le plus récent entre le dernier payout détecté et `lastPayoutAt` saisi ; s'il vient du
+  broker, `payoutsReceived` = rang exact pour les paliers (`progress.cycleSource`).
 - Séances : `sessionPnlsSql` (liste) ≡ `sessionPnls` (étalon JS), journée CME, `pnl − commission`.
 
 ### Drawdown selon le plan prop firm relié (2026-10-03)

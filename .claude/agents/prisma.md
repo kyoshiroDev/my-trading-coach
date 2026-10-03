@@ -363,6 +363,10 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
 >
+> `BrokerPayout` + `BrokerConnection.payoutsCheckedThrough` (migration
+> `20261004110000_broker_payout`, additive, cascade sur le compte, `@@unique([accountId,
+> transactionId])`) = payouts détectés dans l'historique de trésorerie du broker.
+>
 > `TradingAccount.lastPayoutAt` (migration `20261004090000_trading_account_last_payout`, `DATE`
 > nullable, additive) = séance du dernier payout reçu, saisie par l'utilisateur : début du cycle de
 > payout (cf. `nestjs.md`, « Progression objectif / payout »). Le DTO reçoit `AAAA-MM-JJ`,

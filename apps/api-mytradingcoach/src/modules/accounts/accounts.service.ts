@@ -38,6 +38,27 @@ export interface RulePlan {
   needsReview?: boolean;
 }
 
+/** Payouts détectés chez le broker pour le compte : dernière séance et nombre. */
+export interface RulePayouts {
+  last: string;
+  count: number;
+}
+
+/**
+ * Début du cycle de payout : le plus récent entre le payout détecté chez le broker et la date
+ * saisie. Le nombre détecté n'est un rang fiable que si c'est lui qui fixe le cycle.
+ */
+function lastPayout(
+  userDate: Date | null | undefined,
+  broker: RulePayouts | null,
+): { lastPayoutDay: string | null; cycleSource: 'broker' | 'user' | null; payoutsReceived: number | null } {
+  const user = userDate ? userDate.toISOString().slice(0, 10) : null;
+  if (broker && (!user || broker.last >= user)) {
+    return { lastPayoutDay: broker.last, cycleSource: 'broker', payoutsReceived: broker.count };
+  }
+  return { lastPayoutDay: user, cycleSource: user ? 'user' : null, payoutsReceived: null };
+}
+
 /** Clôtures officielles du compte (rapport du broker) : plus haut et dernière séance couverte. */
 export interface RuleOfficialCloses {
   peakClose: number;
@@ -205,6 +226,15 @@ export class AccountsService {
           lastTradeDate: c._max.tradeDate!.toISOString().slice(0, 10),
         } satisfies RuleOfficialCloses]),
     );
+    const payoutRows = await this.prisma.brokerPayout.groupBy({
+      by: ['accountId'],
+      where: { accountId: { in: rows.map((r) => r.id) } },
+      _max: { tradeDate: true },
+      _count: { _all: true },
+    });
+    const payoutsByAccount = new Map(payoutRows
+      .filter((p) => p._max.tradeDate)
+      .map((p) => [p.accountId, { last: p._max.tradeDate!.toISOString().slice(0, 10), count: p._count._all } satisfies RulePayouts]));
     const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
       account: a,
       plan: toRulePlan(propFirmPlan),
@@ -212,6 +242,7 @@ export class AccountsService {
       // Compte connecté via Tradovate : la plateforme est connue, quoi qu'ait saisi l'utilisateur.
       connectedPlatform: brokerConnections.some((c) => c.provider === BrokerProvider.TRADOVATE) ? 'tradovate' : null,
       official: officialByAccount.get(a.id) ?? null,
+      payouts: payoutsByAccount.get(a.id) ?? null,
     }));
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
@@ -223,11 +254,11 @@ export class AccountsService {
       sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
     ]);
 
-    return accounts.map(({ account, plan, broker, connectedPlatform, official }) => ({
+    return accounts.map(({ account, plan, broker, connectedPlatform, official, payouts }) => ({
       ...account,
       metrics: this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
-        sessions.get(account.id) ?? [],
+        sessions.get(account.id) ?? [], payouts,
       ),
     }));
   }
@@ -267,6 +298,7 @@ export class AccountsService {
     official: RuleOfficialCloses | null = null,
     now = new Date(),
     sessions: SessionPnl[] = [],
+    payouts: RulePayouts | null = null,
   ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
@@ -415,7 +447,7 @@ export class AccountsService {
           phaseStartingBalance: phase.starting_balance ?? plan.accountSize,
           currentBalance,
           sessions,
-          lastPayoutDay: account.lastPayoutAt ? account.lastPayoutAt.toISOString().slice(0, 10) : null,
+          ...lastPayout(account.lastPayoutAt, payouts),
           unconfirmed: plan.needsReview ?? false,
         })
         : null,

@@ -99,6 +99,18 @@ describe('Prochain payout (funded)', () => {
     expect(req(next, 'consistency')).toMatchObject({ required: 0.25, met: true });
   });
 
+  it('rang connu par le broker (2 payouts reçus) : 3e palier de consistency, cycle marqué « broker »', () => {
+    const lightning = phase({
+      phase: 'direct',
+      consistency: { max_single_day_pct: 0.2, max_single_day_pct_schedule: [0.2, 0.25, 0.3], applies_to: 'payout', notes: null } as never,
+      payout: payout({ min_cycle_profit_schedule: [3_000, 2_000] }) as never,
+    });
+    const r = computeProgress(input({ phase: lightning, sessions: days(500, 600), lastPayoutDay: '2026-09-09', cycleSource: 'broker', payoutsReceived: 2 }));
+    expect(req(r, 'consistency')!.required).toBe(0.3);
+    expect(req(r, 'cycle_profit')!.required).toBe(2_000); // dernier palier tenu au-delà
+    expect(r).toMatchObject({ cycleSource: 'broker', payoutsReceived: 2 });
+  });
+
   it('plan sans règle de payout chiffrée : pas de progression', () => {
     expect(computeProgress(input({ phase: phase({ phase: 'funded' }) }))).toBeNull();
   });

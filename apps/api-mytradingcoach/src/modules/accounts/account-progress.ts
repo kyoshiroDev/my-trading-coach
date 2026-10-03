@@ -37,6 +37,10 @@ export interface AccountProgress {
   requirements: ProgressRequirement[];
   /** Payout : dernière séance déjà payée (le cycle commence après), null = depuis le début. */
   cycleAfter: string | null;
+  /** D'où vient `cycleAfter` : payout détecté chez le broker, ou date saisie par l'utilisateur. */
+  cycleSource: 'broker' | 'user' | null;
+  /** Payouts déjà reçus d'après le broker (rang du prochain), null si inconnu. */
+  payoutsReceived: number | null;
   /** Plan marqué « à revoir » au catalogue : à présenter comme une estimation. */
   unconfirmed: boolean;
 }
@@ -48,8 +52,11 @@ export interface ProgressInput {
   phaseStartingBalance: number;
   currentBalance: number;
   sessions: SessionPnl[];
-  /** `AAAA-MM-JJ` de la séance du dernier payout, saisie par l'utilisateur. */
+  /** `AAAA-MM-JJ` de la séance du dernier payout (le plus récent, détecté ou saisi). */
   lastPayoutDay: string | null;
+  cycleSource?: 'broker' | 'user' | null;
+  /** Payouts détectés chez le broker : choisit le palier exact ; null → 1er si aucun payout connu, sinon le suivant. */
+  payoutsReceived?: number | null;
   unconfirmed: boolean;
 }
 
@@ -87,6 +94,8 @@ function objectiveProgress(input: ProgressInput, target: number): AccountProgres
     done: requirements.every((r) => r.met),
     requirements,
     cycleAfter: null,
+    cycleSource: null,
+    payoutsReceived: null,
     unconfirmed: input.unconfirmed,
   };
 }
@@ -109,11 +118,13 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
   // Profit du cycle : objectif chiffré (le palier du 1er payout si l'utilisateur n'en a jamais
   // reçu, sinon le suivant — on ne connaît pas le rang exact au-delà), et/ou plancher imposé par
   // la consistency (meilleur jour ÷ X %).
+  // Rang du prochain payout : connu si le broker a détecté les payouts, sinon 1er / suivant.
+  const rank = input.payoutsReceived ?? (lastPayoutDay ? 1 : 0);
   const schedule = payout.min_cycle_profit_schedule ?? null;
-  const goal = payout.min_cycle_profit ?? (schedule?.length ? schedule[Math.min(lastPayoutDay ? 1 : 0, schedule.length - 1)] : null);
+  const goal = payout.min_cycle_profit ?? (schedule?.length ? schedule[Math.min(rank, schedule.length - 1)] : null);
   const consSchedule = phase.consistency?.applies_to === 'payout' ? phase.consistency.max_single_day_pct_schedule ?? null : null;
   const cons = phase.consistency?.applies_to === 'payout'
-    ? consSchedule?.length ? consSchedule[Math.min(lastPayoutDay ? 1 : 0, consSchedule.length - 1)] : phase.consistency.max_single_day_pct
+    ? consSchedule?.length ? consSchedule[Math.min(rank, consSchedule.length - 1)] : phase.consistency.max_single_day_pct
     : null;
   const consFloor = cons ? best / cons : 0;
   if (goal != null || cons) {
@@ -135,6 +146,8 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
     done: requirements.length > 0 && requirements.every((r) => r.met),
     requirements,
     cycleAfter: lastPayoutDay,
+    cycleSource: lastPayoutDay ? input.cycleSource ?? 'user' : null,
+    payoutsReceived: input.payoutsReceived ?? null,
     unconfirmed: input.unconfirmed,
   };
 }
