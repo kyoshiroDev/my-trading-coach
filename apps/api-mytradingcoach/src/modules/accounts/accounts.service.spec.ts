@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { previousSession } from './account-rules';
 import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
@@ -25,6 +26,7 @@ function makePrisma() {
     tradeSession: { count: vi.fn() },
     user: { findUnique: vi.fn() },
     propFirmPlan: { count: vi.fn() },
+    brokerDailyClose: { groupBy: vi.fn(async () => []) },
   };
 }
 
@@ -452,6 +454,59 @@ describe('AccountsService', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
       expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+  });
+
+  describe('computeRuleMetrics — plus haut de clôture officiel (trailing EOD)', () => {
+    // Vendredi 2 octobre 2026, 15:00 UTC : séance du 2 en cours, la précédente est le 1er.
+    const now = new Date('2026-10-02T15:00:00Z');
+    const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
+    const eod: RulePlan = { firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [
+      { phase: 'evaluation', max_drawdown: {
+        amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: 52_100, locked_floor: 50_100,
+        enforced_on: null, basis_notes: null,
+      } } as unknown as PropFirmPhaseRules,
+    ] };
+    const acc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'EVALUATION' as const };
+    const broker = (cash: number): RuleBroker => ({ cashBalance: cash, cashBalanceAt: now, netLiq: cash, openPnl: 0, equityAt: now, openPositions: 0 });
+    // MTC ne voit qu'un trade (+500) ; le broker a clôturé à 51 400 le 30/09 (des trades manquent).
+    const trades = [at(500, '2026-09-30T15:00:00Z')];
+
+    it('clôtures à jour (séance précédente couverte) : elles font foi, même au-dessus des trades', () => {
+      const m = svc.computeRuleMetrics(acc, trades, eod, broker(51_000), null, { peakClose: 51_400, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown).toMatchObject({ floor: 49_400 });
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'broker', peakBalance: 51_400, officialThrough: '2026-10-01' });
+    });
+
+    it('clôtures à jour : un plus haut reconstitué trop haut (pertes non loggées) est écarté', () => {
+      const m = svc.computeRuleMetrics(acc, [at(3_000, '2026-09-29T15:00:00Z')], eod, broker(50_800), null,
+        { peakClose: 51_200, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'broker', peakBalance: 51_200 });
+    });
+
+    it('clôtures en retard (séance précédente absente) : le plus prudent des deux', () => {
+      const m = svc.computeRuleMetrics(acc, [at(3_000, '2026-09-29T15:00:00Z')], eod, broker(50_800), null,
+        { peakClose: 51_200, lastTradeDate: '2026-09-29' }, now);
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'trades', peakBalance: 53_000, officialThrough: '2026-09-29' });
+    });
+
+    it('verrouillage atteint grâce au plus haut officiel', () => {
+      const m = svc.computeRuleMetrics(acc, trades, eod, broker(51_900), null, { peakClose: 52_300, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown).toMatchObject({ floor: 50_100 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true });
+    });
+
+    it('sans solde broker, ou référentiel incompatible : clôtures ignorées', () => {
+      const off = { peakClose: 51_400, lastTradeDate: '2026-10-01' };
+      expect(svc.computeRuleMetrics(acc, trades, eod, null, null, off, now).drawdown?.rule).toMatchObject({ peakSource: 'trades', officialThrough: null });
+      const m = svc.computeRuleMetrics({ ...acc, startingBalance: 0, accountSize: null }, trades, eod, broker(51_000), null, off, now);
+      expect(m.broker?.referenceMismatch).toBe(true);
+      expect(m.drawdown?.rule?.officialThrough).toBeNull();
+    });
+
+    it('previousSession : lundi → vendredi, mardi → lundi', () => {
+      expect(previousSession('2026-10-05')).toBe('2026-10-02');
+      expect(previousSession('2026-10-06')).toBe('2026-10-05');
     });
   });
 

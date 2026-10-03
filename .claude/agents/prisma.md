@@ -363,6 +363,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 > traders Apex étrangers portaient `699523`). C'est la clé du verrou de renouvellement et de la
 > propagation aux connexions sœurs — une valeur partagée entre traders sérialise tout le monde.
 >
+> `BrokerDailyClose` (migration `20261003230000_broker_daily_close`, table nouvelle, cascade sur
+> `TradingAccount`, `@@unique([accountId, tradeDate])`, `tradeDate` en `@db.Date` = date de SÉANCE)
+> = soldes de clôture officiels lus chez le broker (cf. `nestjs.md`, « Clôtures officielles »).
+> Le seed démo en crée pour le compte connecté vitrine, tirés de ses trades.
+>
 > `TradingAccount.platform` (migration `20261003220000_trading_account_platform`, TEXT nullable,
 > additive) = plateforme de trading saisie (`rithmic`, `tradovate`…), pour les règles qui en
 > dépendent (verrouillage Apex). Ignorée quand le compte a une connexion Tradovate.

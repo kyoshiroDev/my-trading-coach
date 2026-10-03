@@ -363,7 +363,8 @@ describe('Mes comptes — verrouillage selon la plateforme', () => {
 
   const rule = (over: Partial<NonNullable<NonNullable<TradingAccount['metrics']['drawdown']>['rule']>>) => ({
     firmName: 'Apex Trader Funding', planName: 'EOD Trail', phase: 'evaluation' as const, kind: 'trailing_eod' as const,
-    locksAt: null, lockedFloor: null, locked: false, realtimeEquity: true, platform: null, platformChoices: [], ...over,
+    locksAt: null, lockedFloor: null, locked: false, realtimeEquity: true, platform: null, platformChoices: [],
+    peakSource: null as 'broker' | 'trades' | null, peakBalance: null as number | null, officialThrough: null as string | null, ...over,
   });
   const withRule = (r: ReturnType<typeof rule>) => acct('a', 'Apex 50k', {
     propFirmPlanId: 'apex-eod-50k',
@@ -386,6 +387,34 @@ describe('Mes comptes — verrouillage selon la plateforme', () => {
     click('account-expand-a');
     expect(q('dd-basis')!.textContent).toContain('règle Rithmic');
     expect(q('dd-platform-unknown')).toBeNull();
+  });
+});
+
+describe('Mes comptes — plus haut de clôture', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withPeak = (over: Record<string, unknown>) => acct('a', 'Lucid 50k', {
+    propFirmPlanId: 'lucid-flex-50k',
+    metrics: {
+      ...acct('a', '').metrics,
+      drawdown: { type: 'TRAILING', floor: 49_400, margin: 1_600, maxDrawdown: 2_000, pct: 0.8, breached: false, source: 'plan',
+        rule: { firmName: 'Lucid Trading', planName: 'LucidFlex', phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
+          locked: false, realtimeEquity: false, platform: null, platformChoices: [], peakSource: 'trades', peakBalance: 51_400, officialThrough: null, ...over } },
+    },
+  });
+
+  it('clôtures officielles à jour : origine et dernière séance couverte', () => {
+    const { q, click } = setup({ accounts: [withPeak({ peakSource: 'broker', officialThrough: '2026-10-01' })] });
+    click('account-expand-a');
+    const t = q('dd-peak')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('$51,400');
+    expect(t).toContain('officiel, relevé chez le broker jusqu\'à la séance du 01/10');
+  });
+
+  it('sans clôtures officielles : reconstitué depuis les trades', () => {
+    const { q, click } = setup({ accounts: [withPeak({})] });
+    click('account-expand-a');
+    expect(q('dd-peak')!.textContent).toContain('reconstitué depuis tes trades');
   });
 });
 

@@ -42,6 +42,18 @@ export function tradingDay(at: Date): string {
   return new Date(Date.UTC(+p['year'], +p['month'] - 1, +p['day'], +p['hour'] + 7)).toISOString().slice(0, 10);
 }
 
+/**
+ * Séance précédant `day` (`AAAA-MM-JJ`), week-end sauté : lundi → vendredi. Les jours fériés ne
+ * sont pas connus : une clôture « manquante » un lendemain de férié rend seulement le calcul plus
+ * prudent (cf. AccountsService).
+ */
+export function previousSession(day: string): string {
+  const d = new Date(`${day}T00:00:00.000Z`);
+  do d.setUTCDate(d.getUTCDate() - 1);
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Étalon JavaScript : mêmes agrégats à partir des trades fermés d'un compte. */
 export function aggregateRuleTrades(trades: RuleTrade[]): RuleAgg {
   if (trades.length === 0) return EMPTY_RULE_AGG;

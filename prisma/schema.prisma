@@ -336,11 +336,32 @@ model TradingAccount {
   trades          Trade[]
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]
+  brokerDailyCloses BrokerDailyClose[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   @@index([userId, status])
   @@index([propFirmPlanId])
+}
+
+/// Solde de clôture OFFICIEL d'un compte, par journée de trading, lu chez le broker (rapport
+/// `Account Balance History` de la Reporting API Tradovate). Base du plus haut de clôture des règles
+/// « trailing EOD » : plus fiable que la reconstitution depuis les trades (trade ou frais manquant,
+/// compte connecté en cours de route). Une ligne seulement pour les journées où le solde a bougé.
+model BrokerDailyClose {
+  id             String         @id @default(cuid())
+  accountId      String
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Journée de trading (date de SÉANCE, pas date calendaire), telle que le broker la libelle.
+  tradeDate      DateTime       @db.Date
+  /// Solde du compte à la clôture de la séance (`Total Amount`).
+  closingBalance Float
+  /// P&L réalisé de la séance (`Total Realized PNL`).
+  realizedPnl    Float
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([accountId, tradeDate])
 }
 
 /// Connexion API d'un broker, portée par UN `TradingAccount`.

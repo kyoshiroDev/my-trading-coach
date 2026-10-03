@@ -390,6 +390,18 @@
                   @if (r.platform) {
                     <span class="dd-platform">(règle {{ platformLabel(r.platform) }})</span>
                   }
+                  @if (r.peakBalance !== null) {
+                    <span class="dd-peak" data-testid="dd-peak">
+                      Plus haut de clôture <b>{{ money(r.peakBalance, a.currency) }}</b>
+                      @if (r.peakSource === 'broker') {
+                        · officiel, relevé chez le broker jusqu'à la séance du {{ sessionDate(r.officialThrough) }}
+                      } @else if (r.officialThrough) {
+                        · reconstitué depuis tes trades (clôtures du broker en retard, dernière séance le {{ sessionDate(r.officialThrough) }})
+                      } @else {
+                        · reconstitué depuis tes trades
+                      }
+                    </span>
+                  }
                   @if (r.platformChoices.length) {
                     <span class="dd-platform-warn" data-testid="dd-platform-unknown">
                       Le verrouillage dépend de ta plateforme ({{ platformList(r.platformChoices) }}) : indique-la via « Modifier ».

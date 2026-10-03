@@ -7,6 +7,7 @@ import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENG
 import { type DemoDay, type DemoStats, net } from './demo-data/model';
 import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generate';
 import { PROFILE, isoWeek, setupRanking, usd } from './demo-data/reports';
+import { tradingDay } from '../accounts/account-rules';
 
 
 /**
@@ -297,6 +298,29 @@ export async function seedTradingData(
       brokerOpenPositions: 0,
     },
   });
+
+  // Clôtures « officielles » du compte connecté : solde à la fin de chaque séance tradée, tiré des
+  // trades seedés (même convention de séance que le calcul : 17:00 heure de Chicago). La séance en
+  // cours n'en a pas, comme chez le broker. Supprimées avec le compte (cascade).
+  if (opts.brokerShowcase) {
+    const startingBalance = DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance;
+    const closeBySession = new Map<string, number>();
+    let balance = startingBalance;
+    const apexTrades = days.flatMap((d) => d.trades).filter((t) => t.account === 'apex')
+      .sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime());
+    for (const t of apexTrades) {
+      balance += net(t);
+      closeBySession.set(tradingDay(t.tradedAt), round2(balance));
+    }
+    const currentSession = tradingDay(now);
+    let previous = startingBalance;
+    const closes = [...closeBySession].filter(([session]) => session < currentSession).map(([session, close]) => {
+      const row = { accountId: apexId, tradeDate: new Date(`${session}T00:00:00.000Z`), closingBalance: close, realizedPnl: round2(close - previous) };
+      previous = close;
+      return row;
+    });
+    if (closes.length) await prisma.brokerDailyClose.createMany({ data: closes });
+  }
 
   return {
     email: user.email, trades: stats.trades, winRate: Math.round(stats.winRateNet), pnl: stats.netPnl,

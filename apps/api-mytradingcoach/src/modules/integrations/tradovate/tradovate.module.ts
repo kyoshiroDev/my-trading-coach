@@ -7,6 +7,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateBalanceService } from './tradovate-balance.service';
+import { TradovateClosingsService } from './tradovate-closings.service';
 import { TradovateReportingClient } from './tradovate-reporting.client';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
@@ -32,6 +33,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     TradovateSyncService,
     // Solde et equity lus chez le broker (WebSocket + instantané sur événement).
     TradovateBalanceService,
+    // Soldes de clôture officiels (rapport Account Balance History) : plus haut des règles EOD.
+    TradovateClosingsService,
     // Historique par la Reporting API : la Trade API ne voit que la séance.
     TradovateReportingClient,
     TradovateHistoryService,

@@ -1254,7 +1254,26 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
   intraday : un nouveau plus haut d'equity relève le seuil. Écart solde broker ↔ solde MTC
   > max(2 000 $, 25 % de la taille) = référentiel incompatible (`brokerReferenceMismatch`, ex.
   funded saisi à 0 $) → calcul MTC + latent, `broker.referenceMismatch` affiché à l'utilisateur.
-- Le plus haut de clôture reste tiré des trades (le rapport `Account Balance History` le donnera).
+- Le plus haut de clôture des règles EOD vient des **clôtures officielles** (section suivante).
+
+### Clôtures officielles (rapport `Account Balance History`, 2026-10-03)
+
+`TradovateClosingsService` (`integrations/tradovate/tradovate-closings.service.ts`) remplit
+`BrokerDailyClose` (une ligne par compte et par journée de trading : `closingBalance` = « Total
+Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en plus.
+- **Cadence** : dans `TradovateSyncService.sync` quand `history: true` (cron horaire, retour
+  après absence, bouton « Synchroniser »), best-effort. Incrémental : reprise à la dernière séance
+  stockée (relue), sinon depuis la création du compte ; fenêtres de 60 jours.
+- **Séance en cours jamais stockée** (`tradeDate < tradingDay(now)`) : son « Total Amount » n'est
+  une clôture qu'après la fermeture.
+- **Format réel** (mesuré) : `Account ID, Account Name, Trade Date (AAAA-MM-JJ), Total Amount
+  ("50,000.00"), Total Realized PNL` ; une ligne seulement les jours où le solde a bougé. Colonnes
+  lues par leur nom ; montants par `parseReportAmount` (⚠️ `parseTradovatePnl` ne retire pas les
+  séparateurs de milliers : `"50,000.00"` y vaudrait 50).
+- **Métriques** : trailing EOD → plus haut = max des clôtures officielles si elles couvrent la
+  séance précédente (`previousSession`, week-end sauté) ET que le solde broker est dans le
+  référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`
+  (`broker` | `trades`), `rule.peakBalance`, `rule.officialThrough` affichés sous la marge.
 
 ### Drawdown selon le plan prop firm relié (2026-10-03)
 
