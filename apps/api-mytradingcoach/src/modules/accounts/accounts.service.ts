@@ -31,6 +31,35 @@ export interface RulePlan {
   phases: PropFirmPhaseRules[];
 }
 
+/** Solde et equity du compte lus chez le broker (connexion API), quand il y en a une. */
+export interface RuleBroker {
+  cashBalance: number | null;
+  cashBalanceAt: Date | null;
+  netLiq: number | null;
+  openPnl: number | null;
+  equityAt: Date | null;
+  openPositions: number;
+}
+
+const BROKER_SELECT = {
+  brokerCashBalance: true,
+  brokerCashBalanceAt: true,
+  brokerNetLiq: true,
+  brokerOpenPnl: true,
+  brokerEquityAt: true,
+  brokerOpenPositions: true,
+} as const;
+
+/**
+ * Écart solde broker ↔ solde MTC au-delà duquel le solde de départ saisi n'est visiblement pas
+ * dans le même référentiel que le broker (ex. funded saisi à 0 $, compte à 50 000 $ chez le
+ * broker). On garde alors le calcul MTC et on n'ajoute que le latent du broker. En deçà, l'écart
+ * vient de trades ou de frais manquants : le solde du broker fait foi.
+ */
+export function brokerReferenceMismatch(gap: number, reference: number): boolean {
+  return Math.abs(gap) > Math.max(2_000, 0.25 * Math.abs(reference));
+}
+
 const PLAN_SELECT = {
   planName: true,
   accountSize: true,
@@ -45,6 +74,10 @@ type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 // Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
 // slot (PASSED / FAILED / ARCHIVED le libèrent).
 const FREE_ACCOUNT_LIMIT = 1;
+
+const BROKER_DISCLAIMER =
+  "Solde et positions ouvertes lus chez le broker ; seuil de drawdown calculé par MyTradingCoach, " +
+  "pas celui de la prop firm. Le statut du compte reste piloté par toi.";
 
 const RULE_DISCLAIMER =
   "Estimation basée uniquement sur les trades loggés dans MyTradingCoach, pas " +
@@ -87,6 +120,20 @@ export interface AccountRuleMetrics {
   } | null;
   /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
   drawdownUnconfirmed: boolean;
+  /**
+   * Solde et equity lus chez le broker. Présent → `currentBalance` est le solde du broker et la
+   * marge de drawdown se calcule sur l'equity (latent compris), sauf `referenceMismatch`.
+   */
+  broker: {
+    cashBalance: number;
+    equity: number;
+    openPnl: number;
+    openPositions: number;
+    balanceAt: Date | null;
+    equityAt: Date | null;
+    /** Solde de départ saisi incompatible avec le solde du broker : calcul MTC + latent. */
+    referenceMismatch: boolean;
+  } | null;
   estimated: true;
   disclaimer: string;
 }
@@ -106,18 +153,25 @@ export class AccountsService {
     const rows = await this.prisma.tradingAccount.findMany({
       where: { userId },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
-      include: { propFirmPlan: { select: PLAN_SELECT } },
+      include: {
+        propFirmPlan: { select: PLAN_SELECT },
+        brokerConnections: { where: { brokerCashBalance: { not: null } }, select: BROKER_SELECT, take: 1 },
+      },
     });
     if (rows.length === 0) return [];
-    const accounts = rows.map(({ propFirmPlan, ...a }) => ({ account: a, plan: toRulePlan(propFirmPlan) }));
+    const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
+      account: a,
+      plan: toRulePlan(propFirmPlan),
+      broker: toRuleBroker(brokerConnections[0] ?? null),
+    }));
 
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
     const aggs = await ruleAggregatesSql(this.prisma, userId, accounts.map(({ account }) => account.id));
 
-    return accounts.map(({ account, plan }) => ({
+    return accounts.map(({ account, plan, broker }) => ({
       ...account,
-      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan),
+      metrics: this.ruleMetricsFromAgg(account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker),
     }));
   }
 
@@ -136,17 +190,50 @@ export class AccountsService {
     account: RuleAccount,
     trades: RuleTrade[],
     plan: RulePlan | null = null,
+    broker: RuleBroker | null = null,
   ): AccountRuleMetrics {
-    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan);
+    return this.ruleMetricsFromAgg(account, aggregateRuleTrades(trades), plan, broker);
   }
 
   /** Mise en forme des métriques à partir des agrégats (calculés en SQL par `list`, ou en JS). */
-  ruleMetricsFromAgg(account: RuleAccount, agg: RuleAgg, plan: RulePlan | null = null): AccountRuleMetrics {
+  ruleMetricsFromAgg(
+    account: RuleAccount,
+    agg: RuleAgg,
+    plan: RulePlan | null = null,
+    brokerData: RuleBroker | null = null,
+  ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
       account.startingBalance ?? account.accountSize ?? (phase && plan ? phase.starting_balance ?? plan.accountSize : 0);
-    const realizedPnl = agg.realized;
-    const currentBalance = startingBalance + realizedPnl;
+    const tradesBalance = startingBalance + agg.realized;
+
+    // Solde du broker : il fait foi (trades ou frais manquants côté MTC), sauf référentiel
+    // incompatible avec le solde de départ saisi. L'equity ajoute le latent du dernier instantané
+    // tant qu'une position est ouverte ; sans position, l'equity EST le solde.
+    let broker: AccountRuleMetrics['broker'] = null;
+    if (brokerData?.cashBalance != null) {
+      const referenceMismatch = brokerReferenceMismatch(
+        brokerData.cashBalance - tradesBalance,
+        account.accountSize ?? startingBalance,
+      );
+      const open = brokerData.openPositions > 0;
+      const openPnl = open ? brokerData.openPnl ?? 0 : 0;
+      const cashBalance = referenceMismatch ? tradesBalance : brokerData.cashBalance;
+      const equity = !referenceMismatch && open && brokerData.netLiq != null ? brokerData.netLiq : cashBalance + openPnl;
+      broker = {
+        cashBalance: brokerData.cashBalance,
+        equity,
+        openPnl,
+        openPositions: brokerData.openPositions,
+        balanceAt: brokerData.cashBalanceAt,
+        equityAt: brokerData.equityAt,
+        referenceMismatch,
+      };
+    }
+    const currentBalance = broker && !broker.referenceMismatch ? broker.cashBalance : tradesBalance;
+    const realizedPnl = currentBalance - startingBalance;
+    /** Valeur comparée au plancher : l'equity du broker (latent compris) quand on l'a. */
+    const equity = broker ? broker.equity : currentBalance;
 
     // Taux de réussite (BE exclus du dénominateur) : RATIO 0..1, null si aucun trade décisif.
     const winRate = agg.wins + agg.losses > 0 ? agg.wins / (agg.wins + agg.losses) : null;
@@ -170,9 +257,10 @@ export class AccountsService {
         // Seuils du catalogue exprimés depuis le solde de départ de la phase : on les décale sur
         // celui du compte (reprise du suivi en cours de route, solde saisi différent).
         const shift = startingBalance - (phase.starting_balance ?? plan.accountSize);
+        // Intraday : un nouveau plus haut en direct (equity du broker) fait monter le seuil.
         const peakProfit =
           md.type === 'trailing_eod' ? Math.max(0, agg.maxEodCumulative)
-          : md.type === 'trailing_intraday' ? Math.max(0, agg.maxCumulative)
+          : md.type === 'trailing_intraday' ? Math.max(0, agg.maxCumulative, equity - startingBalance)
           : 0;
         const locksAt = md.locks_at != null ? md.locks_at + shift : null;
         const lockedFloor = md.locked_floor != null ? md.locked_floor + shift : null;
@@ -180,7 +268,7 @@ export class AccountsService {
         const floor = locked
           ? lockedFloor ?? locksAt! - md.amount
           : startingBalance + peakProfit - md.amount;
-        const margin = currentBalance - floor;
+        const margin = equity - floor;
         drawdown = {
           type: md.type === 'static' ? DrawdownType.STATIC : DrawdownType.TRAILING,
           floor,
@@ -206,9 +294,9 @@ export class AccountsService {
       // départ) ; STATIC : plancher fixe depuis le solde de départ.
       const floor =
         account.drawdownType === DrawdownType.TRAILING
-          ? startingBalance + Math.max(0, agg.maxCumulative) - account.maxDrawdown
+          ? startingBalance + Math.max(0, agg.maxCumulative, equity - startingBalance) - account.maxDrawdown
           : startingBalance - account.maxDrawdown;
-      const margin = currentBalance - floor;
+      const margin = equity - floor;
       drawdown = {
         type: account.drawdownType,
         floor,
@@ -232,8 +320,9 @@ export class AccountsService {
       objective,
       drawdown,
       drawdownUnconfirmed,
+      broker,
       estimated: true,
-      disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule) : RULE_DISCLAIMER,
+      disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule, broker) : broker ? BROKER_DISCLAIMER : RULE_DISCLAIMER,
     };
   }
 
@@ -452,19 +541,37 @@ function toRulePlan(
   return { firmName: row.firm.name, planName: row.planName, accountSize: row.accountSize, phases: row.phases as PropFirmPhaseRules[] };
 }
 
-function planDisclaimer(rule: DrawdownPlanRule): string {
+function planDisclaimer(rule: DrawdownPlanRule, broker: AccountRuleMetrics['broker']): string {
   const kind =
     rule.kind === 'trailing_eod' ? 'trailing sur le plus haut solde de fin de journée'
     : rule.kind === 'trailing_intraday' ? 'trailing sur le plus haut atteint en séance'
     : 'statique';
+  const live = broker && !broker.referenceMismatch;
   return (
     `Drawdown calculé avec les règles officielles ${rule.firmName} · ${rule.planName} (${kind}), ` +
-    'appliquées à tes trades loggés dans MyTradingCoach.' +
-    (rule.realtimeEquity
+    (live
+      ? 'appliquées au solde et aux positions ouvertes lus chez le broker.'
+      : 'appliquées à tes trades loggés dans MyTradingCoach.') +
+    (rule.realtimeEquity && !broker
       ? ` ${rule.firmName} contrôle ce seuil en temps réel, positions ouvertes comprises : elles ne sont pas incluses ici.`
       : '') +
-    (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas connus : le seuil réel peut être plus haut.' : '') +
+    (rule.kind === 'trailing_intraday' ? ' Les pics atteints pendant un trade ouvert ne sont pas tous connus : le seuil réel peut être plus haut.' : '') +
     ' Les payouts ne sont pas suivis. Le statut du compte reste piloté par toi.'
   );
+}
+
+function toRuleBroker(row: {
+  brokerCashBalance: number | null; brokerCashBalanceAt: Date | null; brokerNetLiq: number | null;
+  brokerOpenPnl: number | null; brokerEquityAt: Date | null; brokerOpenPositions: number;
+} | null): RuleBroker | null {
+  if (!row || row.brokerCashBalance == null) return null;
+  return {
+    cashBalance: row.brokerCashBalance,
+    cashBalanceAt: row.brokerCashBalanceAt,
+    netLiq: row.brokerNetLiq,
+    openPnl: row.brokerOpenPnl,
+    equityAt: row.brokerEquityAt,
+    openPositions: row.brokerOpenPositions,
+  };
 }
 
