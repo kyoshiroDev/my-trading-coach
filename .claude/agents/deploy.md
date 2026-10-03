@@ -590,6 +590,7 @@ l'API jusqu'à **90 s** (idleConnTimeout par défaut). Node les fermait après 5
 sous charge (225 sur 355 000 au test B9 n°4, sans erreur de l'API). `config/http-keepalive.ts` :
 `keepAliveTimeout` 95 s, `headersTimeout` 96 s, appliqués après `app.listen` dans chaque worker.
 **Si un jour on règle `serversTransport.forwardingTimeouts.idleConnTimeout` dans Traefik, garder le
-délai de Node AU-DESSUS** (constante `TRAEFIK_IDLE_CONN_TIMEOUT_MS`). Vérification sur le VPS :
-`docker exec mtc_api_prod wget -qSO- http://localhost:3000/api/health 2>&1 | grep -i keep-alive`
-→ `Keep-Alive: timeout=95`.
+délai de Node AU-DESSUS** (constante `TRAEFIK_IDLE_CONN_TIMEOUT_MS`). Vérification sur le VPS (⚠️ pas `wget` : il envoie `Connection: close`, Node ne renvoie alors
+aucun en-tête `Keep-Alive`) :
+`docker exec mtc_api_prod node -e "const h=require('http');h.get({host:'127.0.0.1',port:3000,path:'/api/health',agent:new h.Agent({keepAlive:true})},r=>{r.resume();console.log(r.headers['keep-alive'])})"`
+→ `timeout=95`.

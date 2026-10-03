@@ -207,8 +207,12 @@ const user = await prisma.user.findUnique({
 
 ## Rate Limiting
 
-- **Défaut** : 60 requêtes / minute / IP (`ThrottlerModule.forRootAsync` dans `app.module.ts`,
-  `ThrottlerGuard` en APP_GUARD). Surcharge par route : `@Throttle({ default: { ttl, limit } })`.
+- **Défaut** (SCA-B3-03) : **300 requêtes / minute par utilisateur connecté** (compteur
+  `user:<id>`), **60 / minute / IP** pour un anonyme (`defaultThrottleLimit`). Deux utilisateurs
+  derrière la même IP ne partagent plus de compteur. **`JwtAuthGuard` passe AVANT le throttler**
+  (`app.module.ts`) pour que `req.user` soit connu ; les routes `@Public` restent comptées par IP
+  (+ empreinte d'e-mail). Surcharge par route : `@Throttle({ default: { ttl, limit } })` — sur une
+  route authentifiée, elle compte désormais par utilisateur.
 - **IP réelle** : `app.set('trust proxy', 1)` dans `main.ts` (un seul saut : Traefik). Sans lui,
   `req.ip` = IP du proxy → tous les users dans le même compteur. Ne jamais monter à `true`
   (le client pourrait forger `X-Forwarded-For`).
