@@ -6,6 +6,18 @@ import type { AccountStatus, AccountType, DrawdownType } from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
 
+/** Règle officielle appliquée au drawdown (compte relié à un plan du catalogue). */
+export interface DrawdownPlanRule {
+  firmName: string;
+  planName: string;
+  phase: 'evaluation' | 'funded' | 'direct';
+  kind: 'static' | 'trailing_eod' | 'trailing_intraday';
+  locksAt: number | null;
+  lockedFloor: number | null;
+  locked: boolean;
+  realtimeEquity: boolean;
+}
+
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -23,7 +35,12 @@ export interface AccountRuleMetrics {
     maxDrawdown: number;
     pct: number;
     breached: boolean;
+    /** `plan` : règles officielles du plan relié ; `manual` : montant et type saisis. */
+    source: 'plan' | 'manual';
+    rule: DrawdownPlanRule | null;
   } | null;
+  /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
+  drawdownUnconfirmed: boolean;
   estimated: true;
   disclaimer: string;
 }

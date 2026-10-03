@@ -48,7 +48,7 @@
     @if (hasPropAccount()) {
       <div class="global-note">
         <svg [lucideIcon]="InfoIcon" [size]="15"></svg>
-        <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach, pas l'equity temps réel ni le calcul officiel des firms (positions ouvertes, fuseau, trailing intraday). Le statut de chaque compte reste piloté par toi.</span>
+        <span><b>Règles prop firm estimées</b> d'après tes trades loggés dans MyTradingCoach. Pour un compte relié à un plan du catalogue, la marge suit les règles officielles de la firm, mais les positions ouvertes ne sont pas incluses alors que la plupart des firms contrôlent le seuil en temps réel. Le statut de chaque compte reste piloté par toi.</span>
       </div>
     }
 
@@ -184,6 +184,8 @@
                 <div class="bar-track xs">
                   <div class="bar-fill" [style.width.%]="ddWidth(a)" [style.background]="ddColor(a)"></div>
                 </div>
+              } @else if (a.metrics.drawdownUnconfirmed) {
+                <span class="cell-none" title="Montant non publié par la firm">non confirmé</span>
               } @else {
                 <span class="cell-none" title="Compte sans drawdown prop firm">—</span>
               }
@@ -300,6 +302,18 @@
           @if (a.propFirmPlanId && expandedId() === a.id) {
             @let rules = rulesOf(a.propFirmPlanId);
             <div class="acct-sub acct-rules" [attr.data-testid]="'account-rules-' + a.id">
+              @if (a.metrics.drawdown?.rule; as r) {
+                <p class="dd-basis" data-testid="dd-basis">
+                  <b>Marge calculée avec ces règles</b> ({{ phaseLabel(r.phase) }}) :
+                  seuil actuel <b>{{ money(a.metrics.drawdown!.floor, a.currency) }}</b>
+                  @if (r.locksAt !== null) {
+                    · {{ r.locked ? 'figé' : 'se fige à ' + money(r.lockedFloor, a.currency) + ' quand le solde atteint ' + money(r.locksAt, a.currency) }}
+                  }
+                  <span class="dd-disclaimer">{{ a.metrics.disclaimer }}</span>
+                </p>
+              } @else if (a.metrics.drawdownUnconfirmed) {
+                <p class="dd-basis" data-testid="dd-basis">Montant de drawdown <b>non confirmé</b> par la firm pour ce plan : aucune marge calculée.</p>
+              }
               @if (isPlanDetail(rules)) {
                 <mtc-prop-firm-rules [plan]="rules" [accountType]="a.type" />
               } @else if (rules === 'error') {

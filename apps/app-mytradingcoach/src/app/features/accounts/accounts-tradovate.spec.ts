@@ -30,7 +30,7 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };

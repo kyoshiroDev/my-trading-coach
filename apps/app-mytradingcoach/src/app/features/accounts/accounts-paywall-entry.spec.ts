@@ -32,7 +32,7 @@ function acct(id: string): TradingAccount {
     metrics: {
       startingBalance: 5000, realizedPnl: 0, currentBalance: 5000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, estimated: true, disclaimer: 'estimé',
     },
   };
 }
