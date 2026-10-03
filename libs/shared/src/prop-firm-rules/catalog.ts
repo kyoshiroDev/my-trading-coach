@@ -20,5 +20,6 @@ import toponefutures from './toponefutures.json';
 import topstep from './topstep.json';
 import tradeday from './tradeday.json';
 import tradeify from './tradeify.json';
+import uprofit from './uprofit.json';
 
-export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias, earn2trade, toponefutures, blusky, fundedfuturesfamily, oneuptrader];
+export const PROP_FIRM_CATALOG_FILES: readonly unknown[] = [lucid, apex, topstep, tradeify, myfundedfutures, tradeday, takeprofittrader, phidias, earn2trade, toponefutures, blusky, fundedfuturesfamily, oneuptrader, uprofit];
