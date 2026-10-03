@@ -193,3 +193,50 @@ partagé, le scénario pire cas tient **au moins 1 500 utilisateurs simultanés*
 (dashboard rouvert moins souvent), la marge pour 10 000 inscrits est confortable. Le prochain
 plafond sera la machine elle-même (CPU partagé avec la prod) : leviers suivants B3 (coût fixe par
 requête), le correctif keep-alive (#301), et le jour J 4 workers une fois dev/beta arrêtés.
+
+## Test n°5 (2026-10-03, 22 h 11) — après la phase B3, sur dev (#340)
+
+B3 complet (#314 #316 #317 #318 #319 #328 #339) n'existe que sur **dev** (les PR partent vers dev
+depuis le 2026-10-03) : le test s'est joué sur `dev.api`, base `mytradingcoach_dev`, mêmes données
+(2 000 comptes, 4,12 M trades), même scénario (`peak.js`), réglages alignés sur la prod
+(`DB_POOL_MAX=5`, pool PgBouncer 20), API beta arrêtée pour libérer le CPU. `seed-beta.sql` et
+`purge-beta.sql` acceptent désormais beta **ou** dev (toujours refusés ailleurs, prod comprise).
+
+> ⚠️ **Différence découverte pendant le test : l'API dev tourne en `NODE_ENV=development`, donc
+> sans cluster — 1 seul worker** (prod et test n°4 : 3 workers). Les chiffres ci-dessous mesurent
+> donc **un worker seul face au trafic que trois absorbaient** au test n°4. Le test a été arrêté à
+> l'arrivée au palier 1 500 (20 h 29 UTC), le maintien de 15 min n'ayant pas de sens avec un worker.
+
+| Utilisateurs | Req/min | p50 | p95 | p99 | Test n°4, 3 workers (p50 / p95) |
+|---|---|---|---|---|---|
+| 200 | 2 000 | 8 ms | 17-20 ms | 26-31 ms | 10 / 21 ms |
+| 500 | 5 150 | 8-9 ms | 21-23 ms | 31-42 ms | 11 / 23-32 ms |
+| **1 000** | **10 200** | **13-15 ms** | **41-48 ms** | **71-92 ms** | 15 / 44-64 ms |
+| 1 150-1 400 (montée) | 12 800-14 600 | 37-174 ms | 0,4-1,1 s | 0,65-1,9 s | 28 / 250 ms |
+| 1 500 (1re minute) | 14 600 | 54 ms | 276 ms | 499 ms | 22-34 / 108-188 ms |
+
+- **Coût par requête nettement réduit** : à 1 000 utilisateurs, **un seul worker** fait mieux que
+  les trois du test n°4 (p95 41-48 ms contre 44-64 ms), avec une machine **deux fois moins
+  chargée** (charge ~2,1 contre 4-4,7 ; Postgres 26-38 % contre ~44 %). À 500 : charge 0,6,
+  API ~25 % de CPU.
+- Le worker unique sature vers **~13 000 req/min (~1 150 utilisateurs)** : c'est le plafond d'un
+  seul cœur, pas celui de la machine (charge 5,4 sur 4 cœurs au pic, base et PgBouncer sans attente :
+  5 connexions actives, 0 en attente).
+- **Erreurs : 0 erreur de l'API, aucun redémarrage ni OOM, 0 × 502** (correctif keep-alive #301
+  confirmé en charge, contre 225 × 502 au test n°4). 497 × 401 = jetons de 15 min expirés (le script
+  se reconnecte), 40 × 499 = requêtes coupées par l'arrêt de k6. 0 % de checks en échec sur 113 045.
+- Redis partagé avec la prod (db 1, préfixe `dev:`) : pic **36 Mo / 256**, prod à 0,13-0,33 s tout
+  du long, garde-fou jamais déclenché.
+
+### Conclusion
+
+B3 a fait ce qu'on attendait : à trafic égal, environ **trois fois moins de CPU de l'API par
+requête**. En extrapolant prudemment (3 workers en prod, chacun tenant ~1 000-1 100 utilisateurs du
+scénario pire cas), la prod dépasse largement les 1 500 utilisateurs simultanés du test n°4 ; le
+plafond devient la machine partagée. Pour le chiffrer : refaire ce test sur un environnement en
+`NODE_ENV=production` (beta quand B3 y sera, ou dev passé temporairement en production) avec le
+maintien de 15 min, en poussant à 2 000-2 500.
+
+Nettoyage : 2 000 comptes purgés (base dev revenue à 11 Mo, `VACUUM FULL`), clés de charge supprimées
+du Redis partagé (db 1 uniquement), `LOAD_TEST_KEY` et collecteur retirés, `DB_POOL_MAX=2` et pool 6
+rétablis sur dev, API beta relancée — dev, beta et prod `healthy`.
