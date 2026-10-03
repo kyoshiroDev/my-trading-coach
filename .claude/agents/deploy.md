@@ -582,3 +582,14 @@ l'**ignore si `DATABASE_URL` vise `mytradingcoach_prod`**. Jeu de données : `se
 `purge-beta.sql` (refusent toute autre base que beta). Pendant un test : beta en format prod
 (`DB_POOL_MAX=5`, pool PgBouncer beta 20, API dev arrêtée), hors heures du marché US, purge
 avant la sauvegarde de 3 h.
+
+## Keep-alive Node ↔ Traefik (#301, 2026-10-03)
+
+Traefik 2.11 n'a **pas** de `serversTransport` configuré : il garde ses connexions inactives vers
+l'API jusqu'à **90 s** (idleConnTimeout par défaut). Node les fermait après 5 s → 502 sporadiques
+sous charge (225 sur 355 000 au test B9 n°4, sans erreur de l'API). `config/http-keepalive.ts` :
+`keepAliveTimeout` 95 s, `headersTimeout` 96 s, appliqués après `app.listen` dans chaque worker.
+**Si un jour on règle `serversTransport.forwardingTimeouts.idleConnTimeout` dans Traefik, garder le
+délai de Node AU-DESSUS** (constante `TRAEFIK_IDLE_CONN_TIMEOUT_MS`). Vérification sur le VPS :
+`docker exec mtc_api_prod wget -qSO- http://localhost:3000/api/health 2>&1 | grep -i keep-alive`
+→ `Keep-Alive: timeout=95`.
