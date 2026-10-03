@@ -122,11 +122,11 @@ PATCH  /api/admin/ambassadors/:id/pay-all ADMIN                             │
 POST   /api/admin/ambassadors/promote|revoke ADMIN                          │
 GET    /api/admin/referral/overview    ADMIN                                ┘
 
-GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token)
+GET    /api/integrations/tradovate/connections                 JWT → état de connexion par compte (jamais de token) · `brokerTradesCount` = trades broker ENCORE présents (≠ `tradesImported`, cumul jamais décrémenté)
 POST   /api/integrations/tradovate/accounts/:accountId/authorize  JWT → { url } + cookie httpOnly de state · body { origin?: 'wizard'|'settings' }
 POST   /api/integrations/tradovate/accounts/:accountId/select     JWT → choix du compte Tradovate { externalAccountId }
 POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchro manuelle (FREE, pas de cron en V1)
-DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés)
+DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés) · `?deleteTrades=true` → supprime AUSSI les trades BROKER_SYNC/BROKER_HISTORY de ce compte (jamais MANUAL/CSV_IMPORT) → { disconnected, tradesDeleted } ; suppression hors transaction, en échec → connexion quand même coupée, `tradesDeleted: null` + log
 GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
 GET    /api/health

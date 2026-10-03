@@ -19,6 +19,7 @@ import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService, type HistoryImportResult } from './tradovate-history.service';
 import { SelectTradovateAccountDto } from './dto/select-tradovate-account.dto';
 import { AuthorizeTradovateDto } from './dto/authorize-tradovate.dto';
+import { DisconnectTradovateDto } from './dto/disconnect-tradovate.dto';
 import type { FirstSyncSummary } from './tradovate-connection.service';
 import type { TradovateSyncResult } from './tradovate-sync.service';
 
@@ -108,9 +109,17 @@ export class TradovateController {
     return this.historyService.importForAccount(user.id, accountId);
   }
 
+  /**
+   * Déconnexion. `?deleteTrades=true` supprime en plus les trades importés par Tradovate sur ce
+   * compte (jamais les saisies manuelles ni les imports CSV) — cas d'un mauvais compte branché.
+   */
   @Delete('accounts/:accountId')
-  disconnect(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
-    return this.connections.disconnect(user.id, accountId);
+  disconnect(
+    @CurrentUser() user: { id: string },
+    @Param('accountId') accountId: string,
+    @Query() dto: DisconnectTradovateDto,
+  ) {
+    return this.syncService.disconnect(user.id, accountId, { deleteTrades: dto.deleteTrades === 'true' });
   }
 }
 
