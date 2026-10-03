@@ -25,8 +25,13 @@ export class PropFirmPlanPickerComponent {
   readonly catalog = input.required<readonly PropFirmCatalogFirm[]>();
   readonly accountType = input.required<AccountType>();
   readonly planId = input<string | null>(null);
-  /** Compte existant avec une firm saisie à la main et sans plan : ouvrir sur « Autre ». */
-  readonly startOnOther = input(false);
+  /**
+   * Compte existant sans plan : firm sur laquelle ouvrir (id du catalogue reconnu dans la firm
+   * saisie, ou « Autre » si elle n'y est pas). '' = rien de présélectionné.
+   */
+  readonly startFirm = input<FirmChoice>('');
+  /** Taille du compte : choisir un programme sélectionne d'emblée cette taille si elle existe. */
+  readonly preferredSize = input<number | null>(null);
 
   readonly firmChange = output<FirmChoice>();
   readonly planChange = output<PropFirmPlanSummary | null>();
@@ -67,8 +72,8 @@ export class PropFirmPlanPickerComponent {
       if (sel) {
         this.firmId.set(sel.firm.id);
         this.programId.set(programKey(sel.plan));
-      } else if (this.startOnOther()) {
-        this.firmId.set(OTHER_FIRM);
+      } else if (this.startFirm()) {
+        this.firmId.set(this.startFirm());
       }
     });
   }
@@ -80,10 +85,10 @@ export class PropFirmPlanPickerComponent {
     this.planChange.emit(null);
   }
 
-  /** Changer de programme garde la taille choisie quand elle existe dans le nouveau. */
+  /** Changer de programme garde la taille choisie (ou celle du compte) quand elle existe dans le nouveau. */
   protected onProgram(key: string): void {
     this.programId.set(key);
-    const size = this.selected()?.plan.accountSize;
+    const size = this.selected()?.plan.accountSize ?? this.preferredSize();
     const plans = this.program()?.plans ?? [];
     this.planChange.emit(plans.find((p) => p.accountSize === size) ?? null);
   }

@@ -1190,6 +1190,15 @@ redéployer : rien à lancer sur le VPS.
   les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
   Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
 - Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
+  le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
+  si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,
+  drawdown, statique / trailing : `matchPlans` de `@mtc/shared`). Jamais un compte modifié depuis
+  `PLAN_PICKER_RELEASED_AT` (il a pu être laissé sans plan exprès), jamais un user `isDemo`.
+  En pratique c'est rare : les programmes d'une firm (EOD / intraday, DLL, payout) partagent
+  objectif et drawdown (Lucid 50K = 9 plans). Les autres comptes reçoivent dans l'app une bannière
+  « Relie ce compte à son plan » (masquable, `localStorage`) qui ouvre le formulaire sur la firm
+  reconnue et la taille du compte.
 - Import de JSON : `resolveJsonModule` est activé dans `tsconfig.base.json`, et les projets
   `composite` qui incluent `libs/shared` (API app + spec, spec de l'app) listent
   `libs/shared/src/prop-firm-rules/*.json` dans `include` (sinon TS6307). Le catalogue est exporté
