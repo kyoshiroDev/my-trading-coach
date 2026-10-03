@@ -36,6 +36,7 @@ import {
   LucideAlertCircle as AlertCircle,
   LucideLink2 as Link2,
   LucideRefreshCw as RefreshCw,
+  LucideBadgeCheck as BadgeCheck,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -45,7 +46,8 @@ import { TradovateStore } from '../../core/stores/tradovate.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import type { TradovateSyncResult } from '../../core/api/tradovate.api';
+import { TradovateApi, type TradovateSyncResult } from '../../core/api/tradovate.api';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
   excludedAccountsMessage,
@@ -57,7 +59,7 @@ import {
 } from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
-import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney } from '@mtc/shared';
+import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney, matchPlans } from '@mtc/shared';
 import {
   AccountType,
   AccountStatus,
@@ -67,6 +69,16 @@ import {
   AccountsApi,
 } from '../../core/api/accounts.api';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
+import { PropFirmsApi, type PropFirmCatalogFirm, type PropFirmPlanDetail } from '../../core/api/prop-firms.api';
+import { PropFirmRulesComponent } from './prop-firm-rules/prop-firm-rules.component';
+import type { PropFirmPlanSummary } from '@mtc/shared';
+import {
+  OTHER_FIRM,
+  PropFirmPlanPickerComponent,
+  type FirmChoice,
+} from './prop-firm-plan-picker/prop-firm-plan-picker.component';
+import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
 interface AccountFormState {
   label: string;
@@ -79,6 +91,8 @@ interface AccountFormState {
   maxDrawdown: number | null;
   drawdownType: DrawdownType;
   status: AccountStatus;
+  propFirmPlanId: string | null;
+  platform: string | null;
 }
 
 function emptyForm(): AccountFormState {
@@ -93,7 +107,20 @@ function emptyForm(): AccountFormState {
     maxDrawdown: null,
     drawdownType: 'TRAILING',
     status: 'ACTIVE',
+    propFirmPlanId: null,
+    platform: null,
   };
+}
+
+const DISMISSED_LINKS_KEY = 'mtc.accounts.planLinkDismissed';
+
+function readDismissedLinks(): string[] {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(DISMISSED_LINKS_KEY) ?? '[]');
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 // « Mes comptes » (PREMIUM) : CRUD des comptes + barres de règles prop firm
@@ -104,7 +131,8 @@ function emptyForm(): AccountFormState {
   imports: [
     DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
-    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
+    PropFirmRulesComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -113,6 +141,7 @@ export class AccountsComponent implements OnInit {
   protected readonly store = inject(SelectedAccountStore);
   protected readonly userStore = inject(UserStore);
   private readonly api = inject(AccountsApi);
+  private readonly propFirmsApi = inject(PropFirmsApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly tradesStore = inject(TradesStore);
@@ -139,6 +168,50 @@ export class AccountsComponent implements OnInit {
    */
   protected readonly expandedId = signal<string | null>(null);
   protected readonly form = signal<AccountFormState>(emptyForm());
+  /** Catalogue prop firm, null tant qu'il n'est pas chargé. */
+  protected readonly catalog = signal<PropFirmCatalogFirm[] | null>(null);
+  private catalogLoading = false;
+  /** Choix de firm du sélecteur : id du catalogue, `other` (saisie libre) ou ''. */
+  protected readonly firmChoice = signal<FirmChoice>('');
+  protected readonly OTHER_FIRM = OTHER_FIRM;
+  /** Pastille initiales + couleur de la prop firm (null si `broker` vide). */
+  protected readonly brokerBadge = brokerBadge;
+  /**
+   * Couleur DISTINCTE par prop firm dans cette liste (assignBrokerTones). Ordre d'ancienneté :
+   * en cas de conflit, la firm dont le premier compte est le plus ancien garde sa couleur, donc
+   * ajouter un compte d'une nouvelle firm ne recolore jamais les autres. Un compte prop firm sans
+   * firm saisie est identifié par son libellé.
+   */
+  protected readonly brokerTones = computed(() =>
+    assignBrokerTones(
+      [...this.store.accounts()]
+        .filter((a) => a.type !== 'PERSONAL')
+        .sort((x, y) => x.createdAt.localeCompare(y.createdAt))
+        .map((a) => a.broker || a.label),
+    ),
+  );
+  /** Comptes dont l'utilisateur a écarté la proposition de plan (ce navigateur seulement). */
+  private readonly dismissedLinks = signal<string[]>(readDismissedLinks());
+  /**
+   * Comptes prop firm saisis avant le catalogue, dont la firm y figure : on propose de les relier
+   * à leur plan (id du compte → nom de la firm). L'API relie seule ceux qu'un plan unique désigne ;
+   * pour les autres, plusieurs programmes partagent les mêmes règles et seul l'utilisateur sait
+   * lequel il a acheté.
+   */
+  protected readonly linkSuggestions = computed(() => {
+    const catalog = this.catalog();
+    const out = new Map<string, string>();
+    if (!catalog?.length) return out;
+    const dismissed = this.dismissedLinks();
+    for (const a of this.store.accounts()) {
+      if (a.propFirmPlanId || a.status === 'ARCHIVED' || dismissed.includes(a.id)) continue;
+      const match = matchPlans(catalog, a);
+      if (match?.plans.length) out.set(a.id, match.firm.name);
+    }
+    return out;
+  });
+  /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
+  protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
   // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
   // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
@@ -199,6 +272,22 @@ export class AccountsComponent implements OnInit {
   protected readonly totalsCurrency = computed(() =>
     commonCurrency(this.visibleAccounts().map((a) => a.currency)),
   );
+  /**
+   * Plateformes du plan choisi dont le verrouillage du drawdown diffère (Apex : Rithmic,
+   * Tradovate, Wealthcharts). Vide → pas de choix à proposer. Un compte connecté via Tradovate
+   * n'en a pas besoin : la plateforme est connue.
+   */
+  protected readonly formPlatformChoices = computed(() => {
+    if (this.formSynced()) return [];
+    const sel = findPlan(this.catalog() ?? [], this.form().propFirmPlanId);
+    return sel?.plan.platformDependent ?? [];
+  });
+  protected readonly platformLabel = platformLabel;
+  /** « Rithmic, Tradovate, Wealthcharts » */
+  protected platformList(keys: readonly string[]): string {
+    return keys.map(platformLabel).join(', ');
+  }
+
   /** Compte synchronisé en édition : sa devise vient du broker, non modifiable. */
   protected readonly formSynced = computed(() => {
     const id = this.editingId();
@@ -229,12 +318,55 @@ export class AccountsComponent implements OnInit {
     return limit !== null && this.activeAccountsCount() >= limit;
   });
 
+  private readonly tradovateApi = inject(TradovateApi);
+  /** Comptes dont le solde broker est en cours de relecture (bouton « Actualiser »). */
+  protected readonly balanceBusy = signal<ReadonlySet<string>>(new Set());
+  private brokerRefreshed = false;
+
+  /**
+   * Relit solde et equity chez le broker pour les comptes connectés, puis recharge la liste.
+   * À l'ouverture de la page et sur « Actualiser » seulement : jamais en boucle (le serveur bride
+   * en plus à 20 s par compte). Le temps réel, lui, arrive par le WebSocket (`tradovate:balance`).
+   */
+  protected refreshBrokerBalances(accountIds?: string[]): void {
+    if (this.userStore.isDemo()) return;
+    const ids = (accountIds ?? this.tv.connections()
+      .filter((c) => c.status === 'CONNECTED' && c.externalAccountId && !c.needsAccountSelection)
+      .map((c) => c.accountId));
+    if (ids.length === 0) return;
+    this.balanceBusy.update((s) => new Set([...s, ...ids]));
+    forkJoin(ids.map((id) => this.tradovateApi.refreshBalance(id).pipe(catchError(() => of(null)))))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.balanceBusy.update((s) => new Set([...s].filter((id) => !ids.includes(id))));
+        this.store.load();
+      });
+  }
+
+  /** Relevé broker affiché : « il y a 2 min », sur la date la plus récente (equity ou solde). */
+  protected brokerAge(b: NonNullable<TradingAccount['metrics']['broker']>): string {
+    const at = [b.equityAt, b.balanceAt].filter((x): x is string => !!x).sort().at(-1) ?? null;
+    return relativeTime(at);
+  }
+
   constructor() {
+    // Une fois les connexions connues : solde et equity à jour pour chaque compte connecté.
+    effect(() => {
+      if (!this.tv.loaded() || this.brokerRefreshed) return;
+      this.brokerRefreshed = true;
+      untracked(() => this.refreshBrokerBalances());
+    });
     // Changement de vue (sélecteur de compte) : le message ne décrit plus la liste
     // affichée, on le retire. `untracked` pour ne pas se réveiller sur sa propre écriture.
     effect(() => {
       this.store.selectedAccountId();
       untracked(() => this.deleteError.set(null));
+    });
+    // Un compte prop firm sans plan : le catalogue sert à lui proposer le sien.
+    effect(() => {
+      if (this.store.accounts().some((a) => this.isPropFirm(a.type) && !a.propFirmPlanId)) {
+        untracked(() => this.loadCatalog());
+      }
     });
   }
 
@@ -346,6 +478,7 @@ export class AccountsComponent implements OnInit {
   protected readonly BriefcaseIcon = Briefcase;
   protected readonly LinkIcon = Link2;
   protected readonly RefreshIcon = RefreshCw;
+  protected readonly BadgeCheckIcon = BadgeCheck;
 
   // ── Helpers d'affichage ─────────────────────────────────────────────────
   // Icône lucide selon le type de compte.
@@ -422,15 +555,12 @@ export class AccountsComponent implements OnInit {
     return a.type === 'FUNDED' ? 'Objectif payout' : 'Objectif';
   }
 
-  // Couleur d'accent stable par compte (identité visuelle, pas l'état). Perso → vert ;
-  // sinon dérivée d'un hash du broker/label (même firm = même couleur, stable au reorder).
-  private readonly ACCENT_VARS = ['--blue', '--yellow', '--purple', '--cyan', '--green', '--red', '--blue-bright'];
+  // Couleur d'accent du compte (liseré, icône, tag firm, sous-lignes du dépli) = couleur de la
+  // pastille de sa prop firm : une firm a UNE couleur partout, quel que soit le compte. Perso → vert ;
+  // compte prop firm sans firm saisie → même palette, dérivée du libellé (stable au reorder).
   protected accentVar(a: TradingAccount): string {
     if (a.type === 'PERSONAL') return 'var(--green)';
-    const key = a.broker ?? a.label ?? a.id;
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-    return `var(${this.ACCENT_VARS[h % this.ACCENT_VARS.length]})`;
+    return brokerBadge(a.broker || a.label, this.brokerTones())?.color ?? 'var(--blue)';
   }
 
   // ── Bloc « Activité » carte perso (métriques du 126, dégradation propre si absentes) ──
@@ -452,6 +582,9 @@ export class AccountsComponent implements OnInit {
   }
 
   /** Libellé de la colonne marge : « trailing » n'est affiché que s'il s'applique. */
+  protected phaseLabel(phase: 'evaluation' | 'funded' | 'direct'): string {
+    return phase === 'evaluation' ? 'évaluation' : phase === 'funded' ? 'compte funded' : 'compte funded direct';
+  }
   protected ddLabel(a: TradingAccount): string {
     return a.metrics.drawdown?.type === 'TRAILING' ? 'Marge trailing drawdown' : 'Marge drawdown';
   }
@@ -459,6 +592,8 @@ export class AccountsComponent implements OnInit {
   // ── Ligne dépliable (mobile) ────────────────────────────────────────────
   protected toggleExpand(id: string): void {
     this.expandedId.update((cur) => (cur === id ? null : id));
+    const planId = this.store.accounts().find((a) => a.id === id)?.propFirmPlanId;
+    if (this.expandedId() === id && planId) this.loadPlanRules(planId);
   }
 
   // ── Menu ligne ──────────────────────────────────────────────────────────
@@ -478,6 +613,8 @@ export class AccountsComponent implements OnInit {
     }
     this.editingId.set(null);
     this.form.set(emptyForm());
+    this.firmChoice.set('');
+    this.loadCatalog();
     this.menuOpenId.set(null);
     this.formOpen.set(true);
   }
@@ -494,16 +631,105 @@ export class AccountsComponent implements OnInit {
       maxDrawdown: a.maxDrawdown,
       drawdownType: a.drawdownType,
       status: a.status,
+      propFirmPlanId: a.propFirmPlanId,
+      platform: a.platform,
     });
+    this.firmChoice.set(this.startFirmOf(a));
+    this.loadCatalog();
     this.menuOpenId.set(null);
     this.formOpen.set(true);
   }
+  /** Firm sur laquelle ouvrir le sélecteur d'un compte sans plan : celle du catalogue qu'il désigne, sinon « Autre ». */
+  private startFirmOf(a: TradingAccount): FirmChoice {
+    if (a.propFirmPlanId) return '';
+    const firm = matchPlans(this.catalog() ?? [], a)?.firm;
+    return firm ? firm.id : a.broker ? OTHER_FIRM : '';
+  }
+
+  protected dismissLinkSuggestion(id: string): void {
+    this.dismissedLinks.update((ids) => [...ids, id]);
+    try {
+      localStorage.setItem(DISMISSED_LINKS_KEY, JSON.stringify(this.dismissedLinks()));
+    } catch {
+      // Stockage indisponible (navigation privée) : la proposition reviendra au prochain chargement.
+    }
+  }
+
   protected closeForm(): void {
     this.formOpen.set(false);
   }
 
   protected patch(p: Partial<AccountFormState>): void {
     this.form.update((f) => ({ ...f, ...p }));
+  }
+
+  /** Règles du plan relié : un appel par plan, réessayé au dépli suivant en cas d'échec. */
+  private loadPlanRules(planId: string): void {
+    const cur = this.planRules()[planId];
+    if (cur && cur !== 'error') return;
+    this.planRules.update((m) => ({ ...m, [planId]: 'loading' }));
+    this.propFirmsApi
+      .getPlan(planId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.planRules.update((m) => ({ ...m, [planId]: res.data })),
+        error: () => this.planRules.update((m) => ({ ...m, [planId]: 'error' })),
+      });
+  }
+
+  protected rulesOf(planId: string): PropFirmPlanDetail | 'loading' | 'error' | undefined {
+    return this.planRules()[planId];
+  }
+
+  protected isPlanDetail(v: PropFirmPlanDetail | 'loading' | 'error' | undefined): v is PropFirmPlanDetail {
+    return typeof v === 'object';
+  }
+
+  // ── Catalogue prop firm (choix du plan) ─────────────────────────────────
+  /** Chargé à la première ouverture du formulaire ; [] si l'appel échoue (saisie libre seule). */
+  private loadCatalog(): void {
+    if (this.catalog() !== null || this.catalogLoading) return;
+    this.catalogLoading = true;
+    this.propFirmsApi
+      .getCatalog()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.catalog.set(res.data),
+        error: () => this.catalog.set([]),
+        complete: () => (this.catalogLoading = false),
+      });
+  }
+
+  protected onFirmChoice(choice: FirmChoice): void {
+    this.firmChoice.set(choice);
+    const firm = this.catalog()?.find((f) => f.id === choice);
+    this.patch({ broker: firm ? firm.name : '', propFirmPlanId: null });
+  }
+
+  /** Plan choisi : relie le compte et pré-remplit ses règles (toujours modifiables). */
+  protected onPlanChoice(plan: PropFirmPlanSummary | null): void {
+    if (!plan) {
+      this.patch({ propFirmPlanId: null });
+      return;
+    }
+    const f = this.form();
+    const rules = rulesFromPlan(plan, f.type);
+    this.patch({
+      propFirmPlanId: plan.id,
+      accountSize: rules.accountSize,
+      startingBalance: rules.startingBalance,
+      currency: this.formSynced() ? f.currency : rules.currency,
+      profitTarget: rules.profitTarget,
+      maxDrawdown: rules.maxDrawdown,
+      drawdownType: rules.drawdownType ?? f.drawdownType,
+    });
+  }
+
+  /** Changer évaluation ↔ funded avec un plan choisi : les règles suivent la phase. */
+  protected onTypeChange(type: AccountType): void {
+    this.patch({ type });
+    const sel = findPlan(this.catalog() ?? [], this.form().propFirmPlanId);
+    if (sel && this.isPropFirm(type)) this.onPlanChoice(sel.plan);
   }
 
   protected canSubmit(): boolean {
@@ -526,6 +752,8 @@ export class AccountsComponent implements OnInit {
       profitTarget: propFirm ? f.profitTarget : null,
       maxDrawdown: propFirm ? f.maxDrawdown : null,
       drawdownType: f.drawdownType,
+      propFirmPlanId: propFirm ? f.propFirmPlanId : null,
+      platform: propFirm && f.propFirmPlanId ? f.platform : null,
     };
     this.saving.set(true);
     const id = this.editingId();

@@ -26,6 +26,7 @@
       "*"
     ],
     "esModuleInterop": false,
+    "resolveJsonModule": true,
     "ignoreDeprecations": "6.0",
     "paths": {
       "@mtc/shared": [

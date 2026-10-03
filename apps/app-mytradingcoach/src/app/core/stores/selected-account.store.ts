@@ -79,6 +79,20 @@ export class SelectedAccountStore {
       });
   }
 
+  private reloadTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Recharge regroupée : le broker pousse le solde à chaque variation (plusieurs par trade). Une
+   * rafale d'événements → UN rechargement de la liste, une seconde après le dernier.
+   */
+  reloadSoon(delayMs = 1_000): void {
+    if (this.reloadTimer) clearTimeout(this.reloadTimer);
+    this.reloadTimer = setTimeout(() => {
+      this.reloadTimer = null;
+      this.load();
+    }, delayMs);
+  }
+
   select(id: string | 'all'): void {
     this.selectedAccountId.set(id);
     try { localStorage.setItem(STORAGE_KEY, id); } catch { /* stockage indispo */ }

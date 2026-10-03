@@ -16,6 +16,7 @@ import { CurrentUser } from '@api/common/decorators/current-user.decorator';
 import { Public } from '@api/common/decorators/public.decorator';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
+import { TradovateBalanceService } from './tradovate-balance.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { SelectTradovateAccountDto } from './dto/select-tradovate-account.dto';
 import { AuthorizeTradovateDto } from './dto/authorize-tradovate.dto';
@@ -41,6 +42,7 @@ export class TradovateController {
     private readonly connections: TradovateConnectionService,
     private readonly syncService: TradovateSyncService,
     private readonly historyService: TradovateHistoryService,
+    private readonly balance: TradovateBalanceService,
   ) {}
 
   /** État de connexion de chaque compte du user (jamais de token). */
@@ -114,6 +116,17 @@ export class TradovateController {
   @Throttle({ default: { ttl: 300_000, limit: 3 } })
   importHistory(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
     return this.historyService.importForAccount(user.id, accountId);
+  }
+
+  /**
+   * Solde et equity du compte chez le broker, relus si le dernier instantané a plus de 20 s.
+   * Appelé à l'ouverture de « Mes comptes » et par « Actualiser » : jamais en boucle (cf.
+   * TradovateBalanceService). GET : c'est une lecture, y compris pour le compte démo.
+   */
+  @Get('accounts/:accountId/balance')
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  refreshBalance(@CurrentUser() user: { id: string }, @Param('accountId') accountId: string) {
+    return this.balance.refresh(user.id, accountId);
   }
 
   /**

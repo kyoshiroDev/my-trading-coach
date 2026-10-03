@@ -56,7 +56,15 @@
               "required": ["daily_loss_limit", "eval_drawdown"],
               "properties": {
                 "daily_loss_limit": { "type": ["boolean", "null"] },
-                "eval_drawdown": { "enum": ["eod", "intraday", null] }
+                "eval_drawdown": { "enum": ["eod", "intraday", null] },
+                "payout_path": {
+                  "description": "Ajout : parcours de payout choisi (à l'achat ou à l'activation du funded) qui change les règles funded (Topstep XFA Standard / Consistency, Tradeify Select Flex / Daily).",
+                  "enum": ["standard", "consistency", "flex", "daily", null]
+                },
+                "addon": {
+                  "description": "Ajout : option payante du checkout qui change une règle, en clair (ex. « consistency 50 % », « drawdown 1 500 $ »).",
+                  "type": ["string", "null"]
+                }
               }
             }
           ]
@@ -84,6 +92,10 @@
       "required": ["phase", "profit_target", "daily_loss_limit", "max_drawdown", "consistency", "min_trading_days", "max_contracts", "time_rules", "payout"],
       "properties": {
         "phase": { "enum": ["evaluation", "funded", "direct"] },
+        "starting_balance": {
+          "description": "Ajout : solde de départ de la phase quand il diffère de account_size (Topstep XFA, comptes funded MyFundedFutures : 0). Les seuils (locks_at, locked_floor, safety_net_balance) s'expriment dans ce même référentiel.",
+          "$ref": "#/$defs/nullableMoney"
+        },
         "profit_target": { "type": ["number", "null"], "exclusiveMinimum": 0 },
         "daily_loss_limit": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/dailyLossLimit" }] },
         "max_drawdown": { "$ref": "#/$defs/maxDrawdown" },
@@ -171,6 +183,10 @@
       "required": ["max_single_day_pct", "applies_to", "notes"],
       "properties": {
         "max_single_day_pct": { "$ref": "#/$defs/pct" },
+        "max_single_day_pct_schedule": {
+          "description": "Ajout : seuil par numéro de payout quand il varie (Tradeify Lightning 20 % / 25 % / 30 %). Index i = payout i+1, la dernière valeur vaut pour les suivants ; max_single_day_pct = premier palier.",
+          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/pct" } }]
+        },
         "applies_to": { "enum": ["profit_target", "payout"] },
         "notes": { "$ref": "#/$defs/nullableText" }
       }
@@ -231,11 +247,35 @@
           "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
         },
         "split_pct": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pct" }] },
+        "split_after": {
+          "description": "Ajout : partage qui change au-delà d'un cumul payé par compte (ex. Apex Legacy : 100 % sur les 25 000 premiers $, 90 % ensuite). split_pct = partage avant le seuil.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["paid_out_over", "split_pct"],
+              "properties": { "paid_out_over": { "$ref": "#/$defs/money" }, "split_pct": { "$ref": "#/$defs/pct" } }
+            }
+          ]
+        },
+        "split_by_profit": {
+          "description": "Ajout : partage qui dépend du profit présent sur le compte (TradeDay Quick Pay : 50 % sous 4 000 $ de profit, 80 % au-delà). split_pct = partage sous le seuil.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["profit_over", "split_pct"],
+              "properties": { "profit_over": { "$ref": "#/$defs/money" }, "split_pct": { "$ref": "#/$defs/pct" } }
+            }
+          ]
+        },
         "min_amount": { "$ref": "#/$defs/nullableMoney" },
         "max_amount": { "$ref": "#/$defs/nullableMoney", "description": "Plafond fixe par demande. null si absent ou s'il varie (voir max_amount_schedule)." },
         "max_amount_schedule": {
-          "description": "Ajout : plafond par numéro de payout. Index i = payout i+1, la dernière valeur vaut pour les suivants.",
-          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/money" } }]
+          "description": "Ajout : plafond par numéro de payout. Index i = payout i+1, la dernière valeur vaut pour les suivants. null dans le tableau = pas de plafond pour ce payout (ex. Apex Legacy : plafonné jusqu'au 5e, libre à partir du 6e).",
+          "oneOf": [{ "type": "null" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nullableMoney" } }]
         },
         "max_payouts": { "type": ["integer", "null"], "minimum": 1, "description": "Ajout : nombre max de payouts avant fermeture ou passage en live." },
         "safety_net_balance": { "$ref": "#/$defs/nullableMoney", "description": "Ajout : solde sous lequel aucun payout n'est possible (buffer / safety net)." },

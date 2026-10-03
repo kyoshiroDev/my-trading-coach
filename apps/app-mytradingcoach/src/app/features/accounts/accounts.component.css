@@ -132,7 +132,7 @@
 .acct-line {
   display: grid;
   grid-template-columns:
-    minmax(190px, 1.5fr) 0.75fr 0.75fr 0.45fr minmax(115px, 1fr)
+    minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(115px, 1fr)
     minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
   gap: 0 14px;
   align-items: center;
@@ -179,7 +179,7 @@
 .cell-none { color: var(--text-3); font-family: var(--font-mono); font-size: 12px; }
 
 /* 1 · Compte */
-.cell-acct { display: flex; align-items: center; gap: 9px; }
+.cell-acct { display: flex; align-items: center; gap: 8px; }
 .acct-expand {
   /* Desktop : les 8 colonnes sont à l'écran, le chevron ne déplierait que du vide.
      Il ne reste que sur les lignes qui cachent vraiment quelque chose (compte perso
@@ -196,6 +196,7 @@
 .acct-expand:hover { color: var(--text); background: var(--bg-3); }
 .acct-block.is-open .acct-expand { transform: rotate(180deg); color: var(--text-2); }
 .acct-ic {
+  position: relative;
   width: 30px; height: 30px;
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
@@ -204,12 +205,46 @@
   border: 1px solid color-mix(in srgb, var(--ac, var(--blue)) 28%, transparent);
   color: var(--ac, var(--blue));
 }
-.acct-id { min-width: 0; }
+/* Pastille de la prop firm, sur le coin bas droit de l'icône de type : initiales + teinte stable
+   (brokerBadge). Liseré de la couleur du fond de ligne pour se détacher sans masquer l'icône. */
+.firm-dot {
+  position: absolute; right: -6px; bottom: -6px;
+  width: 17px; height: 17px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: -.2px; line-height: 1;
+  box-shadow: 0 0 0 2px var(--bg-card);
+  pointer-events: none;
+}
+.acct-block:hover .firm-dot { box-shadow: 0 0 0 2px var(--bg-2); }
+
+/* Prend toute la largeur restante de la colonne : le tag firm ne se tronque qu'en dernier recours.
+   Conteneur de requête : la ligne de badges choisit sa disposition selon SA largeur réelle. */
+.acct-id { flex: 1 1 auto; min-width: 0; container-type: inline-size; }
 .acct-name {
   font-family: var(--font-display); font-weight: 600; font-size: 13.5px; line-height: 1.2;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.acct-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+.acct-meta {
+  /* Une seule ligne, quelle que soit la longueur du nom de la firm (texte libre) : c'est le
+     tag firm qui se tronque, jamais « • Actif » qui passe dessous. Le wrap d'avant faisait
+     passer la ligne de 63 à 85 px sur « Apex Trader Funding » et décentrait toute la ligne. */
+  display: flex; align-items: center; gap: 5px; margin-top: 3px;
+  flex-wrap: nowrap; min-width: 0;
+}
+.acct-meta > * { flex-shrink: 0; }
+.meta-pair { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.acct-meta > .tag.firm { flex-shrink: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* Colonne étroite (laptop ~1200 px, où la colonne est à son minimum) : une seule ligne écraserait
+   le nom de la firm à une lettre et ferait déborder « • Actif » sur la colonne Solde. Le tag firm
+   passe alors sur sa propre ligne (tronqué si besoin) et type + statut restent ensemble dessous :
+   même structure pour toutes les lignes prop firm, jamais de statut orphelin. */
+@container (max-width: 230px) {
+  .acct-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .acct-meta > .tag.firm { max-width: 100%; }
+  /* « ÉVALUATION • Actif » dépassait de 6 px à la largeur minimale : tags un peu plus serrés. */
+  .meta-pair { gap: 4px; }
+  .acct-meta .tag { padding: 2px 4px; letter-spacing: .2px; }
+}
 .tag {
   font-family: var(--font-mono);
   font-size: var(--fs-2xs); font-weight: 500;
@@ -226,6 +261,11 @@
 
 /* 5 et 6 · Jauges inline : la barre des cartes, en version fine */
 .cell-gauge { display: flex; flex-direction: column; gap: 4px; }
+/* Texte + barre empilés : sans compensation, le texte remonte de 4 px par rapport aux
+   colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
+   recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
+   Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
+@media (min-width: 1025px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
@@ -303,9 +343,42 @@
 .acct-sub .tv-text { min-width: 0; }
 .acct-sub .tv-reselect { flex-basis: 100%; }
 .acct-sub .tv-ext { font-family: var(--font-mono); color: var(--text-2); }
+/* Proposition de relier un compte saisi avant le catalogue à son plan officiel. */
+.plan-link { color: var(--text-2); }
+.plan-link > svg { color: var(--blue-bright); flex-shrink: 0; }
+.plan-link .tv-text { flex: 1 1 220px; }
+.plan-link-close {
+  display: inline-flex; padding: 4px; border: none; border-radius: 6px;
+  background: none; color: var(--text-3); cursor: pointer;
+}
+.plan-link-close:hover { color: var(--text); background: var(--bg-3); }
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }
+.acct-rules { display: block; }
+.acct-broker { display: block; }
+.broker-line { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-2); }
+.broker-line b { color: var(--text); font-weight: 600; }
+.broker-age { color: var(--text-3); }
+.broker-refresh {
+  display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 3px 9px;
+  font: 600 11px var(--font-body); color: var(--text-2); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+}
+.broker-refresh:hover:not(:disabled) { color: var(--text); border-color: var(--border-hover); }
+.broker-refresh:disabled { opacity: .6; cursor: default; }
+.broker-warn { margin: 6px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--yellow); }
+/* Pastille « en direct » : solde lu chez le broker. Jaune quand on ne peut pas s'y fier. */
+.live-dot {
+  display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%;
+  background: var(--green); vertical-align: middle;
+}
+.live-dot.is-stale { background: var(--yellow); }
+.dd-basis { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.dd-basis b { color: var(--text); font-weight: 600; }
+.dd-platform { color: var(--text-3); }
+.dd-platform-warn { display: block; margin-top: 2px; color: var(--yellow); }
+.dd-disclaimer { display: block; margin-top: 2px; font-size: 11.5px; color: var(--text-3); }
 .acct-block.is-open .acct-activity { display: flex; }
 .acct-activity .ai { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); }
 .acct-activity .ai b { font-weight: 600; font-size: 12px; margin-right: 4px; }
@@ -353,6 +426,7 @@
 .fld-row { display: flex; gap: 12px; }
 .fld-row .fld { flex: 1; }
 .fld-row .fld-sm { flex: 0 0 90px; }
+.fld-hint { font-size: 11.5px; color: var(--text-3); line-height: 1.4; }
 .fld-lbl { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
 .inp {
   background: var(--bg-3);

@@ -79,6 +79,14 @@ export async function seedTradingData(
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
 
   const accountIdByKey = new Map<AccountKey, string>();
+  // Plans du catalogue (synchronisé au démarrage de l'API) : seed lancé sur une base pas encore
+  // synchronisée → compte non relié, la marge retombe sur les champs manuels.
+  const catalogPlans = new Set(
+    (await prisma.propFirmPlan.findMany({
+      where: { id: { in: DEMO_ACCOUNTS.map((a) => a.propFirmPlanId) }, active: true },
+      select: { id: true },
+    })).map((p) => p.id),
+  );
   for (const a of DEMO_ACCOUNTS) {
     const created = await prisma.tradingAccount.create({
       data: {
@@ -86,6 +94,7 @@ export async function seedTradingData(
         status: AccountStatus.ACTIVE, accountSize: a.accountSize,
         startingBalance: a.startingBalance, profitTarget: a.profitTarget,
         maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+        propFirmPlanId: catalogPlans.has(a.propFirmPlanId) ? a.propFirmPlanId : null,
       },
     });
     accountIdByKey.set(a.key, created.id);
@@ -278,6 +287,14 @@ export async function seedTradingData(
       externalEnv: demoTradovateAccount.env, availableAccounts: [demoTradovateAccount],
       lastSyncAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       tradesImported: stats.byAccount['apex'].trades,
+      // Solde « lu chez le broker » : cohérent avec les trades seedés (aucun écart), sans position
+      // ouverte → equity = solde. Montre le suivi en direct sans inventer de latent.
+      brokerCashBalance: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerCashBalanceAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerNetLiq: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerOpenPnl: 0,
+      brokerEquityAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerOpenPositions: 0,
     },
   });
 

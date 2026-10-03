@@ -22,6 +22,13 @@ function watchErrors(page: Page): string[] {
       errors.push(`api ${res.status()}: ${res.url()}`);
     }
   });
+  // Le smoke teste l'API démarrée par le job : un appel à une API déployée (dev, beta, prod)
+  // veut dire que l'app a été compilée avec le mauvais environnement.
+  page.on('request', (req) => {
+    if (/^https:\/\/[^/]*api\.mytradingcoach\.app\//.test(req.url())) {
+      errors.push(`api distante appelée (attendu : localhost:3001) : ${req.url()}`);
+    }
+  });
   page.on('requestfailed', (req) => {
     // ERR_ABORTED = requête annulée par la navigation suivante, pas une panne.
     const reason = req.failure()?.errorText ?? '';

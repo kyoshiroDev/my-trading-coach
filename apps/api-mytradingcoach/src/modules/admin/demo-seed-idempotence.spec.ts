@@ -98,6 +98,8 @@ function fakePrisma(calls: Call[]) {
     ecoEvent: model('ecoEvent'),
     tradingAccount: model('tradingAccount'),
     brokerConnection: model('brokerConnection'),
+    // Catalogue synchronisé : les deux plans des comptes démo existent.
+    propFirmPlan: { findMany: vi.fn(async () => [{ id: 'apex-eod-50k' }, { id: 'tradeify-select-flex-50k' }]) },
   };
   return { prisma: prisma as unknown as PrismaClient, created };
 }
@@ -171,7 +173,7 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     expect(accounts.every((a) => a['status'] === 'ACTIVE')).toBe(true);
     expect(accounts.every((a) => a['currency'] === 'USD')).toBe(true);
     expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'FUNDED']);
-    expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex', 'Tradeify']);
+    expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex Trader Funding', 'Tradeify']);
   });
 
   it('Σ startingBalance des comptes === capital du profil (sinon les 2 pages divergent)', async () => {
@@ -225,19 +227,29 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     expect(assets.has('MNQ') && assets.has('MES')).toBe(true);
   });
 
-  it('le compte prop firm porte les vraies règles Apex 50k', async () => {
+  it('le compte prop firm porte les vraies règles Apex 50k et est relié au plan du catalogue', async () => {
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
 
     const apex = created['tradingAccount'].find((a) => a['type'] === 'EVALUATION')!;
-    // Apex 50k Full Evaluation : base 50 000, objectif +3 000, trailing drawdown 2 500.
+    // Apex EOD Trail 50K (catalogue) : base 50 000, objectif +3 000, trailing EOD 2 000.
     // Le palier doit exister réellement — le 20k générique d'avant n'était proposé par
     // aucune firme, ce qu'un prospect qui connaît Apex repérait.
     expect(apex['startingBalance']).toBe(50_000);
     expect(apex['accountSize']).toBe(50_000);
     expect(apex['profitTarget']).toBe(3_000);
-    expect(apex['maxDrawdown']).toBe(2_500);
+    expect(apex['maxDrawdown']).toBe(2_000);
     expect(apex['drawdownType']).toBe('TRAILING');
+    expect(apex['propFirmPlanId']).toBe('apex-eod-50k');
+    const funded = created['tradingAccount'].find((a) => a['type'] === 'FUNDED')!;
+    expect(funded['propFirmPlanId']).toBe('tradeify-select-flex-50k');
+  });
+
+  it('catalogue pas encore synchronisé : comptes créés sans plan relié', async () => {
+    const { prisma, created } = fakePrisma([]);
+    (prisma as unknown as { propFirmPlan: { findMany: () => Promise<unknown[]> } }).propFirmPlan.findMany = async () => [];
+    await seedDemo(prisma);
+    expect(created['tradingAccount'].every((a) => a['propFirmPlanId'] === null)).toBe(true);
   });
 
   it('l\'évaluation est EN COURS : P&L sous l\'objectif, drawdown loin du seuil', async () => {

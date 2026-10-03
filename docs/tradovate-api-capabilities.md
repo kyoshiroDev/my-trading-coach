@@ -387,6 +387,10 @@ Deux enseignements structurants :
 
 #### 🥇 Quick win n°1 — Le vrai solde du compte ✅ accessible
 
+> **Implémenté le 2026-10-03** : solde réalisé poussé par le WebSocket (`cashBalance`), equity et
+> latent par `getcashbalancesnapshot` sur événement (jamais en boucle, la doc parle
+> d'anti-pattern), marge de drawdown calculée sur l'equity. Voir `.claude/agents/nestjs.md`.
+
 `POST /cashBalance/getcashbalancesnapshot` (+ `/cashBalance/list` pour la devise).
 Aujourd'hui, le capital, l'equity et la marge de drawdown affichés par MTC sont **estimés à partir
 des trades loggés**, avec un disclaimer. Le broker, lui, donne `netLiq`, `totalCashValue`,

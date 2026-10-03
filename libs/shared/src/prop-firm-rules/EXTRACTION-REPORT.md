@@ -1,6 +1,10 @@
 # Rapport d'extraction : règles prop firm (PROMPT-136)
 
+**Mise à jour du 2026-10-03** : ajout de Topstep, Tradeify, MyFundedFutures et TradeDay (62 plans), voir la section « Quatre firms ajoutées » en fin de rapport. Catalogue : 6 firms, 116 plans.
+
 Relevé du 2026-10-02. Sources : sites et help centers officiels uniquement. Issue GitHub : #267.
+
+**Re-vérification complète du 2026-10-02 (soir)** : voir la section « Re-vérification » en fin de rapport (3 corrections Lucid, Apex conforme, offre Legacy Apex revenue en vente et non couverte).
 
 **À lire en premier** : tous les plans Lucid sont en `needs_review`, pour trois questions transverses qu'une seule question au support Lucid peut trancher (voir « Plans à revoir »). Les 8 plans Apex sont complets.
 
@@ -9,7 +13,9 @@ Relevé du 2026-10-02. Sources : sites et help centers officiels uniquement. Iss
 | Firm | Programmes en vente | Tailles | Plans dans le catalogue | `needs_review` |
 |---|---|---|---|---|
 | Lucid Trading | LucidFlex, LucidPro, LucidDaily, LucidDirect, LucidMaxx (sur invitation) | 25K, 50K, 100K, 150K | 40 | 40 |
-| Apex Trader Funding | Intraday Trail, EOD Trail | 25K, 50K, 100K, 150K | 8 | 0 |
+| Apex Trader Funding | Intraday Trail, EOD Trail, Legacy Full (promotion limitée) | 25K, 50K, 100K, 150K (+ 250K, 300K en Legacy) | 14 | 6 |
+
+Apex : 8 plans de la gamme actuelle (complets) + 6 plans **Legacy Full** (25K à 300K), revenus en vente en promotion limitée, tous en `needs_review`.
 
 Pourquoi 40 plans Lucid : les options choisies au checkout changent les règles, donc chaque combinaison est un plan.
 - LucidFlex et LucidPro : DLL ON ou OFF (2 x 4 tailles chacun).
@@ -19,7 +25,7 @@ Pourquoi 40 plans Lucid : les options choisies au checkout changent les règles,
 Exclus volontairement :
 - **LucidBlack** : collection « Legacy » du help center, plus en vente.
 - **Comptes live Lucid** (LucidLive) : on n'y entre pas par achat, Lucid y fait passer les traders (après le payout 5 ou sur décision de l'équipe risque). Règles notées dans `notes` ; à modéliser si MTC suit ces comptes.
-- **Produits « Legacy » Apex** : plus vendus depuis le 2026-03-01. **Attention** : des utilisateurs peuvent encore détenir des comptes Legacy (évaluations et PA), qui suivent d'autres règles. Ils ne sont pas couverts.
+- **Apex Legacy Static (100K) et Legacy 75K** : produits Legacy qui ne sont pas dans l'offre promotionnelle en cours (seuls les 6 « Full » 25K à 300K le sont). Non couverts.
 - **Apex « No Activation Fee »** : mêmes règles que l'offre Standard, seul le prix change. Noté dans `price.notes`, pas de plan séparé.
 
 ## Sources consultées
@@ -213,9 +219,10 @@ En attendant, le calcul MTC doit traiter un `enforced_on: null` comme `equity_re
 
 | Plans | Raison |
 |---|---|
-| `lucid-flex-dll-*` (4) | Montant de la DLL en funded non publié (`amount: null`). La page Customization dit que l'option s'applique aussi au funded ; seul le montant d'évaluation est affiché. |
+| `lucid-flex-dll-*` (4) | DLL funded relevée sur le sélecteur du site (« DLL (Below Initial Trail) », mêmes montants qu'en évaluation) ; le help center ne la chiffre pas et ne dit pas ce qu'elle devient au-dessus de l'Initial Trail Balance. |
+| `lucid-pro-*` (8) | `payout.min_days = 3` vient du site (« Days to Payout 3 ») ; l'article LucidPro Payouts n'a pas de minimum de jours. |
 | `lucid-pro-dll-25k` | Contradiction de sources sur la DLL 25K, voir plus bas. |
-| `lucid-daily-*` (16) | Heure de clôture obligatoire non documentée : l'article Allowed Trading Times ne cite que Pro, Flex et Direct. `must_close_by: null`. |
+| `lucid-daily-*` (16) | Heure de clôture obligatoire et positions overnight non documentées : l'article Allowed Trading Times ne cite que Pro, Flex et Direct. `must_close_by: null`, `overnight_allowed: null`. |
 | `lucid-direct-*` (4) | `payout.min_days = 5` vient du site (« Min Day to Payout 5 ») mais n'apparaît pas dans l'article LucidDirect Payout Objectives. |
 | `lucid-maxx-*` (4) | Programme sur invitation. Taille max, seuil de blocage du trailing et horaires non publiés pour l'évaluation Maxx. Le type « EOD » vient de l'article Overview (niveau programme), pas des règles d'évaluation. |
 
@@ -234,6 +241,9 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | DLL LucidPro 25K, funded | Article LucidPro Funded Account (2026-08-26) : DLL fixe 600 $ (optionnelle) | Article LucidPro Daily Loss Limit (2026-07-26) : « None » | 600 $ : article le plus récent, cohérent avec le site. `needs_review`. |
 | Palier 4 du PA Apex 50K | Scaling Levels Explained : « 5 999 $ et plus » | Daily Loss Limit Explained : « 6 000 $ et plus » | 6 000 $ (le palier 3 s'arrête à 5 999 $). Écart d'un dollar, sans effet pratique. |
 | Minimum de jours avant payout LucidDirect | Site : « Min Day to Payout 5 » | Help center : aucune mention | 5, `needs_review`. |
+| Minimum de jours avant payout LucidPro | Site : « Days to Payout 3 » (fiche Funded Rules) | Article LucidPro Payouts : aucune mention | 3, `needs_review`. |
+| DLL funded LucidFlex (option DLL ON) | Site : « DLL (Below Initial Trail) » 600 / 1 200 / 1 800 / 2 700 $ | Help center : DLL funded « Optional », non chiffrée | Montants du site, `needs_review` (comportement au-dessus du trail non documenté). |
+| Scaling du PA Apex Legacy | Carte de vente legacy-products : « Scaling: None » | Article Legacy PA Trading Rules (2026-07-31) : moitié des contrats jusqu'au safety net | Règle du help center (la plus restrictive), `needs_review`. |
 | Prix Apex « No Activation Fee » | 25K intraday affiché 690 $, plus cher que le 50K (490 $) | | Relevé tel quel dans `price.notes`. Probable anomalie d'affichage du prix barré. |
 
 ## Règles qui n'entrent pas proprement dans le schéma
@@ -249,3 +259,103 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | **Règle news LucidDaily** : être flat de 1 min avant à 1 min après une news USD à fort impact, sinon hard breach | `time_rules.notes`, `news_trading_allowed: false` | Brancher sur le calendrier éco MTC (`eco-event-key.ts`) pour une alerte. |
 | **Taille max en contrats** : Lucid et Apex comptent 10 micros pour 1 mini, toutes positions confondues | `max_contracts.minis` / `micros` | Le calcul doit additionner l'exposition en « équivalent mini », pas comparer minis et micros séparément. |
 | **Pas de prix fiable pour Lucid Flex, Pro et Daily** : le site renvoie au checkout et des promotions temporaires sont en cours | `price.amount: null` | Hors périmètre sécurité. À relever au checkout si on affiche les prix. |
+
+## Re-vérification (2026-10-02, soir)
+
+Relecture complète, source par source, après un doute sur LucidFlex 50K.
+
+**Méthode**
+- Lucid : les 33 pages du help center citées dans `source_urls`, plus la configuration du sélecteur de plans de lucidtrading.com (`window.LucidPricingConfig`, faces évaluation et « Funded Rules » de chaque programme et taille). Comparaison automatique du sélecteur aux 40 plans : 0 écart après corrections.
+- Apex : les 19 pages du help center citées dans `source_urls` et la page d'accueil. Aucun écart sur les règles des 8 plans.
+
+**LucidFlex 50K (sans DLL)** : conforme sur tous les points (objectif 3 000, MLL 2 000 EOD figé à 50 100 au-delà de 52 100, consistency 50 % en évaluation, 4 minis / 40 micros, scaling funded 2 / 3 / 4 minis, payout 5 jours à 150 $, 90 %, 500 à 2 000 $, 5 payouts, clôture 16:45 ET).
+
+**Corrigé**
+1. `lucid-flex-dll-*` : DLL funded renseignée (600 / 1 200 / 1 800 / 2 700 $), elle était à `null`.
+2. `lucid-pro-*` : `payout.min_days = 3` ajouté (sélecteur du site), il manquait.
+3. `lucid-daily-*` : la note des horaires affirmait une clôture automatique à 16:45 ET et `overnight_allowed: false`, alors qu'aucune source ne couvre LucidDaily. Remplacé par « non documenté » (`overnight_allowed: null`).
+
+**Ajouté** : les 6 plans **Apex Legacy Full**, voir la section suivante.
+
+## Apex Legacy (ajouté le 2026-10-02, soir)
+
+Gamme d'avant le 2026-03-01, revenue en vente en promotion limitée (`apextraderfunding.com/legacy-products`) : 25K, 50K, 100K, 150K, 250K, 300K « Full », sur Tradovate, WealthCharts et Rithmic, mêmes règles et prix sur les trois. Ids `apex-legacy-<taille>k`, programme « Legacy Full ».
+
+Sources : page de vente Legacy et la section Legacy du help center (liste complète via `help-center-sitemap.xml`, articles mis à jour entre le 2026-04-15 et le 2026-09-16).
+
+| Taille | Contrats | Objectif | Trailing | Prix / mois | Frais PA | Plafond payouts 1 à 5 |
+|---|---|---|---|---|---|---|
+| 25K | 4 (40 micros) | 1 500 | 1 500 | 177 | 89 | 1 500 |
+| 50K | 10 (100) | 3 000 | 2 500 | 197 | 99 | 2 000 |
+| 100K | 14 (140) | 6 000 | 3 000 | 397 | 129 | 2 500 |
+| 150K | 17 (170) | 9 000 | 5 000 | 597 | 169 | 2 750 |
+| 250K | 27 (270) | 15 000 | 6 500 | 697 | 179 | 3 000 |
+| 300K | 35 (350) | 20 000 | 7 500 | 797 | 199 | 3 500 |
+
+- **Évaluation** : trailing intraday (plus haut solde latent inclus), pas de DLL, 7 jours de trading minimum (sauf promotion « 1-day pass »), pas de limite de durée (abonnement mensuel). Blocage du trailing : Rithmic au solde objectif, Tradovate jamais, WealthCharts non documenté.
+- **PA** : trailing intraday figé à capital + 100 $ au safety net (capital + drawdown + 100 $), pas de DLL, consistency 30 % jusqu'au 6e payout, contract scaling (moitié des contrats jusqu'au safety net). Payout : 8 jours de trading dont 5 à 50 $ ou plus, 500 $ minimum, plafond sur les 5 premiers puis sans plafond (`max_amount_schedule` se termine par `null`, ajout au schéma), 100 % sur les 25 000 premiers $ par compte puis 90 % (`split_pct = 1`, nuance dans `notes`), safety net pour les 3 premiers payouts seulement.
+- **Hors schéma** (dans `notes`) : règle MAE 30 % (perte latente ouverte), ratio risque/rendement 5:1, une seule direction, pas de hedging, inactivité.
+
+**Pourquoi `needs_review`**
+- Contradiction : la carte de vente affiche « Scaling: None », l'article Legacy PA Trading Rules (2026-07-31) impose la moitié des contrats jusqu'au safety net. Retenu : la règle du help center, la plus restrictive.
+- Moitié de 17, 27 et 35 contrats (150K, 250K, 300K) : arrondi non documenté, paliers laissés vides.
+- Trailing d'évaluation sur WealthCharts non documenté.
+- Inactivité : la politique Legacy (1 jour à 150 $ par 30 jours) renvoie, pour les produits promotionnels vendus après le 2026-03-01, à la nouvelle politique (2 jours à 50 $).
+
+## Quatre firms ajoutées (relevé du 2026-10-03)
+
+Sources : sites et help centers officiels uniquement, lus dans un navigateur (sélecteurs de prix compris). Chaque plan liste ses pages dans `source_urls`. Les comptes Live (appel de l'équipe risque) ne sont pas modélisés.
+
+### Ajouts au format (`schema.json`, tous optionnels)
+
+| Champ | Pourquoi |
+|---|---|
+| `phase.starting_balance` | Comptes funded qui démarrent à 0 $ (Topstep XFA, MyFundedFutures Rapid / Rapid EOD / Builder). Les seuils (`locks_at`, `locked_floor`, `safety_net_balance`) sont exprimés dans ce référentiel. |
+| `configuration.payout_path` | Parcours de payout choisi qui change les règles funded : Topstep XFA Standard / Consistency, Tradeify Select Flex / Daily. |
+| `configuration.addon` | Option payante qui change une règle : Tradeify « consistency 50 % », MyFundedFutures Builder « drawdown 1 500 $ ». |
+| `consistency.max_single_day_pct_schedule` | Seuil par numéro de payout (Tradeify Lightning 20 / 25 / 30 %). |
+| `payout.split_by_profit` | Partage selon le profit présent sur le compte (TradeDay Quick Pay : 50 % sous 4 000 $, 80 % au-delà). |
+
+### Plans
+
+| Firm | Plans | Tailles | `needs_review` |
+|---|---|---|---|
+| Topstep | Trading Combine × (DLL oui / non) × (payout Standard / Consistency) | 50K, 100K, 150K | 0 / 12 |
+| Tradeify | Growth, Lightning Funded, Select × (Flex / Daily) × (consistency 40 % / 50 %) | 25K à 150K | 9 / 24 |
+| MyFundedFutures | Rapid, Rapid EOD (25K, 50K), Pro (50K à 150K), Builder (+ option drawdown 1 500 $ en 50K) | 25K à 150K | 9 / 14 |
+| TradeDay | Quick Pay intraday, Quick Pay EOD, Fast Pass EOD | 25K à 150K | 3 / 12 |
+
+Exclus volontairement : Tradeify Select 300K et « Level Up » (éditions limitées, deux versions du 300K) ; MyFundedFutures Flex (rangé dans « Legacy Plans », absent du sélecteur) ; comptes Live de toutes les firms.
+
+### Écarts avec les chiffres fournis dans le prompt du 2026-10-03
+
+| Point du prompt | Source officielle | Retenu |
+|---|---|---|
+| Tradeify Growth : drawdown 1 100 / 2 000 / 3 500 / 4 900 $ | Article Growth Evaluation : 1 000 / 2 000 / 3 500 / 5 000 $ (cohérent avec le tableau de lock 26 100 / 52 100 / 103 600 / 155 100 $) | Source officielle |
+| Tradeify Lightning : 25K introuvable, 150K 5 900 $ | Article Lightning : 25K à 1 000 $, 150K à 5 250 $ ; le tableau de lock de l'article drawdown implique 6 000 $ pour le 150K | 25K ajouté ; 150K à 5 250 $, `needs_review` (contradiction interne Tradeify) |
+| Tradeify Select : drawdown non chiffré | Article Select : 1 000 / 2 000 / 3 000 / 4 500 $ en évaluation ; Daily funded 1 000 / 2 000 / 2 500 / 3 500 $ | Source officielle |
+| MyFundedFutures Rapid EOD : lock à 0 $ | Le plancher à 0 $ concerne le compte **Live** ; le funded sim démarre à 0 $ et se verrouille à **100 $** | Source officielle |
+| MyFundedFutures Builder : 1 500 $ avec option sur le 25K | L'option drawdown 1 500 $ porte sur le **50K** | Source officielle |
+| MyFundedFutures Flex | Plan « Legacy », plus dans le sélecteur | Exclu |
+| TradeDay : seul le 100K chiffré | Le sélecteur de prix chiffre les 4 tailles (drawdown 1 000 / 2 000 / 3 000 / 4 500 $) | 4 tailles |
+| TradeDay : lock à 100 000 $ exactement (100K) | Confirmé (seuil figé au solde de départ) | Conforme |
+| Topstep : MLL, DLL, XFA | Conformes ; la DLL est une **option** choisie à l'achat, l'XFA a deux parcours de payout | Variantes en plans distincts |
+
+### Contradictions à l'intérieur des sources
+
+| Sujet | Source A | Source B | Retenu |
+|---|---|---|---|
+| Tradeify Lightning 150K, drawdown | Article Lightning : 5 250 $ | Tableau de lock (Trailing Max Drawdowns) : déclenchement 156 100 $ (= 6 000 $) | 5 250 $, `locks_at` à null, `needs_review` |
+| Tradeify Select 25K, taille max en évaluation | Article Select Evaluation : 1 mini / 10 micros | Article des payouts Select : 2 / 20 en évaluation | 1 / 10, `needs_review` |
+| MyFundedFutures Rapid, verrouillage du funded | Help center et page : le seuil se fige quand il atteint 100 $ (profit = drawdown + 100 $) | FAQ de la page Rapid : « après le premier payout » | Help center, `needs_review` |
+| MyFundedFutures Builder, tailles | En-tête de page : « $25K & $50K » | Tableau des règles et sélecteur : 25K à 150K | 4 tailles, `needs_review` |
+| MyFundedFutures Pro, taille | Sous-titre : « $90K–$150K » | Page Pro et sélecteur : 50K, 100K, 150K | 50K à 150K |
+| MyFundedFutures Rapid EOD, news funded | Article Rapid EOD : Tier 1 interdit | Politique news : seuls Rapid et Pro funded sont listés | Interdit (le plus prudent) |
+
+### Valeurs non publiées (`null`)
+
+- Tradeify : taille max du funded Growth ; base des DLL (réalisé ou latent).
+- Topstep : base de la DLL (« Net P&L », latent non précisé).
+- MyFundedFutures Builder : heure de reprise et base de la DLL ; prix de l'option drawdown 1 500 $.
+- TradeDay Fast Pass funded : taille maximale (scaling « +1 contrat par 2 000 $ », maximum publié seulement pour le 25K).
+

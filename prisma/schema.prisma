@@ -325,6 +325,14 @@ model TradingAccount {
   profitTarget    Float? // objectif (eval) / objectif payout (funded), en $
   maxDrawdown     Float? // montant du drawdown autorisé, en $
   drawdownType    DrawdownType   @default(STATIC)
+  /// Plan du catalogue prop firm (`PropFirmPlan.id`), optionnel. Les règles saisies ci-dessus
+  /// restent la référence tant que l'UI ne s'appuie pas sur le catalogue.
+  /// Plateforme de trading du compte (clé du catalogue : `tradovate`, `rithmic`, `wealthcharts`…).
+  /// Certaines règles en dépendent (verrouillage du drawdown Apex). Ignorée si le compte est
+  /// connecté via Tradovate : la plateforme est alors connue.
+  platform          String?
+  propFirmPlanId    String?
+  propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
   trades          Trade[]
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]
@@ -332,6 +340,7 @@ model TradingAccount {
   updatedAt       DateTime       @updatedAt
 
   @@index([userId, status])
+  @@index([propFirmPlanId])
 }
 
 /// Connexion API d'un broker, portée par UN `TradingAccount`.
@@ -378,6 +387,18 @@ model BrokerConnection {
   /// du cron : une connexion créée avant cette feature, ou dont l'import initial a échoué,
   /// récupère donc son passé sans que l'utilisateur ait quoi que ce soit à faire.
   historyImportedAt     DateTime?
+  /// Solde RÉALISÉ officiel du compte chez le broker (`cashBalance.amount`), poussé en temps réel
+  /// par le WebSocket quand l'app est ouverte, relu à chaque synchro sinon.
+  brokerCashBalance     Float?
+  brokerCashBalanceAt   DateTime?
+  /// Instantané `getcashbalancesnapshot` : equity (`netLiq`) et latent (`openPnL`) calculés par le
+  /// broker avec ses cotations. Lu sur événement (trade, synchro, ouverture de la page), JAMAIS en
+  /// boucle : la doc NinjaTrader qualifie l'interrogation répétée d'anti-pattern.
+  brokerNetLiq          Float?
+  brokerOpenPnl         Float?
+  brokerEquityAt        DateTime?
+  /// Positions ouvertes sur le compte au dernier relevé (latent non nul possible).
+  brokerOpenPositions   Int                    @default(0)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
@@ -725,4 +746,59 @@ model LandingVisitDaily {
 
   // L'unique (date en tête) sert aussi d'index pour les lectures par période.
   @@unique([date, path, source, medium, campaign])
+}
+
+// ── Catalogue des règles prop firm (PROMPT-136) ─────────────────────────────
+/// Miroir en base de `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
+/// vérité : le JSON est embarqué dans le build de l'API et synchronisé au démarrage
+/// (`PropFirmCatalogSyncService`). Ne jamais modifier ces lignes à la main : la prochaine
+/// synchro les écraserait.
+model PropFirm {
+  /// Slug stable (`firm.id` du JSON) : `lucid`, `apex`.
+  id          String         @id
+  name        String
+  website     String
+  helpCenter  String?
+  /// Plateformes acceptées (slugs : `tradovate`, `rithmic`...).
+  platforms   String[]
+  /// Date du relevé des règles sur les sources officielles.
+  verifiedAt  DateTime       @db.Date
+  /// Empreinte du contenu synchronisé : la synchro n'écrit que si elle change.
+  contentHash String
+  plans       PropFirmPlan[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+/// Un plan vendu par une firm, pour une combinaison d'options qui change les règles
+/// (cf. README du catalogue). Colonnes = ce qui sert à filtrer ; les règles détaillées
+/// (`phases`, `price`, `configuration`) restent en Json, au format du catalogue, et se
+/// relisent avec `propFirmPlanSchema` (Zod) côté API.
+model PropFirmPlan {
+  /// Slug stable (`lucid-flex-50k`) : un id publié ne change jamais.
+  id              String           @id
+  firmId          String
+  /// Restrict : une firm ne se supprime pas tant qu'elle a des plans (elle se vide en `active = false`).
+  firm            PropFirm         @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  planName        String
+  accountSize     Float
+  currency        String
+  /// `public` | `invite_only` (valeurs du catalogue).
+  availability    String
+  configuration   Json?
+  price           Json
+  phases          Json
+  sourceUrls      String[]
+  /// Au moins une règle non publiée ou contradictoire : afficher comme estimation.
+  needsReview     Boolean
+  notes           String?
+  /// false = retiré du catalogue. Jamais supprimé : des comptes peuvent encore le référencer.
+  active          Boolean          @default(true)
+  /// Empreinte du plan tel que synchronisé : la synchro n'écrit que si elle change.
+  contentHash     String
+  tradingAccounts TradingAccount[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([firmId, active])
 }

@@ -1,0 +1,1839 @@
+{
+  "firm": {
+    "id": "topstep",
+    "name": "Topstep",
+    "website": "https://www.topstep.com",
+    "help_center": "https://help.topstep.com/en/",
+    "platforms": [
+      "topstepx",
+      "quantower"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "topstep-standard-50k",
+      "plan_name": "Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 49,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (50000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1650 $ sur 3000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-standard-dll-50k",
+      "plan_name": "Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 49,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (50000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1650 $ sur 3000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 4000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (4000 $ au lieu de 2000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-50k",
+      "plan_name": "Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 49,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (50000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1650 $ sur 3000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-dll-50k",
+      "plan_name": "Trading Combine",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 49,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 49 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 95 $/mois, activation 0 $, remise DLL de 10 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (50000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (1650 $ sur 3000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 2000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -2000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 2000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 6000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (6000 $ au lieu de 3000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-standard-100k",
+      "plan_name": "Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 99,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (100000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (3300 $ sur 6000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 3000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-standard-dll-100k",
+      "plan_name": "Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 99,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (100000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (3300 $ sur 6000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 3000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 6000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (6000 $ au lieu de 3000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-100k",
+      "plan_name": "Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 99,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (100000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (3300 $ sur 6000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 3000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 4000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-dll-100k",
+      "plan_name": "Trading Combine",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 99,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 99 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 149 $/mois, activation 0 $, remise DLL de 20 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (100000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (3300 $ sur 6000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 3000,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -3000 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 3000 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 8000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (8000 $ au lieu de 4000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-standard-150k",
+      "plan_name": "Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (150000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4950 $ sur 9000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 4500,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4500.01,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 5000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-standard-dll-150k",
+      "plan_name": "Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "standard",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (150000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4950 $ sur 9000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 4500,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4500.01,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 10000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Standard : 5 jours gagnants à 150 $ net ou plus (non consécutifs) et profit net > 0 depuis le dernier payout (premier payout exempté). 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (10000 $ au lieu de 5000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Standard (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-150k",
+      "plan_name": "Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (150000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4950 $ sur 9000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 4500,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4500.01,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 6000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Sans DLL, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    },
+    {
+      "id": "topstep-consistency-dll-150k",
+      "plan_name": "Trading Combine",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "consistency",
+        "addon": null
+      },
+      "price": {
+        "amount": 199,
+        "billing": "monthly",
+        "activation_fee": 149,
+        "notes": "Parcours Standard : 199 $/mois + 149 $ d'activation par XFA obtenu. Parcours No Activation Fee (mêmes règles) : 229 $/mois, activation 0 $, remise DLL de 30 $ sur le NAF."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "MLL qui monte avec le solde de fin de journée, jamais à la baisse, verrouillé définitivement au solde de départ (150000). Surveillé en temps réel sur le Net P&L réalisé + latent : liquidation immédiate. Combine : liquidé pour la journée, plus éligible au funding jusqu'au Reset."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.55,
+            "applies_to": "profit_target",
+            "notes": "Le meilleur jour doit rester sous 55 % de l'objectif (4950 $ sur 9000 $). Au-delà, l'objectif augmente (ce n'est pas un échec). Pas d'arrondi, pas de marge."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille max ouverte à la fois, micros comptés 10:1."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "starting_balance": 0,
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": null,
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 4500,
+            "locked_floor": 0,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Express Funded Account : solde de départ 0 $, MLL à -4500 $ qui monte avec le solde de fin de journée, verrouillé à 0 $ quand le solde atteint 4500 $. Après le premier payout, MLL fixé à 0 $ quel que soit son niveau. Surveillé en temps réel, latent compris ; atteint = compte fermé définitivement."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Plus gros jour ÷ profit net total ≤ 40 % (pas d'arrondi). Remis à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000.01,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000.01,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4500.01,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling Plan selon le solde du compte (départ 0 $), mis à jour pour la session suivante, jamais en cours de séance. Micros 10:1 (exceptions : Micro Silver, Micro Bitcoin, Micro Ether)."
+          },
+          "time_rules": {
+            "must_close_by": "15:10 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 15:10 CT ; Topstep commence à liquider vers 15:08 CT. Reprise à 17:00 CT. Produits qui ferment plus tôt (CBOT, bétail) : sortir avant leur clôture. News autorisées, mais trader sa taille maximale directement dans une annonce majeure programmée est une stratégie interdite."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 125,
+            "max_amount": 12000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Parcours Consistency : 3 jours tradés (au moins 1 trade par jour) et consistency à 40 % ou moins. 50 % du solde par demande, plafonné. Minimum 125 $. Split 90/10. Après chaque payout, le MLL repasse à 0 définitivement. Les jours se figent à 16:00 CT ; le jour de la demande ne compte pas pour le cycle suivant. Plafond doublé (12000 $ au lieu de 6000 $) : offre à durée limitée pour les comptes avec DLL ajoutée à l'achat."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.topstep.com/en/articles/8284197-trading-combine-parameters",
+        "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters",
+        "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit",
+        "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account",
+        "https://help.topstep.com/en/articles/8284208-consistency-at-topstep",
+        "https://help.topstep.com/en/articles/8284233-topstep-payout-policy",
+        "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan",
+        "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade",
+        "https://help.topstep.com/en/articles/8284099-topstep-program-overview",
+        "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions",
+        "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep"
+      ],
+      "needs_review": false,
+      "notes": "Option DLL ajoutée à l'achat, parcours de payout Consistency (choisi à l'activation du XFA, définitif). Compte Live Funded (appel de l'équipe risque, DLL dynamique) non modélisé."
+    }
+  ]
+}
