@@ -14,10 +14,10 @@ function syncedState(files: readonly unknown[]) {
 }
 
 describe('parseCatalog', () => {
-  it('accepte le catalogue livré (Lucid + Apex) : le Zod suit schema.json', () => {
+  it('accepte le catalogue livré (6 firms) : le Zod suit schema.json', () => {
     const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
-    expect(catalog.map((f) => f.firm.id)).toEqual(['lucid', 'apex']);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(54);
+    expect(catalog.map((f) => f.firm.id)).toEqual(['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday']);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(116);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -50,8 +50,8 @@ describe('toRows', () => {
   const { firms, plans } = toRows(parseCatalog(PROP_FIRM_CATALOG_FILES));
 
   it('une ligne par firm et par plan, avec la date du relevé', () => {
-    expect(firms.map((f) => f.id)).toEqual(['lucid', 'apex']);
-    expect(plans).toHaveLength(54);
+    expect(firms.map((f) => f.id)).toEqual(['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday']);
+    expect(plans).toHaveLength(116);
     expect(firms[1].verifiedAt).toEqual(new Date('2026-10-02T00:00:00Z'));
   });
 
@@ -67,6 +67,31 @@ describe('toRows', () => {
     expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
     const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
     expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
+  });
+
+  it('relevé du 2026-10-03 : valeurs clés des 4 nouvelles firms', () => {
+    type Ph = { phase: string; starting_balance?: number; max_drawdown: { amount: number; type: string; locks_at: number | null; locked_floor?: number | null };
+      consistency: { max_single_day_pct: number; max_single_day_pct_schedule?: number[] } | null;
+      payout: { split_pct: number | null; split_by_profit?: { profit_over: number; split_pct: number } } | null };
+    const phases = (id: string) => plans.find((p) => p.id === id)!.phases as Ph[];
+    const funded = (id: string) => phases(id).find((p) => p.phase !== 'evaluation')!;
+
+    // Topstep XFA : solde de départ 0, MLL -2 000 verrouillé à 0 quand le solde atteint 2 000.
+    expect(funded('topstep-standard-50k')).toMatchObject({ starting_balance: 0, max_drawdown: { amount: 2000, locks_at: 2000, locked_floor: 0 } });
+    expect(phases('topstep-standard-50k')[0].max_drawdown).toMatchObject({ amount: 2000, type: 'trailing_eod', locks_at: 52000, locked_floor: 50000 });
+    // TradeDay : seuil figé au solde de départ exact (pas + 100 $).
+    expect(phases('tradeday-qp-intraday-100k')[0].max_drawdown).toMatchObject({ amount: 3000, type: 'trailing_intraday', locks_at: 103000, locked_floor: 100000 });
+    expect(funded('tradeday-qp-eod-50k').max_drawdown.type).toBe('trailing_intraday'); // Quick Pay funded toujours intraday
+    expect(funded('tradeday-fp-eod-50k').max_drawdown.type).toBe('trailing_eod'); // Fast Pass funded toujours EOD
+    expect(funded('tradeday-qp-eod-50k').payout).toMatchObject({ split_pct: 0.5, split_by_profit: { profit_over: 4000, split_pct: 0.8 } });
+    // Tradeify : Growth 1 000 / 2 000 / 3 500 / 5 000 ; Lightning consistency par palier ; lock funded seulement.
+    expect([25, 50, 100, 150].map((k) => phases(`tradeify-growth-${k}k`)[0].max_drawdown.amount)).toEqual([1000, 2000, 3500, 5000]);
+    expect(phases('tradeify-growth-50k')[0].max_drawdown.locks_at).toBeNull();
+    expect(funded('tradeify-growth-50k').max_drawdown).toMatchObject({ locks_at: 52100, locked_floor: 50100 });
+    expect(funded('tradeify-lightning-50k').consistency).toMatchObject({ max_single_day_pct: 0.2, max_single_day_pct_schedule: [0.2, 0.25, 0.3] });
+    // MyFundedFutures : Rapid funded intraday depuis 0 $, verrouillé à 100 $ ; Pro verrouillé après le 1er payout.
+    expect(funded('myfundedfutures-rapid-50k')).toMatchObject({ starting_balance: 0, max_drawdown: { type: 'trailing_intraday', locks_at: 2100, locked_floor: 100 } });
+    expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
   });
 
   it('LucidMaxx reste invite_only et needs_review', () => {
@@ -93,10 +118,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 2 firms et les 54 plans', () => {
+  it('base vide : crée les 6 firms et les 116 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
-    expect(plan.firmsToCreate).toHaveLength(2);
-    expect(plan.plansToCreate).toHaveLength(54);
+    expect(plan.firmsToCreate).toHaveLength(6);
+    expect(plan.plansToCreate).toHaveLength(116);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);

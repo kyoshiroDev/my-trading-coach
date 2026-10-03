@@ -1,5 +1,7 @@
 # Rapport d'extraction : règles prop firm (PROMPT-136)
 
+**Mise à jour du 2026-10-03** : ajout de Topstep, Tradeify, MyFundedFutures et TradeDay (62 plans), voir la section « Quatre firms ajoutées » en fin de rapport. Catalogue : 6 firms, 116 plans.
+
 Relevé du 2026-10-02. Sources : sites et help centers officiels uniquement. Issue GitHub : #267.
 
 **Re-vérification complète du 2026-10-02 (soir)** : voir la section « Re-vérification » en fin de rapport (3 corrections Lucid, Apex conforme, offre Legacy Apex revenue en vente et non couverte).
@@ -299,4 +301,61 @@ Sources : page de vente Legacy et la section Legacy du help center (liste compl�
 - Moitié de 17, 27 et 35 contrats (150K, 250K, 300K) : arrondi non documenté, paliers laissés vides.
 - Trailing d'évaluation sur WealthCharts non documenté.
 - Inactivité : la politique Legacy (1 jour à 150 $ par 30 jours) renvoie, pour les produits promotionnels vendus après le 2026-03-01, à la nouvelle politique (2 jours à 50 $).
+
+## Quatre firms ajoutées (relevé du 2026-10-03)
+
+Sources : sites et help centers officiels uniquement, lus dans un navigateur (sélecteurs de prix compris). Chaque plan liste ses pages dans `source_urls`. Les comptes Live (appel de l'équipe risque) ne sont pas modélisés.
+
+### Ajouts au format (`schema.json`, tous optionnels)
+
+| Champ | Pourquoi |
+|---|---|
+| `phase.starting_balance` | Comptes funded qui démarrent à 0 $ (Topstep XFA, MyFundedFutures Rapid / Rapid EOD / Builder). Les seuils (`locks_at`, `locked_floor`, `safety_net_balance`) sont exprimés dans ce référentiel. |
+| `configuration.payout_path` | Parcours de payout choisi qui change les règles funded : Topstep XFA Standard / Consistency, Tradeify Select Flex / Daily. |
+| `configuration.addon` | Option payante qui change une règle : Tradeify « consistency 50 % », MyFundedFutures Builder « drawdown 1 500 $ ». |
+| `consistency.max_single_day_pct_schedule` | Seuil par numéro de payout (Tradeify Lightning 20 / 25 / 30 %). |
+| `payout.split_by_profit` | Partage selon le profit présent sur le compte (TradeDay Quick Pay : 50 % sous 4 000 $, 80 % au-delà). |
+
+### Plans
+
+| Firm | Plans | Tailles | `needs_review` |
+|---|---|---|---|
+| Topstep | Trading Combine × (DLL oui / non) × (payout Standard / Consistency) | 50K, 100K, 150K | 0 / 12 |
+| Tradeify | Growth, Lightning Funded, Select × (Flex / Daily) × (consistency 40 % / 50 %) | 25K à 150K | 9 / 24 |
+| MyFundedFutures | Rapid, Rapid EOD (25K, 50K), Pro (50K à 150K), Builder (+ option drawdown 1 500 $ en 50K) | 25K à 150K | 9 / 14 |
+| TradeDay | Quick Pay intraday, Quick Pay EOD, Fast Pass EOD | 25K à 150K | 3 / 12 |
+
+Exclus volontairement : Tradeify Select 300K et « Level Up » (éditions limitées, deux versions du 300K) ; MyFundedFutures Flex (rangé dans « Legacy Plans », absent du sélecteur) ; comptes Live de toutes les firms.
+
+### Écarts avec les chiffres fournis dans le prompt du 2026-10-03
+
+| Point du prompt | Source officielle | Retenu |
+|---|---|---|
+| Tradeify Growth : drawdown 1 100 / 2 000 / 3 500 / 4 900 $ | Article Growth Evaluation : 1 000 / 2 000 / 3 500 / 5 000 $ (cohérent avec le tableau de lock 26 100 / 52 100 / 103 600 / 155 100 $) | Source officielle |
+| Tradeify Lightning : 25K introuvable, 150K 5 900 $ | Article Lightning : 25K à 1 000 $, 150K à 5 250 $ ; le tableau de lock de l'article drawdown implique 6 000 $ pour le 150K | 25K ajouté ; 150K à 5 250 $, `needs_review` (contradiction interne Tradeify) |
+| Tradeify Select : drawdown non chiffré | Article Select : 1 000 / 2 000 / 3 000 / 4 500 $ en évaluation ; Daily funded 1 000 / 2 000 / 2 500 / 3 500 $ | Source officielle |
+| MyFundedFutures Rapid EOD : lock à 0 $ | Le plancher à 0 $ concerne le compte **Live** ; le funded sim démarre à 0 $ et se verrouille à **100 $** | Source officielle |
+| MyFundedFutures Builder : 1 500 $ avec option sur le 25K | L'option drawdown 1 500 $ porte sur le **50K** | Source officielle |
+| MyFundedFutures Flex | Plan « Legacy », plus dans le sélecteur | Exclu |
+| TradeDay : seul le 100K chiffré | Le sélecteur de prix chiffre les 4 tailles (drawdown 1 000 / 2 000 / 3 000 / 4 500 $) | 4 tailles |
+| TradeDay : lock à 100 000 $ exactement (100K) | Confirmé (seuil figé au solde de départ) | Conforme |
+| Topstep : MLL, DLL, XFA | Conformes ; la DLL est une **option** choisie à l'achat, l'XFA a deux parcours de payout | Variantes en plans distincts |
+
+### Contradictions à l'intérieur des sources
+
+| Sujet | Source A | Source B | Retenu |
+|---|---|---|---|
+| Tradeify Lightning 150K, drawdown | Article Lightning : 5 250 $ | Tableau de lock (Trailing Max Drawdowns) : déclenchement 156 100 $ (= 6 000 $) | 5 250 $, `locks_at` à null, `needs_review` |
+| Tradeify Select 25K, taille max en évaluation | Article Select Evaluation : 1 mini / 10 micros | Article des payouts Select : 2 / 20 en évaluation | 1 / 10, `needs_review` |
+| MyFundedFutures Rapid, verrouillage du funded | Help center et page : le seuil se fige quand il atteint 100 $ (profit = drawdown + 100 $) | FAQ de la page Rapid : « après le premier payout » | Help center, `needs_review` |
+| MyFundedFutures Builder, tailles | En-tête de page : « $25K & $50K » | Tableau des règles et sélecteur : 25K à 150K | 4 tailles, `needs_review` |
+| MyFundedFutures Pro, taille | Sous-titre : « $90K–$150K » | Page Pro et sélecteur : 50K, 100K, 150K | 50K à 150K |
+| MyFundedFutures Rapid EOD, news funded | Article Rapid EOD : Tier 1 interdit | Politique news : seuls Rapid et Pro funded sont listés | Interdit (le plus prudent) |
+
+### Valeurs non publiées (`null`)
+
+- Tradeify : taille max du funded Growth ; base des DLL (réalisé ou latent).
+- Topstep : base de la DLL (« Net P&L », latent non précisé).
+- MyFundedFutures Builder : heure de reprise et base de la DLL ; prix de l'option drawdown 1 500 $.
+- TradeDay Fast Pass funded : taille maximale (scaling « +1 contrat par 2 000 $ », maximum publié seulement pour le 25K).
 
