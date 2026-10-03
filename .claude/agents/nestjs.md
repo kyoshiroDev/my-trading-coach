@@ -1262,3 +1262,10 @@ Stripe sur les octets exacts), puis les parseurs JSON / urlencoded standard aill
 brute de chaque corps). **Utilisé par `main.ts` ET par `test/integration-app.helper.ts`** : la même
 configuration est testée. Une nouvelle route qui a besoin du corps brut (autre webhook signé) →
 l'ajouter dans `configureBodyParsers`, pas `rawBody: true` global.
+
+### Cache HTTP des routes publiques (SCA-B3-07, 2026-10-03)
+
+`GET /public/stats` : `@Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')`
+(`PUBLIC_STATS_CACHE_CONTROL`). Aucun middleware global ne pose de `Cache-Control` (vérifié :
+Helmet ne le fait pas) ; verrouillé par `public-stats-cache.int-spec.ts`. Une donnée publique et
+peu changeante → même traitement ; jamais sur une route authentifiée ou personnelle.
