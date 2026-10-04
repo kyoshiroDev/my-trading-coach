@@ -68,6 +68,7 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
+          command_timeout: 30m # build + bascule blue/green (~5-10 min)
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
@@ -76,22 +77,11 @@ jobs:
             cd /opt/apps/mytradingcoach/prod
             git fetch origin
             git reset --hard ${{ github.event.workflow_run.head_sha }}
-            export GIT_SHA=$(git rev-parse --short HEAD)   # → SENTRY_RELEASE (docker-compose.prod.yml)
-            docker compose -f docker-compose.prod.yml --env-file .env.production build api
-            docker compose -f docker-compose.prod.yml --env-file .env.production up -d --force-recreate api
-            # Garde-fou : l'API doit répondre prête (Postgres + Redis) sous 90 s, sinon le job échoue
-            # et le tag deployed/prod ne bouge pas (le prochain CD recomparera depuis le bon commit).
-            ready=0
-            for i in $(seq 1 18); do
-              if docker exec mtc_api_prod wget -qO- http://localhost:3000/api/health/ready >/dev/null 2>&1; then ready=1; break; fi
-              sleep 5
-            done
-            if [ "$ready" != 1 ]; then
-              echo "❌ API non prête après 90 s : derniers logs"
-              docker logs --tail 80 mtc_api_prod
-              exit 1
-            fi
-            echo "✅ API prête"
+            # Blue/green sans coupure (SCA-B8, docs : .claude/agents/deploy.md) : image taguée SHA,
+            # migration unique, couleur inactive démarrée et vérifiée dans Traefik, drain de
+            # l'ancienne, worker recréé. Échec avant le drain → l'ancienne n'a jamais cessé de servir,
+            # le job échoue et le tag deployed/prod ne bouge pas.
+            bash infra/deploy-api.sh prod
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production build discord-bot
             docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --force-recreate discord-bot
             docker buildx prune --keep-storage=8GB -f
