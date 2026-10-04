@@ -56,6 +56,17 @@ export function shareText(code: string | null | undefined): string {
   return `Mon débrief de session sur MyTradingCoach 📈 ${referralUrl(code)}`;
 }
 
+/**
+ * Diffusion progressive : bêta-testeurs, admins et ambassadeurs (premiers à publier, lien
+ * de parrainage commissionné). À ouvrir à tous après un retour bêta positif explicite.
+ */
+export const RESULTS_SHARE_ROLES: readonly string[] = ['BETA_TESTER', 'ADMIN', 'AMBASSADOR'];
+
+/** Bouton « Publier mes résultats » : rôle autorisé ET session clôturée (stats du jour connues). */
+export function canPublishResults(role: string | null | undefined, sessionStatus: string | null | undefined): boolean {
+  return !!role && RESULTS_SHARE_ROLES.includes(role) && sessionStatus === 'CLOSED';
+}
+
 /** Rien à partager sans trade ou avec un P&L nul : pas de carte vide. */
 export function hasResultsToShare(stats: { tradesCount: number; totalPnl: number } | null | undefined): boolean {
   return !!stats && stats.tradesCount > 0 && stats.totalPnl !== 0;

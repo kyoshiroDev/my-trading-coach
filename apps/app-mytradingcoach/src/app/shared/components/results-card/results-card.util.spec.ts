@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  canPublishResults,
   hasResultsToShare,
   moodDisplay,
   referralDisplay,
@@ -21,6 +22,16 @@ describe('results-card.util', () => {
     expect(shareText('VAL')).toBe('Mon débrief de session sur MyTradingCoach 📈 https://mytradingcoach.app/?ref=VAL');
     expect(shareText(null)).toContain('https://mytradingcoach.app');
     expect(shareText(null)).not.toContain('?ref=');
+  });
+
+  it('accès : bêta-testeurs, admins et ambassadeurs, uniquement session clôturée', () => {
+    for (const role of ['BETA_TESTER', 'ADMIN', 'AMBASSADOR']) {
+      expect(canPublishResults(role, 'CLOSED'), role).toBe(true);
+      expect(canPublishResults(role, 'ACTIVE'), `${role} en session`).toBe(false);
+    }
+    expect(canPublishResults('USER', 'CLOSED')).toBe(false);
+    expect(canPublishResults(null, 'CLOSED')).toBe(false);
+    expect(canPublishResults('AMBASSADOR', null)).toBe(false);
   });
 
   it('rien à partager sans trade ni avec un P&L nul', () => {
