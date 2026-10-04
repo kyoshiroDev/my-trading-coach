@@ -392,6 +392,38 @@ describe('AccountsService', () => {
       ],
     };
 
+    describe('perte journalière (Premium, #370)', () => {
+      const dll = { amount: 1000, basis: 'equity', resets_at: '17:00 America/Chicago', breach: 'trading_paused_for_day', scaling_rule: null } as const;
+      const withDll: RulePlan = { ...topstep, phases: [{ ...topstep.phases[0], daily_loss_limit: dll }] };
+      const acct = { ...manual, startingBalance: 50000, type: 'EVALUATION' as const };
+      // 2 juin, 16:00 UTC = 11:00 à Chicago : journée de trading du 2 juin, la veille = 1er juin.
+      const now = new Date(Date.UTC(2026, 5, 2, 16));
+      const agg = { count: 2, wins: 1, losses: 1, realized: 400, maxCumulative: 1200, maxEodCumulative: 1200, bestDay: 1200, worstDay: -800 };
+      const sessions = [{ day: '2026-06-01', pnl: 1200 }, { day: '2026-06-02', pnl: -800 }];
+
+      it('hors Premium : non calculée', () => {
+        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null);
+        expect(m.dailyLoss).toBeNull();
+      });
+
+      it('sans clôture officielle : référence = solde − trades du jour', () => {
+        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null, { dailyLoss: true });
+        expect(m.dailyLoss).toMatchObject({ limit: 1000, startOfDay: 51200, used: 800, remaining: 200, source: 'trades', breached: false });
+      });
+
+      it('clôture officielle de la veille + latent du broker : elle fait foi, le latent compte', () => {
+        const broker = { cashBalance: 50400, cashBalanceAt: now, netLiq: 50100, openPnl: -300, equityAt: now, openPositions: 1 };
+        const official = { peakClose: 51200, lastTradeDate: '2026-06-01', lastClose: 51200 };
+        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, broker, 'tradovate', official, now, sessions, null, { dailyLoss: true });
+        expect(m.dailyLoss).toMatchObject({ startOfDay: 51200, used: 1100, breached: true, source: 'broker' });
+      });
+
+      it('plan sans perte journalière : null', () => {
+        const m = svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, sessions, null, { dailyLoss: true });
+        expect(m.dailyLoss).toBeNull();
+      });
+    });
+
     it('évaluation : le plan remplace la saisie manuelle (montant, type)', () => {
       const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(500, 1), d(700, 2)], topstep);
       expect(m.drawdown).toMatchObject({ source: 'plan', type: 'TRAILING', maxDrawdown: 2000, floor: 49200, margin: 2000, breached: false });

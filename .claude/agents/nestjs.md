@@ -731,6 +731,24 @@ export class CreateTradeDto {
 
 ---
 
+## Alertes prop firm « avant la casse » (#370, PREMIUM)
+
+- **Perte journalière** : `accounts/daily-loss.ts` (pur, testé). Journée = `tradingDay` (CME, 17:00 CT
+  = 18:00 ET, le reset de toutes les firms qui en publient un). Référence = clôture officielle de la
+  séance précédente (`BrokerDailyClose`, dernière ligne par compte) quand elle est à jour et dans le
+  référentiel du compte, sinon solde − P&L des trades du jour. Base `equity` sauf `basis: 'balance'`
+  (base non publiée → equity, le plus prudent). Paliers selon le profit de la veille, jamais sous le
+  palier 1. `scaling_rule` (LucidScale…) NON modélisée → `approximate: true`.
+- `AccountsService.list(userId, { dailyLoss })` : le contrôleur passe `isPremiumAccess(user)`.
+- **Alertes** : `PropAlertsService` (module Tradovate), déclenché par le gateway `/tradovate-live`
+  sur chaque `tradovate:balance` (worker titulaire, donc une seule évaluation), regroupé 1,5 s par
+  compte. Réutilise `AccountsService.list` (aucune règle recalculée). Niveaux : ≤ 25 % de marge →
+  `warning`, ≤ 10 % → `critical`, dépassé → `breached`, pour `drawdown` et `daily_loss`. Clé Redis
+  `prop-alert:<compte>:<type>:<journée>` = plus haut niveau envoyé (TTL 2 j) ; réarmée quand la marge
+  remonte au-dessus de 35 % (hystérésis). Hors Premium, démo ou compte non ACTIVE : rien.
+- ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
+  boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
+
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
 Premier broker synchronisé par **API** plutôt que par fichier. Module

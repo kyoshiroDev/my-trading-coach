@@ -22,6 +22,7 @@ import {
   type RuleAgg, type RuleTrade, type SessionPnl,
 } from './account-rules';
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
+import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
 
 type RuleAccount = Pick<
   TradingAccount,
@@ -73,6 +74,13 @@ export interface RuleOfficialCloses {
   peakClose: number;
   /** Dernière journée de trading couverte, `AAAA-MM-JJ`. */
   lastTradeDate: string;
+  /** Solde de clôture de cette dernière journée (référence de la perte journalière). */
+  lastClose?: number | null;
+}
+
+/** Options de calcul : la perte journalière est réservée au Premium (#370). */
+export interface RuleMetricsOptions {
+  dailyLoss?: boolean;
 }
 
 /** Solde et equity du compte lus chez le broker (connexion API), quand il y en a une. */
@@ -184,6 +192,11 @@ export interface AccountRuleMetrics {
   /** Progression vers l'objectif ou le prochain payout (plan du catalogue relié), sinon null. */
   progress: AccountProgress | null;
   /**
+   * Perte journalière selon la règle du plan relié (PREMIUM, #370) ; null hors Premium, sans plan
+   * ou sans montant publié. Cf. `daily-loss.ts`.
+   */
+  dailyLoss: DailyLossMetrics | null;
+  /**
    * Solde et equity lus chez le broker. Présent → `currentBalance` est le solde du broker et la
    * marge de drawdown se calcule sur l'equity (latent compris), sauf `referenceMismatch`.
    */
@@ -211,6 +224,7 @@ export class AccountsService {
    */
   async list(
     userId: string,
+    options: RuleMetricsOptions = {},
   ): Promise<(TradingAccount & { metrics: AccountRuleMetrics })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
     const rows = await this.prisma.tradingAccount.findMany({
@@ -227,12 +241,24 @@ export class AccountsService {
       where: { accountId: { in: rows.map((r) => r.id) } },
       _max: { closingBalance: true, tradeDate: true },
     });
+    // Solde de clôture de la dernière séance couverte, par compte : référence de la perte
+    // journalière (Premium seulement, une ligne par compte).
+    const lastCloses = options.dailyLoss
+      ? await this.prisma.brokerDailyClose.findMany({
+        where: { accountId: { in: rows.map((r) => r.id) } },
+        distinct: ['accountId'],
+        orderBy: [{ accountId: 'asc' }, { tradeDate: 'desc' }],
+        select: { accountId: true, closingBalance: true },
+      })
+      : [];
+    const lastCloseByAccount = new Map(lastCloses.map((c) => [c.accountId, c.closingBalance]));
     const officialByAccount = new Map(
       closes
         .filter((c) => c._max.closingBalance != null && c._max.tradeDate != null)
         .map((c) => [c.accountId, {
           peakClose: c._max.closingBalance!,
           lastTradeDate: c._max.tradeDate!.toISOString().slice(0, 10),
+          lastClose: lastCloseByAccount.get(c.accountId) ?? null,
         } satisfies RuleOfficialCloses]),
     );
     // Payouts détectés (hors écartés par l'utilisateur), du plus récent au plus ancien : quelques
@@ -274,7 +300,7 @@ export class AccountsService {
       ...account,
       metrics: this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
-        sessions.get(account.id) ?? [], payouts,
+        sessions.get(account.id) ?? [], payouts, options,
       ),
     }));
   }
@@ -315,6 +341,7 @@ export class AccountsService {
     now = new Date(),
     sessions: SessionPnl[] = [],
     payouts: RulePayouts | null = null,
+    options: RuleMetricsOptions = {},
   ): AccountRuleMetrics {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
@@ -443,6 +470,25 @@ export class AccountsService {
       };
     }
 
+    // Perte journalière (Premium) : référence = clôture officielle de la séance précédente quand
+    // elle est à jour et dans le référentiel du compte, sinon solde actuel − trades du jour.
+    let dailyLoss: DailyLossMetrics | null = null;
+    if (options.dailyLoss && phase) {
+      const today = tradingDay(now);
+      const previousClose =
+        official?.lastClose != null && official.lastTradeDate === previousSession(today) && broker && !broker.referenceMismatch
+          ? official.lastClose
+          : null;
+      dailyLoss = computeDailyLoss({
+        rule: phase.daily_loss_limit,
+        startingBalance,
+        currentBalance,
+        equity,
+        todayTradesPnl: sessions.find((x) => x.day === today)?.pnl ?? 0,
+        previousClose,
+      });
+    }
+
     return {
       startingBalance,
       realizedPnl,
@@ -467,6 +513,7 @@ export class AccountsService {
           unconfirmed: plan.needsReview ?? false,
         })
         : null,
+      dailyLoss,
       estimated: true,
       disclaimer: drawdown?.rule ? planDisclaimer(drawdown.rule, broker) : broker ? BROKER_DISCLAIMER : RULE_DISCLAIMER,
     };
