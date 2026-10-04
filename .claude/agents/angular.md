@@ -761,7 +761,10 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - Jamais de nouvelle interface d'échange recopiée dans `core/api/*.api.ts` : l'ajouter au contrat,
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
-  `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+  `renderEmailMarkdown` (rendu des campagnes côté API).
+- Aperçu des campagnes (admin `/emails`) : **toujours** le HTML renvoyé par
+  `POST /admin/campaigns/:type/preview` (le vrai template envoyé), jamais un rendu reconstruit côté
+  front. Objet/contenu d'une annonce → nouvel appel après 400 ms de pause (`switchMap`).
 
 ## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
 
