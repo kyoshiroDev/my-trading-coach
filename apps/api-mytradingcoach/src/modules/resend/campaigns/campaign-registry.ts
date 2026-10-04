@@ -116,7 +116,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
         { userName, appUrl, unsubUrl },
         {
           subject: '📅 Ton débrief hebdo est prêt',
-          bodyHtml: `<p style="font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">Ton analyse de la semaine vient d'être générée : tes patterns, tes points forts et 3 objectifs concrets pour la semaine.</p>`,
+          bodyHtml: `<p style="font-family:'Inter',Arial,sans-serif;font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">Ton analyse de la semaine vient d'être générée : tes patterns, tes points forts et 3 objectifs concrets pour la semaine.</p>`,
         },
       ),
   },

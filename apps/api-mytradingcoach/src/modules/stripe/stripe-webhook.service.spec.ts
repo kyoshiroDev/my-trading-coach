@@ -27,13 +27,15 @@ function makeSvc() {
     sendWelcomePremium: vi.fn().mockResolvedValue(undefined),
     sendSubscriptionCanceled: vi.fn().mockResolvedValue(undefined),
     sendAdminAlert: vi.fn().mockResolvedValue(undefined),
+    sendPaymentSucceeded: vi.fn().mockResolvedValue(undefined),
   };
   const discord = { syncDiscordRole: vi.fn().mockResolvedValue(undefined) };
   const queue = { add: vi.fn() };
   const redisService = { client: { del: vi.fn().mockResolvedValue(1), get: vi.fn(), setex: vi.fn() } };
   const config = { getOrThrow: vi.fn(() => 'sk_test_fake'), get: vi.fn() };
   const retrieve = vi.fn();
-  const stripe = { subscriptions: { retrieve } } as never;
+  const listInvoicePayments = vi.fn().mockResolvedValue({ data: [] });
+  const stripe = { subscriptions: { retrieve }, invoicePayments: { list: listInvoicePayments } } as never;
 
   const subscriptions = new StripeSubscriptionService(prisma as never, redisService as never, stripe);
   const referrals = new StripeReferralService(
@@ -43,7 +45,7 @@ function makeSvc() {
     config as never, prisma as never, resend as never, discord as never,
     subscriptions, referrals, queue as never, stripe,
   );
-  return { svc, prisma, resend, discord, retrieve };
+  return { svc, prisma, resend, discord, retrieve, listInvoicePayments };
 }
 
 function subscription(over: Record<string, any> = {}): any {
@@ -145,5 +147,79 @@ describe('StripeWebhookService.processWebhookEvent — tunnel argent', () => {
     } as any);
 
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('StripeWebhookService — invoice.payment_succeeded (reçu de renouvellement)', () => {
+  function invoice(over: Record<string, any> = {}): any {
+    return {
+      id: 'in_1',
+      customer: 'cus_1',
+      billing_reason: 'subscription_cycle',
+      amount_paid: 4900,
+      currency: 'eur',
+      hosted_invoice_url: 'https://invoice.stripe.com/i/in_1',
+      parent: { subscription_details: { subscription: 'sub_1' } },
+      ...over,
+    };
+  }
+
+  function paidSetup() {
+    const ctx = makeSvc();
+    ctx.retrieve.mockResolvedValue(subscription());
+    ctx.prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: false });
+    return ctx;
+  }
+
+  it('renouvellement → reçu envoyé avec montant, carte, échéance et facture', async () => {
+    const { svc, resend, listInvoicePayments } = paidSetup();
+    listInvoicePayments.mockResolvedValue({
+      data: [{ payment: { payment_intent: { payment_method: { card: { last4: '4242' } } } } }],
+    });
+
+    await svc.processWebhookEvent({ type: 'invoice.payment_succeeded', data: { object: invoice() } } as any);
+
+    expect(resend.sendPaymentSucceeded).toHaveBeenCalledOnce();
+    const params = resend.sendPaymentSucceeded.mock.calls[0][0];
+    expect(params.to).toBe('u@t.com');
+    expect(params.amount).toMatch(/^49,00\s€$/);
+    expect(params.last4).toBe('4242');
+    expect(params.nextRenewalDate).toEqual(new Date(1_893_456_000 * 1000));
+    expect(params.invoiceUrl).toBe('https://invoice.stripe.com/i/in_1');
+  });
+
+  it('premier paiement (subscription_create) → pas de reçu (doublon du mail de bienvenue)', async () => {
+    const { svc, resend } = paidSetup();
+
+    await svc.processWebhookEvent({
+      type: 'invoice.payment_succeeded',
+      data: { object: invoice({ billing_reason: 'subscription_create' }) },
+    } as any);
+
+    expect(resend.sendPaymentSucceeded).not.toHaveBeenCalled();
+  });
+
+  it('champs optionnels absents (carte, facture) → reçu envoyé quand même, sans ces lignes', async () => {
+    const { svc, resend, listInvoicePayments } = paidSetup();
+    listInvoicePayments.mockRejectedValue(new Error('stripe down'));
+
+    await svc.processWebhookEvent({
+      type: 'invoice.payment_succeeded',
+      data: { object: invoice({ hosted_invoice_url: null }) },
+    } as any);
+
+    expect(resend.sendPaymentSucceeded).toHaveBeenCalledOnce();
+    const params = resend.sendPaymentSucceeded.mock.calls[0][0];
+    expect(params.last4).toBeUndefined();
+    expect(params.invoiceUrl).toBeUndefined();
+  });
+
+  it('échec d\'envoi du reçu → l\'event ne lève pas (pas de rejeu sync/parrainage)', async () => {
+    const { svc, resend } = paidSetup();
+    resend.sendPaymentSucceeded.mockRejectedValue(new Error('resend down'));
+
+    await expect(
+      svc.processWebhookEvent({ type: 'invoice.payment_succeeded', data: { object: invoice() } } as any),
+    ).resolves.toBeUndefined();
   });
 });

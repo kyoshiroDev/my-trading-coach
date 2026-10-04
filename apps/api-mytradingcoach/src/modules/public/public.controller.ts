@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Headers, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, HttpCode, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { PublicService } from './public.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 import { LandingVisitDto } from './dto/landing-visit.dto';
+
+export const PUBLIC_STATS_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=600';
 
 @Controller('public')
 export class PublicController {
@@ -12,6 +14,9 @@ export class PublicController {
   /** Stats publiques (lecture seule, sans auth) : n'expose que le nombre de traders. */
   @Public()
   @Throttle({ default: { ttl: 60_000, limit: 60 } })
+  // Chiffre public qui bouge peu : navigateurs et caches intermédiaires le gardent 5 min, et
+  // peuvent servir l'ancien pendant 10 min de plus le temps de revalider (SCA-B3-07).
+  @Header('Cache-Control', PUBLIC_STATS_CACHE_CONTROL)
   @Get('stats')
   async getStats(): Promise<{ traders: number }> {
     return { traders: await this.publicService.getTradersCount() };

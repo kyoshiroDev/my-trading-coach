@@ -1,0 +1,55 @@
+name: Deploy API prod (manuel)
+
+# Déploiement manuel de l'API prod par le script blue/green (SCA-B8-04) :
+# - retour arrière : SHA d'une image encore gardée sur le VPS (les 5 dernières, listées à la fin du
+#   log de chaque déploiement) → pas de build, ~2 min, sans coupure ;
+# - transition vers le blue/green (une seule fois) : case « transition » cochée, à une heure creuse
+#   (~2 s d'erreurs : l'ancien conteneur unique ne sait pas se drainer).
+# Ne touche pas au dépôt du VPS (pas de git reset) ni au tag deployed/prod.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "SHA à déployer (7 à 40 caractères hexadécimaux)"
+        required: true
+        type: string
+      transition:
+        description: "Transition depuis le conteneur unique d'avant B8 (une seule fois, heure creuse)"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-api-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy API prod (${{ inputs.sha }})
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Valider le SHA
+        env:
+          SHA: ${{ inputs.sha }}
+        run: |
+          if ! [[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]]; then echo "SHA invalide : $SHA"; exit 1; fi
+
+      - name: Déployer via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SHA: ${{ inputs.sha }}
+          DEPLOY_TRANSITION: ${{ inputs.transition && '1' || '0' }}
+        with:
+          command_timeout: 30m
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: SHA,DEPLOY_TRANSITION
+          script: |
+            set -e
+            cd /opt/apps/mytradingcoach/prod
+            DEPLOY_TRANSITION="$DEPLOY_TRANSITION" bash infra/deploy-api.sh prod "$SHA"

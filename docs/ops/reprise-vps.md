@@ -130,9 +130,11 @@ cp /tmp/restauration/apps/beta/.env.beta       beta/
 chmod 600 */.env.*
 
 cd prod
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# API : blue/green (SCA-B8). Sur un hôte neuf, le script construit l'image, migre, démarre
+# mtc_api_prod_blue + mtc_api_prod_worker et vérifie que Traefik (déjà lancé) les sert.
+bash infra/deploy-api.sh prod
 docker compose -f docker-compose.discord-bot.yml --env-file .env.production up -d --build
-docker exec mtc_api_prod wget -qO- http://localhost:3000/api/health/ready
+docker exec mtc_api_prod_blue wget -qO- http://localhost:3000/api/health/ready
 ```
 ⚠️ Toujours préciser `-f docker-compose.<env>.yml` : le `docker-compose.yml` par défaut n'est pas
 celui du VPS. Dev et beta : même chose avec `docker-compose.dev.yml` / `.env.dev` et

@@ -12,22 +12,27 @@ mib() { awk '{v=$1; u=$1; gsub(/[0-9.]/,"",u); if(u=="GiB")v*=1024; else if(u=="
 echo "=== $(date '+%d/%m %H:%M:%S') · charge $(cut -d' ' -f1-3 /proc/loadavg) (4 cœurs)"
 
 echo "--- Conteneurs (mémoire / limite)"
-docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep -E '^mtc_(api_prod|postgres|pgbouncer|redis|traefik|discord_bot) ' | sort |
+docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' | grep -E '^mtc_(api_prod(_blue|_green|_worker)?|postgres|pgbouncer|redis|traefik|discord_bot) ' | sort |
 while read -r n cpu used _ lim; do
   u=$(echo "$used" | mib); l=$(echo "$lim" | mib); pct=$(( u * 100 / l ))
-  printf '%-16s CPU %7s  %5d / %5d Mo (%2d %%)  %s\n' "$n" "$cpu" "$u" "$l" "$pct" "$(flag $([ $pct -ge 80 ] && echo 1) "mémoire ≥ 80 % de la limite")"
+  printf '%-20s CPU %7s  %5d / %5d Mo (%2d %%)  %s\n' "$n" "$cpu" "$u" "$l" "$pct" "$(flag $([ $pct -ge 80 ] && echo 1) "mémoire ≥ 80 % de la limite")"
 done
 for c in $(docker ps -a --format '{{.Names}}' | grep '^mtc_'); do
   read -r st h r < <(docker inspect "$c" --format '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}} {{.RestartCount}}')
+  # Couleur en cours de drain (déploiement blue/green) : unhealthy volontairement.
+  if [ "$h" = unhealthy ] && docker exec "$c" test -f /tmp/drain 2>/dev/null; then echo "   $c : drain en cours (déploiement)"; continue; fi
   if [ "$st" != running ] || [ "$h" = unhealthy ] || [ "$r" != 0 ]; then echo "⚠️  $c : $st, santé $h, $r redémarrage(s)"; fi
 done
-dev_beta=$(docker ps --format '{{.Names}}' | grep -E '^mtc_api_(dev|beta)$' | tr '\n' ' ')
+dev_beta=$(docker ps --format '{{.Names}}' | grep -E '^mtc_api_(dev|beta)(_blue|_green|_worker)?$' | tr '\n' ' ')
 echo "API dev/beta en marche : ${dev_beta:-aucune}  $(flag $([ -n "$dev_beta" ] && echo 1) "à arrêter le jour J (docs/ops/jour-j.md)")"
 
 echo "--- API prod"
 ready=$(curl -s -o /dev/null -w '%{http_code} %{time_total}' --max-time 5 https://api.mytradingcoach.app/api/health/ready)
 echo "/health/ready : $ready s  $(flag $([ "${ready%% *}" != 200 ] && echo 1) "n'est pas 200")"
-logs=$(docker logs --since 10m mtc_api_prod 2>&1)
+# Web (couleur(s) en marche) + worker ; ou le conteneur unique d'avant B8.
+web=$(docker ps --format '{{.Names}}' | grep -E '^mtc_api_prod(_blue|_green)?$' | tr '\n' ' ')
+echo "conteneur(s) web : ${web:-AUCUN}  $(flag $([ -z "$web" ] && echo 1) "aucun conteneur web")"
+logs=$(for c in $(docker ps --format '{{.Names}}' | grep -E '^mtc_api_prod(_blue|_green|_worker)?$'); do docker logs --since 10m "$c" 2>&1; done)
 e5=$(grep -c -E '"message":"5[0-9]{2} ' <<<"$logs"); e429=$(grep -c -E '"message":"429 ' <<<"$logs")
 echo "10 dernières min : $e5 erreur(s) 5xx · $e429 réponse(s) 429  $(flag $([ "$e5" -ge 10 ] && echo 1) "≥ 10 erreurs 5xx : voir Sentry")"
 grep -oE '"message":"5[0-9]{2} [A-Z]+ [^ ?"]+' <<<"$logs" | cut -d'"' -f4 | sort | uniq -c | sort -rn | head -3 | sed 's/^/   /'

@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, debounce, of, switchMap, timer } from 'rxjs';
 import {
   LucideDynamicIcon,
   LucideSend as Send,
@@ -14,8 +15,9 @@ import {
   LucideRefreshCw as RefreshCw,
 } from '@lucide/angular';
 import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
-import { renderEmailMarkdown } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
+
+const PREVIEW_DEBOUNCE_MS = 400;
 
 @Component({
   selector: 'mtc-admin-emails',
@@ -55,25 +57,10 @@ export class EmailsComponent {
     return this.force() ? c.targetCount : c.newCount;
   });
 
-  protected readonly wrappedPreviewHtml = computed<SafeHtml>(() => {
-    const campaign = this.previewCampaign();
-
-    let inner: string;
-    if (campaign?.type === 'announcement') {
-      const subject = this.announcementSubject().trim() || '📣 Nouveauté MyTradingCoach';
-      const body    = this.renderMarkdown(this.announcementBody());
-      const name    = this.previewRecipients()[0]?.name ?? 'Trader';
-      const APP_URL = 'https://app.mytradingcoach.app';
-      inner = `<div style="margin:0;padding:0;background-color:#070a10;font-family:'DM Sans',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070a10;padding:24px 0;"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#0e1420;border:1px solid rgba(120,160,255,0.1);border-radius:18px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:34px 32px;text-align:center;"><div style="font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.3;margin:0;">${subject}</div></td></tr><tr><td style="padding:32px 32px 8px;"><p style="font-size:16px;color:#eef3fb;line-height:1.6;margin:0 0 16px;">Bonjour ${name},</p>${body}</td></tr><tr><td style="padding:8px 32px 28px;text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 34px;border-radius:12px;">Découvrir →</a></td></tr><tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(120,160,255,0.08);"><div style="font-size:12px;color:#5e789c;text-align:center;line-height:1.6;">🇫🇷 Données hébergées en France<br/>MyTradingCoach · <a href="https://mytradingcoach.app" style="color:#60a5fa;text-decoration:none;">mytradingcoach.app</a></div></td></tr></table></td></tr></table></div>`;
-    } else {
-      inner = this.previewHtml();
-    }
-
-    const fullHtml = !inner
-      ? ''
-      : `<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;}html,body{margin:0;padding:0;background:#070a10;font-family:Arial,sans-serif;}body{display:flex;justify-content:center;padding:0;}</style></head><body>${inner}</body></html>`;
-    return this.sanitizer.bypassSecurityTrustHtml(fullHtml);
-  });
+  // HTML renvoyé par l'API = celui réellement envoyé (même template backend), pour tous les types.
+  protected readonly safePreviewHtml = computed<SafeHtml>(() =>
+    this.sanitizer.bypassSecurityTrustHtml(this.previewHtml()),
+  );
 
   protected readonly canSend = computed(() => {
     const c = this.sendCampaignModal();
@@ -82,7 +69,29 @@ export class EmailsComponent {
     return true;
   });
 
-  constructor() { this.load(); }
+  // Ouverture : rendu immédiat ; frappe : 400 ms de pause. switchMap annule la requête périmée.
+  private readonly previewRequests = new Subject<{ campaign: CampaignMeta; debounced: boolean }>();
+
+  constructor() {
+    this.load();
+    this.previewRequests
+      .pipe(
+        debounce(r => timer(r.debounced ? PREVIEW_DEBOUNCE_MS : 0)),
+        switchMap(({ campaign }) =>
+          this.adminApi
+            .previewCampaign(campaign.type, this.announcementSubject(), this.announcementBody())
+            .pipe(catchError(() => of(null))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(r => {
+        if (r) {
+          this.previewHtml.set(r.data.html);
+          this.previewRecipients.set(r.data.recipients ?? []);
+        }
+        this.previewLoading.set(false);
+      });
+  }
 
   load(): void {
     this.loading.set(true);
@@ -96,16 +105,13 @@ export class EmailsComponent {
     this.previewHtml.set('');
     this.previewRecipients.set([]);
     this.previewLoading.set(true);
-    this.adminApi.previewCampaign(c.type, this.announcementSubject(), this.announcementBody())
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: r => {
-          if (c.type !== 'announcement') this.previewHtml.set(r.data.html);
-          this.previewRecipients.set(r.data.recipients ?? []);
-          this.previewLoading.set(false);
-        },
-        error: () => this.previewLoading.set(false),
-      });
+    this.previewRequests.next({ campaign: c, debounced: false });
+  }
+
+  /** Objet / contenu modifiés dans l'aperçu : nouveau rendu serveur après une pause de frappe. */
+  refreshPreview(): void {
+    const c = this.previewCampaign();
+    if (c) this.previewRequests.next({ campaign: c, debounced: true });
   }
 
   openSend(c: CampaignMeta): void {
@@ -134,13 +140,6 @@ export class EmailsComponent {
         error: () => { this.sending.set(false); this.showToast('❌ Erreur lors de l\'envoi', true); },
       });
   }
-
-  /** Aperçu : même rendu que l'email envoyé (@mtc/shared), avec un texte d'attente si vide. */
-  private renderMarkdown(raw: string): string {
-    if (!raw?.trim()) return '<p style="color:#5e789c;font-style:italic;">Ton message apparaîtra ici…</p>';
-    return renderEmailMarkdown(raw);
-  }
-
 
   private showToast(message: string, error = false): void {
     this.toast.set({ message, error });

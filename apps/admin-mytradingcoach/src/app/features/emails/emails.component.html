@@ -50,14 +50,14 @@
               <input id="preview-subject" type="text" class="field-input"
                 placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
                 [ngModel]="announcementSubject()"
-                (ngModelChange)="announcementSubject.set($event)" />
+                (ngModelChange)="announcementSubject.set($event); refreshPreview()" />
             </div>
             <div class="field-group">
               <label class="field-label" for="preview-body">Contenu</label>
               <textarea id="preview-body" class="field-textarea preview-textarea" rows="6"
                 placeholder="# Titre de section&#10;**mot important** en gras&#10;- élément de liste&#10;&#10;Ligne vide = nouveau paragraphe."
                 [ngModel]="announcementBody()"
-                (ngModelChange)="announcementBody.set($event)"></textarea>
+                (ngModelChange)="announcementBody.set($event); refreshPreview()"></textarea>
             </div>
           </div>
         }
@@ -76,7 +76,7 @@
             </div>
           </div>
           <div class="preview-frame">
-            <iframe [srcdoc]="wrappedPreviewHtml()" title="Aperçu email"
+            <iframe [srcdoc]="safePreviewHtml()" title="Aperçu email"
               style="width:100%;height:460px;border:none;border-radius:8px;background:#070a10"></iframe>
           </div>
         }

@@ -29,6 +29,14 @@ docker run --rm -i -v "$PWD/tools/load:/scripts" grafana/k6 run \
 
 ## Procédure B9 complète (pic sur beta)
 
+> **Beta ou dev** : les scripts SQL acceptent `mytradingcoach_beta` ou `mytradingcoach_dev` (refus
+> partout ailleurs). Sur dev, remplacer beta par dev dans les étapes ci-dessous (`.env.dev`, pool
+> dev, arrêter l'API **beta**) et tenir compte de deux différences :
+> - **l'API dev tourne en `NODE_ENV=development` → 1 seul worker** (prod : 3). Pour mesurer la
+>   capacité de la prod, passer dev temporairement en production ou jouer le test sur beta ;
+> - dev partage l'instance Redis de la prod (db 1, préfixe `dev:`) : surveiller sa mémoire, et au
+>   nettoyage supprimer les clés `dev:*load-u-*` **dans la db 1 uniquement**.
+
 Machine partagée avec la prod : **hors heures du marché US** (15 h 30 – 22 h Paris), et
 **purger avant 3 h** (sinon la sauvegarde nocturne embarque ~4 Go de beta vers B2).
 

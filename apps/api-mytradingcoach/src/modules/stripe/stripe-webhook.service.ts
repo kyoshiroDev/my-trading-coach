@@ -9,7 +9,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { DiscordService } from '../discord/discord.service';
 import { STRIPE_CLIENT } from './stripe.client';
-import { STRIPE_QUEUE, extractId, isUniqueConstraintError } from './stripe.helpers';
+import {
+  STRIPE_QUEUE,
+  extractId,
+  formatInvoiceAmount,
+  isUniqueConstraintError,
+} from './stripe.helpers';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { StripeWebhookJobPayload } from './stripe.types';
@@ -281,13 +286,52 @@ export class StripeWebhookService {
       invoice.parent?.subscription_details?.subscription,
     );
 
+    const synced = subscriptionId
+      ? await this.subscriptions.syncSubscription(subscriptionId)
+      : null;
     if (subscriptionId) {
-      await this.subscriptions.syncSubscription(subscriptionId);
       this.logger.log(
         `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
       );
     }
     await this.referrals.processReferral(invoice);
+
+    // Reçu de renouvellement. La souscription initiale (subscription_create) est déjà
+    // couverte par le mail de bienvenue Premium ; une facture à 0 (essai, avoir) n'est pas un paiement.
+    if (!synced || invoice.billing_reason === 'subscription_create' || invoice.amount_paid <= 0) return;
+
+    // Un mail raté ne doit pas rejouer l'event (re-sync, parrainage) : on journalise et on continue.
+    await this.resend
+      .sendPaymentSucceeded({
+        to: synced.email,
+        userName: synced.name ?? '',
+        amount: formatInvoiceAmount(invoice.amount_paid, invoice.currency),
+        last4: await this.invoiceCardLast4(invoice),
+        nextRenewalDate: synced.currentPeriodEnd,
+        invoiceUrl: invoice.hosted_invoice_url ?? undefined,
+      })
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Reçu de paiement non envoyé (invoice ${invoice.id}) : ${err instanceof Error ? err.message : err}`,
+        ),
+      );
+  }
+
+  /** 4 derniers chiffres de la carte débitée, best-effort : absent → ligne masquée dans le mail. */
+  private async invoiceCardLast4(invoice: Stripe.Invoice): Promise<string | undefined> {
+    if (!invoice.id) return undefined;
+    try {
+      const payments = await this.stripe.invoicePayments.list({
+        invoice: invoice.id,
+        limit: 1,
+        expand: ['data.payment.payment_intent.payment_method'],
+      });
+      const intent = payments.data[0]?.payment.payment_intent;
+      const method = typeof intent === 'object' ? intent?.payment_method : null;
+      return typeof method === 'object' ? (method?.card?.last4 ?? undefined) : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   // ── Idempotence ─────────────────────────────────────────────────────────────
