@@ -3,6 +3,7 @@
 // Réutilise les helpers de style partagés (emailWrapper/card/cta/divider/FONT).
 
 import {
+  ACCENT,
   FONT,
   card,
   cta,
@@ -107,7 +108,7 @@ export function discordTemplate({ userName, unsubUrl }: CampaignBuildCtx): Campa
 
   return {
     subject: '💬 Rejoins la communauté Discord MyTradingCoach',
-    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.'),
+    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.', ACCENT.discord),
   };
 }
 
