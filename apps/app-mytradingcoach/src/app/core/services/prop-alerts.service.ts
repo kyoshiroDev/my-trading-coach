@@ -19,6 +19,44 @@ export interface PropAlertEvent {
   extraProfit?: number;
 }
 
+/** Événement `tilt:alert` : signal de tilt sur le dernier trade synchronisé (PREMIUM, #371). */
+export interface TiltAlertEvent {
+  accountId: string;
+  accountLabel: string;
+  signal: 'revenge' | 'size' | 'overtrading';
+  ref: string;
+  minutes?: number;
+  quantity?: number;
+  medianQuantity?: number;
+  count?: number;
+  medianCount?: number;
+  /** Humeur notée en pré-session (session ouverte), sinon null. */
+  moodStart: 'CONFIDENT' | 'FOCUSED' | 'NEUTRAL' | 'TIRED' | 'STRESSED' | null;
+}
+
+/** Un nudge reste assez longtemps pour être lu entre deux trades, sans bloquer. */
+export const TILT_TOAST_MS = 15_000;
+
+const MOOD_LABEL: Partial<Record<NonNullable<TiltAlertEvent['moodStart']>, string>> = {
+  TIRED: 'fatigué',
+  STRESSED: 'stressé',
+};
+
+/** Nudge anti-tilt : le fait, l'humeur du jour si elle pèse, puis une question (jamais un ordre). */
+export function tiltMessage(e: TiltAlertEvent): string {
+  const mood = e.moodStart && MOOD_LABEL[e.moodStart] ? ` Tu avais noté « ${MOOD_LABEL[e.moodStart]} » en pré-session.` : '';
+  switch (e.signal) {
+    case 'revenge': {
+      const m = Math.max(1, Math.round(e.minutes ?? 0));
+      return `${e.accountLabel} : trade repris ${m} min après une perte.${mood} Une pause de 10 minutes ?`;
+    }
+    case 'size':
+      return `${e.accountLabel} : ${e.quantity} contrats juste après une perte, plus du double de ta taille habituelle (${e.medianQuantity}).${mood} Une pause avant le prochain ?`;
+    case 'overtrading':
+      return `${e.accountLabel} : ${e.count} trades aujourd'hui, plus du double d'une journée habituelle (${e.medianCount}).${mood} Tu suis toujours ton plan ?`;
+  }
+}
+
 type Permission = 'default' | 'granted' | 'denied' | 'unsupported';
 
 /** Texte de l'alerte : le compte, ce qui reste, et ce qui se passe si on dépasse. */
@@ -74,6 +112,13 @@ export class PropAlertsService {
     this.notify(e, message);
   }
 
+  /** Nudge anti-tilt : avertissement non bloquant + notification « pause ? ». */
+  handleTilt(e: TiltAlertEvent): void {
+    const message = tiltMessage(e);
+    this.toast.warning(message, { duration: TILT_TOAST_MS });
+    this.show('MyTradingCoach · pause ?', message, `${e.accountId}:tilt:${e.signal}`);
+  }
+
   /** Demande l'autorisation des notifications système (sur un clic de l'utilisateur). */
   async requestPermission(): Promise<void> {
     if (this.permission() === 'unsupported') return;
@@ -85,11 +130,15 @@ export class PropAlertsService {
   }
 
   private notify(e: PropAlertEvent, body: string): void {
+    const title = e.level === 'reached' ? 'MyTradingCoach · bonne nouvelle' : 'MyTradingCoach · alerte prop firm';
+    this.show(title, body, `${e.accountId}:${e.kind}`);
+  }
+
+  /** `tag` : une nouvelle alerte du même compte et du même type remplace la précédente. */
+  private show(title: string, body: string, tag: string): void {
     if (this.readPermission() !== 'granted') return;
     try {
-      // `tag` : une nouvelle alerte du même compte et du même type remplace la précédente.
-      const title = e.level === 'reached' ? 'MyTradingCoach · bonne nouvelle' : 'MyTradingCoach · alerte prop firm';
-      new Notification(title, { body, tag: `${e.accountId}:${e.kind}` });
+      new Notification(title, { body, tag });
     } catch {
       /* contexte sans Notification utilisable (navigateur mobile) : le toast suffit */
     }

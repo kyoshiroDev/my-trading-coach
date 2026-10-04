@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { PropAlertsService, propAlertMessage, type PropAlertEvent } from './prop-alerts.service';
+import { PropAlertsService, TILT_TOAST_MS, propAlertMessage, tiltMessage, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
 import { ToastService } from './toast.service';
 
 const ev = (p: Partial<PropAlertEvent> = {}): PropAlertEvent => ({
@@ -35,6 +35,28 @@ describe('propAlertMessage : consistency et bonnes nouvelles', () => {
   it('objectif atteint, payout possible : présentés comme une estimation', () => {
     expect(propAlertMessage(ev({ kind: 'objective', level: 'reached' }))).toContain('objectif atteint selon l\'estimation');
     expect(propAlertMessage(ev({ kind: 'payout', level: 'reached' }))).toContain('payout possible');
+  });
+});
+
+const tilt = (p: Partial<TiltAlertEvent> = {}): TiltAlertEvent => ({
+  accountId: 'a', accountLabel: 'Apex 50k', signal: 'revenge', ref: 't1', minutes: 1.4, moodStart: null, ...p,
+});
+
+describe('tiltMessage : le fait, l’humeur si elle pèse, une question', () => {
+  it('revenge, avec une humeur fatiguée notée en pré-session', () => {
+    expect(tiltMessage(tilt({ moodStart: 'TIRED' })))
+      .toBe('Apex 50k : trade repris 1 min après une perte. Tu avais noté « fatigué » en pré-session. Une pause de 10 minutes ?');
+  });
+
+  it('humeur neutre ou positive : non mentionnée', () => {
+    expect(tiltMessage(tilt({ moodStart: 'FOCUSED' }))).not.toContain('pré-session');
+  });
+
+  it('taille et surtrading : comparés à l’habitude du trader', () => {
+    expect(tiltMessage(tilt({ signal: 'size', quantity: 5, medianQuantity: 2 })))
+      .toBe('Apex 50k : 5 contrats juste après une perte, plus du double de ta taille habituelle (2). Une pause avant le prochain ?');
+    expect(tiltMessage(tilt({ signal: 'overtrading', count: 7, medianCount: 3 })))
+      .toBe("Apex 50k : 7 trades aujourd'hui, plus du double d'une journée habituelle (3). Tu suis toujours ton plan ?");
   });
 });
 
@@ -78,6 +100,13 @@ describe('PropAlertsService.handle', () => {
     svc.handle(ev({ kind: 'payout', level: 'reached' }));
     expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('payout possible'), { duration: null });
     expect(notifications[0].title).toBe('MyTradingCoach · bonne nouvelle');
+  });
+
+  it('anti-tilt : avertissement de 15 s, notification « pause ? »', () => {
+    const { svc, toast } = setup();
+    svc.handleTilt(tilt());
+    expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('trade repris'), { duration: TILT_TOAST_MS });
+    expect(notifications[0]).toEqual({ title: 'MyTradingCoach · pause ?', opts: expect.objectContaining({ tag: 'a:tilt:revenge' }) });
   });
 
   it('notifications non autorisées : toast seulement', () => {

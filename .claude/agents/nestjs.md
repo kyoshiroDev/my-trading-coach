@@ -753,6 +753,15 @@ export class CreateTradeDto {
   `extraProfit` = profit à rattraper), réarmée sous 60 %.
 - **Bonnes nouvelles** : `objective` / `payout` au niveau `reached` quand `progress.done`, UNE fois
   par cycle (clé `prop-alert:<compte>:<type>:cycle-<cycleAfter|start>`, TTL 120 j).
+- **Anti-tilt (#371)** : `TiltAlertsService` (module Tradovate), déclenché par le gateway sur
+  `tradovate:trades` **source `live` seulement** (pas le rattrapage à l'ouverture : un nudge après
+  coup n'a plus de sens). Détection pure dans `tilt-detection.ts`, sur le DERNIER trade du jour,
+  avec les seuils de la note comportementale (`execution-grade.util`) : `revenge` = clôture < 2 min
+  après la clôture de la dernière perte du jour (clôture à clôture : les trades synchronisés n'ont
+  que l'heure de clôture) ; `size` = taille > 2× la médiane juste après une perte (≥ 20 trades
+  d'historique) ; `overtrading` = trades du jour > 2× la médiane des journées et ≥ 6 (≥ 10 journées).
+  Événement `tilt:alert` avec l'humeur de pré-session de la session ouverte. Dédoublonnage Redis
+  `SET NX` par signal et par trade (par journée pour le surtrading). Premium, hors démo.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
 
