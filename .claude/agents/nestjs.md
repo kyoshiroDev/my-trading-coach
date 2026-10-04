@@ -1302,7 +1302,11 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   (`PROBABLE_PAYOUT_MIN`) — c'est ainsi qu'Apex inscrit ses payouts (beta 2026-10-04 : 3
   ajustements = les 3 seules baisses de solde inexpliquées par le P&L sur 146 séances ; confirmé
   par le trader : « une baisse du solde sans trade est forcément un payout »). Jamais en évaluation
-  (resets) ; `Debit` exclu. Un payout reste écartable par l'utilisateur (`POST /accounts/:id/payouts/:payoutId/dismiss`
+  (resets) ; `Debit` exclu. **Filet** (`balanceDrops`, `changeType: balancedrop`) : sur un compte
+  funded, toute baisse de solde ≥ 100 $ que le P&L de la séance n'explique pas, lue dans
+  `BrokerDailyClose`, compte comme payout si aucun payout connu (détecté OU écarté) n'existe à un
+  jour près ; une transaction de l'historique de trésorerie arrivée ensuite le remplace. Couvre une
+  firme qui inscrirait ses payouts sous un type inconnu. Un payout reste écartable par l'utilisateur (`POST /accounts/:id/payouts/:payoutId/dismiss`
   → `dismissedAt`, jamais supprimé pour ne pas être recréé). Types en
   libellés lisibles (`" Trade Paired"`) → `normalizeChangeType`. Chaque passage journalise les
   types lus avec leur nombre (jamais de montant) : **vérifier sur beta, avec de vrais comptes payés,

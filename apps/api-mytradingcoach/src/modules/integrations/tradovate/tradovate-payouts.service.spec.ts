@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { TradovatePayoutsService, normalizeChangeType, payoutConfidence, scanCashHistory } from './tradovate-payouts.service';
+import {
+  TradovatePayoutsService, balanceDrops, normalizeChangeType, payoutConfidence, sameWithdrawal, scanCashHistory,
+} from './tradovate-payouts.service';
 import { TradovateApiError } from './tradovate.errors';
 
 /**
@@ -77,7 +79,12 @@ function setup(opts: { checked?: string | null; csv?: string } = {}) {
   const conn = { id: 'bc-1', accountId: 'acc-1', externalAccountId: '7', externalEnv: 'demo',
     payoutsCheckedThrough: opts.checked ? new Date(`${opts.checked}T00:00:00Z`) : null };
   const prisma = {
-    brokerPayout: { createMany: vi.fn(async ({ data }: { data: unknown[] }) => ({ count: data.length })) },
+    brokerPayout: {
+      createMany: vi.fn(async ({ data }: { data: unknown[] }) => ({ count: data.length })),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+      findMany: vi.fn(async () => [] as { tradeDate: Date }[]),
+    },
+    brokerDailyClose: { findMany: vi.fn(async () => [] as { tradeDate: Date; closingBalance: number; realizedPnl: number }[]) },
     tradingAccount: { findUnique: vi.fn(async () => ({ type: 'FUNDED' })) },
     brokerConnection: { update: vi.fn(async () => ({})) },
   };
@@ -121,3 +128,68 @@ describe('TradovatePayoutsService.refresh', () => {
     await expect(service.refresh(conn as never, 'AT', null, now)).rejects.toBeInstanceOf(TradovateApiError);
   });
 });
+
+describe('Filet : payouts déduits des clôtures officielles', () => {
+  // Clôtures réelles du compte Apex PA (beta, 2026-10-04) autour des trois retraits.
+  const closes = [
+    { tradeDate: '2026-08-03', closingBalance: 303_000, realizedPnl: 120 },
+    { tradeDate: '2026-08-04', closingBalance: 302_154.44, realizedPnl: 336.44 }, // −1 182 inexpliqués
+    { tradeDate: '2026-09-09', closingBalance: 305_000, realizedPnl: 2_845.56 },
+    { tradeDate: '2026-09-10', closingBalance: 301_500, realizedPnl: 0 }, // −3 500, aucun trade
+    { tradeDate: '2026-09-30', closingBalance: 302_000, realizedPnl: 500 },
+    { tradeDate: '2026-10-01', closingBalance: 301_096.76, realizedPnl: 181.76 }, // −1 085
+    { tradeDate: '2026-10-02', closingBalance: 301_090, realizedPnl: -2.5 }, // frais : sous le seuil
+  ];
+
+  it('baisses de solde inexpliquées par le P&L ≥ 100 $ : les trois payouts, pas les frais', () => {
+    expect(balanceDrops(closes).map((d) => [d.tradeDate, d.amount])).toEqual([
+      ['2026-08-04', 1_182], ['2026-09-10', 3_500], ['2026-10-01', 1_085],
+    ]);
+    expect(balanceDrops(closes)[0]).toMatchObject({ changeType: 'balancedrop', confidence: 'certain', transactionId: 'balancedrop:2026-08-04' });
+  });
+
+  it('même retrait à un jour près (bornes de séance)', () => {
+    expect(sameWithdrawal('2026-10-01', '2026-10-02')).toBe(true);
+    expect(sameWithdrawal('2026-10-01', '2026-10-03')).toBe(false);
+  });
+
+  const asRows = (cs: typeof closes) => cs.map((c) => ({ ...c, tradeDate: new Date(`${c.tradeDate}T00:00:00Z`) }));
+
+  it('compte funded sans transaction de payout connue : les payouts viennent des clôtures', async () => {
+    const { service, prisma, conn } = setup({ checked: '2026-10-01' });
+    prisma.brokerDailyClose.findMany.mockResolvedValueOnce(asRows(closes));
+    expect(await service.refresh(conn as never, 'AT', null, new Date('2026-10-03T15:00:00Z'))).toBe(3);
+    const data = (prisma.brokerPayout.createMany.mock.calls.at(-1)![0] as { data: { tradeDate: Date; amount: number }[] }).data;
+    expect(data.map((d) => d.amount)).toEqual([1_182, 3_500, 1_085]);
+  });
+
+  it('retrait déjà connu (détecté ou écarté, à un jour près) : pas recréé', async () => {
+    const { service, prisma, conn } = setup({ checked: '2026-10-01' });
+    prisma.brokerDailyClose.findMany.mockResolvedValueOnce(asRows(closes));
+    prisma.brokerPayout.findMany.mockResolvedValueOnce([
+      { tradeDate: new Date('2026-08-05T00:00:00Z') }, { tradeDate: new Date('2026-09-10T00:00:00Z') },
+    ]);
+    await service.refresh(conn as never, 'AT', null, new Date('2026-10-03T15:00:00Z'));
+    const data = (prisma.brokerPayout.createMany.mock.calls.at(-1)![0] as { data: { amount: number }[] }).data;
+    expect(data.map((d) => d.amount)).toEqual([1_085]);
+  });
+
+  it('une transaction du broker remplace le payout déduit des clôtures pour le même retrait', async () => {
+    const csv = `${HEADER}\r\nAPEX-1,77,10/01/2026 16:00:00,2026-10-01,"-1,085.00","1.00",Manual Adjustment,USD,`;
+    const { service, prisma, conn } = setup({ checked: '2026-09-30', csv });
+    await service.refresh(conn as never, 'AT', null, new Date('2026-10-03T15:00:00Z'));
+    expect(prisma.brokerPayout.deleteMany).toHaveBeenCalledWith({ where: {
+      accountId: 'acc-1', changeType: 'balancedrop',
+      tradeDate: { gte: new Date('2026-09-30T00:00:00Z'), lte: new Date('2026-10-02T00:00:00Z') },
+    } });
+  });
+
+  it('compte en évaluation : aucun payout déduit (resets, pas de cycle)', async () => {
+    const { service, prisma, conn } = setup({ checked: '2026-10-01' });
+    prisma.tradingAccount.findUnique.mockResolvedValueOnce({ type: 'EVALUATION' });
+    prisma.brokerDailyClose.findMany.mockResolvedValueOnce(asRows(closes));
+    expect(await service.refresh(conn as never, 'AT', null, new Date('2026-10-03T15:00:00Z'))).toBe(0);
+    expect(prisma.brokerDailyClose.findMany).not.toHaveBeenCalled();
+  });
+});
+

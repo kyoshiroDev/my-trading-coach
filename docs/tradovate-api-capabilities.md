@@ -523,7 +523,9 @@ compte Apex PA (seul compte payé lu) : `commission×470, tradepaired×315, manu
 où le solde de clôture baisse sans que le P&L l'explique (−1 182 $, −3 500 $ sans trade, −1 085 $) :
 **Apex inscrit ses payouts en `ManualAdjustment` négatif.** Confirmé par le trader le 2026-10-04
 (payouts de ses deux comptes PA en prod) : sur un compte funded, une baisse du solde sans trade est
-un payout. MTC les compte donc comme payouts (compte funded, ≥ 100 $), sans réserve.
+un payout. MTC les compte donc comme payouts (compte funded, ≥ 100 $), sans réserve. En filet,
+toute baisse de solde ≥ 100 $ inexpliquée par le P&L de la séance (clôtures officielles) compte
+aussi comme payout quand aucune transaction connue ne la porte.
 
 ### `Account Balance History` : les clôtures officielles (2026-10-03)
 
