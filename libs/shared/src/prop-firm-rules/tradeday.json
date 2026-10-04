@@ -1089,7 +1089,7 @@
         "amount": 189,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 85 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 85 $/mois (code TDNEW). Reset au prix promo. Le support cite 180 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {
@@ -1150,11 +1150,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 5,
+            "micros": 50,
             "scaling": true,
             "tiers": null,
-            "notes": "Départ à 2 contrat(s) (20 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié."
+            "notes": "Départ à 2 contrat(s) (20 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 5 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1185,8 +1185,8 @@
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
       ],
-      "needs_review": true,
-      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD. À revoir : taille max du funded (scaling) non publiée."
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
     },
     {
       "id": "tradeday-fp-eod-100k",
@@ -1204,7 +1204,7 @@
         "amount": 330,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 330 $/mois ; promotion en cours à 149 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Prix catalogue 330 $/mois ; promotion en cours à 149 $/mois (code TDNEW). Reset au prix promo. Le support cite 320 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {
@@ -1265,11 +1265,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 10,
+            "micros": 50,
             "scaling": true,
             "tiers": null,
-            "notes": "Départ à 3 contrat(s) (30 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié."
+            "notes": "Départ à 3 contrat(s) (30 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 10 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1300,8 +1300,8 @@
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
       ],
-      "needs_review": true,
-      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD. À revoir : taille max du funded (scaling) non publiée."
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
     },
     {
       "id": "tradeday-fp-eod-150k",
@@ -1319,7 +1319,7 @@
         "amount": 500,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 500 $/mois ; promotion en cours à 225 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Prix catalogue 500 $/mois ; promotion en cours à 225 $/mois (code TDNEW). Reset au prix promo. Le support cite 480 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {
@@ -1380,11 +1380,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 15,
+            "micros": 50,
             "scaling": true,
             "tiers": null,
-            "notes": "Départ à 4 contrat(s) (40 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié."
+            "notes": "Départ à 4 contrat(s) (40 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 15 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -1415,8 +1415,8 @@
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
         "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
       ],
-      "needs_review": true,
-      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD. À revoir : taille max du funded (scaling) non publiée."
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
     }
   ]
 }
