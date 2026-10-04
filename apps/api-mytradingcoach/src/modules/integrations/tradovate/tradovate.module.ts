@@ -18,6 +18,7 @@ import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.serv
 import { nativeSocketFactory } from './tradovate-live.connection';
 import { TradovateLiveGateway } from './tradovate-live.gateway';
 import { PropAlertsService } from './prop-alerts.service';
+import { TiltAlertsService } from './tilt-alerts.service';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
@@ -52,6 +53,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     TradovateLiveGateway,
     // Alertes prop firm « avant la casse » (Premium) sur chaque solde poussé.
     PropAlertsService,
+    // Anti-tilt en direct (Premium) sur chaque trade synchronisé.
+    TiltAlertsService,
     TradovateBackgroundRefreshCron,
   ],
 })
