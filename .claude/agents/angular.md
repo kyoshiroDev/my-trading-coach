@@ -158,8 +158,10 @@ la maquette design (« The Terminal »).
 
 #### Carte de résultats + « Publier mes résultats » (bêta, #391)
 
-Onglet Débrief, sous les 4 stats, **session `CLOSED` + `userStore.isBeta()`** uniquement
-(pas de route guard : c'est un bouton). `features/today-session/results-share/` (bouton +
+Onglet Débrief, sous les 4 stats, **session `CLOSED` + rôle `BETA_TESTER` / `ADMIN` /
+`AMBASSADOR`** (`canPublishResults`, `RESULTS_SHARE_ROLES` dans `results-card.util.ts` ;
+pas de route guard : c'est un bouton). Ouverture à tous seulement après un retour bêta
+positif explicite. `features/today-session/results-share/` (bouton +
 modale) rend hors écran `shared/components/results-card/` (1080×1080 ou 1080×1920, maquettes
 de l'artefact « Carte de résultats — partage Instagram ») et la convertit en PNG avec
 `html-to-image` chargé à la demande (`import()`), `pixelRatio: 1`. **Rien ne part au serveur.**

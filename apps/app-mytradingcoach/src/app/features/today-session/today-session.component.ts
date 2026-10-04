@@ -42,6 +42,7 @@ import { ResultsShareComponent } from './results-share/results-share.component';
 import {
   MOOD_OPTIONS,
   ResultsCardData,
+  canPublishResults,
   frenchDayLabel,
   hasResultsToShare,
   moodDisplay,
@@ -137,9 +138,9 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   });
 
   // ── Carte de résultats (bêta) ─────────────────────────────────────────────
-  /** Bouton « Publier mes résultats » : bêta-testeurs + admin, session clôturée uniquement. */
+  /** Bouton « Publier mes résultats » : bêta-testeurs, admin et ambassadeurs, session clôturée. */
   protected readonly showResultsShare = computed(
-    () => this.userStore.isBeta() && this.store.activeSession()?.status === 'CLOSED',
+    () => canPublishResults(this.userStore.user()?.role, this.store.activeSession()?.status),
   );
   protected readonly canShareResults = computed(() => hasResultsToShare(this.store.todayStats()));
   protected readonly sessionDate = computed(() => {
