@@ -1,0 +1,51 @@
+:host { display: flex; flex-direction: column; gap: 14px; }
+
+.fld { display: flex; flex-direction: column; gap: 6px; }
+.fld-row { display: flex; gap: 12px; }
+.fld-row .fld { flex: 1; min-width: 0; }
+.fld-lbl { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
+.inp {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 13.5px; color: var(--text);
+  font-family: var(--font-body);
+  width: 100%;
+}
+.inp:focus { outline: none; border-color: var(--blue); }
+
+.pf-sizes { display: flex; gap: 8px; flex-wrap: wrap; }
+.pf-size {
+  min-width: 64px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.pf-size:hover { border-color: var(--blue); color: var(--text); }
+.pf-size.active { border-color: var(--blue); background: var(--blue-glow); color: var(--blue); }
+.pf-size:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.pf-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  font-size: 12px; line-height: 1.45;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+}
+.pf-note svg.lucide { flex: 0 0 auto; margin-top: 1px; }
+.pf-note.ok svg.lucide { color: var(--green); }
+.pf-note.warn { background: var(--yellow-dim); border-color: transparent; color: var(--text); }
+.pf-note.warn svg.lucide { color: var(--yellow); }
+
+@media (max-width: 560px) {
+  .fld-row { flex-direction: column; }
+}

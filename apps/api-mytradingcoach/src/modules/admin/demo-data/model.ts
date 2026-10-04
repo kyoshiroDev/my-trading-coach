@@ -88,6 +88,8 @@ export function statsOf(days: DemoDay[]): DemoStats {
 }
 
 /** Contraintes de crédibilité validées avec Greg. */
+const maxDrawdownOf = (key: AccountKey) => DEMO_ACCOUNTS.find((a) => a.key === key)!.maxDrawdown;
+
 export function meetsTargets(s: DemoStats): boolean {
   const red = s.redDays / s.tradingDays;
   const setups = s.bySetup;
@@ -107,9 +109,9 @@ export function meetsTargets(s: DemoStats): boolean {
     setups['Reversal'].netPnl < 0 &&
     // Éval Apex EN COURS : positive, loin de l'objectif ; drawdown visible, loin du seuil.
     s.byAccount['apex'].netPnl > 0 && s.byAccount['apex'].netPnl < 3_000 * 0.8 &&
-    s.byAccount['apex'].worstDrawdown >= 350 && s.byAccount['apex'].worstDrawdown < 2_500 * 0.5 &&
+    s.byAccount['apex'].worstDrawdown >= 350 && s.byAccount['apex'].worstDrawdown < maxDrawdownOf('apex') * 0.5 &&
     // Funded Tradeify : jamais au bord de la liquidation.
-    s.byAccount['tradeify'].trades >= 12 && s.byAccount['tradeify'].worstDrawdown < 2_000 * 0.5
+    s.byAccount['tradeify'].trades >= 12 && s.byAccount['tradeify'].worstDrawdown < maxDrawdownOf('tradeify') * 0.5
   );
 }
 

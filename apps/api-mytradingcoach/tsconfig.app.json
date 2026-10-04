@@ -13,6 +13,6 @@
     "target": "es2021",
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts"],
+  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts", "../../libs/shared/src/prop-firm-rules/*.json"],
   "exclude": ["src/**/*.spec.ts", "src/**/*.int-spec.ts", "src/test/**"]
 }

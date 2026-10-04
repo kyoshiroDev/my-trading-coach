@@ -54,6 +54,16 @@ export class AccountsController {
     });
   }
 
+  /** « Ce n'était pas un payout » : écarte un payout détecté chez le broker du cycle de payout. */
+  @Post(':id/payouts/:payoutId/dismiss')
+  dismissPayout(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Param('payoutId') payoutId: string,
+  ) {
+    return this.accounts.dismissPayout(user.id, id, payoutId);
+  }
+
   @Delete(':id')
   remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.accounts.remove(user.id, id);

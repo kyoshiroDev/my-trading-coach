@@ -1,0 +1,177 @@
+@let p = plan();
+@let ph = phase();
+@let cur = currency();
+
+<div class="pfr" data-testid="prop-firm-rules">
+  <div class="pfr-head">
+    <div class="pfr-title">
+      <span class="pfr-name">{{ p.planName }} · {{ fmt.amount(p.accountSize, cur) }}</span>
+      <span class="pfr-meta">Règles officielles {{ p.firm.name }}, relevées le {{ verifiedLabel() }}</span>
+    </div>
+    @if (p.phases.length > 1) {
+      <div class="pfr-tabs" role="tablist" aria-label="Phase du plan">
+        @for (x of p.phases; track x.phase) {
+          <button type="button" role="tab" class="pfr-tab"
+                  [class.active]="x.phase === ph.phase" [attr.aria-selected]="x.phase === ph.phase"
+                  (click)="phaseKey.set(x.phase)" [attr.data-testid]="'pfr-tab-' + x.phase">
+            {{ PHASE_LABELS[x.phase] }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (!p.active) {
+    <p class="pfr-warn"><svg [lucideIcon]="icons.AlertTriangle" [size]="14"></svg>
+      <span>Ce plan n'est plus proposé par {{ p.firm.name }}. Les règles affichées sont celles du dernier relevé.</span></p>
+  }
+  @if (p.needsReview) {
+    <p class="pfr-warn" data-testid="pfr-needs-review"><svg [lucideIcon]="icons.AlertTriangle" [size]="14"></svg>
+      <span>Certaines règles de ce plan ne sont pas publiées clairement par {{ p.firm.name }}. Les valeurs « non documenté » sont à vérifier auprès de la firm.</span></p>
+  }
+
+  <div class="pfr-grid">
+    <!-- Objectif + durée -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Target" [size]="13"></svg>Objectif</h4>
+      <div class="pfr-val">{{ has(ph.profit_target) ? fmt.amount(ph.profit_target, cur) : 'Aucun' }}</div>
+      <ul class="pfr-facts">
+        <li>Jours de trading min : <b>{{ ph.min_trading_days ?? 'aucun' }}</b></li>
+        @if (ph.max_duration_days) { <li>Durée max : <b>{{ ph.max_duration_days }} jours</b></li> }
+      </ul>
+    </section>
+
+    <!-- Drawdown max -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.TrendingDown" [size]="13"></svg>Drawdown max</h4>
+      <div class="pfr-val">{{ fmt.amount(ph.max_drawdown.amount, cur) }}</div>
+      <ul class="pfr-facts">
+        @if (has(ph.starting_balance) && ph.starting_balance !== p.accountSize) {
+          <li>Solde de départ : <b>{{ fmt.amount(ph.starting_balance, cur) }}</b> (seuils exprimés depuis ce solde)</li>
+        }
+        <li>{{ fmt.drawdownKindLabel(ph.max_drawdown) }}</li>
+        <li [class.unknown]="!ph.max_drawdown.enforced_on">{{ fmt.enforcementLabel(ph.max_drawdown) }}</li>
+        @if (fmt.lockLabel(ph.max_drawdown.locked_floor, ph.max_drawdown.locks_at, cur); as lock) { <li>{{ lock }}</li> }
+        @for (o of overrides(); track o.platform) {
+          <li class="pfr-override"><b>{{ o.platform }}</b> :
+            {{ fmt.lockLabel(o.locked_floor, o.locks_at, cur) ?? 'ne se fige jamais' }}</li>
+        }
+      </ul>
+      @if (ph.max_drawdown.basis_notes) {
+        <details class="pfr-notes"><summary>Précisions</summary><p>{{ ph.max_drawdown.basis_notes }}</p></details>
+      }
+    </section>
+
+    <!-- Perte journalière -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.CalendarX" [size]="13"></svg>Perte journalière max</h4>
+      @if (ph.daily_loss_limit; as dll) {
+        <div class="pfr-val" [class.unknown]="!has(dll.amount)">
+          {{ has(dll.amount) ? fmt.amount(dll.amount, cur) : (dll.scaling_rule ? 'Variable' : 'Non documentée') }}
+        </div>
+        <ul class="pfr-facts">
+          <li>{{ fmt.breachLabel(dll) }}</li>
+          <li [class.unknown]="!dll.basis">Mesurée sur : <b>{{ dll.basis === 'equity' ? "l'equity (latent inclus)" : dll.basis === 'balance' ? 'le solde réalisé' : 'non documenté' }}</b></li>
+          @if (dll.scaling_rule) { <li>{{ dll.scaling_rule }}</li> }
+        </ul>
+        @if (dll.tiers?.length) {
+          <table class="pfr-tiers">
+            <thead><tr><th>Profit</th><th>Perte max</th></tr></thead>
+            <tbody>
+              @for (t of dll.tiers; track t.min_profit) {
+                <tr><td>{{ fmt.tierRange(t.min_profit, t.max_profit, cur) }}</td><td>{{ fmt.amount(t.amount, cur) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+        @if (dll.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ dll.notes }}</p></details> }
+      } @else {
+        <div class="pfr-val dim">Aucune</div>
+      }
+    </section>
+
+    <!-- Consistency -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Scale" [size]="13"></svg>Consistency</h4>
+      @if (ph.consistency; as c) {
+        <div class="pfr-val">{{ fmt.pctLabel(c.max_single_day_pct) }}</div>
+        <ul class="pfr-facts">
+          <!-- Pas de « ≤ » : Lucid accepte 50 % pile, Apex exige strictement moins. La nuance est dans les précisions. -->
+          <li>Part maximale du profit faite sur ton meilleur jour, {{ c.applies_to === 'payout' ? 'pour demander un payout' : "pour valider l'objectif" }}</li>
+          @if (c.max_single_day_pct_schedule?.length) {
+            <li>Selon le payout : <b>{{ fmt.pctScheduleLabel(c.max_single_day_pct_schedule!) }}</b></li>
+          }
+        </ul>
+        @if (c.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ c.notes }}</p></details> }
+      } @else {
+        <div class="pfr-val dim">Aucune</div>
+      }
+    </section>
+
+    <!-- Taille max -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Layers" [size]="13"></svg>Taille max</h4>
+      <div class="pfr-val" [class.unknown]="!fmt.contractsLabel(ph.max_contracts)">{{ fmt.contractsLabel(ph.max_contracts) ?? 'Non documentée' }}</div>
+      @if (ph.max_contracts.tiers?.length) {
+        <table class="pfr-tiers">
+          <thead><tr><th>Profit</th><th>Contrats</th></tr></thead>
+          <tbody>
+            @for (t of ph.max_contracts.tiers; track t.min_profit) {
+              <tr><td>{{ fmt.tierRange(t.min_profit, t.max_profit, cur) }}</td><td>{{ t.minis }} · {{ t.micros }} µ</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (ph.max_contracts.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ ph.max_contracts.notes }}</p></details> }
+    </section>
+
+    <!-- Horaires -->
+    <section class="pfr-card">
+      <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Clock" [size]="13"></svg>Horaires</h4>
+      <div class="pfr-val" [class.dim]="!ph.time_rules.must_close_by">
+        {{ ph.time_rules.must_close_by ? 'Clôture avant ' + fmt.timeLabel(ph.time_rules.must_close_by) : 'Pas de clôture imposée' }}
+      </div>
+      @if (ph.time_rules.must_close_by) { <div class="pfr-sub">heure de Paris</div> }
+      <ul class="pfr-facts">
+        <li [class.unknown]="!has(ph.time_rules.overnight_allowed)">Positions overnight : <b>{{ fmt.yesNo(ph.time_rules.overnight_allowed) }}</b></li>
+        <li [class.unknown]="!has(ph.time_rules.news_trading_allowed)">Trading des news : <b>{{ fmt.yesNo(ph.time_rules.news_trading_allowed) }}</b></li>
+      </ul>
+      @if (ph.time_rules.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ ph.time_rules.notes }}</p></details> }
+    </section>
+
+    <!-- Payout (phases funded) -->
+    @if (ph.payout; as po) {
+      <section class="pfr-card">
+        <h4 class="pfr-lbl"><svg [lucideIcon]="icons.Wallet" [size]="13"></svg>Payout</h4>
+        <div class="pfr-val">{{ has(po.split_pct) ? fmt.pctLabel(po.split_pct) + ' pour toi' : 'Partage non documenté' }}</div>
+        <ul class="pfr-facts">
+          @if (po.split_by_profit; as sp) {
+            <li><b>{{ fmt.pctLabel(sp.split_pct) }}</b> sur la part qui laisse plus de <b>{{ fmt.amount(sp.profit_over, cur) }}</b> de profit sur le compte</li>
+          }
+          @if (po.split_after; as sa) {
+            <li>Puis <b>{{ fmt.pctLabel(sa.split_pct) }}</b> une fois <b>{{ fmt.amount(sa.paid_out_over, cur) }}</b> payés sur le compte</li>
+          }
+          @if (has(po.min_days)) { <li>Jours min avant payout : <b>{{ po.min_days }}</b></li> }
+          @if (has(po.min_daily_profit)) { <li>Un jour compte à partir de <b>{{ fmt.amount(po.min_daily_profit, cur) }}</b></li> }
+          @if (has(po.min_amount)) { <li>Payout min : <b>{{ fmt.amount(po.min_amount, cur) }}</b></li> }
+          @if (has(po.min_cycle_profit)) { <li>Profit min entre deux payouts : <b>{{ fmt.amount(po.min_cycle_profit, cur) }}</b></li> }
+          @if (po.min_cycle_profit_schedule?.length) { <li>Profit min par cycle : <b>{{ fmt.scheduleLabel(po.min_cycle_profit_schedule!, cur, po.max_payouts) }}</b></li> }
+          @if (has(po.max_amount)) { <li>Payout max : <b>{{ fmt.amount(po.max_amount, cur) }}</b></li> }
+          @if (po.max_amount_schedule?.length) { <li>Payout max par demande : <b>{{ fmt.scheduleLabel(po.max_amount_schedule!, cur, po.max_payouts) }}</b></li> }
+          @if (has(po.max_payouts)) { <li>Nombre de payouts : <b>{{ po.max_payouts }}</b></li> }
+          @if (has(po.safety_net_balance)) { <li>Solde plancher : <b>{{ fmt.amount(po.safety_net_balance, cur) }}</b></li> }
+        </ul>
+        @if (po.notes) { <details class="pfr-notes"><summary>Précisions</summary><p>{{ po.notes }}</p></details> }
+      </section>
+    }
+  </div>
+
+  <details class="pfr-sources">
+    <summary><svg [lucideIcon]="icons.ExternalLink" [size]="12"></svg>Sources officielles ({{ p.sourceUrls.length }})</summary>
+    <ul>
+      @for (s of sourceHosts(); track s.url) {
+        <li><a [href]="s.url" target="_blank" rel="noopener noreferrer">{{ s.label }}</a></li>
+      }
+    </ul>
+  </details>
+</div>

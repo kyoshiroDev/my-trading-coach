@@ -79,6 +79,19 @@ export interface TradovateCashBalance {
  * seul `name` porte le code lisible. Mesuré le 2026-09-20 sur un compte réel (cf.
  * `docs/tradovate-api-capabilities.md` §2) : `/currency/item?id=1` → `{"name":"USD","symbol":"$"}`.
  */
+/**
+ * `POST /cashBalance/getcashbalancesnapshot` (sous-ensemble lu). `netLiq` = solde + latent, calculé
+ * par le broker avec SES cotations (MTC n'a pas la market data). Mesuré accessible avec nos
+ * permissions le 2026-09-20 (docs/tradovate-api-capabilities.md §9).
+ */
+export interface TradovateCashBalanceSnapshot {
+  errorText?: string;
+  totalCashValue?: number;
+  netLiq?: number;
+  openPnL?: number;
+  realizedPnL?: number;
+}
+
 export interface TradovateCurrency {
   id: number;
   name: string;

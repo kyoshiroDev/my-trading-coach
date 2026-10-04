@@ -1,9 +1,11 @@
 import {
   IsEnum,
   IsIn,
+  IsISO8601,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -61,4 +63,22 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsEnum(DrawdownType, { message: 'Type de drawdown invalide (STATIC ou TRAILING).' })
   drawdownType?: DrawdownType;
+
+  // Plan du catalogue prop firm ; null détache le compte du plan (IsOptional laisse passer null).
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  propFirmPlanId?: string | null;
+
+  // Plateforme de trading (clé du catalogue, ex. `rithmic`) : certaines règles en dépendent.
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  @Matches(/^[a-z0-9_]+$/, { message: 'Plateforme invalide.' })
+  platform?: string | null;
+
+  // Date du dernier payout reçu (AAAA-MM-JJ) : début du cycle de payout en cours.
+  @IsOptional()
+  @IsISO8601({ strict: true }, { message: 'Date du dernier payout invalide (AAAA-MM-JJ).' })
+  lastPayoutAt?: string | null;
 }

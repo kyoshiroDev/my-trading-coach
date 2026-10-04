@@ -1,9 +1,14 @@
 import {
   HEARTBEAT_MS,
   QUOTA_BACKOFF_MS,
+  SYNC_REQUEST_ID,
   authorizeMessage,
   backoffDelay,
+  cashBalanceUpdate,
+  initialAccountState,
   isTradeEvent,
+  type BalanceUpdate,
+  type InitialAccountState,
   parseFrame,
   shutdownReason,
   syncRequestMessage,
@@ -41,6 +46,10 @@ export interface LiveConnectionOptions {
   getToken: () => Promise<string>;
   /** Changement pouvant produire un trade (le service regroupe et synchronise). */
   onTradeEvent: () => void;
+  /** Solde réalisé du compte, poussé par Tradovate à chaque variation. */
+  onBalance?: (update: BalanceUpdate) => void;
+  /** État initial de la souscription (solde, positions ouvertes). */
+  onInitialState?: (state: InitialAccountState) => void;
   /** La connexion renonce : l'app retombe sur le bouton « Synchroniser ». */
   onFatal?: (reason: string) => void;
   socketFactory?: LiveSocketFactory;
@@ -144,7 +153,7 @@ export class TradovateLiveConnection {
         this.attempt = 0;
         this.quotaReached = false;
         this.startHeartbeat();
-        this.send(syncRequestMessage(1, this.opts.externalAccountId));
+        this.send(syncRequestMessage(SYNC_REQUEST_ID, this.opts.externalAccountId));
       } else {
         // Jeton refusé : on ferme ; la reconnexion redemandera un jeton (renouvelé au besoin).
         this.opts.logger?.warn(`Tradovate WS : autorisation refusée (${m.s})`);
@@ -156,6 +165,16 @@ export class TradovateLiveConnection {
     if (reason) {
       if (reason === 'ConnectionQuotaReached') this.quotaReached = true;
       this.opts.logger?.warn(`Tradovate WS : fermeture annoncée (${reason})`);
+      return;
+    }
+    const initial = initialAccountState(m, this.opts.externalAccountId);
+    if (initial) {
+      this.opts.onInitialState?.(initial);
+      return;
+    }
+    const balance = cashBalanceUpdate(m, this.opts.externalAccountId);
+    if (balance) {
+      this.opts.onBalance?.(balance);
       return;
     }
     if (isTradeEvent(m, this.opts.externalAccountId)) this.opts.onTradeEvent();

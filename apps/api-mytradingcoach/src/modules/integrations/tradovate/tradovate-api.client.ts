@@ -24,8 +24,16 @@ export const TRADOVATE_API_BASE: Record<TradovateEnv, string> = {
 const TIMEOUT_MS = 20_000;
 
 /**
- * Client HTTP bas niveau de la Trade API. LECTURE SEULE : il n'expose que des GET de données
- * et les deux appels d'authentification (échange de code, renouvellement). Aucune méthode
+ * Seules routes appelées en POST : des LECTURES dont Tradovate n'offre pas de version GET. Toute
+ * autre route refusée avant le réseau — le client reste en lecture seule (contrat NinjaTrader).
+ */
+export const READ_ONLY_POST_PATHS = ['/cashBalance/getcashbalancesnapshot'] as const;
+export type ReadOnlyPostPath = (typeof READ_ONLY_POST_PATHS)[number];
+
+/**
+ * Client HTTP bas niveau de la Trade API. LECTURE SEULE : il n'expose que des GET de données,
+ * les lectures POST de `READ_ONLY_POST_PATHS` et les deux appels d'authentification (échange de
+ * code, renouvellement). Aucune méthode
  * d'écriture (ordre, risque, alerte) n'existe ici, et aucune ne doit y être ajoutée : les
  * scopes accordés sont en lecture seule et le contrat NinjaTrader exclut le passage d'ordres.
  */
@@ -127,6 +135,44 @@ export class TradovateApiClient {
     const body = await this.readJson(res);
     this.assertOk(res.status, body, path);
     return body as T;
+  }
+
+  /**
+   * Lecture exposée par Tradovate en POST (corps JSON), limitée à `READ_ONLY_POST_PATHS`. Une route
+   * hors liste lève avant tout appel réseau : impossible d'en faire une écriture par erreur.
+   */
+  async postRead<T>(
+    env: TradovateEnv,
+    path: ReadOnlyPostPath,
+    accessToken: string,
+    body: Record<string, unknown>,
+    apiHosts?: unknown,
+  ): Promise<T> {
+    if (!(READ_ONLY_POST_PATHS as readonly string[]).includes(path)) {
+      throw new Error(`Route Tradovate non autorisée en POST : ${path}`);
+    }
+    let res: Response;
+    try {
+      res = await fetchFollowingRedirect(
+        `${restBase(env, apiHosts)}${path}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        },
+        (from, to) => this.logger.warn(`Tradovate ${path} : redirection ${from} → ${to} (apiHosts périmé ?)`),
+      );
+    } catch (err) {
+      throw new TradovateApiError('unavailable', 0, `${path} : ${(err as Error).name}`);
+    }
+    const json = await this.readJson(res);
+    this.assertOk(res.status, json, path);
+    return json as T;
   }
 
   private async postToken(

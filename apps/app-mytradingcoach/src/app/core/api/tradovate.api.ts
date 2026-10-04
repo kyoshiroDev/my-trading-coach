@@ -84,6 +84,11 @@ export class TradovateApi {
     return this.http.post<{ data: TradovateSyncResult }>(`${this.base}/accounts/${accountId}/sync`, {});
   }
 
+  /** Relit solde et equity chez le broker (bridé côté serveur : 20 s). Jamais en boucle. */
+  refreshBalance(accountId: string): Observable<{ data: unknown }> {
+    return this.http.get<{ data: unknown }>(`${this.base}/accounts/${accountId}/balance`);
+  }
+
   /**
    * `deleteTrades` → supprime aussi les trades importés par Tradovate sur ce compte (jamais les
    * saisies manuelles ni les imports CSV). `tradesDeleted: null` = connexion coupée mais

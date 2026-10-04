@@ -1,10 +1,12 @@
+import type { PropFirmPhaseRules } from '@mtc/shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { AccountsService } from './accounts.service';
+import { aggregateRuleTrades, previousSession, sessionPnls } from './account-rules';
+import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePayouts, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
 // est ouvert à FREE (1 compte) comme à PREMIUM (illimité) ; le plafond vit dans le service.
@@ -23,6 +25,9 @@ function makePrisma() {
     trade: { count: vi.fn() },
     tradeSession: { count: vi.fn() },
     user: { findUnique: vi.fn() },
+    propFirmPlan: { count: vi.fn() },
+    brokerDailyClose: { groupBy: vi.fn(async () => []) },
+    brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
   };
 }
 
@@ -226,12 +231,54 @@ describe('AccountsService', () => {
     });
   });
 
+  describe('plan du catalogue prop firm (propFirmPlanId)', () => {
+    it('create — plan actif du catalogue → relie le compte', async () => {
+      prisma.propFirmPlan.count.mockResolvedValue(1);
+      prisma.tradingAccount.create.mockResolvedValue({ id: 'a1' });
+      await svc.create('u1', { label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' } as never);
+      expect(prisma.propFirmPlan.count).toHaveBeenCalledWith({ where: { id: 'apex-eod-50k', active: true } });
+      expect(prisma.tradingAccount.create).toHaveBeenCalledWith({
+        data: { userId: 'u1', label: 'Apex 50k', propFirmPlanId: 'apex-eod-50k' },
+      });
+    });
+
+    it('create — plan inconnu ou retiré → 400, rien de créé (pas de 500 sur la FK)', async () => {
+      prisma.propFirmPlan.count.mockResolvedValue(0);
+      await expect(
+        svc.create('u1', { label: 'X', propFirmPlanId: 'apex-retire-50k' } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+    });
+
+    it('update — même plan qu’avant → aucun contrôle (un plan retiré reste sur le compte)', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-retire-50k' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { propFirmPlanId: 'apex-retire-50k', label: 'Renommé' } as never);
+      expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalled();
+    });
+
+    it('update — null détache le compte du plan', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: 'apex-eod-50k' });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      await svc.update('u1', 'a1', { propFirmPlanId: null } as never);
+      expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({ where: { id: 'a1' }, data: { propFirmPlanId: null } });
+    });
+  });
+
   it('list — scope user + actifs avant archivés', async () => {
     prisma.tradingAccount.findMany.mockResolvedValue([]);
     await svc.list('u1');
     expect(prisma.tradingAccount.findMany).toHaveBeenCalledWith({
       where: { userId: 'u1' },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        propFirmPlan: { select: expect.objectContaining({ phases: true }) },
+        // Solde du broker : seulement une connexion qui en a un.
+        // Toutes les connexions : solde du broker, et plateforme connue si Tradovate.
+        brokerConnections: { select: expect.objectContaining({ provider: true, brokerNetLiq: true }) },
+      },
     });
   });
 
@@ -325,6 +372,288 @@ describe('AccountsService', () => {
         data: { userId: 'u1', label: 'Compte principal', startingBalance: null },
         select: { id: true },
       });
+    });
+  });
+
+  describe('computeRuleMetrics — règles du plan du catalogue', () => {
+    // Trades à 15:00 UTC (= 10:00 heure de Chicago) : une journée de trading CME par jour.
+    const d = (pnl: number, day: number, h = 15) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, h)) });
+    const md = (o: Partial<PropFirmPhaseRules['max_drawdown']>) =>
+      ({ amount: 2000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null,
+        enforced_on: 'equity_realtime', basis_notes: null, ...o }) as PropFirmPhaseRules['max_drawdown'];
+    const ph = (phase: PropFirmPhaseRules['phase'], m: PropFirmPhaseRules['max_drawdown'], starting?: number) =>
+      ({ phase, starting_balance: starting, max_drawdown: m }) as PropFirmPhaseRules;
+    const manual = { accountSize: 50000, profitTarget: null, maxDrawdown: 9999, drawdownType: 'STATIC' as const };
+    const topstep: RulePlan = {
+      firmName: 'Topstep', planName: 'Trading Combine', accountSize: 50000,
+      phases: [
+        ph('evaluation', md({ locks_at: 52000, locked_floor: 50000 })),
+        ph('funded', md({ locks_at: 2000, locked_floor: 0 }), 0),
+      ],
+    };
+
+    it('évaluation : le plan remplace la saisie manuelle (montant, type)', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(500, 1), d(700, 2)], topstep);
+      expect(m.drawdown).toMatchObject({ source: 'plan', type: 'TRAILING', maxDrawdown: 2000, floor: 49200, margin: 2000, breached: false });
+      expect(m.drawdown?.rule).toMatchObject({ firmName: 'Topstep', phase: 'evaluation', kind: 'trailing_eod', locked: false, realtimeEquity: true });
+      expect(m.disclaimer).toContain('positions ouvertes comprises : elles ne sont pas incluses ici');
+    });
+
+    it('trailing EOD : seul le solde de clôture de la journée de trading fait monter le seuil', () => {
+      // Jour 1 : +1 500 puis -1 000 → clôture +500. Le pic intraday (+1 500) ne compte pas.
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(1500, 1, 14), d(-1000, 1, 19)], topstep);
+      expect(m.drawdown?.floor).toBe(48500); // 50 000 + 500 − 2 000
+    });
+
+    it('trailing intraday : le plus haut atteint après chaque trade fait monter le seuil', () => {
+      const intraday: RulePlan = { ...topstep, phases: [ph('evaluation', md({ type: 'trailing_intraday', trails_on: 'equity' }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(1500, 1, 14), d(-1000, 1, 19)], intraday);
+      expect(m.drawdown?.floor).toBe(49500); // 50 000 + 1 500 − 2 000
+      expect(m.disclaimer).toContain('pics atteints pendant un trade ouvert');
+    });
+
+    it('verrouillage : une fois le seuil de déclenchement atteint, le plancher est figé', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(2500, 1), d(1000, 2)], topstep);
+      expect(m.drawdown).toMatchObject({ floor: 50000, margin: 3500 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true, locksAt: 52000, lockedFloor: 50000 });
+    });
+
+    it('funded qui démarre à 0 $ (XFA Topstep) : seuil à −2 000 $, figé à 0 $', () => {
+      const xfa = { ...manual, startingBalance: 0, type: 'FUNDED' as const };
+      expect(svc.computeRuleMetrics(xfa, [d(300, 1)], topstep).drawdown).toMatchObject({ floor: -1700, margin: 2000 });
+      expect(svc.computeRuleMetrics(xfa, [d(2100, 1)], topstep).drawdown).toMatchObject({ floor: 0, margin: 2100 });
+    });
+
+    it('solde de départ saisi différent : les seuils du plan sont décalés d\'autant', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 51000, type: 'EVALUATION' }, [d(2000, 1)], topstep);
+      expect(m.drawdown?.rule).toMatchObject({ locksAt: 53000, lockedFloor: 51000, locked: true });
+      expect(m.drawdown?.floor).toBe(51000);
+    });
+
+    it('plan sans verrouillage chiffré (déclenché par un payout) : le seuil continue de suivre', () => {
+      const pro: RulePlan = { ...topstep, phases: [ph('funded', md({ locks_at: null, locked_floor: 50100 }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'FUNDED' }, [d(5000, 1)], pro);
+      expect(m.drawdown).toMatchObject({ floor: 53000 });
+      expect(m.drawdown?.rule).toMatchObject({ locksAt: null, lockedFloor: null, locked: false });
+    });
+
+    it('statique : plancher fixe sous le solde de départ', () => {
+      const st: RulePlan = { ...topstep, phases: [ph('direct', md({ type: 'static', trails_on: null, enforced_on: null }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'FUNDED' }, [d(3000, 1)], st);
+      expect(m.drawdown).toMatchObject({ type: 'STATIC', floor: 48000 });
+      expect(m.disclaimer).not.toContain('positions ouvertes comprises');
+    });
+
+    it('montant non publié : aucun chiffre, drawdownUnconfirmed', () => {
+      const unk: RulePlan = { ...topstep, phases: [ph('evaluation', md({ amount: null as unknown as number }))] };
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'EVALUATION' }, [d(100, 1)], unk);
+      expect(m.drawdown).toBeNull();
+      expect(m.drawdownUnconfirmed).toBe(true);
+    });
+
+    it('type de compte sans phase correspondante (perso) → saisie manuelle', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 50000, type: 'PERSONAL' }, [d(100, 1)], topstep);
+      expect(m.drawdown).toMatchObject({ source: 'manual', maxDrawdown: 9999, rule: null });
+      expect(m.disclaimer).toContain('Estimation basée uniquement sur les trades loggés');
+    });
+  });
+
+  describe('dismissPayout — « ce n\'était pas un payout »', () => {
+    it('compte d\'un autre utilisateur → 404, rien modifié', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'autre' });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.brokerPayout.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('écarte le payout de CE compte, jamais supprimé', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1' });
+      prisma.brokerPayout.updateMany.mockResolvedValue({ count: 1 });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).resolves.toEqual({ dismissed: true });
+      expect(prisma.brokerPayout.updateMany).toHaveBeenCalledWith({
+        where: { id: 'p1', accountId: 'a1', dismissedAt: null }, data: { dismissedAt: expect.any(Date) },
+      });
+    });
+
+    it('payout inconnu ou déjà écarté → 404', async () => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1' });
+      prisma.brokerPayout.updateMany.mockResolvedValue({ count: 0 });
+      await expect(svc.dismissPayout('u1', 'a1', 'p1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('computeRuleMetrics — cycle de payout : détecté chez le broker ou saisi', () => {
+    const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
+    const funded: RulePlan = { firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [
+      { phase: 'funded', profit_target: null, consistency: null, min_trading_days: null,
+        max_drawdown: { amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null, basis_notes: null },
+        payout: { min_days: 5, min_daily_profit: 150, min_cycle_profit: null, min_cycle_profit_schedule: null, safety_net_balance: null, min_amount: 500 },
+      } as unknown as PropFirmPhaseRules,
+    ] };
+    const acc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'FUNDED' as const };
+    const trades = [at(200, '2026-09-28T15:00:00Z'), at(200, '2026-09-29T15:00:00Z'), at(200, '2026-09-30T15:00:00Z')];
+    const progressOf = (lastPayoutAt: Date | null, payouts: RulePayouts | null) =>
+      svc.ruleMetricsFromAgg({ ...acc, lastPayoutAt }, aggregateRuleTrades(trades), funded, null, null, null, new Date(), sessionPnls(trades), payouts).progress!;
+
+    it('payout détecté plus récent que la date saisie : il fixe le cycle et donne le rang', () => {
+      const p = progressOf(new Date('2026-09-20T00:00:00Z'), { last: '2026-09-28', count: 3 });
+      expect(p).toMatchObject({ cycleAfter: '2026-09-28', cycleSource: 'broker', payoutsReceived: 3 });
+      expect(p.requirements[0]).toMatchObject({ key: 'winning_days', current: 2 });
+    });
+
+    it('date saisie plus récente que le dernier payout détecté : la saisie l\'emporte, rang inconnu', () => {
+      expect(progressOf(new Date('2026-09-29T00:00:00Z'), { last: '2026-09-10', count: 1 }))
+        .toMatchObject({ cycleAfter: '2026-09-29', cycleSource: 'user', payoutsReceived: null });
+    });
+
+    it('payout probable qui fixe le cycle : exposé (id, montant, certitude) pour être confirmé ou écarté', () => {
+      expect(progressOf(null, { last: '2026-10-01', count: 3, lastId: 'p3', lastAmount: 1_085, lastConfidence: 'probable' }))
+        .toMatchObject({ cycleSource: 'broker', lastPayout: { id: 'p3', amount: 1_085, confidence: 'probable' } });
+    });
+
+    it('ni détecté ni saisi : cycle depuis le début', () => {
+      expect(progressOf(null, null)).toMatchObject({ cycleAfter: null, cycleSource: null });
+    });
+  });
+
+  describe('computeRuleMetrics — plus haut de clôture officiel (trailing EOD)', () => {
+    // Vendredi 2 octobre 2026, 15:00 UTC : séance du 2 en cours, la précédente est le 1er.
+    const now = new Date('2026-10-02T15:00:00Z');
+    const at = (pnl: number, iso: string) => ({ pnl, tradedAt: new Date(iso) });
+    const eod: RulePlan = { firmName: 'Lucid Trading', planName: 'LucidFlex', accountSize: 50_000, phases: [
+      { phase: 'evaluation', max_drawdown: {
+        amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: 52_100, locked_floor: 50_100,
+        enforced_on: null, basis_notes: null,
+      } } as unknown as PropFirmPhaseRules,
+    ] };
+    const acc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'EVALUATION' as const };
+    const broker = (cash: number): RuleBroker => ({ cashBalance: cash, cashBalanceAt: now, netLiq: cash, openPnl: 0, equityAt: now, openPositions: 0 });
+    // MTC ne voit qu'un trade (+500) ; le broker a clôturé à 51 400 le 30/09 (des trades manquent).
+    const trades = [at(500, '2026-09-30T15:00:00Z')];
+
+    it('clôtures à jour (séance précédente couverte) : elles font foi, même au-dessus des trades', () => {
+      const m = svc.computeRuleMetrics(acc, trades, eod, broker(51_000), null, { peakClose: 51_400, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown).toMatchObject({ floor: 49_400 });
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'broker', peakBalance: 51_400, officialThrough: '2026-10-01' });
+    });
+
+    it('clôtures à jour : un plus haut reconstitué trop haut (pertes non loggées) est écarté', () => {
+      const m = svc.computeRuleMetrics(acc, [at(3_000, '2026-09-29T15:00:00Z')], eod, broker(50_800), null,
+        { peakClose: 51_200, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'broker', peakBalance: 51_200 });
+    });
+
+    it('clôtures en retard (séance précédente absente) : le plus prudent des deux', () => {
+      const m = svc.computeRuleMetrics(acc, [at(3_000, '2026-09-29T15:00:00Z')], eod, broker(50_800), null,
+        { peakClose: 51_200, lastTradeDate: '2026-09-29' }, now);
+      expect(m.drawdown?.rule).toMatchObject({ peakSource: 'trades', peakBalance: 53_000, officialThrough: '2026-09-29' });
+    });
+
+    it('verrouillage atteint grâce au plus haut officiel', () => {
+      const m = svc.computeRuleMetrics(acc, trades, eod, broker(51_900), null, { peakClose: 52_300, lastTradeDate: '2026-10-01' }, now);
+      expect(m.drawdown).toMatchObject({ floor: 50_100 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true });
+    });
+
+    it('sans solde broker, ou référentiel incompatible : clôtures ignorées', () => {
+      const off = { peakClose: 51_400, lastTradeDate: '2026-10-01' };
+      expect(svc.computeRuleMetrics(acc, trades, eod, null, null, off, now).drawdown?.rule).toMatchObject({ peakSource: 'trades', officialThrough: null });
+      const m = svc.computeRuleMetrics({ ...acc, startingBalance: 0, accountSize: null }, trades, eod, broker(51_000), null, off, now);
+      expect(m.broker?.referenceMismatch).toBe(true);
+      expect(m.drawdown?.rule?.officialThrough).toBeNull();
+    });
+
+    it('previousSession : lundi → vendredi, mardi → lundi', () => {
+      expect(previousSession('2026-10-05')).toBe('2026-10-02');
+      expect(previousSession('2026-10-06')).toBe('2026-10-05');
+    });
+  });
+
+  describe('computeRuleMetrics — verrouillage propre à la plateforme', () => {
+    const d = (pnl: number, day: number) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, 15)) });
+    // Apex EOD 50K : pas de verrouillage par défaut ni sur Tradovate, figé à 53 000 $ sur Rithmic
+    // quand le solde de clôture atteint 55 000 $.
+    const apex: RulePlan = { firmName: 'Apex Trader Funding', planName: 'EOD Trail', accountSize: 50_000, phases: [
+      { phase: 'evaluation', max_drawdown: {
+        amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null,
+        enforced_on: 'equity_realtime', basis_notes: null,
+        platform_overrides: {
+          tradovate: { locks_at: null, locked_floor: null },
+          rithmic: { locks_at: 55_000, locked_floor: 53_000 },
+          wealthcharts: { locks_at: 55_000, locked_floor: 53_000 },
+        },
+      } } as unknown as PropFirmPhaseRules,
+    ] };
+    const evalAcc = { startingBalance: 50_000, accountSize: 50_000, profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING' as const, type: 'EVALUATION' as const };
+    const trades = [d(5_500, 1), d(-1_000, 2)]; // clôtures 55 500 puis 54 500
+
+    it('Rithmic (saisi) : seuil figé à 53 000 $ une fois 55 000 $ atteints', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'rithmic' }, trades, apex);
+      expect(m.drawdown).toMatchObject({ floor: 53_000, margin: 1_500 });
+      expect(m.drawdown?.rule).toMatchObject({ locked: true, platform: 'rithmic', platformChoices: [] });
+    });
+
+    it('connecté via Tradovate : jamais figé, même si une autre plateforme a été saisie', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'rithmic' }, trades, apex, null, 'tradovate');
+      expect(m.drawdown).toMatchObject({ floor: 53_500, margin: 1_000 }); // 55 500 − 2 000
+      expect(m.drawdown?.rule).toMatchObject({ locked: false, platform: 'tradovate' });
+    });
+
+    it('plateforme inconnue : règle par défaut (la plus prudente) et choix proposés', () => {
+      const m = svc.computeRuleMetrics(evalAcc, trades, apex);
+      expect(m.drawdown?.floor).toBe(53_500);
+      expect(m.drawdown?.rule).toMatchObject({ platform: null, platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] });
+    });
+
+    it('plateforme sans règle particulière (ex. NinjaTrader) : règle par défaut, choix toujours proposés', () => {
+      const m = svc.computeRuleMetrics({ ...evalAcc, platform: 'ninjatrader' }, trades, apex);
+      expect(m.drawdown?.rule).toMatchObject({ platform: null, platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] });
+    });
+  });
+
+  describe('computeRuleMetrics — solde et equity lus chez le broker', () => {
+    const d = (pnl: number, day: number) => ({ pnl, tradedAt: new Date(Date.UTC(2026, 5, day, 15)) });
+    const manual = { startingBalance: 50_000, accountSize: 50_000, profitTarget: 3_000, maxDrawdown: 2_000, drawdownType: 'STATIC' as const };
+    const broker = (o: Partial<RuleBroker> = {}): RuleBroker => ({
+      cashBalance: 50_400, cashBalanceAt: new Date(), netLiq: null, openPnl: null, equityAt: null, openPositions: 0, ...o,
+    });
+
+    it('le solde du broker fait foi (trade ou frais manquant côté MTC) : solde, P&L et objectif', () => {
+      // MTC ne voit que +500 ; le broker dit 50 400 (un trade de -100 n'a pas été loggé).
+      const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker());
+      expect(m.currentBalance).toBe(50_400);
+      expect(m.realizedPnl).toBe(400);
+      expect(m.objective?.current).toBe(400);
+      expect(m.broker).toMatchObject({ cashBalance: 50_400, equity: 50_400, openPnl: 0, referenceMismatch: false });
+      expect(m.disclaimer).toContain('lus chez le broker');
+    });
+
+    it('position ouverte : la marge se calcule sur l\'equity du broker, latent compris', () => {
+      const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker({ cashBalance: 50_500, netLiq: 48_700, openPnl: -1_800, openPositions: 1 }));
+      expect(m.currentBalance).toBe(50_500);
+      expect(m.broker?.equity).toBe(48_700);
+      expect(m.drawdown).toMatchObject({ floor: 48_000, margin: 700 }); // et non 2 500 sur le seul solde
+    });
+
+    it('trailing intraday : un nouveau plus haut en direct fait monter le seuil', () => {
+      const intraday: RulePlan = { firmName: 'F', planName: 'P', accountSize: 50_000, phases: [
+        { phase: 'evaluation', max_drawdown: { amount: 2_000, type: 'trailing_intraday', trails_on: 'equity', locks_at: null, locked_floor: null, enforced_on: 'equity_realtime', basis_notes: null } } as PropFirmPhaseRules,
+      ] };
+      const m = svc.computeRuleMetrics({ ...manual, type: 'EVALUATION' }, [d(500, 1)], intraday,
+        broker({ cashBalance: 50_500, netLiq: 51_200, openPnl: 700, openPositions: 1 }));
+      expect(m.drawdown).toMatchObject({ floor: 49_200, margin: 2_000 });
+    });
+
+    it('référentiel incompatible (funded saisi à 0 $, broker à 50 000 $) : calcul MTC + latent, signalé', () => {
+      const m = svc.computeRuleMetrics({ ...manual, startingBalance: 0, accountSize: null }, [d(300, 1)], null,
+        broker({ cashBalance: 50_300, openPnl: -200, openPositions: 1, netLiq: 50_100 }));
+      expect(m.currentBalance).toBe(300);
+      expect(m.broker).toMatchObject({ referenceMismatch: true, equity: 100 });
+    });
+
+    it('brokerReferenceMismatch : petit écart = trades manquants, gros écart = autre référentiel', () => {
+      expect(brokerReferenceMismatch(-1_500, 50_000)).toBe(false);
+      expect(brokerReferenceMismatch(50_000, 0)).toBe(true);
+      expect(brokerReferenceMismatch(15_000, 50_000)).toBe(true);
     });
   });
 

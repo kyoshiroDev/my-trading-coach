@@ -1,0 +1,3044 @@
+{
+  "firm": {
+    "id": "bulenox",
+    "name": "Bulenox",
+    "website": "https://bulenox.com",
+    "help_center": "https://bulenox.com/help-center",
+    "platforms": [
+      "rithmic",
+      "rtrader_pro",
+      "ninjatrader"
+    ]
+  },
+  "verified_at": "2026-10-04",
+  "plans": [
+    {
+      "id": "bulenox-qualification-trailing-25k",
+      "plan_name": "Qualification",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 145,
+        "billing": "one_time",
+        "activation_fee": 143,
+        "notes": "Qualification : paiement unique 145 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 143 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26600,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1500 $ en dessous ; ne redescend jamais. Se fige définitivement à 25100 $ quand le compte atteint 26600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-trailing-50k",
+      "plan_name": "Qualification",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 175,
+        "billing": "one_time",
+        "activation_fee": 148,
+        "notes": "Qualification : paiement unique 175 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 148 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52600,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2500 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              1500,
+              1500,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-trailing-100k",
+      "plan_name": "Qualification",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 215,
+        "billing": "one_time",
+        "activation_fee": 248,
+        "notes": "Qualification : paiement unique 215 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 248 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 3000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 3000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 103100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1750,
+              1750,
+              1750,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-trailing-150k",
+      "plan_name": "Qualification",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 325,
+        "billing": "one_time",
+        "activation_fee": 498,
+        "notes": "Qualification : paiement unique 325 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 498 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 154600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-eod-25k",
+      "plan_name": "Qualification",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 145,
+        "billing": "one_time",
+        "activation_fee": 143,
+        "notes": "Qualification : paiement unique 145 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 143 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante. Supprimée définitivement quand le drawdown se fige."
+          },
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26600,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 25100 $ quand la clôture atteint 26600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-eod-50k",
+      "plan_name": "Qualification",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 175,
+        "billing": "one_time",
+        "activation_fee": 148,
+        "notes": "Qualification : paiement unique 175 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 148 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 4000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante. Supprimée définitivement quand le drawdown se fige."
+          },
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52600,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 4000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": null,
+                "minis": 7,
+                "micros": 70
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              1500,
+              1500,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-eod-100k",
+      "plan_name": "Qualification",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 215,
+        "billing": "one_time",
+        "activation_fee": 248,
+        "notes": "Qualification : paiement unique 215 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 248 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 3000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 5000,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante. Supprimée définitivement quand le drawdown se fige."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 3000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 103100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": 3000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 5000,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1750,
+              1750,
+              1750,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-qualification-eod-150k",
+      "plan_name": "Qualification",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 325,
+        "billing": "one_time",
+        "activation_fee": 498,
+        "notes": "Qualification : paiement unique 325 $, accès 30 jours. Reset 78 $ (ne prolonge pas les 30 jours). Activation du compte Master 498 $, sans mensualité."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 4000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": 8000,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 8001,
+                "max_profit": 12000,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante. Supprimée définitivement quand le drawdown se fige."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 154600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 4000,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": 8000,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 8001,
+                "max_profit": 12000,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Dynamic Scaling Plan sur le Cash on Hand (solde au-dessus du départ), dans les deux sens."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 10,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              null
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+    },
+    {
+      "id": "bulenox-fast-track-trailing-25k",
+      "plan_name": "Fast Track",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 338,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 338 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1000 $ en dessous ; ne redescend jamais. Se fige définitivement à 25100 $ quand le compte atteint 26100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              1500,
+              1000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1250
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-trailing-50k",
+      "plan_name": "Fast Track",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 488,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 488 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52350,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              3000,
+              2000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              2500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-trailing-100k",
+      "plan_name": "Fast Track",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 648,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 648 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 104100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              6000,
+              3000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              2500,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-trailing-150k",
+      "plan_name": "Fast Track",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 788,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 788 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 155600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 155600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              9000,
+              4500
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3000,
+              3000,
+              3500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-eod-25k",
+      "plan_name": "Fast Track",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 338,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 338 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 25100 $ quand la clôture atteint 26100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Option 2 : pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              1500,
+              1000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1250
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD), sans DLL en 25K. Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-eod-50k",
+      "plan_name": "Fast Track",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 488,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 488 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52350,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Option 2 : pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              3000,
+              2000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              2500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD), DLL pour toute la vie du compte. Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-eod-100k",
+      "plan_name": "Fast Track",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 648,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 648 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 104100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Option 2 : pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              6000,
+              3000
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              2500,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD), DLL pour toute la vie du compte. Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-fast-track-eod-150k",
+      "plan_name": "Fast Track",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 788,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 788 $, sans qualification."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 155600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 155600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "Meilleur jour divisé par le profit net du cycle : 20 % au 1er payout, 25 % au 2e, 30 % ensuite. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Option 2 : pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              9000,
+              4500
+            ],
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3000,
+              3000,
+              3500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": false,
+      "notes": "Option 2 (EOD), DLL pour toute la vie du compte. Sans qualification. Partage la limite de 5 comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-trailing-25k",
+      "plan_name": "Momentum",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 94,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 94 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1000 $ en dessous ; ne redescend jamais. Se fige définitivement à 25100 $ quand le compte atteint 26100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-trailing-50k",
+      "plan_name": "Momentum",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 143,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 143 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52350,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 7,
+            "micros": 70,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              2000,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 53000,
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-trailing-100k",
+      "plan_name": "Momentum",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 248,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 248 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 104100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2500,
+              3000,
+              4000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 104500,
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-trailing-150k",
+      "plan_name": "Momentum",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 358,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 358 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 155600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 155600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              3000,
+              4000,
+              5000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 156500,
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-eod-25k",
+      "plan_name": "Momentum",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 94,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 94 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 25100 $ quand la clôture atteint 26100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26500,
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-eod-50k",
+      "plan_name": "Momentum",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 143,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 143 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52350,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1500,
+              2000,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 53000,
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-eod-100k",
+      "plan_name": "Momentum",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 248,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 248 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 104100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 104100 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2500,
+              3000,
+              4000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 104500,
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    },
+    {
+      "id": "bulenox-momentum-eod-150k",
+      "plan_name": "Momentum",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 358,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique 358 $, Momentum Master activé gratuitement."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3300,
+            "basis": "equity",
+            "resets_at": "17:00 America/Chicago",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
+          },
+          "max_drawdown": {
+            "amount": 5500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 155600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 155600 $."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.35,
+            "applies_to": "payout",
+            "notes": "Meilleur jour au plus 35 % du profit net du cycle ; nouveau cycle après chaque payout. Pas un échec."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 12,
+            "micros": 120,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 17:00 à 16:00 CT, tout fermer à 15:59 CT, pas d'overnight ni de week-end. News autorisées dans les limites de risque."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 10000,
+              "split_pct": 0.9
+            },
+            "split_by_profit": null,
+            "min_amount": 1000,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              3000,
+              4000,
+              5000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 156500,
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://bulenox.com/accounts-pricing",
+        "https://bulenox.com/help-center/qualification",
+        "https://bulenox.com/help-center/master",
+        "https://bulenox.com/help-center/fast-track",
+        "https://bulenox.com/help-center/momentum",
+        "https://bulenox.com/help-center/funded"
+      ],
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+    }
+  ]
+}

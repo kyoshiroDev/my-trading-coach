@@ -5,6 +5,6 @@
     "tsBuildInfoFile": "dist/tsconfig.spec.tsbuildinfo",
     "types": ["node", "multer", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts"],
+  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts", "../../libs/shared/src/prop-firm-rules/*.json"],
   "exclude": []
 }
