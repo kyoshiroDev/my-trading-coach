@@ -739,13 +739,20 @@ export class CreateTradeDto {
   référentiel du compte, sinon solde − P&L des trades du jour. Base `equity` sauf `basis: 'balance'`
   (base non publiée → equity, le plus prudent). Paliers selon le profit de la veille, jamais sous le
   palier 1. `scaling_rule` (LucidScale…) NON modélisée → `approximate: true`.
-- `AccountsService.list(userId, { dailyLoss })` : le contrôleur passe `isPremiumAccess(user)`.
+- `AccountsService.list(userId, { premium })` : le contrôleur passe `isPremiumAccess(user)` (perte journalière + gain max du jour).
 - **Alertes** : `PropAlertsService` (module Tradovate), déclenché par le gateway `/tradovate-live`
   sur chaque `tradovate:balance` (worker titulaire, donc une seule évaluation), regroupé 1,5 s par
   compte. Réutilise `AccountsService.list` (aucune règle recalculée). Niveaux : ≤ 25 % de marge →
   `warning`, ≤ 10 % → `critical`, dépassé → `breached`, pour `drawdown` et `daily_loss`. Clé Redis
   `prop-alert:<compte>:<type>:<journée>` = plus haut niveau envoyé (TTL 2 j) ; réarmée quand la marge
   remonte au-dessus de 35 % (hystérésis). Hors Premium, démo ou compte non ACTIVE : rien.
+- **Consistency (2e partie)** : `progress.requirements[consistency]` porte, pour le Premium
+  (`today` passé à `computeProgress`), `dayCap` = gain max de la journée pour qu'elle reste sous la
+  limite (`c · P0 / (1 − c)`, P0 = profit des autres journées du cycle ; null si P0 ≤ 0) et
+  `todayPnl`. Alerte `consistency` : `warning` à 80 % du gain max, `breached` au-delà (avec
+  `extraProfit` = profit à rattraper), réarmée sous 60 %.
+- **Bonnes nouvelles** : `objective` / `payout` au niveau `reached` quand `progress.done`, UNE fois
+  par cycle (clé `prop-alert:<compte>:<type>:cycle-<cycleAfter|start>`, TTL 120 j).
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
 

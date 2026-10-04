@@ -407,19 +407,19 @@ describe('AccountsService', () => {
       });
 
       it('sans clôture officielle : référence = solde − trades du jour', () => {
-        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null, { dailyLoss: true });
+        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, null, null, null, now, sessions, null, { premium: true });
         expect(m.dailyLoss).toMatchObject({ limit: 1000, startOfDay: 51200, used: 800, remaining: 200, source: 'trades', breached: false });
       });
 
       it('clôture officielle de la veille + latent du broker : elle fait foi, le latent compte', () => {
         const broker = { cashBalance: 50400, cashBalanceAt: now, netLiq: 50100, openPnl: -300, equityAt: now, openPositions: 1 };
         const official = { peakClose: 51200, lastTradeDate: '2026-06-01', lastClose: 51200 };
-        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, broker, 'tradovate', official, now, sessions, null, { dailyLoss: true });
+        const m = svc.ruleMetricsFromAgg(acct, agg, withDll, broker, 'tradovate', official, now, sessions, null, { premium: true });
         expect(m.dailyLoss).toMatchObject({ startOfDay: 51200, used: 1100, breached: true, source: 'broker' });
       });
 
       it('plan sans perte journalière : null', () => {
-        const m = svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, sessions, null, { dailyLoss: true });
+        const m = svc.ruleMetricsFromAgg(acct, agg, topstep, null, null, null, now, sessions, null, { premium: true });
         expect(m.dailyLoss).toBeNull();
       });
     });

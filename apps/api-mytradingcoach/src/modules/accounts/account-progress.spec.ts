@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { PropFirmPhaseRules } from '@mtc/shared';
-import { computeProgress, type ProgressInput } from './account-progress';
+import { computeProgress, consistencyDayCap, type ProgressInput } from './account-progress';
 import { sessionPnls } from './account-rules';
 
 /**
@@ -127,5 +127,43 @@ describe('sessionPnls', () => {
       { pnl: -50, commission: 0, tradedAt: new Date('2026-06-01T21:00:00Z') },
       { pnl: 30, commission: 1, tradedAt: new Date('2026-06-01T22:30:00Z') }, // séance du 2 juin
     ])).toEqual([{ day: '2026-06-01', pnl: 46 }, { day: '2026-06-02', pnl: 29 }]);
+  });
+});
+
+describe('Gain max du jour pour respecter la consistency (Premium, #370)', () => {
+  const lucid = phase({ profit_target: 3_000, consistency: { max_single_day_pct: 0.5, applies_to: 'profit_target', notes: null } as never });
+
+  it('T / (P0 + T) ≤ c ⇔ T ≤ c · P0 / (1 − c)', () => {
+    expect(consistencyDayCap(1_200, 0.5)).toBe(1_200);
+    expect(consistencyDayCap(1_200, 0.4)).toBeCloseTo(800);
+    expect(consistencyDayCap(0, 0.5), 'aucun profit avant aujourd’hui').toBeNull();
+    expect(consistencyDayCap(-300, 0.5)).toBeNull();
+    expect(consistencyDayCap(1_200, 1)).toBeNull();
+  });
+
+  it('journée en cours fournie : gain max calculé sur les AUTRES journées, P&L du jour joint', () => {
+    const s = days(600, 700, 900); // 900 = aujourd'hui (2026-09-12)
+    const r = computeProgress(input({ phase: lucid, currentBalance: 52_200, sessions: s, today: '2026-09-12' }));
+    expect(req(r, 'consistency')).toMatchObject({ dayCap: 1_300, todayPnl: 900 });
+  });
+
+  it('sans journée en cours (hors Premium) : rien de plus', () => {
+    const r = computeProgress(input({ phase: lucid, currentBalance: 52_200, sessions: days(600, 700, 900) }));
+    expect(req(r, 'consistency')!.dayCap).toBeUndefined();
+    expect(req(r, 'consistency')!.todayPnl).toBeUndefined();
+  });
+
+  it('payout : sur le cycle seulement (après le dernier payout)', () => {
+    const funded = phase({
+      phase: 'funded',
+      consistency: { max_single_day_pct: 0.4, applies_to: 'payout', notes: null } as never,
+      payout: payout({ min_cycle_profit: 1_000 }) as never,
+    });
+    // 10/09 et 11/09 avant le payout du 11 : hors cycle. Cycle = 12/09 (600) + 13/09 (aujourd'hui, 200).
+    const r = computeProgress(input({
+      phase: funded, currentBalance: 50_800, sessions: days(3_000, 500, 600, 200), lastPayoutDay: '2026-09-11', today: '2026-09-13',
+    }));
+    expect(req(r, 'consistency')!.dayCap).toBeCloseTo(400); // 0,4 × 600 / 0,6
+    expect(req(r, 'consistency')!.todayPnl).toBe(200);
   });
 });

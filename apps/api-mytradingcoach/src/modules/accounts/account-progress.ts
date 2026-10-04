@@ -26,6 +26,14 @@ export interface ProgressRequirement {
   unit: 'usd' | 'days' | 'pct';
   /** `winning_days` : profit minimum d'une journée pour qu'elle compte (null = journée positive). */
   threshold?: number | null;
+  /**
+   * `consistency`, PREMIUM (#370) : gain maximal de la journée en cours pour qu'elle ne devienne pas
+   * un meilleur jour au-dessus de la limite, d'après le profit des autres journées. null = non
+   * calculable (aucun profit avant aujourd'hui) ; absent hors Premium.
+   */
+  dayCap?: number | null;
+  /** `consistency`, PREMIUM : P&L de la journée en cours (avec `dayCap`). */
+  todayPnl?: number;
 }
 
 export interface AccountProgress {
@@ -61,6 +69,8 @@ export interface ProgressInput {
   payoutsReceived?: number | null;
   lastPayout?: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;
   unconfirmed: boolean;
+  /** Journée de trading en cours (`AAAA-MM-JJ`) : fournie → gain max du jour (Premium). */
+  today?: string | null;
 }
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -90,7 +100,7 @@ function objectiveProgress(input: ProgressInput, target: number): AccountProgres
       current: sessions.length, required: phase.min_trading_days, unit: 'days',
     });
   }
-  if (cons) requirements.push(consistencyRequirement(best, profit, cons));
+  if (cons) requirements.push(consistencyRequirement(best, profit, cons, sessions, input.today));
   return {
     kind: 'objective',
     remaining: Math.max(0, effectiveTarget - profit),
@@ -135,7 +145,7 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
     const required = Math.max(goal ?? 0, consFloor);
     requirements.push({ key: 'cycle_profit', met: cycleProfit >= required && cycleProfit > 0, current: cycleProfit, required, unit: 'usd' });
   }
-  if (cons) requirements.push(consistencyRequirement(best, cycleProfit, cons));
+  if (cons) requirements.push(consistencyRequirement(best, cycleProfit, cons, cycle, input.today));
 
   if (payout.safety_net_balance != null) {
     // Seuil exprimé depuis le solde de départ de la phase : décalé sur celui du compte.
@@ -157,7 +167,31 @@ function payoutProgress(input: ProgressInput, payout: NonNullable<PropFirmPhaseR
   };
 }
 
-function consistencyRequirement(best: number, profit: number, maxPct: number): ProgressRequirement {
+function consistencyRequirement(
+  best: number,
+  profit: number,
+  maxPct: number,
+  sessions: SessionPnl[],
+  today?: string | null,
+): ProgressRequirement {
   const share = profit > 0 ? best / profit : best > 0 ? 1 : 0;
-  return { key: 'consistency', met: profit > 0 ? share <= maxPct : best === 0, current: share, required: maxPct, unit: 'pct' };
+  const req: ProgressRequirement = {
+    key: 'consistency', met: profit > 0 ? share <= maxPct : best === 0, current: share, required: maxPct, unit: 'pct',
+  };
+  if (today) {
+    const todayPnl = sessions.find((x) => x.day === today)?.pnl ?? 0;
+    req.todayPnl = todayPnl;
+    req.dayCap = consistencyDayCap(sum(sessions.filter((x) => x.day !== today).map((x) => x.pnl)), maxPct);
+  }
+  return req;
+}
+
+/**
+ * Gain maximal de la journée pour respecter la consistency si elle devient le meilleur jour :
+ * T / (P0 + T) ≤ c  ⇔  T ≤ c · P0 / (1 − c), avec P0 le profit des autres journées.
+ * null quand P0 ≤ 0 (premier jour gagnant : la règle ne peut pas encore être tenue) ou c ≥ 1.
+ */
+export function consistencyDayCap(otherDaysProfit: number, maxPct: number): number | null {
+  if (otherDaysProfit <= 0 || maxPct <= 0 || maxPct >= 1) return null;
+  return (maxPct * otherDaysProfit) / (1 - maxPct);
 }

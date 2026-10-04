@@ -23,11 +23,11 @@ import { isPremiumAccess } from '../discord/discord-access.util';
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
-  // Perte journalière (#370) : calculée pour le Premium seulement (mêmes règles que PremiumGuard).
+  // Couche Premium (#370 : perte journalière, gain max du jour) : calculée pour le Premium seulement (mêmes règles que PremiumGuard).
   @Get()
   list(@CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null }) {
     return this.accounts.list(user.id, {
-      dailyLoss: isPremiumAccess({ plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt ?? null }),
+      premium: isPremiumAccess({ plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt ?? null }),
     });
   }
 

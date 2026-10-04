@@ -6,8 +6,9 @@ import { AccountsService } from '../../accounts/accounts.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 
-export type PropAlertKind = 'drawdown' | 'daily_loss';
-export type PropAlertLevel = 'warning' | 'critical' | 'breached';
+export type PropAlertKind = 'drawdown' | 'daily_loss' | 'consistency' | 'objective' | 'payout';
+/** `reached` : bonne nouvelle (objectif atteint, payout possible), une fois par cycle. */
+export type PropAlertLevel = 'warning' | 'critical' | 'breached' | 'reached';
 
 /** Événement `prop:alert` poussé à l'app (canal `/tradovate-live`). */
 export interface PropAlertEvent {
@@ -16,12 +17,19 @@ export interface PropAlertEvent {
   currency: string;
   kind: PropAlertKind;
   level: PropAlertLevel;
-  /** Marge restante (drawdown) ou perte encore permise (perte journalière), ≤ 0 si dépassé. */
+  /**
+   * Marge restante (drawdown), perte encore permise (perte journalière) ou gain encore possible
+   * aujourd'hui sans casser la consistency ; ≤ 0 si dépassé. 0 pour `objective` / `payout`.
+   */
   remaining: number;
-  /** Drawdown max ou limite journalière. */
+  /** Drawdown max, limite journalière, ou gain max du jour (consistency). */
   limit: number;
   /** Perte journalière : ce que fait la firm quand elle est atteinte. */
   breach: 'account_failed' | 'trading_paused_for_day' | null;
+  /** Consistency : part max d'une journée dans le profit (0 à 1). */
+  maxShare?: number;
+  /** Consistency dépassée : profit supplémentaire nécessaire pour la respecter de nouveau. */
+  extraProfit?: number;
 }
 
 export type PropAlertEmit = (event: 'prop:alert', payload: PropAlertEvent) => void;
@@ -31,11 +39,16 @@ export const ALERT_WARNING_PCT = 0.25;
 export const ALERT_CRITICAL_PCT = 0.1;
 /** Hystérésis : l'alerte du jour n'est réarmée qu'une fois la marge remontée au-dessus. */
 export const ALERT_REARM_PCT = 0.35;
+/** Consistency : avertir à 80 % du gain max du jour, réarmer sous 60 %. */
+export const CONSISTENCY_WARNING_RATIO = 0.8;
+export const CONSISTENCY_REARM_RATIO = 0.6;
 /** Un trade = plusieurs mises à jour de solde : une seule évaluation, juste après la rafale. */
 export const ALERT_DEBOUNCE_MS = 1_500;
 const KEY_TTL_S = 2 * 24 * 3600;
+/** Objectif / payout : une alerte par cycle, gardée le temps d'un cycle long. */
+const CYCLE_KEY_TTL_S = 120 * 24 * 3600;
 
-const RANK: Record<PropAlertLevel, number> = { warning: 1, critical: 2, breached: 3 };
+const RANK: Record<PropAlertLevel, number> = { warning: 1, critical: 2, breached: 3, reached: 4 };
 
 export function alertLevel(pct: number, breached: boolean): PropAlertLevel | null {
   if (breached) return 'breached';
@@ -44,10 +57,46 @@ export function alertLevel(pct: number, breached: boolean): PropAlertLevel | nul
   return null;
 }
 
-const alertKey = (accountId: string, kind: PropAlertKind, day: string) => `prop-alert:${accountId}:${kind}:${day}`;
+const alertKey = (accountId: string, kind: PropAlertKind, period: string) => `prop-alert:${accountId}:${kind}:${period}`;
+
+/** Une alerte candidate : niveau atteint (null = aucun), et réarmement de celle du jour. */
+interface Candidate {
+  kind: PropAlertKind;
+  level: PropAlertLevel | null;
+  rearm: boolean;
+  /** Journée de trading, ou cycle de payout pour `objective` / `payout`. */
+  period: string;
+  ttl: number;
+  payload: Pick<PropAlertEvent, 'remaining' | 'limit' | 'breach' | 'maxShare' | 'extraProfit'>;
+}
 
 /**
- * Alertes « avant la casse » (PREMIUM, #370) : marge drawdown et perte journalière.
+ * Consistency, d'après le gain max du jour : avertir à l'approche, puis quand la journée dépasse
+ * (elle devient un meilleur jour trop lourd). Rien sans gain max calculable.
+ */
+export function consistencyCandidate(
+  req: { required: number; dayCap?: number | null; todayPnl?: number } | undefined,
+  day: string,
+): Candidate | null {
+  if (!req || req.dayCap == null || req.todayPnl == null) return null;
+  const cap = req.dayCap;
+  const t = req.todayPnl;
+  const level: PropAlertLevel | null = t > cap ? 'breached' : t >= CONSISTENCY_WARNING_RATIO * cap ? 'warning' : null;
+  // Profit des autres journées (P0) : cap = c · P0 / (1 − c). Dépassé → profit à ajouter pour que la
+  // journée retombe sous c : T / c − (P0 + T).
+  const others = (cap * (1 - req.required)) / req.required;
+  return {
+    kind: 'consistency', level, rearm: t < CONSISTENCY_REARM_RATIO * cap, period: day, ttl: KEY_TTL_S,
+    payload: {
+      remaining: cap - t, limit: cap, breach: null, maxShare: req.required,
+      ...(level === 'breached' ? { extraProfit: t / req.required - (others + t) } : {}),
+    },
+  };
+}
+
+/**
+ * Alertes « avant la casse » (PREMIUM, #370) : marge drawdown, perte journalière, consistency
+ * (gain max du jour), et bonnes nouvelles : objectif atteint, payout possible.
  *
  * Évaluées à chaque solde poussé par Tradovate (`tradovate:balance`, app ouverte) sur les
  * métriques de `AccountsService.list` : aucun calcul de règle dupliqué ici. Une alerte par
@@ -88,30 +137,47 @@ export class PropAlertsService implements OnModuleDestroy {
     });
     if (!user || user.isDemo || !isPremiumAccess(user)) return;
 
-    const account = (await this.accounts.list(userId, { dailyLoss: true })).find((a) => a.id === accountId);
+    const account = (await this.accounts.list(userId, { premium: true })).find((a) => a.id === accountId);
     if (!account || account.status !== AccountStatus.ACTIVE) return;
     const m = account.metrics;
     const day = tradingDay(now);
 
-    const candidates: [PropAlertKind, { pct: number; breached: boolean; remaining: number; limit: number } | null, PropAlertEvent['breach']][] = [
-      ['drawdown', m.drawdown && { pct: m.drawdown.pct, breached: m.drawdown.breached, remaining: m.drawdown.margin, limit: m.drawdown.maxDrawdown }, null],
-      ['daily_loss', m.dailyLoss && { pct: m.dailyLoss.pct, breached: m.dailyLoss.breached, remaining: m.dailyLoss.remaining, limit: m.dailyLoss.limit }, m.dailyLoss?.breach ?? null],
-    ];
+    const candidates: Candidate[] = [];
+    if (m.drawdown) {
+      candidates.push({
+        kind: 'drawdown', level: alertLevel(m.drawdown.pct, m.drawdown.breached), rearm: m.drawdown.pct > ALERT_REARM_PCT,
+        period: day, ttl: KEY_TTL_S, payload: { remaining: m.drawdown.margin, limit: m.drawdown.maxDrawdown, breach: null },
+      });
+    }
+    if (m.dailyLoss) {
+      candidates.push({
+        kind: 'daily_loss', level: alertLevel(m.dailyLoss.pct, m.dailyLoss.breached), rearm: m.dailyLoss.pct > ALERT_REARM_PCT,
+        period: day, ttl: KEY_TTL_S, payload: { remaining: m.dailyLoss.remaining, limit: m.dailyLoss.limit, breach: m.dailyLoss.breach },
+      });
+    }
+    const progress = m.progress;
+    if (progress) {
+      const cons = consistencyCandidate(progress.requirements.find((r) => r.key === 'consistency'), day);
+      if (cons) candidates.push(cons);
+      // Bonne nouvelle : une fois par cycle (évaluation entière, ou cycle depuis le dernier payout).
+      candidates.push({
+        kind: progress.kind, level: progress.done ? 'reached' : null, rearm: false,
+        period: `cycle-${progress.cycleAfter ?? 'start'}`, ttl: CYCLE_KEY_TTL_S,
+        payload: { remaining: 0, limit: 0, breach: null },
+      });
+    }
 
-    for (const [kind, v, breach] of candidates) {
-      if (!v) continue;
-      const key = alertKey(accountId, kind, day);
-      const level = alertLevel(v.pct, v.breached);
+    for (const c of candidates) {
+      const key = alertKey(accountId, c.kind, c.period);
       const sent = (await this.redis.client.get(key)) as PropAlertLevel | null;
-      if (!level) {
-        if (sent && v.pct > ALERT_REARM_PCT) await this.redis.client.del(key);
+      if (!c.level) {
+        if (sent && c.rearm) await this.redis.client.del(key);
         continue;
       }
-      if (sent && RANK[sent] >= RANK[level]) continue;
-      await this.redis.client.set(key, level, 'EX', KEY_TTL_S);
+      if (sent && RANK[sent] >= RANK[c.level]) continue;
+      await this.redis.client.set(key, c.level, 'EX', c.ttl);
       emit('prop:alert', {
-        accountId, accountLabel: account.label, currency: account.currency,
-        kind, level, remaining: v.remaining, limit: v.limit, breach,
+        accountId, accountLabel: account.label, currency: account.currency, kind: c.kind, level: c.level, ...c.payload,
       });
     }
   }

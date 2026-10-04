@@ -78,9 +78,9 @@ export interface RuleOfficialCloses {
   lastClose?: number | null;
 }
 
-/** Options de calcul : la perte journalière est réservée au Premium (#370). */
+/** Options de calcul : la couche Premium (#370 : perte journalière, gain max du jour) est à part. */
 export interface RuleMetricsOptions {
-  dailyLoss?: boolean;
+  premium?: boolean;
 }
 
 /** Solde et equity du compte lus chez le broker (connexion API), quand il y en a une. */
@@ -243,7 +243,7 @@ export class AccountsService {
     });
     // Solde de clôture de la dernière séance couverte, par compte : référence de la perte
     // journalière (Premium seulement, une ligne par compte).
-    const lastCloses = options.dailyLoss
+    const lastCloses = options.premium
       ? await this.prisma.brokerDailyClose.findMany({
         where: { accountId: { in: rows.map((r) => r.id) } },
         distinct: ['accountId'],
@@ -473,7 +473,7 @@ export class AccountsService {
     // Perte journalière (Premium) : référence = clôture officielle de la séance précédente quand
     // elle est à jour et dans le référentiel du compte, sinon solde actuel − trades du jour.
     let dailyLoss: DailyLossMetrics | null = null;
-    if (options.dailyLoss && phase) {
+    if (options.premium && phase) {
       const today = tradingDay(now);
       const previousClose =
         official?.lastClose != null && official.lastTradeDate === previousSession(today) && broker && !broker.referenceMismatch
@@ -511,6 +511,7 @@ export class AccountsService {
           sessions,
           ...lastPayout(account.lastPayoutAt, payouts),
           unconfirmed: plan.needsReview ?? false,
+          today: options.premium ? tradingDay(now) : null,
         })
         : null,
       dailyLoss,
