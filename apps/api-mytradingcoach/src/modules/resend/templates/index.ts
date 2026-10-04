@@ -30,20 +30,22 @@ function gradientFallback(gradient: string): string {
   return gradient.match(/#[0-9a-f]{3,8}/i)?.[0] ?? '#3b82f6';
 }
 
-// Logo : tracé ECG en SVG inline (aucune image à charger, donc visible même images bloquées).
-// Un client qui ignore le SVG (Gmail web, Outlook) garde le carré en dégradé.
-const LOGO = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center">
+// Logo : PNG hébergé par l'app (apps/app-mytradingcoach/public/logo-email.png, 80 px affiché en
+// 40 px pour rester net sur écran Retina). Le SVG inline était retiré par Gmail et Outlook.
+// Servi par l'environnement de l'API (FRONTEND_URL) : dev → dev.app, prod → app.
+function logo(): string {
+  const src = `${process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app'}/logo-email.png`;
+  return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center">
   <tr>
-    <td width="30" height="30" align="center" valign="middle" style="width:30px;height:30px;border-radius:8px;background:#6366f1;background-image:linear-gradient(135deg,#3b82f6,#8b5cf6);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:auto;">
-        <polyline points="2 12 6 12 9 5 14 19 17 12 22 12" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
+    <td width="40" valign="middle" style="width:40px;">
+      <img src="${src}" width="40" height="40" alt="MyTradingCoach" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;border-radius:10px;">
     </td>
-    <td style="padding-left:10px;${BRAND_FONT}font-size:17px;font-weight:800;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
+    <td valign="middle" style="padding-left:12px;${BRAND_FONT}font-size:19px;font-weight:800;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
       MyTrading<span style="color:#60a5fa;">Coach</span>
     </td>
   </tr>
 </table>`;
+}
 
 export function emailWrapper(content: string, preheader = '', accentGradient: string = ACCENT.brand): string {
   return `<!DOCTYPE html>
@@ -52,12 +54,18 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
+  <!-- Thème sombre assumé : empêche Apple Mail / iOS d'imposer un fond clair -->
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <style>:root { color-scheme: dark; supported-color-schemes: dark; } body { margin:0; padding:0; background:#080c14; }</style>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <title>MyTradingCoach</title>
 </head>
-<body style="margin:0;padding:0;background:#080c14;${FONT}">
+<body bgcolor="#080c14" style="margin:0;padding:0;background:#080c14;${FONT}">
+  <!-- Gmail retire le style du <body> : le fond sombre est porté par ce conteneur et la table (bgcolor) -->
+  <div style="background:#080c14;background-color:#080c14;margin:0;padding:0;">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>` : ''}
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#080c14;min-height:100vh;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="#080c14" style="background:#080c14;background-color:#080c14;min-height:100vh;">
     <!-- BARRE D'ACCENT -->
     <tr>
       <td height="4" style="height:4px;line-height:4px;font-size:0;background:${gradientFallback(accentGradient)};background-image:${accentGradient};">&nbsp;</td>
@@ -69,7 +77,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
           <!-- HEADER -->
           <tr>
             <td align="center" style="padding-bottom:24px;">
-              ${LOGO}
+              ${logo()}
             </td>
           </tr>
 
@@ -95,6 +103,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
       </td>
     </tr>
   </table>
+  </div>
 </body>
 </html>`;
 }

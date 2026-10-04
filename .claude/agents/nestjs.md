@@ -1157,8 +1157,10 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
 - **Identité visuelle** (`templates/index.ts`, oct. 2026) : `emailWrapper(content, preheader, accent)`
   pose une barre pleine largeur en haut (`ACCENT.brand` par défaut ; `alert` = reset mot de passe et
   paiement échoué ; `success` = paiement reçu et récap/débrief positif ; `discord` = invitation
-  Discord), puis le logo ECG en **SVG inline** (jamais d'image : visible images bloquées ; Gmail web
-  et Outlook ignorent le SVG et n'affichent que le carré en dégradé). CTA primaire unique :
+  Discord), puis le logo **PNG** `logo-email.png` (80 px affiché en 40 px, servi par l'app de
+  l'environnement : `${FRONTEND_URL}/logo-email.png`). Pas de SVG inline : Gmail et Outlook le
+  retirent. Fond sombre forcé (`color-scheme: dark` + `bgcolor` sur body/div/table, Gmail retirant
+  le style du `<body>`) : sans ça, fond blanc sur mobile. CTA primaire unique :
   `cta()` (dégradé `135deg #3b82f6 → #8b5cf6`), jamais de bouton stylé à la main.
 - **Reçu de paiement** (`invoice.payment_succeeded` → `sendPaymentSucceeded`) : seulement pour les
   renouvellements. Pas pour `billing_reason === 'subscription_create'` (le mail de bienvenue Premium
