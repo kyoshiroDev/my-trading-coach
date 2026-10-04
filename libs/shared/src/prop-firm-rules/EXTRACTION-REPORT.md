@@ -399,8 +399,14 @@ Objectif : couvrir les firms futures que TradesViz ou Edgely proposent et que no
 | Top One Elite Daily, reset évaluation | Article : 93 / 115 / 214 / 297 $ | Page d'accueil : 75 / 93 $ (25K / 50K) | Les deux en notes |
 | Top One Instant, DLL | Fiche Instant : « account breach » | Article général : soft breach sauf X-Ultra | Échec (prudent) |
 | Top One Ignite, clôture | Fiche Ignite : 16:00 ET | Règle générale : 16:10 ET | 16:00 |
-| FFF S2F 25K, contrats | Fiche : 1 mini | Grille de scaling : jusqu'à 3 | 1 mini en max, grille en `tiers` |
+| FFF S2F 25K, contrats | Fiche : 1 mini | Grille de scaling : jusqu'à 3 | 3 minis (le support renvoie à la grille, 2026-10-04) |
 
 ### Non modélisés
 
 - Take Profit Trader PRO+ (live sur invitation), Phidias 10K Drawdown Challenge (compétition), Earn2Trade comptes Live du growth plan, Top One S2F Sim Pro (absent des pages actuelles), BluSky Stocks, FFF Prestige (sur invitation, bascule directement en live) et Base 2K (drawdown égal à la taille du compte, chiffres ambigus), UProfit Day / One (gammes historiques), Elite Trader Funding LIVE ELITE.
+
+### Réponses des supports
+
+| Date | Firm | Réponse | Effet |
+|---|---|---|---|
+| 2026-10-04 | Funded Futures Family | S2F : la grille de scaling fait foi. Prix visibles seulement au paiement (dashboard). Base 2K retiré de la vente (départ 2 000 $, perte max 2 000 $). Drawdown EOD : seul le calcul du seuil est redécrit ; contrôle en séance, blocage en évaluation Prime et contrats « Standard / Max » non répondus (relance envoyée). | S2F 25K à 3 minis ; notes de prix ; `needs_review` maintenu |

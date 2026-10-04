@@ -24,7 +24,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -159,7 +159,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -294,7 +294,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -435,7 +435,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -587,7 +587,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -724,7 +724,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -861,7 +861,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1004,7 +1004,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1153,7 +1153,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1290,7 +1290,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1427,7 +1427,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1570,7 +1570,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1850,7 +1850,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -1986,7 +1986,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -2128,7 +2128,7 @@
         "amount": null,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix non publié dans le centre d'aide (voir le site). Pas de frais d'activation."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
       },
       "phases": [
         {
@@ -2276,7 +2276,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, prix non publié dans le centre d'aide. Pas de reset."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
       },
       "phases": [
         {
@@ -2301,8 +2301,8 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 1,
-            "micros": 10,
+            "minis": 3,
+            "micros": 30,
             "scaling": true,
             "tiers": [
               {
@@ -2324,7 +2324,7 @@
                 "micros": 30
               }
             ],
-            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+            "notes": "Grille de scaling S2F (confirmée par le support le 2026-10-04) : 1 mini au départ, 2 dès 1 000 $ de profit, 3 dès 2 000 $. Le « 1 mini » de la fiche S2F est le palier de départ."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -2370,7 +2370,7 @@
         "https://www.fundedfuturesfamily.com/"
       ],
       "needs_review": true,
-      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+      "notes": "Sans évaluation, pas de reset."
     },
     {
       "id": "fundedfuturesfamily-s2f-50k",
@@ -2383,7 +2383,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, prix non publié dans le centre d'aide. Pas de reset."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
       },
       "phases": [
         {
@@ -2490,7 +2490,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, prix non publié dans le centre d'aide. Pas de reset."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
       },
       "phases": [
         {
@@ -2603,7 +2603,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, prix non publié dans le centre d'aide. Pas de reset."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
       },
       "phases": [
         {
@@ -2722,7 +2722,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, prix non publié dans le centre d'aide."
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
       },
       "phases": [
         {
