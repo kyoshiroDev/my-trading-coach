@@ -559,7 +559,7 @@
         "amount": 178,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique 178 $ hors promo (98 $ avec le code du moment). Pas d'activation. Reset évaluation 93 $ (fiche) mais 75 $ sur la page d'accueil ; reset funded 299 $."
+        "notes": "Paiement unique 178 $ hors promo (98 $ avec le code du moment). Pas d'activation. Reset évaluation 93 $ (confirmé par le support, les 75 / 93 $ de la page d'accueil sont périmés) ; reset funded 299 $."
       },
       "phases": [
         {
@@ -701,7 +701,7 @@
         "amount": 218,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique 218 $ hors promo (120 $ avec le code du moment). Pas d'activation. Reset évaluation 115 $ (fiche) mais 93 $ sur la page d'accueil ; reset funded 499 $."
+        "notes": "Paiement unique 218 $ hors promo (120 $ avec le code du moment). Pas d'activation. Reset évaluation 115 $ (confirmé par le support, les 75 / 93 $ de la page d'accueil sont périmés) ; reset funded 499 $."
       },
       "phases": [
         {
@@ -855,7 +855,7 @@
         "amount": 398,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique 398 $ hors promo (219 $ avec le code du moment). Pas d'activation. Reset évaluation 214 $ (fiche) mais non affiché $ sur la page d'accueil ; reset funded 849 $."
+        "notes": "Paiement unique 398 $ hors promo (219 $ avec le code du moment). Pas d'activation. Reset évaluation 214 $ (confirmé par le support, les 75 / 93 $ de la page d'accueil sont périmés) ; reset funded 849 $."
       },
       "phases": [
         {
@@ -1015,7 +1015,7 @@
         "amount": 549,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique 549 $ hors promo (302 $ avec le code du moment). Pas d'activation. Reset évaluation 297 $ (fiche) mais non affiché $ sur la page d'accueil ; reset funded 1250 $."
+        "notes": "Paiement unique 549 $ hors promo (302 $ avec le code du moment). Pas d'activation. Reset évaluation 297 $ (confirmé par le support, les 75 / 93 $ de la page d'accueil sont périmés) ; reset funded 1250 $."
       },
       "phases": [
         {
@@ -1168,7 +1168,7 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": true,
-      "notes": "Elite Daily V2 (5 comptes funded max). DLL 150K contradictoire entre deux articles."
+      "notes": "Elite Daily V2 (5 comptes funded max). À revoir : le support dit « pas de DLL en évaluation 150K, 1 850 $ en funded », ce qui contredit l'article DLL Evaluation Phase V2 (1 850 $ en évaluation) ; valeur de l'article conservée."
     },
     {
       "id": "toponefutures-elite-access-25k",
@@ -2371,10 +2371,10 @@
             "amount": 625,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+            "notes": "Soft breach : pause jusqu'à la session suivante, comme sur tous les plans sauf X-Ultra (support Top One Futures, e-mail du 2026-10-04). La fiche Instant parlait d'« account breach » : incohérence reconnue par le support."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -2382,9 +2382,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD (17:00 heure de New York) : 1000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+            "basis_notes": "EOD (17:00 heure de New York) : 1000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -2438,7 +2438,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
     },
     {
@@ -2462,10 +2462,10 @@
             "amount": 1250,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+            "notes": "Soft breach : pause jusqu'à la session suivante, comme sur tous les plans sauf X-Ultra (support Top One Futures, e-mail du 2026-10-04). La fiche Instant parlait d'« account breach » : incohérence reconnue par le support."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -2473,9 +2473,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD (17:00 heure de New York) : 2000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+            "basis_notes": "EOD (17:00 heure de New York) : 2000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -2529,7 +2529,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
     },
     {
@@ -2553,10 +2553,10 @@
             "amount": 2500,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+            "notes": "Soft breach : pause jusqu'à la session suivante, comme sur tous les plans sauf X-Ultra (support Top One Futures, e-mail du 2026-10-04). La fiche Instant parlait d'« account breach » : incohérence reconnue par le support."
           },
           "max_drawdown": {
             "amount": 4000,
@@ -2564,9 +2564,9 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD (17:00 heure de New York) : 4000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout."
+            "basis_notes": "EOD (17:00 heure de New York) : 4000 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -2620,7 +2620,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
     },
     {
@@ -2644,10 +2644,10 @@
             "amount": 3000,
             "basis": "equity",
             "resets_at": "18:00 America/New_York",
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "La fiche Instant dit qu'un dépassement « results in an account breach », alors que l'article général des DLL parle de soft breach (pause) pour tous les plans sauf X-Ultra. Retenu : échec (le plus prudent)."
+            "notes": "Soft breach : pause jusqu'à la session suivante, comme sur tous les plans sauf X-Ultra (support Top One Futures, e-mail du 2026-10-04). La fiche Instant parlait d'« account breach » : incohérence reconnue par le support."
           },
           "max_drawdown": {
             "amount": 5250,
@@ -2655,9 +2655,9 @@
             "trails_on": "balance",
             "locks_at": 155350,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD (17:00 heure de New York) : 5250 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé », sans préciser si le latent compte en séance. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 155350 $, et dès le premier payout."
+            "basis_notes": "EOD (17:00 heure de New York) : 5250 $ sous le plus haut solde de clôture ; « si le solde passe sous le niveau, le compte est clôturé ». Se fige à 150100 $ (départ + 100 $) quand le solde atteint 155350 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -2711,7 +2711,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Règles 2.0 (achats depuis le 27/07/2026). Comptes plus anciens : drawdown 3 000 $ (100K) et 4 500 $ (150K), DLL 3 750 $ (150K), plafonds 1 500 / 2 500 / 3 000 / 3 500 $."
     },
     {
@@ -2746,9 +2746,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout."
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 25100 $ (départ + 100 $) quand le solde atteint 26100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.15,
@@ -2765,10 +2765,10 @@
             "notes": "Pas de scaling."
           },
           "time_rules": {
-            "must_close_by": "16:00 America/New_York",
+            "must_close_by": "16:10 America/New_York",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+            "notes": "Clôture à 16:10 heure de New York, règle générale retenue par le support (la fiche Ignite indiquait 16:00, écart signalé à leur équipe) (support Top One Futures, e-mail du 2026-10-04). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
           },
           "payout": {
             "min_days": null,
@@ -2801,7 +2801,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
     },
     {
@@ -2836,9 +2836,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout."
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 52100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.15,
@@ -2855,10 +2855,10 @@
             "notes": "Pas de scaling."
           },
           "time_rules": {
-            "must_close_by": "16:00 America/New_York",
+            "must_close_by": "16:10 America/New_York",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+            "notes": "Clôture à 16:10 heure de New York, règle générale retenue par le support (la fiche Ignite indiquait 16:00, écart signalé à leur équipe) (support Top One Futures, e-mail du 2026-10-04). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
           },
           "payout": {
             "min_days": null,
@@ -2891,7 +2891,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
     },
     {
@@ -2926,9 +2926,9 @@
             "trails_on": "balance",
             "locks_at": 104100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout."
+            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.15,
@@ -2945,10 +2945,10 @@
             "notes": "Pas de scaling."
           },
           "time_rules": {
-            "must_close_by": "16:00 America/New_York",
+            "must_close_by": "16:10 America/New_York",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+            "notes": "Clôture à 16:10 heure de New York, règle générale retenue par le support (la fiche Ignite indiquait 16:00, écart signalé à leur équipe) (support Top One Futures, e-mail du 2026-10-04). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
           },
           "payout": {
             "min_days": null,
@@ -2981,7 +2981,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
     },
     {
@@ -3016,9 +3016,9 @@
             "trails_on": "balance",
             "locks_at": 156100,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : 6000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Contrôle en séance non précisé. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout."
+            "basis_notes": "EOD : 6000 $ sous le plus haut solde de clôture, seul le solde de fin de journée fait monter le seuil. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.15,
@@ -3035,10 +3035,10 @@
             "notes": "Pas de scaling."
           },
           "time_rules": {
-            "must_close_by": "16:00 America/New_York",
+            "must_close_by": "16:10 America/New_York",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "La fiche Ignite demande de tout fermer à 16:00 heure de New York (règle générale : 16:10). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
+            "notes": "Clôture à 16:10 heure de New York, règle générale retenue par le support (la fiche Ignite indiquait 16:00, écart signalé à leur équipe) (support Top One Futures, e-mail du 2026-10-04). Durée minimale d'un trade : 10 secondes. Pas d'overnight ni d'EA."
           },
           "payout": {
             "min_days": null,
@@ -3071,7 +3071,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Ignite : 6 comptes maximum (copy trading jusqu'à 10 comptes selon la page d'accueil)."
     },
     {
@@ -3082,10 +3082,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 258,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+        "notes": "258 $ (paiement unique, avant code promo ; -50 % avec le code LAUNCHPAD) (support Top One Futures, e-mail du 2026-10-04). Pas d'activation."
       },
       "phases": [
         {
@@ -3106,9 +3106,9 @@
             "trails_on": "balance",
             "locks_at": 54100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 4000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 54100 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 4000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 54100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3150,9 +3150,9 @@
             "trails_on": "balance",
             "locks_at": 53100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 50100 $ (départ + 100 $) quand le solde atteint 53100 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 3000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 50100 $ (départ + 100 $) quand le solde atteint 53100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -3225,7 +3225,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
     },
     {
@@ -3239,7 +3239,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+        "notes": "Prix non communiqué par le support (renvoi vers toponefutures.com/launchpad). Pas d'activation."
       },
       "phases": [
         {
@@ -3260,9 +3260,9 @@
             "trails_on": "balance",
             "locks_at": 108100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 8000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 108100 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 8000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 108100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3304,9 +3304,9 @@
             "trails_on": "balance",
             "locks_at": 104600,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 4500 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104600 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 4500 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 100100 $ (départ + 100 $) quand le solde atteint 104600 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -3379,7 +3379,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
     },
     {
@@ -3393,7 +3393,7 @@
         "amount": null,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Prix non affiché sur la page d'accueil au moment du relevé."
+        "notes": "Prix non communiqué par le support (renvoi vers toponefutures.com/launchpad). Pas d'activation."
       },
       "phases": [
         {
@@ -3414,9 +3414,9 @@
             "trails_on": "balance",
             "locks_at": 162100,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 12000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 162100 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 12000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 162100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3458,9 +3458,9 @@
             "trails_on": "balance",
             "locks_at": 156100,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "MLL EOD : 6000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau (contrôle en séance non précisé). Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout."
+            "basis_notes": "MLL EOD : 6000 $ sous le plus haut solde de clôture ; échec si le solde passe sous le niveau. Se fige à 150100 $ (départ + 100 $) quand le solde atteint 156100 $, et dès le premier payout. Le seuil ne monte qu'en fin de journée, mais le dépassement est vérifié en continu, pertes ouvertes comprises (support Top One Futures, e-mail du 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -3539,7 +3539,7 @@
         "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts",
         "https://www.toponefutures.com/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
     }
   ]
