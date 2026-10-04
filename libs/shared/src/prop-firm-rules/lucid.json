@@ -2227,10 +2227,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2259,10 +2259,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2292,8 +2292,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-eod-50k",
@@ -2341,10 +2341,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2373,10 +2373,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2406,8 +2406,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-eod-100k",
@@ -2455,10 +2455,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2487,10 +2487,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2520,8 +2520,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-eod-150k",
@@ -2569,10 +2569,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2601,10 +2601,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2634,8 +2634,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-intraday-25k",
@@ -2683,10 +2683,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2715,10 +2715,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2748,8 +2748,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-intraday-50k",
@@ -2797,10 +2797,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2829,10 +2829,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2862,8 +2862,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-intraday-100k",
@@ -2911,10 +2911,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2943,10 +2943,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2976,8 +2976,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-intraday-150k",
@@ -3025,10 +3025,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3057,10 +3057,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3090,8 +3090,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-eod-25k",
@@ -3147,10 +3147,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3187,10 +3187,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3220,8 +3220,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-eod-50k",
@@ -3277,10 +3277,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3317,10 +3317,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3350,8 +3350,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-eod-100k",
@@ -3407,10 +3407,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3447,10 +3447,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3480,8 +3480,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-eod-150k",
@@ -3537,10 +3537,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3577,10 +3577,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3610,8 +3610,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-intraday-25k",
@@ -3667,10 +3667,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3707,10 +3707,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3740,8 +3740,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-intraday-50k",
@@ -3797,10 +3797,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3837,10 +3837,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3870,8 +3870,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-intraday-100k",
@@ -3927,10 +3927,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3967,10 +3967,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -4000,8 +4000,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-daily-dll-intraday-150k",
@@ -4057,10 +4057,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -4097,10 +4097,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": false,
             "overnight_allowed": false,
-            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -4130,8 +4130,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
     },
     {
       "id": "lucid-direct-25k",
@@ -4548,10 +4548,10 @@
             "notes": "Taille maximale non publiée pour LucidMaxx."
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": null,
-            "overnight_allowed": null,
-            "notes": "Non documenté pour LucidMaxx."
+            "overnight_allowed": false,
+            "notes": "Clôture à 16:45 ET, pas d'overnight, comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »)."
           },
           "payout": null
         }
@@ -4564,7 +4564,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-50k",
@@ -4609,10 +4609,10 @@
             "notes": "Taille maximale non publiée pour LucidMaxx."
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": null,
-            "overnight_allowed": null,
-            "notes": "Non documenté pour LucidMaxx."
+            "overnight_allowed": false,
+            "notes": "Clôture à 16:45 ET, pas d'overnight, comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »)."
           },
           "payout": null
         }
@@ -4625,7 +4625,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-100k",
@@ -4670,10 +4670,10 @@
             "notes": "Taille maximale non publiée pour LucidMaxx."
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": null,
-            "overnight_allowed": null,
-            "notes": "Non documenté pour LucidMaxx."
+            "overnight_allowed": false,
+            "notes": "Clôture à 16:45 ET, pas d'overnight, comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »)."
           },
           "payout": null
         }
@@ -4686,7 +4686,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-150k",
@@ -4731,10 +4731,10 @@
             "notes": "Taille maximale non publiée pour LucidMaxx."
           },
           "time_rules": {
-            "must_close_by": null,
+            "must_close_by": "16:45 America/New_York",
             "news_trading_allowed": null,
-            "overnight_allowed": null,
-            "notes": "Non documenté pour LucidMaxx."
+            "overnight_allowed": false,
+            "notes": "Clôture à 16:45 ET, pas d'overnight, comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »)."
           },
           "payout": null
         }
@@ -4747,7 +4747,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
     }
   ]
 }
