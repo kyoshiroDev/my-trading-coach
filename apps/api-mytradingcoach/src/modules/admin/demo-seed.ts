@@ -7,6 +7,7 @@ import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENG
 import { type DemoDay, type DemoStats, net } from './demo-data/model';
 import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generate';
 import { PROFILE, isoWeek, setupRanking, usd } from './demo-data/reports';
+import { tradingDay } from '../accounts/account-rules';
 
 
 /**
@@ -79,6 +80,14 @@ export async function seedTradingData(
   await prisma.dailyRecap.deleteMany({ where: { userId: user.id } });
 
   const accountIdByKey = new Map<AccountKey, string>();
+  // Plans du catalogue (synchronisé au démarrage de l'API) : seed lancé sur une base pas encore
+  // synchronisée → compte non relié, la marge retombe sur les champs manuels.
+  const catalogPlans = new Set(
+    (await prisma.propFirmPlan.findMany({
+      where: { id: { in: DEMO_ACCOUNTS.map((a) => a.propFirmPlanId) }, active: true },
+      select: { id: true },
+    })).map((p) => p.id),
+  );
   for (const a of DEMO_ACCOUNTS) {
     const created = await prisma.tradingAccount.create({
       data: {
@@ -86,6 +95,7 @@ export async function seedTradingData(
         status: AccountStatus.ACTIVE, accountSize: a.accountSize,
         startingBalance: a.startingBalance, profitTarget: a.profitTarget,
         maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+        propFirmPlanId: catalogPlans.has(a.propFirmPlanId) ? a.propFirmPlanId : null,
       },
     });
     accountIdByKey.set(a.key, created.id);
@@ -278,8 +288,39 @@ export async function seedTradingData(
       externalEnv: demoTradovateAccount.env, availableAccounts: [demoTradovateAccount],
       lastSyncAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       tradesImported: stats.byAccount['apex'].trades,
+      // Solde « lu chez le broker » : cohérent avec les trades seedés (aucun écart), sans position
+      // ouverte → equity = solde. Montre le suivi en direct sans inventer de latent.
+      brokerCashBalance: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerCashBalanceAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerNetLiq: round2(DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance + stats.byAccount['apex'].netPnl),
+      brokerOpenPnl: 0,
+      brokerEquityAt: new Date(now.getTime() - 4 * 60 * 1000),
+      brokerOpenPositions: 0,
     },
   });
+
+  // Clôtures « officielles » du compte connecté : solde à la fin de chaque séance tradée, tiré des
+  // trades seedés (même convention de séance que le calcul : 17:00 heure de Chicago). La séance en
+  // cours n'en a pas, comme chez le broker. Supprimées avec le compte (cascade).
+  if (opts.brokerShowcase) {
+    const startingBalance = DEMO_ACCOUNTS.find((x) => x.key === 'apex')!.startingBalance;
+    const closeBySession = new Map<string, number>();
+    let balance = startingBalance;
+    const apexTrades = days.flatMap((d) => d.trades).filter((t) => t.account === 'apex')
+      .sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime());
+    for (const t of apexTrades) {
+      balance += net(t);
+      closeBySession.set(tradingDay(t.tradedAt), round2(balance));
+    }
+    const currentSession = tradingDay(now);
+    let previous = startingBalance;
+    const closes = [...closeBySession].filter(([session]) => session < currentSession).map(([session, close]) => {
+      const row = { accountId: apexId, tradeDate: new Date(`${session}T00:00:00.000Z`), closingBalance: close, realizedPnl: round2(close - previous) };
+      previous = close;
+      return row;
+    });
+    if (closes.length) await prisma.brokerDailyClose.createMany({ data: closes });
+  }
 
   return {
     email: user.email, trades: stats.trades, winRate: Math.round(stats.winRateNet), pnl: stats.netPnl,

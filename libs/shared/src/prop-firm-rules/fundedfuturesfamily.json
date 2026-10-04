@@ -1,0 +1,2798 @@
+{
+  "firm": {
+    "id": "fundedfuturesfamily",
+    "name": "Funded Futures Family",
+    "website": "https://www.fundedfuturesfamily.com",
+    "help_center": "https://intercom.help/funded-futures-family/en/",
+    "platforms": [
+      "tradovate",
+      "ninjatrader",
+      "tradingview",
+      "rithmic"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "fundedfuturesfamily-prime-25k",
+      "plan_name": "Prime",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture. Blocage et contrôle en séance non précisés pour l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Standard 2 minis, maximum 3 minis (la différence entre les deux n'est pas expliquée)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (25000 $) quand le solde de clôture atteint 26000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 40 % du profit du cycle ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 300,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Payout tous les 3 jours de trading (jours à 200 $ minimum), 300 $ de profit depuis le payout précédent. Buffer 26100 $ (drawdown + 100 $) à garder. Plafond 1000 $ puis 1500 $. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account",
+        "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "7 jours pour activer le compte funded après la réussite, sinon il est fermé. Pas de DLL."
+    },
+    {
+      "id": "fundedfuturesfamily-prime-50k",
+      "plan_name": "Prime",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture. Blocage et contrôle en séance non précisés pour l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Standard 4 minis, maximum 5 minis (la différence entre les deux n'est pas expliquée)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (50000 $) quand le solde de clôture atteint 52000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 40 % du profit du cycle ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payout tous les 3 jours de trading (jours à 200 $ minimum), 500 $ de profit depuis le payout précédent. Buffer 52100 $ (drawdown + 100 $) à garder. Plafond 2000 $ puis 2500 $. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account",
+        "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "7 jours pour activer le compte funded après la réussite, sinon il est fermé. Pas de DLL."
+    },
+    {
+      "id": "fundedfuturesfamily-prime-100k",
+      "plan_name": "Prime",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 3000 $ sous le plus haut solde de clôture. Blocage et contrôle en séance non précisés pour l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Standard 6 minis, maximum 10 minis (la différence entre les deux n'est pas expliquée)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 3000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (100000 $) quand le solde de clôture atteint 103000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 40 % du profit du cycle ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 750,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payout tous les 3 jours de trading (jours à 200 $ minimum), 750 $ de profit depuis le payout précédent. Buffer 103100 $ (drawdown + 100 $) à garder. Plafond 3000 $ puis 3500 $. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account",
+        "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "7 jours pour activer le compte funded après la réussite, sinon il est fermé. Pas de DLL."
+    },
+    {
+      "id": "fundedfuturesfamily-prime-150k",
+      "plan_name": "Prime",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4500 $ sous le plus haut solde de clôture. Blocage et contrôle en séance non précisés pour l'évaluation."
+          },
+          "consistency": null,
+          "min_trading_days": 1,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Standard 10 minis, maximum 15 minis (la différence entre les deux n'est pas expliquée)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (150000 $) quand le solde de clôture atteint 154500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 40 % du profit du cycle ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 1000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3500,
+              4000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payout tous les 3 jours de trading (jours à 200 $ minimum), 1000 $ de profit depuis le payout précédent. Buffer 154600 $ (drawdown + 100 $) à garder. Plafond 3500 $ puis 4000 $. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account",
+        "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "7 jours pour activer le compte funded après la réussite, sinon il est fermé. Pas de DLL."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-eod-25k",
+      "plan_name": "Premier+",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 750,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 25750,
+            "locked_floor": 25000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 750 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (25000 $) quand le solde de clôture atteint 25750 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 750,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 25750,
+            "locked_floor": 25000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 750 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (25000 $) quand le solde de clôture atteint 25750 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 2 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 1000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-eod-50k",
+      "plan_name": "Premier+",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 51500,
+            "locked_floor": 50000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (50000 $) quand le solde de clôture atteint 51500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 51500,
+            "locked_floor": 50000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (50000 $) quand le solde de clôture atteint 51500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 4 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 2000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-eod-100k",
+      "plan_name": "Premier+",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 102500,
+            "locked_floor": 100000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (100000 $) quand le solde de clôture atteint 102500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 102500,
+            "locked_floor": 100000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (100000 $) quand le solde de clôture atteint 102500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 6 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 2500 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-eod-150k",
+      "plan_name": "Premier+",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154000,
+            "locked_floor": 150000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (150000 $) quand le solde de clôture atteint 154000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154000,
+            "locked_floor": 150000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (150000 $) quand le solde de clôture atteint 154000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout. Au premier payout, le seuil remonte au solde de départ."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 10 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 3000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-intraday-25k",
+      "plan_name": "Premier+",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 1000 $ sous la plus haute valeur atteinte, P&L latent compris, en temps réel. Échec si l'equity touche le seuil."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 1000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (25000 $)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 2 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 1000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-intraday-50k",
+      "plan_name": "Premier+",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2000 $ sous la plus haute valeur atteinte, P&L latent compris, en temps réel. Échec si l'equity touche le seuil."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (50000 $)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 4 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 2000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-intraday-100k",
+      "plan_name": "Premier+",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 3000 $ sous la plus haute valeur atteinte, P&L latent compris, en temps réel. Échec si l'equity touche le seuil."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 3000 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (100000 $)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 6 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 2500 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-premier-intraday-150k",
+      "plan_name": "Premier+",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 4500 $ sous la plus haute valeur atteinte, P&L latent compris, en temps réel. Échec si l'equity touche le seuil."
+          },
+          "consistency": null,
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 jour minimum avec l'option Fast Pass, 2 en standard."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 4500 $ sous la plus haute valeur atteinte, latent compris. Au premier payout, le seuil remonte au solde de départ (150000 $)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Comptes achetés depuis le 9 septembre 2026 : aucun jour au-delà de 40 % du profit réalisé au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend). Taille funded publiée : 10 minis."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout tous les 5 jours de trading qualifiants (200 $ minimum). Au plus 50 % du profit, plafonné à 3000 $. Après le 1er payout, au moins 1 $ de profit net depuis le précédent. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Règles des comptes achetés depuis le 9 septembre 2026. Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-velocity-25k",
+      "plan_name": "Velocity",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 16,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "À partir de 16 $/mois (25K, selon le centre d'aide). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 1250 $ sous la plus haute valeur atteinte (latent compris), en temps réel ; ne redescend jamais."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "40 % sur toute la vie du compte."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Même drawdown intraday qu'en évaluation (1250 $), sans blocage publié ; il ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "40 % sur toute la vie du compte (sauf option Daily Payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 1500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 750,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "3 jours de trading (200 $ minimum) et 1500 $ de profit réalisé depuis le payout précédent. Plafond 750 $. Option Daily Payout : pas de jours ni de consistency, plafond réduit. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-velocity-50k",
+      "plan_name": "Velocity",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2250 $ sous la plus haute valeur atteinte (latent compris), en temps réel ; ne redescend jamais."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "40 % sur toute la vie du compte."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Même drawdown intraday qu'en évaluation (2250 $), sans blocage publié ; il ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "40 % sur toute la vie du compte (sauf option Daily Payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 3000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 1250,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "3 jours de trading (200 $ minimum) et 3000 $ de profit réalisé depuis le payout précédent. Plafond 1250 $. Option Daily Payout : pas de jours ni de consistency, plafond réduit. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-velocity-100k",
+      "plan_name": "Velocity",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 7000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 3250 $ sous la plus haute valeur atteinte (latent compris), en temps réel ; ne redescend jamais."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "40 % sur toute la vie du compte."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3250,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Même drawdown intraday qu'en évaluation (3250 $), sans blocage publié ; il ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "40 % sur toute la vie du compte (sauf option Daily Payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 6000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 2250,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "3 jours de trading (200 $ minimum) et 6000 $ de profit réalisé depuis le payout précédent. Plafond 2250 $. Option Daily Payout : pas de jours ni de consistency, plafond réduit. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-velocity-150k",
+      "plan_name": "Velocity",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 10000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4750,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 4750 $ sous la plus haute valeur atteinte (latent compris), en temps réel ; ne redescend jamais."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "40 % sur toute la vie du compte."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4750,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Même drawdown intraday qu'en évaluation (4750 $), sans blocage publié ; il ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "40 % sur toute la vie du compte (sauf option Daily Payout)."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 9000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 3250,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "3 jours de trading (200 $ minimum) et 9000 $ de profit réalisé depuis le payout précédent. Plafond 3250 $. Option Daily Payout : pas de jours ni de consistency, plafond réduit. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation",
+        "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency",
+        "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 7 jours pour activer le funded."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-25k",
+      "plan_name": "Straight to Funded",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 1000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (25000 $) quand le solde de clôture atteint 26000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Grille de scaling S2F (confirmée par le support le 2026-10-04) : 1 mini au départ, 2 dès 1 000 $ de profit, 3 dès 2 000 $. Le « 1 mini » de la fiche S2F est le palier de départ."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              1500,
+              1000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1000,
+              1000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading à 200 $ minimum avant le payout. Profit requis 1500 $ pour le 1er payout, 1000 $ ensuite. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-50k",
+      "plan_name": "Straight to Funded",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (50000 $) quand le solde de clôture atteint 52000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 5,
+                "micros": 50
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              3000,
+              2000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2000,
+              2000,
+              2000,
+              2500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading à 200 $ minimum avant le payout. Profit requis 3000 $ pour le 1er payout, 2000 $ ensuite. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-100k",
+      "plan_name": "Straight to Funded",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 3000 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (100000 $) quand le solde de clôture atteint 103000 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              6000,
+              3000
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              2500,
+              2500,
+              2500,
+              3000
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading à 200 $ minimum avant le payout. Profit requis 6000 $ pour le 1er payout, 3000 $ ensuite. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+    },
+    {
+      "id": "fundedfuturesfamily-s2f-150k",
+      "plan_name": "Straight to Funded",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "EOD : 4500 $ sous le plus haut solde de clôture, recalculé seulement après la clôture (les gains intraday ne le font pas monter). Se fige au solde de départ (150000 $) quand le solde de clôture atteint 154500 $. Échec si le solde passe sous le seuil. Le seuil ne redescend pas après un payout."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "Aucun jour au-delà de 25 % du profit au moment du payout ; repart à zéro après chaque payout."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 150,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 12,
+                "micros": 120
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Scaling funded selon le profit simulé, mis à jour à la clôture de chaque session (monte et descend)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": [
+              9000,
+              4500
+            ],
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              3000,
+              3000,
+              3000,
+              3500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de trading à 200 $ minimum avant le payout. Profit requis 9000 $ pour le 1er payout, 4500 $ ensuite. 90/10. 5 comptes funded maximum."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, pas de reset. La taille max publiée (1 mini sur 25K) ne correspond pas à la grille de scaling (jusqu'à 3)."
+    },
+    {
+      "id": "fundedfuturesfamily-accelerate-50k",
+      "plan_name": "Accelerate S2F",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2 000 $ sous la plus haute balance ou equity atteinte, latent compris ; ne redescend pas, aucun blocage publié."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.25,
+            "applies_to": "payout",
+            "notes": "25 % sur toute la vie du compte."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1250,
+              1250,
+              1500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 1 250 $ puis 1 500 $ dès le 3e payout. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation."
+    }
+  ]
+}

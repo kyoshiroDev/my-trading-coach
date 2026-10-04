@@ -6,6 +6,78 @@ import type { AccountStatus, AccountType, DrawdownType } from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
 
+/** Règle officielle appliquée au drawdown (compte relié à un plan du catalogue). */
+export interface DrawdownPlanRule {
+  firmName: string;
+  planName: string;
+  phase: 'evaluation' | 'funded' | 'direct';
+  kind: 'static' | 'trailing_eod' | 'trailing_intraday';
+  locksAt: number | null;
+  lockedFloor: number | null;
+  locked: boolean;
+  realtimeEquity: boolean;
+  /** Origine du plus haut retenu (trailing EOD) : clôtures officielles ou trades ; null hors EOD. */
+  peakSource: 'broker' | 'trades' | null;
+  /** Plus haut solde de clôture retenu, null hors EOD. */
+  peakBalance: number | null;
+  /** Dernière séance couverte par les clôtures officielles (`AAAA-MM-JJ`), sinon null. */
+  officialThrough: string | null;
+  /** Plateforme dont la règle de verrouillage a été appliquée, sinon null. */
+  platform: string | null;
+  /** Plateforme inconnue alors que le verrouillage en dépend : choix à proposer. */
+  platformChoices: string[];
+}
+
+export type ProgressRequirementKey =
+  | 'profit' | 'trading_days' | 'consistency' | 'winning_days' | 'cycle_profit' | 'safety_net';
+
+export interface ProgressRequirement {
+  key: ProgressRequirementKey;
+  met: boolean;
+  current: number;
+  required: number;
+  unit: 'usd' | 'days' | 'pct';
+  threshold?: number | null;
+  /** `consistency`, PREMIUM : gain max de la journée en cours pour respecter la règle (null = non calculable). */
+  dayCap?: number | null;
+  /** `consistency`, PREMIUM : P&L de la journée en cours. */
+  todayPnl?: number;
+}
+
+/** Progression vers l'objectif (évaluation) ou le prochain payout (funded), d'après le plan. */
+export interface AccountProgress {
+  kind: 'objective' | 'payout';
+  remaining: number;
+  done: boolean;
+  requirements: ProgressRequirement[];
+  /** Séance du dernier payout (le cycle commence après), null = depuis le début. */
+  cycleAfter: string | null;
+  /** Payout détecté chez le broker, ou date saisie par l'utilisateur. */
+  cycleSource: 'broker' | 'user' | null;
+  /** Payouts déjà reçus d'après le broker, null si inconnu. */
+  payoutsReceived: number | null;
+  /** Payout détecté qui fixe le cycle : `probable` = ajustement du broker, à confirmer ou écarter. */
+  lastPayout: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;
+  unconfirmed: boolean;
+}
+
+/** Perte journalière selon la règle du plan relié (PREMIUM, #370). */
+export interface DailyLossMetrics {
+  limit: number;
+  /** Perte du jour, ≥ 0. */
+  used: number;
+  remaining: number;
+  /** Marge restante / limite, 0 à 1. */
+  pct: number;
+  breached: boolean;
+  /** Sanction de la firm : compte en échec, ou trading coupé jusqu'à la séance suivante. */
+  breach: 'account_failed' | 'trading_paused_for_day';
+  basis: 'equity' | 'balance';
+  startOfDay: number;
+  source: 'broker' | 'trades';
+  approximate: boolean;
+}
+
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -23,6 +95,28 @@ export interface AccountRuleMetrics {
     maxDrawdown: number;
     pct: number;
     breached: boolean;
+    /** `plan` : règles officielles du plan relié ; `manual` : montant et type saisis. */
+    source: 'plan' | 'manual';
+    rule: DrawdownPlanRule | null;
+  } | null;
+  /** Plan relié dont le montant de drawdown n'est pas publié : aucun chiffre affiché. */
+  drawdownUnconfirmed: boolean;
+  /** Progression vers l'objectif ou le prochain payout (plan relié), sinon null. */
+  progress: AccountProgress | null;
+  /** Perte journalière (PREMIUM) : null hors Premium, sans plan relié ou sans montant publié. */
+  dailyLoss: DailyLossMetrics | null;
+  /**
+   * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
+   * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).
+   */
+  broker: {
+    cashBalance: number;
+    equity: number;
+    openPnl: number;
+    openPositions: number;
+    balanceAt: string | null;
+    equityAt: string | null;
+    referenceMismatch: boolean;
   } | null;
   estimated: true;
   disclaimer: string;
@@ -40,6 +134,12 @@ export interface TradingAccount {
   profitTarget: number | null;
   maxDrawdown: number | null;
   drawdownType: DrawdownType;
+  /** Plan du catalogue prop firm relié au compte (`PropFirmPlanSummary.id`), sinon null. */
+  propFirmPlanId: string | null;
+  /** Plateforme de trading (clé du catalogue : `tradovate`, `rithmic`…), sinon null. */
+  platform: string | null;
+  /** Séance du dernier payout reçu (`AAAA-MM-JJ…`), sinon null. */
+  lastPayoutAt: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -55,6 +155,9 @@ export interface CreateAccountPayload {
   profitTarget?: number | null;
   maxDrawdown?: number | null;
   drawdownType?: DrawdownType;
+  propFirmPlanId?: string | null;
+  platform?: string | null;
+  lastPayoutAt?: string | null;
 }
 
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {
@@ -76,6 +179,11 @@ export class AccountsApi {
 
   update(id: string, payload: UpdateAccountPayload): Observable<{ data: TradingAccount }> {
     return this.http.patch<{ data: TradingAccount }>(`${this.base}/${id}`, payload);
+  }
+
+  /** « Ce n'était pas un payout » : écarte un payout détecté du cycle de payout. */
+  dismissPayout(accountId: string, payoutId: string): Observable<{ data: { dismissed: true } }> {
+    return this.http.post<{ data: { dismissed: true } }>(`${this.base}/${accountId}/payouts/${payoutId}/dismiss`, {});
   }
 
   remove(id: string): Observable<{ data: { deleted?: boolean; archived?: boolean } }> {

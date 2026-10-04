@@ -10,6 +10,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
 import { ResendModule } from '../resend/resend.module';
 import { PdfModule } from '../pdf/pdf.module';
 import { SessionModule } from '../session/session.module';
+import { AccountsModule } from '../accounts/accounts.module';
 import { runsQueueProcessors } from '../../config/app-role';
 
 @Module({
@@ -20,6 +21,8 @@ import { runsQueueProcessors } from '../../config/app-role';
     ResendModule,
     PdfModule,
     SessionModule,
+    // Bloc « prop firm » du prompt (#374).
+    AccountsModule,
   ],
   controllers: [DebriefController, DebriefAdminController],
   // Processeur de file : worker seulement (SCA-B6-01) ; le web ne fait qu'alimenter la file.

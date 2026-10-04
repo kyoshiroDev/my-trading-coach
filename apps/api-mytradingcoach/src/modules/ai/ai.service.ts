@@ -267,6 +267,8 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       bySidePair: Record<string, { wins: number; total: number; pnl: number }>;
       bySession: Record<string, { wins: number; total: number; pnl: number }>;
     };
+    /** Bloc « prop firm » (#374) : séance vue en direct, faits déjà calculés par le back. */
+    propContext?: string | null;
   }): Promise<string> {
     // ── 1. Profil trader ────────────────────────────────────────────────────
     const profileCtx = data.userProfile
@@ -349,12 +351,16 @@ Journée du ${dateStr} : ${data.trades.length} trades, P&L ${money(data.pnl)}, w
 Détail des trades :
 ${tradesDetail}
 ${patternsCtx}
-
+${data.propContext ? `
+Suivi prop firm du jour (estimations MyTradingCoach déjà calculées : ne recalcule rien, aucun chiffre n'est officiel) :
+${data.propContext}
+` : ''}
 Génère UNE seule phrase coaching (max 140 caractères).
 Règles :
 - Directe et concrète : cite l'asset, le setup ou la session problématique si identifié
 - Basée sur les vrais patterns de ce trader, pas des conseils génériques
 - Si un pattern négatif récurrent est détecté (ex: shorts MNQ perdants), le mentionner explicitement
+- Si le suivi prop firm montre une limite approchée, une alerte ou un épisode de tilt, ta phrase en parle EN PRIORITÉ (heure, montant), sans jamais présenter un chiffre comme officiel
 - Ton coach bienveillant mais franc
 - PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
 - PAS d'astérisques ni de markdown`;

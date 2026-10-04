@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, Logger, Optional } from '@nestjs/common';
 import { Plan, Prisma, Role, WeeklyDebrief } from '@prisma/client';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
@@ -27,6 +27,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
+import { PropRiskContextService } from '../accounts/prop-risk-context';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
 @Injectable()
@@ -38,6 +39,8 @@ export class DebriefService {
     private aiService: AiService,
     private analyticsService: AnalyticsService,
     private sessionService: SessionService,
+    /** Bloc « prop firm » du prompt (#374) ; optionnel pour garder les tests légers. */
+    @Optional() private propRisk?: PropRiskContextService,
   ) {}
 
   /**
@@ -186,7 +189,14 @@ export class DebriefService {
       tradesCount: tradesByAccount[a.id]?.length ?? 0,
     }));
 
+    // Séances prop firm vues en direct dans la semaine (marges, alertes, tilt) : faits calculés (#374).
+    const propContext = (await this.propRisk?.forWeek(userId, startDate, endDate).catch((err: unknown) => {
+      this.logger.warn(`Contexte prop firm ignoré : ${(err as Error).message}`);
+      return null;
+    })) ?? null;
+
     const aiResult = (await this.aiService.generateDebrief({
+      propContext,
       trades,
       stats,
       previousObjectives,

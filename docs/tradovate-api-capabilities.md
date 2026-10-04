@@ -387,6 +387,10 @@ Deux enseignements structurants :
 
 #### 🥇 Quick win n°1 — Le vrai solde du compte ✅ accessible
 
+> **Implémenté le 2026-10-03** : solde réalisé poussé par le WebSocket (`cashBalance`), equity et
+> latent par `getcashbalancesnapshot` sur événement (jamais en boucle, la doc parle
+> d'anti-pattern), marge de drawdown calculée sur l'equity. Voir `.claude/agents/nestjs.md`.
+
 `POST /cashBalance/getcashbalancesnapshot` (+ `/cashBalance/list` pour la devise).
 Aujourd'hui, le capital, l'equity et la marge de drawdown affichés par MTC sont **estimés à partir
 des trades loggés**, avec un disclaimer. Le broker, lui, donne `netLiq`, `totalCashValue`,
@@ -508,6 +512,30 @@ Account Balance History 60 s, Cash History dépasse 120 s et expire. Avec lui : 
 - **Authentification réelle** : jeton bidon → `401 Access is denied`. Un jeton expiré donne
   `Expired Access Token` — message différent, à ne pas confondre.
 - **CSV avec guillemets** : `"123,714.00"` — un `split(',')` naïf découpe faux.
+
+### Payouts dans `Cash History` (2026-10-04, non mesuré sur un compte payé)
+
+L'énumération `cashChangeType` (doc `cash-balance-log-item`) contient `ChallengePayout`,
+`FundTransaction`, `ManualAdjustment`, `Debit`… Le rapport écrit ces types en libellés lisibles avec
+espaces (`" Trade Paired"`, `" Commission"` mesurés sur un export réel). Mesuré sur beta le 2026-10-04,
+compte Apex PA (seul compte payé lu) : `commission×470, tradepaired×315, manualadjustment×3`, aucun
+`ChallengePayout` ni `FundTransaction`. Les 3 ajustements tombent sur les 3 seules séances (sur 146)
+où le solde de clôture baisse sans que le P&L l'explique (−1 182 $, −3 500 $ sans trade, −1 085 $) :
+**Apex inscrit ses payouts en `ManualAdjustment` négatif.** Confirmé par le trader le 2026-10-04
+(payouts de ses deux comptes PA en prod) : sur un compte funded, une baisse du solde sans trade est
+un payout. MTC les compte donc comme payouts (compte funded, ≥ 100 $), sans réserve. En filet,
+toute baisse de solde ≥ 100 $ inexpliquée par le P&L de la séance (clôtures officielles) compte
+aussi comme payout quand aucune transaction connue ne la porte.
+
+### `Account Balance History` : les clôtures officielles (2026-10-03)
+
+Catalogue complet relevé par `GET /v1/reports/requestReportDefinitions` : `Performance`, `Orders`,
+`Position History`, `Cash History`, `Order Details`, `Chat History`, `Fills`, `Account Balance
+History`. Ce dernier renvoie `Account ID, Account Name, Trade Date, Total Amount, Total Realized PNL`
+(date de séance en ISO, montants entre guillemets avec séparateur de milliers), **une ligne par
+séance où le solde a bougé**. « Total Amount » = solde de clôture, d'après la doc partenaire, si le
+rapport est demandé après la fermeture (17-18 h ET). Mêmes pièges que les autres rapports en entrée
+(dates `M/D/YYYY`, compte par NOM). Utilisé pour le plus haut de clôture des règles EOD.
 
 ### ⚠️ Les frais viennent de `Fills`, pas de `Cash History`
 

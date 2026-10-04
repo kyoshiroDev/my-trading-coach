@@ -325,13 +325,119 @@ model TradingAccount {
   profitTarget    Float? // objectif (eval) / objectif payout (funded), en $
   maxDrawdown     Float? // montant du drawdown autorisé, en $
   drawdownType    DrawdownType   @default(STATIC)
+  /// Plan du catalogue prop firm (`PropFirmPlan.id`), optionnel. Les règles saisies ci-dessus
+  /// restent la référence tant que l'UI ne s'appuie pas sur le catalogue.
+  /// Plateforme de trading du compte (clé du catalogue : `tradovate`, `rithmic`, `wealthcharts`…).
+  /// Certaines règles en dépendent (verrouillage du drawdown Apex). Ignorée si le compte est
+  /// connecté via Tradovate : la plateforme est alors connue.
+  platform          String?
+  /// Date (séance) du dernier payout reçu, saisie par l'utilisateur : le cycle de payout repart de
+  /// là (jours gagnants, profit du cycle). Null = aucun payout, cycle compté depuis le début.
+  lastPayoutAt      DateTime?      @db.Date
+  propFirmPlanId    String?
+  propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
   trades          Trade[]
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]
+  brokerDailyCloses BrokerDailyClose[]
+  brokerPayouts     BrokerPayout[]
+  riskDays          AccountRiskDay[]
+  riskEvents        PropRiskEvent[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   @@index([userId, status])
+  @@index([propFirmPlanId])
+}
+
+/// Solde de clôture OFFICIEL d'un compte, par journée de trading, lu chez le broker (rapport
+/// `Account Balance History` de la Reporting API Tradovate). Base du plus haut de clôture des règles
+/// « trailing EOD » : plus fiable que la reconstitution depuis les trades (trade ou frais manquant,
+/// compte connecté en cours de route). Une ligne seulement pour les journées où le solde a bougé.
+model BrokerDailyClose {
+  id             String         @id @default(cuid())
+  accountId      String
+  account        TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Journée de trading (date de SÉANCE, pas date calendaire), telle que le broker la libelle.
+  tradeDate      DateTime       @db.Date
+  /// Solde du compte à la clôture de la séance (`Total Amount`).
+  closingBalance Float
+  /// P&L réalisé de la séance (`Total Realized PNL`).
+  realizedPnl    Float
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([accountId, tradeDate])
+}
+
+/// Payout (retrait) détecté dans l'historique de trésorerie du broker (rapport `Cash History`) :
+/// `ChallengePayout` ou `FundTransaction` négatif (certain) ; `ManualAdjustment` négatif ≥ 100 $ sur un
+/// compte funded (probable : constaté chez Apex, 3 ajustements = 3 retraits inexpliqués par le P&L,
+/// beta 2026-10-04). Fait repartir le cycle de payout et donne le rang du prochain. `Debit` exclu.
+/// Séance d'un compte prop firm vue en direct (PREMIUM, #373) : ce que l'IA ne peut pas
+/// reconstituer depuis les trades clôturés. Écrit par `PropAlertsService` à chaque solde poussé.
+model AccountRiskDay {
+  id                    String         @id @default(cuid())
+  accountId             String
+  account               TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Journée de trading CME (`tradingDay`), pas date calendaire.
+  tradeDate             DateTime       @db.Date
+  /// Plus petite marge avant le plancher de drawdown vue dans la séance, et quand.
+  minDrawdownMargin     Float?
+  minDrawdownAt         DateTime?
+  /// Plus petite perte encore permise (perte journalière) vue dans la séance, et quand.
+  minDailyLossRemaining Float?
+  minDailyLossAt        DateTime?
+  /// Plancher de drawdown au premier et au dernier relevé de la séance.
+  floorStart            Float?
+  floorEnd              Float?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@unique([accountId, tradeDate])
+}
+
+/// Alerte prop firm ou épisode de tilt envoyé pendant une séance (PREMIUM, #373) : matière du
+/// récap 17h30 et du Weekly Debrief (#374).
+model PropRiskEvent {
+  id        String         @id @default(cuid())
+  userId    String
+  accountId String
+  account   TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  tradeDate DateTime       @db.Date
+  /// `drawdown` · `daily_loss` · `consistency` · `objective` · `payout` · `tilt`
+  kind      String
+  /// Alerte : `warning` · `critical` · `breached` · `reached` ; tilt : `revenge` · `size` · `overtrading`
+  level     String
+  /// Chiffres de l'événement (marge, limite, minutes, tailles…), tels qu'envoyés à l'app.
+  data      Json?
+  createdAt DateTime       @default(now())
+
+  @@index([userId, tradeDate])
+  @@index([accountId, tradeDate])
+}
+
+model BrokerPayout {
+  id            String         @id @default(cuid())
+  accountId     String
+  account       TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// `Transaction ID` du broker : une transaction n'est comptée qu'une fois.
+  transactionId String
+  /// Journée de trading de l'opération.
+  tradeDate     DateTime       @db.Date
+  /// Montant retiré, positif.
+  amount        Float
+  /// Type tel que lu chez le broker, normalisé (`challengepayout`, `fundtransaction`, `manualadjustment`).
+  changeType    String
+  /// `certain` (ChallengePayout, FundTransaction négatif) ou `probable` (ajustement manuel négatif
+  /// sur un compte funded : Apex inscrit ses payouts ainsi, mais un ajustement peut être autre chose).
+  confidence    String         @default("certain")
+  /// L'utilisateur a indiqué que ce n'était pas un payout : ignoré pour le cycle, jamais recréé.
+  dismissedAt   DateTime?
+  createdAt     DateTime       @default(now())
+
+  @@unique([accountId, transactionId])
+  @@index([accountId, tradeDate])
 }
 
 /// Connexion API d'un broker, portée par UN `TradingAccount`.
@@ -378,6 +484,21 @@ model BrokerConnection {
   /// du cron : une connexion créée avant cette feature, ou dont l'import initial a échoué,
   /// récupère donc son passé sans que l'utilisateur ait quoi que ce soit à faire.
   historyImportedAt     DateTime?
+  /// Solde RÉALISÉ officiel du compte chez le broker (`cashBalance.amount`), poussé en temps réel
+  /// par le WebSocket quand l'app est ouverte, relu à chaque synchro sinon.
+  brokerCashBalance     Float?
+  brokerCashBalanceAt   DateTime?
+  /// Instantané `getcashbalancesnapshot` : equity (`netLiq`) et latent (`openPnL`) calculés par le
+  /// broker avec ses cotations. Lu sur événement (trade, synchro, ouverture de la page), JAMAIS en
+  /// boucle : la doc NinjaTrader qualifie l'interrogation répétée d'anti-pattern.
+  brokerNetLiq          Float?
+  brokerOpenPnl         Float?
+  brokerEquityAt        DateTime?
+  /// Positions ouvertes sur le compte au dernier relevé (latent non nul possible).
+  brokerOpenPositions   Int                    @default(0)
+  /// Dernière séance couverte par la détection des payouts (historique de trésorerie) : la
+  /// relecture suivante repart de là au lieu de toute la vie du compte.
+  payoutsCheckedThrough DateTime?              @db.Date
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
@@ -725,4 +846,59 @@ model LandingVisitDaily {
 
   // L'unique (date en tête) sert aussi d'index pour les lectures par période.
   @@unique([date, path, source, medium, campaign])
+}
+
+// ── Catalogue des règles prop firm (PROMPT-136) ─────────────────────────────
+/// Miroir en base de `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
+/// vérité : le JSON est embarqué dans le build de l'API et synchronisé au démarrage
+/// (`PropFirmCatalogSyncService`). Ne jamais modifier ces lignes à la main : la prochaine
+/// synchro les écraserait.
+model PropFirm {
+  /// Slug stable (`firm.id` du JSON) : `lucid`, `apex`.
+  id          String         @id
+  name        String
+  website     String
+  helpCenter  String?
+  /// Plateformes acceptées (slugs : `tradovate`, `rithmic`...).
+  platforms   String[]
+  /// Date du relevé des règles sur les sources officielles.
+  verifiedAt  DateTime       @db.Date
+  /// Empreinte du contenu synchronisé : la synchro n'écrit que si elle change.
+  contentHash String
+  plans       PropFirmPlan[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+/// Un plan vendu par une firm, pour une combinaison d'options qui change les règles
+/// (cf. README du catalogue). Colonnes = ce qui sert à filtrer ; les règles détaillées
+/// (`phases`, `price`, `configuration`) restent en Json, au format du catalogue, et se
+/// relisent avec `propFirmPlanSchema` (Zod) côté API.
+model PropFirmPlan {
+  /// Slug stable (`lucid-flex-50k`) : un id publié ne change jamais.
+  id              String           @id
+  firmId          String
+  /// Restrict : une firm ne se supprime pas tant qu'elle a des plans (elle se vide en `active = false`).
+  firm            PropFirm         @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  planName        String
+  accountSize     Float
+  currency        String
+  /// `public` | `invite_only` (valeurs du catalogue).
+  availability    String
+  configuration   Json?
+  price           Json
+  phases          Json
+  sourceUrls      String[]
+  /// Au moins une règle non publiée ou contradictoire : afficher comme estimation.
+  needsReview     Boolean
+  notes           String?
+  /// false = retiré du catalogue. Jamais supprimé : des comptes peuvent encore le référencer.
+  active          Boolean          @default(true)
+  /// Empreinte du plan tel que synchronisé : la synchro n'écrit que si elle change.
+  contentHash     String
+  tradingAccounts TradingAccount[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([firmId, active])
 }

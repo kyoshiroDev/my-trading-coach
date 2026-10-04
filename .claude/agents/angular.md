@@ -133,6 +133,26 @@ la maquette design (« The Terminal »).
   + **zone gauche** (4 mini-stats sur la largeur Calendrier+Live feed, puis Calendrier |
   Live feed) + **Trade rapide en colonne pleine hauteur à droite**. Live feed en **ligne
   compacte** : heure · asset · sens (▲/▼) · émotion (`emotionEmojiPipe`) · P&L / ● LIVE.
+- **Colonne droite de la session live** : compte de la session **éval ou funded synchronisé
+  Tradovate** (`isLivePropAccount`, `live-prop-firm.util.ts`) → `mtc-live-prop-firm` (suivi prop
+  firm, FREE) **à la place** de Trade rapide : solde et latent du broker, marge avant le plancher
+  et avancement objectif / payout, tout calculé par l'API (`metrics` de `GET /accounts`, règles du
+  plan relié). Temps réel = `tradovate:balance` → `SelectedAccountStore.reloadSoon()` ; le panneau
+  ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
+  trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
+  non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
+- **Alertes prop firm (#370, PREMIUM)** : `prop:alert` (canal `/tradovate-live`) →
+  `PropAlertsService` (core/services) : toast (`warning` temporaire ; `critical` / `breached` en
+  `error` sans durée) + `Notification` système si autorisée (`tag` compte:type, une alerte
+  remplace la précédente). Autorisation demandée sur un clic, depuis le panneau de la session live.
+  Le panneau affiche « Perte du jour » si `metrics.dailyLoss` (calculée côté API pour le Premium
+  seulement) ; compte gratuit relié à un plan → teaser PREMIUM qui ouvre `mtc-plan-modal`.
+  Ligne « Consistency : encore X $ de gain max aujourd'hui » (ou dépassée) si le requirement
+  consistency porte `dayCap` (Premium). Bonnes nouvelles (`level: 'reached'`, objectif / payout) →
+  toast de succès sans durée, notification « bonne nouvelle ».
+  Anti-tilt (#371) : `tilt:alert` → `PropAlertsService.handleTilt` : toast `warning` de 15 s
+  (non bloquant, une question, jamais un ordre), humeur de pré-session citée seulement si
+  « fatigué » / « stressé », notification « pause ? ».
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 

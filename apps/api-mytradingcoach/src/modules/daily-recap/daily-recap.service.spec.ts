@@ -4,6 +4,7 @@ import { Plan } from '@prisma/client';
 import { DailyRecapService } from './daily-recap.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { PropRiskContextService } from '../accounts/prop-risk-context';
 
 const TODAY = new Date('2026-05-23T10:00:00.000Z');
 
@@ -285,5 +286,56 @@ describe('DailyRecapService', () => {
       expect(callArgs.trades[0]).toHaveProperty('timeframe');
       expect(callArgs.trades[0].setup).toBe('BREAKOUT');
     });
+  });
+});
+
+describe('DailyRecapService — suivi prop firm (#374)', () => {
+  it('Premium : le bloc prop firm du jour est transmis au one-liner', async () => {
+    vi.clearAllMocks();
+    const propRisk = { forDay: vi.fn().mockResolvedValue('- « Apex 50k » : marge drawdown la plus basse $210 à 10:42') };
+    const module = await Test.createTestingModule({
+      providers: [
+        DailyRecapService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AiService, useValue: mockAi },
+        { provide: PropRiskContextService, useValue: propRisk },
+      ],
+    }).compile();
+    const service = module.get(DailyRecapService);
+    mockPrisma.trade.findMany
+      .mockResolvedValueOnce([makeTrade({ pnl: 100 }), makeTrade({ id: 't2', pnl: -50 }), makeTrade({ id: 't3', pnl: 20 })])
+      .mockResolvedValueOnce([]);
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: Plan.PREMIUM });
+    mockAi.generateDailyOneLiner.mockResolvedValue('x');
+    mockPrisma.dailyRecap.upsert.mockResolvedValue({});
+
+    await service.generateRecap('user-1', TODAY);
+    expect(propRisk.forDay).toHaveBeenCalledWith('user-1', TODAY);
+    expect(mockAi.generateDailyOneLiner).toHaveBeenCalledWith(expect.objectContaining({
+      propContext: expect.stringContaining('marge drawdown la plus basse'),
+    }));
+  });
+
+  it('contexte indisponible : le one-liner part quand même, sans bloc', async () => {
+    vi.clearAllMocks();
+    const propRisk = { forDay: vi.fn().mockRejectedValue(new Error('base')) };
+    const module = await Test.createTestingModule({
+      providers: [
+        DailyRecapService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: AiService, useValue: mockAi },
+        { provide: PropRiskContextService, useValue: propRisk },
+      ],
+    }).compile();
+    const service = module.get(DailyRecapService);
+    mockPrisma.trade.findMany
+      .mockResolvedValueOnce([makeTrade({ pnl: 100 }), makeTrade({ id: 't2', pnl: -50 }), makeTrade({ id: 't3', pnl: 20 })])
+      .mockResolvedValueOnce([]);
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: Plan.PREMIUM });
+    mockAi.generateDailyOneLiner.mockResolvedValue('x');
+    mockPrisma.dailyRecap.upsert.mockResolvedValue({});
+
+    await service.generateRecap('user-1', TODAY);
+    expect(mockAi.generateDailyOneLiner).toHaveBeenCalledWith(expect.objectContaining({ propContext: null }));
   });
 });

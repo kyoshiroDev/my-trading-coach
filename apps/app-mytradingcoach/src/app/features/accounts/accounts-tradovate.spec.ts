@@ -10,6 +10,7 @@ import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import { TradesStore } from '../../core/stores/trades.store';
+import { TradovateApi } from '../../core/api/tradovate.api';
 import { TradovateStore, TradovateFeedback, TradovateBusy } from '../../core/stores/tradovate.store';
 import type { TradovateConnection } from '../../core/api/tradovate.api';
 import { ToastService } from '../../core/services/toast.service';
@@ -25,12 +26,12 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
   return {
     id, label, broker: null, type: 'EVALUATION', status: 'ACTIVE',
     accountSize: null, currency: 'USD', startingBalance: 50000,
-    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING',
+    profitTarget: null, maxDrawdown: null, drawdownType: 'TRAILING', propFirmPlanId: null, platform: null, lastPayoutAt: null,
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
     metrics: {
       startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
       winRate: null, bestDay: null, worstDay: null,
-      objective: null, drawdown: null, estimated: true, disclaimer: 'estimé',
+      objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
     },
     ...p,
   };
@@ -72,13 +73,15 @@ function setup(opts: {
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
+  const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
 
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: { create: vi.fn(() => of({ data: {} })) } },
       { provide: SelectedAccountStore, useValue: store },
-      { provide: UserStore, useValue: { isPremium: () => true, maxAccounts: signal(null) } },
+      { provide: UserStore, useValue: { isDemo: () => false, isPremium: () => true, maxAccounts: signal(null) } },
       { provide: TradovateStore, useValue: tv },
+      { provide: TradovateApi, useValue: tvApi },
       { provide: TradesStore, useValue: tradesStore },
       { provide: Router, useValue: router },
     ],
@@ -96,7 +99,7 @@ function setup(opts: {
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
   const click = (id: string) => { q(id)!.click(); fixture.detectChanges(); };
-  return { fixture, el, q, click, tv, router, store, tradesStore };
+  return { fixture, el, q, click, tv, router, store, tradesStore, tvApi };
 }
 
 describe('Mes comptes — connexion Tradovate par compte', () => {
@@ -320,3 +323,168 @@ describe('Mes comptes — retour du consentement Tradovate (toasts)', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 });
+
+describe('Mes comptes — solde lu chez le broker', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withBroker = (id: string, broker: NonNullable<TradingAccount['metrics']['broker']>) =>
+    acct(id, 'Apex 50k', {
+      metrics: { ...acct(id, '').metrics, currentBalance: broker.cashBalance, broker },
+    });
+  const live = {
+    cashBalance: 50_500, equity: 48_700, openPnl: -1_800, openPositions: 1,
+    balanceAt: new Date().toISOString(), equityAt: new Date().toISOString(), referenceMismatch: false,
+  };
+
+  it('ouverture de la page : solde relu UNE fois pour chaque compte connecté, puis liste rechargée', () => {
+    const { tvApi, store } = setup({
+      accounts: [acct('a', 'Apex 50k'), acct('b', 'Lucid'), acct('c', 'TPT')],
+      connections: [conn('a'), conn('b', { status: 'NEEDS_RECONNECT' }), conn('c', { needsAccountSelection: true })],
+    });
+    expect(tvApi.refreshBalance).toHaveBeenCalledTimes(1);
+    expect(tvApi.refreshBalance).toHaveBeenCalledWith('a');
+    expect(store.load).toHaveBeenCalled();
+  });
+
+  it('dépli : solde, equity et latent du broker, avec « Actualiser » sur CE compte', () => {
+    const { q, click, tvApi } = setup({ accounts: [withBroker('a', live)], connections: [conn('a')] });
+    click('account-expand-a');
+    const line = q('account-broker-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(line).toContain('Chez le broker');
+    expect(line).toContain('$50,500');
+    expect(line).toContain('$48,700');
+    expect(line).toContain('1 position ouverte');
+    tvApi.refreshBalance.mockClear();
+    click('broker-refresh-a');
+    expect(tvApi.refreshBalance).toHaveBeenCalledWith('a');
+  });
+
+  it('solde de départ incompatible avec le broker : avertissement explicite', () => {
+    const { q, click } = setup({ accounts: [withBroker('a', { ...live, referenceMismatch: true })], connections: [conn('a')] });
+    click('account-expand-a');
+    expect(q('broker-reference-mismatch')!.textContent).toContain('ne correspond pas au solde du broker');
+  });
+});
+
+describe('Mes comptes — verrouillage selon la plateforme', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const rule = (over: Partial<NonNullable<NonNullable<TradingAccount['metrics']['drawdown']>['rule']>>) => ({
+    firmName: 'Apex Trader Funding', planName: 'EOD Trail', phase: 'evaluation' as const, kind: 'trailing_eod' as const,
+    locksAt: null, lockedFloor: null, locked: false, realtimeEquity: true, platform: null, platformChoices: [],
+    peakSource: null as 'broker' | 'trades' | null, peakBalance: null as number | null, officialThrough: null as string | null, ...over,
+  });
+  const withRule = (r: ReturnType<typeof rule>) => acct('a', 'Apex 50k', {
+    propFirmPlanId: 'apex-eod-50k',
+    metrics: {
+      ...acct('a', '').metrics,
+      drawdown: { type: 'TRAILING', floor: 53_500, margin: 1_000, maxDrawdown: 2_000, pct: 0.5, breached: false, source: 'plan', rule: r },
+    },
+  });
+
+  it('plateforme inconnue alors que le verrouillage en dépend : avertissement et plateformes citées', () => {
+    const { q, click } = setup({ accounts: [withRule(rule({ platformChoices: ['rithmic', 'tradovate', 'wealthcharts'] }))] });
+    click('account-expand-a');
+    const warn = q('dd-platform-unknown')!.textContent!.replace(/\s+/g, ' ');
+    expect(warn).toContain('Rithmic, Tradovate, Wealthcharts');
+    expect(warn).toContain('le plus prudent');
+  });
+
+  it('plateforme connue : règle appliquée affichée, pas d\'avertissement', () => {
+    const { q, click } = setup({ accounts: [withRule(rule({ platform: 'rithmic', locksAt: 55_000, lockedFloor: 53_000, locked: true }))] });
+    click('account-expand-a');
+    expect(q('dd-basis')!.textContent).toContain('règle Rithmic');
+    expect(q('dd-platform-unknown')).toBeNull();
+  });
+});
+
+describe('Mes comptes — plus haut de clôture', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withPeak = (over: Record<string, unknown>) => acct('a', 'Lucid 50k', {
+    propFirmPlanId: 'lucid-flex-50k',
+    metrics: {
+      ...acct('a', '').metrics,
+      drawdown: { type: 'TRAILING', floor: 49_400, margin: 1_600, maxDrawdown: 2_000, pct: 0.8, breached: false, source: 'plan',
+        rule: { firmName: 'Lucid Trading', planName: 'LucidFlex', phase: 'evaluation', kind: 'trailing_eod', locksAt: null, lockedFloor: null,
+          locked: false, realtimeEquity: false, platform: null, platformChoices: [], peakSource: 'trades', peakBalance: 51_400, officialThrough: null, ...over } },
+    },
+  });
+
+  it('clôtures officielles à jour : origine et dernière séance couverte', () => {
+    const { q, click } = setup({ accounts: [withPeak({ peakSource: 'broker', officialThrough: '2026-10-01' })] });
+    click('account-expand-a');
+    const t = q('dd-peak')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('$51,400');
+    expect(t).toContain('officiel, relevé chez le broker jusqu\'à la séance du 01/10');
+  });
+
+  it('sans clôtures officielles : reconstitué depuis les trades', () => {
+    const { q, click } = setup({ accounts: [withPeak({})] });
+    click('account-expand-a');
+    expect(q('dd-peak')!.textContent).toContain('reconstitué depuis tes trades');
+  });
+});
+
+describe('Mes comptes — progression objectif / payout', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const withProgress = (progress: NonNullable<TradingAccount['metrics']['progress']>) =>
+    acct('a', 'Lucid 50k', { propFirmPlanId: 'lucid-flex-50k', metrics: { ...acct('a', '').metrics, progress } });
+
+  it('payout : exigences, cycle compté depuis le début et invitation à saisir le dernier payout', () => {
+    const { q, click } = setup({ accounts: [withProgress({
+      kind: 'payout', remaining: 0, done: false, cycleAfter: null, cycleSource: null, payoutsReceived: null, lastPayout: null, unconfirmed: false,
+      requirements: [{ key: 'winning_days', met: false, current: 3, required: 5, unit: 'days', threshold: 150 }],
+    })] });
+    click('account-expand-a');
+    const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('Jours ≥ $150 : 3 / 5');
+    expect(t).toContain('depuis le début du compte');
+  });
+
+  it('objectif atteint : bloc marqué comme fait', () => {
+    const { q, click } = setup({ accounts: [withProgress({
+      kind: 'objective', remaining: 0, done: true, cycleAfter: null, cycleSource: null, payoutsReceived: null, lastPayout: null, unconfirmed: true,
+      requirements: [{ key: 'profit', met: true, current: 3_200, required: 3_000, unit: 'usd' }],
+    })] });
+    click('account-expand-a');
+    const block = q('account-progress-a')!;
+    expect(block.classList.contains('is-done')).toBe(true);
+    expect(block.textContent).toContain('Objectif atteint');
+    expect(block.textContent).toContain('à revoir');
+  });
+});
+
+describe('Mes comptes — payout détecté chez le broker', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('cycle fixé par un payout détecté : date, origine et nombre reçus', () => {
+    const { q, click } = setup({ accounts: [acct('a', 'Lucid 50k', { propFirmPlanId: 'lucid-flex-50k', metrics: { ...acct('a', '').metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, cycleAfter: '2026-10-02', cycleSource: 'broker', payoutsReceived: 2, lastPayout: null, unconfirmed: false,
+      requirements: [{ key: 'winning_days', met: false, current: 1, required: 5, unit: 'days', threshold: 150 }],
+    } } })] });
+    click('account-expand-a');
+    const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('depuis ton payout du 02/10, détecté chez le broker');
+    expect(t).toContain('2 payouts reçus');
+  });
+});
+
+describe('Mes comptes — payout probable', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('ajustement du broker : « probable », montant, et bouton pour l\'écarter', () => {
+    const { q, click } = setup({ accounts: [acct('a', 'Apex PA', { propFirmPlanId: 'apex-eod-50k', metrics: { ...acct('a', '').metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, cycleAfter: '2026-10-01', cycleSource: 'broker', payoutsReceived: 3,
+      lastPayout: { id: 'p3', amount: 1_085, confidence: 'probable' }, unconfirmed: false,
+      requirements: [{ key: 'winning_days', met: false, current: 1, required: 8, unit: 'days', threshold: 50 }],
+    } } })] });
+    click('account-expand-a');
+    const t = q('account-progress-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(t).toContain('payout probable du 01/10');
+    expect(t).toContain('retrait de $1,085');
+    expect(q('payout-dismiss-a')).not.toBeNull();
+  });
+});
+
