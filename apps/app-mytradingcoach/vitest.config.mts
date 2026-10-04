@@ -3,7 +3,10 @@ import { resolve } from 'path';
 
 // Specs qui remplacent un module avec `vi.mock` : elles ont besoin d'un registre de modules
 // neuf, donc restent isolées. Toute nouvelle spec avec `vi.mock` doit être ajoutée ici.
-const NEEDS_ISOLATION = ['src/app/core/services/tradovate-live-socket.service.spec.ts'];
+const NEEDS_ISOLATION = [
+  'src/app/core/services/tradovate-live-socket.service.spec.ts',
+  'src/app/features/today-session/results-share/results-share.component.spec.ts',
+];
 
 export default defineConfig({
   resolve: {

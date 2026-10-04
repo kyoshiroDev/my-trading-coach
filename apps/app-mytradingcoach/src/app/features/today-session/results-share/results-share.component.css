@@ -1,0 +1,202 @@
+:host { display: contents; }
+
+/* ── Déclencheur : bouton secondaire, pas une bannière ── */
+.rs-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.rs-trigger:hover:not(:disabled) { background: var(--bg-3); border-color: var(--blue); }
+.rs-trigger:disabled { color: var(--text-3); border-color: var(--border); cursor: not-allowed; }
+.rs-trigger-ic { flex: none; }
+
+/* ── Modale ──────────────────────────────────────────── */
+.rs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 7, 12, 0.75);
+}
+.rs-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+.rs-head { display: flex; align-items: center; justify-content: space-between; }
+.rs-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); }
+.rs-close {
+  display: inline-flex;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.rs-close:hover { color: var(--text); background: var(--bg-3); }
+
+.rs-formats {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 9px;
+  background: var(--bg-3);
+}
+.rs-format {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rs-format.active { background: var(--bg-2); color: var(--text); }
+
+.rs-preview {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rs-preview.story { aspect-ratio: 9 / 16; width: auto; height: min(58dvh, 560px); }
+.rs-preview img { width: 100%; height: 100%; display: block; }
+.rs-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.rs-error { color: var(--red); }
+.rs-retry {
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Actions ─────────────────────────────────────────── */
+.rs-actions { display: flex; flex-direction: column; gap: 8px; }
+.rs-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 0;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rs-primary:disabled { opacity: 0.5; cursor: wait; }
+.rs-pair { display: flex; gap: 8px; }
+.rs-secondary {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 155, 255, 0.3);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.rs-secondary:hover { background: var(--bg-3); }
+.rs-secondary.is-disabled { opacity: 0.5; cursor: wait; }
+.rs-help, .rs-hint { font-size: 12px; line-height: 1.5; text-align: center; color: var(--text-3); }
+.rs-hint { color: var(--text-2); }
+
+/* Hors écran mais rendue (display: none empêcherait la capture). */
+.rs-offscreen {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .rs-pair { flex-direction: column; }
+}
+
+/* ── Graphique optionnel ─────────────────────────────── */
+.rs-file { display: none; }
+.rs-chart-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rs-chart-add {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(99, 155, 255, 0.35);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rs-chart-add:hover { background: var(--bg-3); }
+.rs-optional { color: var(--text-3); font-weight: 400; }
+.rs-chart-ok { flex: 1; font-size: 13px; color: var(--green); }
+.rs-link-btn {
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  color: var(--blue-bright);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+}
+.rs-link-btn:hover { text-decoration: underline; }
+.rs-chart-error { font-size: 12px; line-height: 1.5; color: var(--red); }
+.rs-format:disabled, .rs-chart-add:disabled, .rs-link-btn:disabled { opacity: 0.5; cursor: wait; }

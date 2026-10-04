@@ -1,0 +1,48 @@
+<div class="rc-bar"></div>
+
+<div class="rc-main">
+@if (chartUrl(); as chart) {
+  <div class="rc-chart" data-testid="rc-chart"><img [src]="chart" alt="" /></div>
+}
+<div class="rc-card">
+<header class="rc-head">
+  <img class="rc-logo" src="logo.svg" alt="" width="56" height="56" />
+  <div class="rc-wordmark"><span class="rc-wm-a">MyTrading</span><span class="rc-wm-b">Coach</span></div>
+</header>
+
+<main class="rc-body">
+  @if (format() === 'story') {
+    <div class="rc-kicker">Débrief de fin de session</div>
+    <div class="rc-date">{{ data().dateLabelLong }}</div>
+  } @else {
+    <div class="rc-kicker">Débrief de fin de session · {{ data().dateLabel }}</div>
+  }
+
+  <div class="rc-pnl" [class.neg]="!data().pnlPositive" [class.long]="pnlLength() === 'long'"
+       [class.xlong]="pnlLength() === 'xlong'" data-testid="rc-pnl">{{ data().pnlLabel }}</div>
+
+  <div class="rc-tiles">
+    <div class="rc-tile">
+      <div class="rc-tile-v blue">{{ data().winRateLabel }}</div>
+      <div class="rc-tile-l">Win Rate</div>
+    </div>
+    <div class="rc-tile">
+      <div class="rc-tile-v">{{ data().tradesCount }}</div>
+      <div class="rc-tile-l">Trades</div>
+    </div>
+    <div class="rc-tile rc-tile-mood">
+      <div class="rc-tile-v">{{ data().moodEmoji }}</div>
+      <div class="rc-tile-l">{{ data().moodLabel }}</div>
+    </div>
+  </div>
+</main>
+
+<footer class="rc-cta">
+  <div class="rc-sep"></div>
+  <div class="rc-tagline">« Tu trades seul. @if (format() === 'story') {<br>}Ton compagnon, lui, ne dort pas. »</div>
+  <div class="rc-pill">Commencer gratuitement</div>
+  <div class="rc-link" data-testid="rc-link">{{ link() }}</div>
+  <div class="rc-fine">Gratuit · trades illimités · sans CB</div>
+</footer>
+</div>
+</div>
