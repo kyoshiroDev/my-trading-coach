@@ -26,8 +26,8 @@ describe('normalizeChangeType / payoutConfidence', () => {
     expect(payoutConfidence('fundtransaction', 2_000, true)).toBeNull(); // dépôt
   });
 
-  it('probable : ajustement manuel négatif ≥ 100 $ sur un compte funded (Apex), jamais en évaluation', () => {
-    expect(payoutConfidence('manualadjustment', -1_085, true)).toBe('probable');
+  it('ajustement manuel négatif ≥ 100 $ sur un compte funded (Apex) : payout, jamais en évaluation', () => {
+    expect(payoutConfidence('manualadjustment', -1_085, true)).toBe('certain');
     expect(payoutConfidence('manualadjustment', -1_085, false)).toBeNull(); // évaluation : reset, correction
     expect(payoutConfidence('manualadjustment', -99, true)).toBeNull(); // frais, correction
     expect(payoutConfidence('manualadjustment', 3_500, true)).toBeNull(); // crédit
@@ -59,10 +59,10 @@ describe('scanCashHistory', () => {
     ]);
   });
 
-  it('compte funded : l\'ajustement manuel négatif devient un payout probable', () => {
+  it('compte funded : l\'ajustement manuel négatif est un payout', () => {
     const csv = [HEADER, 'APEX-1,900004,10/01/2026 16:00:00,2026-10-01,"-1,085.00","48,000.00",Manual Adjustment,USD,'].join('\r\n');
     expect(scanCashHistory(csv, 'APEX-1', true).payouts).toEqual([
-      { transactionId: '900004', tradeDate: '2026-10-01', amount: 1_085, changeType: 'manualadjustment', confidence: 'probable' },
+      { transactionId: '900004', tradeDate: '2026-10-01', amount: 1_085, changeType: 'manualadjustment', confidence: 'certain' },
     ]);
     expect(scanCashHistory(csv, 'APEX-1', false).payouts).toEqual([]);
   });

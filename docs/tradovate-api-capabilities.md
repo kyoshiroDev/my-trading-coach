@@ -521,8 +521,9 @@ espaces (`" Trade Paired"`, `" Commission"` mesurés sur un export réel). Mesur
 compte Apex PA (seul compte payé lu) : `commission×470, tradepaired×315, manualadjustment×3`, aucun
 `ChallengePayout` ni `FundTransaction`. Les 3 ajustements tombent sur les 3 seules séances (sur 146)
 où le solde de clôture baisse sans que le P&L l'explique (−1 182 $, −3 500 $ sans trade, −1 085 $) :
-**Apex inscrit ses payouts en `ManualAdjustment` négatif.** MTC les compte comme payouts
-« probables » (compte funded, ≥ 100 $), affichés comme tels et écartables par l'utilisateur.
+**Apex inscrit ses payouts en `ManualAdjustment` négatif.** Confirmé par le trader le 2026-10-04
+(payouts de ses deux comptes PA en prod) : sur un compte funded, une baisse du solde sans trade est
+un payout. MTC les compte donc comme payouts (compte funded, ≥ 100 $), sans réserve.
 
 ### `Account Balance History` : les clôtures officielles (2026-10-03)
 

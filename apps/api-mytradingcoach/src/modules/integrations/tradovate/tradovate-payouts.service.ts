@@ -41,19 +41,19 @@ export interface CashHistoryScan {
 }
 
 /**
- * Un payout, et à quel point on en est sûr :
- * - CERTAIN : `ChallengePayout` (type dédié, quel que soit le signe écrit), `FundTransaction`
- *   NÉGATIF (sortie d'argent ; positif = dépôt, ignoré) ;
- * - PROBABLE : `ManualAdjustment` NÉGATIF d'au moins `PROBABLE_PAYOUT_MIN`, sur un compte FUNDED.
- *   Constaté chez Apex (beta, 2026-10-04) : 3 ajustements = les 3 seules baisses de solde que le P&L
- *   n'explique pas sur 146 séances. Mais un ajustement peut aussi être une correction : affiché comme
- *   « probable », et l'utilisateur peut l'écarter. En évaluation (resets), jamais.
- * `Debit` reste exclu.
+ * Un payout (retrait) :
+ * - `ChallengePayout` (type dédié, quel que soit le signe écrit) ;
+ * - `FundTransaction` NÉGATIF (sortie d'argent ; positif = dépôt, ignoré) ;
+ * - `ManualAdjustment` NÉGATIF d'au moins `PROBABLE_PAYOUT_MIN`, sur un compte FUNDED : c'est ainsi
+ *   qu'Apex inscrit ses payouts. Confirmé par un trader (2026-10-04, comptes PA en prod : 3 500 $,
+ *   1 085 $, 564 $, 501 $) : sur un compte funded, une baisse du solde sans trade est un payout.
+ *   En évaluation (resets), jamais ; sous 100 $, une correction.
+ * `Debit` reste exclu. (`probable` n'est plus produit : conservé pour les données existantes.)
  */
 export function payoutConfidence(changeType: string, delta: number, funded: boolean): PayoutConfidence | null {
   if (changeType === 'challengepayout') return delta !== 0 ? 'certain' : null;
   if (changeType === 'fundtransaction') return delta < 0 ? 'certain' : null;
-  if (changeType === 'manualadjustment') return funded && delta <= -PROBABLE_PAYOUT_MIN ? 'probable' : null;
+  if (changeType === 'manualadjustment') return funded && delta <= -PROBABLE_PAYOUT_MIN ? 'certain' : null;
   return null;
 }
 
@@ -124,7 +124,7 @@ export class TradovatePayoutsService {
     const account = (Array.isArray(accounts) ? accounts : []).find((a) => String(a.id) === conn.externalAccountId);
     if (!account) return 0;
 
-    // Un ajustement manuel n'est un payout probable que sur un compte funded (cycle de payout).
+    // Un ajustement manuel n'est un payout que sur un compte funded (cycle de payout).
     const mtcAccount = await this.prisma.tradingAccount.findUnique({ where: { id: conn.accountId }, select: { type: true } });
     const funded = mtcAccount?.type === 'FUNDED';
     const created = account.timestamp ? new Date(account.timestamp) : null;
