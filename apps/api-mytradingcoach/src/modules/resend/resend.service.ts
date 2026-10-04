@@ -7,6 +7,7 @@ import {
   dailyRecapTemplate,
   debriefReadyTemplate,
   paymentFailedTemplate,
+  paymentSucceededTemplate,
   renewalReminderTemplate,
   resetPasswordTemplate,
   subscriptionCanceledTemplate,
@@ -93,6 +94,22 @@ export class ResendService {
     });
 
     await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Paiement réussi ────────────────────────────────────────────────────────
+
+  async sendPaymentSucceeded(params: {
+    to: string;
+    userName: string;
+    amount: string;
+    last4?: string;
+    nextRenewalDate?: Date | null;
+    invoiceUrl?: string;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = paymentSucceededTemplate({ ...rest, appUrl: this.frontendUrl });
+
+    await this.send({ to, subject, html });
   }
 
   // ── Abonnement résilié ─────────────────────────────────────────────────────

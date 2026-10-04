@@ -13,6 +13,7 @@ import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeWebhookService } from './stripe-webhook.service';
+import { runsQueueProcessors } from '../../config/app-role';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { StripeWebhookService } from './stripe-webhook.service';
     StripeReferralService,
     StripeBillingService,
     StripeWebhookService,
-    StripeProcessor,
+    // Processeur de file : worker seulement (SCA-B6-01) ; le web ne fait qu'alimenter la file.
+    ...(runsQueueProcessors() ? [StripeProcessor] : []),
   ],
   // Admin (réconciliation des abonnements) et referral (avoir du parrain).
   exports: [StripeSubscriptionService, StripeCustomerService],

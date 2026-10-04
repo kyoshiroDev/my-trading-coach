@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
+import { runsCrons } from '../../config/app-role';
 
 const BASE = 'https://api.anthropic.com/v1/organizations/cost_report';
 
@@ -24,7 +25,7 @@ export class AnthropicCostService implements OnModuleInit {
 
   /** Au boot du worker cron : remplit le cache s'il est vide (premier déploiement). */
   async onModuleInit(): Promise<void> {
-    if (process.env['IS_CRON_WORKER'] !== 'true') return;
+    if (!runsCrons()) return;
     try {
       const count = await this.prisma.anthropicCostDaily.count();
       if (count === 0) {

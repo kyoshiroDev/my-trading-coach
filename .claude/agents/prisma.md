@@ -22,7 +22,8 @@ En production, `DATABASE_URL` pointe vers PgBouncer (port 6432, transaction mode
 
 → Les migrations utilisent `DATABASE_DIRECT_URL` (Postgres direct, port 5432) :
 ```sh
-# entrypoint.sh — automatique au démarrage du container
+# entrypoint.sh — au démarrage du container si RUN_MIGRATIONS≠false (défaut),
+# ou seul via `docker compose run --rm <service> migrate` (déploiement sans coupure, SCA-B8-02)
 DATABASE_URL="${DATABASE_DIRECT_URL:-$DATABASE_URL}" prisma migrate deploy
 ```
 
@@ -340,6 +341,22 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 - Tester la migration en dev avant d'appliquer en prod
 - En prod : `prisma migrate deploy` (pas `migrate dev`)
 - Après modification schéma : toujours `prisma generate`
+
+### Migrations compatibles N-1 (déploiement sans coupure, SCA-B8-02, 2026-10-03)
+
+Pendant une bascule blue/green, **l'ancienne version de l'API tourne encore sur le schéma déjà
+migré** (la migration passe avant le démarrage de la nouvelle couleur, et l'ancienne draine
+~30 s ensuite). Toute migration doit donc être **lisible et écrivable par la version précédente
+du code** :
+- **Ajouter** : colonne nullable ou avec `DEFAULT`, nouvelle table, nouvel index (`CONCURRENTLY`
+  si la table est grosse) → OK en un déploiement.
+- **Supprimer / renommer** une colonne ou une table → **en deux déploiements** : (1) le code
+  arrête de la lire et de l'écrire (la colonne reste) ; (2) au déploiement suivant, la migration
+  la supprime. Renommer = ajouter la nouvelle + backfill + double écriture, puis supprimer
+  l'ancienne plus tard.
+- **Rendre NOT NULL / ajouter une contrainte** sur une colonne que l'ancien code peut laisser
+  vide → seulement après un déploiement où le code la remplit toujours (+ backfill).
+- Changer le type d'une colonne lue par l'ancien code → nouvelle colonne, même méthode que le renommage.
 
 ---
 

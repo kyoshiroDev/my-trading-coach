@@ -1154,6 +1154,19 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   rappels de renouvellement corrigés (ils tiraient tous les envois en même temps → 429 perdus).
 - **Pas d'adresse e-mail complète dans les logs** : `maskEmail()` (`j***@gmail.com`) ; un cron
   logue un **nombre**, pas la liste des destinataires.
+- **Identité visuelle** (`templates/index.ts`, oct. 2026) : `emailWrapper(content, preheader, accent)`
+  pose une barre pleine largeur en haut (`ACCENT.brand` par défaut ; `alert` = reset mot de passe et
+  paiement échoué ; `success` = paiement reçu et récap/débrief positif ; `discord` = invitation
+  Discord), puis le logo **PNG** `logo-email.png` (80 px affiché en 40 px, servi par l'app de
+  l'environnement : `${FRONTEND_URL}/logo-email.png`). Pas de SVG inline : Gmail et Outlook le
+  retirent. Fond sombre forcé (`color-scheme: dark` + `bgcolor` sur body/div/table, Gmail retirant
+  le style du `<body>`) : sans ça, fond blanc sur mobile. CTA primaire unique :
+  `cta()` (dégradé `135deg #3b82f6 → #8b5cf6`), jamais de bouton stylé à la main.
+- **Reçu de paiement** (`invoice.payment_succeeded` → `sendPaymentSucceeded`) : seulement pour les
+  renouvellements. Pas pour `billing_reason === 'subscription_create'` (le mail de bienvenue Premium
+  couvre la souscription) ni pour une facture à 0. Carte (`invoicePayments.list`, best-effort),
+  facture (`hosted_invoice_url`) et échéance (`syncSubscription().currentPeriodEnd`) sont
+  optionnelles : une info absente = ligne masquée, jamais d'envoi bloqué.
 
 ## Contexte marché poussé (SCA-B4-03, 2026-10-01)
 
@@ -1388,3 +1401,27 @@ Stripe sur les octets exacts), puis les parseurs JSON / urlencoded standard aill
 brute de chaque corps). **Utilisé par `main.ts` ET par `test/integration-app.helper.ts`** : la même
 configuration est testée. Une nouvelle route qui a besoin du corps brut (autre webhook signé) →
 l'ajouter dans `configureBodyParsers`, pas `rawBody: true` global.
+
+### Cache HTTP des routes publiques (SCA-B3-07, 2026-10-03)
+
+`GET /public/stats` : `@Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')`
+(`PUBLIC_STATS_CACHE_CONTROL`). Aucun middleware global ne pose de `Cache-Control` (vérifié :
+Helmet ne le fait pas) ; verrouillé par `public-stats-cache.int-spec.ts`. Une donnée publique et
+peu changeante → même traitement ; jamais sur une route authentifiée ou personnelle.
+
+### Rôle du process : APP_ROLE (SCA-B6-01, 2026-10-03)
+
+`config/app-role.ts` — `APP_ROLE=web|worker|all` (absent → `all`, comportement historique ;
+valeur inconnue → refus au boot).
+- `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
+  aucun processeur BullMQ** : les files sont alimentées, pas consommées.
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`).
+- Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
+  doit donc jamais tourner dans le web.
+
+Règles :
+- Nouveau cron / code « une seule fois au boot » → garde `runsCrons()` (jamais
+  `process.env['IS_CRON_WORKER']` en direct).
+- Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
+  et l'ajouter à `app-role-wiring.spec.ts`.
+- Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.

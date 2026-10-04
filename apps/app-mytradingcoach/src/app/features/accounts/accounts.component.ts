@@ -127,8 +127,10 @@ function readDismissedLinks(): string[] {
   }
 }
 
-// « Mes comptes » (PREMIUM) : CRUD des comptes + barres de règles prop firm
+// « Mes comptes » (tous plans) : CRUD des comptes + barres de règles prop firm
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
+// Seul le NOMBRE de comptes ACTIVE est gaté (FREE 1 · Premium illimité), côté back dans
+// AccountsService ; `atLimit` n'en est que le miroir pour l'UI.
 @Component({
   selector: 'mtc-accounts',
   changeDetection: ChangeDetectionStrategy.OnPush,

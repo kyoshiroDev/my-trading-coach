@@ -10,6 +10,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
 import { ResendModule } from '../resend/resend.module';
 import { PdfModule } from '../pdf/pdf.module';
 import { SessionModule } from '../session/session.module';
+import { runsQueueProcessors } from '../../config/app-role';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SessionModule } from '../session/session.module';
     SessionModule,
   ],
   controllers: [DebriefController, DebriefAdminController],
-  providers: [DebriefService, DebriefCron, DebriefProcessor],
+  // Processeur de file : worker seulement (SCA-B6-01) ; le web ne fait qu'alimenter la file.
+  providers: [DebriefService, DebriefCron, ...(runsQueueProcessors() ? [DebriefProcessor] : [])],
 })
 export class DebriefModule {}

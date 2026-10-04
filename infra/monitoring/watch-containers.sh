@@ -14,7 +14,8 @@ STATE=/opt/backups/.watch-state
 RESTARTS=/opt/backups/.watch-restarts   # « conteneur compteur » du passage précédent
 DISK_MAX=85
 # Doivent TOUJOURS tourner. dev/beta : arrêtables volontairement (jour J), surveillés seulement s'ils tournent.
-CRITICAL="mtc_api_prod mtc_postgres mtc_pgbouncer mtc_redis mtc_traefik mtc_app_prod mtc_landing_prod mtc_admin mtc_discord_bot"
+# L'API prod est vérifiée à part (blue/green, SCA-B8) : au moins une couleur web + le worker.
+CRITICAL="mtc_postgres mtc_pgbouncer mtc_redis mtc_traefik mtc_app_prod mtc_landing_prod mtc_admin mtc_discord_bot"
 
 problems=()
 declare -A before=()
@@ -28,7 +29,8 @@ for c in $(docker ps -a --format '{{.Names}}' | grep '^mtc_' | sort); do
     [ "$critical" = 1 ] && problems+=("$c : $status (conteneur critique arrêté)")
     continue
   fi
-  [ "$health" = unhealthy ] && problems+=("$c : unhealthy")
+  # Couleur en cours de drain par deploy-api.sh : unhealthy volontairement, quelques dizaines de secondes.
+  if [ "$health" = unhealthy ] && ! docker exec "$c" test -f /tmp/drain 2>/dev/null; then problems+=("$c : unhealthy"); fi
   [ "$oom" = true ] && problems+=("$c : tué par manque de mémoire (OOM)")
   # Nouveau redémarrage par Docker depuis le passage précédent (RestartCount est cumulé depuis la
   # création ; une recréation par le CD le remet à 0, ce n'est pas une panne).
@@ -36,6 +38,11 @@ for c in $(docker ps -a --format '{{.Names}}' | grep '^mtc_' | sort); do
   [ "$restarts" -gt "$prev" ] && problems+=("$c : redémarré automatiquement ($((restarts - prev)) fois en 5 min)")
 done
 mv "$RESTARTS.new" "$RESTARTS"
+# API prod (SCA-B8) : mtc_api_prod_blue ou _green pour le web, mtc_api_prod_worker pour les crons et
+# les files. Le conteneur unique d'avant B8 (mtc_api_prod, rôle all) compte pour les deux.
+up=$(docker ps --format '{{.Names}}')
+grep -qE '^mtc_api_prod(_blue|_green)?$' <<<"$up" || problems+=("API prod : aucun conteneur web en marche (mtc_api_prod_blue / _green)")
+grep -qE '^mtc_api_prod(_worker)?$' <<<"$up" || problems+=("API prod : worker arrêté (mtc_api_prod_worker : crons, files)")
 disk=$(df --output=pcent / | tail -1 | tr -dc '0-9')
 [ "$disk" -ge "$DISK_MAX" ] && problems+=("disque / : ${disk} % utilisé (seuil ${DISK_MAX} %)")
 

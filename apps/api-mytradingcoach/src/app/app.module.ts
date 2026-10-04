@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { runsCrons } from '../config/app-role';
 import { ConfigModule } from '@nestjs/config';
 import { InfraModule } from '../modules/infra/infra.module';
 import { HealthModule } from '../modules/health/health.module';
@@ -75,9 +76,8 @@ import { RedisService } from '../modules/infra/redis.service';
     // Fail-safe cluster : les crons s'activent UNIQUEMENT en opt-in explicite
     // (IS_CRON_WORKER=true), à poser sur LE worker cron dédié. Par défaut (variable
     // absente) → aucun cron, donc jamais de recap 17h30 & co envoyés N fois.
-    ...(process.env['IS_CRON_WORKER'] === 'true'
-      ? [ScheduleModule.forRoot()]
-      : []),
+    // Jamais en APP_ROLE=web (SCA-B6-01) : deux conteneurs web coexistent pendant un déploiement.
+    ...(runsCrons() ? [ScheduleModule.forRoot()] : []),
     InfraModule,
     PrismaModule,
     HealthModule,

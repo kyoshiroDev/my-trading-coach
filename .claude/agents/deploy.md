@@ -594,3 +594,54 @@ délai de Node AU-DESSUS** (constante `TRAEFIK_IDLE_CONN_TIMEOUT_MS`). Vérifica
 aucun en-tête `Keep-Alive`) :
 `docker exec mtc_api_prod node -e "const h=require('http');h.get({host:'127.0.0.1',port:3000,path:'/api/health',agent:new h.Agent({keepAlive:true})},r=>{r.resume();console.log(r.headers['keep-alive'])})"`
 → `timeout=95`.
+
+## Déploiement API sans coupure — blue/green (SCA-B8, 2026-10-04)
+
+**En place sur dev** (2026-10-04) ; **prod prête** (compose, CD, workflow manuel) — transition prod à faire une fois, à la main. Script : `infra/deploy-api.sh <dev|prod> [<sha>]`, lancé par
+la CI depuis le dépôt cloné sur le VPS. Compose : `api_blue` / `api_green` (`APP_ROLE=web`, mêmes
+labels Traefik → même service) + `worker` (`APP_ROLE=worker`, crons et files, sans route Traefik).
+
+Étapes : image `mtc_api_<env>:<sha>` (build sur le VPS, sautée si elle existe) → migration unique
+(`run --rm … migrate`, conteneurs en `RUN_MIGRATIONS=false`) → couleur inactive démarrée → healthy
++ `/health/ready` → **vérification dans le journal d'accès Traefik que des sondes
+`/api/health?deploy-probe=<sha>` arrivent sur son IP** → drain de l'ancienne (`/tmp/drain` → healthcheck
+en échec → unhealthy → Traefik la retire → sondes vérifiées → 10 s → `docker stop -t 30`) → worker
+recréé (quelques secondes sans cron) → `:latest` = version en service, 5 images SHA gardées.
+
+- **Retour arrière** : `bash infra/deploy-api.sh <env> <sha>` (image gardée → pas de build, ~2 min).
+- **Échec avant le drain** : la nouvelle couleur est drainée puis arrêtée, l'ancienne n'a jamais cessé
+  de servir. Un seul déploiement à la fois (`flock /tmp/deploy-api-<env>.lock`).
+- **Ne jamais faire diverger les labels Traefik entre couleurs** : un routeur défini différemment par
+  deux conteneurs est rejeté par Traefik → coupure. D'où l'absence de middleware de retry.
+- **Ne jamais arrêter une couleur sans drain** : Traefik continue de lui envoyer des requêtes pendant
+  son arrêt propre → 502 (mesuré : 21 s).
+- **Transition** depuis le conteneur unique d'avant B8 (`mtc_api_<env>`) : gérée par le script, mais
+  ce conteneur ne sait pas se drainer → arrêté en 2 s, **~2 s d'erreurs une seule fois** → faire le
+  premier déploiement prod à une heure creuse.
+- Le journal d'accès Traefik n'écrit **pas** le user-agent (`"-"`) : marquer une sonde par l'URL.
+- Sur dev (`NODE_ENV=development`) : pas de cluster, donc pas de crons (comme avant).
+
+Répétition sur dev (2026-10-04, flux continu de requêtes) : blue → green **0 erreur / 201**, retour
+arrière green → blue sans build **0 / 118**, remise au conteneur unique **0 / 102**. La répétition a
+révélé deux défauts corrigés avant la PR : sondes non retrouvées (user-agent absent du journal) et
+arrêt sans drain dans la branche d'abandon (21 s de 502).
+
+### Prod : transition et retour arrière (SCA-B8-04)
+
+- **CD** (`cd.yml`) : `bash infra/deploy-api.sh prod` après `git reset --hard <sha>`.
+- **Garde-fou de transition** : en prod, tant que le conteneur unique `mtc_api_prod` tourne, le script
+  **refuse** (avant tout build ou appel docker) sauf `DEPLOY_TRANSITION=1` → un merge sur `main` ne
+  fait jamais la transition par surprise ; le job échoue, `deployed/prod` ne bouge pas.
+- **Workflow « Deploy API prod (manuel) »** (`deploy-api-manual.yml`, `workflow_dispatch`) : SHA +
+  case « transition ». Sert (1) à la transition, une fois, à une heure creuse, avec le SHA de `main`
+  (l'image est construite si le dépôt du VPS est sur ce commit, ce qui est le cas après l'échec du CD) ;
+  (2) au **retour arrière** vers une des 5 images gardées (sans build, ~2 min, sans coupure) ;
+  (3) à une **relance sans coupure** (même SHA). Ne touche ni au dépôt du VPS ni à `deployed/prod`.
+- Une image plus ancienne relancée applique `migrate deploy` avec moins de migrations que la base :
+  vérifié, Prisma répond « No pending migrations » (code 0). D'où la règle N-1 (`prisma.md`).
+- **Supervision** (`watch-containers.sh`, `etat-prod.sh`) : API prod vérifiée comme « au moins une
+  couleur web (`mtc_api_prod_blue|_green`) + `mtc_api_prod_worker` » ; l'ancien `mtc_api_prod` compte
+  pour les deux ; une couleur en drain (`/tmp/drain`) n'est pas une alerte. Compatibles avant et après
+  la transition : **les copier dans `/opt/backups/` avant la transition**.
+- Conteneurs prod après transition : `mtc_api_prod_blue` **ou** `_green` (web) + `mtc_api_prod_worker`.
+  `docker logs` / `docker stats` : viser la couleur en marche (`docker ps | grep mtc_api_prod`).
