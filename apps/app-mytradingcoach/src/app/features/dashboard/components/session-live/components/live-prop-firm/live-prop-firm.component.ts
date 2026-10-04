@@ -70,6 +70,11 @@ export class LivePropFirmComponent {
   protected readonly dailyLoss = computed(() => this.metrics()?.dailyLoss ?? null);
   protected readonly dlTone = computed(() => drawdownTone(this.dailyLoss()));
   protected readonly dlWidth = computed(() => barWidth(this.dailyLoss()?.pct));
+  /** Consistency du plan, avec le gain max du jour (calculé par l'API pour le Premium seulement). */
+  protected readonly consistency = computed(() => {
+    const r = this.metrics()?.progress?.requirements.find((x) => x.key === 'consistency');
+    return r && r.dayCap != null && r.todayPnl != null ? { cap: r.dayCap, today: r.todayPnl, maxShare: r.required } : null;
+  });
   /** Plan relié et compte gratuit : la couche Premium (perte journalière + alertes) en teaser. */
   protected readonly premiumTeaser = computed(() => !this.userStore.isPremium() && !!this.account()?.propFirmPlanId);
   protected readonly ddWidth = computed(() => barWidth(this.drawdown()?.pct));
@@ -121,6 +126,10 @@ export class LivePropFirmComponent {
   /** Montant dans la devise du compte, sans conversion. */
   protected money(value: number | null | undefined, sign = false): string {
     return formatMoney(value ?? 0, this.account()?.currency ?? null, { decimals: 0, sign });
+  }
+
+  protected pct(v: number): string {
+    return `${Math.round(v * 100)} %`;
   }
 
   protected ddKindLabel(kind: string): string {

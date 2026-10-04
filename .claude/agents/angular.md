@@ -147,6 +147,9 @@ la maquette design (« The Terminal »).
   remplace la précédente). Autorisation demandée sur un clic, depuis le panneau de la session live.
   Le panneau affiche « Perte du jour » si `metrics.dailyLoss` (calculée côté API pour le Premium
   seulement) ; compte gratuit relié à un plan → teaser PREMIUM qui ouvre `mtc-plan-modal`.
+  Ligne « Consistency : encore X $ de gain max aujourd'hui » (ou dépassée) si le requirement
+  consistency porte `dayCap` (Premium). Bonnes nouvelles (`level: 'reached'`, objectif / payout) →
+  toast de succès sans durée, notification « bonne nouvelle ».
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 

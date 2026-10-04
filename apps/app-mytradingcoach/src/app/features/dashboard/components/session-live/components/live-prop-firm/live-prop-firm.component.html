@@ -119,6 +119,18 @@
           <div class="bar-fill blue" [class.green]="objWidth() >= 100" [style.width.%]="objWidth()"></div>
         </div>
         <div class="pf-sub">{{ title }}</div>
+        <!-- Consistency (PREMIUM) : gain max du jour pour que la journée reste sous la limite -->
+        @if (consistency(); as c) {
+          @if (c.today > c.cap) {
+            <div class="pf-sub red" data-testid="live-prop-firm-consistency">
+              Consistency : ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          } @else {
+            <div class="pf-sub" data-testid="live-prop-firm-consistency">
+              Consistency : encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          }
+        }
       </div>
     }
 
