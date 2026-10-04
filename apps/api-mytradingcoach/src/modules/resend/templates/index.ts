@@ -4,9 +4,9 @@ import { formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
-export const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
-const MONO = `font-family: 'DM Mono', 'Courier New', monospace;`;
-const BRAND_FONT = `font-family: 'Syne', 'DM Sans', -apple-system, Arial, sans-serif;`;
+export const FONT = `font-family: 'Inter', -apple-system, Arial, sans-serif;`;
+const MONO = `font-family: 'JetBrains Mono', 'Courier New', monospace;`;
+const BRAND_FONT = `font-family: 'Space Grotesk', 'Inter', -apple-system, Arial, sans-serif;`;
 
 // Pied de page marketing : mention RGPD + lien de désinscription obligatoire.
 // Réutilisé par les templates de campagnes marketing (campaign-registry).
@@ -40,7 +40,7 @@ function logo(): string {
     <td width="40" valign="middle" style="width:40px;">
       <img src="${src}" width="40" height="40" alt="MyTradingCoach" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;border-radius:10px;">
     </td>
-    <td valign="middle" style="padding-left:12px;${BRAND_FONT}font-size:19px;font-weight:800;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
+    <td valign="middle" style="padding-left:12px;${BRAND_FONT}font-size:19px;font-weight:700;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
       MyTrading<span style="color:#60a5fa;">Coach</span>
     </td>
   </tr>
@@ -58,7 +58,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
   <style>:root { color-scheme: dark; supported-color-schemes: dark; } body { margin:0; padding:0; background:#080c14; }</style>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
   <title>MyTradingCoach</title>
 </head>
 <body bgcolor="#080c14" style="margin:0;padding:0;background:#080c14;${FONT}">
