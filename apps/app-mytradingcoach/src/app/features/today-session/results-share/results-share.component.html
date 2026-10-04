@@ -1,0 +1,98 @@
+<button type="button" class="rs-trigger" data-testid="results-share-open"
+        [disabled]="disabled()" (click)="openModal()">
+  <svg [lucideIcon]="ShareIcon" [size]="14" class="rs-trigger-ic"></svg>
+  {{ disabled() ? 'Rien à partager aujourd’hui' : 'Publier mes résultats' }}
+</button>
+
+@if (open()) {
+  <div class="rs-overlay" role="button" tabindex="-1" (click)="close()" (keyup.escape)="close()">
+    <div class="rs-modal" role="dialog" aria-modal="true" aria-labelledby="rs-title"
+         mtcDialog (mtcDialogClose)="close()"
+         (click)="$event.stopPropagation(); hideHint()" (keydown)="$event.stopPropagation()">
+
+      <div class="rs-head">
+        <div id="rs-title" class="rs-title">Publier mes résultats</div>
+        <button type="button" class="rs-close" aria-label="Fermer" (click)="close()">
+          <svg [lucideIcon]="CloseIcon" [size]="16"></svg>
+        </button>
+      </div>
+
+      <div class="rs-formats" role="tablist" aria-label="Format de l’image">
+        <button type="button" role="tab" class="rs-format" [class.active]="format() === 'square'"
+                [attr.aria-selected]="format() === 'square'" data-testid="rs-format-square" [disabled]="generating()"
+                (click)="selectFormat('square')">Post · 1:1</button>
+        <button type="button" role="tab" class="rs-format" [class.active]="format() === 'story'"
+                [attr.aria-selected]="format() === 'story'" data-testid="rs-format-story" [disabled]="generating()"
+                (click)="selectFormat('story')">Story · 9:16</button>
+      </div>
+
+      <div class="rs-chart-row">
+        <input #chartInput type="file" accept="image/*" class="rs-file" data-testid="rs-chart-input"
+               (change)="onChartSelected($event)" />
+        @if (chartUrl()) {
+          <span class="rs-chart-ok">Graphique ajouté</span>
+          <button type="button" class="rs-link-btn" [disabled]="generating()" (click)="chartInput.click()">Changer</button>
+          <button type="button" class="rs-link-btn" data-testid="rs-chart-remove" [disabled]="generating()" (click)="removeChart()">Retirer</button>
+        } @else {
+          <button type="button" class="rs-chart-add" data-testid="rs-chart-add" [disabled]="generating()" (click)="chartInput.click()">
+            <svg [lucideIcon]="ChartIcon" [size]="15"></svg> Ajouter mon graphique <span class="rs-optional">(optionnel)</span>
+          </button>
+        }
+      </div>
+      @if (chartError(); as msg) {
+        <div class="rs-chart-error" role="alert" data-testid="rs-chart-error">{{ msg }}</div>
+      } @else if (!chartUrl()) {
+        <div class="rs-help">Une capture de ton graphique (Tradovate, TradingView…) à côté de ta carte. Elle reste sur ton appareil.</div>
+      }
+
+      <div class="rs-preview" [class.story]="format() === 'story'">
+        @if (current(); as r) {
+          <img [src]="r.url" [width]="size().width" [height]="size().height" alt="Aperçu de la carte de résultats" />
+        } @else if (error(); as msg) {
+          <div class="rs-state rs-error">
+            <span>{{ msg }}</span>
+            <button type="button" class="rs-retry" (click)="retry()">Réessayer</button>
+          </div>
+        } @else {
+          <div class="rs-state">Génération de l’image…</div>
+        }
+      </div>
+
+      <div class="rs-actions">
+        @if (nativeShare()) {
+          <button type="button" class="rs-primary" data-testid="rs-share" [disabled]="!current()" (click)="share()">
+            <svg [lucideIcon]="ShareIcon" [size]="16"></svg> Publier mes résultats
+          </button>
+        } @else {
+          <div class="rs-pair">
+            @if (current(); as r) {
+              <a class="rs-secondary" data-testid="rs-download" [href]="r.url" [attr.download]="r.file.name"
+                 (click)="onDownloaded($event)">
+                <svg [lucideIcon]="DownloadIcon" [size]="15"></svg> Télécharger l’image
+              </a>
+            } @else {
+              <span class="rs-secondary is-disabled" aria-disabled="true">
+                <svg [lucideIcon]="DownloadIcon" [size]="15"></svg> Télécharger l’image
+              </span>
+            }
+            <a class="rs-secondary" href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+              <svg [lucideIcon]="ExternalIcon" [size]="15"></svg> Ouvrir Instagram
+            </a>
+          </div>
+          <div class="rs-help">Télécharge l’image, puis glisse-la dans la fenêtre Instagram qui s’ouvre.</div>
+        }
+
+        @if (hint()) {
+          <div class="rs-hint" role="status">Pour un lien cliquable sur Instagram : ajoute un sticker lien sur ta Story, ou mets ton lien en bio.</div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Carte à taille réelle, hors écran : c'est elle qui est convertie en PNG. -->
+@if (open()) {
+  <div class="rs-offscreen" aria-hidden="true">
+    <mtc-results-card [format]="format()" [data]="cardData()" [chartUrl]="chartUrl()" />
+  </div>
+}

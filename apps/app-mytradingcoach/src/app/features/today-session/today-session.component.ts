@@ -37,13 +37,15 @@ import { evaluateObjectiveCheck } from './objective-check.util';
 import { EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe } from '../../shared/pipes';
 import { ToastService } from '../../core/services/toast.service';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
-
-const MOODS: { value: MoodState; label: string; emoji: string }[] = [
-  { value: 'CONFIDENT', label: 'Confiant', emoji: '😎' },
-  { value: 'FOCUSED',   label: 'Focalisé', emoji: '🎯' },
-  { value: 'NEUTRAL',   label: 'Neutre',   emoji: '😐' },
-  { value: 'TIRED',     label: 'Fatigué',  emoji: '😰' },
-];
+import { MoneyService } from '../../core/services/money.service';
+import { ResultsShareComponent } from './results-share/results-share.component';
+import {
+  MOOD_OPTIONS,
+  ResultsCardData,
+  frenchDayLabel,
+  hasResultsToShare,
+  moodDisplay,
+} from '../../shared/components/results-card/results-card.util';
 
 const EMOTION_COLORS: Record<string, string> = {
   CONFIDENT: 'var(--green)',
@@ -56,7 +58,7 @@ const EMOTION_COLORS: Record<string, string> = {
 
 @Component({
   selector: 'mtc-today-session',
-  imports: [DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
+  imports: [DialogDirective, ErrorStateComponent, DatePipe, LucideDynamicIcon, SessionMorningComponent, SessionLiveComponent, ResultsShareComponent, EmotionEmojiPipe, PnlColorPipe, PnlFormatPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './today-session.component.css',
   templateUrl: './today-session.component.html',
@@ -69,6 +71,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   private  readonly sessionApi      = inject(SessionApi);
   private  readonly destroyRef      = inject(DestroyRef);
   private  readonly toast           = inject(ToastService);
+  private  readonly money           = inject(MoneyService);
 
   private  journalSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -79,7 +82,7 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   protected readonly journalText       = signal('');
   protected readonly journalSaved      = signal(false);
   protected readonly savedFlash        = signal(false);
-  protected readonly moods             = MOODS;
+  protected readonly moods             = MOOD_OPTIONS;
   protected readonly today             = new Date();
 
   // Icônes Lucide (segmented control + actions du shell).
@@ -131,6 +134,34 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
     const h = Math.floor(diff / 3600);
     const m = Math.floor((diff % 3600) / 60);
     return h > 0 ? `${h}h ${m}min` : `${m}min`;
+  });
+
+  // ── Carte de résultats (bêta) ─────────────────────────────────────────────
+  /** Bouton « Publier mes résultats » : bêta-testeurs + admin, session clôturée uniquement. */
+  protected readonly showResultsShare = computed(
+    () => this.userStore.isBeta() && this.store.activeSession()?.status === 'CLOSED',
+  );
+  protected readonly canShareResults = computed(() => hasResultsToShare(this.store.todayStats()));
+  protected readonly sessionDate = computed(() => {
+    const s = this.store.activeSession();
+    return new Date(s?.endedAt ?? s?.startedAt ?? this.today);
+  });
+  /** Mêmes chiffres que les 4 cartes du débrief ; humeur = celle choisie en fin de session. */
+  protected readonly resultsCard = computed<Omit<ResultsCardData, 'referralCode'>>(() => {
+    const stats = this.store.todayStats();
+    const pnl = stats?.totalPnl ?? 0;
+    const mood = moodDisplay(this.closeMood());
+    const date = this.sessionDate();
+    return {
+      pnlLabel: this.money.formatFor(this.store.activeSession()?.accountId, pnl),
+      pnlPositive: pnl >= 0,
+      winRateLabel: `${Math.round(stats?.winRate ?? 0)}%`,
+      tradesCount: stats?.tradesCount ?? 0,
+      moodEmoji: mood.emoji,
+      moodLabel: mood.label,
+      dateLabel: frenchDayLabel(date),
+      dateLabelLong: frenchDayLabel(date, true),
+    };
   });
 
   // ── Trades ────────────────────────────────────────────────────────────────

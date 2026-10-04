@@ -387,3 +387,6 @@
 @container (max-width: 480px) {
   .score-ring-wrap { flex-direction: column; text-align: center; }
 }
+
+/* « Publier mes résultats » (bêta) : sous les 4 stats, aligné à droite, bouton secondaire */
+.debrief-share-row { display: flex; justify-content: flex-end; margin-top: -4px; }
