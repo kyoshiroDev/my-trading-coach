@@ -90,14 +90,12 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
 
           <!-- FOOTER -->
           <tr>
-            <td align="left" style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;text-align:left;">
-              <p style="${MONO}font-size:11px;color:#3d5268;line-height:1.8;margin:0;text-align:left;">
+            <td align="center" style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;text-align:center;">
+              <p style="${MONO}font-size:11px;color:#3d5268;line-height:1.8;margin:0;text-align:center;">
                 MyTradingCoach<br>
                 Fait en France 🇫🇷<br>
                 SIRET 512 926 460 00027<br>
-                <a href="https://www.mytradingcoach.app" style="color:#3d5268;text-decoration:none;">mytradingcoach.app</a>
-              </p>
-              <p style="${MONO}font-size:11px;color:#3d5268;line-height:1.8;margin:12px 0 0 0;text-align:center;">
+                <a href="https://www.mytradingcoach.app" style="color:#3d5268;text-decoration:none;">mytradingcoach.app</a><br>
                 <a href="https://app.mytradingcoach.app/parametres" style="color:#3d5268;text-decoration:none;">Se désabonner</a>
               </p>
             </td>
