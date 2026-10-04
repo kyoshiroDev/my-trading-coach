@@ -22,7 +22,7 @@ const account = (type: TradingAccount['type']): TradingAccount => ({
   createdAt: '', updatedAt: '',
   metrics: {
     startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0, winRate: null,
-    bestDay: null, worstDay: null, objective: null, drawdown: null, drawdownUnconfirmed: false,
+    bestDay: null, worstDay: null, objective: null, drawdown: null, drawdownUnconfirmed: false, dailyLoss: null,
     progress: null, broker: null, estimated: true, disclaimer: 'estimé',
   },
 });

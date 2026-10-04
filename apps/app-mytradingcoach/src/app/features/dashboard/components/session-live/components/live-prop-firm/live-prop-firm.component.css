@@ -121,6 +121,48 @@
 .pf-link { color: var(--blue-bright); text-decoration: none; }
 .pf-link:hover { text-decoration: underline; }
 
+/* Couche Premium en teaser (compte gratuit, plan relié) : ouvre la modale des offres. */
+.pf-teaser {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px dashed rgba(99,102,241,.35);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+}
+.pf-teaser:hover { border-color: var(--blue); color: var(--text); }
+.pf-badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  color: var(--blue-bright);
+  background: rgba(99,102,241,.12);
+  border: 1px solid rgba(99,102,241,.3);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.pf-notify {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--blue-bright);
+  cursor: pointer;
+}
+.pf-notify:hover { border-color: var(--blue); }
+
 .pf-manual {
   margin-top: auto;
   background: transparent;

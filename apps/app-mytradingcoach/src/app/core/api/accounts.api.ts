@@ -57,6 +57,23 @@ export interface AccountProgress {
   unconfirmed: boolean;
 }
 
+/** Perte journalière selon la règle du plan relié (PREMIUM, #370). */
+export interface DailyLossMetrics {
+  limit: number;
+  /** Perte du jour, ≥ 0. */
+  used: number;
+  remaining: number;
+  /** Marge restante / limite, 0 à 1. */
+  pct: number;
+  breached: boolean;
+  /** Sanction de la firm : compte en échec, ou trading coupé jusqu'à la séance suivante. */
+  breach: 'account_failed' | 'trading_paused_for_day';
+  basis: 'equity' | 'balance';
+  startOfDay: number;
+  source: 'broker' | 'trades';
+  approximate: boolean;
+}
+
 /** Métriques « règles prop firm » ESTIMÉES d'après les trades loggés (renvoyées par 089). */
 export interface AccountRuleMetrics {
   startingBalance: number;
@@ -82,6 +99,8 @@ export interface AccountRuleMetrics {
   drawdownUnconfirmed: boolean;
   /** Progression vers l'objectif ou le prochain payout (plan relié), sinon null. */
   progress: AccountProgress | null;
+  /** Perte journalière (PREMIUM) : null hors Premium, sans plan relié ou sans montant publié. */
+  dailyLoss: DailyLossMetrics | null;
   /**
    * Solde et equity lus chez le broker (compte connecté). Présent → `currentBalance` est le solde
    * du broker et la marge se calcule sur l'equity, latent compris (sauf `referenceMismatch`).

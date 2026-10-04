@@ -38,7 +38,7 @@ function acct(
       worstDay: null,
       objective: null,
       drawdown: null,
-      drawdownUnconfirmed: false, progress: null, broker: null,
+      drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null,
       estimated: true,
       disclaimer: 'estimé',
       ...(p.metrics ?? {}),

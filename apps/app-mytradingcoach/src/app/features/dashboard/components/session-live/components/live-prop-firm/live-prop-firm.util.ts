@@ -22,13 +22,14 @@ export function barWidth(ratio: number | null | undefined): number {
 }
 
 /**
- * Couleur de la marge drawdown : mêmes seuils que « Mes comptes » (rouge ≤ 25 % de marge ou
- * dépassé, jaune ≤ 50 %, vert au-delà), pour qu'un compte ait la même couleur partout.
+ * Couleur d'une marge (drawdown, perte journalière) : mêmes seuils que « Mes comptes » (rouge
+ * ≤ 25 % de marge ou dépassé, jaune ≤ 50 %, vert au-delà), pour qu'un compte ait la même couleur
+ * partout. 25 % est aussi le premier seuil d'alerte (#370).
  */
-export function drawdownTone(dd: AccountRuleMetrics['drawdown']): 'green' | 'yellow' | 'red' {
-  if (!dd) return 'green';
-  if (dd.breached || dd.pct <= 0.25) return 'red';
-  if (dd.pct <= 0.5) return 'yellow';
+export function drawdownTone(gauge: { pct: number; breached: boolean } | null): 'green' | 'yellow' | 'red' {
+  if (!gauge) return 'green';
+  if (gauge.breached || gauge.pct <= 0.25) return 'red';
+  if (gauge.pct <= 0.5) return 'yellow';
   return 'green';
 }
 
