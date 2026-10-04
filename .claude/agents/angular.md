@@ -133,6 +133,14 @@ la maquette design (« The Terminal »).
   + **zone gauche** (4 mini-stats sur la largeur Calendrier+Live feed, puis Calendrier |
   Live feed) + **Trade rapide en colonne pleine hauteur à droite**. Live feed en **ligne
   compacte** : heure · asset · sens (▲/▼) · émotion (`emotionEmojiPipe`) · P&L / ● LIVE.
+- **Colonne droite de la session live** : compte de la session **éval ou funded synchronisé
+  Tradovate** (`isLivePropAccount`, `live-prop-firm.util.ts`) → `mtc-live-prop-firm` (suivi prop
+  firm, FREE) **à la place** de Trade rapide : solde et latent du broker, marge avant le plancher
+  et avancement objectif / payout, tout calculé par l'API (`metrics` de `GET /accounts`, règles du
+  plan relié). Temps réel = `tradovate:balance` → `SelectedAccountStore.reloadSoon()` ; le panneau
+  ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
+  trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
+  non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 

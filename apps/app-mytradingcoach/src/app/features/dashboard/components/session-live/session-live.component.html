@@ -35,7 +35,7 @@
     </div>
   }
 
-  <!-- Live layout : zone gauche (stats + calendrier + live feed) / Trade rapide pleine hauteur à droite -->
+  <!-- Live layout : zone gauche (stats + calendrier + live feed) / colonne pleine hauteur à droite -->
   <div class="live-layout">
     <div class="live-main">
 
@@ -74,8 +74,21 @@
       </div>
     </div>
 
-    <!-- Trade rapide (colonne pleine hauteur à droite) -->
-    <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
+    <!-- Colonne droite : suivi prop firm si le compte est synchronisé, sinon Trade rapide -->
+    @if (propFirmAccountId(); as accountId) {
+      @if (manualEntry()) {
+        <div class="right-col">
+          <button type="button" class="back-prop" data-testid="back-to-prop-firm" (click)="manualEntry.set(false)">
+            ← Suivi du compte
+          </button>
+          <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
+        </div>
+      } @else {
+        <mtc-live-prop-firm [accountId]="accountId" (manualEntry)="manualEntry.set(true)" />
+      }
+    } @else {
+      <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
+    }
   </div>
 
   } <!-- /if session ACTIVE -->
