@@ -11,9 +11,9 @@ const BRAND_FONT = `font-family: 'Space Grotesk', 'Inter', -apple-system, Arial,
 // Pied de page marketing : mention RGPD + lien de désinscription obligatoire.
 // Réutilisé par les templates de campagnes marketing (campaign-registry).
 export function marketingFooter(unsubUrl: string): string {
-  return `<p style="${FONT}font-size:12px;color:#6b8299;line-height:1.6;margin:18px 0 0 0;text-align:center;">
+  return `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">
     Tu reçois cet email parce que tu as un compte MyTradingCoach.
-    <a href="${unsubUrl}" style="color:#8fa3bf;text-decoration:underline;">Me désinscrire des emails</a>.
+    <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Me désinscrire des emails</a>.
   </p>`;
 }
 
