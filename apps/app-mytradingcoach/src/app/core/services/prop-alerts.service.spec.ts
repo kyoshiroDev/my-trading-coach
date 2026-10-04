@@ -24,6 +24,20 @@ describe('propAlertMessage', () => {
   });
 });
 
+describe('propAlertMessage : consistency et bonnes nouvelles', () => {
+  it('consistency : ce qui reste aujourd’hui, ou le profit à rattraper', () => {
+    expect(propAlertMessage(ev({ kind: 'consistency', remaining: 150, limit: 800, maxShare: 0.4 })))
+      .toBe("Apex 50k : encore $150 de gain maximum aujourd'hui pour respecter la consistency (une journée ≤ 40 % du profit).");
+    expect(propAlertMessage(ev({ kind: 'consistency', level: 'breached', remaining: -100, limit: 800, maxShare: 0.4, extraProfit: 250 })))
+      .toBe('Apex 50k : ta journée dépasse la règle de consistency (une journée ≤ 40 % du profit) : il faudra environ $250 de profit en plus pour la respecter.');
+  });
+
+  it('objectif atteint, payout possible : présentés comme une estimation', () => {
+    expect(propAlertMessage(ev({ kind: 'objective', level: 'reached' }))).toContain('objectif atteint selon l\'estimation');
+    expect(propAlertMessage(ev({ kind: 'payout', level: 'reached' }))).toContain('payout possible');
+  });
+});
+
 describe('PropAlertsService.handle', () => {
   const notifications: { title: string; opts: NotificationOptions }[] = [];
   class FakeNotification {
@@ -33,7 +47,7 @@ describe('PropAlertsService.handle', () => {
   }
 
   function setup() {
-    const toast = { warning: vi.fn(), error: vi.fn() };
+    const toast = { warning: vi.fn(), error: vi.fn(), success: vi.fn() };
     TestBed.configureTestingModule({ providers: [{ provide: ToastService, useValue: toast }] });
     return { svc: TestBed.inject(PropAlertsService), toast };
   }
@@ -57,6 +71,13 @@ describe('PropAlertsService.handle', () => {
     const { svc, toast } = setup();
     svc.handle(ev({ level: 'critical' }));
     expect(toast.error).toHaveBeenCalledWith(expect.any(String), { duration: null });
+  });
+
+  it('bonne nouvelle : toast de succès qui reste, notification « bonne nouvelle »', () => {
+    const { svc, toast } = setup();
+    svc.handle(ev({ kind: 'payout', level: 'reached' }));
+    expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('payout possible'), { duration: null });
+    expect(notifications[0].title).toBe('MyTradingCoach · bonne nouvelle');
   });
 
   it('notifications non autorisées : toast seulement', () => {

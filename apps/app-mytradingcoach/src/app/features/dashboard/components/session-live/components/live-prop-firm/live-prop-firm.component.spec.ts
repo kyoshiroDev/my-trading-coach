@@ -152,6 +152,21 @@ describe('Session live — suivi prop firm', () => {
       expect(alerts.requestPermission).toHaveBeenCalled();
     });
 
+    it('Premium : gain max du jour pour la consistency, ou dépassement', () => {
+      const base = metrics();
+      const withCons = (todayPnl: number) => metrics({
+        progress: { ...base.progress!, requirements: [...base.progress!.requirements, { key: 'consistency', met: true, current: 0.3, required: 0.4, unit: 'pct', dayCap: 800, todayPnl }] },
+      });
+      expect(setup(withCons(500), { premium: true }).text('live-prop-firm-consistency')).toContain('300');
+      TestBed.resetTestingModule();
+      expect(setup(withCons(900), { premium: true }).text('live-prop-firm-consistency')).toContain('dépasse la règle');
+    });
+
+    it('sans gain max (hors Premium) : pas de ligne consistency', () => {
+      const { q } = setup(metrics(), { premium: false });
+      expect(q('live-prop-firm-consistency')).toBeNull();
+    });
+
     it('Premium, notifications bloquées : le dit, sans bouton', () => {
       const { q } = setup(metrics({ dailyLoss: dl }), { premium: true, permission: 'denied' });
       expect(q('live-prop-firm-enable-notifications')).toBeNull();

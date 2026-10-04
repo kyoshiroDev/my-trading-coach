@@ -38,6 +38,10 @@ export interface ProgressRequirement {
   required: number;
   unit: 'usd' | 'days' | 'pct';
   threshold?: number | null;
+  /** `consistency`, PREMIUM : gain max de la journée en cours pour respecter la règle (null = non calculable). */
+  dayCap?: number | null;
+  /** `consistency`, PREMIUM : P&L de la journée en cours. */
+  todayPnl?: number;
 }
 
 /** Progression vers l'objectif (évaluation) ou le prochain payout (funded), d'après le plan. */
