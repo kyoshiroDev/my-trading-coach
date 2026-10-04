@@ -33,6 +33,45 @@ export interface DetectedPayout {
   changeType: string;
 }
 
+/** Changement de type des payouts déduits des clôtures (pas une transaction du broker). */
+export const BALANCE_DROP_TYPE = 'balancedrop';
+const DAY = 86_400_000;
+
+export interface DailyCloseRow {
+  /** `AAAA-MM-JJ` */
+  tradeDate: string;
+  closingBalance: number;
+  realizedPnl: number;
+}
+
+/**
+ * Filet de sécurité : baisses de solde que le P&L de la séance n'explique pas (clôtures officielles,
+ * dans l'ordre). Règle confirmée par un trader : sur un compte funded, une baisse du solde sans
+ * trade est un payout. Sert quand une firme inscrit ses payouts sous un type qu'on ne connaît pas.
+ * Seuil `PROBABLE_PAYOUT_MIN` : frais et arrondis (quelques dollars) restent sous la barre.
+ */
+export function balanceDrops(closes: DailyCloseRow[]): DetectedPayout[] {
+  const drops: DetectedPayout[] = [];
+  for (let i = 1; i < closes.length; i++) {
+    const unexplained = closes[i].closingBalance - closes[i - 1].closingBalance - closes[i].realizedPnl;
+    if (unexplained <= -PROBABLE_PAYOUT_MIN) {
+      drops.push({
+        transactionId: `${BALANCE_DROP_TYPE}:${closes[i].tradeDate}`,
+        tradeDate: closes[i].tradeDate,
+        amount: Math.round(-unexplained * 100) / 100,
+        changeType: BALANCE_DROP_TYPE,
+        confidence: 'certain',
+      });
+    }
+  }
+  return drops;
+}
+
+/** Même retrait vu par l'historique de trésorerie : même séance, à un jour près (bornes de séance). */
+export function sameWithdrawal(a: string, b: string): boolean {
+  return Math.abs(new Date(`${a}T00:00:00Z`).getTime() - new Date(`${b}T00:00:00Z`).getTime()) <= DAY;
+}
+
 export interface CashHistoryScan {
   payouts: DetectedPayout[];
   /** Nombre de lignes par type normalisé : sert à vérifier, sur de vrais comptes, quel type
@@ -153,6 +192,13 @@ export class TradovatePayoutsService {
 
     let created_ = 0;
     for (const p of payouts) {
+      // Une transaction du broker remplace le payout déduit des clôtures pour le même retrait.
+      await this.prisma.brokerPayout.deleteMany({
+        where: {
+          accountId: conn.accountId, changeType: BALANCE_DROP_TYPE,
+          tradeDate: { gte: dayOffset(p.tradeDate, -1), lte: dayOffset(p.tradeDate, 1) },
+        },
+      });
       const res = await this.prisma.brokerPayout.createMany({
         data: [{
           accountId: conn.accountId, transactionId: p.transactionId, tradeDate: new Date(`${p.tradeDate}T00:00:00.000Z`),
@@ -162,6 +208,7 @@ export class TradovatePayoutsService {
       });
       created_ += res.count;
     }
+    if (funded) created_ += await this.payoutsFromCloses(conn.accountId);
     // Le curseur n'avance que si toutes les fenêtres ont abouti : un trou serait sinon définitif.
     if (complete) {
       await this.prisma.brokerConnection.update({
@@ -175,8 +222,39 @@ export class TradovatePayoutsService {
     this.logger.log(`Payouts (compte ${account.name}) : ${created_} nouveau(x) ; types lus : ${types}.`);
     return created_;
   }
+
+  /**
+   * Filet : payouts déduits des clôtures officielles (baisse du solde inexpliquée par le P&L), pour
+   * les retraits qu'aucune transaction connue de l'historique de trésorerie ne porte. Jamais en
+   * double : un retrait déjà vu (même séance ± 1 jour, détecté ou écarté) n'est pas recréé.
+   */
+  private async payoutsFromCloses(accountId: string): Promise<number> {
+    const rows = await this.prisma.brokerDailyClose.findMany({
+      where: { accountId }, orderBy: { tradeDate: 'asc' },
+      select: { tradeDate: true, closingBalance: true, realizedPnl: true },
+    });
+    const drops = balanceDrops(rows.map((r) => ({ ...r, tradeDate: r.tradeDate.toISOString().slice(0, 10) })));
+    if (drops.length === 0) return 0;
+    const known = (await this.prisma.brokerPayout.findMany({ where: { accountId }, select: { tradeDate: true } }))
+      .map((p) => p.tradeDate.toISOString().slice(0, 10));
+    const missing = drops.filter((d) => !known.some((k) => sameWithdrawal(k, d.tradeDate)));
+    if (missing.length === 0) return 0;
+    const { count } = await this.prisma.brokerPayout.createMany({
+      data: missing.map((d) => ({
+        accountId, transactionId: d.transactionId, tradeDate: new Date(`${d.tradeDate}T00:00:00.000Z`),
+        amount: d.amount, changeType: d.changeType, confidence: d.confidence,
+      })),
+      skipDuplicates: true,
+    });
+    if (count) this.logger.log(`Payouts déduits des clôtures (compte ${accountId}) : ${count}.`);
+    return count;
+  }
 }
 
 function startOfUtcDay(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+function dayOffset(day: string, days: number): Date {
+  return new Date(new Date(`${day}T00:00:00.000Z`).getTime() + days * DAY);
 }
