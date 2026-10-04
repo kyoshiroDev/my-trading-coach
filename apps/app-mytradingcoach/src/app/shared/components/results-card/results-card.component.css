@@ -1,0 +1,212 @@
+/* Carte exportée en PNG : dimensions fixes en px, aucune règle responsive.
+   Couleurs propres à la carte (maquette) en variables locales, le reste suit le thème. */
+:host {
+  --rc-bg: #06090f;
+  --rc-tile: #0d1420;
+  --rc-tile-border: rgba(99, 155, 255, 0.14);
+  --rc-muted: #4a6080;
+  --rc-label: #6b8299;
+  --rc-quote: #9db4ce;
+  --rc-white: #f4f7fb;
+  --rc-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.14), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.12), transparent 50%),
+    var(--rc-bg);
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+.rc-bar { height: 8px; flex: none; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+
+/* ── En-tête ─────────────────────────────────────────── */
+.rc-head { display: flex; align-items: center; gap: 18px; padding: 52px 80px 0; }
+.rc-logo { width: 56px; height: 56px; flex: none; display: block; }
+.rc-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 30px; }
+.rc-wm-a { color: var(--rc-white); }
+.rc-wm-b { color: var(--blue-bright); }
+
+/* ── Corps ───────────────────────────────────────────── */
+.rc-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 80px;
+}
+.rc-kicker {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--rc-muted);
+  margin-bottom: 16px;
+}
+.rc-date { font-size: 26px; color: var(--rc-label); margin-bottom: 40px; }
+.rc-pnl {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 142px;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--green);
+  margin-bottom: 44px;
+  white-space: nowrap;
+}
+.rc-pnl.neg { color: var(--red); }
+.rc-pnl.long { font-size: 112px; }
+.rc-pnl.xlong { font-size: 84px; letter-spacing: -1px; }
+
+.rc-tiles { display: flex; gap: 20px; width: 100%; max-width: 820px; }
+.rc-tile {
+  flex: 1;
+  min-width: 0;
+  background: var(--rc-tile);
+  border: 1px solid var(--rc-tile-border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+}
+.rc-tile-v {
+  font-family: var(--font-mono);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+.rc-tile-v.blue { color: var(--blue-bright); }
+.rc-tile-l {
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--rc-label);
+  margin-top: 12px;
+}
+
+/* ── Bloc acquisition ────────────────────────────────── */
+.rc-cta { padding: 0 80px 56px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.rc-sep { width: 64px; height: 1px; background: rgba(99, 155, 255, 0.18); margin-bottom: 28px; }
+.rc-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  line-height: 1.4;
+  color: var(--rc-quote);
+  margin-bottom: 28px;
+}
+.rc-pill {
+  background: var(--rc-gradient);
+  padding: 18px 36px;
+  border-radius: 100px;
+  box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.5);
+  font-weight: 700;
+  font-size: 22px;
+  color: #fff;
+}
+.rc-link {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  letter-spacing: 0.5px;
+  color: var(--blue-bright);
+  margin-top: 18px;
+}
+.rc-fine { font-size: 13px; color: var(--rc-muted); margin-top: 10px; }
+
+/* ── Story 1080×1920 : même contenu, plus d'air, tuile humeur en pleine largeur ── */
+:host(.story) {
+  background:
+    radial-gradient(ellipse at 15% 0%, rgba(59, 130, 246, 0.16), transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.14), transparent 50%),
+    var(--rc-bg);
+}
+:host(.story) .rc-head { justify-content: center; gap: 20px; padding-top: 88px; }
+:host(.story) .rc-logo { width: 64px; height: 64px; }
+:host(.story) .rc-wordmark { font-size: 34px; }
+:host(.story) .rc-kicker { font-size: 24px; margin-bottom: 24px; }
+:host(.story) .rc-pnl { font-size: 170px; letter-spacing: -3px; margin-bottom: 64px; }
+:host(.story) .rc-pnl.long { font-size: 128px; }
+:host(.story) .rc-pnl.xlong { font-size: 96px; letter-spacing: -1px; }
+:host(.story) .rc-tiles { flex-wrap: wrap; max-width: 760px; }
+:host(.story) .rc-tile { flex: 1 1 calc(50% - 10px); border-radius: 22px; padding: 36px 24px; }
+:host(.story) .rc-tile-mood { flex-basis: 100%; }
+:host(.story) .rc-tile-v { font-size: 48px; }
+:host(.story) .rc-tile-l { font-size: 18px; margin-top: 14px; }
+:host(.story) .rc-cta { padding-bottom: 100px; }
+:host(.story) .rc-sep { width: 80px; margin-bottom: 36px; }
+:host(.story) .rc-tagline { font-size: 30px; margin-bottom: 36px; }
+:host(.story) .rc-pill { padding: 22px 44px; font-size: 26px; }
+:host(.story) .rc-link { font-size: 21px; margin-top: 24px; }
+:host(.story) .rc-fine { font-size: 16px; margin-top: 12px; }
+
+/* ── Conteneurs : carte seule (défaut) ou graphique + carte ── */
+.rc-main { flex: 1; min-height: 0; display: flex; }
+.rc-card { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.rc-chart {
+  flex: 0 0 50%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 20, 32, 0.6);
+}
+/* Contenu, pas recadré : un P&L ou une échelle coupés trahiraient le graphique. */
+.rc-chart img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid var(--rc-tile-border);
+}
+
+/* Carré + graphique : deux colonnes de 540 px, carte compactée */
+:host(.split:not(.story)) .rc-chart { border-right: 1px solid var(--rc-tile-border); }
+:host(.split:not(.story)) .rc-head { padding: 44px 40px 0; gap: 12px; }
+:host(.split:not(.story)) .rc-logo { width: 40px; height: 40px; }
+:host(.split:not(.story)) .rc-wordmark { font-size: 22px; }
+:host(.split:not(.story)) .rc-body { padding: 0 40px; }
+:host(.split:not(.story)) .rc-kicker { font-size: 13px; letter-spacing: 2px; text-align: center; line-height: 1.6; }
+:host(.split:not(.story)) .rc-pnl { font-size: 76px; letter-spacing: -1px; margin-bottom: 32px; }
+:host(.split:not(.story)) .rc-pnl.long { font-size: 60px; }
+:host(.split:not(.story)) .rc-pnl.xlong { font-size: 46px; }
+:host(.split:not(.story)) .rc-tiles { flex-wrap: wrap; gap: 12px; }
+:host(.split:not(.story)) .rc-tile { flex: 1 1 calc(50% - 6px); padding: 20px 12px; border-radius: 16px; }
+:host(.split:not(.story)) .rc-tile-mood { flex-basis: 100%; }
+:host(.split:not(.story)) .rc-tile-v { font-size: 30px; }
+:host(.split:not(.story)) .rc-tile-l { font-size: 12px; margin-top: 8px; }
+:host(.split:not(.story)) .rc-cta { padding: 0 32px 44px; }
+:host(.split:not(.story)) .rc-sep { margin-bottom: 20px; }
+:host(.split:not(.story)) .rc-tagline { font-size: 18px; margin-bottom: 20px; }
+:host(.split:not(.story)) .rc-pill { padding: 14px 28px; font-size: 17px; }
+:host(.split:not(.story)) .rc-link { font-size: 13px; margin-top: 14px; }
+:host(.split:not(.story)) .rc-fine { font-size: 11px; margin-top: 8px; }
+
+/* Story + graphique : graphique en haut (1080×~956), carte au gabarit carré en bas */
+:host(.split.story) .rc-main { flex-direction: column; }
+:host(.split.story) .rc-chart { padding: 48px 48px 24px; background: transparent; }
+:host(.split.story) .rc-head { justify-content: center; padding-top: 24px; gap: 18px; }
+:host(.split.story) .rc-logo { width: 56px; height: 56px; }
+:host(.split.story) .rc-wordmark { font-size: 30px; }
+:host(.split.story) .rc-kicker { font-size: 20px; margin-bottom: 12px; }
+:host(.split.story) .rc-date { font-size: 22px; margin-bottom: 20px; }
+:host(.split.story) .rc-pnl { font-size: 120px; letter-spacing: -2px; margin-bottom: 28px; }
+:host(.split.story) .rc-pnl.long { font-size: 96px; }
+:host(.split.story) .rc-pnl.xlong { font-size: 76px; }
+:host(.split.story) .rc-tiles { flex-wrap: nowrap; max-width: 820px; }
+:host(.split.story) .rc-tile { flex: 1; padding: 22px 20px; border-radius: 20px; }
+:host(.split.story) .rc-tile-v { font-size: 36px; }
+:host(.split.story) .rc-tile-l { font-size: 14px; margin-top: 10px; }
+:host(.split.story) .rc-cta { padding-bottom: 64px; }
+:host(.split.story) .rc-sep { margin-bottom: 22px; }
+:host(.split.story) .rc-tagline { font-size: 24px; margin-bottom: 22px; }
+:host(.split.story) .rc-pill { padding: 16px 34px; font-size: 21px; }
+:host(.split.story) .rc-link { font-size: 17px; margin-top: 14px; }
+:host(.split.story) .rc-fine { font-size: 13px; margin-top: 8px; }

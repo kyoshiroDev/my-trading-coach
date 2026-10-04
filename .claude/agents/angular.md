@@ -153,6 +153,26 @@ la maquette design (« The Terminal »).
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 
+#### Carte de résultats + « Publier mes résultats » (bêta, #391)
+
+Onglet Débrief, sous les 4 stats, **session `CLOSED` + `userStore.isBeta()`** uniquement
+(pas de route guard : c'est un bouton). `features/today-session/results-share/` (bouton +
+modale) rend hors écran `shared/components/results-card/` (1080×1080 ou 1080×1920, maquettes
+de l'artefact « Carte de résultats — partage Instagram ») et la convertit en PNG avec
+`html-to-image` chargé à la demande (`import()`), `pixelRatio: 1`. **Rien ne part au serveur.**
+
+- Lien : code de `GET /referral/me` (généré pour tout user) ; échec → domaine seul, jamais `VAL` en dur.
+- Mobile (`navigator.canShare({ files })`) : un bouton → `navigator.share`. Le PNG est généré
+  **avant** le clic : Safari iOS refuse `share()` hors du geste utilisateur. Desktop : Télécharger +
+  Ouvrir Instagram. L'UI ne promet jamais de lien cliquable sur Instagram (rappel sticker/bio).
+- Graphique optionnel (screenshot de l'utilisateur) : `image/*`, 10 Mo max, décodé et réduit à
+  1600 px en local (une photo pleine taille fait échouer le rendu sur iPhone) → deux panneaux,
+  côte à côte en carré, **empilés en Story** (540×1920 rendrait un graphique paysage illisible).
+- Rien à partager si 0 trade ou P&L nul : bouton désactivé « Rien à partager aujourd'hui ».
+- La carte est capturée via `querySelector` depuis l'hôte, pas `viewChild()` : en JIT sous
+  vitest, les requêtes signal ne se résolvent pas plus que les entrées signal.
+- Un onglet en arrière-plan suspend le rendu (`toBlob` ne rend pas la main) : normal, il reprend.
+
 Le compagnon de session (pré-session + live + débrief de base) est **FREE** ; le gating
 IA (contexte marché, news, calendrier éco IA, recap) suit `plans.md`. Données chargées
 via `SessionStore` : `/session/active`, `/analytics/daily-recap/yesterday`,
