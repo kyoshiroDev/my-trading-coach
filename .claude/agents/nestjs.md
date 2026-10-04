@@ -762,6 +762,16 @@ export class CreateTradeDto {
   d'historique) ; `overtrading` = trades du jour > 2× la médiane des journées et ≥ 6 (≥ 10 journées).
   Événement `tilt:alert` avec l'humeur de pré-session de la session ouverte. Dédoublonnage Redis
   `SET NX` par signal et par trade (par journée pour le surtrading). Premium, hors démo.
+- **Journal de séance (#373)** : `PropRiskJournalService` (module Tradovate) — appelé par
+  `PropAlertsService` (relevé des marges + alertes envoyées) et `TiltAlertsService` (épisodes de
+  tilt). Injecté en `@Optional()` : best-effort, un échec est journalisé sans bloquer l'alerte.
+- **IA (#374)** : `PropRiskContextService` (module Comptes, exporté) construit un bloc texte de
+  FAITS déjà calculés (métriques Premium des comptes actifs + `AccountRiskDay` + `PropRiskEvent`),
+  `forDay` pour le récap 17h30 (`generateDailyOneLiner({ propContext })`), `forWeek` pour le Weekly
+  Debrief (`buildDebriefPrompt({ propContext })`). Consigne aux prompts : ne rien recalculer, aucun
+  chiffre officiel, et le récap parle EN PRIORITÉ d'une limite approchée, d'une alerte ou d'un tilt.
+  Heures affichées à Paris. Injecté en `@Optional()` dans les deux services ; contexte indisponible
+  → l'IA part sans le bloc.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
 
