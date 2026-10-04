@@ -188,6 +188,7 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Weekly Debrief** : controller `PremiumGuard` **ET** cron `getEligibleUsers()` doivent matcher → `plan === PREMIUM` ou `role ∈ {ADMIN, BETA_TESTER}` ou essai.
 - **Daily recap** : PREMIUM only.
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).
+- **Suivi prop firm de la session live** (#369) : **FREE**, aucun guard — mêmes données que « Mes comptes » (on ne verrouille pas la vue de ses propres données), sur le compte de la session. La couche PREMIUM prévue par-dessus (#370 alertes, consistency, payout · #371 anti-tilt · #374 IA) n'est pas livrée : trancher son guard au moment de la livrer.
 - **Synchro Tradovate par API** (PROMPT-207) : **FREE**, aucun guard — même règle que l'import CSV d'un broker connu (socle « import »), zéro coût IA. Décision Greg 2026-09-11. Le FREE reste borné à 1 compte, donc à 1 connexion. Ne pas la confondre avec « sync crypto » (ligne PREMIUM ci-dessus, non livrée) : si une synchro Binance/Bybit arrive, trancher explicitement son palier et mettre à jour cette ligne.
 - **Front** : `isPremium` = PREMIUM / trial / admin / beta (l'alias `isStarterOrAbove` a été supprimé).
 
