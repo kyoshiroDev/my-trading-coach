@@ -4,16 +4,16 @@ import { formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
-export const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
-const MONO = `font-family: 'DM Mono', 'Courier New', monospace;`;
-const BRAND_FONT = `font-family: 'Syne', 'DM Sans', -apple-system, Arial, sans-serif;`;
+export const FONT = `font-family: 'Inter', -apple-system, Arial, sans-serif;`;
+const MONO = `font-family: 'JetBrains Mono', 'Courier New', monospace;`;
+const BRAND_FONT = `font-family: 'Space Grotesk', 'Inter', -apple-system, Arial, sans-serif;`;
 
 // Pied de page marketing : mention RGPD + lien de désinscription obligatoire.
 // Réutilisé par les templates de campagnes marketing (campaign-registry).
 export function marketingFooter(unsubUrl: string): string {
-  return `<p style="${FONT}font-size:12px;color:#6b8299;line-height:1.6;margin:18px 0 0 0;text-align:center;">
+  return `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">
     Tu reçois cet email parce que tu as un compte MyTradingCoach.
-    <a href="${unsubUrl}" style="color:#8fa3bf;text-decoration:underline;">Me désinscrire des emails</a>.
+    <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Me désinscrire des emails</a>.
   </p>`;
 }
 
@@ -40,7 +40,7 @@ function logo(): string {
     <td width="40" valign="middle" style="width:40px;">
       <img src="${src}" width="40" height="40" alt="MyTradingCoach" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;border-radius:10px;">
     </td>
-    <td valign="middle" style="padding-left:12px;${BRAND_FONT}font-size:19px;font-weight:800;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
+    <td valign="middle" style="padding-left:12px;${BRAND_FONT}font-size:19px;font-weight:700;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
       MyTrading<span style="color:#60a5fa;">Coach</span>
     </td>
   </tr>
@@ -58,7 +58,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
   <style>:root { color-scheme: dark; supported-color-schemes: dark; } body { margin:0; padding:0; background:#080c14; }</style>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
   <title>MyTradingCoach</title>
 </head>
 <body bgcolor="#080c14" style="margin:0;padding:0;background:#080c14;${FONT}">
@@ -90,11 +90,13 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
 
           <!-- FOOTER -->
           <tr>
-            <td style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;">
-              <p style="${MONO}font-size:11px;color:#3d5268;line-height:1.6;margin:0;">
-                MyTradingCoach · Fait en France 🇫🇷 · SIRET 512 926 460 00027<br>
-                <a href="https://www.mytradingcoach.app" style="color:#3d5268;text-decoration:none;">mytradingcoach.app</a>
-                · <a href="https://app.mytradingcoach.app/parametres" style="color:#3d5268;text-decoration:none;">Se désabonner</a>
+            <td align="center" style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;text-align:center;">
+              <p style="${MONO}font-size:11px;color:#9db4ce;line-height:1.8;margin:0;text-align:center;">
+                MyTradingCoach<br>
+                Fait en France 🇫🇷<br>
+                SIRET 512 926 460 00027<br>
+                <a href="https://www.mytradingcoach.app" style="color:#9db4ce;text-decoration:none;">mytradingcoach.app</a><br>
+                <a href="https://app.mytradingcoach.app/parametres" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>
               </p>
             </td>
           </tr>
