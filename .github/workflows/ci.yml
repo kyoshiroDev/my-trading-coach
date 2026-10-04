@@ -194,6 +194,7 @@ jobs:
       - name: Deploy via SSH (dev)
         uses: appleboy/ssh-action@v1.2.0
         with:
+          command_timeout: 30m # build + bascule blue/green (~5-10 min)
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
@@ -202,8 +203,8 @@ jobs:
             cd /opt/apps/mytradingcoach/dev
             git fetch origin
             git reset --hard origin/dev
-            docker compose -f docker-compose.dev.yml --env-file .env.dev build api
-            docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --force-recreate api
+            # Blue/green sans coupure (SCA-B8-03) : build taggé SHA, migration, bascule, worker.
+            bash infra/deploy-api.sh dev
             docker buildx prune --keep-storage=8GB -f
             echo "Dev API deployment complete at $(date)"
 
