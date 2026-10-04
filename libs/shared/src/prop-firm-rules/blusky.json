@@ -1477,10 +1477,10 @@
             "amount": 1000,
             "basis": null,
             "resets_at": null,
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Montant publié sans précision sur le calcul, l'heure de reset ni la sanction (échec retenu, cas prudent)."
+            "notes": "Montant 1000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Calcul (réalisé ou latent) et heure de reset non publiés."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1563,10 +1563,10 @@
             "amount": 2000,
             "basis": null,
             "resets_at": null,
-            "breach": "account_failed",
+            "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Montant publié sans précision sur le calcul, l'heure de reset ni la sanction (échec retenu, cas prudent)."
+            "notes": "Montant 2000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Calcul (réalisé ou latent) et heure de reset non publiés."
           },
           "max_drawdown": {
             "amount": 2500,
