@@ -1,10 +1,11 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { AccountStatus } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { AccountsService } from '../../accounts/accounts.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
+import { PropRiskJournalService } from './prop-risk-journal.service';
 
 export type PropAlertKind = 'drawdown' | 'daily_loss' | 'consistency' | 'objective' | 'payout';
 /** `reached` : bonne nouvelle (objectif atteint, payout possible), une fois par cycle. */
@@ -113,6 +114,8 @@ export class PropAlertsService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly accounts: AccountsService,
+    /** Journal de séance (#373) : optionnel pour garder les tests unitaires légers. */
+    @Optional() private readonly journal?: PropRiskJournalService,
   ) {}
 
   /** Regroupe la rafale de soldes d'un trade : une évaluation par compte, après le dernier. */
@@ -141,6 +144,14 @@ export class PropAlertsService implements OnModuleDestroy {
     if (!account || account.status !== AccountStatus.ACTIVE) return;
     const m = account.metrics;
     const day = tradingDay(now);
+    // Séance vue en direct (#373) : marges les plus basses, plancher. Avant les alertes, sans les bloquer.
+    await this.journal
+      ?.recordReading(accountId, day, {
+        drawdownMargin: m.drawdown?.margin ?? null,
+        dailyLossRemaining: m.dailyLoss?.remaining ?? null,
+        floor: m.drawdown?.floor ?? null,
+      }, now)
+      .catch((err: unknown) => this.logger.warn(`Séance non journalisée (compte ${accountId}) : ${(err as Error).message}`));
 
     const candidates: Candidate[] = [];
     if (m.drawdown) {
@@ -176,9 +187,13 @@ export class PropAlertsService implements OnModuleDestroy {
       }
       if (sent && RANK[sent] >= RANK[c.level]) continue;
       await this.redis.client.set(key, c.level, 'EX', c.ttl);
-      emit('prop:alert', {
+      const event: PropAlertEvent = {
         accountId, accountLabel: account.label, currency: account.currency, kind: c.kind, level: c.level, ...c.payload,
-      });
+      };
+      emit('prop:alert', event);
+      await this.journal
+        ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
+        .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));
     }
   }
 

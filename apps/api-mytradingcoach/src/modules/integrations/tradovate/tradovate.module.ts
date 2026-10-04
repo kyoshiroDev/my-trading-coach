@@ -19,6 +19,7 @@ import { nativeSocketFactory } from './tradovate-live.connection';
 import { TradovateLiveGateway } from './tradovate-live.gateway';
 import { PropAlertsService } from './prop-alerts.service';
 import { TiltAlertsService } from './tilt-alerts.service';
+import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
@@ -55,6 +56,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     PropAlertsService,
     // Anti-tilt en direct (Premium) sur chaque trade synchronisé.
     TiltAlertsService,
+    // Journal des séances prop firm (marges, plancher, alertes, tilt) pour l'IA (#373).
+    PropRiskJournalService,
     TradovateBackgroundRefreshCron,
   ],
 })

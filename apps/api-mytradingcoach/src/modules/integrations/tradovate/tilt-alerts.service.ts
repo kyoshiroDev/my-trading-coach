@@ -1,10 +1,11 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { MoodState, SessionStatus } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { detectTilt, type TiltFinding, type TiltTrade } from './tilt-detection';
+import { PropRiskJournalService } from './prop-risk-journal.service';
 
 /** Événement `tilt:alert` poussé à l'app (canal `/tradovate-live`). */
 export interface TiltAlertEvent extends TiltFinding {
@@ -38,6 +39,8 @@ export class TiltAlertsService implements OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    /** Journal de séance (#373) : optionnel pour garder les tests unitaires légers. */
+    @Optional() private readonly journal?: PropRiskJournalService,
   ) {}
 
   schedule(userId: string, accountId: string, emit: TiltAlertEmit): void {
@@ -98,6 +101,10 @@ export class TiltAlertsService implements OnModuleDestroy {
       const sent = await this.redis.client.set(`tilt-alert:${accountId}:${f.signal}:${f.ref}`, '1', 'EX', KEY_TTL_S, 'NX');
       if (sent !== 'OK') continue;
       emit('tilt:alert', { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null });
+      const { signal, ref: _ref, ...details } = f;
+      await this.journal
+        ?.recordEvent(userId, accountId, day, 'tilt', signal, details)
+        .catch((err: unknown) => this.logger.warn(`Tilt non journalisé (compte ${accountId}) : ${(err as Error).message}`));
     }
   }
 
