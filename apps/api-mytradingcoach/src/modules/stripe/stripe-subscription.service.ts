@@ -31,6 +31,7 @@ export class StripeSubscriptionService {
     email: string;
     name: string | null;
     stripeSubscriptionStatus: string | null;
+    currentPeriodEnd: Date | null;
   } | null> {
     let subscription: Stripe.Subscription;
 
@@ -110,6 +111,7 @@ export class StripeSubscriptionService {
       email: user.email,
       name: user.name,
       stripeSubscriptionStatus: status,
+      currentPeriodEnd: periodEnd,
     };
   }
 

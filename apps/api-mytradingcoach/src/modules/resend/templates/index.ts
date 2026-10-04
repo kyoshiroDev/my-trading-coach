@@ -6,6 +6,7 @@ import { formatMoney } from '@mtc/shared';
 
 export const FONT = `font-family: 'DM Sans', -apple-system, Arial, sans-serif;`;
 const MONO = `font-family: 'DM Mono', 'Courier New', monospace;`;
+const BRAND_FONT = `font-family: 'Syne', 'DM Sans', -apple-system, Arial, sans-serif;`;
 
 // Pied de page marketing : mention RGPD + lien de désinscription obligatoire.
 // Réutilisé par les templates de campagnes marketing (campaign-registry).
@@ -16,29 +17,59 @@ export function marketingFooter(unsubUrl: string): string {
   </p>`;
 }
 
-export function emailWrapper(content: string, preheader = ''): string {
+// Barres d'accent pleine largeur (haut de l'email) : la couleur annonce la nature du message.
+export const ACCENT = {
+  brand: 'linear-gradient(90deg,#3b82f6,#8b5cf6)',
+  alert: 'linear-gradient(90deg,#ef4444,#f59e0b)', // sécurité, paiement échoué
+  success: 'linear-gradient(90deg,#10b981,#3b82f6)', // paiement reçu, recap positif
+  discord: 'linear-gradient(90deg,#5865f2,#8b5cf6)',
+} as const;
+
+// Première couleur du dégradé : repli pour les clients mail qui ignorent linear-gradient (Outlook).
+function gradientFallback(gradient: string): string {
+  return gradient.match(/#[0-9a-f]{3,8}/i)?.[0] ?? '#3b82f6';
+}
+
+// Logo : tracé ECG en SVG inline (aucune image à charger, donc visible même images bloquées).
+// Un client qui ignore le SVG (Gmail web, Outlook) garde le carré en dégradé.
+const LOGO = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center">
+  <tr>
+    <td width="30" height="30" align="center" valign="middle" style="width:30px;height:30px;border-radius:8px;background:#6366f1;background-image:linear-gradient(135deg,#3b82f6,#8b5cf6);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:auto;">
+        <polyline points="2 12 6 12 9 5 14 19 17 12 22 12" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </td>
+    <td style="padding-left:10px;${BRAND_FONT}font-size:17px;font-weight:800;letter-spacing:-.3px;color:#f4f7fb;white-space:nowrap;">
+      MyTrading<span style="color:#60a5fa;">Coach</span>
+    </td>
+  </tr>
+</table>`;
+
+export function emailWrapper(content: string, preheader = '', accentGradient: string = ACCENT.brand): string {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <title>MyTradingCoach</title>
 </head>
 <body style="margin:0;padding:0;background:#080c14;${FONT}">
   ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>` : ''}
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#080c14;min-height:100vh;">
+    <!-- BARRE D'ACCENT -->
     <tr>
-      <td align="center" style="padding:32px 16px;">
+      <td height="4" style="height:4px;line-height:4px;font-size:0;background:${gradientFallback(accentGradient)};background-image:${accentGradient};">&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" style="padding:28px 16px 32px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;margin:0 auto;">
 
           <!-- HEADER -->
           <tr>
-            <td style="padding-bottom:24px;">
-              <div style="display:inline-flex;align-items:center;gap:8px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#22d3ee;display:inline-block;"></div>
-                <span style="${FONT}font-size:15px;font-weight:700;color:#e2eaf5;letter-spacing:-.3px;">MyTradingCoach</span>
-              </div>
+            <td align="center" style="padding-bottom:24px;">
+              ${LOGO}
             </td>
           </tr>
 
@@ -52,7 +83,7 @@ export function emailWrapper(content: string, preheader = ''): string {
           <!-- FOOTER -->
           <tr>
             <td style="padding-top:32px;border-top:1px solid rgba(99,155,255,.08);margin-top:32px;">
-              <p style="${FONT}font-size:11px;color:#3d5268;line-height:1.6;margin:0;">
+              <p style="${MONO}font-size:11px;color:#3d5268;line-height:1.6;margin:0;">
                 MyTradingCoach · Fait en France 🇫🇷 · SIRET 512 926 460 00027<br>
                 <a href="https://www.mytradingcoach.app" style="color:#3d5268;text-decoration:none;">mytradingcoach.app</a>
                 · <a href="https://app.mytradingcoach.app/parametres" style="color:#3d5268;text-decoration:none;">Se désabonner</a>
@@ -82,7 +113,7 @@ function statCell(value: string, label: string, color = '#e2eaf5'): string {
 }
 
 export function cta(text: string, url: string, style: 'primary' | 'secondary' = 'primary'): string {
-  const bg = style === 'primary' ? 'linear-gradient(90deg,#3b82f6,#6366f1)' : 'transparent';
+  const bg = style === 'primary' ? '#6366f1;background-image:linear-gradient(135deg,#3b82f6,#8b5cf6)' : 'transparent';
   const border = style === 'secondary' ? 'border:1px solid rgba(99,155,255,.3);' : '';
   return `<a href="${url}" style="display:block;background:${bg};${border}color:#ffffff;text-decoration:none;text-align:center;padding:13px 24px;border-radius:9px;${FONT}font-size:14px;font-weight:600;margin-top:20px;">
     ${text}
@@ -147,7 +178,11 @@ export function debriefReadyTemplate(params: {
 
   return {
     subject: `📅 Ton débrief semaine ${weekNumber} est prêt : ${pnlStr}`,
-    html: emailWrapper(content, `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`),
+    html: emailWrapper(
+      content,
+      `Semaine ${weekNumber} : ${winRate.toFixed(0)}% WR · ${pnlStr} · ${totalTrades} trades`,
+      totalPnl >= 0 ? ACCENT.success : ACCENT.brand,
+    ),
   };
 }
 
@@ -205,7 +240,11 @@ export function dailyRecapTemplate(params: {
 
   return {
     subject: `${pnl >= 0 ? '📈' : '📉'} Session ${dateStr} : ${pnlStr}`,
-    html: emailWrapper(content, `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`),
+    html: emailWrapper(
+      content,
+      `${pnlStr} · ${winRate.toFixed(0)}% WR · ${tradesCount} trades`,
+      pnl >= 0 ? ACCENT.success : ACCENT.brand,
+    ),
   };
 }
 
@@ -365,7 +404,7 @@ export function resetPasswordTemplate(params: {
 
   return {
     subject: '🔐 Réinitialisation de ton mot de passe',
-    html: emailWrapper(content, `Lien valable ${expiresIn}.`),
+    html: emailWrapper(content, `Lien valable ${expiresIn}.`, ACCENT.alert),
   };
 }
 
@@ -393,7 +432,51 @@ export function paymentFailedTemplate(params: {
 
   return {
     subject: '⚠️ Paiement échoué',
-    html: emailWrapper(content),
+    html: emailWrapper(content, '', ACCENT.alert),
+  };
+}
+
+// ── Paiement réussi (renouvellement) ─────────────────────────────────────────
+
+export function paymentSucceededTemplate(params: {
+  userName: string;
+  amount: string;
+  last4?: string;
+  nextRenewalDate?: Date | null;
+  invoiceUrl?: string;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, amount, last4, nextRenewalDate, invoiceUrl, appUrl } = params;
+  const renewalStr = nextRenewalDate?.toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  // Lignes du récapitulatif : un champ inconnu n'est simplement pas affiché.
+  const rows: [string, string][] = [['Montant', amount]];
+  if (last4) rows.push(['Moyen de paiement', `Carte •••• ${last4}`]);
+  if (renewalStr) rows.push(['Prochaine échéance', renewalStr]);
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton paiement a bien été reçu
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, merci ! Ton abonnement Premium est renouvelé.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;">
+      ${rows.map(([label, value], i) => `<tr>
+        <td style="${FONT}font-size:12px;color:#6b8299;padding:12px 14px;${i ? 'border-top:1px solid rgba(99,155,255,.08);' : ''}">${label}</td>
+        <td align="right" style="${MONO}font-size:13px;color:#e2eaf5;padding:12px 14px;${i ? 'border-top:1px solid rgba(99,155,255,.08);' : ''}">${value}</td>
+      </tr>`).join('')}
+    </table>
+    ${cta('Voir mon dashboard →', `${appUrl}/dashboard`)}
+    ${invoiceUrl ? cta('Télécharger la facture', invoiceUrl, 'secondary') : ''}
+  `, 'rgba(16,185,129,.3)');
+
+  return {
+    subject: `✅ Paiement reçu : ${amount}`,
+    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.success),
   };
 }
 

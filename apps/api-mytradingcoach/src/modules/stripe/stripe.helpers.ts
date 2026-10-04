@@ -23,6 +23,17 @@ export function extractId(
   return typeof resource === 'string' ? resource : resource.id;
 }
 
+/** Montant Stripe (centimes) → `49,00 €` ; devise invalide → montant + code brut. */
+export function formatInvoiceAmount(amountCents: number, currency: string | null | undefined): string {
+  const value = amountCents / 100;
+  const code = (currency ?? 'eur').toUpperCase();
+  try {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: code }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${code}`;
+  }
+}
+
 export function isUniqueConstraintError(err: unknown): boolean {
   return (
     err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
