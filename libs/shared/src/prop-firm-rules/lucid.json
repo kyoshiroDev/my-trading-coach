@@ -48,9 +48,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -84,9 +84,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -145,8 +145,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF. À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF."
     },
     {
       "id": "lucid-flex-50k",
@@ -175,9 +175,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -211,9 +211,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -278,8 +278,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF. À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF."
     },
     {
       "id": "lucid-flex-100k",
@@ -308,9 +308,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -344,9 +344,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -417,8 +417,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF. À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF."
     },
     {
       "id": "lucid-flex-150k",
@@ -447,9 +447,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -483,9 +483,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -562,8 +562,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF. À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF."
     },
     {
       "id": "lucid-flex-dll-25k",
@@ -587,12 +587,12 @@
           "profit_target": 1250,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Montant affiché sur le sélecteur de plans de lucidtrading.com."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -600,9 +600,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -631,12 +631,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 600 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (26100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 600 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (26100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -644,9 +644,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -705,8 +705,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-flex-dll-50k",
@@ -730,12 +730,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Montant affiché sur le sélecteur de plans de lucidtrading.com."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -743,9 +743,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -774,12 +774,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1200 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (52100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1200 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (52100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -787,9 +787,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -854,8 +854,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-flex-dll-100k",
@@ -879,12 +879,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Montant affiché sur le sélecteur de plans de lucidtrading.com."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -892,9 +892,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -923,12 +923,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1800 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (103100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1800 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (103100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -936,9 +936,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1009,8 +1009,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-flex-dll-150k",
@@ -1034,12 +1034,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Montant affiché sur le sélecteur de plans de lucidtrading.com."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1047,9 +1047,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -1078,12 +1078,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 2700 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (154600) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Base (réalisé seul ou latent inclus) non documentée. Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 2700 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (154600) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1091,9 +1091,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1170,8 +1170,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée, DLL funded au-dessus de l'Initial Trail Balance non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-pro-25k",
@@ -1200,9 +1200,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1232,9 +1232,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1270,7 +1270,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1288,8 +1288,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
     },
     {
       "id": "lucid-pro-50k",
@@ -1318,9 +1318,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1350,9 +1350,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1388,7 +1388,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1406,8 +1406,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
     },
     {
       "id": "lucid-pro-100k",
@@ -1436,9 +1436,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1468,9 +1468,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1506,7 +1506,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1524,8 +1524,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
     },
     {
       "id": "lucid-pro-150k",
@@ -1554,9 +1554,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1586,9 +1586,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1624,7 +1624,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1642,8 +1642,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded). À revoir : contrôle temps réel du MLL non documenté."
+      "needs_review": false,
+      "notes": "Variante DLL OFF (aucune DLL en évaluation ni en funded)."
     },
     {
       "id": "lucid-pro-dll-25k",
@@ -1667,12 +1667,12 @@
           "profit_target": 1250,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). CONTRADICTION : le sélecteur de lucidtrading.com affiche 600 $ pour le 25K en DLL ON, l'article LucidPro Evaluation (maj 2026-08-26) indique « None » pour le 25K. Valeur du site retenue (plus spécifique à la variante DLL ON)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. CONTRADICTION : le sélecteur de lucidtrading.com affiche 600 $ pour le 25K en DLL ON, l'article LucidPro Evaluation (maj 2026-08-26) indique « None » pour le 25K. Valeur du site retenue (plus spécifique à la variante DLL ON). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1680,9 +1680,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1707,12 +1707,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). CONTRADICTION 25K : l'article LucidPro Funded Account indique une DLL fixe de 600 $ (optionnelle), l'article LucidPro Daily Loss Limit indique « None » pour le 25K. Valeur 600 $ retenue (article funded, plus récent et cohérent avec le site)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. CONTRADICTION 25K : l'article LucidPro Funded Account indique une DLL fixe de 600 $ (optionnelle), l'article LucidPro Daily Loss Limit indique « None » pour le 25K. Valeur 600 $ retenue (article funded, plus récent et cohérent avec le site). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1720,9 +1720,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1758,7 +1758,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 26100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1776,8 +1776,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). Contradiction de sources sur la DLL 25K (voir phases). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Contradiction de sources sur la DLL 25K (voir phases). DLL de 600 $ avec l'option DLL activée, confirmée (support Lucid, Discord, 2026-10-04)."
     },
     {
       "id": "lucid-pro-dll-50k",
@@ -1801,12 +1801,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1814,9 +1814,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1841,12 +1841,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (52100) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (52100) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1854,9 +1854,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1892,7 +1892,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 52100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -1910,8 +1910,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-pro-dll-100k",
@@ -1935,12 +1935,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1948,9 +1948,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1975,12 +1975,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (103100) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (103100) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1988,9 +1988,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -2026,7 +2026,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 103100,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -2044,8 +2044,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-pro-dll-150k",
@@ -2069,12 +2069,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -2082,9 +2082,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -2109,12 +2109,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (154600) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (154600) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -2122,9 +2122,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidPro Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -2160,7 +2160,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": 154600,
-            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours."
+            "notes": "Profit minimum par cycle, consistency 40 % et solde au-dessus du buffer (MLL initial + 100 $). Plafond : 1er payout puis payouts 2+. max_payouts = 5 d'après l'article New Live Structure (payout 5 = dernier palier avant revue live). Comptes antérieurs au 2025-11-28 : 100 % sur les premiers 10 000 $. min_days = 3 vient du site (« Days to Payout 3 », fiche « Funded Rules ») ; l'article LucidPro Payouts ne mentionne pas de minimum de jours. 3 jours de trading minimum par cycle, liés à la consistency de 40 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -2178,8 +2178,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded). À revoir : contrôle temps réel du MLL non documenté, base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
     },
     {
       "id": "lucid-daily-eod-25k",
@@ -2208,9 +2208,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -2229,8 +2229,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2261,8 +2261,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2293,7 +2293,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-eod-50k",
@@ -2322,9 +2322,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -2343,8 +2343,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2375,8 +2375,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2407,7 +2407,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-eod-100k",
@@ -2436,9 +2436,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -2457,8 +2457,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2489,8 +2489,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2521,7 +2521,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-eod-150k",
@@ -2550,9 +2550,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -2571,8 +2571,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2603,8 +2603,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2635,7 +2635,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-intraday-25k",
@@ -2685,8 +2685,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2717,8 +2717,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2749,7 +2749,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-intraday-50k",
@@ -2799,8 +2799,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2831,8 +2831,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2863,7 +2863,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-intraday-100k",
@@ -2913,8 +2913,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -2945,8 +2945,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -2977,7 +2977,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-intraday-150k",
@@ -3027,8 +3027,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3059,8 +3059,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3091,7 +3091,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-eod-25k",
@@ -3115,12 +3115,12 @@
           "profit_target": 1250,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -3128,9 +3128,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3149,8 +3149,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3159,12 +3159,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -3189,8 +3189,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3221,7 +3221,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-eod-50k",
@@ -3245,12 +3245,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -3258,9 +3258,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3279,8 +3279,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3289,12 +3289,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -3319,8 +3319,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3351,7 +3351,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-eod-100k",
@@ -3375,12 +3375,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -3388,9 +3388,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3409,8 +3409,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3419,12 +3419,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -3449,8 +3449,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3481,7 +3481,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-eod-150k",
@@ -3505,12 +3505,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -3518,9 +3518,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.5,
@@ -3539,8 +3539,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3549,12 +3549,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -3579,8 +3579,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3611,7 +3611,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, contrôle temps réel du MLL en évaluation EOD non documenté, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-intraday-25k",
@@ -3635,12 +3635,12 @@
           "profit_target": 1250,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -3669,8 +3669,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3679,12 +3679,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -3709,8 +3709,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3741,7 +3741,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-intraday-50k",
@@ -3765,12 +3765,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -3799,8 +3799,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3809,12 +3809,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -3839,8 +3839,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -3871,7 +3871,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-intraday-100k",
@@ -3895,12 +3895,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -3929,8 +3929,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -3939,12 +3939,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1800,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -3969,8 +3969,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -4001,7 +4001,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-daily-dll-intraday-150k",
@@ -4025,12 +4025,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -4059,8 +4059,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": null
         },
@@ -4069,12 +4069,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2700,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit)."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -4099,8 +4099,8 @@
           "time_rules": {
             "must_close_by": null,
             "news_trading_allowed": false,
-            "overnight_allowed": null,
-            "notes": "Heure de clôture et positions overnight non documentées pour LucidDaily : l'article Allowed Trading Times ne cite que LucidPro, LucidFlex et LucidDirect (clôture 16:45 ET). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Heure de clôture obligatoire non publiée pour LucidDaily (16:45 ET pour Pro, Flex et Direct). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
           },
           "payout": {
             "min_days": null,
@@ -4131,7 +4131,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": true,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non documentée pour LucidDaily, base de la DLL non documentée."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. À revoir : heure de clôture obligatoire non publiée pour LucidDaily."
     },
     {
       "id": "lucid-direct-25k",
@@ -4157,9 +4157,9 @@
             "trails_on": "balance",
             "locks_at": 26100,
             "locked_floor": 25100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -4201,7 +4201,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": null,
-            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours."
+            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours. 5 jours de trading minimum par cycle, liés à la consistency de 20 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -4217,8 +4217,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Compte funded direct, sans évaluation. À revoir : contrôle temps réel du MLL non documenté ; min_days du payout présent sur le site mais absent du help center."
+      "needs_review": false,
+      "notes": "Compte funded direct, sans évaluation."
     },
     {
       "id": "lucid-direct-50k",
@@ -4239,12 +4239,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1200,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (52100) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (52100) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -4252,9 +4252,9 @@
             "trails_on": "balance",
             "locks_at": 52100,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -4296,7 +4296,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": null,
-            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours."
+            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours. 5 jours de trading minimum par cycle, liés à la consistency de 20 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -4312,8 +4312,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Compte funded direct, sans évaluation. À revoir : contrôle temps réel du MLL non documenté ; min_days du payout présent sur le site mais absent du help center ; base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Compte funded direct, sans évaluation."
     },
     {
       "id": "lucid-direct-100k",
@@ -4334,12 +4334,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2100,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (103600) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (103600) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3500,
@@ -4347,9 +4347,9 @@
             "trails_on": "balance",
             "locks_at": 103600,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103600) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -4391,7 +4391,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": null,
-            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours."
+            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours. 5 jours de trading minimum par cycle, liés à la consistency de 20 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -4407,8 +4407,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Compte funded direct, sans évaluation. À revoir : contrôle temps réel du MLL non documenté ; min_days du payout présent sur le site mais absent du help center ; base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Compte funded direct, sans évaluation."
     },
     {
       "id": "lucid-direct-150k",
@@ -4429,12 +4429,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
-            "resets_at": "18:00 America/New_York",
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": "LucidScale : une fois le compte clôturé au-dessus de l'Initial Trail Balance, DLL = 60 % du plus haut profit de fin de journée. Elle ne redescend jamais.",
-            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Lucid ne précise pas si la DLL se mesure sur le P&L réalisé seul ou avec le latent (basis = null). Reset déduit de la reprise de session à 18:00 ET (article Allowed Trading Times). DLL fixe tant que le solde reste sous l'Initial Trail Balance (155100) ; au-delà, remplacée par la LucidScale DLL."
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. DLL fixe tant que le solde reste sous l'Initial Trail Balance (155100) ; au-delà, remplacée par la LucidScale DLL. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 5000,
@@ -4442,9 +4442,9 @@
             "trails_on": "balance",
             "locks_at": 155100,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (155100) dépassé. Lucid ne précise pas si le MLL est contrôlé en temps réel sur l'equity (P&L latent inclus) ou seulement sur le solde. Le texte LucidDaily dit seulement que le P&L latent n'entre pas dans le calcul EOD. À confirmer avant de s'en servir pour une alerte de liquidation."
+            "basis_notes": "Source (LucidDirect Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (155100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -4486,7 +4486,7 @@
             ],
             "max_payouts": 5,
             "safety_net_balance": null,
-            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours."
+            "notes": "Objectif de profit : 1er cycle puis cycles 2+. min_days = 5 vient du site (« Min Day to Payout 5 ») ; l'article LucidDirect Payout Objectives ne mentionne pas de minimum de jours. 5 jours de trading minimum par cycle, liés à la consistency de 20 % (support Lucid, Discord, 2026-10-04)."
           }
         }
       ],
@@ -4502,8 +4502,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://lucidtrading.com/"
       ],
-      "needs_review": true,
-      "notes": "Compte funded direct, sans évaluation. À revoir : contrôle temps réel du MLL non documenté ; min_days du payout présent sur le site mais absent du help center ; base de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Compte funded direct, sans évaluation."
     },
     {
       "id": "lucid-maxx-25k",
@@ -4529,9 +4529,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing et contrôle temps réel non documentés pour l'évaluation Maxx."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4564,7 +4564,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, blocage du trailing, horaires."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-50k",
@@ -4590,9 +4590,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing et contrôle temps réel non documentés pour l'évaluation Maxx."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4625,7 +4625,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, blocage du trailing, horaires."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-100k",
@@ -4651,9 +4651,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing et contrôle temps réel non documentés pour l'évaluation Maxx."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4686,7 +4686,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, blocage du trailing, horaires."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
     },
     {
       "id": "lucid-maxx-150k",
@@ -4712,9 +4712,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing et contrôle temps réel non documentés pour l'évaluation Maxx."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4747,7 +4747,7 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, blocage du trailing, horaires."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Une fois l'évaluation validée, passage direct en live (structure live standard Lucid, non modélisée ici). Sans DLL. À revoir : taille max, seuil de blocage du trailing et horaires de l'évaluation Maxx non publiés (programme sur invitation)."
     }
   ]
 }

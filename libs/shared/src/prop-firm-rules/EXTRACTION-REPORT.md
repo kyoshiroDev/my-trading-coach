@@ -209,6 +209,8 @@ Seuil figé : « solde déclencheur (niveau du seuil une fois figé) ». DD jour
 
 ### Lucid : trois questions transverses (concernent les 40 plans)
 
+> **Résolu le 2026-10-04** par le support Lucid (Harsh [LUCD], Discord) : MLL EOD contrôlé en temps réel, P&L latent compris (la position est liquidée et le compte échoue) ; DLL mesurée de la même façon, soft breach jusqu'au jour suivant ; reset de la DLL en fin de journée à **17:30** heure de New York (et non 18:00). 20 plans sortis de `needs_review`, voir « Réponses des supports ».
+
 1. **Le MLL EOD est-il contrôlé en temps réel sur l'equity ?** Lucid décrit le calcul du seuil (plus haut solde de clôture) et précise, pour LucidDaily, que le P&L latent n'entre pas dans le calcul EOD. Il ne dit nulle part si une perte latente qui fait passer l'equity sous le MLL en séance liquide le compte. Apex, lui, le dit explicitement. C'est la question la plus critique pour l'alerte de liquidation. Dans le catalogue : `enforced_on: null` pour tous les drawdowns EOD Lucid. Concerne Flex, Pro, Direct, Maxx et les évaluations LucidDaily EOD. Les drawdowns intraday LucidDaily sont documentés (P&L latent inclus).
 2. **Base de la DLL** (réalisé seul ou réalisé + latent) : non documentée. `basis: null` sur toutes les DLL Lucid. Impact limité : la DLL Lucid est un soft breach (pause jusqu'à la session suivante, le compte reste actif).
 3. **Heure de reset de la DLL** : Lucid dit « jusqu'à la prochaine session ». `resets_at` est fixé à 18:00 America/New_York, déduit de l'article Allowed Trading Times (reprise à 18:00). C'est une déduction, pas une phrase explicite.
@@ -410,3 +412,4 @@ Objectif : couvrir les firms futures que TradesViz ou Edgely proposent et que no
 | Date | Firm | Réponse | Effet |
 |---|---|---|---|
 | 2026-10-04 | Funded Futures Family | S2F : la grille de scaling fait foi. Prix visibles seulement au paiement (dashboard). Base 2K retiré de la vente (départ 2 000 $, perte max 2 000 $). Drawdown EOD : seul le calcul du seuil est redécrit ; contrôle en séance, blocage en évaluation Prime et contrats « Standard / Max » non répondus (relance envoyée). | S2F 25K à 3 minis ; notes de prix ; `needs_review` maintenu |
+| 2026-10-04 | Lucid (Harsh [LUCD], Discord) | MLL EOD contrôlé en temps réel, latent compris. DLL : latent compris, soft breach, reset à 17:30 ET. DLL Flex funded toujours active au-dessus de l'Initial Trail Balance. DLL Pro 25K = 600 $ (option DLL). 3 jours minimum par cycle en Pro (consistency 40 %), 5 en Direct (20 %). LucidDaily : overnight interdit. LucidMaxx : renvoi à l'article Overview (taille, blocage, horaires non publiés). | 20 plans sortis de `needs_review` (Flex, Pro, Direct). Restent : LucidDaily (heure de clôture) et LucidMaxx |
