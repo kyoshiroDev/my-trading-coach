@@ -150,6 +150,9 @@ la maquette design (« The Terminal »).
   Ligne « Consistency : encore X $ de gain max aujourd'hui » (ou dépassée) si le requirement
   consistency porte `dayCap` (Premium). Bonnes nouvelles (`level: 'reached'`, objectif / payout) →
   toast de succès sans durée, notification « bonne nouvelle ».
+  Anti-tilt (#371) : `tilt:alert` → `PropAlertsService.handleTilt` : toast `warning` de 15 s
+  (non bloquant, une question, jamais un ordre), humeur de pré-session citée seulement si
+  « fatigué » / « stressé », notification « pause ? ».
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 

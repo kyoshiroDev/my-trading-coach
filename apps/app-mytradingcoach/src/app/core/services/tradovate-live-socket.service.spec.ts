@@ -36,7 +36,7 @@ function setup(activeSession = false) {
   const accounts = { load: vi.fn() };
   const tradovate = { load: vi.fn() };
   const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn() };
-  const alerts = { handle: vi.fn() };
+  const alerts = { handle: vi.fn(), handleTilt: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       { provide: PropAlertsService, useValue: alerts },
@@ -101,6 +101,14 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     const e = { accountId: 'acc-1', accountLabel: 'Apex', currency: 'USD', kind: 'drawdown', level: 'warning', remaining: 400, limit: 2000, breach: null };
     fake.sockets[0].emit('prop:alert', e);
     expect(alerts.handle).toHaveBeenCalledWith(e);
+  });
+
+  it('nudge anti-tilt poussé → relayé au service d’alertes', () => {
+    const { service, alerts } = setup();
+    service.connect();
+    const e = { accountId: 'acc-1', accountLabel: 'Apex', signal: 'revenge', ref: 't', minutes: 1, moodStart: null };
+    fake.sockets[0].emit('tilt:alert', e);
+    expect(alerts.handleTilt).toHaveBeenCalledWith(e);
   });
 
   it('rien de créé → silence', () => {

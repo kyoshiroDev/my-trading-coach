@@ -6,7 +6,7 @@ import { ToastService } from './toast.service';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradovateStore } from '../stores/tradovate.store';
 import { SessionStore } from '../stores/session.store';
-import { PropAlertsService, type PropAlertEvent } from './prop-alerts.service';
+import { PropAlertsService, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
 
 /** Trades créés par la synchro poussée (rattrapage à l'ouverture, ou événement Tradovate). */
 export interface TradovateLiveTrades {
@@ -72,6 +72,8 @@ export class TradovateLiveSocketService {
     socket.on('tradovate:balance', () => this.accounts.reloadSoon());
     // Alerte prop firm « avant la casse » (Premium) : décidée par le serveur.
     socket.on('prop:alert', (e: PropAlertEvent) => this.alerts.handle(e));
+    // Anti-tilt (Premium) : nudge non bloquant sur le dernier trade synchronisé.
+    socket.on('tilt:alert', (e: TiltAlertEvent) => this.alerts.handleTilt(e));
     // Connexion Tradovate à refaire : la carte « Mes comptes » l'affiche.
     socket.on('tradovate:status', () => this.tradovate.load());
   }
