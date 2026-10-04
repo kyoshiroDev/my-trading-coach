@@ -185,6 +185,12 @@
           </div>
         </div>
 
+        @if (showResultsShare()) {
+          <div class="debrief-share-row">
+            <mtc-results-share [data]="resultsCard()" [date]="sessionDate()" [disabled]="!canShareResults()" />
+          </div>
+        }
+
         <!-- Corps : analyse (gauche) | journal pleine hauteur (droite) -->
         <div class="debrief-grid">
           <div class="debrief-main">
