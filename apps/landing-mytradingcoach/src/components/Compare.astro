@@ -1,56 +1,95 @@
 ---
-// Une seule source de verite pour les lignes : le tableau desktop (5 colonnes) et
-// la version mobile (2 colonnes) sont rendus depuis les memes donnees, donc ils ne
-// peuvent pas diverger. En mobile, les 3 concurrents sont fusionnes en « Les autres ».
+// Une seule source de verite pour les lignes : le tableau desktop et la version mobile
+// sont rendus depuis les memes donnees, donc ils ne peuvent pas diverger. En mobile,
+// les 3 concurrents sont fusionnes en « Les autres ».
+//
+// MTC est coupe en deux colonnes Gratuit / Premium (plutot qu'un badge PREMIUM a cote
+// d'une coche) : on lit d'un coup d'oeil ce qui est gratuit. Ce partage suit le CONTROLE
+// D'ACCES REEL de l'API, pas le marketing (verifie le 2026-09-28, cf. plans.md) :
+//  - Analytics avances  -> analytics.controller, PremiumGuard sur by-setup et by-hour
+//  - Coach IA           -> ai.controller, PremiumGuard sur tout le controller
+//  - Weekly Debrief     -> debrief.controller (PremiumGuard) + cron getEligibleUsers()
+//  - Recap 17h30        -> daily-recap.cron, where { plan: 'PREMIUM' }
+//  - Comptes            -> AccountsService : FREE 1 compte ACTIVE, Premium illimite
+//
+// Concurrents : uniquement leurs pages officielles, verifiees le 2026-10-04.
+//  - FocusPips  https://focuspips.com/ (grille Basic / Premium sur la page d'accueil)
+//  - TradesViz  https://www.tradesviz.com/pricing/ (tableau Basic / Pro / Platinum),
+//               /trading-psychology/ (emotions), /blog/auto-import-trades/ (Tradovate)
+//  - Edgely     https://edgely.trade/ (FAQ) et https://edgely.trade/tarifs
+// Regle : on affiche le palier MINIMUM ou la fonction apparait ; « ✓ » seul quand le site
+// ne precise pas le palier ; « - » quand le site n'en parle pas. Dans le doute, on
+// tranche en faveur du concurrent (publicite comparative : objective et verifiable).
+// A re-verifier a chaque modification de ce tableau, et mettre a jour UPDATED.
 import { PREMIUM_PRICE_EUR } from '@mtc/shared';
 
-type Val = boolean | string;
+const UPDATED = 'octobre 2026';
+
+/** Cellule MTC : true = inclus, false = absent, texte = valeur (ex. « 1 compte »). */
+type MtcVal = boolean | string;
+/** Cellule concurrent. */
+type RivalVal =
+  | false                         // non mentionne sur le site officiel
+  | { yes: true; plan?: string }  // propose ; plan = palier minimum s'il est precise
+  | { text: string };             // valeur nuancee (prix, perimetre partiel)
+
+const yes = (plan?: string): RivalVal => ({ yes: true, plan });
+const txt = (text: string): RivalVal => ({ text });
 
 interface Row {
   label: string;
-  isNew?: boolean;
-  pulse?: boolean;  // coche MTC en couleur accent
-  hl?: boolean;     // ligne mise en avant
-  /**
-   * Reserve au Premium par le CONTROLE D'ACCES REEL, pas par le marketing. Verifie le
-   * 2026-09-28 dans les guards de l'API, seule source qui fasse foi :
-   *  - Analytics avances  -> analytics.controller, PremiumGuard sur by-setup et by-hour
-   *  - Coach IA           -> ai.controller, PremiumGuard sur tout le controller
-   *  - Weekly Debrief     -> debrief.controller (PremiumGuard) + cron getEligibleUsers()
-   *  - Recap 17h30        -> daily-recap.cron, where { plan: 'PREMIUM' }
-   * Concorde avec .claude/agents/plans.md et avec les listes de Pricing.astro.
-   * Une coche nue sans ce drapeau = vraiment inclus dans le Gratuit.
-   */
-  premium?: boolean;
-  mtc: Val;
-  rivals: [Val, Val, Val];  // TraderSync · TradesViz · Edgely
-  othersLabel?: string;     // fusion explicite quand les valeurs ne sont pas booleennes
+  hl?: boolean;            // ligne mise en avant
+  free: MtcVal;            // MTC Gratuit
+  premium: MtcVal;         // MTC Premium
+  rivals: [RivalVal, RivalVal, RivalVal];  // FocusPips · TradesViz · Edgely
+  othersLabel?: string;    // fusion explicite quand les valeurs ne sont pas booleennes
+  price?: boolean;         // ligne de prix (style mono)
 }
 
 const rows: Row[] = [
-  { label: 'Journal de trading', mtc: true, rivals: [true, true, true] },
-  { label: 'Analytics avancés', mtc: true, rivals: [true, true, true] , premium: true },
-  { label: 'Tracking émotionnel', mtc: true, rivals: [false, false, false] },
-  { label: 'Coach IA conversationnel', mtc: true, rivals: [false, false, false] , premium: true },
-  { label: 'Weekly Debrief IA automatique', mtc: true, rivals: [false, false, false], pulse: true, hl: true , premium: true },
-  { label: 'Pré-session matin', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
-  { label: 'Session live + trade rapide', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
-  { label: 'Calendrier éco IA filtré', isNew: true, mtc: true, rivals: [false, false, false], pulse: true },
-  { label: 'Recap journalier email 17h30', isNew: true, mtc: true, rivals: [false, false, false], pulse: true , premium: true },
-  { label: 'Import CSV universel (broker-agnostic)', mtc: true, rivals: [true, true, false] },
-  { label: 'Hébergé en France 🇫🇷', mtc: true, rivals: [false, false, false] },
-    // Les deux paliers : « dès 0 € » seul laissait croire que toutes les coches MTC
-    // (Coach IA, débrief hebdo, récap 17h30…) sont gratuites alors qu'une partie est Premium.
-    // Prix tiré de @mtc/shared : aucune valeur en dur sur la landing.
-    { label: 'Prix mensuel', mtc: `0 € (Gratuit) · dès ${PREMIUM_PRICE_EUR.monthly} € (Premium)`, rivals: ['30-80 $', '10-29 $', '~€15'], othersLabel: '10-80 $' },
+  { label: 'Journal de trading', free: true, premium: true,
+    rivals: [yes('Gratuit'), yes('Gratuit'), yes('Gratuit')] },
+  { label: 'Tracking émotionnel', free: true, premium: true,
+    rivals: [false, yes(), false] },
+  { label: 'Analytics avancés', free: false, premium: true,
+    rivals: [yes(), yes('Pro'), yes('Pro')] },
+  { label: 'Coach IA conversationnel', free: false, premium: true,
+    rivals: [yes('Premium'), yes('Pro'), false] },
+  { label: 'Weekly Debrief IA automatique', hl: true, free: false, premium: true,
+    rivals: [false, false, false] },
+  { label: 'Préparation de séance', free: true, premium: true,
+    rivals: [yes(), yes('Pro'), yes()] },
+  { label: 'Session live + trade rapide', free: true, premium: true,
+    rivals: [false, false, yes()] },
+  { label: 'Calendrier éco avec analyse IA', free: true, premium: true,
+    rivals: [txt('sans IA'), false, false] },
+  { label: 'Récap journalier par email', free: false, premium: true,
+    rivals: [false, false, false] },
+  { label: 'Règles prop firm par compte', free: '1 compte', premium: 'illimité',
+    rivals: [yes('Premium'), yes('Pro'), yes()] },
+  { label: 'Synchro Tradovate', free: true, premium: true,
+    rivals: [false, yes('Gratuit'), yes('Max · bêta')] },
+  { label: 'Import CSV tout broker', free: true, premium: true,
+    rivals: [false, yes('Gratuit'), txt('Tradovate, TopStepX')] },
+  { label: 'Hébergé en France 🇫🇷', free: true, premium: true,
+    rivals: [false, false, false] },
+  { label: 'Prix mensuel', price: true, free: '0 €', premium: `${PREMIUM_PRICE_EUR.monthly} €`,
+    rivals: [txt('0 € · 19 €'), txt('0 € · 17,99 € · 25,99 €'), txt('0 € · 15 € · 29 €')],
+    othersLabel: '0 € · 15 à 29 €' },
 ];
 
-type Cell = { cls: string; text: string; accent?: boolean };
+type Cell = { cls: string; text: string; tag?: string };
 
-const cell = (v: Val, opts: { pulse?: boolean; hlPrice?: boolean } = {}): Cell => {
-  if (v === true) return { cls: 'comp-yes', text: '✓', accent: opts.pulse };
+const mtcCell = (v: MtcVal, price = false): Cell => {
+  if (v === true) return { cls: 'comp-yes', text: '✓' };
   if (v === false) return { cls: 'comp-no', text: '-' };
-  return { cls: opts.hlPrice ? 'comp-price-hl' : 'comp-price', text: v };
+  return { cls: price ? 'comp-price-hl' : 'comp-val', text: v };
+};
+
+const rivalCell = (v: RivalVal, price = false): Cell => {
+  if (v === false) return { cls: 'comp-no', text: '-' };
+  if ('text' in v) return { cls: price ? 'comp-price' : 'comp-partial', text: v.text };
+  return { cls: 'comp-yes', text: '✓', tag: v.plan };
 };
 
 // Fusion « Les autres » : ✓ seulement si les trois l'ont, - seulement si aucun ne
@@ -58,10 +97,10 @@ const cell = (v: Val, opts: { pulse?: boolean; hlPrice?: boolean } = {}): Cell =
 // concurrent qui propose la fonctionnalite.
 const merge = (row: Row): Cell => {
   if (row.othersLabel) return { cls: 'comp-price', text: row.othersLabel };
-  const bools = row.rivals.filter((v): v is boolean => typeof v === 'boolean');
-  if (bools.length !== row.rivals.length) return { cls: 'comp-partial', text: 'partiel' };
-  if (bools.every(Boolean)) return { cls: 'comp-yes', text: '✓' };
-  if (!bools.some(Boolean)) return { cls: 'comp-no', text: '-' };
+  const has = row.rivals.map((v) => v !== false && 'yes' in v);
+  const none = row.rivals.every((v) => v === false);
+  if (has.every(Boolean)) return { cls: 'comp-yes', text: '✓' };
+  if (none) return { cls: 'comp-no', text: '-' };
   return { cls: 'comp-partial', text: 'partiel' };
 };
 ---
@@ -78,31 +117,40 @@ const merge = (row: Row): Cell => {
         <table class="comp-table">
           <thead>
             <tr>
-              <th class="th-left">Fonctionnalité</th>
-              <th class="hl">MyTrading<wbr />Coach</th>
-              <th class="c-rival">TraderSync</th>
-              <th class="c-rival">TradesViz</th>
-              <th class="c-rival">Edgely</th>
-              <th class="c-others">Les autres</th>
+              <th class="th-left" rowspan="2">Fonctionnalité</th>
+              <th class="hl th-group" colspan="2">MyTrading<wbr />Coach</th>
+              <th class="c-rival" rowspan="2">FocusPips</th>
+              <th class="c-rival" rowspan="2">TradesViz</th>
+              <th class="c-rival" rowspan="2">Edgely</th>
+              <th class="c-others" rowspan="2">Les autres</th>
+            </tr>
+            <tr>
+              <th class="hl th-plan">Gratuit</th>
+              <th class="hl th-plan">Premium</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => {
-              const mtc = cell(row.mtc, { pulse: row.pulse, hlPrice: typeof row.mtc === 'string' });
               const others = merge(row);
               return (
                 <tr class={row.hl ? 'row-hl' : undefined}>
-                  <td class={row.hl ? 'cell-hl' : undefined}>
-                    {row.label}{row.isNew && <span class="comp-new">NEW</span>}
-                  </td>
-                  <td><span class={mtc.cls} style={mtc.accent ? 'color:var(--pulse)' : undefined}>
-                    {mtc.text.split(' · ').map((part, i) => (
-                      <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
-                    ))}
-                  </span>{row.premium && <span class="comp-premium" title="Inclus dans le plan Premium">PREMIUM</span>}</td>
+                  <td class={row.hl ? 'cell-hl' : undefined}>{row.label}</td>
+                  {[row.free, row.premium].map((v) => {
+                    const c = mtcCell(v, row.price);
+                    return <td class="c-mtc"><span class={c.cls}>{c.text}</span></td>;
+                  })}
                   {row.rivals.map((v) => {
-                    const c = cell(v);
-                    return <td class="c-rival"><span class={c.cls}>{c.text}</span></td>;
+                    const c = rivalCell(v, row.price);
+                    return (
+                      <td class="c-rival">
+                        <span class={c.cls}>
+                          {c.text.split(' · ').map((part, i) => (
+                            <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
+                          ))}
+                        </span>
+                        {c.tag && <span class="comp-plan">{c.tag}</span>}
+                      </td>
+                    );
                   })}
                   <td class="c-others"><span class={others.cls}>{others.text}</span></td>
                 </tr>
@@ -112,10 +160,10 @@ const merge = (row: Row): Cell => {
         </table>
       </div>
       <p class="comp-note">
-        <span class="comp-premium legend-badge">PREMIUM</span> = inclus dans le plan Premium · une coche seule
-        est incluse dans le Gratuit
+        Concurrents : <span class="comp-plan legend-plan">Pro</span> = palier minimum où la fonction apparaît ·
+        ✓ seul = palier non précisé · - = non mentionné sur leur site officiel
       </p>
-      <p class="comp-note">Données basées sur les fonctionnalités publiquement documentées · Mise à jour mai 2026</p>
+      <p class="comp-note">Données issues des sites officiels de chaque outil · Mise à jour {UPDATED}</p>
     </div>
   </div>
 </section>
@@ -156,6 +204,9 @@ const merge = (row: Row): Cell => {
   }
   .comp-table th:first-child { text-align: left; }
   .comp-table th.hl { color: var(--pulse); }
+  /* En-tete a deux niveaux : « MyTradingCoach » couvre Gratuit + Premium. */
+  .comp-table th.th-group { padding-bottom: 6px; border-bottom-color: rgba(34,211,238,.25); }
+  .comp-table th.th-plan { padding-top: 6px; font-size: 9px; }
 
   .comp-table td {
     padding: 12px 18px;
@@ -166,6 +217,11 @@ const merge = (row: Row): Cell => {
   .comp-table td:first-child { text-align: left; color: var(--txt); font-weight: 400; }
   .comp-table tr:last-child td { border-bottom: none; }
   .comp-table tr:hover td { background: rgba(99,155,255,.02); }
+  /* Colonnes MTC teintees : elles se lisent comme un bloc. */
+  .comp-table td.c-mtc { background: rgba(34,211,238,.03); }
+  /* Colonnes de meme largeur : sinon la largeur suit le contenu (prix, paliers). */
+  .comp-table td.c-mtc { width: 10%; }
+  .comp-table td.c-rival { width: 15%; }
 
   .row-hl { background: rgba(34,211,238,.02); }
   .comp-table .row-hl .cell-hl { font-weight: 500; color: var(--txt); }
@@ -176,46 +232,29 @@ const merge = (row: Row): Cell => {
 
   .comp-yes { color: var(--green); font-size: 14px; }
   .comp-no  { color: var(--txt3); }
-  /* Fusion mixte : au moins un concurrent propose la fonctionnalite. */
+  .comp-val { color: var(--txt); font-family: var(--mono); font-size: 11px; }
+  /* Valeur nuancee ou fusion mixte : au moins un concurrent propose la fonctionnalite. */
   .comp-partial { color: var(--txt3); font-family: var(--mono); font-size: 11px; }
   .comp-price { font-family: var(--mono); font-size: 12px; }
   /* Chaque palier reste sur une ligne ; la coupure ne peut tomber qu'après le « · ». */
   .comp-price-part { white-space: nowrap; }
-  @media (max-width: 767px) {
-    /* Colonne étroite : un palier par ligne, sans « · » orphelin entre les deux. */
-    .comp-price-sep { display: none; }
-    .comp-price-part { display: block; white-space: normal; font-size: 12px; }
-  }
   .comp-price-hl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--pulse); }
-  .comp-new {
-    margin-left: 6px;
-    white-space: nowrap;
-    font-size: 9px;
-    background: rgba(245,158,11,.1);
-    color: var(--yel);
-    border: 1px solid rgba(245,158,11,.2);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: var(--mono);
-    font-weight: 700;
-  }
 
-  /* Meme structure que .comp-new, couleur du badge « Recommande » de Pricing : dans toute la
-     landing, le jaune signale une nouveaute et le bleu/indigo signale le palier Premium. */
-  .comp-premium {
-    margin-left: 6px;
+  /* Palier requis chez un concurrent : neutre (gris), sous la coche. */
+  .comp-plan {
+    display: block;
+    width: fit-content;
+    margin: 3px auto 0;
     white-space: nowrap;
     font-size: 9px;
-    background: rgba(99,102,241,.12);
-    color: var(--blue2);
-    border: 1px solid rgba(99,102,241,.3);
-    padding: 2px 6px;
+    color: var(--txt3);
+    border: 1px solid var(--b);
+    padding: 1px 5px;
     border-radius: 3px;
     font-family: var(--mono);
-    font-weight: 700;
-    letter-spacing: .4px;
+    letter-spacing: .3px;
   }
-  .legend-badge { margin-left: 0; }
+  .legend-plan { display: inline-block; margin: 0; }
 
   .comp-note {
     font-size: 11px;
@@ -225,23 +264,27 @@ const merge = (row: Row): Cell => {
     text-align: center;
   }
 
+  @media (max-width: 767px) {
+    /* Colonne étroite : un palier par ligne, sans « · » orphelin entre les deux. */
+    .comp-price-sep { display: none; }
+    .comp-price-part { display: block; white-space: normal; font-size: 12px; }
+  }
+
   @media (max-width: 768px) {
     .comp-section { padding: 64px 16px; }
-    /* Plus de min-width : les 3 colonnes restantes tiennent dans le viewport,
+    /* Plus de min-width : les 4 colonnes restantes tiennent dans le viewport,
        donc plus de scroll horizontal. */
-    .comp-table { font-size: 12px; table-layout: fixed; }
-    .comp-table th, .comp-table td { padding: 10px 8px; }
+    .comp-table { font-size: 12px; }
+    .comp-table th, .comp-table td { padding: 10px 6px; }
     .comp-table th { font-size: 9px; letter-spacing: .5px; overflow-wrap: break-word; }
     .table-wrapper { margin-top: 28px; border-radius: 8px; }
 
     .comp-table .c-rival { display: none; }
     .comp-table .c-others { display: table-cell; }
 
-    .comp-table th:first-child, .comp-table td:first-child { width: 52%; }
-    .comp-table th:not(:first-child), .comp-table td:not(:first-child) { width: 24%; }
-
-    /* 24 % de large : « PREMIUM » ne tient pas a cote de la coche, il passe dessous. */
-    .comp-premium { display: block; width: fit-content; margin: 4px auto 0; }
-    .legend-badge { display: inline-block; margin: 0; }
+    /* Largeurs portees par les cellules du corps : l'en-tete a deux niveaux (colspan)
+       fausserait un table-layout fixed, qui ne lit que la premiere ligne. */
+    .comp-table td:first-child { width: 40%; }
+    .comp-table td:not(:first-child) { width: 20%; }
   }
 </style>
