@@ -30,12 +30,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1100,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -74,12 +74,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1100,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -175,12 +175,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 2200,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -219,12 +219,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2200,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -326,12 +326,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -370,12 +370,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Commissions comprises ; prise en compte du latent non précisée."
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
           },
           "max_drawdown": {
             "amount": 4500,

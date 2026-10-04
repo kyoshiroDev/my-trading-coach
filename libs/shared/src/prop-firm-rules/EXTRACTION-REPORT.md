@@ -418,3 +418,4 @@ Objectif : couvrir les firms futures que TradesViz ou Edgely proposent et que no
 | 2026-10-04 | TradeDay (Ajaybee, e-mail) | Fast Pass : le funded garde le même maximum de contrats que l'évaluation (2/20, 5/50, 10/50, 15/50). Prix cités : 130 / 180 / 320 / 480 $. | 3 plans Fast Pass sortent de `needs_review` ; écart de prix noté (promotion probable) |
 | 2026-10-04 | UProfit (Gonzalo, e-mail) | News autorisées (déconseillées). Base de la DLL Soft non répondue (renvoi à l'article des paramètres). | `news_trading_allowed: true` sur les 6 plans |
 | 2026-10-04 | Tradeify (e-mail automatique) | L'adresse hey@ ne traite pas le support : passer par le chat du centre d'aide. | Aucun ; questions à reposer par chat |
+| 2026-10-04 | UProfit (Paula, e-mail, relance) | DLL Day Soft : pertes latentes des positions ouvertes et commissions comprises ; atteinte même sans clôturer la position. | `basis: equity` sur les 6 DLL Day Soft |
