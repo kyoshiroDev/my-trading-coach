@@ -436,6 +436,50 @@ export function paymentFailedTemplate(params: {
   };
 }
 
+// ── Paiement réussi (renouvellement) ─────────────────────────────────────────
+
+export function paymentSucceededTemplate(params: {
+  userName: string;
+  amount: string;
+  last4?: string;
+  nextRenewalDate?: Date | null;
+  invoiceUrl?: string;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, amount, last4, nextRenewalDate, invoiceUrl, appUrl } = params;
+  const renewalStr = nextRenewalDate?.toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  // Lignes du récapitulatif : un champ inconnu n'est simplement pas affiché.
+  const rows: [string, string][] = [['Montant', amount]];
+  if (last4) rows.push(['Moyen de paiement', `Carte •••• ${last4}`]);
+  if (renewalStr) rows.push(['Prochaine échéance', renewalStr]);
+
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton paiement a bien été reçu
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, merci ! Ton abonnement Premium est renouvelé.
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;">
+      ${rows.map(([label, value], i) => `<tr>
+        <td style="${FONT}font-size:12px;color:#6b8299;padding:12px 14px;${i ? 'border-top:1px solid rgba(99,155,255,.08);' : ''}">${label}</td>
+        <td align="right" style="${MONO}font-size:13px;color:#e2eaf5;padding:12px 14px;${i ? 'border-top:1px solid rgba(99,155,255,.08);' : ''}">${value}</td>
+      </tr>`).join('')}
+    </table>
+    ${cta('Voir mon dashboard →', `${appUrl}/dashboard`)}
+    ${invoiceUrl ? cta('Télécharger la facture', invoiceUrl, 'secondary') : ''}
+  `, 'rgba(16,185,129,.3)');
+
+  return {
+    subject: `✅ Paiement reçu : ${amount}`,
+    html: emailWrapper(content, renewalStr ? `Prochaine échéance le ${renewalStr}.` : 'Merci pour ton paiement.', ACCENT.success),
+  };
+}
+
 // ── Abonnement résilié ────────────────────────────────────────────────────────
 
 export function subscriptionCanceledTemplate(params: {

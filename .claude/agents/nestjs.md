@@ -1154,6 +1154,17 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   rappels de renouvellement corrigés (ils tiraient tous les envois en même temps → 429 perdus).
 - **Pas d'adresse e-mail complète dans les logs** : `maskEmail()` (`j***@gmail.com`) ; un cron
   logue un **nombre**, pas la liste des destinataires.
+- **Identité visuelle** (`templates/index.ts`, oct. 2026) : `emailWrapper(content, preheader, accent)`
+  pose une barre pleine largeur en haut (`ACCENT.brand` par défaut ; `alert` = reset mot de passe et
+  paiement échoué ; `success` = paiement reçu et récap/débrief positif ; `discord` = invitation
+  Discord), puis le logo ECG en **SVG inline** (jamais d'image : visible images bloquées ; Gmail web
+  et Outlook ignorent le SVG et n'affichent que le carré en dégradé). CTA primaire unique :
+  `cta()` (dégradé `135deg #3b82f6 → #8b5cf6`), jamais de bouton stylé à la main.
+- **Reçu de paiement** (`invoice.payment_succeeded` → `sendPaymentSucceeded`) : seulement pour les
+  renouvellements. Pas pour `billing_reason === 'subscription_create'` (le mail de bienvenue Premium
+  couvre la souscription) ni pour une facture à 0. Carte (`invoicePayments.list`, best-effort),
+  facture (`hosted_invoice_url`) et échéance (`syncSubscription().currentPeriodEnd`) sont
+  optionnelles : une info absente = ligne masquée, jamais d'envoi bloqué.
 
 ## Contexte marché poussé (SCA-B4-03, 2026-10-01)
 
