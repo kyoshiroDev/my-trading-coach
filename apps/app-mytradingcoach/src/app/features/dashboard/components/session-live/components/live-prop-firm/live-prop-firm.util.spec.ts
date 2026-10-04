@@ -6,7 +6,7 @@ import { barWidth, drawdownTone, isLivePropAccount, objectiveRatio } from './liv
 const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
   startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
   winRate: null, bestDay: null, worstDay: null, objective: null, drawdown: null,
-  drawdownUnconfirmed: false, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
+  drawdownUnconfirmed: false, dailyLoss: null, progress: null, broker: null, estimated: true, disclaimer: 'estimé',
   ...p,
 });
 

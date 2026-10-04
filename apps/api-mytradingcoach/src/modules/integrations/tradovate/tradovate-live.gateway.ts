@@ -10,6 +10,8 @@ import type { Server, Socket } from 'socket.io';
 import { PrismaService } from '@api/prisma/prisma.service';
 import type { JwtPayload } from '../../auth/jwt.strategy';
 import { TradovateLiveService } from './tradovate-live.service';
+import type { BrokerBalanceView } from './tradovate-balance.service';
+import { PropAlertsService } from './prop-alerts.service';
 
 export const userRoom = (userId: string) => `user:${userId}`;
 
@@ -36,11 +38,19 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly live: TradovateLiveService,
+    private readonly alerts: PropAlertsService,
   ) {}
 
   afterInit(): void {
     this.live.bindEmitter((userId, event, payload) => {
-      this.server.to(userRoom(userId)).emit(event, payload);
+      const room = this.server.to(userRoom(userId));
+      room.emit(event, payload);
+      // Nouveau solde : alertes prop firm (Premium) évaluées sur le worker titulaire, une fois.
+      if (event === 'tradovate:balance') {
+        this.alerts.schedule(userId, (payload as BrokerBalanceView).accountId, (e, p) => {
+          this.server.to(userRoom(userId)).emit(e, p);
+        });
+      }
     });
   }
 

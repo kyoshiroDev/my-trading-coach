@@ -6,6 +6,7 @@ import { ToastService } from './toast.service';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradovateStore } from '../stores/tradovate.store';
 import { SessionStore } from '../stores/session.store';
+import { PropAlertsService } from './prop-alerts.service';
 
 /** Socket.io simulée : on déclenche les événements serveur à la main. */
 const fake = vi.hoisted(() => {
@@ -35,8 +36,10 @@ function setup(activeSession = false) {
   const accounts = { load: vi.fn() };
   const tradovate = { load: vi.fn() };
   const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn() };
+  const alerts = { handle: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
+      { provide: PropAlertsService, useValue: alerts },
       { provide: ToastService, useValue: toast },
       { provide: SelectedAccountStore, useValue: accounts },
       { provide: TradovateStore, useValue: tradovate },
@@ -44,7 +47,7 @@ function setup(activeSession = false) {
     ],
   });
   const service = TestBed.inject(TradovateLiveSocketService);
-  return { service, toast, accounts, tradovate, session };
+  return { service, toast, accounts, tradovate, session, alerts };
 }
 
 const trades = (created: number): TradovateLiveTrades =>
@@ -90,6 +93,14 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     fake.sockets[0].emit('tradovate:trades', trades(1));
     expect(session.refreshLive).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith('1 trade Tradovate synchronisé');
+  });
+
+  it('alerte prop firm poussée → relayée au service d’alertes', () => {
+    const { service, alerts } = setup();
+    service.connect();
+    const e = { accountId: 'acc-1', accountLabel: 'Apex', currency: 'USD', kind: 'drawdown', level: 'warning', remaining: 400, limit: 2000, breach: null };
+    fake.sockets[0].emit('prop:alert', e);
+    expect(alerts.handle).toHaveBeenCalledWith(e);
   });
 
   it('rien de créé → silence', () => {

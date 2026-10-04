@@ -7,6 +7,7 @@ import {
   inject,
   input,
   output,
+  signal,
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +20,8 @@ import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
+import { PropAlertsService } from '@app/core/services/prop-alerts.service';
+import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
 import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
@@ -33,7 +36,7 @@ import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 @Component({
   selector: 'mtc-live-prop-firm',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon, RouterLink],
+  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent],
   templateUrl: './live-prop-firm.component.html',
   styleUrl: './live-prop-firm.component.css',
 })
@@ -45,7 +48,9 @@ export class LivePropFirmComponent {
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tv = inject(TradovateStore);
   private readonly tradovateApi = inject(TradovateApi);
-  private readonly userStore = inject(UserStore);
+  protected readonly userStore = inject(UserStore);
+  protected readonly alerts = inject(PropAlertsService);
+  protected readonly showPlanModal = signal(false);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly live = inject(TradovateLiveSocketService);
 
@@ -60,6 +65,13 @@ export class LivePropFirmComponent {
   protected readonly rule = computed(() => this.drawdown()?.rule ?? null);
 
   protected readonly ddTone = computed(() => drawdownTone(this.drawdown()));
+
+  /** Perte journalière (PREMIUM) : l'API ne la calcule que pour un compte Premium. */
+  protected readonly dailyLoss = computed(() => this.metrics()?.dailyLoss ?? null);
+  protected readonly dlTone = computed(() => drawdownTone(this.dailyLoss()));
+  protected readonly dlWidth = computed(() => barWidth(this.dailyLoss()?.pct));
+  /** Plan relié et compte gratuit : la couche Premium (perte journalière + alertes) en teaser. */
+  protected readonly premiumTeaser = computed(() => !this.userStore.isPremium() && !!this.account()?.propFirmPlanId);
   protected readonly ddWidth = computed(() => barWidth(this.drawdown()?.pct));
 
   protected readonly objRatio = computed(() => {

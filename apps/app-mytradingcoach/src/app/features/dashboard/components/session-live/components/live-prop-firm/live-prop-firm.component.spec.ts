@@ -9,6 +9,7 @@ import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
+import { PropAlertsService } from '@app/core/services/prop-alerts.service';
 import TEMPLATE from './live-prop-firm.component.html?raw';
 
 /** Panneau de suivi prop firm de la session live, sur son VRAI template. */
@@ -25,7 +26,7 @@ const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
       peakSource: 'broker', peakBalance: 50820, officialThrough: null, platform: null, platformChoices: [],
     },
   },
-  drawdownUnconfirmed: false,
+  drawdownUnconfirmed: false, dailyLoss: null,
   progress: {
     kind: 'objective', remaining: 2180, done: false, cycleAfter: null, cycleSource: null,
     payoutsReceived: null, lastPayout: null, unconfirmed: false,
@@ -46,16 +47,18 @@ const account = (m: AccountRuleMetrics): TradingAccount => ({
   lastPayoutAt: null, createdAt: '', updatedAt: '', metrics: m,
 });
 
-function setup(m: AccountRuleMetrics, opts: { demo?: boolean } = {}) {
+function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean; permission?: string } = {}) {
   const store = { accounts: signal([account(m)]), load: vi.fn() };
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
   const tv = { loaded: signal(false), load: vi.fn() };
+  const alerts = { permission: signal(opts.permission ?? 'granted'), requestPermission: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
       { provide: SelectedAccountStore, useValue: store },
       { provide: TradovateStore, useValue: tv },
       { provide: TradovateApi, useValue: tvApi },
-      { provide: UserStore, useValue: { isDemo: () => !!opts.demo } },
+      { provide: UserStore, useValue: { isDemo: () => !!opts.demo, isPremium: () => !!opts.premium } },
+      { provide: PropAlertsService, useValue: alerts },
       { provide: TradovateLiveSocketService, useValue: { connected: signal(true) } },
     ],
   });
@@ -68,7 +71,8 @@ function setup(m: AccountRuleMetrics, opts: { demo?: boolean } = {}) {
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const text = (id: string) => (el.querySelector(`[data-testid="${id}"]`)?.textContent ?? '').replace(/\s+/g, ' ').trim();
-  return { fixture, el, text, store, tvApi, tv };
+  const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+  return { fixture, el, text, q, store, tvApi, tv, alerts };
 }
 
 describe('Session live — suivi prop firm', () => {
@@ -111,6 +115,48 @@ describe('Session live — suivi prop firm', () => {
   it('compte démo : aucune relecture (lecture seule)', () => {
     const { tvApi } = setup(metrics(), { demo: true });
     expect(tvApi.refreshBalance).not.toHaveBeenCalled();
+  });
+
+  describe('couche Premium (#370)', () => {
+    const dl = {
+      limit: 1000, used: 820, remaining: 180, pct: 0.18, breached: false, breach: 'trading_paused_for_day' as const,
+      basis: 'equity' as const, startOfDay: 51000, source: 'broker' as const, approximate: false,
+    };
+
+    it('Premium : perte du jour, ce qui reste et la sanction de la firm', () => {
+      const { text, q } = setup(metrics({ dailyLoss: dl }), { premium: true });
+      const t = text('live-prop-firm-daily-loss');
+      expect(t).toContain('180');
+      expect(t).toContain('820');
+      expect(t).toContain('1,000');
+      expect(t).toContain('trading coupé');
+      expect(q('live-prop-firm-premium-teaser')).toBeNull();
+    });
+
+    it('Premium, limite atteinte : le dit en clair', () => {
+      const { text } = setup(metrics({ dailyLoss: { ...dl, remaining: -20, pct: 0, breached: true, breach: 'account_failed' } }), { premium: true });
+      expect(text('live-prop-firm-daily-loss')).toContain('limite atteinte');
+      expect(text('live-prop-firm-daily-loss')).toContain('échec du compte');
+    });
+
+    it('gratuit avec plan relié : teaser Premium, ni perte du jour ni bouton de notifications', () => {
+      const { q } = setup(metrics(), { premium: false, permission: 'default' });
+      expect(q('live-prop-firm-premium-teaser')).not.toBeNull();
+      expect(q('live-prop-firm-daily-loss')).toBeNull();
+      expect(q('live-prop-firm-enable-notifications')).toBeNull();
+    });
+
+    it('Premium, notifications pas encore autorisées : bouton qui les demande', () => {
+      const { q, alerts } = setup(metrics({ dailyLoss: dl }), { premium: true, permission: 'default' });
+      q('live-prop-firm-enable-notifications')!.click();
+      expect(alerts.requestPermission).toHaveBeenCalled();
+    });
+
+    it('Premium, notifications bloquées : le dit, sans bouton', () => {
+      const { q } = setup(metrics({ dailyLoss: dl }), { premium: true, permission: 'denied' });
+      expect(q('live-prop-firm-enable-notifications')).toBeNull();
+      expect(q('live-prop-firm-notifications-denied')).not.toBeNull();
+    });
   });
 
   it('« Saisir un trade à la main » prévient le parent', () => {

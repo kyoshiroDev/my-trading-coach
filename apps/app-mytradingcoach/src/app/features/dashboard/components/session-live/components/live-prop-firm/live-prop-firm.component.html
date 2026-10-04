@@ -63,6 +63,49 @@
       }
     </div>
 
+    <!-- Perte journalière (PREMIUM) selon la règle du plan relié -->
+    @if (dailyLoss(); as dl) {
+      <div class="pf-block" data-testid="live-prop-firm-daily-loss">
+        <div class="pf-row">
+          <span class="pf-lbl">Perte du jour</span>
+          @if (dl.breached) {
+            <span class="pf-val red">limite atteinte</span>
+          } @else {
+            <span [class]="'pf-val ' + dlTone()">{{ money(dl.remaining) }}</span>
+          }
+        </div>
+        <div class="bar-track">
+          <div [class]="'bar-fill ' + dlTone()" [style.width.%]="dlWidth()"></div>
+        </div>
+        <div class="pf-sub">
+          {{ money(dl.used) }} perdus sur {{ money(dl.limit) }} autorisés
+          · {{ dl.breach === 'account_failed' ? 'dépassement = échec du compte' : 'dépassement = trading coupé jusqu’à demain' }}
+          @if (dl.approximate) { · estimation }
+        </div>
+      </div>
+    } @else if (premiumTeaser()) {
+      <button type="button" class="pf-teaser" data-testid="live-prop-firm-premium-teaser" (click)="showPlanModal.set(true)">
+        <span>Perte journalière et alertes avant la casse</span>
+        <span class="pf-badge">PREMIUM</span>
+      </button>
+    }
+
+    <!-- Alertes Premium : notification système (l'utilisateur regarde sa plateforme) -->
+    @if (userStore.isPremium() && (drawdown() || dailyLoss())) {
+      @switch (alerts.permission()) {
+        @case ('default') {
+          <button type="button" class="pf-notify" data-testid="live-prop-firm-enable-notifications" (click)="alerts.requestPermission()">
+            Activer les notifications d'alerte
+          </button>
+        }
+        @case ('denied') {
+          <p class="pf-note" data-testid="live-prop-firm-notifications-denied">
+            Notifications bloquées par le navigateur : les alertes restent affichées dans l'app.
+          </p>
+        }
+      }
+    }
+
     <!-- Objectif (évaluation) ou prochain payout (funded) -->
     @if (objTitle(); as title) {
       <div class="pf-block" data-testid="live-prop-firm-objective">
@@ -92,3 +135,7 @@
     Saisir un trade à la main
   </button>
 </div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}

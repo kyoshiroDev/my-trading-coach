@@ -3,6 +3,7 @@ import { PrismaModule } from '@api/prisma/prisma.module';
 import { TradesModule } from '../../trades/trades.module';
 import { SetupsModule } from '../../setups/setups.module';
 import { AuthModule } from '../../auth/auth.module';
+import { AccountsModule } from '../../accounts/accounts.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
@@ -16,6 +17,7 @@ import { TradovateBackgroundRefreshCron } from './tradovate-background-refresh.c
 import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
 import { nativeSocketFactory } from './tradovate-live.connection';
 import { TradovateLiveGateway } from './tradovate-live.gateway';
+import { PropAlertsService } from './prop-alerts.service';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 
 /**
@@ -26,7 +28,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
  */
 @Module({
   // AuthModule : JwtService pour authentifier le handshake du canal temps réel.
-  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule],
+  // AccountsModule : métriques des règles prop firm, base des alertes (#370).
+  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule],
   controllers: [TradovateController, TradovateCallbackController],
   providers: [
     TradovateApiClient,
@@ -47,6 +50,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     // WebSocket natif (Node ≥ 22) ; remplacé par un faux serveur Tradovate en test.
     { provide: LIVE_SOCKET_FACTORY, useValue: nativeSocketFactory },
     TradovateLiveGateway,
+    // Alertes prop firm « avant la casse » (Premium) sur chaque solde poussé.
+    PropAlertsService,
     TradovateBackgroundRefreshCron,
   ],
 })
