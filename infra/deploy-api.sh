@@ -23,7 +23,8 @@ esac
 
 IMAGE="mtc_api_${ENV_NAME}"
 LEGACY="mtc_api_${ENV_NAME}"           # conteneur unique d'avant le blue/green (transition)
-SHA="${2:-$(git rev-parse --short=12 HEAD)}"
+# Tags d'image en SHA court (12) : un SHA complet ou plus court est ramené à cette forme si possible.
+if [ -n "${2:-}" ]; then SHA=$(git rev-parse --short=12 "$2" 2>/dev/null || echo "$2"); else SHA=$(git rev-parse --short=12 HEAD); fi
 KEEP_IMAGES=5
 # Marqueur des sondes dans le journal d'accès Traefik (qui n'écrit pas le user-agent : "-").
 PROBE_TAG="deploy-probe=${SHA}-$$"
@@ -85,16 +86,7 @@ drain_and_stop() {
   docker rm "$c" >/dev/null 2>&1 || true
 }
 
-# ── 1. Image ────────────────────────────────────────────────────────────────
-if docker image inspect "${IMAGE}:${SHA}" >/dev/null 2>&1; then
-  log "image ${IMAGE}:${SHA} déjà présente (retour arrière ou relance) : pas de build"
-else
-  [ "$(git rev-parse --short=12 HEAD)" = "$SHA" ] || die "image ${SHA} absente et le dépôt n'est pas sur ce commit"
-  log "build ${IMAGE}:${SHA}"
-  docker build -f apps/api-mytradingcoach/Dockerfile -t "${IMAGE}:${SHA}" .
-fi
-
-# ── 2. Couleur active / cible ───────────────────────────────────────────────
+# ── 1. Couleur active / cible ───────────────────────────────────────────────
 ACTIVE=""
 for c in blue green; do running "${IMAGE}_${c}" && ACTIVE="${ACTIVE:+$ACTIVE }$c"; done
 if [ "$ACTIVE" = "blue green" ]; then
@@ -109,6 +101,22 @@ case "$ACTIVE" in
 esac
 NEW="${IMAGE}_${TARGET}"
 log "active : ${OLD:-aucune} → cible : ${NEW} (${SHA})"
+
+# Premier passage en prod depuis le conteneur unique d'avant B8 : ~2 s d'erreurs (il ne sait pas se
+# drainer) → jamais par surprise sur un merge, seulement demandé (workflow « Deploy API prod
+# (manuel) », case transition) à une heure creuse.
+if [ "$OLD" = "$LEGACY" ] && [ "$ENV_NAME" = prod ] && [ "${DEPLOY_TRANSITION:-0}" != 1 ]; then
+  die "transition vers le blue/green non demandée : la lancer à une heure creuse via le workflow « Deploy API prod (manuel) » (case transition), ou DEPLOY_TRANSITION=1"
+fi
+
+# ── 2. Image ────────────────────────────────────────────────────────────────
+if docker image inspect "${IMAGE}:${SHA}" >/dev/null 2>&1; then
+  log "image ${IMAGE}:${SHA} déjà présente (retour arrière ou relance) : pas de build"
+else
+  [ "$(git rev-parse --short=12 HEAD)" = "$SHA" ] || die "image ${SHA} absente et le dépôt n'est pas sur ce commit"
+  log "build ${IMAGE}:${SHA}"
+  docker build -f apps/api-mytradingcoach/Dockerfile -t "${IMAGE}:${SHA}" .
+fi
 
 # ── 3. Migration, une fois, avec le code de la nouvelle version ─────────────
 docker tag "${IMAGE}:${SHA}" "${IMAGE}:${TARGET}"
