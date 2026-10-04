@@ -523,6 +523,16 @@ E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingc
 ⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
 Tests : `WATCH_DRY=1` (affiche l'état, n'envoie rien) · `WATCH_TEST=1` (envoie un e-mail de test).
 
+**Interne — `infra/monitoring/watch-apihosts.sh`** (#420, installé dans `/opt/backups/`, cron
+`7,22,37,52 * * * *`, log `/opt/backups/watch-apihosts.log`) : e-mail 🔀 quand l'ensemble des hôtes
+Tradovate DISTINCTS stockés en base prod (`BrokerConnection.apiHosts` : `live`, `demo`,
+`reportingLive`, `reportingDemo`, connexions `CONNECTED`) change, c.-à-d. quand NinjaTrader bascule
+une prop firm sur une autre infra (cf. #286, `tradovate-hosts.ts` : l'API suit seule, l'alerte sert
+à le savoir). Une nouvelle connexion sur un hôte déjà connu ne déclenche rien. État de référence
+dans `/opt/backups/.watch-apihosts-state` (1er passage = mémorisation sans e-mail ; mémorisé
+seulement après un envoi réussi). Même chaîne Resend que ci-dessus. Tests : `WATCH_DRY=1` ·
+`WATCH_TEST=1` · `WATCH_APIHOSTS_STATE=<fichier temporaire>` pour simuler un changement.
+
 **Externe — UptimeRobot** (plan gratuit, compte `hello@mytradingcoach.app`) : sondes HTTP toutes
 les 5 min depuis l'extérieur, alerte e-mail vers `hello@mytradingcoach.app`. Elles détectent la perte
 totale du VPS, que le script interne ne peut pas signaler.
