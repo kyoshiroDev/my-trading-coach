@@ -1,0 +1,1422 @@
+{
+  "firm": {
+    "id": "tradeday",
+    "name": "TradeDay",
+    "website": "https://www.tradeday.com",
+    "help_center": "https://tradeday.freshdesk.com/en/support/solutions",
+    "platforms": [
+      "tradovate",
+      "ninjatrader",
+      "tradingview",
+      "jigsaw",
+      "rtrader_pro",
+      "quantower",
+      "atas",
+      "motivewave",
+      "bookmap",
+      "sierra_chart",
+      "edgeprox",
+      "finamark",
+      "volfix",
+      "wealthcharts",
+      "multicharts",
+      "overcharts"
+    ]
+  },
+  "verified_at": "2026-10-03",
+  "plans": [
+    {
+      "id": "tradeday-qp-intraday-25k",
+      "plan_name": "Quick Pay",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 100,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 100 $/mois ; promotion en cours à 45 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : suit le plus haut equity de la séance (latent compris). Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-intraday-50k",
+      "plan_name": "Quick Pay",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 131,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 131 $/mois ; promotion en cours à 59 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : suit le plus haut equity de la séance (latent compris). Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-intraday-100k",
+      "plan_name": "Quick Pay",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 240,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 240 $/mois ; promotion en cours à 108 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : suit le plus haut equity de la séance (latent compris). Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-intraday-150k",
+      "plan_name": "Quick Pay",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "intraday",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 360,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 360 $/mois ; promotion en cours à 162 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : suit le plus haut equity de la séance (latent compris). Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-eod-25k",
+      "plan_name": "Quick Pay",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 120,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 120 $/mois ; promotion en cours à 54 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-eod-50k",
+      "plan_name": "Quick Pay",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 175,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 175 $/mois ; promotion en cours à 79 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-eod-100k",
+      "plan_name": "Quick Pay",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 285,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 285 $/mois ; promotion en cours à 129 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-qp-eod-150k",
+      "plan_name": "Quick Pay",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 400,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 400 $/mois ; promotion en cours à 180 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.3,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 30 % du profit total."
+          },
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Quick Pay funded : drawdown toujours intraday, quel que soit le mode de l'évaluation. Calculé sur le profit BRUT (profit actuel + payouts) : il continue de monter même quand on retire. Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 1,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.5,
+            "split_by_profit": {
+              "profit_over": 4000,
+              "split_pct": 0.8
+            },
+            "min_amount": 250,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Payout dès le premier jour, sans buffer ni consistency. Partage par compte : 50/50 tant que le profit présent sur le compte est sous 4 000 $, 80/20 sur la part qui laisse plus de 4 000 $ de profit (mixte entre les deux). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Quick Pay : funded toujours en drawdown intraday."
+    },
+    {
+      "id": "tradeday-fp-eod-25k",
+      "plan_name": "Fast Pass",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 130,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 130 $/mois ; promotion en cours à 59 $/mois (code TDNEW). Reset au prix promo."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1500,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 45 % du profit total."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26000,
+            "locked_floor": 25000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Fast Pass funded : drawdown toujours EOD. Se fige au solde de départ exact (25000 $) quand le solde atteint 26000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "payout",
+            "notes": "Sur le funded Fast Pass."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1999.99,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 2,
+                "micros": 20
+              }
+            ],
+            "notes": "Départ à 1 contrat(s) (10 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée, maximum 2 minis."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 250,
+            "max_amount": 750,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 jours minimum avant payout, dont 5 jours profitables d'au moins 100 $. Plafond par cycle 750 $. Pas de palier (« Milestones: None »). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
+    },
+    {
+      "id": "tradeday-fp-eod-50k",
+      "plan_name": "Fast Pass",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 189,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 85 $/mois (code TDNEW). Reset au prix promo. Le support cite 180 $ le 2026-10-04 (promotion probable)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 45 % du profit total."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Fast Pass funded : drawdown toujours EOD. Se fige au solde de départ exact (50000 $) quand le solde atteint 52000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "payout",
+            "notes": "Sur le funded Fast Pass."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Départ à 2 contrat(s) (20 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 5 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 250,
+            "max_amount": 1500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 jours minimum avant payout, dont 5 jours profitables d'au moins 150 $. Plafond par cycle 1500 $. Pas de palier (« Milestones: None »). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
+    },
+    {
+      "id": "tradeday-fp-eod-100k",
+      "plan_name": "Fast Pass",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 330,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 330 $/mois ; promotion en cours à 149 $/mois (code TDNEW). Reset au prix promo. Le support cite 320 $ le 2026-10-04 (promotion probable)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 45 % du profit total."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103000,
+            "locked_floor": 100000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Fast Pass funded : drawdown toujours EOD. Se fige au solde de départ exact (100000 $) quand le solde atteint 103000 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "payout",
+            "notes": "Sur le funded Fast Pass."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 50,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Départ à 3 contrat(s) (30 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 10 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 250,
+            "max_amount": 1875,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 jours minimum avant payout, dont 5 jours profitables d'au moins 200 $. Plafond par cycle 1875 $. Pas de palier (« Milestones: None »). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
+    },
+    {
+      "id": "tradeday-fp-eod-150k",
+      "plan_name": "Fast Pass",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": null,
+        "eval_drawdown": "eod",
+        "payout_path": null,
+        "addon": null
+      },
+      "price": {
+        "amount": 500,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "Prix catalogue 500 $/mois ; promotion en cours à 225 $/mois (code TDNEW). Reset au prix promo. Le support cite 480 $ le 2026-10-04 (promotion probable)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le solde de clôture. Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 45 % du profit total."
+          },
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Tel que publié sur le sélecteur (« 10 Contracts (50 Micros) », « 15 Contracts (50 Micros) »)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154500,
+            "locked_floor": 150000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Fast Pass funded : drawdown toujours EOD. Se fige au solde de départ exact (150000 $) quand le solde atteint 154500 $ (pas + 100 $). Appliqué en temps réel, positions ouvertes comprises, quel que soit le mode de calcul."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.45,
+            "applies_to": "payout",
+            "notes": "Sur le funded Fast Pass."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 15,
+            "micros": 50,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Départ à 4 contrat(s) (40 micros), +1 contrat par tranche de 2 000 $ de profit en fin de journée ; maximum non publié. Même maximum qu'en évaluation : 15 minis / 50 micros (support TradeDay, e-mail du 2026-10-04)."
+          },
+          "time_rules": {
+            "must_close_by": "15:50 America/Chicago",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Tout fermer 10 minutes avant la clôture ; TradeDay liquide à 15:50 CT (produits CME) et 2 minutes avant les annonces Tier 1, puis rouvre 2 minutes après. Session à partir de 17:00 CT. Pas d'échec pour un oubli accidentel, mais pas de position à la clôture. Produits qui ferment plus tôt : à la charge du trader."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "min_amount": 250,
+            "max_amount": 2250,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "5 jours minimum avant payout, dont 5 jours profitables d'au moins 250 $. Plafond par cycle 2250 $. Pas de palier (« Milestones: None »). 90/10 en Funded Live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.tradeday.com/#pricing",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy",
+        "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-"
+      ],
+      "needs_review": false,
+      "notes": "Fast Pass : n'existe qu'en drawdown EOD ; funded toujours EOD."
+    }
+  ]
+}

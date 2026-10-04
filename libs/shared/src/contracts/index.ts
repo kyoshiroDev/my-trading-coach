@@ -8,3 +8,4 @@ export * from './session';
 export * from './eco-calendar';
 export * from './admin';
 export * from './debrief';
+export * from './prop-firm';

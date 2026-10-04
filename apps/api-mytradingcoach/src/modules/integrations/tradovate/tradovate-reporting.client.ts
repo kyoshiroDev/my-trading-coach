@@ -37,8 +37,12 @@ export const REPORT_MAX_WINDOW_DAYS = 62;
 
 const TIMEOUT_MS = 60_000;
 
-/** Rapports utilisés par l'import. Le catalogue complet en compte 8 (cf. docs/). */
-export type TradovateReportName = 'Performance' | 'Cash History' | 'Fills' | 'Orders';
+/**
+ * Rapports utilisés. Le serveur en expose 8 (`/reports/requestReportDefinitions`, relevé le
+ * 2026-10-03) : Performance, Orders, Position History, Cash History, Order Details, Chat History,
+ * Fills, Account Balance History. Noms exacts, sensibles à la casse et aux espaces.
+ */
+export type TradovateReportName = 'Performance' | 'Cash History' | 'Fills' | 'Orders' | 'Account Balance History';
 
 export interface ReportWindow {
   /** Bornes INCLUSIVES de la fenêtre demandée. */

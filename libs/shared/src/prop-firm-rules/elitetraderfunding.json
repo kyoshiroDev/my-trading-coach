@@ -1,0 +1,1442 @@
+{
+  "firm": {
+    "id": "elitetraderfunding",
+    "name": "Elite Trader Funding",
+    "website": "https://elitetraderfunding.app",
+    "help_center": "https://elitetraderfunding.app/help",
+    "platforms": [
+      "tradovate",
+      "ninjatrader",
+      "tradingview",
+      "rithmic",
+      "quantower",
+      "sierra_chart",
+      "motivewave"
+    ]
+  },
+  "verified_at": "2026-10-04",
+  "plans": [
+    {
+      "id": "elitetraderfunding-1step-50k",
+      "plan_name": "1 Step",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 2000 $ en dessous ; on peut échouer avec une position gagnante ouverte."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 2000 $ en dessous ; on peut échouer avec une position gagnante ouverte. Funded : une fois 2100 $ de profit réalisé (safety net), le seuil se fige à 50100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/1-step-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-1step-100k",
+      "plan_name": "1 Step",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 3000 $ en dessous ; on peut échouer avec une position gagnante ouverte."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 3000 $ en dessous ; on peut échouer avec une position gagnante ouverte. Funded : une fois 3100 $ de profit réalisé (safety net), le seuil se fige à 100100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/1-step-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-1step-250k",
+      "plan_name": "1 Step",
+      "account_size": 250000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 15000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 6500 $ en dessous ; on peut échouer avec une position gagnante ouverte."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 24,
+            "micros": 240,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 256600,
+            "locked_floor": 250100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 6500 $ en dessous ; on peut échouer avec une position gagnante ouverte. Funded : une fois 6600 $ de profit réalisé (safety net), le seuil se fige à 250100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 24,
+            "micros": 240,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 256600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/1-step-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-eod-50k",
+      "plan_name": "End of Day",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 2000 $ en dessous ; les pertes latentes comptent en séance."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1100,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 2000 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 2100 $ de profit réalisé (safety net), le seuil se fige à 50100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 8,
+            "micros": 80,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/end-of-day-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "DLL en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-eod-100k",
+      "plan_name": "End of Day",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 3500 $ en dessous ; les pertes latentes comptent en séance."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2200,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103600,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 3500 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 3600 $ de profit réalisé (safety net), le seuil se fige à 100100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 14,
+            "micros": 140,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/end-of-day-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "DLL en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-diamond-hands-100k",
+      "plan_name": "Diamond Hands",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 5000,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 3500 $ en dessous ; les pertes latentes comptent en séance."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées ; le risque de gap reste à la charge du trader."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1500,
+            "basis": "equity",
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach : touchée par des pertes ouvertes ou réalisées, mesurée depuis le solde de fin de la veille. L'option TradeShield la transforme en soft breach."
+          },
+          "max_drawdown": {
+            "amount": 3500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103600,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 3500 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 3600 $ de profit réalisé (safety net), le seuil se fige à 100100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées ; le risque de gap reste à la charge du trader."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/diamond-hands-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Seul plan qui autorise l'overnight et le week-end. DLL 1 500 $ en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-static-10k",
+      "plan_name": "Static",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 9500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 9500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 9500 $ ; une fois 600 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 10600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/static-drawdown",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-static-25k",
+      "plan_name": "Static",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 24000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 24000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 24000 $ ; une fois 1100 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/static-drawdown",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-static-50k",
+      "plan_name": "Static",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 4000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 48000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": 5,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 48000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 48000 $ ; une fois 2100 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/static-drawdown",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+    },
+    {
+      "id": "elitetraderfunding-fast-track-eod-10k",
+      "plan_name": "Fast Track",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation 10K, moins de 100 $ en version EOD (prix exact non relevé). Pas de reset. Premier mois d'activation funded inclus."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 500 $ en dessous ; les pertes latentes comptent en séance."
+          },
+          "consistency": null,
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 10600,
+            "locked_floor": 10100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 500 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 600 $ de profit réalisé (safety net), le seuil se fige à 10100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 10600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (jusqu'à 1 500 $ par cycle sur Fast Track). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/fast-track-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Fast Track EOD : pas de reset, premier mois d'activation funded offert, pas de DLL."
+    },
+    {
+      "id": "elitetraderfunding-fast-track-static-10k",
+      "plan_name": "Fast Track",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "monthly",
+        "activation_fee": 87,
+        "notes": "Évaluation 10K, moins de 100 $ en version EOD (prix exact non relevé). Pas de reset. Premier mois d'activation funded inclus."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 2000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 9500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": 3,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 500,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 9500,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 1,
+            "micros": 10,
+            "scaling": false,
+            "tiers": null,
+            "notes": "1 mini = 10 micros."
+          },
+          "time_rules": {
+            "must_close_by": "15:59 America/Chicago",
+            "news_trading_allowed": null,
+            "overnight_allowed": false,
+            "notes": "Tout fermer une minute avant la clôture de l'instrument tradé (15:59 CT pour les indices CME ; plus tôt pour les produits qui ferment avant). Pas d'overnight."
+          },
+          "payout": {
+            "min_days": 8,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 10600,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (jusqu'à 1 500 $ par cycle sur Fast Track). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/fast-track-evaluation",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Fast Track Static : pas de reset, premier mois d'activation funded offert, pas de DLL."
+    },
+    {
+      "id": "elitetraderfunding-dtf-10k",
+      "plan_name": "Mini Inferno Direct to Funded",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique (prix non relevé)."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 11600,
+            "locked_floor": 10100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 1500 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 1600 $ de profit réalisé (safety net), le seuil se fige à 10100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 2,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Direct to Funded : 1 mini = 1 micro (pas d'équivalence x10)."
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées ; le risque de gap reste à la charge du trader."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 11600,
+            "notes": "Premier payout après 5 jours de trading qualifiants et 1600 $ de profit (safety net). Ensuite, cycle standard : jusqu'à 100 % du profit, plafond par cycle jusqu'à 5 000 $. 5 comptes maximum, 2 resets."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/direct-to-funded",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, swing autorisé, pas de DLL."
+    },
+    {
+      "id": "elitetraderfunding-dtf-50k",
+      "plan_name": "Direct to Funded",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique (prix non relevé)."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 55100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : le seuil ne monte qu'à la clôture, sur le plus haut solde réalisé, 5000 $ en dessous ; les pertes latentes comptent en séance. Funded : une fois 5100 $ de profit réalisé (safety net), le seuil se fige à 50100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Direct to Funded : 1 mini = 1 micro (pas d'équivalence x10)."
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées ; le risque de gap reste à la charge du trader."
+          },
+          "payout": {
+            "min_days": 15,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 55100,
+            "notes": "Premier payout après 15 jours de trading qualifiants et 5100 $ de profit (safety net). Ensuite, cycle standard : jusqu'à 100 % du profit, plafond par cycle jusqu'à 5 000 $. 5 comptes maximum, 2 resets."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/direct-to-funded",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, swing autorisé, pas de DLL."
+    },
+    {
+      "id": "elitetraderfunding-dtf-100k",
+      "plan_name": "Direct to Funded",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": null,
+        "notes": "Paiement unique (prix non relevé)."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "static",
+            "trails_on": null,
+            "locks_at": null,
+            "locked_floor": 95000,
+            "enforced_on": null,
+            "platform_overrides": null,
+            "basis_notes": "Static : solde minimum fixe à 95000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 3,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Direct to Funded : 1 mini = 1 micro (pas d'équivalence x10)."
+          },
+          "time_rules": {
+            "must_close_by": null,
+            "news_trading_allowed": true,
+            "overnight_allowed": true,
+            "notes": "Positions overnight et week-end autorisées ; le risque de gap reste à la charge du trader."
+          },
+          "payout": {
+            "min_days": 20,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 1.0,
+            "split_after": {
+              "paid_out_over": 25000,
+              "split_pct": 0.8
+            },
+            "split_by_profit": null,
+            "min_amount": 100,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 105100,
+            "notes": "Premier payout après 20 jours de trading qualifiants et 5100 $ de profit (safety net). Ensuite, cycle standard : jusqu'à 100 % du profit, plafond par cycle jusqu'à 5 000 $. 5 comptes maximum, 2 resets."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://elitetraderfunding.app/direct-to-funded",
+        "https://elitetraderfunding.app/elite",
+        "https://elitetraderfunding.app/payouts",
+        "https://elitetraderfunding.app/evaluations"
+      ],
+      "needs_review": true,
+      "notes": "Sans évaluation, swing autorisé, pas de DLL."
+    }
+  ]
+}

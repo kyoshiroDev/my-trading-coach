@@ -132,6 +132,20 @@
   flex-direction: column;
 }
 
+/* Colonne droite en saisie manuelle (compte synchronisé) : retour au suivi prop firm. */
+.right-col { gap: 8px; }
+.back-prop {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--blue-bright);
+  cursor: pointer;
+}
+.back-prop:hover { text-decoration: underline; }
+
 /* Market context bar wrapper */
 .ctx-bar-wrap { padding: 0; flex-shrink: 0; }
 

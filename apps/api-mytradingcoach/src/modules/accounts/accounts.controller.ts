@@ -14,6 +14,7 @@ import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { isPremiumAccess } from '../discord/discord-access.util';
 
 // Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
 // Le plafond est appliqué dans AccountsService.create (FREE peut gérer son 1 compte).
@@ -22,9 +23,12 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
+  // Couche Premium (#370 : perte journalière, gain max du jour) : calculée pour le Premium seulement (mêmes règles que PremiumGuard).
   @Get()
-  list(@CurrentUser() user: { id: string }) {
-    return this.accounts.list(user.id);
+  list(@CurrentUser() user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null }) {
+    return this.accounts.list(user.id, {
+      premium: isPremiumAccess({ plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt ?? null }),
+    });
   }
 
   @Post()
@@ -52,6 +56,16 @@ export class AccountsController {
       role: user.role,
       trialEndsAt: user.trialEndsAt,
     });
+  }
+
+  /** « Ce n'était pas un payout » : écarte un payout détecté chez le broker du cycle de payout. */
+  @Post(':id/payouts/:payoutId/dismiss')
+  dismissPayout(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Param('payoutId') payoutId: string,
+  ) {
+    return this.accounts.dismissPayout(user.id, id, payoutId);
   }
 
   @Delete(':id')

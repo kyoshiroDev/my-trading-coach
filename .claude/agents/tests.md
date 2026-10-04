@@ -40,6 +40,12 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
   analytics sur une base Postgres éphémère (migrations + `pnpm seed:demo`), API et app lancées dans
   le job. Échoue sur toute réponse API 5xx ou erreur console. **Non bloquant**
   (`continue-on-error`) : le rendre bloquant après deux semaines sans flake.
+  L'app est servie en build **`local`** (`serve-static --buildTarget=app-mytradingcoach:build:local`
+  → `environment.ts`, API `localhost:3001`) : le build par défaut `development` appelle l'API de
+  dev du VPS. Le smoke échoue sur tout appel à `*api.mytradingcoach.app`.
+  En local : `playwright test src/smoke.spec.ts` (le filtre `smoke` porte sur le chemin complet :
+  dans un dossier dont le nom contient « smoke », il lance TOUTE la suite, inscriptions comprises)
+  et `RESEND_API_KEY=re_placeholder` sur l'API, sinon les inscriptions envoient de vrais e-mails.
 
 ---
 
@@ -122,6 +128,14 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > et les `int-spec` échouent sur une colonne inexistante (`The column X does not exist`)
 > qui n'a rien à voir avec le test. Lancer
 > `pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts` avant la suite.
+
+> ⚠️ **Catalogue prop firm : tables globales, synchronisées au boot.** Chaque `createIntegrationApp()`
+> aligne `PropFirm` / `PropFirmPlan` sur le JSON livré. Un test qui synchronise un catalogue modifié
+> (`service.sync(files)`) doit remettre la base à l'état livré (`service.sync()` en `afterAll`), sinon
+> les autres specs voient un plan désactivé. Le verrou de la synchro se teste en le PRENANT depuis le
+> test (`$executeRaw` `pg_advisory_xact_lock`, `$queryRaw` ne sait pas lire le `void` renvoyé) :
+> des `sync()` lancés en parallèle dans un même process finissent l'un après l'autre et passent au
+> vert même sans verrou (constaté en retirant le verrou).
 
 > ⚠️ **Arrêter toute API lancée à côté avant de jouer la suite d'intégration.** Un autre
 > process branché sur le même Redis consomme la file BullMQ « stripe » et traite les jobs

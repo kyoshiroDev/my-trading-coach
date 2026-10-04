@@ -47,6 +47,8 @@ export const buildDebriefPrompt = (data: {
   recentSessions?: unknown[];
   accounts?: DebriefAccountInput[];
   tradesByAccount?: Record<string, unknown[]>;
+  /** Bloc « prop firm » (#374) : état des comptes et séances vues en direct, faits déjà calculés. */
+  propContext?: string | null;
 }) => {
   const accounts = data.accounts ?? [];
   const tradesByAccount = data.tradesByAccount ?? {};
@@ -72,7 +74,10 @@ ${JSON.stringify(data.stats, null, 2)}
 
 COMPTES ET RÈGLES :
 ${accountsBlock}
-
+${data.propContext ? `
+SUIVI PROP FIRM EN DIRECT (estimations MyTradingCoach déjà calculées avec les règles officielles du plan relié : ne recalcule rien) :
+${data.propContext}
+` : ''}
 TRADES GROUPÉS PAR COMPTE (clé = accountId, ou "unassigned" pour les trades sans compte) :
 ${JSON.stringify(tradesByAccount, null, 2)}
 
@@ -103,6 +108,7 @@ RÈGLES D'ANALYSE PAR COMPTE :
 - Reprends EXACTEMENT l'accountId fourni. Si des trades sont sous "unassigned", crée une entrée accountId="unassigned".
 - "summary" : 1-2 phrases sur ce compte précis.
 - "propNote" (comptes prop firm EVALUATION/FUNDED avec règles UNIQUEMENT, sinon null) : comportemental, intègre la MARGE estimée avant drawdown et le PACING de l'objectif, et termine par « (estimation depuis tes trades loggés, pas le calcul officiel de la firme) ». Jamais de chiffre officiel ni de promesse de gain.
+- Si le SUIVI PROP FIRM EN DIRECT existe pour ce compte, le "propNote" s'appuie D'ABORD dessus : marge la plus basse touchée et quand, alertes, épisodes de tilt, consistency, ce qui reste avant l'objectif ou le payout. Relie-les aux trades et à l'humeur de la semaine. Utilise ces chiffres tels quels, n'en invente aucun.
 
 RÈGLES OBJECTIFS GLOBAUX (IMPÉRATIF) :
 - Le champ racine "objectives" contient 3 à 4 objectifs GLOBAUX (cross-compte), TOUS vérifiables automatiquement.

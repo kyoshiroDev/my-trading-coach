@@ -12,20 +12,22 @@ export const DEMO_WINDOW_DAYS = 42;
  *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL (50 000 + 50 000)
  * (`dashboard.baseCapital` et `accounts.trackedCapital` somment les `startingBalance`).
  *
- * Règles = celles publiées par les firmes pour ce palier, à titre indicatif : l'app ESTIME marge
- * et pacing depuis les trades loggés (disclaimer affiché), elle ne reproduit pas leur calcul.
+ * Chaque compte est relié à un plan du catalogue prop firm (`propFirmPlanId`) : la marge de
+ * drawdown suit alors les règles officielles du plan (trailing EOD, verrouillage). Les champs
+ * manuels reprennent les mêmes valeurs, au cas où le plan serait absent de la base.
  */
 export const DEMO_ACCOUNTS = [
   {
     key: 'apex' as const,
     label: 'Apex 50k · Éval',
-    broker: 'Apex',
+    broker: 'Apex Trader Funding',
     type: AccountType.EVALUATION,
     accountSize: 50_000,
     startingBalance: 50_000,
     profitTarget: 3_000,
-    maxDrawdown: 2_500,
+    maxDrawdown: 2_000,
     drawdownType: DrawdownType.TRAILING,
+    propFirmPlanId: 'apex-eod-50k',
   },
   {
     key: 'tradeify' as const,
@@ -37,6 +39,7 @@ export const DEMO_ACCOUNTS = [
     profitTarget: null,
     maxDrawdown: 2_000,
     drawdownType: DrawdownType.TRAILING,
+    propFirmPlanId: 'tradeify-select-flex-50k',
   },
 ];
 export type AccountKey = (typeof DEMO_ACCOUNTS)[number]['key'];

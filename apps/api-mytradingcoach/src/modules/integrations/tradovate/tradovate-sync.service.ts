@@ -8,6 +8,9 @@ import type { CreateTradeDto } from '../../trades/dto/create-trade.dto';
 import type { FeesReport } from '../../trades/csv-import.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { TradovateBalanceService } from './tradovate-balance.service';
+import { TradovateClosingsService } from './tradovate-closings.service';
+import { TradovatePayoutsService } from './tradovate-payouts.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
@@ -66,6 +69,9 @@ export class TradovateSyncService {
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
     private readonly history: TradovateHistoryService,
+    private readonly balance: TradovateBalanceService,
+    private readonly closings: TradovateClosingsService,
+    private readonly payouts: TradovatePayoutsService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
   ) {}
@@ -120,6 +126,9 @@ export class TradovateSyncService {
       // Le rattrapage incrémente lui-même `tradesImported` : on ne l'ajoute donc PAS ici, sous
       // peine de compter ses trades deux fois. Il n'entre que dans le total rendu à l'appelant.
       const rattrapage = options.history ? await this.topUpCurrentMonth(userId, conn) : 0;
+      // Clôtures officielles (plus haut de clôture des règles EOD) : même cadence que le rattrapage
+      // du mois — cron horaire, retour après absence, bouton « Synchroniser ». Jamais à chaque trade.
+      if (options.history) await this.refreshClosings(conn);
       await this.prisma.brokerConnection.update({
         where: { id: conn.id },
         data: {
@@ -179,6 +188,23 @@ export class TradovateSyncService {
     } catch (err) {
       this.logger.warn(`Rattrapage mensuel Tradovate ignoré (${(err as Error).message}).`);
       return 0;
+    }
+  }
+
+  /** Best-effort : des clôtures en retard ne doivent jamais faire échouer la synchro des trades. */
+  private async refreshClosings(conn: BrokerConnection): Promise<void> {
+    try {
+      const { token, apiHosts } = await this.connections.getSession(conn);
+      await this.closings.refresh(conn, token, apiHosts);
+    } catch (err) {
+      this.logger.warn(`Clôtures officielles non relues (connexion ${conn.id}) : ${(err as Error).message}`);
+    }
+    // Payouts reçus (historique de trésorerie) : début du cycle et rang du prochain payout.
+    try {
+      const { token, apiHosts } = await this.connections.getSession(conn);
+      await this.payouts.refresh(conn, token, apiHosts);
+    } catch (err) {
+      this.logger.warn(`Payouts non relus (connexion ${conn.id}) : ${(err as Error).message}`);
     }
   }
 
@@ -255,6 +281,9 @@ export class TradovateSyncService {
     });
 
     const imported = await this.trades.importTrades(userId, dtos, TradeSource.BROKER_SYNC);
+    // Solde et equity du broker : une synchro = un événement (trade, cron, rattrapage), jamais
+    // une boucle. Best-effort, n'échoue pas la synchro.
+    await this.balance.captureSnapshot(conn, token, apiHosts, openPositions);
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(

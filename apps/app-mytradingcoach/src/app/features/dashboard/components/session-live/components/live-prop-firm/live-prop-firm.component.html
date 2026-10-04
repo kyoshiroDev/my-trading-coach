@@ -1,0 +1,153 @@
+<div class="pf-panel" data-testid="live-prop-firm">
+  <div class="pf-title">
+    <svg [lucideIcon]="ShieldIcon" [size]="14" class="ct-ic"></svg>
+    Suivi du compte
+    @if (live.connected()) {
+      <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
+    }
+  </div>
+
+  @if (account(); as a) {
+    <div class="pf-account">
+      <span class="pf-label">{{ a.label }}</span>
+      @if (rule(); as r) {
+        <span class="pf-plan">{{ r.firmName }} · {{ r.planName }}</span>
+      }
+    </div>
+
+    <!-- Solde et latent lus chez le broker -->
+    <div class="pf-balance">
+      <div>
+        <div class="pf-lbl">Solde</div>
+        <div class="pf-big" data-testid="live-prop-firm-balance">{{ money(broker()?.cashBalance ?? metrics()?.currentBalance) }}</div>
+      </div>
+      @if (broker(); as b) {
+        <div class="pf-open">
+          <div class="pf-lbl">Latent</div>
+          <div class="pf-mid" [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0"
+               data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</div>
+          <div class="pf-sub">{{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }}</div>
+        </div>
+      }
+    </div>
+
+    <!-- Marge avant le plancher de drawdown -->
+    <div class="pf-block" data-testid="live-prop-firm-drawdown">
+      <div class="pf-row">
+        <span class="pf-lbl">Marge drawdown</span>
+        @if (drawdown(); as dd) {
+          @if (dd.breached) {
+            <span class="pf-val red">plancher dépassé</span>
+          } @else {
+            <span [class]="'pf-val ' + ddTone()">{{ money(dd.margin) }}</span>
+          }
+        }
+      </div>
+      @if (drawdown(); as dd) {
+        <div class="bar-track">
+          <div [class]="'bar-fill ' + ddTone()" [style.width.%]="ddWidth()"></div>
+        </div>
+        <div class="pf-sub">
+          plancher {{ money(dd.floor) }}
+          @if (rule(); as r) {
+            · {{ ddKindLabel(r.kind) }}{{ r.locked ? ', figé' : '' }}
+          }
+        </div>
+      } @else if (metrics()?.drawdownUnconfirmed) {
+        <div class="pf-sub">Montant non publié par la firm pour ce plan : aucune marge calculée.</div>
+      } @else {
+        <div class="pf-sub">
+          Aucune règle de drawdown sur ce compte.
+          <a routerLink="/accounts" class="pf-link">Relie-le à son plan</a>
+        </div>
+      }
+    </div>
+
+    <!-- Perte journalière (PREMIUM) selon la règle du plan relié -->
+    @if (dailyLoss(); as dl) {
+      <div class="pf-block" data-testid="live-prop-firm-daily-loss">
+        <div class="pf-row">
+          <span class="pf-lbl">Perte du jour</span>
+          @if (dl.breached) {
+            <span class="pf-val red">limite atteinte</span>
+          } @else {
+            <span [class]="'pf-val ' + dlTone()">{{ money(dl.remaining) }}</span>
+          }
+        </div>
+        <div class="bar-track">
+          <div [class]="'bar-fill ' + dlTone()" [style.width.%]="dlWidth()"></div>
+        </div>
+        <div class="pf-sub">
+          {{ money(dl.used) }} perdus sur {{ money(dl.limit) }} autorisés
+          · {{ dl.breach === 'account_failed' ? 'dépassement = échec du compte' : 'dépassement = trading coupé jusqu’à demain' }}
+          @if (dl.approximate) { · estimation }
+        </div>
+      </div>
+    } @else if (premiumTeaser()) {
+      <button type="button" class="pf-teaser" data-testid="live-prop-firm-premium-teaser" (click)="showPlanModal.set(true)">
+        <span>Perte journalière, alertes avant la casse et anti-tilt</span>
+        <span class="pf-badge">PREMIUM</span>
+      </button>
+    }
+
+    <!-- Alertes Premium : notification système (l'utilisateur regarde sa plateforme) -->
+    @if (userStore.isPremium() && (drawdown() || dailyLoss())) {
+      @switch (alerts.permission()) {
+        @case ('default') {
+          <button type="button" class="pf-notify" data-testid="live-prop-firm-enable-notifications" (click)="alerts.requestPermission()">
+            Activer les notifications d'alerte
+          </button>
+        }
+        @case ('denied') {
+          <p class="pf-note" data-testid="live-prop-firm-notifications-denied">
+            Notifications bloquées par le navigateur : les alertes restent affichées dans l'app.
+          </p>
+        }
+      }
+    }
+
+    <!-- Objectif (évaluation) ou prochain payout (funded) -->
+    @if (objTitle(); as title) {
+      <div class="pf-block" data-testid="live-prop-firm-objective">
+        <div class="pf-row">
+          <span class="pf-lbl">{{ metrics()?.progress?.kind === 'payout' ? 'Payout' : 'Objectif' }}</span>
+          @if (objRatio() !== null) {
+            <span class="pf-val">{{ objWidth() }} %</span>
+          }
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill blue" [class.green]="objWidth() >= 100" [style.width.%]="objWidth()"></div>
+        </div>
+        <div class="pf-sub">{{ title }}</div>
+        <!-- Consistency (PREMIUM) : gain max du jour pour que la journée reste sous la limite -->
+        @if (consistency(); as c) {
+          @if (c.today > c.cap) {
+            <div class="pf-sub red" data-testid="live-prop-firm-consistency">
+              Consistency : ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          } @else {
+            <div class="pf-sub" data-testid="live-prop-firm-consistency">
+              Consistency : encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <p class="pf-note">
+      Estimation MyTradingCoach, pas le calcul officiel de ta firm.
+      @if (brokerAge(); as age) { Relevé {{ age }}. }
+      <a routerLink="/accounts" class="pf-link">Détail des règles</a>
+    </p>
+  } @else {
+    <div class="pf-sub">Chargement du compte…</div>
+  }
+
+  <button type="button" class="pf-manual" data-testid="live-prop-firm-manual" (click)="manualEntry.emit()">
+    Saisir un trade à la main
+  </button>
+</div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}
