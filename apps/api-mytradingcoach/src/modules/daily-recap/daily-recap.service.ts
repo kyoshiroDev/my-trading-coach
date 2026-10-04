@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
+import { PropRiskContextService } from '../accounts/prop-risk-context';
 
 @Injectable()
 export class DailyRecapService {
@@ -13,6 +14,8 @@ export class DailyRecapService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
+    /** Bloc « prop firm » du prompt (#374) ; optionnel pour garder les tests légers. */
+    @Optional() private readonly propRisk?: PropRiskContextService,
   ) {}
 
   async generateRecap(userId: string, date: Date) {
@@ -115,8 +118,15 @@ export class DailyRecapService {
         sessionMap.set(key, existing);
       }
 
+      // Séance prop firm vue en direct (marges, alertes, tilt) : faits déjà calculés (#374).
+      const propContext = (await this.propRisk?.forDay(userId, date).catch((err: unknown) => {
+        this.logger.warn(`Contexte prop firm ignoré : ${(err as Error).message}`);
+        return null;
+      })) ?? null;
+
       try {
         aiOneLiner = await this.ai.generateDailyOneLiner({
+          propContext,
           userId,
           // setup (relation) → titre string attendu par generateDailyOneLiner.
           trades: trades.map((t) => ({ ...t, setup: t.setup?.title })),

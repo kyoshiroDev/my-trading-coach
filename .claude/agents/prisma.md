@@ -334,6 +334,20 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
   pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
 
+## Séances prop firm vues en direct (#373, 2026-10-05)
+
+- `AccountRiskDay` (unique `accountId + tradeDate`, journée de trading CME) : marge drawdown et
+  perte journalière les PLUS BASSES de la séance avec leur heure, plancher au premier et au dernier
+  relevé. Écrit par `PropRiskJournalService.recordReading` à chaque évaluation des alertes
+  (Premium, app ouverte) : lecture puis upsert, le min se calcule côté code.
+- `PropRiskEvent` (index `userId + tradeDate`, `accountId + tradeDate`) : chaque alerte prop firm
+  (`kind` drawdown / daily_loss / consistency / objective / payout, `level` warning / critical /
+  breached / reached) et chaque épisode de tilt (`kind = 'tilt'`, `level` = signal), avec ses
+  chiffres en `data`. `kind` / `level` en TEXT, pas en enum : la liste grandit avec les alertes.
+- Lus par `PropRiskContextService` (bloc « prop firm » des prompts IA, #374). Cascade à la
+  suppression du compte. Pas de seed démo : rien ne les affiche, seule l'IA les lit (le compte
+  démo n'a ni temps réel ni Premium IA).
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`
