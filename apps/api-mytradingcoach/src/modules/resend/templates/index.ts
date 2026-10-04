@@ -57,7 +57,13 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
   <!-- Thème sombre assumé : empêche Apple Mail / iOS d'imposer un fond clair -->
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
-  <style>:root { color-scheme: dark; supported-color-schemes: dark; } body { margin:0; padding:0; background:#080c14; }</style>
+  <style>:root { color-scheme: dark; supported-color-schemes: dark; } body { margin:0; padding:0; background:#080c14; }
+    /* Écran étroit : les stat-cells passent en pile verticale (3 colonnes illisibles sous ~480px) */
+    @media only screen and (max-width: 480px) {
+      .stat-cell-td { display:block !important; width:100% !important; box-sizing:border-box; margin-bottom:8px !important; }
+      .stat-gap { display:none !important; }
+    }
+  </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
   <title>MyTradingCoach</title>
 </head>
@@ -117,10 +123,20 @@ export function card(content: string, accentColor = 'rgba(59,130,246,.3)'): stri
 }
 
 function statCell(value: string, label: string, color = '#e2eaf5'): string {
-  return `<td style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;padding:14px;text-align:center;width:33%;">
-    <div style="${MONO}font-size:22px;font-weight:700;color:${color};line-height:1;margin-bottom:4px;">${value}</div>
+  return `<td class="stat-cell-td" style="background:#0a1220;border:1px solid rgba(99,155,255,.08);border-radius:8px;padding:14px;text-align:center;width:33%;">
+    <div style="${MONO}font-size:22px;font-weight:700;color:${color};line-height:1;margin-bottom:4px;white-space:nowrap;">${value}</div>
     <div style="${FONT}font-size:10px;color:#4a6080;letter-spacing:.5px;text-transform:uppercase;">${label}</div>
   </td>`;
+}
+
+// Ligne de stat-cells : en table pour tous les clients mail, empilée sous 480px (media query d'emailWrapper).
+function statsRow(stats: { value: string; label: string; color?: string }[], margin = '20px 0'): string {
+  const cells = stats.map((s) => statCell(s.value, s.label, s.color)).join('\n        <td class="stat-gap" style="width:4px;"></td>\n        ');
+  return `<table role="presentation" width="100%" cellpadding="4" cellspacing="4" border="0" style="margin:${margin};">
+      <tr>
+        ${cells}
+      </tr>
+    </table>`;
 }
 
 export function cta(text: string, url: string, style: 'primary' | 'secondary' = 'primary'): string {
@@ -167,15 +183,11 @@ export function debriefReadyTemplate(params: {
       Bonjour ${userName || 'Trader'}, ton analyse de la semaine ${weekNumber} vient d'être générée par ton compagnon.
     </p>
 
-    <table width="100%" cellpadding="4" cellspacing="4" border="0" style="margin:20px 0;">
-      <tr>
-        ${statCell(`${winRate.toFixed(1)}%`, 'Win Rate', '#60a5fa')}
-        <td style="width:4px;"></td>
-        ${statCell(pnlStr, 'P&L', pnlColor)}
-        <td style="width:4px;"></td>
-        ${statCell(`${totalTrades}`, 'Trades', '#e2eaf5')}
-      </tr>
-    </table>
+    ${statsRow([
+      { value: `${winRate.toFixed(1)}%`, label: 'Win Rate', color: '#60a5fa' },
+      { value: pnlStr, label: 'P&L', color: pnlColor },
+      { value: `${totalTrades}`, label: 'Trades', color: '#e2eaf5' },
+    ])}
 
     ${divider}
 
@@ -228,15 +240,11 @@ export function dailyRecapTemplate(params: {
       Bonjour ${userName || 'Trader'}, voici le bilan de ta session du jour.
     </p>
 
-    <table width="100%" cellpadding="4" cellspacing="4" border="0" style="margin:0 0 16px 0;">
-      <tr>
-        ${statCell(pnlStr, 'P&L', pnlColor)}
-        <td style="width:4px;"></td>
-        ${statCell(`${winRate.toFixed(0)}%`, 'Win Rate', '#60a5fa')}
-        <td style="width:4px;"></td>
-        ${statCell(`${tradesCount}`, 'Trades', '#e2eaf5')}
-      </tr>
-    </table>
+    ${statsRow([
+      { value: pnlStr, label: 'P&L', color: pnlColor },
+      { value: `${winRate.toFixed(0)}%`, label: 'Win Rate', color: '#60a5fa' },
+      { value: `${tradesCount}`, label: 'Trades', color: '#e2eaf5' },
+    ], '0 0 16px 0')}
 
     ${aiOneLiner ? aiBlock(aiOneLiner) : ''}
 
