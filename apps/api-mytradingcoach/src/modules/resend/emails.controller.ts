@@ -17,7 +17,7 @@ export class EmailsController {
     await this.emails.unsubscribe(token);
     res.type('html').send(
       `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Désinscription</title></head>
-       <body style="margin:0;background:#080c14;font-family:'DM Sans',-apple-system,Arial,sans-serif;color:#e2eaf5;">
+       <body style="margin:0;background:#080c14;font-family:'Inter',-apple-system,Arial,sans-serif;color:#e2eaf5;">
          <div style="max-width:480px;margin:80px auto;padding:32px;background:#0f1824;border:1px solid rgba(99,155,255,.12);border-radius:16px;text-align:center;">
            <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#22d3ee;">MyTradingCoach</div>
            <h1 style="font-size:20px;margin:0 0 12px;">Tu es désinscrit</h1>

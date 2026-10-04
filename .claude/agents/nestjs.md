@@ -1163,7 +1163,8 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   le style du `<body>`) : sans ça, fond blanc sur mobile. **Exception assumée** : l'app Gmail
   iOS en mode sombre inverse toutes les couleurs (l'email sombre devient clair, texte foncé, lisible).
   Décision du 2026-10-04 : on laisse faire, pas de hack `mix-blend-mode` (fragile, texte illisible
-  hors blanc). Apple Mail et Gmail web/PC gardent le fond sombre. CTA primaire unique :
+  hors blanc). Apple Mail et Gmail web/PC gardent le fond sombre. Typo = celle de l'app et de la
+  landing (`FONT` Inter, `BRAND_FONT` Space Grotesk, `MONO` JetBrains Mono). CTA primaire unique :
   `cta()` (dégradé `135deg #3b82f6 → #8b5cf6`), jamais de bouton stylé à la main.
 - **Reçu de paiement** (`invoice.payment_succeeded` → `sendPaymentSucceeded`) : seulement pour les
   renouvellements. Pas pour `billing_reason === 'subscription_create'` (le mail de bienvenue Premium
