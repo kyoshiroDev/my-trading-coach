@@ -63,9 +63,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -120,9 +120,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,
@@ -208,9 +208,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -271,9 +271,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,
@@ -359,9 +359,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -428,9 +428,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,
@@ -508,9 +508,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -557,9 +557,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,
@@ -637,9 +637,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -692,9 +692,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,
@@ -772,9 +772,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": null
         },
@@ -833,9 +833,9 @@
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
-            "news_trading_allowed": null,
+            "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Aucune règle news publiée. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours)."
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
           },
           "payout": {
             "min_days": 3,

@@ -314,7 +314,7 @@ l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 
 ## Catalogue des règles prop firm (PROMPT-136, 2026-10-02)
 
-Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 255 plans au 2026-10-04 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Futures Family, OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
+Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 259 plans au 2026-10-04 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Futures Family, OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
 **miroir** du catalogue JSON `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
 vérité. Ne jamais les modifier à la main ni par une migration de données : la synchro au démarrage
 de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modification.
