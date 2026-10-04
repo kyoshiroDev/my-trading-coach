@@ -597,7 +597,7 @@ aucun en-tête `Keep-Alive`) :
 
 ## Déploiement API sans coupure — blue/green (SCA-B8, 2026-10-04)
 
-**En place sur dev** (2026-10-04) ; **prod prête** (compose, CD, workflow manuel) — transition prod à faire une fois, à la main. Script : `infra/deploy-api.sh <dev|prod> [<sha>]`, lancé par
+**En place sur dev et en prod** (2026-10-04, transition prod faite : voir plus bas). Script : `infra/deploy-api.sh <dev|prod> [<sha>]`, lancé par
 la CI depuis le dépôt cloné sur le VPS. Compose : `api_blue` / `api_green` (`APP_ROLE=web`, mêmes
 labels Traefik → même service) + `worker` (`APP_ROLE=worker`, crons et files, sans route Traefik).
 
@@ -617,7 +617,7 @@ recréé (quelques secondes sans cron) → `:latest` = version en service, 5 ima
   son arrêt propre → 502 (mesuré : 21 s).
 - **Transition** depuis le conteneur unique d'avant B8 (`mtc_api_<env>`) : gérée par le script, mais
   ce conteneur ne sait pas se drainer → arrêté en 2 s, **~2 s d'erreurs une seule fois** → faire le
-  premier déploiement prod à une heure creuse.
+  premier déploiement prod à une heure creuse. **Faite sur dev et en prod** : ne se reproduit plus.
 - Le journal d'accès Traefik n'écrit **pas** le user-agent (`"-"`) : marquer une sonde par l'URL.
 - Sur dev (`NODE_ENV=development`) : pas de cluster, donc pas de crons (comme avant).
 
@@ -627,6 +627,20 @@ révélé deux défauts corrigés avant la PR : sondes non retrouvées (user-age
 arrêt sans drain dans la branche d'abandon (21 s de 502).
 
 ### Prod : transition et retour arrière (SCA-B8-04)
+
+**Transition prod faite le 2026-10-04** (SHA `315607ae`, merge #394) :
+1. Le CD du merge a échoué sur le garde-fou (« transition vers le blue/green non demandée ») —
+   comportement attendu ; Landing/App/Admin étaient déjà déployés, le dépôt du VPS déjà sur le SHA.
+2. Workflow manuel, case transition cochée (run `37215943439`, 16:13 → 16:14 UTC) :
+   `mtc_api_prod` → `mtc_api_prod_blue`, arrêt rapide de l'ancien conteneur (~2 s d'erreurs
+   possibles à 16:14:04), worker healthy.
+3. Relance du job échoué du CD (`gh run rerun <id> --failed`) pour rattraper ce que le workflow
+   manuel ne fait pas (bot Discord, tag `deployed/prod`) : blue → green **sans coupure**, bot
+   reconstruit, `deployed/prod` → `315607ae`.
+
+Depuis : chaque merge sur `main` déploie l'API en blue/green, sans coupure ni action manuelle. Le
+garde-fou ne se déclenche plus (plus de `mtc_api_prod`). **Piège** : après un passage par le workflow
+manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD réussi.
 
 - **CD** (`cd.yml`) : `bash infra/deploy-api.sh prod` après `git reset --hard <sha>`.
 - **Garde-fou de transition** : en prod, tant que le conteneur unique `mtc_api_prod` tourne, le script
@@ -643,5 +657,5 @@ arrêt sans drain dans la branche d'abandon (21 s de 502).
   couleur web (`mtc_api_prod_blue|_green`) + `mtc_api_prod_worker` » ; l'ancien `mtc_api_prod` compte
   pour les deux ; une couleur en drain (`/tmp/drain`) n'est pas une alerte. Compatibles avant et après
   la transition : **les copier dans `/opt/backups/` avant la transition**.
-- Conteneurs prod après transition : `mtc_api_prod_blue` **ou** `_green` (web) + `mtc_api_prod_worker`.
+- Conteneurs prod (depuis la transition) : `mtc_api_prod_blue` **ou** `_green` (web) + `mtc_api_prod_worker`.
   `docker logs` / `docker stats` : viser la couleur en marche (`docker ps | grep mtc_api_prod`).
