@@ -10,6 +10,7 @@ import { TradovateStore } from '@app/core/stores/tradovate.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
 import { PropAlertsService } from '@app/core/services/prop-alerts.service';
+import { AlertSoundService } from '@app/core/services/alert-sound.service';
 import TEMPLATE from './live-prop-firm.component.html?raw';
 
 /** Panneau de suivi prop firm de la session live, sur son VRAI template. */
@@ -52,6 +53,8 @@ function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean;
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
   const tv = { loaded: signal(false), load: vi.fn() };
   const alerts = { permission: signal(opts.permission ?? 'granted'), requestPermission: vi.fn() };
+  const enabled = signal(true);
+  const sound = { enabled, toggle: vi.fn(() => enabled.update((v) => !v)) };
   TestBed.configureTestingModule({
     providers: [
       { provide: SelectedAccountStore, useValue: store },
@@ -59,6 +62,7 @@ function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean;
       { provide: TradovateApi, useValue: tvApi },
       { provide: UserStore, useValue: { isDemo: () => !!opts.demo, isPremium: () => !!opts.premium } },
       { provide: PropAlertsService, useValue: alerts },
+      { provide: AlertSoundService, useValue: sound },
       { provide: TradovateLiveSocketService, useValue: { connected: signal(true) } },
     ],
   });
@@ -72,7 +76,7 @@ function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean;
   const el = fixture.nativeElement as HTMLElement;
   const text = (id: string) => (el.querySelector(`[data-testid="${id}"]`)?.textContent ?? '').replace(/\s+/g, ' ').trim();
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
-  return { fixture, el, text, q, store, tvApi, tv, alerts };
+  return { fixture, el, text, q, store, tvApi, tv, alerts, sound };
 }
 
 describe('Session live — suivi prop firm', () => {
@@ -165,6 +169,22 @@ describe('Session live — suivi prop firm', () => {
     it('sans gain max (hors Premium) : pas de ligne consistency', () => {
       const { q } = setup(metrics(), { premium: false });
       expect(q('live-prop-firm-consistency')).toBeNull();
+    });
+
+    it('Premium : bouton pour couper puis réactiver le son des alertes', () => {
+      const { q, sound, fixture } = setup(metrics(), { premium: true });
+      const btn = q('live-prop-firm-sound')!;
+      expect(btn.getAttribute('aria-pressed')).toBe('true');
+      btn.click();
+      fixture.detectChanges();
+      expect(sound.toggle).toHaveBeenCalled();
+      expect(q('live-prop-firm-sound')!.getAttribute('aria-pressed')).toBe('false');
+      expect(q('live-prop-firm-sound')!.getAttribute('aria-label')).toBe('Activer le son des alertes');
+    });
+
+    it('gratuit : pas de bouton de son (pas d’alertes)', () => {
+      const { q } = setup(metrics(), { premium: false });
+      expect(q('live-prop-firm-sound')).toBeNull();
     });
 
     it('Premium, notifications bloquées : le dit, sans bouton', () => {
