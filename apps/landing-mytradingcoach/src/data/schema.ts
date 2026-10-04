@@ -52,7 +52,7 @@ export const SOFTWARE_APPLICATION = {
       price: monthly,
       priceCurrency: 'EUR',
       priceSpecification: { '@type': 'UnitPriceSpecification', price: monthly, priceCurrency: 'EUR', unitCode: 'MON' },
-      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Weekly Debrief, analytics avancés et comptes illimités avec leurs règles prop firm',
+      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Weekly Debrief, alertes prop firm en direct, anti-tilt, analytics avancés et comptes illimités avec leurs règles prop firm',
     },
   ],
   featureList: [
