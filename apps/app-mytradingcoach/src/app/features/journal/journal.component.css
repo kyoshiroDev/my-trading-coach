@@ -446,7 +446,9 @@
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .content { padding: 12px 12px calc(env(safe-area-inset-bottom) + 12px); padding-top: 70px; gap: 12px; }
-  .filters-bar { flex-direction: column; align-items: stretch; }
+  /* nowrap : avec flex-wrap, chaque ligne prend la largeur de son contenu et le stretch
+     ne borne plus les filtres (997 px sur 390) → plus de scroll interne, la page glissait. */
+  .filters-bar { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
   .filter-chips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .filter-chips::-webkit-scrollbar { display: none; }
   .filter-right { justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; }

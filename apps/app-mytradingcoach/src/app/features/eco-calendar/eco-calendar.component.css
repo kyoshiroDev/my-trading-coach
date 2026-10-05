@@ -287,6 +287,11 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 
 /* Mobile : le tableau devient des cartes empilées (label : valeur) */
 @media (max-width: 768px) {
+  /* 5 pastilles × 80 px min débordaient de 70 px : elles se partagent la largeur. */
+  .eco-day-pills { gap: 6px; }
+  .eco-day-pill { min-width: 0; padding: 10px 4px; }
+  /* Un seul scroll vertical sur mobile : la sélection s'affiche en entier. */
+  .eco-selection-body { max-height: none; overflow-y: visible; }
   .cal thead { display: none; }
   .cal, .cal tbody { display: block; width: 100%; }
   .eco-table-wrap { border: none; background: transparent; }

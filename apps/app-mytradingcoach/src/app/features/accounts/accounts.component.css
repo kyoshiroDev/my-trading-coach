@@ -502,6 +502,10 @@
 }
 
 @media (max-width: 768px) {
+  /* .content scrollait seul sous le topbar, dans .main-content : scroll imbriqué.
+     Sur mobile c'est la page qui défile (le topbar reste sticky). */
+  :host { flex: none; }
+  .content { overflow-y: visible; }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .fld-row { flex-wrap: wrap; }
   .acct-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
