@@ -10,6 +10,7 @@ import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
 import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
 import * as dates from './eco-calendar.dates';
+import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 
@@ -78,12 +79,17 @@ export class EcoCalendarService {
       // FMP retourne directement un tableau (pas d'objet wrapper)
       const data = (await response.json()) as FmpEcoEvent[];
 
-      // Garder uniquement Medium et High
-      const filtered = data.filter((e) => ['High', 'Medium'].includes(e.impact));
+      // Tri façon ForexFactory : devises majeures, sans bruit, impact selon nos règles.
+      const filtered = data
+        .map((e) => ({
+          e,
+          impact: classifyEcoEvent({ name: e.event, currency: e.currency, country: e.country, fmpImpact: e.impact }),
+        }))
+        .filter((x): x is { e: FmpEcoEvent; impact: EcoImpact } => x.impact !== null);
 
       const upserted: EcoEvent[] = [];
 
-      for (const e of filtered) {
+      for (const { e, impact } of filtered) {
         const eventTimeUTC = e.date
           ? new Date(e.date.replace(' ', 'T') + 'Z')
           : null;
@@ -103,7 +109,7 @@ export class EcoCalendarService {
           name: e.event,
           country: e.country,
           currency: e.currency,
-          impact: e.impact === 'High' ? 'high' : 'medium',
+          impact,
           actual,
           estimate: e.estimate ?? null,
           previous: e.previous ?? null,
@@ -252,7 +258,17 @@ export class EcoCalendarService {
       now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    return rows.map((r) => {
+    // Même tri qu'à l'ingestion : les lignes stockées avant ces règles (Brésil, CFTC…)
+    // disparaissent sans attendre un nouveau fetch. `r.name` = libellé FMP anglais.
+    const kept = rows.flatMap((r) => {
+      const impact = classifyEcoEvent({
+        name: r.name, currency: r.currency, country: r.country,
+        fmpImpact: r.impact === 'high' ? 'High' : 'Medium',
+      });
+      return impact ? [{ r, impact }] : [];
+    });
+
+    return kept.map(({ r, impact }) => {
       // r.time est stocké en heure Paris (HH:MM) : reconstruire pour comparaison
       const eventDateTime = new Date(`${r.date}T${r.time}:00`);
       // Un `actual` sur un event à venir est une donnée FMP erronée : masqué jusqu'à l'heure.
@@ -261,7 +277,7 @@ export class EcoCalendarService {
       return {
         time: r.time,
         name: r.nameFr ?? r.name,
-        impact: r.impact as 'high' | 'medium',
+        impact,
         country: r.country,
         currency: r.currency,
         actual,

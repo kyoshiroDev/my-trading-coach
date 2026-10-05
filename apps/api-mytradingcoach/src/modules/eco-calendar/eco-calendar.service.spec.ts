@@ -159,7 +159,7 @@ describe('EcoCalendarService', () => {
         json: vi.fn().mockResolvedValue([
           makeFmpEvent({ impact: 'High' }),
           makeFmpEvent({ event: 'Holiday Notice', impact: 'Low' }),
-          makeFmpEvent({ event: 'PMI Flash', impact: 'Medium', currency: 'EUR' }),
+          makeFmpEvent({ event: 'PMI Flash', impact: 'Medium', currency: 'EUR', country: 'EU' }),
         ]),
       }));
       mockPrisma.ecoEvent.upsert.mockImplementation(({ create }) => Promise.resolve({ ...create, id: 'id-1' }));
@@ -281,7 +281,7 @@ describe('EcoCalendarService', () => {
       const future = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
       mockPrisma.ecoEvent.findMany.mockResolvedValue([
         {
-          date: future, time: '14:00', name: 'Inflation Rate YoY', country: 'BR', currency: 'BRL',
+          date: future, time: '14:30', name: 'CPI YoY', country: 'US', currency: 'USD',
           impact: 'high', actual: 4.47, estimate: 4.4, previous: 4.22, isReleased: false, unit: '%',
         },
       ]);
@@ -291,6 +291,21 @@ describe('EcoCalendarService', () => {
       expect(ev.actual).toBeNull();
       expect(ev.isReleased).toBe(false);
       expect(ev.estimate).toBe(4.4);
+    });
+
+    it('tri façon ForexFactory : écarte les lignes déjà stockées hors règles et recalcule l\'impact', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([
+        { date: '2026-05-26', time: '14:00', name: 'Inflation Rate YoY', nameFr: null, country: 'BR', currency: 'BRL',
+          impact: 'high', actual: null, estimate: 4.4, previous: 4.2, isReleased: false, unit: '%' },
+        { date: '2026-05-26', time: '21:30', name: 'CFTC Gold speculative net positions', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'medium', actual: null, estimate: null, previous: 218.6, isReleased: false, unit: 'K' },
+        { date: '2026-05-26', time: '16:00', name: 'ISM Services PMI', nameFr: 'PMI services ISM', country: 'US',
+          currency: 'USD', impact: 'high', actual: null, estimate: 55, previous: 55.4, isReleased: false, unit: null },
+      ]);
+
+      const result = await service.getEventsFromDb('2026-05-26');
+
+      expect(result.map((e) => [e.name, e.impact])).toEqual([['PMI services ISM', 'medium']]);
     });
   });
 

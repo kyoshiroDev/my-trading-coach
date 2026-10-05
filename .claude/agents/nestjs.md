@@ -1497,5 +1497,16 @@ Règles :
 - Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
   appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
   polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
-- Limites connues, non corrigées ici : FMP publie des doublons sous deux noms (« Current Account » à deux
-  dates) et classe en « Medium » bien plus large que ForexFactory (~90 events/semaine contre ~10).
+- **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
+  ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
+  JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
+  immobiliers, balance courante, stocks EIA hors brut…) ; impact **fort = nos règles** (NFP, CPI, PCE,
+  PIB trimestriel, ventes au détail, ISM manuf., taux directeurs, FOMC, gouverneurs), y compris quand
+  FMP dit Low ; le reste jugé High/Medium par FMP = moyen ; Low = écarté. ~90 → ~25 annonces/semaine.
+  Une annonce manquante ou mal classée = une règle à ajouter dans `HIGH`/`NOISE` + un cas dans
+  `eco-calendar.impact.spec.ts`.
+- `EcoEvent` est **partagé** (pas de `userId`) : le seed démo n'y écrit plus de faux events quand
+  `FMP_API_KEY` est défini (il épingle 2 vraies annonces du jour). Avant, ses 4 faux events (« CPI US »
+  fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
+  `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
+  `readUserPins` vidait la sélection démo).
