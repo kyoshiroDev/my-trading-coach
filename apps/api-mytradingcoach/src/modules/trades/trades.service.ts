@@ -118,7 +118,9 @@ export class TradesService {
         executionGrade,
         executionMethod,
         userId,
-        sessionId: activeSession?.id ?? null,
+        // 1 session = 1 compte : un trade d'un autre compte (synchro broker) n'entre pas
+        // dans la session active, sinon il gonfle son P&L (#457).
+        sessionId: activeSession && activeSession.accountId === accountId ? activeSession.id : null,
         accountId,
         tradedAt: dto.tradedAt ? new Date(dto.tradedAt) : new Date(),
         // Renseigné par l'import uniquement : c'est lui qui porte la contrainte

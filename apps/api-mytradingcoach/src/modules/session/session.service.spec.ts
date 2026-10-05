@@ -109,6 +109,28 @@ describe('SessionService', () => {
       );
       expect(result).toHaveLength(2);
     });
+
+    it('session active → seulement les trades de son compte (#457)', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({ accountId: 'acc-session' });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.getTodayTrades('user-1');
+
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ userId: 'user-1', accountId: 'acc-session' }),
+        }),
+      );
+    });
+
+    it('sans session active → tous les comptes', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.getTodayTrades('user-1');
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).not.toHaveProperty('accountId');
+    });
   });
 
   describe('getLiveStats', () => {
@@ -172,6 +194,25 @@ describe('SessionService', () => {
           }),
         }),
       );
+    });
+
+    it("n'inclut que les trades du compte de la session (#457)", async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({
+        startedAt: new Date('2026-10-05T13:24:00.000Z'),
+        accountId: 'acc-tradeify',
+      });
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.trade.findMany.mockResolvedValue([makeTrade({ pnl: 330, commission: 26.6 })]);
+      mockPrisma.tradeSession.update.mockResolvedValue({ id: 'session-1' });
+
+      await service.closeSession('user-1', 'session-1', 'CONFIDENT');
+
+      expect(mockPrisma.trade.updateMany.mock.calls[0][0].where).toMatchObject({ accountId: 'acc-tradeify' });
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toMatchObject({
+        sessionId: 'session-1',
+        accountId: 'acc-tradeify',
+      });
+      expect(mockPrisma.tradeSession.update.mock.calls[0][0].data.totalPnl).toBe(303.4);
     });
 
     it('lance NotFoundException si la session est introuvable', async () => {

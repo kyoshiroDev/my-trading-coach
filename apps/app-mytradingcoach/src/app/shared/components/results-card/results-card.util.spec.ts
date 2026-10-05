@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  debriefStats,
   canPublishResults,
   hasResultsToShare,
   moodDisplay,
@@ -40,6 +41,15 @@ describe('results-card.util', () => {
     expect(hasResultsToShare({ tradesCount: 3, totalPnl: 0 })).toBe(false);
     expect(hasResultsToShare({ tradesCount: 3, totalPnl: -120 })).toBe(true);
     expect(hasResultsToShare({ tradesCount: 1, totalPnl: 42 })).toBe(true);
+  });
+
+  it('chiffres : ceux de la session clôturée, pas la journée entière (#457)', () => {
+    const today = { totalPnl: 403.46, winRate: 86.4, tradesCount: 22 };
+    const closed = { status: 'CLOSED', totalPnl: 303.4, winRate: 85.7, totalTrades: 14 };
+    expect(debriefStats(closed, today)).toEqual({ totalPnl: 303.4, winRate: 85.7, tradesCount: 14 });
+    expect(debriefStats({ ...closed, status: 'ACTIVE' }, today)).toBe(today);
+    expect(debriefStats({ ...closed, totalPnl: null }, today)).toBe(today);
+    expect(debriefStats(null, null)).toBeNull();
   });
 
   it('humeur : même emoji que le sélecteur du débrief, Neutre par défaut', () => {

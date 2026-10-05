@@ -72,9 +72,11 @@ export class SessionService {
   ) {
     const existing = await this.prisma.tradeSession.findFirst({
       where: { id: sessionId, userId },
-      select: { startedAt: true },
+      select: { startedAt: true, accountId: true },
     });
     if (!existing) throw new NotFoundException('Session introuvable');
+    // 1 session = 1 compte : les trades d'un autre compte n'y entrent pas (#457).
+    const sameAccount = existing.accountId ? { accountId: existing.accountId } : {};
 
     // Fenêtre du jour de la session (même base de date que getLiveStats / Débrief)
     const dayStart = new Date(existing.startedAt);
@@ -84,12 +86,12 @@ export class SessionService {
 
     // Rattacher les trades du jour encore non liés à cette session
     await this.prisma.trade.updateMany({
-      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lte: dayEnd } },
+      where: { userId, sessionId: null, tradedAt: { gte: dayStart, lte: dayEnd }, ...sameAccount },
       data: { sessionId },
     });
 
     const trades = await this.prisma.trade.findMany({
-      where: { userId, sessionId },
+      where: { userId, sessionId, ...sameAccount },
       select: { pnl: true, commission: true, asset: true },
       orderBy: { tradedAt: 'asc' },
     });
@@ -266,8 +268,19 @@ export class SessionService {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
+    // 1 session = 1 compte : pendant une session, seuls les trades de son compte comptent
+    // (un trade synchronisé sur un autre compte gonflait le P&L de la carte, #457).
+    const active = await this.prisma.tradeSession.findFirst({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { accountId: true },
+    });
+
     return this.prisma.trade.findMany({
-      where: { userId, tradedAt: { gte: startOfDay } },
+      where: {
+        userId,
+        tradedAt: { gte: startOfDay },
+        ...(active?.accountId ? { accountId: active.accountId } : {}),
+      },
       orderBy: { tradedAt: 'desc' },
     });
   }

@@ -75,8 +75,11 @@ GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
-GET    /api/session/today/trades       JWT → trades du jour
-GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades)
+GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
+GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
+# 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
+# broker, rattachement à la clôture) que s'il est sur SON compte ; la clôture ne compte que ces
+# trades. Le débrief et la carte « Publier » lisent les totaux de la session clôturée.
 POST   /api/session/trades/:id/close   JWT → clôturer un trade (exitPrice → détection SL/TP/Manuel)
 
 GET    /api/eco-calendar/today         PREMIUM → events du jour + analyse IA (cache Redis 1h)
