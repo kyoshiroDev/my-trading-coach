@@ -9,6 +9,7 @@ import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generat
 import { PROFILE, isoWeek, setupRanking, usd } from './demo-data/reports';
 import { tradingDay } from '../accounts/account-rules';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
+import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
 
 
 /**
@@ -271,28 +272,19 @@ export async function seedTradingData(
     debriefs++;
   }
 
-  // Calendrier éco du jour + 2 favoris épinglés (agenda pré-session + live). Upsert idempotent.
+  // Calendrier éco du jour + 2 favoris épinglés (agenda pré-session + live).
+  // `EcoEvent` est PARTAGÉ par tous les users : avec FMP branché (prod, dev), la démo lit le vrai
+  // calendrier et épingle 2 de ses annonces. Les faux events n'existent que sans FMP (local,
+  // tests) ; avant, ils étaient injectés chaque nuit dans le calendrier de tout le monde
+  // (« CPI US » fantôme du lundi, « Balance courante » en double…).
   const today = now.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-  const ecoEvents = [
-    { time: '01:50', name: 'Balance courante', currency: 'JPY', country: 'JP', impact: 'medium', actual: 1.2, estimate: 1.0, previous: 0.9, unit: 'T¥' },
-    { time: '09:00', name: 'PMI manufacturier', currency: 'EUR', country: 'EU', impact: 'medium', actual: 49.2, estimate: 49.0, previous: 48.8, unit: null },
-    { time: '14:30', name: 'Inflation CPI (US)', currency: 'USD', country: 'US', impact: 'high', actual: 3.1, estimate: 3.2, previous: 3.4, unit: '%' },
-    { time: '16:00', name: 'Discours BCE', currency: 'EUR', country: 'EU', impact: 'high', actual: null, estimate: null, previous: null, unit: null },
-  ];
-  for (const e of ecoEvents) {
-    const data = {
-      time: e.time, nameFr: e.name, country: e.country, impact: e.impact,
-      actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: e.actual !== null, unit: e.unit,
-    };
-    await prisma.ecoEvent.upsert({
-      where: { date_name_currency: { date: today, name: e.name, currency: e.currency } },
-      update: data,
-      create: { date: today, name: e.name, currency: e.currency, ...data },
-    });
-  }
+  const pinnedEcoEvents = process.env['FMP_API_KEY']
+    ? await pickRealEcoPins(prisma, today)
+    : await seedFakeEcoEvents(prisma, today);
   await prisma.user.update({
     where: { id: user.id },
-    data: { pinnedEcoEvents: ['Inflation CPI (US):USD', 'Discours BCE:EUR'] },
+    // Sans la date du jour, readUserPins jugeait la sélection expirée et la vidait aussitôt.
+    data: { pinnedEcoEvents, pinnedEcoDate: today },
   });
 
   // Compte Apex « Connecté » à Tradovate (vitrine de la connexion broker) : aucun vrai token, le compte démo
@@ -364,6 +356,45 @@ export async function seedTradingData(
     sessions: days.filter((d) => d.trades.length).length, recaps, debriefs, accounts: DEMO_ACCOUNTS.length,
     bySetup: stats.bySetup, byAccount: stats.byAccount,
   };
+}
+
+/** Épingles démo = les 2 annonces les plus fortes du vrai calendrier du jour (clé affichée `nom:devise`). */
+async function pickRealEcoPins(prisma: PrismaClient, today: string): Promise<string[]> {
+  const rows = await prisma.ecoEvent.findMany({ where: { date: today }, orderBy: { time: 'asc' } });
+  return rows
+    .map((r) => ({
+      r,
+      impact: classifyEcoEvent({
+        name: r.name, currency: r.currency, country: r.country,
+        fmpImpact: r.impact === 'high' ? 'High' : 'Medium',
+      }),
+    }))
+    .filter((x) => x.impact !== null)
+    .sort((a, b) => Number(b.impact === 'high') - Number(a.impact === 'high'))
+    .slice(0, 2)
+    .map(({ r }) => `${r.nameFr ?? r.name}:${r.currency}`);
+}
+
+/** Sans FMP (local, tests) : un faux calendrier du jour, aux libellés FMP anglais, pour que la démo reste peuplée. */
+async function seedFakeEcoEvents(prisma: PrismaClient, today: string): Promise<string[]> {
+  const ecoEvents = [
+    { time: '01:30', name: 'Tokyo CPI YoY', nameFr: 'Inflation Tokyo', currency: 'JPY', country: 'JP', impact: 'medium', actual: 2.5, estimate: 2.4, previous: 2.6, unit: '%' },
+    { time: '10:00', name: 'HCOB Manufacturing PMI', nameFr: 'PMI manufacturier', currency: 'EUR', country: 'EU', impact: 'medium', actual: 49.2, estimate: 49.0, previous: 48.8, unit: null },
+    { time: '14:30', name: 'CPI YoY', nameFr: 'Inflation CPI (US)', currency: 'USD', country: 'US', impact: 'high', actual: 3.1, estimate: 3.2, previous: 3.4, unit: '%' },
+    { time: '16:00', name: 'ECB President Lagarde Speech', nameFr: 'Discours de Lagarde (BCE)', currency: 'EUR', country: 'EU', impact: 'high', actual: null, estimate: null, previous: null, unit: null },
+  ];
+  for (const e of ecoEvents) {
+    const data = {
+      time: e.time, nameFr: e.nameFr, country: e.country, impact: e.impact,
+      actual: e.actual, estimate: e.estimate, previous: e.previous, isReleased: e.actual !== null, unit: e.unit,
+    };
+    await prisma.ecoEvent.upsert({
+      where: { date_name_currency: { date: today, name: e.name, currency: e.currency } },
+      update: data,
+      create: { date: today, name: e.name, currency: e.currency, ...data },
+    });
+  }
+  return ['Inflation CPI (US):USD', 'Discours de Lagarde (BCE):EUR'];
 }
 
 // Réexports : API publique historique de ce module (cron, service, spec, script).
