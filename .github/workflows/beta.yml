@@ -82,7 +82,8 @@ jobs:
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
-      - name: rsync Angular beta → VPS
-        run: |
-          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-beta/
+      # Release /opt/static/app-beta/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Angular beta → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh app-beta dist/apps/app-mytradingcoach/browser/ ${{ github.sha }}
