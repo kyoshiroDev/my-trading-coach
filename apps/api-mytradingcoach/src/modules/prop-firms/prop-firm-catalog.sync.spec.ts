@@ -58,7 +58,7 @@ describe('toRows', () => {
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
     expect(plans).toHaveLength(255);
-    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-02T00:00:00Z'));
+    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-05T00:00:00Z'));
   });
 
   it('mappe les colonnes de requête et garde les règles au format du catalogue', () => {
@@ -73,6 +73,12 @@ describe('toRows', () => {
     expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
     const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
     expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
+    // Scaling Legacy en PA (support Apex, 2026-10-05) : moitié arrondie à l'inférieur jusqu'au safety net.
+    const pa150 = (plans.find((p) => p.id === 'apex-legacy-150k')!.phases as { phase: string; max_contracts: { tiers: unknown } }[]).find((p) => p.phase === 'funded')!;
+    expect(pa150.max_contracts.tiers).toEqual([
+      { min_profit: 0, max_profit: 5100, minis: 8, micros: 80 },
+      { min_profit: 5101, max_profit: null, minis: 17, micros: 170 },
+    ]);
   });
 
   it('relevé du 2026-10-03 : valeurs clés des 4 nouvelles firms', () => {
