@@ -524,6 +524,7 @@
   display: flex; align-items: center; gap: 8px;
   background: var(--bg-3); border: 1px solid var(--border);
   border-radius: 8px; padding: 6px 12px; flex: 1; transition: border-color .15s;
+  min-width: 0; /* sinon un libellé long pousse le bouton × hors écran (l'ellipse ne joue pas) */
 }
 .asset-chip.is-fav { border-color: rgba(245,158,11,.3); }
 
@@ -604,7 +605,7 @@
 .profile-grid-2 { display: grid; grid-template-columns: 1.05fr 1fr; gap: 24px; align-items: start; }
 .pcol { display: flex; flex-direction: column; }
 @media (max-width: 1024px) {
-  .profile-grid-trader, .profile-grid-2 { grid-template-columns: 1fr; }
+  .profile-grid-trader, .profile-grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Stratégie — vue résumé */
