@@ -2,9 +2,22 @@
   <div class="pf-title">
     <svg [lucideIcon]="ShieldIcon" [size]="14" class="ct-ic"></svg>
     Suivi du compte
-    @if (live.connected()) {
-      <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
-    }
+    <span class="pf-title-end">
+      @if (live.connected()) {
+        <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
+      }
+      <!-- Son des alertes et de l'anti-tilt (Premium) : coupable, préférence de cet appareil -->
+      @if (userStore.isPremium()) {
+        <button type="button" class="pf-sound" data-testid="live-prop-firm-sound"
+                [class.is-off]="!sound.enabled()"
+                [attr.aria-pressed]="sound.enabled()"
+                [attr.aria-label]="sound.enabled() ? 'Couper le son des alertes' : 'Activer le son des alertes'"
+                [title]="sound.enabled() ? 'Couper le son des alertes' : 'Activer le son des alertes'"
+                (click)="sound.toggle()">
+          <svg [lucideIcon]="sound.enabled() ? BellIcon : BellOffIcon" [size]="14"></svg>
+        </button>
+      }
+    </span>
   </div>
 
   @if (account(); as a) {

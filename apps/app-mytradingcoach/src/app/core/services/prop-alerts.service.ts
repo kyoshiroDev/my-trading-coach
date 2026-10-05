@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { formatMoney } from '@mtc/shared';
 import { ToastService } from './toast.service';
+import { AlertSoundService } from './alert-sound.service';
 
 /** Événement `prop:alert` du canal `/tradovate-live` (cf. API `PropAlertsService`, #370). */
 export interface PropAlertEvent {
@@ -99,6 +100,7 @@ export function propAlertMessage(e: PropAlertEvent): string {
 @Injectable({ providedIn: 'root' })
 export class PropAlertsService {
   private readonly toast = inject(ToastService);
+  private readonly sound = inject(AlertSoundService);
 
   readonly permission = signal<Permission>(this.readPermission());
 
@@ -109,6 +111,7 @@ export class PropAlertsService {
     if (e.level === 'reached') this.toast.success(message, { duration: null });
     else if (e.level === 'warning') this.toast.warning(message);
     else this.toast.error(message, { duration: null });
+    this.sound.play(e.level === 'reached' ? 'reached' : e.level === 'warning' ? 'warning' : 'critical');
     this.notify(e, message);
   }
 
@@ -116,6 +119,7 @@ export class PropAlertsService {
   handleTilt(e: TiltAlertEvent): void {
     const message = tiltMessage(e);
     this.toast.warning(message, { duration: TILT_TOAST_MS });
+    this.sound.play('tilt');
     this.show('MyTradingCoach · pause ?', message, `${e.accountId}:tilt:${e.signal}`);
   }
 

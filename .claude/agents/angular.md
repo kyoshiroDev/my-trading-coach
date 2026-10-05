@@ -153,6 +153,12 @@ la maquette design (« The Terminal »).
   Anti-tilt (#371) : `tilt:alert` → `PropAlertsService.handleTilt` : toast `warning` de 15 s
   (non bloquant, une question, jamais un ordre), humeur de pré-session citée seulement si
   « fatigué » / « stressé », notification « pause ? ».
+  **Son** (`AlertSoundService`, core/services) : motif Web Audio généré (aucun fichier) par
+  gravité — `tilt` grave et doux, `warning` deux bips, `critical` (critique ou dépassé) trois bips
+  aigus, `reached` arpège montant. Activé par défaut, bouton cloche du panneau de la session live
+  (Premium) pour le couper ; préférence de l'appareil en `localStorage` (`mtc.alertSound`).
+  Autoplay : le contexte audio se débloque au premier clic / touche de la page ; avant, l'alerte
+  reste silencieuse (toast et notification s'affichent quand même).
 - **Onglet Débrief** (inline dans session-day) : 4 stats · analyse (mood fin, score de
   discipline, meilleur/pire trade, émotions, objectifs) · journal pleine hauteur à droite.
 

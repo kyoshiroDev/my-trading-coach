@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PropAlertsService, TILT_TOAST_MS, propAlertMessage, tiltMessage, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
 import { ToastService } from './toast.service';
+import { AlertSoundService } from './alert-sound.service';
 
 const ev = (p: Partial<PropAlertEvent> = {}): PropAlertEvent => ({
   accountId: 'a', accountLabel: 'Apex 50k', currency: 'USD', kind: 'drawdown', level: 'warning',
@@ -70,8 +71,11 @@ describe('PropAlertsService.handle', () => {
 
   function setup() {
     const toast = { warning: vi.fn(), error: vi.fn(), success: vi.fn() };
-    TestBed.configureTestingModule({ providers: [{ provide: ToastService, useValue: toast }] });
-    return { svc: TestBed.inject(PropAlertsService), toast };
+    const sound = { play: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [{ provide: ToastService, useValue: toast }, { provide: AlertSoundService, useValue: sound }],
+    });
+    return { svc: TestBed.inject(PropAlertsService), toast, sound };
   }
 
   beforeEach(() => {
@@ -107,6 +111,16 @@ describe('PropAlertsService.handle', () => {
     svc.handleTilt(tilt());
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('trade repris'), { duration: TILT_TOAST_MS });
     expect(notifications[0]).toEqual({ title: 'MyTradingCoach · pause ?', opts: expect.objectContaining({ tag: 'a:tilt:revenge' }) });
+  });
+
+  it('un son par gravité : avertissement, critique ou dépassé, bonne nouvelle, anti-tilt', () => {
+    const { svc, sound } = setup();
+    svc.handle(ev());
+    svc.handle(ev({ level: 'critical' }));
+    svc.handle(ev({ level: 'breached' }));
+    svc.handle(ev({ kind: 'payout', level: 'reached' }));
+    svc.handleTilt(tilt());
+    expect(sound.play.mock.calls.map((c) => c[0])).toEqual(['warning', 'critical', 'critical', 'reached', 'tilt']);
   });
 
   it('notifications non autorisées : toast seulement', () => {
