@@ -126,8 +126,9 @@ describe('TradovateConnectionService.getAccessToken', () => {
     it('un autre worker a renouvelé pendant l’attente → on prend SON token, sans rappeler Tradovate', async () => {
       const { service, api, prisma, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() - 1000) });
       api.refresh.mockRejectedValue(refusé());
-      // Relecture : la base porte déjà un access token frais, posé par un autre worker du cluster.
-      prisma.brokerConnection.findUnique.mockResolvedValue(
+      // 1re lecture (sous verrou) : rien n'a bougé. 2e (après l'attente) : la base porte un access
+      // token frais, posé par un autre worker du cluster.
+      prisma.brokerConnection.findUnique.mockResolvedValueOnce(conn).mockResolvedValue(
         makeConn({
           accessTokenEnc: encryptToken('AT-AUTRE-WORKER', key),
           accessTokenExpiresAt: new Date(Date.now() + 75 * 60_000),
@@ -136,6 +137,33 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
       await expect(service.getAccessToken(conn)).resolves.toBe('AT-AUTRE-WORKER');
       expect(api.refresh).toHaveBeenCalledTimes(1); // pas de 2e appel : inutile
+    });
+
+    it('objet périmé (lu avant une rotation) → token relu en base, AUCUN refresh présenté (prod 2026-10-05)', async () => {
+      // `refreshClosings` repassait l'objet lu au début de la synchro : ancienne échéance, ancien
+      // refresh_token. Le présenter, déjà remplacé, se fait refuser — et coûte le token neuf.
+      const { service, api, prisma, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      prisma.brokerConnection.findUnique.mockResolvedValue(
+        makeConn({
+          accessTokenEnc: encryptToken('AT-APRES-ROTATION', key),
+          refreshTokenEnc: encryptToken('RT-2', key),
+          accessTokenExpiresAt: new Date(Date.now() + 80 * 60_000),
+        }),
+      );
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-APRES-ROTATION');
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+
+    it('relecture inchangée sauf le refresh_token → c’est le refresh_token RELU qui est présenté', async () => {
+      const { service, api, prisma, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      prisma.brokerConnection.findUnique.mockResolvedValue(
+        makeConn({ refreshTokenEnc: encryptToken('RT-RELU', key), accessTokenExpiresAt: new Date(Date.now() - 1000) }),
+      );
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-3' });
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
+      expect(api.refresh).toHaveBeenCalledWith('RT-RELU');
     });
 
     it('marge de 40 min : un token qui expire dans 30 min est renouvelé AVANT sa mort', async () => {

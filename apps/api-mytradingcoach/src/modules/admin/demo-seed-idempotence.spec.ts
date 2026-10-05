@@ -422,6 +422,40 @@ describe('seedDemo — connexion Tradovate démo', () => {
   });
 });
 
+describe('seedDemo — calendrier éco partagé', () => {
+  const ecoWrites = (calls: Call[]) => calls.filter((c) => c.model === 'ecoEvent' && c.op !== 'findMany');
+  const pinsUpdate = (calls: Call[]) =>
+    calls.find((c) => c.model === 'user' && c.op === 'update' && 'pinnedEcoEvents' in (c.args['data'] as object));
+
+  it('avec FMP branché : aucune écriture dans EcoEvent (partagé par tous les users)', async () => {
+    const prev = process.env['FMP_API_KEY'];
+    process.env['FMP_API_KEY'] = 'test-key';
+    try {
+      const calls: Call[] = [];
+      await seedDemo(fakePrisma(calls).prisma);
+      expect(ecoWrites(calls)).toHaveLength(0);
+      expect((pinsUpdate(calls)?.args['data'] as Record<string, unknown>)['pinnedEcoDate']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    } finally {
+      if (prev === undefined) delete process.env['FMP_API_KEY']; else process.env['FMP_API_KEY'] = prev;
+    }
+  });
+
+  it('sans FMP (local) : faux calendrier du jour et épingles datées du jour', async () => {
+    const prev = process.env['FMP_API_KEY'];
+    delete process.env['FMP_API_KEY'];
+    try {
+      const calls: Call[] = [];
+      await seedDemo(fakePrisma(calls).prisma);
+      expect(ecoWrites(calls).length).toBeGreaterThan(0);
+      const data = pinsUpdate(calls)?.args['data'] as Record<string, unknown>;
+      expect(data['pinnedEcoEvents']).toHaveLength(2);
+      expect(data['pinnedEcoDate']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    } finally {
+      if (prev !== undefined) process.env['FMP_API_KEY'] = prev;
+    }
+  });
+});
+
 describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant parfait', () => {
   const net = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
   const dayKey = (t: Record<string, unknown>) => (t['tradedAt'] as Date).toDateString();

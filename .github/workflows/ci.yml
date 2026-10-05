@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [main, dev, beta]
 
+# Groupe séparé par événement : une PR mergée avant le démarrage de son run (promotion dev → main
+# en quelques secondes) perd sa ref refs/pull/N/merge et hérite de refs/heads/main. Dans un groupe
+# commun, elle annulait alors le CI du push sur main, donc le CD (constaté le 2026-10-05, #441).
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

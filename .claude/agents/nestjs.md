@@ -883,6 +883,14 @@ sont en direct.
     depuis la lecture (`renewedElsewhere`) — PAS un access token simplement loin de son échéance :
     le cron de maintien choisit sur l'échéance du refresh_token, et prenait un token inchangé pour
     un renouvellement (faux « déjà renouvelé ailleurs », prod 2026-10-05).
+  - ⚠️ **Jamais d'objet `conn` périmé jusqu'au refresh** (correctif du 2026-10-05). `refreshWithRetry`
+    **relit la connexion sous le verrou de login**, avant tout appel : déjà renouvelée (`renewedElsewhere`)
+    → token relu, aucun appel ; sinon c'est le refresh_token RELU qui part. Cause : `refreshClosings`
+    repassait l'objet lu au début de `sync()`, après la rotation faite par `run()` → refresh_token
+    déjà remplacé présenté (refusé), et le token neuf refusé à son tour juste après (2 connexions
+    prod perdues, refresh_token pourtant non échu — Tradovate semble révoquer la lignée sur
+    réutilisation, non documenté). Tout appelant qui enchaîne plusieurs `getSession` après une
+    étape qui a pu renouveler relit quand même la connexion (`topUpCurrentMonth`, `refreshClosings`).
   - ⚠️ **Refresh_token mort, renew vivant** (correctif du 2026-10-05 : 42 refus `invalid_token` en
     7 h sur 4 connexions prod). `renew` prolonge l'access token mais **ne fait pas tourner le
     refresh_token** : le token refusé restait en base et repartait 2 fois à chaque passage. Après
@@ -1485,3 +1493,31 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
+
+- FMP renvoie parfois un `actual` sur un event **encore à venir** (inflation brésilienne du vendredi
+  « publiée » le lundi). `fetchAndStoreEvents` ne stocke un `actual` que si l'heure UTC est passée, et
+  `getEventsFromDb` le masque aussi à la lecture (lignes déjà en base). `isReleased` = `actual !== null`
+  après ce filtre.
+- L'upsert resynchronise heure, impact, prévision, précédent, unité et `actual` (pas seulement `actual`) :
+  FMP révise ses prévisions après coup. La clé reste `(date, name, currency)`.
+- Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
+  appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
+  polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
+  ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
+  JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
+  immobiliers, balance courante, stocks EIA hors brut…) ; impact **fort = nos règles** (NFP, CPI, PCE,
+  PIB trimestriel, ventes au détail, ISM manuf., taux directeurs, FOMC, gouverneurs), y compris quand
+  FMP dit Low ; le reste jugé High/Medium par FMP = moyen ; Low = écarté. Écartés aussi : discours des
+  membres non gouverneurs (`SPEECH` sans `GOVERNORS`), exports/imports, PMI construction, WASDE…, et
+  `KEEP_ONLY_FOR` (balance commerciale hors CNY, production industrielle hors GBP/CNY, ventes au détail,
+  chômage et confiance des ménages hors devises où FF les montre). Semaine du 5/10 : ~90 → ~15 annonces.
+  Une annonce manquante ou mal classée = une règle à ajouter dans `HIGH`/`NOISE` + un cas dans
+  `eco-calendar.impact.spec.ts`.
+- `EcoEvent` est **partagé** (pas de `userId`) : le seed démo n'y écrit plus de faux events quand
+  `FMP_API_KEY` est défini (il épingle 2 vraies annonces du jour). Avant, ses 4 faux events (« CPI US »
+  fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
+  `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
+  `readUserPins` vidait la sélection démo).
