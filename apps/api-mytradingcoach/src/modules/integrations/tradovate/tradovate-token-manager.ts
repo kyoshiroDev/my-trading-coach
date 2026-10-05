@@ -6,7 +6,7 @@ import type { TradovateApiClient } from './tradovate-api.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import type { TradovateApiHosts, TradovateOAuthTokenResponse } from './tradovate.types';
 import type { TradovateLocks } from './tradovate-locks';
-import { REFRESH_MARGIN_MS, REFRESH_RETRY_DELAY_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
+import { REFRESH_DEAD_RETRY_S, REFRESH_MARGIN_MS, REFRESH_RETRY_DELAY_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
 import { API_HOSTS_TTL_MS, describeHosts, parseApiHosts } from './tradovate-hosts';
 
 /** Colonnes de tokens chiffrés d'une connexion, prêtes à écrire en base. */
@@ -139,13 +139,23 @@ export class TradovateTokenManager {
       throw new TradovateException('TRADOVATE_REFRESH_DEFERRED');
     }
 
+    // Refresh_token déjà refusé deux fois : on prolonge l'access token sans le représenter
+    // (cf. REFRESH_DEAD_RETRY_S). Renew refusé → dernier recours, le refresh ci-dessous.
+    const knownDead = await this.deps.locks.isRefreshKnownDead(conn);
+    if (knownDead) {
+      const renewed = await this.tryRenew(conn, current);
+      if (renewed) return renewed;
+    }
+
     // `refreshTokenExpiresAt` n'est PAS une autorité : Tradovate refuse parfois avant l'échéance
     // qu'il annonce. On tente donc dès qu'un refresh_token existe, et c'est sa réponse qui tranche.
     const refreshed = conn.refreshTokenEnc ? await this.refreshWithRetry(conn) : null;
     if (refreshed) return refreshed;
 
-    const renewed = await this.tryRenew(conn, current);
-    if (renewed) return renewed;
+    if (!knownDead) {
+      const renewed = await this.renewAfterRefusedRefresh(conn, current);
+      if (renewed) return renewed;
+    }
 
     if (this.refreshStillPromised(conn)) {
       this.deps.logger.warn(
@@ -211,7 +221,7 @@ export class TradovateTokenManager {
     // est alors déjà en base, et le réessai n'a plus lieu d'être.
     const fresh = await this.deps.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
     if (!fresh || fresh.status === BrokerConnectionStatus.NEEDS_RECONNECT) return null;
-    if (fresh.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > Date.now()) {
+    if (this.renewedElsewhere(conn, fresh)) {
       this.deps.logger.log(`Token Tradovate déjà renouvelé ailleurs (connexion ${conn.id}).`);
       return decryptToken(fresh.accessTokenEnc, this.deps.tokenKey());
     }
@@ -225,6 +235,37 @@ export class TradovateTokenManager {
       this.deps.logger.warn(`refresh_token Tradovate refusé 2 fois (connexion ${conn.id}) : repli renew.`);
       return null;
     }
+  }
+
+  /**
+   * La base porte-t-elle un token obtenu AILLEURS depuis la lecture de `conn` ? Un access token
+   * simplement loin de son échéance ne suffit pas : le cron de maintien choisit ses connexions sur
+   * l'échéance du refresh_token, pas de l'access token, et prenait ainsi un token inchangé pour un
+   * renouvellement (« déjà renouvelé ailleurs » trompeur, prod 2026-10-05).
+   */
+  private renewedElsewhere(conn: BrokerConnection, fresh: BrokerConnection): boolean {
+    if (fresh.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS <= Date.now()) return false;
+    return (
+      fresh.refreshTokenEnc !== conn.refreshTokenEnc ||
+      fresh.accessTokenExpiresAt.getTime() > conn.accessTokenExpiresAt.getTime()
+    );
+  }
+
+  /**
+   * Repli `renew` après un refresh refusé deux fois. S'il marche, le refresh_token est marqué
+   * mort : `renew` ne le fait pas tourner, et le représenter à chaque passage ne ferait
+   * qu'accumuler les refus (cf. REFRESH_DEAD_RETRY_S).
+   */
+  private async renewAfterRefusedRefresh(conn: BrokerConnection, current: string): Promise<string | null> {
+    const renewed = await this.tryRenew(conn, current);
+    if (renewed && conn.refreshTokenEnc) {
+      await this.deps.locks.markRefreshDead(conn);
+      this.deps.logger.warn(
+        `refresh_token Tradovate refusé, access token prolongé par renew (connexion ${conn.id}) : ` +
+          `refresh retenté dans ${REFRESH_DEAD_RETRY_S / 3600} h.`,
+      );
+    }
+    return renewed;
   }
 
   /**
@@ -257,18 +298,23 @@ export class TradovateTokenManager {
    * `reconnect` = Tradovate refuse le refresh_token (expiré, révoqué) : la connexion est
    * marquée à reconnecter. `retry` = Tradovate injoignable ou limité : on ne touche à rien,
    * le passage suivant réessaiera — jamais de connexion dégradée pour une panne réseau.
+   * `renewed` = refresh_token refusé (ou déjà connu mort), access token seulement prolongé par
+   * `renew` : la connexion vit, mais son refresh_token n'a PAS tourné.
    */
-  async refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'reconnect' | 'retry'> {
+  async refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'renewed' | 'reconnect' | 'retry'> {
     if (!conn.refreshTokenEnc) {
       await this.deps.markNeedsReconnect(conn.id, 'aucun refresh_token stocké');
       return 'reconnect';
     }
     if (this.refreshStillPromised(conn) && (await this.deps.locks.inRefusalCooldown(conn))) return 'retry';
     try {
+      const current = decryptToken(conn.accessTokenEnc, this.deps.tokenKey());
+      // Même logique que validToken : refresh connu mort → renew d'abord, refresh en dernier recours.
+      const knownDead = await this.deps.locks.isRefreshKnownDead(conn);
+      if (knownDead && (await this.tryRenew(conn, current))) return 'renewed';
       // Même exigence que la synchro : deux refus ET aucun repli avant de condamner.
       if (await this.refreshWithRetry(conn)) return 'refreshed';
-      const current = decryptToken(conn.accessTokenEnc, this.deps.tokenKey());
-      if (await this.tryRenew(conn, current)) return 'refreshed';
+      if (!knownDead && (await this.renewAfterRefusedRefresh(conn, current))) return 'renewed';
       if (this.refreshStillPromised(conn)) {
         this.deps.logger.warn(`Renouvellement Tradovate refusé mais refresh_token encore valide (connexion ${conn.id}) : reporté.`);
         await this.deps.locks.startRefusalCooldown(conn);
@@ -397,7 +443,7 @@ export class TradovateTokenManager {
     await this.deps.wait(REFRESH_RETRY_DELAY_MS);
     const fresh = await this.deps.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
     if (!fresh || fresh.status === BrokerConnectionStatus.NEEDS_RECONNECT) return null;
-    if (fresh.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > Date.now()) {
+    if (this.renewedElsewhere(conn, fresh)) {
       this.deps.logger.log(`Token Tradovate repris d'une connexion sœur (connexion ${conn.id}).`);
       return decryptToken(fresh.accessTokenEnc, this.deps.tokenKey());
     }
