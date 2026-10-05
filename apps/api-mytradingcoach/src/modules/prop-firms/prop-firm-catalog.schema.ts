@@ -58,7 +58,7 @@ const maxContractsSchema = z.strictObject({
   minis: positiveInt.nullable(),
   micros: positiveInt.nullable(),
   scaling: z.boolean(),
-  tiers: z.array(z.strictObject({ ...tierBounds, minis: positiveInt, micros: positiveInt })).min(1).nullable().optional(),
+  tiers: z.array(z.strictObject({ ...tierBounds, minis: positiveInt, micros: positiveInt.nullable() })).min(1).nullable().optional(),
   notes: nullableText,
 });
 

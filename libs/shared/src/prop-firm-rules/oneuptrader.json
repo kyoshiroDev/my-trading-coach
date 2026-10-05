@@ -15,7 +15,7 @@
       "volfix"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-05",
   "plans": [
     {
       "id": "oneuptrader-eval-25k",
@@ -75,7 +75,7 @@
             "locked_floor": 25000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 1500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (25000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 1500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (25000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -84,8 +84,21 @@
             "minis": 3,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": null
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -98,7 +111,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -127,7 +140,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL.  3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-eval-50k",
@@ -187,7 +200,7 @@
             "locked_floor": 50000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 2500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (50000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 2500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (50000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -196,8 +209,27 @@
             "minis": 6,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": null
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 4000,
+                "minis": 4,
+                "micros": null
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -210,7 +242,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -239,7 +271,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL.  3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-eval-100k",
@@ -299,7 +331,7 @@
             "locked_floor": 100000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 3500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (100000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 3500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (100000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -308,8 +340,33 @@
             "minis": 12,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": null
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": null
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 5000,
+                "minis": 6,
+                "micros": null
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": null,
+                "minis": 12,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -322,7 +379,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -351,7 +408,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL.  3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-eval-150k",
@@ -411,7 +468,7 @@
             "locked_floor": 150000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5000 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (150000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5000 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (150000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -420,8 +477,33 @@
             "minis": 15,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 4000,
+                "minis": 5,
+                "micros": null
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": 8000,
+                "minis": 8,
+                "micros": null
+              },
+              {
+                "min_profit": 8001,
+                "max_profit": 12000,
+                "minis": 10,
+                "micros": null
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": null,
+                "minis": 15,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -434,7 +516,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -463,7 +545,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL.  3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-eval-250k",
@@ -523,7 +605,7 @@
             "locked_floor": 250000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (250000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (250000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -532,8 +614,33 @@
             "minis": 25,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 5000,
+                "minis": 6,
+                "micros": null
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": 12000,
+                "minis": 12,
+                "micros": null
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": 20000,
+                "minis": 18,
+                "micros": null
+              },
+              {
+                "min_profit": 20001,
+                "max_profit": null,
+                "minis": 25,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -546,7 +653,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -575,7 +682,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL.  3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-pro-25k",
@@ -635,7 +742,7 @@
             "locked_floor": 25000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 1500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (25000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 1500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (25000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -644,8 +751,21 @@
             "minis": 3,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": null
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -658,7 +778,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -687,7 +807,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-pro-50k",
@@ -747,7 +867,7 @@
             "locked_floor": 50000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 2500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (50000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 2500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (50000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -756,8 +876,27 @@
             "minis": 6,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": null
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 4000,
+                "minis": 4,
+                "micros": null
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -770,7 +909,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -799,7 +938,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-pro-100k",
@@ -859,7 +998,7 @@
             "locked_floor": 100000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 3500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (100000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 3500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (100000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -868,8 +1007,33 @@
             "minis": 12,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 2000,
+                "minis": 3,
+                "micros": null
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": 3000,
+                "minis": 4,
+                "micros": null
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 5000,
+                "minis": 6,
+                "micros": null
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": null,
+                "minis": 12,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -882,7 +1046,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -911,7 +1075,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-pro-150k",
@@ -971,7 +1135,7 @@
             "locked_floor": 150000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5000 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (150000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5000 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (150000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -980,8 +1144,33 @@
             "minis": 15,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 4000,
+                "minis": 5,
+                "micros": null
+              },
+              {
+                "min_profit": 4001,
+                "max_profit": 8000,
+                "minis": 8,
+                "micros": null
+              },
+              {
+                "min_profit": 8001,
+                "max_profit": 12000,
+                "minis": 10,
+                "micros": null
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": null,
+                "minis": 15,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -994,7 +1183,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1023,7 +1212,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     },
     {
       "id": "oneuptrader-pro-250k",
@@ -1083,7 +1272,7 @@
             "locked_floor": 250000,
             "enforced_on": "balance_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (250000 $). Funded : compte résilié si le solde touche le seuil. Montant funded supposé identique à l'évaluation (non chiffré séparément). La prise en compte du P&L latent n'est pas précisée."
+            "basis_notes": "Trailing calculé en temps réel pendant la séance (Auto Liquidate Threshold de R|Trader), 5500 $ sous le plus haut solde, commissions et frais compris ; ne redescend pas. Se fige au solde de départ (250000 $). Funded : compte résilié si le solde touche le seuil. Même distance qu'en évaluation (exemple officiel du 100K funded : seuil de départ à 96 500 $). La prise en compte du P&L latent n'est pas précisée."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1092,8 +1281,33 @@
             "minis": 25,
             "micros": null,
             "scaling": true,
-            "tiers": null,
-            "notes": "Dynamic Scaling Targets : taille selon le Cash On Hand en début de session (grille publiée en image, non relevée), réajustée après chaque retrait."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 5000,
+                "minis": 6,
+                "micros": null
+              },
+              {
+                "min_profit": 5001,
+                "max_profit": 12000,
+                "minis": 12,
+                "micros": null
+              },
+              {
+                "min_profit": 12001,
+                "max_profit": 20000,
+                "minis": 18,
+                "micros": null
+              },
+              {
+                "min_profit": 20001,
+                "max_profit": null,
+                "minis": 25,
+                "micros": null
+              }
+            ],
+            "notes": "Dynamic Scaling Targets : nombre de lots selon le Cash On Hand (R|Trader Pro) en début de session, fixe pour la journée quel que soit le P&L flottant ; réajusté après chaque retrait. Équivalence micros non publiée."
           },
           "time_rules": {
             "must_close_by": "15:15 America/Chicago",
@@ -1106,7 +1320,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1135,7 +1349,7 @@
         "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info"
       ],
       "needs_review": true,
-      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum."
+      "notes": "Consistency propre à OneUp : la somme des 3 autres meilleurs jours doit atteindre au moins 80 % du meilleur jour (ou un 2e jour égal à 80 % du meilleur). Non exprimable en pourcentage maximal par jour, donc non modélisée. Pas de DLL. Pro Evaluation : 5 jours minimum au lieu de 10. 3 comptes funded maximum. À revoir : prise en compte du P&L latent dans le seuil (« account balance » et Auto Liquidate Threshold de R|Trader, sans précision). Express Account (3 jours minimum) non couvert."
     }
   ]
 }

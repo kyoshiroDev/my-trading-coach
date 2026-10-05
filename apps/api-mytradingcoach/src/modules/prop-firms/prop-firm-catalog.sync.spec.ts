@@ -106,10 +106,13 @@ describe('toRows', () => {
     expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
   });
 
-  it('LucidMaxx reste invite_only et needs_review', () => {
+  it('LucidMaxx reste invite_only, complet depuis la réponse du support (2026-10-05)', () => {
     const maxx = plans.find((p) => p.id === 'lucid-maxx-50k')!;
     expect(maxx.availability).toBe('invite_only');
-    expect(maxx.needsReview).toBe(true);
+    expect(maxx.needsReview).toBe(false);
+    const ev = (maxx.phases as { max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
+    expect(ev.max_contracts.minis).toBe(4);
+    expect(ev.max_drawdown).toMatchObject({ locks_at: 52_100, locked_floor: 50_100 });
   });
 
   it('empreinte stable entre deux lectures, sensible au moindre changement de règle', () => {

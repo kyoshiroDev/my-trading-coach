@@ -214,7 +214,7 @@
                   "min_profit": { "type": "number" },
                   "max_profit": { "type": ["number", "null"] },
                   "minis": { "type": "integer", "minimum": 1 },
-                  "micros": { "type": "integer", "minimum": 1 }
+                  "micros": { "type": ["integer", "null"], "minimum": 1, "description": "null = équivalence micros non publiée par la firm." }
                 }
               }
             }

@@ -25,10 +25,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 59,
         "billing": "monthly",
         "activation_fee": 99,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 99 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 49 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement. Launch fee 99 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 49 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (hors promo -50 % nouveaux clients)."
       },
       "phases": [
         {
@@ -126,7 +126,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-100k",
@@ -136,10 +136,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 69,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 149 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 59 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement. Launch fee 149 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 59 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (hors promo -50 % nouveaux clients)."
       },
       "phases": [
         {
@@ -237,7 +237,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-200k",
@@ -247,10 +247,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 79,
         "billing": "monthly",
         "activation_fee": 179,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé). Launch fee 179 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 69 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement. Launch fee 179 $ due au passage, à payer sous 14 jours sinon l'évaluation réussie est perdue. Reset évaluation 69 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (hors promo -50 % nouveaux clients)."
       },
       "phases": [
         {
@@ -348,7 +348,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-25k",
@@ -358,10 +358,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 150,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -459,7 +459,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-50k",
@@ -469,10 +469,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 160,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -570,7 +570,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-100k",
@@ -580,10 +580,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 220,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -681,7 +681,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-150k",
@@ -691,10 +691,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 170,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -792,7 +792,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 2000 $, drawdown 1000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 2000 $, drawdown 1000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-200k",
@@ -802,10 +802,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 270,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -903,7 +903,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-300k",
@@ -913,10 +913,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 320,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement (prix sur blusky.pro, non relevé), pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -1014,7 +1014,7 @@
         "https://blusky.pro/"
       ],
       "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ static, consistency 21 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Prix d'abonnement non relevé."
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ static, consistency 21 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-orbit-50k",
@@ -1024,10 +1024,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 199,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 99 $ (ne prolonge pas les 30 jours)."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 99 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1134,10 +1134,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 299,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 109 $ (ne prolonge pas les 30 jours)."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 109 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1244,10 +1244,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 419,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours)."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1354,10 +1354,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 419,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé), évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours)."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 279 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1464,10 +1464,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 599,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé). Pas de reset."
+        "notes": "Achat unique. Pas de reset. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
