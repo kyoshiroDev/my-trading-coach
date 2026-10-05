@@ -37,12 +37,12 @@
           "profit_target": 1500,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Base (réalisé ou latent) non précisée."
+            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -77,7 +77,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 600,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -93,7 +93,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 26500 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 26500 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -113,11 +113,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 1,
+            "micros": 10,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille max du funded Growth non publiée (le tableau de l'article ne couvre que l'évaluation)."
+            "notes": "Même taille qu'en évaluation, disponible dès le premier trade, sans scaling ; limite sur la position totale ouverte (10 micros = 1 mini) (support Tradeify, Luisa, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -152,8 +152,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Taille max du funded non publiée."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "tradeify-growth-50k",
@@ -174,12 +174,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1250,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Base (réalisé ou latent) non précisée."
+            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -214,7 +214,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1250,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -230,7 +230,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 53000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 53000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -250,11 +250,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 4,
+            "micros": 40,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille max du funded Growth non publiée (le tableau de l'article ne couvre que l'évaluation)."
+            "notes": "Même taille qu'en évaluation, disponible dès le premier trade, sans scaling ; limite sur la position totale ouverte (10 micros = 1 mini) (support Tradeify, Luisa, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -292,8 +292,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Taille max du funded non publiée."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "tradeify-growth-100k",
@@ -314,12 +314,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 2500,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Base (réalisé ou latent) non précisée."
+            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 3500,
@@ -354,7 +354,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2500,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -370,7 +370,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 106000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 106000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 3500,
@@ -390,11 +390,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 8,
+            "micros": 80,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille max du funded Growth non publiée (le tableau de l'article ne couvre que l'évaluation)."
+            "notes": "Même taille qu'en évaluation, disponible dès le premier trade, sans scaling ; limite sur la position totale ouverte (10 micros = 1 mini) (support Tradeify, Luisa, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -432,8 +432,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Taille max du funded non publiée."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "tradeify-growth-150k",
@@ -454,12 +454,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 3750,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Base (réalisé ou latent) non précisée."
+            "notes": "Soft breach : trading suspendu jusqu'à la session suivante (18:00 ET), le compte reste actif. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 5000,
@@ -494,7 +494,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3750,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -510,7 +510,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 159000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "DLL initiale, portée au montant du drawdown une fois 6 % de profit atteints (solde 159000 $), effectif à la session suivante. Comptes achetés avant le 2025-09-12 : DLL supprimée à 6 %. Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 5000,
@@ -530,11 +530,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 12,
+            "micros": 120,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille max du funded Growth non publiée (le tableau de l'article ne couvre que l'évaluation)."
+            "notes": "Même taille qu'en évaluation, disponible dès le premier trade, sans scaling ; limite sur la position totale ouverte (10 micros = 1 mini) (support Tradeify, Luisa, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -572,8 +572,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Taille max du funded non publiée."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "tradeify-lightning-25k",
@@ -680,7 +680,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1250,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -696,7 +696,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "Soft breach. DLL portée à 2000 $ une fois 6 % de profit atteints (solde 53000 $), effectif à la session suivante. Base non précisée."
+            "notes": "Soft breach. DLL portée à 2000 $ une fois 6 % de profit atteints (solde 53000 $), effectif à la session suivante. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -788,7 +788,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2500,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -804,7 +804,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "Soft breach. DLL portée à 4000 $ une fois 6 % de profit atteints (solde 106000 $), effectif à la session suivante. Base non précisée."
+            "notes": "Soft breach. DLL portée à 4000 $ une fois 6 % de profit atteints (solde 106000 $), effectif à la session suivante. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 4000,
@@ -896,7 +896,7 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": [
@@ -912,7 +912,7 @@
               }
             ],
             "scaling_rule": null,
-            "notes": "Soft breach. DLL portée à 5250 $ une fois 6 % de profit atteints (solde 159000 $), effectif à la session suivante. 150K achetés avant le 31 mars : DLL 3 750 $. Base non précisée."
+            "notes": "Soft breach. DLL portée à 5250 $ une fois 6 % de profit atteints (solde 159000 $), effectif à la session suivante. 150K achetés avant le 31 mars : DLL 3 750 $. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 5250,
@@ -1297,12 +1297,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 500,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1431,12 +1431,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 500,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1829,12 +1829,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1969,12 +1969,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -2385,12 +2385,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1250,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2500,
@@ -2531,12 +2531,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1250,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 2500,
@@ -2965,12 +2965,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1750,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 3500,
@@ -3117,12 +3117,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1750,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "18:00 America/New_York",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Base non précisée."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
           },
           "max_drawdown": {
             "amount": 3500,
