@@ -329,6 +329,11 @@ envoyées à l'API sont des horodatages ISO complets.
   s'élargit au min-content du contenu, ex. heatmap, champ de lien, profil → page plus large que l'écran)
 - Barre flex passée en `flex-direction: column` : retirer le `flex-wrap: wrap` (avec le wrap, le
   stretch ne borne plus la largeur des enfants — filtres du Journal à 997 px)
+- `overflow-x: hidden` sur `.main-content` **masque** un débordement, il ne le corrige pas : le
+  contenu est rogné à droite (KPI, cartes). Toujours tester à **360 px** (le plus étroit courant) :
+  rangée flex d'un item qui « wrappe » un enfant `flex:1` → l'item lui-même a besoin de
+  `flex:1; min-width:0` (sélecteur de compte) ; valeur + visuel côte à côte dans une carte de
+  ~156 px → `flex-wrap` ; en-tête titre + onglets → `flex-wrap`
 - **Un seul scroll vertical sur mobile** : `.main-content`. Pas de bloc `overflow-y:auto` borné
   (`max-height`, `flex:1 + min-height:0`) sous 768px — Mes comptes, calendrier éco, live feed.
   Un débordement horizontal voulu (tableau, onglets, carrousel) porte son propre `overflow-x:auto`
