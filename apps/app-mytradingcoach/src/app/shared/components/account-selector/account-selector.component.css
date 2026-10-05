@@ -58,6 +58,9 @@
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .acct-tag {
   font-family: var(--font-body);
@@ -227,10 +230,17 @@
 
 /* Mobile : le trigger prend la largeur dispo, le menu s'adapte. */
 @media (max-width: 768px) {
+  /* .acct-select (item flex de .acct-row) gardait min-width:auto : il prenait la largeur
+     du trigger et poussait « + Compte » hors de l'écran (22 px à 360 px). */
+  .acct-select {
+    flex: 1;
+    min-width: 0;
+  }
   .acct-trigger {
     min-width: 0;
-    flex: 1;
+    width: 100%;
   }
+  .acct-bal { white-space: nowrap; flex-shrink: 0; }
   .acct-menu {
     min-width: 0;
     width: max(280px, 100%);

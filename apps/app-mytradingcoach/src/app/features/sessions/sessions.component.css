@@ -139,7 +139,13 @@
 }
 
 @media (max-width: 480px) {
-  .session-center { gap: 16px; margin: 0 8px; }
+  /* En-tête de semaine (label + stats en nowrap) et ligne de session (date · stats ·
+     chevron) dépassaient de 80 à 120 px : les stats passent à la ligne. */
+  .week-header { flex-wrap: wrap; row-gap: 4px; }
+  .week-line { display: none; }
+  .session-row { flex-wrap: wrap; row-gap: 10px; }
+  .session-right { margin-left: auto; }
+  .session-center { order: 3; flex-basis: 100%; justify-content: space-around; gap: 16px; margin: 0; }
   .session-when { gap: 8px; margin-right: 12px; }
   .session-day { font-size: 12px; }
   .stat-val { font-size: 13px; }

@@ -464,6 +464,10 @@
   .td-pnl    { grid-column: 3; grid-row: 2; font-size: 12px; }
   .td-actions { grid-column: 4; grid-row: 1 / 3; }
   .day-label { font-size: 12px; }
-  .day-stats { font-size: var(--fs-2xs); gap: 5px; }
+  /* En-tête de jour : stats (flex-shrink:0) + boutons Déplacer/Supprimer dépassaient de
+     26 px à 360 px → les stats rétrécissent et passent à la ligne, alignées à droite. */
+  .day-header { gap: 6px; padding-right: 10px; }
+  .week-group .day-header { padding-left: 22px; }
+  .day-stats { font-size: var(--fs-2xs); gap: 5px; flex-shrink: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
   .day-winrate, .day-commission { display: none; }
 }

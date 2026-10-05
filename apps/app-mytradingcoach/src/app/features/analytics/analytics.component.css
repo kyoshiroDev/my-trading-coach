@@ -535,12 +535,17 @@
   }
 
   .stats-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
+  .stat-card { padding: 14px; }
+  /* Titre + onglets de période (308 px) côte à côte élargissaient la carte à ~404 px. */
+  .card-header { flex-wrap: wrap; }
+  .stat-value { font-size: 20px; letter-spacing: -.5px; }
 
+  /* minmax(0, 1fr) : un 1fr nu s'élargit au min-content des graphiques (420 px à 360). */
   .grid-2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
