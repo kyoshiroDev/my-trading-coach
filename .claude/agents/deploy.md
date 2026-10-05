@@ -163,7 +163,7 @@ exec node main.js
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (le front est rsync sur le VPS, plus de Vercel)
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (fronts publiés en releases sur le VPS par `infra/deploy-static.sh`, plus de Vercel)
 
 ### Deploy prod VPS
 
@@ -188,12 +188,20 @@ docker compose up -d --force-recreate api
 
 ## Front statique sur le VPS (plus de Vercel)
 
-App Angular, admin et landing Astro sont **buildés dans GitHub Actions** (cd.yml) puis **rsync** vers
-le VPS, servis par des conteneurs **nginx:alpine derrière Traefik** (TLS letsencrypt + routing par
-Host + redirect non-www→www en middleware Traefik).
+App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés sur le VPS
+**en releases** (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
+letsencrypt + routing par Host + redirect non-www→www en middleware Traefik).
 
-- App Angular : `dist/apps/app-mytradingcoach/browser/` → `/opt/static/app-prod` → `app.mytradingcoach.app`
-- Admin : `dist/apps/admin-mytradingcoach/browser/` → `/opt/static/admin` → `admin.mytradingcoach.app`
+| Site (`/opt/static/<site>`) | Build | Hôte | Workflow | Conteneur (compose) |
+|---|---|---|---|---|
+| `app-prod` | `dist/apps/app-mytradingcoach/browser/` | `app.mytradingcoach.app` | cd.yml | `mtc_app_prod` (`docker-compose.yml`) |
+| `admin` | `dist/apps/admin-mytradingcoach/browser/` | `admin.mytradingcoach.app` | cd.yml | `mtc_admin` (`docker-compose.yml`) |
+| `landing-prod` | `apps/landing-mytradingcoach/dist/` | `www.mytradingcoach.app` | cd.yml | `mtc_landing_prod` (`docker-compose.yml`) |
+| `app-dev` | idem app | `dev.app.mytradingcoach.app` | ci.yml | `mtc_app_dev_static` (`docker-compose.yml`) |
+| `landing-dev` | idem landing | `dev.mytradingcoach.app` | ci.yml | `mtc_landing_dev` (`docker-compose.yml`) |
+| `app-beta` | idem app | `beta.app.mytradingcoach.app` | beta.yml | `mtc_app_beta_static` (**`docker-compose.beta.yml`**) |
+
+Les deux fichiers compose sont dans `/opt/infra/static/`.
 
 > ⚠️ **L'admin se déploie depuis `main`, comme l'app et la landing.** Jusqu'au 31/08/2026
 > deux chaînes coexistaient : `ci.yml` publiait l'admin sur un push `dev` vers
@@ -204,7 +212,6 @@ Host + redirect non-www→www en middleware Traefik).
 > `cd.yml` pointe désormais sur `/opt/static/admin`, et `admin-prod` a été supprimé du
 > VPS. Le répertoire servi est celui monté par `mtc_admin` dans
 > `/opt/infra/static/docker-compose.yml` — c'est lui qui fait foi, pas le nom du dossier.
-- Landing Astro : `apps/landing-mytradingcoach/dist/` → `/opt/static/landing-prod` → `www.mytradingcoach.app`
 
 ### Releases + lien symbolique (SCA-B8-05)
 
@@ -232,9 +239,16 @@ dépôt cloné). Les liens sont **relatifs** : le conteneur monte le dossier du 
 résout le lien à chaque requête → aucun reload ni restart à la bascule. (Monter `current`
 directement ne marcherait pas : Docker fige la cible d'un lien au démarrage du conteneur.)
 
-**Confs nginx** : `infra/static/nginx/spa-releases.conf` (app, admin) et `landing-releases.conf`
-sont les copies de référence, à recopier dans `/opt/infra/static/nginx/`. Les assets hashés
-(`*.js|css|…` côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font `try_files /current$uri /previous$uri =404`.
+**Confs nginx** : `spa-releases.conf` (toutes les SPA : app ×3, admin) et `landing-releases.conf`
+(landing prod + dev), montées depuis `/opt/infra/static/nginx/`. Leur copie de référence est dans
+le dépôt (`infra/static/nginx/`) : modifier le dépôt **et** le VPS. Les assets hashés (`*.js|css|…`
+côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font
+`try_files /current$uri /previous$uri =404`.
+
+Après modification d'une conf sur le VPS : `nginx -t` dans un conteneur jetable
+(`docker run --rm -v <conf>:/etc/nginx/conf.d/default.conf:ro nginx:alpine nginx -t`), puis
+**`docker restart`** des conteneurs qui la montent (bind-mount d'un fichier : une copie crée un
+nouvel inode, `nginx -s reload` relirait l'ancien).
 
 **Retour arrière (sur le VPS)** — immédiat, sans rebuild :
 
@@ -246,40 +260,37 @@ bash infra/static-release.sh rollback app-prod <release>
 
 Depuis un poste : `ssh greg@VPS bash -s -- rollback app-prod < infra/static-release.sh`.
 
-**État (2026-10-05)** : app-dev, landing-dev, app-prod, admin, landing-prod migrés (confs
-`*-releases.conf`, racines nettoyées) ; reste **app-beta** (au passage de B8-05 sur beta). Leçon :
-le CD prod a publié en releases (05:25) avant la bascule nginx (14:50) → app.mytradingcoach.app a
-servi l'ancienne version pendant ce temps. Basculer un site **dès** le premier déploiement par release.
+**Transition terminée (2026-10-05)** : les 6 sites sont en releases, racines nettoyées ; plus
+aucun conteneur ne monte les anciennes `spa.conf` / `landing.conf` (gardées sur le VPS, inutilisées).
+Sauvegardes des compose d'avant : `*.bak-b8-05*`. Leçon : app-prod (9 h) et app-beta (12 h) ont servi
+une version périmée, le workflow publiant déjà en releases alors que nginx servait encore la racine.
 
-**Transition d'un site** (une fois, quand le workflow qui le publie contient B8-05 :
-`ci.yml` → app-dev/landing-dev dès le merge sur dev ; `cd.yml` → app-prod/admin/landing-prod au
-passage sur main ; `beta.yml` → app-beta au passage sur beta). Ne pas basculer nginx avant : les
-déploiements à l'ancienne écriraient à la racine, que nginx ne servirait plus.
+**Nouveau site statique** : créer `/opt/static/<site>`, le premier `deploy-static.sh` crée
+`releases/` et `current` ; le conteneur monte le dossier du site sur `/usr/share/nginx/html` et
+`spa-releases.conf` ou `landing-releases.conf`. Pour un site encore servi à la racine (ancien
+layout), migrer **dès** que son workflow publie en releases :
 
 ```bash
-cd /opt/apps/mytradingcoach/<env>   # ou ssh … bash -s -- <cmd> <site> < infra/static-release.sh
+# sur le VPS, ou depuis un poste : ssh greg@VPS bash -s -- <cmd> <site> < infra/static-release.sh
 bash infra/static-release.sh migrate <site>   # release legacy-… (liens physiques) + current ; no-op si current existe
-cp infra/static/nginx/*-releases.conf /opt/infra/static/nginx/
-# /opt/infra/static/docker-compose.yml : le service monte spa-releases.conf / landing-releases.conf
-cd /opt/infra/static && docker compose up -d <service>   # recrée le conteneur (~1 s, une seule fois)
-curl -sI https://<hôte>/ ; curl -s https://<hôte>/ | grep -o 'main-[A-Z0-9]*\.js'   # version servie
+# compose : le service monte spa-releases.conf / landing-releases.conf
+cd /opt/infra/static && docker compose [-f docker-compose.beta.yml] up -d <service>   # ~1 s, une fois
+curl -s https://<hôte>/ | grep -o 'main-[A-Z0-9]*\.js'   # version servie = celle de current
 bash infra/static-release.sh cleanup-legacy <site>   # supprime les fichiers restés à la racine
 ```
 
-`landing-releases.conf` est partagée par landing-prod et landing-dev, `spa-releases.conf` par toutes
-les SPA : les anciennes `spa.conf` / `landing.conf` restent tant qu'un site n'a pas migré.
-
-⚠️ La config nginx de chaque site vit **sur le VPS** (`/opt/infra/static/nginx/*.conf`), pas dans le
-dépôt (le `nginx/nginx.conf` du dépôt est un vestige mort). Compose infra : `/opt/infra/static/`.
+⚠️ C'est la conf montée **sur le VPS** (`/opt/infra/static/nginx/*-releases.conf`) qui est servie ;
+la copie du dépôt (`infra/static/nginx/`) n'est pas déployée automatiquement. Le `nginx/nginx.conf`
+à la racine du dépôt est un vestige mort.
 La landing exige `PUBLIC_FEATURE_MULTI_ACCOUNTS=true` + `PUBLIC_FEATURE_REFERRAL=true` au build
 (sinon `/journal-trading-prop-firm` et `/ambassadeur` redirigent vers `/`) — déjà dans cd.yml/ci.yml.
 
 **Pages gatées flag OFF → 301 Nginx (recommandé).** Astro ne sait faire qu'une redirection
 `<meta http-equiv="refresh">` (page HTML servie en 200, puis redirection à 2 s) : acceptable
 (page en `noindex`, hors sitemap), mais une 301 est plus propre pour Google et plus rapide.
-Quand un flag est OFF sur un environnement, ajouter dans la conf nginx de la landing
-(`/opt/infra/static/nginx/`, bloc `server` de la landing), puis recharger son conteneur nginx
-(nom dans `/opt/infra/static/docker-compose.yml`) avec `nginx -s reload` :
+Quand un flag est OFF sur un environnement, ajouter dans `landing-releases.conf` (partagée par
+landing prod et dev : n'ajouter la règle que si le flag est OFF partout, sinon séparer les confs),
+puis `docker restart mtc_landing_prod mtc_landing_dev` (pas `nginx -s reload`, cf. bind-mount) :
 
 ```nginx
 # Flag PUBLIC_FEATURE_REFERRAL=false
