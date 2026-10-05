@@ -110,6 +110,9 @@ la maquette design (« The Terminal »).
 ```typescript
 // activeTab = signal<'morning' | 'live' | 'debrief'>('morning')
 // effect() auto-switch vers 'live' si activeSession()?.status === 'ACTIVE'
+// Chargement : GET /session/today. Session du jour déjà clôturée (page rechargée, ex. mobile
+// en arrière-plan pendant « Publier ») → réaffichée sur l'onglet Débrief une fois, trades de la
+// session + totaux de la session (debriefStats) — sinon retour Pré-session et session vide (#456)
 // Polling visibleInterval(30s) pour refreshLiveStats() pendant session active (SessionStore, SCA-B4)
 ```
 

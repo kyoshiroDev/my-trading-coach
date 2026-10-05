@@ -109,7 +109,7 @@ async function setupBaseMocks(page: import('@playwright/test').Page, sessionActi
   );
 
   // Session active ou non selon le scénario
-  await page.route('**/api/session/active', (route) =>
+  await page.route('**/api/session/today', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',

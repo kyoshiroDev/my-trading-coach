@@ -43,6 +43,11 @@ export class SessionController {
     return this.sessionService.getActiveSession(user.id);
   }
 
+  @Get('today')
+  getToday(@CurrentUser() user: { id: string }) {
+    return this.sessionService.getTodaySession(user.id);
+  }
+
   @Post(':id/close')
   close(
     @CurrentUser() user: { id: string },

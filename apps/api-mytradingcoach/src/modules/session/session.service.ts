@@ -62,6 +62,28 @@ export class SessionService {
     });
   }
 
+  /**
+   * Session du jour : l'active, sinon la dernière clôturée aujourd'hui avec ses trades.
+   * Sans ça, une session clôturée disparaissait au rechargement de la page (onglet mis en
+   * arrière-plan sur mobile, choix d'image pour « Publier ») : retour sur la Pré-session,
+   * « Démarrer » et session vide parasite (#456).
+   */
+  async getTodaySession(userId: string) {
+    const active = await this.getActiveSession(userId);
+    if (active) return active;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    return this.prisma.tradeSession.findFirst({
+      where: { userId, status: SessionStatus.CLOSED, startedAt: { gte: startOfDay } },
+      orderBy: { endedAt: 'desc' },
+      include: {
+        _count: { select: { trades: true } },
+        trades: { orderBy: { tradedAt: 'desc' } },
+      },
+    });
+  }
+
   async closeSession(
     userId: string,
     sessionId: string,

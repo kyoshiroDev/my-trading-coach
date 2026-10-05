@@ -67,8 +67,9 @@ export class SessionApi {
     });
   }
 
-  getActiveSession(): Observable<{ data: TradingSession | null }> {
-    return this.http.get<{ data: TradingSession | null }>(`${this.base}/active`);
+  /** Session du jour : l'active, sinon la dernière clôturée aujourd'hui (avec ses trades). */
+  getTodaySession(): Observable<{ data: (TradingSession & { trades?: SessionTrade[] }) | null }> {
+    return this.http.get<{ data: (TradingSession & { trades?: SessionTrade[] }) | null }>(`${this.base}/today`);
   }
 
   closeSession(

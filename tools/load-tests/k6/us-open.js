@@ -35,7 +35,7 @@ const RAMP_MIN = Number(__ENV.RAMP_MIN || 1);
 // Paliers (VU) : TARGETS=500,1000 pour un passage court.
 const TARGETS = (__ENV.TARGETS || '100,250,500,1000').split(',').map(Number);
 // Endpoints à sauter (noms k6, séparés par des virgules) : simule le coût d'un endpoint après
-// correctif sans modifier l'API (ex. EXCLUDE=setups,session_active pour estimer le gain de P0-1).
+// correctif sans modifier l'API (ex. EXCLUDE=setups,session_today pour estimer le gain de P0-1).
 const EXCLUDE = new Set((__ENV.EXCLUDE || '').split(',').filter(Boolean));
 
 export const options = {
@@ -127,7 +127,7 @@ function dashboard() {
     req('GET', '/analytics/by-emotion', 'analytics_by_emotion', 'read');
   }
   req('GET', '/analytics/top-assets', 'analytics_top_assets', 'read');
-  req('GET', '/session/active', 'session_active', 'read');
+  req('GET', '/session/today', 'session_today', 'read');
   req('GET', '/analytics/daily-recap/yesterday', 'daily_recap_yesterday', 'read');
 }
 
