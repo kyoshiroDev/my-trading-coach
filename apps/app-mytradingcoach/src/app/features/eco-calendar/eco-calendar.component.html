@@ -5,7 +5,8 @@
     <div class="eco-header-left">
       <h1 class="eco-title">Calendrier économique</h1>
       <span class="eco-subtitle">
-        {{ totalEvents() }} événement{{ totalEvents() > 1 ? 's' : '' }} · {{ getWeekLabel() }}
+        @if (isLoading()) { Chargement… } @else { {{ totalEvents() }} événement{{ totalEvents() > 1 ? 's' : '' }} }
+        · {{ getWeekLabel() }}
       </span>
     </div>
 
