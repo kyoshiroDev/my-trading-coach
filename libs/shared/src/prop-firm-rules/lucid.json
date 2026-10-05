@@ -4527,11 +4527,11 @@
             "amount": 1000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": null,
-            "locked_floor": null,
+            "locks_at": 26100,
+            "locked_floor": 25100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Se fige à départ + 100 $ (25100 $) quand le solde de clôture atteint 26100 $, comme les évaluations standard (support Lucid, Discord, 2026-10-05). Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4541,11 +4541,11 @@
           "min_trading_days": 5,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 2,
+            "micros": 20,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille maximale non publiée pour LucidMaxx."
+            "notes": "Même taille maximale que les évaluations Lucid standard de même taille (support Lucid, Discord, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -4564,8 +4564,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
-      "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 1000 $, drawdown EOD 1000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 1000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 1000 $ répétable après +2000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
+      "needs_review": false,
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 1000 $, drawdown EOD 1000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 1000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 1000 $ répétable après +2000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05)."
     },
     {
       "id": "lucid-maxx-50k",
@@ -4589,11 +4589,11 @@
             "amount": 2000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": null,
-            "locked_floor": null,
+            "locks_at": 52100,
+            "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Se fige à départ + 100 $ (50100 $) quand le solde de clôture atteint 52100 $, comme les évaluations standard (support Lucid, Discord, 2026-10-05). Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4603,11 +4603,11 @@
           "min_trading_days": 5,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 4,
+            "micros": 40,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille maximale non publiée pour LucidMaxx."
+            "notes": "Même taille maximale que les évaluations Lucid standard de même taille (support Lucid, Discord, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -4626,8 +4626,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
-      "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 2000 $, drawdown EOD 2000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 2000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 2000 $ répétable après +4000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
+      "needs_review": false,
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 2000 $, drawdown EOD 2000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 2000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 2000 $ répétable après +4000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05)."
     },
     {
       "id": "lucid-maxx-100k",
@@ -4651,11 +4651,11 @@
             "amount": 3000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": null,
-            "locked_floor": null,
+            "locks_at": 103100,
+            "locked_floor": 100100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Se fige à départ + 100 $ (100100 $) quand le solde de clôture atteint 103100 $, comme les évaluations standard (support Lucid, Discord, 2026-10-05). Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4665,11 +4665,11 @@
           "min_trading_days": 5,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 6,
+            "micros": 60,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille maximale non publiée pour LucidMaxx."
+            "notes": "Même taille maximale que les évaluations Lucid standard de même taille (support Lucid, Discord, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -4688,8 +4688,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
-      "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 3000 $, drawdown EOD 3000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 3000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 3000 $ répétable après +6000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
+      "needs_review": false,
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 3000 $, drawdown EOD 3000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 3000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 3000 $ répétable après +6000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05)."
     },
     {
       "id": "lucid-maxx-150k",
@@ -4713,11 +4713,11 @@
             "amount": 4500,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": null,
-            "locked_floor": null,
+            "locks_at": 154600,
+            "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Seuil de blocage du trailing non documenté pour l'évaluation Maxx. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+            "basis_notes": "L'article LucidMaxx Overview annonce un « End-of-day drawdown » pour le programme ; l'article des règles d'évaluation ne donne que le montant du MLL. Se fige à départ + 100 $ (150100 $) quand le solde de clôture atteint 154600 $, comme les évaluations standard (support Lucid, Discord, 2026-10-05). Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -4727,11 +4727,11 @@
           "min_trading_days": 5,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": null,
-            "micros": null,
+            "minis": 10,
+            "micros": 100,
             "scaling": false,
             "tiers": null,
-            "notes": "Taille maximale non publiée pour LucidMaxx."
+            "notes": "Même taille maximale que les évaluations Lucid standard de même taille (support Lucid, Discord, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -4750,8 +4750,8 @@
         "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
-      "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 4500 $, drawdown EOD 4500 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 4500 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 4500 $ répétable après +9000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. À revoir : taille max et seuil de blocage du trailing de l'évaluation Maxx non publiés (programme sur invitation)."
+      "needs_review": false,
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 4500 $, drawdown EOD 4500 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 4500 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 4500 $ répétable après +9000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05)."
     }
   ]
 }
