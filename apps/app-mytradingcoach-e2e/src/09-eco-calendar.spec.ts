@@ -99,7 +99,7 @@ async function setupEcoMocks(
       body: JSON.stringify({ data: MOCK_BETA_USER }),
     }),
   );
-  await page.route('**/api/session/active', (route) =>
+  await page.route('**/api/session/today', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',

@@ -166,17 +166,17 @@
         <!-- 4 CARDS EN HAUT -->
         <div class="debrief-cards-row">
           <div class="card4">
-            <div class="card4-v" [class.green]="(store.todayStats()?.totalPnl ?? 0) >= 0" [class.red]="(store.todayStats()?.totalPnl ?? 0) < 0">
-              {{ store.todayStats()?.totalPnl | pnlFormat }}
+            <div class="card4-v" [class.green]="(debriefStats()?.totalPnl ?? 0) >= 0" [class.red]="(debriefStats()?.totalPnl ?? 0) < 0">
+              {{ debriefStats()?.totalPnl | pnlFormat }}
             </div>
             <div class="card4-l">P&L session</div>
           </div>
           <div class="card4">
-            <div class="card4-v">{{ store.todayStats()?.tradesCount ?? 0 }}</div>
+            <div class="card4-v">{{ debriefStats()?.tradesCount ?? 0 }}</div>
             <div class="card4-l">Trades</div>
           </div>
           <div class="card4">
-            <div class="card4-v">{{ (store.todayStats()?.winRate ?? 0) > 0 ? (store.todayStats()!.winRate.toFixed(0) + '%') : '-' }}</div>
+            <div class="card4-v">{{ (debriefStats()?.winRate ?? 0) > 0 ? (debriefStats()!.winRate.toFixed(0) + '%') : '-' }}</div>
             <div class="card4-l">Win Rate</div>
           </div>
           <div class="card4">

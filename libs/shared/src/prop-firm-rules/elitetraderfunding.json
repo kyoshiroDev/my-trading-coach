@@ -14,7 +14,7 @@
       "motivewave"
     ]
   },
-  "verified_at": "2026-10-04",
+  "verified_at": "2026-10-05",
   "plans": [
     {
       "id": "elitetraderfunding-1step-50k",
@@ -24,10 +24,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 207,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 177 $."
       },
       "phases": [
         {
@@ -97,18 +97,23 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 100,
+            "min_amount": 250,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1000,
+              1250,
+              1500,
+              1750
+            ],
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -116,10 +121,11 @@
         "https://elitetraderfunding.app/1-step-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass."
     },
     {
       "id": "elitetraderfunding-1step-100k",
@@ -129,10 +135,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 257,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 247 $."
       },
       "phases": [
         {
@@ -202,18 +208,23 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 100,
+            "min_amount": 250,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1250,
+              1500,
+              1750,
+              2000
+            ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -221,45 +232,46 @@
         "https://elitetraderfunding.app/1-step-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass."
     },
     {
-      "id": "elitetraderfunding-1step-250k",
+      "id": "elitetraderfunding-1step-150k",
       "plan_name": "1 Step",
-      "account_size": 250000,
+      "account_size": 150000,
       "currency": "USD",
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 347,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 247 $."
       },
       "phases": [
         {
           "phase": "evaluation",
-          "profit_target": 15000,
+          "profit_target": 9000,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 6500,
+            "amount": 5000,
             "type": "trailing_intraday",
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 6500 $ en dessous ; on peut échouer avec une position gagnante ouverte."
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 5000 $ en dessous ; on peut échouer avec une position gagnante ouverte."
           },
           "consistency": null,
           "min_trading_days": 5,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 24,
-            "micros": 240,
+            "minis": 18,
+            "micros": 180,
             "scaling": false,
             "tiers": null,
             "notes": "1 mini = 10 micros."
@@ -277,21 +289,21 @@
           "profit_target": null,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 6500,
+            "amount": 5000,
             "type": "trailing_intraday",
             "trails_on": "equity",
-            "locks_at": 256600,
-            "locked_floor": 250100,
+            "locks_at": 155100,
+            "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 6500 $ en dessous ; on peut échouer avec une position gagnante ouverte. Funded : une fois 6600 $ de profit réalisé (safety net), le seuil se fige à 250100 $."
+            "basis_notes": "Live trailing : suit le plus haut P&L latent, positions ouvertes comprises, 5000 $ en dessous ; on peut échouer avec une position gagnante ouverte. Funded : une fois 5100 $ de profit réalisé (safety net), le seuil se fige à 150100 $."
           },
           "consistency": null,
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 24,
-            "micros": 240,
+            "minis": 18,
+            "micros": 180,
             "scaling": false,
             "tiers": null,
             "notes": "1 mini = 10 micros."
@@ -307,18 +319,23 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
             },
             "split_by_profit": null,
-            "min_amount": 100,
+            "min_amount": 250,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1500,
+              1750,
+              2000,
+              2250
+            ],
             "max_payouts": null,
-            "safety_net_balance": 256600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "safety_net_balance": 155100,
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -326,10 +343,11 @@
         "https://elitetraderfunding.app/1-step-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL. 1 jour minimum avec l'option One Day to Pass."
     },
     {
       "id": "elitetraderfunding-eod-50k",
@@ -339,10 +357,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 347,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 177 $."
       },
       "phases": [
         {
@@ -428,7 +446,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -436,10 +454,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1250,
+              1500,
+              1750,
+              2000
+            ],
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -447,10 +470,11 @@
         "https://elitetraderfunding.app/end-of-day-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "DLL en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "DLL en hard breach."
     },
     {
       "id": "elitetraderfunding-eod-100k",
@@ -460,10 +484,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 487,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 257 $."
       },
       "phases": [
         {
@@ -549,7 +573,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -557,10 +581,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1750,
+              2000,
+              2250,
+              2500
+            ],
             "max_payouts": null,
             "safety_net_balance": 103600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -568,10 +597,11 @@
         "https://elitetraderfunding.app/end-of-day-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "DLL en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "DLL en hard breach."
     },
     {
       "id": "elitetraderfunding-diamond-hands-100k",
@@ -581,10 +611,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 397,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 307 $ (« et plus » selon le sélecteur)."
       },
       "phases": [
         {
@@ -670,7 +700,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -678,10 +708,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              2500,
+              2750,
+              3000,
+              null
+            ],
             "max_payouts": null,
             "safety_net_balance": 103600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -689,10 +724,11 @@
         "https://elitetraderfunding.app/diamond-hands-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Seul plan qui autorise l'overnight et le week-end. DLL 1 500 $ en hard breach. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Seul plan qui autorise l'overnight et le week-end. DLL 1 500 $ en hard breach."
     },
     {
       "id": "elitetraderfunding-static-10k",
@@ -702,10 +738,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 147,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 177 $."
       },
       "phases": [
         {
@@ -718,9 +754,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 9500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": 5,
@@ -750,9 +786,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 9500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 9500 $ ; une fois 600 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -775,7 +811,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -783,10 +819,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              500,
+              500,
+              500,
+              1000
+            ],
             "max_payouts": null,
             "safety_net_balance": 10600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -794,10 +835,11 @@
         "https://elitetraderfunding.app/static-drawdown",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL ni de consistency."
     },
     {
       "id": "elitetraderfunding-static-25k",
@@ -807,10 +849,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 277,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 177 $."
       },
       "phases": [
         {
@@ -823,9 +865,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 24000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 24000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 24000 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": 5,
@@ -855,9 +897,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 24000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 24000 $ ; une fois 1100 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+            "basis_notes": "Static : solde minimum fixe à 24000 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -880,7 +922,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -888,10 +930,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              750,
+              1000,
+              1250,
+              1500
+            ],
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -899,10 +946,11 @@
         "https://elitetraderfunding.app/static-drawdown",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL ni de consistency."
     },
     {
       "id": "elitetraderfunding-static-50k",
@@ -912,10 +960,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 497,
         "billing": "monthly",
         "activation_fee": 87,
-        "notes": "Évaluation par abonnement mensuel (prix calculé dynamiquement sur le site, non relevé). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie dès 177 $."
+        "notes": "Évaluation par abonnement mensuel (renouvelée tous les 30 jours tant qu'elle n'est pas passée). Reset 47 $, illimité. Compte Elite : 87 $/mois ou activation à vie 177 $."
       },
       "phases": [
         {
@@ -928,9 +976,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 48000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 48000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 48000 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": 5,
@@ -960,9 +1008,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 48000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 48000 $ ; une fois 2100 $ de profit réalisé (safety net), le drawdown est retiré pour l'éligibilité aux payouts."
+            "basis_notes": "Static : solde minimum fixe à 48000 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -985,7 +1033,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -993,10 +1041,15 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
+            "max_amount_schedule": [
+              1250,
+              1500,
+              1750,
+              2000
+            ],
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (ex. 50K : 1 250 $ au 1er cycle, jusqu'à 2 000 $ ensuite). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -1004,10 +1057,11 @@
         "https://elitetraderfunding.app/static-drawdown",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
-      "notes": "Pas de DLL ni de consistency. Drawdown funded supposé identique à l'évaluation (non chiffré à part) ; plafonds de payout par taille non publiés."
+      "needs_review": false,
+      "notes": "Pas de DLL ni de consistency."
     },
     {
       "id": "elitetraderfunding-fast-track-eod-10k",
@@ -1017,10 +1071,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
-        "billing": "monthly",
+        "amount": 57,
+        "billing": "one_time",
         "activation_fee": 87,
-        "notes": "Évaluation 10K, moins de 100 $ en version EOD (prix exact non relevé). Pas de reset. Premier mois d'activation funded inclus."
+        "notes": "Paiement unique, sans renouvellement ni reset. Compte Elite : 87 $/mois (pas d'activation à vie). Max 10 jours calendaires pour passer."
       },
       "phases": [
         {
@@ -1039,7 +1093,7 @@
           },
           "consistency": null,
           "min_trading_days": 3,
-          "max_duration_days": null,
+          "max_duration_days": 10,
           "max_contracts": {
             "minis": 1,
             "micros": 10,
@@ -1090,7 +1144,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -1098,10 +1152,14 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
-            "max_payouts": null,
+            "max_amount_schedule": [
+              500,
+              750,
+              1000
+            ],
+            "max_payouts": 3,
             "safety_net_balance": 10600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (jusqu'à 1 500 $ par cycle sur Fast Track). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -1109,9 +1167,10 @@
         "https://elitetraderfunding.app/fast-track-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Fast Track EOD : pas de reset, premier mois d'activation funded offert, pas de DLL."
     },
     {
@@ -1122,10 +1181,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
-        "billing": "monthly",
+        "amount": 77,
+        "billing": "one_time",
         "activation_fee": 87,
-        "notes": "Évaluation 10K, moins de 100 $ en version EOD (prix exact non relevé). Pas de reset. Premier mois d'activation funded inclus."
+        "notes": "Paiement unique, sans renouvellement ni reset. Compte Elite : 87 $/mois (pas d'activation à vie). Max 10 jours calendaires pour passer."
       },
       "phases": [
         {
@@ -1138,13 +1197,13 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 9500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": 3,
-          "max_duration_days": null,
+          "max_duration_days": 10,
           "max_contracts": {
             "minis": 1,
             "micros": 10,
@@ -1170,9 +1229,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 9500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 9500 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1195,7 +1254,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -1203,10 +1262,14 @@
             "split_by_profit": null,
             "min_amount": 100,
             "max_amount": null,
-            "max_amount_schedule": null,
-            "max_payouts": null,
+            "max_amount_schedule": [
+              750,
+              1000,
+              1250
+            ],
+            "max_payouts": 3,
             "safety_net_balance": 10600,
-            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle qui monte avec la taille et le numéro de cycle (jusqu'à 1 500 $ par cycle sur Fast Track). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
+            "notes": "Elite Sim-Funded : jours de trading actifs (8 pour le 1er cycle, 10 ensuite), minimum 100 $, plafond par cycle selon la taille (max_amount_schedule). Jusqu'à 100 % du profit jusqu'à 25 000 $ de payouts cumulés, puis LIVE ELITE (80/20, sans plafond). Après 20 % de profit, rendre plus de 35 % du profit accumulé peut exclure le compte."
           }
         }
       ],
@@ -1214,9 +1277,10 @@
         "https://elitetraderfunding.app/fast-track-evaluation",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Fast Track Static : pas de reset, premier mois d'activation funded offert, pas de DLL."
     },
     {
@@ -1227,10 +1291,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 357,
         "billing": "one_time",
         "activation_fee": null,
-        "notes": "Paiement unique (prix non relevé)."
+        "notes": "Paiement unique, sans renouvellement. Promotion en cours le 2026-10-05 (-75 % sur 50K et 100K : 186,75 $ et 249,25 $). 5 comptes DTF actifs maximum."
       },
       "phases": [
         {
@@ -1268,7 +1332,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -1287,9 +1351,10 @@
         "https://elitetraderfunding.app/direct-to-funded",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Sans évaluation, swing autorisé, pas de DLL."
     },
     {
@@ -1300,10 +1365,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 747,
         "billing": "one_time",
         "activation_fee": null,
-        "notes": "Paiement unique (prix non relevé)."
+        "notes": "Paiement unique, sans renouvellement. Promotion en cours le 2026-10-05 (-75 % sur 50K et 100K : 186,75 $ et 249,25 $). 5 comptes DTF actifs maximum."
       },
       "phases": [
         {
@@ -1341,7 +1406,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -1360,9 +1425,10 @@
         "https://elitetraderfunding.app/direct-to-funded",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Sans évaluation, swing autorisé, pas de DLL."
     },
     {
@@ -1373,10 +1439,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 997,
         "billing": "one_time",
         "activation_fee": null,
-        "notes": "Paiement unique (prix non relevé)."
+        "notes": "Paiement unique, sans renouvellement. Promotion en cours le 2026-10-05 (-75 % sur 50K et 100K : 186,75 $ et 249,25 $). 5 comptes DTF actifs maximum."
       },
       "phases": [
         {
@@ -1389,9 +1455,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 95000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : solde minimum fixe à 95000 $, fixé à la création du compte ; fin de l'évaluation si le solde clôture au niveau ou en dessous."
+            "basis_notes": "Static : solde minimum fixe à 95000 $, fixé à la création du compte, qui ne bouge jamais (même après le safety net). Le toucher à n'importe quel moment fait échouer le compte (« at any time ») ; appliqué par la liquidation automatique du broker sur le solde en temps réel."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1414,7 +1480,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 25000,
               "split_pct": 0.8
@@ -1433,9 +1499,10 @@
         "https://elitetraderfunding.app/direct-to-funded",
         "https://elitetraderfunding.app/elite",
         "https://elitetraderfunding.app/payouts",
-        "https://elitetraderfunding.app/evaluations"
+        "https://elitetraderfunding.app/evaluations",
+        "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Sans évaluation, swing autorisé, pas de DLL."
     }
   ]

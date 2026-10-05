@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import { SessionLiveComponent } from './session-live.component';
@@ -33,14 +33,21 @@ const conn: TradovateConnection = {
   lastSyncError: null, tradesImported: 0, brokerTradesCount: 0, connectedAt: '',
 };
 
-function setup(opts: { type?: TradingAccount['type']; connected?: boolean }) {
+function setup(opts: { type?: TradingAccount['type']; connected?: boolean; loaded?: boolean }) {
   const connections = signal(opts.connected === false ? [] : [conn]);
+  // Par défaut, connexions déjà chargées (cas « passé par Mes comptes »).
+  const loaded = signal(opts.loaded ?? true);
+  const load = vi.fn();
   TestBed.configureTestingModule({
     providers: [
       { provide: SelectedAccountStore, useValue: { accounts: signal([account(opts.type ?? 'EVALUATION')]) } },
       {
         provide: TradovateStore,
-        useValue: { byAccount: computed(() => new Map(connections().map((c) => [c.accountId, c] as const))) },
+        useValue: {
+          byAccount: computed(() => new Map(connections().map((c) => [c.accountId, c] as const))),
+          loaded,
+          load,
+        },
       },
       { provide: MoneyService, useValue: { format: () => '$0' } },
     ],
@@ -54,7 +61,7 @@ function setup(opts: { type?: TradingAccount['type']; connected?: boolean }) {
   (fixture.componentInstance as unknown as { session: () => TradingSession }).session = signal(session);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
-  return { fixture, el };
+  return { fixture, el, connections, load };
 }
 
 describe('Session live — suivi prop firm à la place de Trade rapide', () => {
@@ -84,5 +91,18 @@ describe('Session live — suivi prop firm à la place de Trade rapide', () => {
     fixture.detectChanges();
     expect(el.querySelector('mtc-live-prop-firm')).not.toBeNull();
     expect(el.querySelector('mtc-quick-trade')).toBeNull();
+  });
+
+  it('ouverture directe ou F5 (connexions pas encore chargées) : les charge, puis affiche le suivi', () => {
+    const { el, fixture, connections, load } = setup({ connected: false, loaded: false });
+    expect(load).toHaveBeenCalledOnce();
+    expect(el.querySelector('mtc-quick-trade')).not.toBeNull(); // en attendant la réponse
+    connections.set([conn]); // réponse de l'API
+    fixture.detectChanges();
+    expect(el.querySelector('mtc-live-prop-firm')).not.toBeNull();
+  });
+
+  it('connexions déjà chargées : pas de nouvel appel', () => {
+    expect(setup({}).load).not.toHaveBeenCalled();
   });
 });

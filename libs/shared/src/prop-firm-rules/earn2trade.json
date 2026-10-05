@@ -18,7 +18,7 @@
       "finamark"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-05",
   "plans": [
     {
       "id": "earn2trade-tcp-25k",
@@ -67,8 +67,21 @@
             "minis": 3,
             "micros": 30,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 3 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -107,8 +120,21 @@
             "minis": 3,
             "micros": 30,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 3 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -149,8 +175,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-tcp-50k",
@@ -199,8 +225,27 @@
             "minis": 6,
             "micros": 60,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 6 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -239,8 +284,27 @@
             "minis": 6,
             "micros": 60,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 6 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -281,8 +345,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-tcp-100k",
@@ -331,8 +395,33 @@
             "minis": 12,
             "micros": 120,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 12 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -371,8 +460,33 @@
             "minis": 12,
             "micros": 120,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 12 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -413,8 +527,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-gauntlet-50k",
@@ -463,8 +577,27 @@
             "minis": 6,
             "micros": 60,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 6 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -503,8 +636,27 @@
             "minis": 6,
             "micros": 60,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 6 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 2000,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2001,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -545,8 +697,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-gauntlet-100k",
@@ -595,8 +747,33 @@
             "minis": 12,
             "micros": 120,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 12 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -635,8 +812,33 @@
             "minis": 12,
             "micros": 120,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 12 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 12,
+                "micros": 120
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -677,8 +879,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-gauntlet-150k",
@@ -727,8 +929,33 @@
             "minis": 15,
             "micros": 150,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 15 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -767,8 +994,33 @@
             "minis": 15,
             "micros": 150,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 15 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 9,
+                "micros": 90
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 15,
+                "micros": 150
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -809,8 +1061,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     },
     {
       "id": "earn2trade-gauntlet-200k",
@@ -859,8 +1111,33 @@
             "minis": 16,
             "micros": 160,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 16 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -899,8 +1176,33 @@
             "minis": 16,
             "micros": 160,
             "scaling": true,
-            "tiers": null,
-            "notes": "Progression Ladder : jusqu'à 16 contrats, à ajuster en temps réel selon le solde et le profit ; dépasser le palier fait échouer le compte. Jusqu'à 10 micros comptent pour 1 contrat standard. Paliers publiés seulement en image, non relevés."
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1500,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 1501,
+                "max_profit": 3000,
+                "minis": 7,
+                "micros": 70
+              },
+              {
+                "min_profit": 3001,
+                "max_profit": 4500,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 4501,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Progression Ladder : taille max selon le profit en cours (solde et profit en temps réel, auto-régulé par le trader) ; dépasser le palier fait échouer le compte immédiatement. Jusqu'à 10 micros comptent pour 1 contrat standard (micros = 10 par contrat, borne prudente). Même grille en évaluation, en LiveSim et en Live de même taille."
           },
           "time_rules": {
             "must_close_by": "15:50 America/Chicago",
@@ -941,8 +1243,8 @@
         "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts",
         "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts"
       ],
-      "needs_review": true,
-      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Paliers de la Progression Ladder non relevés (image)."
+      "needs_review": false,
+      "notes": "Phase funded modélisée en LiveSim (drawdown EOD). Le partenaire peut proposer un compte Live à la place : drawdown trailing intraday, mêmes montants. Choix LiveSim / Live fait par le partenaire, non modélisé en plan séparé : sur un compte Live, le seuil réel est plus strict que celui affiché."
     }
   ]
 }

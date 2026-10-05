@@ -129,12 +129,16 @@ export class SessionStore {
   loadSessionData(): void {
     this.sessionLoadError.set(false);
     this.sessionApi
-      .getActiveSession()
+      .getTodaySession()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.activeSession.set(res.data ?? null);
+          const { trades, ...session } = res.data ?? {};
+          this.activeSession.set(res.data ? (session as TradingSession) : null);
           if (res.data?.status === 'ACTIVE') this.refreshLiveStats();
+          // Session clôturée du jour (rechargement de la page, #456) : ses trades alimentent
+          // le débrief ; ses totaux viennent de la session elle-même (debriefStats).
+          else if (res.data?.status === 'CLOSED') this.todayTrades.set(trades ?? []);
         },
         // Sans ce drapeau, une panne ressemblerait à « aucune session en cours ».
         error: () => this.sessionLoadError.set(true),

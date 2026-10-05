@@ -92,6 +92,33 @@ describe('SessionService', () => {
     });
   });
 
+  describe('getTodaySession (#456)', () => {
+    it('session active → renvoyée telle quelle', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce({ id: 's-active', status: 'ACTIVE' });
+
+      await expect(service.getTodaySession('user-1')).resolves.toEqual({ id: 's-active', status: 'ACTIVE' });
+      expect(mockPrisma.tradeSession.findFirst).toHaveBeenCalledTimes(1);
+    });
+
+    it('aucune active → dernière session clôturée du jour, avec ses trades', async () => {
+      mockPrisma.tradeSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 's-closed', status: 'CLOSED', trades: [] });
+
+      const res = await service.getTodaySession('user-1');
+
+      expect(res).toMatchObject({ id: 's-closed', status: 'CLOSED' });
+      const query = mockPrisma.tradeSession.findFirst.mock.calls[1][0];
+      expect(query.where).toMatchObject({
+        userId: 'user-1',
+        status: 'CLOSED',
+        startedAt: { gte: expect.any(Date) },
+      });
+      expect(query.orderBy).toEqual({ endedAt: 'desc' });
+      expect(query.include.trades).toBeDefined();
+    });
+  });
+
   describe('getTodayTrades', () => {
     it('retourne uniquement les trades du jour', async () => {
       const trades = [makeTrade(), makeTrade({ id: 'trade-2' })];
@@ -108,6 +135,28 @@ describe('SessionService', () => {
         }),
       );
       expect(result).toHaveLength(2);
+    });
+
+    it('session active → seulement les trades de son compte (#457)', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({ accountId: 'acc-session' });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.getTodayTrades('user-1');
+
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ userId: 'user-1', accountId: 'acc-session' }),
+        }),
+      );
+    });
+
+    it('sans session active → tous les comptes', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.getTodayTrades('user-1');
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).not.toHaveProperty('accountId');
     });
   });
 
@@ -172,6 +221,25 @@ describe('SessionService', () => {
           }),
         }),
       );
+    });
+
+    it("n'inclut que les trades du compte de la session (#457)", async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({
+        startedAt: new Date('2026-10-05T13:24:00.000Z'),
+        accountId: 'acc-tradeify',
+      });
+      mockPrisma.trade.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.trade.findMany.mockResolvedValue([makeTrade({ pnl: 330, commission: 26.6 })]);
+      mockPrisma.tradeSession.update.mockResolvedValue({ id: 'session-1' });
+
+      await service.closeSession('user-1', 'session-1', 'CONFIDENT');
+
+      expect(mockPrisma.trade.updateMany.mock.calls[0][0].where).toMatchObject({ accountId: 'acc-tradeify' });
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toMatchObject({
+        sessionId: 'session-1',
+        accountId: 'acc-tradeify',
+      });
+      expect(mockPrisma.tradeSession.update.mock.calls[0][0].data.totalPnl).toBe(303.4);
     });
 
     it('lance NotFoundException si la session est introuvable', async () => {

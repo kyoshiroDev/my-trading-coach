@@ -168,6 +168,26 @@ describe('TradesService', () => {
       });
     });
 
+    describe('Rattachement à la session active (1 session = 1 compte, #457)', () => {
+      beforeEach(() => {
+        mockPrisma.trade.count.mockResolvedValue(0);
+        mockPrisma.trade.create.mockResolvedValue(mockTrade);
+        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: 'acc-session' });
+      });
+
+      it('trade du compte de la session → rattaché à la session', async () => {
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-session' });
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-session' });
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBe('s1');
+      });
+
+      it("trade d'un autre compte (synchro broker) → hors session", async () => {
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-autre' });
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-autre' });
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBeNull();
+      });
+    });
+
     it('calcule le PnL automatiquement si entry et exit fournis', async () => {
       mockPrisma.trade.count.mockResolvedValue(0);
       mockPrisma.trade.create.mockImplementation(({ data }) =>
