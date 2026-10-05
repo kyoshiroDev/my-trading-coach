@@ -32,6 +32,13 @@ function weekdayAt(hour: number, minute = 0): Date {
   d.setHours(hour, minute, 0, 0);
   return d;
 }
+/** Un lundi à l'heure donnée (la veille ouvrée est le vendredi de la semaine précédente). */
+function mondayAt(hour: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + ((1 - d.getDay() + 7) % 7));
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
 /** Un samedi à l'heure donnée. */
 function saturdayAt(hour: number): Date {
   const d = new Date();
@@ -647,5 +654,20 @@ describe('seedDemo — séances suivies en direct (#373 / #374)', () => {
     expect(created['dailyRecap'].some((r) => String(r['aiOneLiner']).startsWith('Anti-tilt'))).toBe(true);
     expect(created['weeklyDebrief'].some((w) =>
       JSON.stringify(w['insights']).includes('Séances suivies en direct'))).toBe(true);
+  });
+
+  it('la journée de revenge tombe dans la semaine du dernier débrief (celui affiché), jamais la veille', async () => {
+    for (const now of [weekdayAt(10), saturdayAt(11), mondayAt(9)]) {
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+      const revenge = created['trade'].find((t) => t['emotion'] === 'REVENGE')!;
+      const latest = created['weeklyDebrief'].reduce((a, b) =>
+        ((b['startDate'] as Date) > (a['startDate'] as Date) ? b : a));
+      const at = revenge['tradedAt'] as Date;
+      expect(at >= (latest['startDate'] as Date) && at <= (latest['endDate'] as Date), `seed du ${now.toISOString()}`).toBe(true);
+      expect(JSON.stringify(latest['insights'])).toContain('Anti-tilt');
+      const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+      expect(startOfToday.getTime() - at.getTime()).toBeGreaterThan(24 * 3600_000);
+    }
   });
 });
