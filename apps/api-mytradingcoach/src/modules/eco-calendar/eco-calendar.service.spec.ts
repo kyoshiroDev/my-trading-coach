@@ -159,7 +159,7 @@ describe('EcoCalendarService', () => {
         json: vi.fn().mockResolvedValue([
           makeFmpEvent({ impact: 'High' }),
           makeFmpEvent({ event: 'Holiday Notice', impact: 'Low' }),
-          makeFmpEvent({ event: 'PMI Flash', impact: 'Medium', currency: 'EUR' }),
+          makeFmpEvent({ event: 'PMI Flash', impact: 'Medium', currency: 'EUR', country: 'EU' }),
         ]),
       }));
       mockPrisma.ecoEvent.upsert.mockImplementation(({ create }) => Promise.resolve({ ...create, id: 'id-1' }));
@@ -214,6 +214,45 @@ describe('EcoCalendarService', () => {
       expect(result[0].isReleased).toBe(true);
       expect(result[0].actual).toBe(210000);
     });
+
+    it('resynchronise prévision, précédent et heure, pas seulement actual', async () => {
+      process.env['FMP_API_KEY'] = 'test-key';
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        status: 200, ok: true,
+        json: vi.fn().mockResolvedValue([makeFmpEvent({ estimate: 190000, previous: 155000 })]),
+      }));
+      mockPrisma.ecoEvent.upsert.mockResolvedValue({
+        date: '2026-05-26', time: '15:30', name: 'NFP', country: 'US', currency: 'USD',
+        impact: 'high', actual: null, estimate: 190000, previous: 155000, isReleased: false, unit: 'K',
+      });
+
+      await service.fetchAndStoreEvents('2026-05-26');
+
+      expect(mockPrisma.ecoEvent.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({ time: '15:30', estimate: 190000, previous: 155000 }),
+        }),
+      );
+    });
+
+    it('ignore un actual FMP sur un event encore à venir', async () => {
+      process.env['FMP_API_KEY'] = 'test-key';
+      const future = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 19).replace('T', ' ');
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        status: 200, ok: true,
+        json: vi.fn().mockResolvedValue([makeFmpEvent({ date: future, actual: 4.47 })]),
+      }));
+      mockPrisma.ecoEvent.upsert.mockResolvedValue({
+        date: future.slice(0, 10), time: '12:00', name: 'NFP', country: 'US', currency: 'USD',
+        impact: 'high', actual: null, estimate: 180000, previous: 150000, isReleased: false, unit: 'K',
+      });
+
+      await service.fetchAndStoreEvents(future.slice(0, 10));
+
+      const call = mockPrisma.ecoEvent.upsert.mock.calls[0][0];
+      expect(call.create).toMatchObject({ actual: null, isReleased: false });
+      expect(call.update).toMatchObject({ actual: null, isReleased: false });
+    });
   });
 
   // ── getEventsFromDb ───────────────────────────────────────────────────────
@@ -236,6 +275,37 @@ describe('EcoCalendarService', () => {
       expect(mockPrisma.ecoEvent.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { date: '2026-05-26' }, orderBy: { time: 'asc' } }),
       );
+    });
+
+    it('masque un actual déjà stocké sur un event à venir', async () => {
+      const future = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([
+        {
+          date: future, time: '14:30', name: 'CPI YoY', country: 'US', currency: 'USD',
+          impact: 'high', actual: 4.47, estimate: 4.4, previous: 4.22, isReleased: false, unit: '%',
+        },
+      ]);
+
+      const [ev] = await service.getEventsFromDb(future);
+
+      expect(ev.actual).toBeNull();
+      expect(ev.isReleased).toBe(false);
+      expect(ev.estimate).toBe(4.4);
+    });
+
+    it('tri façon ForexFactory : écarte les lignes déjà stockées hors règles et recalcule l\'impact', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([
+        { date: '2026-05-26', time: '14:00', name: 'Inflation Rate YoY', nameFr: null, country: 'BR', currency: 'BRL',
+          impact: 'high', actual: null, estimate: 4.4, previous: 4.2, isReleased: false, unit: '%' },
+        { date: '2026-05-26', time: '21:30', name: 'CFTC Gold speculative net positions', nameFr: null, country: 'US',
+          currency: 'USD', impact: 'medium', actual: null, estimate: null, previous: 218.6, isReleased: false, unit: 'K' },
+        { date: '2026-05-26', time: '16:00', name: 'ISM Services PMI', nameFr: 'PMI services ISM', country: 'US',
+          currency: 'USD', impact: 'high', actual: null, estimate: 55, previous: 55.4, isReleased: false, unit: null },
+      ]);
+
+      const result = await service.getEventsFromDb('2026-05-26');
+
+      expect(result.map((e) => [e.name, e.impact])).toEqual([['PMI services ISM', 'medium']]);
     });
   });
 
@@ -653,6 +723,24 @@ describe('EcoCalendarService', () => {
       );
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { date: DATE, name: 'New Label' }, data: { nameFr: 'Nouveau libellé' } }),
+      );
+    });
+
+    it('journée chargée → traduit par lots, un lot illisible ne bloque pas les autres', async () => {
+      const names = Array.from({ length: 20 }, (_, i) => `Label ${i}`);
+      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce(names.map((name) => ({ name })));
+      mockPrisma.ecoLabelTranslation.findMany.mockResolvedValueOnce([]);
+      mockAnthropic.create
+        .mockResolvedValueOnce({ content: [{ type: 'text', text: '{"Label 0": "Libellé 0", "Label 1": "Lib' }] })
+        .mockResolvedValueOnce({ content: [{ type: 'text', text: '{"Label 15":"Libellé 15"}' }] });
+
+      await service['translateEventNames'](DATE);
+
+      expect(mockAnthropic.create).toHaveBeenCalledTimes(2);
+      expect(JSON.stringify(mockAnthropic.create.mock.calls[0][0])).not.toContain('Label 15');
+      expect(mockPrisma.ecoLabelTranslation.upsert).toHaveBeenCalledOnce();
+      expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { date: DATE, name: 'Label 15' }, data: { nameFr: 'Libellé 15' } }),
       );
     });
   });

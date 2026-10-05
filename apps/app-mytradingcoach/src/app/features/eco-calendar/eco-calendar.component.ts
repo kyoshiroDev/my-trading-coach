@@ -502,19 +502,23 @@ export class EcoCalendarComponent implements OnInit {
     // Asie / Pacifique
     JPY: 'asia', CNY: 'asia', AUD: 'asia', NZD: 'asia', KRW: 'asia', INR: 'asia',
     HKD: 'asia', SGD: 'asia', TWD: 'asia', IDR: 'asia', THB: 'asia', MYR: 'asia',
+    PHP: 'asia', VND: 'asia', PKR: 'asia',
     // Europe / EMEA
     EUR: 'europe', GBP: 'europe', CHF: 'europe', SEK: 'europe', NOK: 'europe',
     DKK: 'europe', PLN: 'europe', HUF: 'europe', CZK: 'europe', TRY: 'europe', ZAR: 'europe', RUB: 'europe',
+    RON: 'europe', ISK: 'europe', ILS: 'europe', SAR: 'europe', AED: 'europe', EGP: 'europe',
     // Amériques
-    USD: 'us', CAD: 'us', MXN: 'us', BRL: 'us', ARS: 'us', CLP: 'us',
+    USD: 'us', CAD: 'us', MXN: 'us', BRL: 'us', ARS: 'us', CLP: 'us', COP: 'us', PEN: 'us',
   };
 
   private sessionOf(event: EcoEvent): EcoSession {
     const byCcy = EcoCalendarComponent.SESSION_BY_CCY[event.currency?.toUpperCase()];
     if (byCcy) return byCcy;
-    // Repli si devise non mappée : par heure (Europe/Paris), avant 14h ⇒ europe, sinon us
-    const [h, m] = (event.time ?? '00:00').split(':').map(Number);
-    return ((h || 0) * 60 + (m || 0)) >= 14 * 60 ? 'us' : 'europe';
+    // Repli si devise non mappée : par heure (Europe/Paris). Avant 8h ⇒ asie
+    // (sinon une stat des Philippines à 03:00 tombait en Europe), avant 14h ⇒ europe, sinon us.
+    const minutes = this.timeMinutes(event.time);
+    if (minutes < 8 * 60) return 'asia';
+    return minutes >= 14 * 60 ? 'us' : 'europe';
   }
 
   private bucketBySession(events: EcoEvent[]): SessionGroup {

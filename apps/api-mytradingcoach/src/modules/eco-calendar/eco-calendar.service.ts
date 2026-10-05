@@ -10,11 +10,15 @@ import { normalizeEventKey, toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoAnalysis, EcoEvent } from '@mtc/shared';
 import type { EcoCalendarData, EcoResultAnalysis, FmpEcoEvent } from './eco-calendar.types';
 import * as dates from './eco-calendar.dates';
+import { classifyEcoEvent, type EcoImpact } from './eco-calendar.impact';
 import { readUserPins, saveUserPins, sortWithPins, userTopAssets } from './eco-calendar.pins';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 
 // Réexport : les appelants existants importent ces types depuis le service.
 export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
+
+/** Libellés par appel de traduction : la réponse JSON tient largement dans max_tokens. */
+const TRANSLATION_BATCH = 15;
 
 
 @Injectable()
@@ -75,20 +79,26 @@ export class EcoCalendarService {
       // FMP retourne directement un tableau (pas d'objet wrapper)
       const data = (await response.json()) as FmpEcoEvent[];
 
-      // Garder uniquement Medium et High
-      const filtered = data.filter((e) => ['High', 'Medium'].includes(e.impact));
+      // Tri façon ForexFactory : devises majeures, sans bruit, impact selon nos règles.
+      const filtered = data
+        .map((e) => ({
+          e,
+          impact: classifyEcoEvent({ name: e.event, currency: e.currency, country: e.country, fmpImpact: e.impact }),
+        }))
+        .filter((x): x is { e: FmpEcoEvent; impact: EcoImpact } => x.impact !== null);
 
       const upserted: EcoEvent[] = [];
 
-      for (const e of filtered) {
+      for (const { e, impact } of filtered) {
         const eventTimeUTC = e.date
           ? new Date(e.date.replace(' ', 'T') + 'Z')
           : null;
         const now = new Date();
-        const isReleased =
-          e.actual !== null &&
-          eventTimeUTC !== null &&
-          eventTimeUTC <= now;
+        // FMP renvoie parfois un `actual` sur un event encore à venir (ex. une inflation
+        // du vendredi déjà « publiée » le lundi) : on n'en garde aucun avant l'heure.
+        const isPast = eventTimeUTC !== null && eventTimeUTC <= now;
+        const actual = isPast ? (e.actual ?? null) : null;
+        const isReleased = actual !== null;
         const { date: parisDate, time: parisTime } = this.toParisDateTime(
           e.date ?? `${date} 00:00:00`,
         );
@@ -99,17 +109,28 @@ export class EcoCalendarService {
           name: e.event,
           country: e.country,
           currency: e.currency,
-          impact: e.impact === 'High' ? 'high' : 'medium',
-          actual: e.actual ?? null,
+          impact,
+          actual,
           estimate: e.estimate ?? null,
           previous: e.previous ?? null,
           isReleased,
           unit: e.unit ?? null,
         };
 
+        // FMP révise après coup l'heure, les prévisions ou l'impact : on resynchronise
+        // tout sauf la clé (date, nom, devise), pas seulement `actual`.
         const row = await this.prisma.ecoEvent.upsert({
           where: { date_name_currency: { date: parisDate, name: e.event, currency: e.currency } },
-          update: { actual: e.actual ?? null, isReleased, updatedAt: new Date() },
+          update: {
+            time: mapped.time,
+            impact: mapped.impact,
+            actual,
+            estimate: mapped.estimate,
+            previous: mapped.previous,
+            isReleased,
+            unit: mapped.unit,
+            updatedAt: new Date(),
+          },
           create: mapped,
         });
 
@@ -176,19 +197,12 @@ export class EcoCalendarService {
       const missing = names.filter((n) => !knownMap.has(n));
       if (!missing.length) return;
 
-      const msg = await this.anthropicClient.create(
-        {
-          model: AI_MODELS.fast,
-          max_tokens: 300,
-          messages: [{ role: 'user', content:
-            `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(missing)}` }],
-        },
-        { feature: 'eco_translation', userId: null },
-      );
-      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
-      const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
-      if (s === -1 || e === -1) return;
-      const mapping = JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;
+      // Par lots : en un seul appel à 300 tokens, une journée chargée (20+ libellés)
+      // tronquait le JSON → parse en échec → rien traduit, et nouvel essai à chaque polling.
+      const mapping: Record<string, string> = {};
+      for (let i = 0; i < missing.length; i += TRANSLATION_BATCH) {
+        Object.assign(mapping, await this.translateBatch(missing.slice(i, i + TRANSLATION_BATCH)));
+      }
 
       // 3) Upsert glossaire (1 fois à vie) puis propagation aux events du jour.
       await Promise.all(
@@ -208,6 +222,28 @@ export class EcoCalendarService {
     }
   }
 
+  /** Traduit un lot de libellés ; un lot illisible n'empêche pas les autres d'aboutir. */
+  private async translateBatch(names: string[]): Promise<Record<string, string>> {
+    try {
+      const msg = await this.anthropicClient.create(
+        {
+          model: AI_MODELS.fast,
+          max_tokens: 1024,
+          messages: [{ role: 'user', content:
+            `Traduis en français ces libellés d'événements économiques. Réponds UNIQUEMENT avec un objet JSON { "<libellé EN>": "<libellé FR>" }, sans texte autour.\n\n${JSON.stringify(names)}` }],
+        },
+        { feature: 'eco_translation', userId: null },
+      );
+      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+      if (s === -1 || e === -1) return {};
+      return JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;
+    } catch (err) {
+      this.logger.warn(`Eco name translation batch failed: ${(err as Error).message}`);
+      return {};
+    }
+  }
+
   // ── Lecture depuis BDD ────────────────────────────────────────────────────
 
   async getEventsFromDb(date: string): Promise<EcoEvent[]> {
@@ -222,21 +258,32 @@ export class EcoCalendarService {
       now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    return rows.map((r) => {
+    // Même tri qu'à l'ingestion : les lignes stockées avant ces règles (Brésil, CFTC…)
+    // disparaissent sans attendre un nouveau fetch. `r.name` = libellé FMP anglais.
+    const kept = rows.flatMap((r) => {
+      const impact = classifyEcoEvent({
+        name: r.name, currency: r.currency, country: r.country,
+        fmpImpact: r.impact === 'high' ? 'High' : 'Medium',
+      });
+      return impact ? [{ r, impact }] : [];
+    });
+
+    return kept.map(({ r, impact }) => {
       // r.time est stocké en heure Paris (HH:MM) : reconstruire pour comparaison
       const eventDateTime = new Date(`${r.date}T${r.time}:00`);
-      const dynamicIsReleased = r.actual !== null && eventDateTime <= parisNow;
+      // Un `actual` sur un event à venir est une donnée FMP erronée : masqué jusqu'à l'heure.
+      const actual = eventDateTime <= parisNow ? (r.actual ?? null) : null;
 
       return {
         time: r.time,
         name: r.nameFr ?? r.name,
-        impact: r.impact as 'high' | 'medium',
+        impact,
         country: r.country,
         currency: r.currency,
-        actual: r.actual ?? null,
+        actual,
         estimate: r.estimate ?? null,
         previous: r.previous ?? null,
-        isReleased: dynamicIsReleased,
+        isReleased: actual !== null,
         unit: r.unit,
       };
     });

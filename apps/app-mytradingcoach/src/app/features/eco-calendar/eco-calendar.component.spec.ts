@@ -73,6 +73,18 @@ describe('EcoCalendarComponent', () => {
       const counts = cmp.tabCounts();
       expect(counts).toEqual({ all: 4, asia: 1, europe: 1, us: 2 });
     });
+
+    it('PHP → asie ; devise inconnue de nuit → asie et non plus europe', () => {
+      const { cmp } = setup({
+        events: [
+          ev({ currency: 'PHP', time: '03:00' }),
+          ev({ currency: 'XYZ', time: '02:30' }),
+          ev({ currency: 'XYZ', time: '10:00' }),
+          ev({ currency: 'XYZ', time: '15:00' }),
+        ],
+      });
+      expect(cmp.tabCounts()).toEqual({ all: 4, asia: 2, europe: 1, us: 1 });
+    });
   });
 
   describe('onglet par défaut depuis tradingSessions', () => {

@@ -1485,3 +1485,28 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
+
+- FMP renvoie parfois un `actual` sur un event **encore à venir** (inflation brésilienne du vendredi
+  « publiée » le lundi). `fetchAndStoreEvents` ne stocke un `actual` que si l'heure UTC est passée, et
+  `getEventsFromDb` le masque aussi à la lecture (lignes déjà en base). `isReleased` = `actual !== null`
+  après ce filtre.
+- L'upsert resynchronise heure, impact, prévision, précédent, unité et `actual` (pas seulement `actual`) :
+  FMP révise ses prévisions après coup. La clé reste `(date, name, currency)`.
+- Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
+  appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
+  polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
+  ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
+  JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
+  immobiliers, balance courante, stocks EIA hors brut…) ; impact **fort = nos règles** (NFP, CPI, PCE,
+  PIB trimestriel, ventes au détail, ISM manuf., taux directeurs, FOMC, gouverneurs), y compris quand
+  FMP dit Low ; le reste jugé High/Medium par FMP = moyen ; Low = écarté. ~90 → ~25 annonces/semaine.
+  Une annonce manquante ou mal classée = une règle à ajouter dans `HIGH`/`NOISE` + un cas dans
+  `eco-calendar.impact.spec.ts`.
+- `EcoEvent` est **partagé** (pas de `userId`) : le seed démo n'y écrit plus de faux events quand
+  `FMP_API_KEY` est défini (il épingle 2 vraies annonces du jour). Avant, ses 4 faux events (« CPI US »
+  fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
+  `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
+  `readUserPins` vidait la sélection démo).
