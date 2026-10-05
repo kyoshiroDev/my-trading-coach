@@ -43,6 +43,7 @@ import {
   MOOD_OPTIONS,
   ResultsCardData,
   canPublishResults,
+  debriefStats,
   frenchDayLabel,
   hasResultsToShare,
   moodDisplay,
@@ -142,14 +143,18 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   protected readonly showResultsShare = computed(
     () => canPublishResults(this.userStore.user()?.role, this.store.activeSession()?.status),
   );
-  protected readonly canShareResults = computed(() => hasResultsToShare(this.store.todayStats()));
+  /** Chiffres du débrief et de la carte : ceux de la session clôturée d'abord (#457). */
+  protected readonly debriefStats = computed(() =>
+    debriefStats(this.store.activeSession(), this.store.todayStats()),
+  );
+  protected readonly canShareResults = computed(() => hasResultsToShare(this.debriefStats()));
   protected readonly sessionDate = computed(() => {
     const s = this.store.activeSession();
     return new Date(s?.endedAt ?? s?.startedAt ?? this.today);
   });
   /** Mêmes chiffres que les 4 cartes du débrief ; humeur = celle choisie en fin de session. */
   protected readonly resultsCard = computed<Omit<ResultsCardData, 'referralCode'>>(() => {
-    const stats = this.store.todayStats();
+    const stats = this.debriefStats();
     const pnl = stats?.totalPnl ?? 0;
     const mood = moodDisplay(this.closeMood());
     const date = this.sessionDate();
