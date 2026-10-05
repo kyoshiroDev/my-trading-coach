@@ -60,6 +60,19 @@ const KEEP_ONLY_FOR: { re: RegExp; ccy: string[] }[] = [
   { re: /consumer (confidence|sentiment)/i, ccy: ['USD', 'GBP'] },
 ];
 
+/**
+ * Rendez-vous hebdo/mensuels que FF affiche toujours en moyen : gardés même si FMP les classe
+ * Low. Sinon une annonce vue Low au premier fetch n'est jamais stockée, et une ligne déjà
+ * stockée n'est plus resynchronisée (son résultat ne remonterait pas).
+ */
+const ALWAYS_MEDIUM: { re: RegExp; ccy: string }[] = [
+  { re: /michigan|\bUoM\b/i, ccy: 'USD' }, // sentiment + anticipations d'inflation
+  { re: /^initial jobless claims|^unemployment claims/i, ccy: 'USD' },
+  { re: /ISM (services|non-manufacturing)/i, ccy: 'USD' },
+  { re: /\bEIA\b.*crude/i, ccy: 'USD' },
+  { re: /\bIvey\b/i, ccy: 'CAD' },
+];
+
 interface HighRule {
   re: RegExp;
   /** Devises concernées ; absent = toutes les majeures. */
@@ -130,5 +143,6 @@ export function classifyEcoEvent({ name, currency, country, fmpImpact }: Classif
   // CPI ou PIB allemand/français : moyens chez FF, seul l'agrégat zone euro est fort
   // (la BCE et Lagarde sont publiés sous le pays EU).
   if (isHigh) return ccy === 'EUR' && (cc === 'DE' || cc === 'FR') ? 'medium' : 'high';
+  if (ALWAYS_MEDIUM.some((r) => r.ccy === ccy && r.re.test(stripped))) return 'medium';
   return fmpImpact === 'High' || fmpImpact === 'Medium' ? 'medium' : null;
 }
