@@ -246,6 +246,11 @@ bash infra/static-release.sh rollback app-prod <release>
 
 Depuis un poste : `ssh greg@VPS bash -s -- rollback app-prod < infra/static-release.sh`.
 
+**État (2026-10-05)** : app-dev, landing-dev, app-prod, admin, landing-prod migrés (confs
+`*-releases.conf`, racines nettoyées) ; reste **app-beta** (au passage de B8-05 sur beta). Leçon :
+le CD prod a publié en releases (05:25) avant la bascule nginx (14:50) → app.mytradingcoach.app a
+servi l'ancienne version pendant ce temps. Basculer un site **dès** le premier déploiement par release.
+
 **Transition d'un site** (une fois, quand le workflow qui le publie contient B8-05 :
 `ci.yml` → app-dev/landing-dev dès le merge sur dev ; `cd.yml` → app-prod/admin/landing-prod au
 passage sur main ; `beta.yml` → app-beta au passage sur beta). Ne pas basculer nginx avant : les
