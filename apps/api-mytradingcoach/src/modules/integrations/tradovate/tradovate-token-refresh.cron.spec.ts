@@ -11,7 +11,7 @@ describe('TradovateTokenRefreshCron', () => {
 
   function setup(opts: {
     due?: { id: string }[];
-    outcomes?: Record<string, 'refreshed' | 'reconnect' | 'retry'>;
+    outcomes?: Record<string, 'refreshed' | 'renewed' | 'reconnect' | 'retry'>;
     locked?: string[];
     configured?: boolean;
     condemned?: { id: string }[];
@@ -60,12 +60,12 @@ describe('TradovateTokenRefreshCron', () => {
 
   it('renouvelle chaque connexion sous verrou, et compte les issues', async () => {
     const { cron, connections } = setup({
-      due: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-      outcomes: { a: 'refreshed', b: 'reconnect', c: 'retry' },
+      due: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+      outcomes: { a: 'refreshed', b: 'reconnect', c: 'retry', d: 'renewed' },
     });
     const r = await cron.refreshExpiring(now);
-    expect(r).toEqual({ refreshed: 1, reconnect: 1, retry: 1, locked: 0, revived: 0 });
-    expect(connections.unlock).toHaveBeenCalledTimes(3);
+    expect(r).toEqual({ refreshed: 1, renewed: 1, reconnect: 1, retry: 1, locked: 0, revived: 0 });
+    expect(connections.unlock).toHaveBeenCalledTimes(4);
   });
 
   it('synchro en cours sur une connexion : on ne renouvelle pas en parallèle (rotation du token)', async () => {
@@ -80,14 +80,14 @@ describe('TradovateTokenRefreshCron', () => {
     const { cron, connections } = setup({ due: [{ id: 'a' }, { id: 'b' }] });
     connections.refreshNow.mockRejectedValueOnce(new Error('boom'));
     const r = await cron.refreshExpiring(now);
-    expect(r).toEqual({ refreshed: 1, reconnect: 0, retry: 1, locked: 0, revived: 0 });
+    expect(r).toEqual({ refreshed: 1, renewed: 0, reconnect: 0, retry: 1, locked: 0, revived: 0 });
     expect(connections.unlock).toHaveBeenCalledWith('a');
     expect(connections.refreshNow).toHaveBeenCalledTimes(2);
   });
 
   it('intégration non configurée sur cet environnement : ne fait rien', async () => {
     const { cron, prisma } = setup({ configured: false });
-    expect(await cron.refreshExpiring(now)).toEqual({ refreshed: 0, reconnect: 0, retry: 0, locked: 0, revived: 0 });
+    expect(await cron.refreshExpiring(now)).toEqual({ refreshed: 0, renewed: 0, reconnect: 0, retry: 0, locked: 0, revived: 0 });
     expect(prisma.brokerConnection.findMany).not.toHaveBeenCalled();
   });
 

@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { encryptToken } from '@api/common/utils/token-cipher.util';
 import { ACCOUNT_GONE_GRACE_MS, TradovateConnectionService } from './tradovate-connection.service';
@@ -47,12 +47,14 @@ describe('TradovateConnectionService.getAccessToken', () => {
       },
     };
     const api = { refresh: vi.fn(), renewAccessToken: vi.fn(), get: vi.fn() };
-    const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn(), exists: vi.fn().mockResolvedValue(0) } };
+    const redis = {
+      client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn(), exists: vi.fn().mockResolvedValue(0), get: vi.fn().mockResolvedValue(null) },
+    };
     const service = new TradovateConnectionService(prisma as never, api as never, config as never, redis as never);
     // Le délai entre les deux tentatives est réel en prod (2 s) ; inutile de le subir ici.
     vi.spyOn(service as unknown as { wait: (ms: number) => Promise<void> }, 'wait')
       .mockResolvedValue(undefined);
-    return { service, prisma, api, conn, key };
+    return { service, prisma, api, conn, key, redis };
   }
 
   const refusé = () => new TradovateApiError('unauthorized', 200, 'invalid_token');
@@ -304,6 +306,76 @@ describe('TradovateConnectionService.getAccessToken', () => {
       api.refresh.mockRejectedValue(new TradovateApiError('unavailable', 503, 'oauthtoken'));
       await expect(service.refreshNow(conn)).resolves.toBe('retry');
       expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── refresh_token mort mais renew vivant (prod 2026-10-05 : 42 refus en 7 h sur 4 connexions) ──
+  // `renew` ne fait pas tourner le refresh_token : sans marqueur, le même token mort repartait
+  // deux fois à chaque passage des crons.
+  describe('refresh_token connu mort : plus représenté à chaque passage', () => {
+    const empreinte = (c: BrokerConnection) =>
+      createHash('sha256').update(c.refreshTokenEnc as string).digest('hex').slice(0, 16);
+    const renewOk = () => ({ accessToken: 'AT-RENEW', expirationTime: new Date(Date.now() + 80 * 60_000).toISOString() });
+
+    it('refusé deux fois puis renew réussi → marqueur posé 6 h sur CE refresh_token', async () => {
+      const { service, api, redis, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      api.refresh.mockRejectedValue(refusé());
+      api.renewAccessToken.mockResolvedValue(renewOk());
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-RENEW');
+      expect(redis.client.set).toHaveBeenCalledWith('tradovate:refresh-dead:c1', empreinte(conn), 'EX', 6 * 3600);
+    });
+
+    it('marqueur présent → renew direct, AUCUN appel au refresh', async () => {
+      const { service, api, redis, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      redis.client.get.mockResolvedValue(empreinte(conn));
+      api.renewAccessToken.mockResolvedValue(renewOk());
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-RENEW');
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+
+    it('nouveau refresh_token stocké depuis (sœur, reconnexion) → le marqueur ne s’applique plus', async () => {
+      const { service, api, redis, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      redis.client.get.mockResolvedValue('empreinte-d-un-autre-token');
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-2' });
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
+      expect(api.renewAccessToken).not.toHaveBeenCalled();
+    });
+
+    it('marqueur présent mais renew refusé → refresh tenté en dernier recours', async () => {
+      const { service, api, redis, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      redis.client.get.mockResolvedValue(empreinte(conn));
+      api.renewAccessToken.mockRejectedValue(refusé());
+      api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800, refresh_token: 'RT-2' });
+
+      await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
+    });
+
+    it('cron : refresh refusé, renew réussi → « renewed », pas « refreshed »', async () => {
+      const { service, api, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      api.refresh.mockRejectedValue(refusé());
+      api.renewAccessToken.mockResolvedValue(renewOk());
+      await expect(service.refreshNow(conn)).resolves.toBe('renewed');
+    });
+
+    it('cron : marqueur présent → « renewed » sans appel au refresh', async () => {
+      const { service, api, redis, conn } = setup({ accessTokenExpiresAt: new Date(Date.now() + 20 * 60_000) });
+      redis.client.get.mockResolvedValue(empreinte(conn));
+      api.renewAccessToken.mockResolvedValue(renewOk());
+      await expect(service.refreshNow(conn)).resolves.toBe('renewed');
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+
+    it('cron sur un access token encore frais : rien en base n’a bougé → pas de faux « renouvelé ailleurs »', async () => {
+      // Le cron choisit sur l'échéance du refresh_token : l'access token peut avoir 2 h devant lui.
+      const { service, api, conn } = setup();
+      api.refresh.mockRejectedValue(refusé());
+      api.renewAccessToken.mockResolvedValue(renewOk());
+
+      await expect(service.refreshNow(conn)).resolves.toBe('renewed');
+      expect(api.refresh).toHaveBeenCalledTimes(2); // la relecture n'a pas court-circuité le réessai
     });
   });
 
