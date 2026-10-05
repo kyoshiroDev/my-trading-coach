@@ -475,5 +475,11 @@
   .week-header { flex-wrap: wrap; row-gap: 4px; }
   .week-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .week-header .day-stats { flex-basis: 100%; justify-content: flex-start; padding-left: 24px; }
+  /* Même règle pour l'en-tête de jour (« Dimanche 7 Juin 2026 » passait sur 2 lignes) ;
+     order:1 envoie les stats après les boutons Déplacer/Supprimer, qui restent à droite du
+     titre sur la 1re ligne (20 px = chevron 14 + gap 6). */
+  .day-header { flex-wrap: wrap; row-gap: 2px; }
+  .day-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-header .day-stats { order: 1; flex-basis: 100%; justify-content: flex-start; padding-left: 20px; }
   .day-winrate, .day-commission { display: none; }
 }
