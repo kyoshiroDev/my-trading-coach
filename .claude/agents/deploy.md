@@ -234,7 +234,7 @@ directement ne marcherait pas : Docker fige la cible d'un lien au démarrage du 
 
 **Confs nginx** : `infra/static/nginx/spa-releases.conf` (app, admin) et `landing-releases.conf`
 sont les copies de référence, à recopier dans `/opt/infra/static/nginx/`. Les assets hashés
-(`*.js|css|…` côté SPA, `/_astro/` côté landing) font `try_files /current$uri /previous$uri =404`.
+(`*.js|css|…` côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font `try_files /current$uri /previous$uri =404`.
 
 **Retour arrière (sur le VPS)** — immédiat, sans rebuild :
 
