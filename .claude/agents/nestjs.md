@@ -1485,3 +1485,17 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
+
+- FMP renvoie parfois un `actual` sur un event **encore à venir** (inflation brésilienne du vendredi
+  « publiée » le lundi). `fetchAndStoreEvents` ne stocke un `actual` que si l'heure UTC est passée, et
+  `getEventsFromDb` le masque aussi à la lecture (lignes déjà en base). `isReleased` = `actual !== null`
+  après ce filtre.
+- L'upsert resynchronise heure, impact, prévision, précédent, unité et `actual` (pas seulement `actual`) :
+  FMP révise ses prévisions après coup. La clé reste `(date, name, currency)`.
+- Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
+  appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
+  polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- Limites connues, non corrigées ici : FMP publie des doublons sous deux noms (« Current Account » à deux
+  dates) et classe en « Medium » bien plus large que ForexFactory (~90 events/semaine contre ~10).
