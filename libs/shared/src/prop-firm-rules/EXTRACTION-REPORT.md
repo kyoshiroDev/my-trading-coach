@@ -245,7 +245,7 @@ Aucun plan en `needs_review`. Deux déductions à connaître :
 | Minimum de jours avant payout LucidDirect | Site : « Min Day to Payout 5 » | Help center : aucune mention | 5, `needs_review`. |
 | Minimum de jours avant payout LucidPro | Site : « Days to Payout 3 » (fiche Funded Rules) | Article LucidPro Payouts : aucune mention | 3, `needs_review`. |
 | DLL funded LucidFlex (option DLL ON) | Site : « DLL (Below Initial Trail) » 600 / 1 200 / 1 800 / 2 700 $ | Help center : DLL funded « Optional », non chiffrée | Montants du site, `needs_review` (comportement au-dessus du trail non documenté). |
-| Scaling du PA Apex Legacy | Carte de vente legacy-products : « Scaling: None » | Article Legacy PA Trading Rules (2026-07-31) : moitié des contrats jusqu'au safety net | Règle du help center (la plus restrictive), `needs_review`. |
+| Scaling du PA Apex Legacy | Carte de vente legacy-products : « Scaling: None » | Article Legacy PA Trading Rules (2026-07-31) : moitié des contrats jusqu'au safety net | Règle du help center : la carte décrit l'évaluation, le scaling ne vaut qu'en PA (support, 2026-10-05). Moitié arrondie à l'inférieur. |
 | Prix Apex « No Activation Fee » | 25K intraday affiché 690 $, plus cher que le 50K (490 $) | | Relevé tel quel dans `price.notes`. Probable anomalie d'affichage du prix barré. |
 
 ## Règles qui n'entrent pas proprement dans le schéma
@@ -299,7 +299,7 @@ Sources : page de vente Legacy et la section Legacy du help center (liste compl�
 - **Hors schéma** (dans `notes`) : règle MAE 30 % (perte latente ouverte), ratio risque/rendement 5:1, une seule direction, pas de hedging, inactivité.
 
 **Pourquoi `needs_review`**
-- Contradiction : la carte de vente affiche « Scaling: None », l'article Legacy PA Trading Rules (2026-07-31) impose la moitié des contrats jusqu'au safety net. Retenu : la règle du help center, la plus restrictive.
+- Contradiction : la carte de vente affiche « Scaling: None », l'article Legacy PA Trading Rules (2026-07-31) impose la moitié des contrats jusqu'au safety net. Retenu : la règle du help center, la plus restrictive. Levée le 2026-10-05 : le scaling ne s'applique qu'au PA, la carte décrit l'évaluation ; la moitié est arrondie à l'inférieur (17 → 8).
 - Moitié de 17, 27 et 35 contrats (150K, 250K, 300K) : arrondi non documenté, paliers laissés vides.
 - Trailing d'évaluation sur WealthCharts non documenté.
 - Inactivité : la politique Legacy (1 jour à 150 $ par 30 jours) renvoie, pour les produits promotionnels vendus après le 2026-03-01, à la nouvelle politique (2 jours à 50 $).
@@ -357,7 +357,7 @@ Exclus volontairement : Tradeify Select 300K et « Level Up » (éditions limit�
 ### Valeurs non publiées (`null`)
 
 - Tradeify : taille max du funded Growth ; base des DLL (réalisé ou latent).
-- Topstep : base de la DLL (« Net P&L », latent non précisé).
+- ~~Topstep : base de la DLL (« Net P&L », latent non précisé).~~ Réglé le 2026-10-05 : réalisé + latent, contrôlée en temps réel.
 - MyFundedFutures Builder : heure de reprise et base de la DLL ; prix de l'option drawdown 1 500 $.
 - TradeDay Fast Pass funded : taille maximale (scaling « +1 contrat par 2 000 $ », maximum publié seulement pour le 25K).
 
@@ -421,3 +421,5 @@ Objectif : couvrir les firms futures que TradesViz ou Edgely proposent et que no
 | 2026-10-04 | UProfit (Paula, e-mail, relance) | DLL Day Soft : pertes latentes des positions ouvertes et commissions comprises ; atteinte même sans clôturer la position. | `basis: equity` sur les 6 DLL Day Soft |
 | 2026-10-05 | BluSky (BluGuy, e-mail) | Reprend le help center : solde minimum Sim Funded 100 $ ; contrats Orbit confirmés, Launch / Propel seulement sous les anciens noms de plans ; Buffer Zone : seuils de blocage non publiés ; DLL Instant 1 000 $ et Direct to Funded 2 000 $ = pause jusqu'au lendemain (« as long as Max drawdown level also is hit », sans doute « n'est pas touché ») ; prix : renouvellement au prix d'achat, montants non donnés. | DLL Instant et Direct to Funded en `trading_paused_for_day` ; `needs_review` maintenu (contrôle en séance, prix) |
 | 2026-10-05 | Top One Futures (relance) | Elite Daily : a bien une DLL (contradiction du 150K levée, 1 850 $ en évaluation conservé). Elite classique : n'est plus vendu. X-Ultra : renvoi à la page Launchpad (100K 378 $, 150K 518 $, paiement unique). | Elite Daily 150K sort de `needs_review` ; 4 plans `toponefutures-elite-*` retirés du catalogue (passés `active = false` par la synchro) ; prix X-Ultra complétés |
+| 2026-10-05 | Topstep (e-mail) | DLL calculée sur le Net P&L réalisé + latent, contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat. | `basis: equity` sur les 12 DLL (6 plans à option DLL, évaluation et XFA) |
+| 2026-10-05 | Apex (Julian, ticket #1794125) | Legacy : le scaling ne s'applique qu'au PA (« Scaling: None » de la carte = évaluation) ; moitié arrondie à l'inférieur (150K, 17 contrats → 8). Seuil intraday figé au solde objectif, exemple donné sur une évaluation Intraday 50K Rithmic / WealthCharts actuelle (53 000 $ quand le pic atteint 55 000 $, conforme au catalogue). PA Legacy achetés après le 2026-03-01 : nouvelle politique d'inactivité (2 jours à 50 $). | Paliers de scaling renseignés sur les 6 PA Legacy ; contradiction levée ; inactivité confirmée. `needs_review` maintenu : blocage du trailing d'évaluation Legacy sur WealthCharts toujours pas chiffré pour le Legacy |

@@ -9,7 +9,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-05",
   "plans": [
     {
       "id": "topstep-standard-50k",
@@ -171,12 +171,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -216,12 +216,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -463,12 +463,12 @@
           "profit_target": 3000,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -508,12 +508,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 1000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -761,12 +761,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -806,12 +806,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1065,12 +1065,12 @@
           "profit_target": 6000,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1110,12 +1110,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1375,12 +1375,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1420,12 +1420,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1691,12 +1691,12 @@
           "profit_target": 9000,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1736,12 +1736,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 3000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": "17:00 America/Chicago",
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation. Le help center parle de « Net P&L » sans dire explicitement si le latent compte pour la DLL (basis = null)."
+            "notes": "DLL fixée à l'achat (non modifiable), reportée sur le XFA. Calculée sur le Net P&L réalisé + latent et contrôlée en temps réel : atteinte même brièvement par une position ouverte = verrouillage immédiat (support, 2026-10-05). Atteinte = positions liquidées, ordres annulés, plus de trading jusqu'à 17:00 CT ; pas une violation."
           },
           "max_drawdown": {
             "amount": 4500,
