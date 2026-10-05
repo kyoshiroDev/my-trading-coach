@@ -50,12 +50,13 @@ export class TradovateTokenRefreshCron {
 
   async refreshExpiring(now = new Date()): Promise<{
     refreshed: number;
+    renewed: number;
     reconnect: number;
     retry: number;
     locked: number;
     revived: number;
   }> {
-    const result = { refreshed: 0, reconnect: 0, retry: 0, locked: 0, revived: 0 };
+    const result = { refreshed: 0, renewed: 0, reconnect: 0, retry: 0, locked: 0, revived: 0 };
     try {
       this.connections.assertConfigured();
     } catch {
@@ -111,7 +112,8 @@ export class TradovateTokenRefreshCron {
 
     if (due.length + condemned.length > 0) {
       this.logger.log(
-        `Tokens Tradovate : ${result.refreshed} renouvelé(s), ${result.reconnect} à reconnecter, ` +
+        `Tokens Tradovate : ${result.refreshed} renouvelé(s), ${result.renewed} prolongé(s) sans refresh, ` +
+          `${result.reconnect} à reconnecter, ` +
           `${result.retry} reporté(s), ${result.locked} en synchro (sur ${due.length}) · ` +
           `${result.revived}/${condemned.length} connexion(s) « à reconnecter » ressuscitée(s).`,
       );

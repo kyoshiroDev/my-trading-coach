@@ -16,7 +16,7 @@
 
 /* ── HÉRO : lien + 20% ── */
 .hero { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; margin-bottom: 18px; align-items: stretch; }
-@media (max-width: 1024px) { .hero { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .hero { grid-template-columns: minmax(0, 1fr); } }
 
 .link-card { background: linear-gradient(135deg, #3b82f618, #8b5cf610); border: 1px solid var(--border-hover); border-radius: 14px; padding: 22px 24px; box-shadow: 0 22px 50px -28px rgba(59, 130, 246, .4); }
 .link-lbl { font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--blue-bright); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; }
@@ -45,7 +45,7 @@
 .v-blue { color: var(--blue-bright); }
 .v-green { color: var(--green); }
 .v-amber { color: var(--yellow); }
-@media (max-width: 1024px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1024px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ── COMMENT ÇA MARCHE ── */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }

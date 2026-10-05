@@ -43,6 +43,8 @@ export const DEMO_ACCOUNTS = [
   },
 ];
 export type AccountKey = (typeof DEMO_ACCOUNTS)[number]['key'];
+/** Perte journalière du plan `apex-eod-50k` (catalogue) : rejouée par le journal de risque démo. */
+export const APEX_DAILY_LOSS_LIMIT = 1_000;
 export const STARTING_CAPITAL = DEMO_ACCOUNTS.reduce((s, a) => s + a.startingBalance, 0);
 
 /** Futures d'indices US : $ par point, frais aller-retour par contrat (commission + exchange + NFA). */

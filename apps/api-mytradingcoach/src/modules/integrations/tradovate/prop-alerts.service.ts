@@ -6,10 +6,11 @@ import { AccountsService } from '../../accounts/accounts.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { PropRiskJournalService } from './prop-risk-journal.service';
+import { ALERT_LEVEL_RANK as RANK, ALERT_REARM_PCT, type PropAlertLevel, alertLevel } from './prop-alert-levels';
+
+export { ALERT_CRITICAL_PCT, ALERT_REARM_PCT, ALERT_WARNING_PCT, alertLevel, type PropAlertLevel } from './prop-alert-levels';
 
 export type PropAlertKind = 'drawdown' | 'daily_loss' | 'consistency' | 'objective' | 'payout';
-/** `reached` : bonne nouvelle (objectif atteint, payout possible), une fois par cycle. */
-export type PropAlertLevel = 'warning' | 'critical' | 'breached' | 'reached';
 
 /** Événement `prop:alert` poussé à l'app (canal `/tradovate-live`). */
 export interface PropAlertEvent {
@@ -35,11 +36,6 @@ export interface PropAlertEvent {
 
 export type PropAlertEmit = (event: 'prop:alert', payload: PropAlertEvent) => void;
 
-/** Seuils d'alerte en part de marge restante : 25 % puis 10 %, puis dépassement. */
-export const ALERT_WARNING_PCT = 0.25;
-export const ALERT_CRITICAL_PCT = 0.1;
-/** Hystérésis : l'alerte du jour n'est réarmée qu'une fois la marge remontée au-dessus. */
-export const ALERT_REARM_PCT = 0.35;
 /** Consistency : avertir à 80 % du gain max du jour, réarmer sous 60 %. */
 export const CONSISTENCY_WARNING_RATIO = 0.8;
 export const CONSISTENCY_REARM_RATIO = 0.6;
@@ -49,14 +45,6 @@ const KEY_TTL_S = 2 * 24 * 3600;
 /** Objectif / payout : une alerte par cycle, gardée le temps d'un cycle long. */
 const CYCLE_KEY_TTL_S = 120 * 24 * 3600;
 
-const RANK: Record<PropAlertLevel, number> = { warning: 1, critical: 2, breached: 3, reached: 4 };
-
-export function alertLevel(pct: number, breached: boolean): PropAlertLevel | null {
-  if (breached) return 'breached';
-  if (pct <= ALERT_CRITICAL_PCT) return 'critical';
-  if (pct <= ALERT_WARNING_PCT) return 'warning';
-  return null;
-}
 
 const alertKey = (accountId: string, kind: PropAlertKind, period: string) => `prop-alert:${accountId}:${kind}:${period}`;
 

@@ -129,10 +129,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: rsync Angular prod → VPS
-        run: |
-          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-prod/
+      # Release /opt/static/app-prod/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Angular prod → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh app-prod dist/apps/app-mytradingcoach/browser/ ${{ github.event.workflow_run.head_sha }}
 
   # ── Deploy Admin → VPS static ────────────────────────────────────────────
   deploy-admin:
@@ -176,10 +177,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: rsync Admin → VPS
-        run: |
-          rsync -az --delete dist/apps/admin-mytradingcoach/browser/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/admin/
+      # Release /opt/static/admin/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Admin → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh admin dist/apps/admin-mytradingcoach/browser/ ${{ github.event.workflow_run.head_sha }}
 
   # ── Deploy Astro Landing → VPS static ────────────────────────────────────
   deploy-landing:
@@ -221,10 +223,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: rsync Landing prod → VPS
-        run: |
-          rsync -az --delete apps/landing-mytradingcoach/dist/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/landing-prod/
+      # Release /opt/static/landing-prod/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Landing prod → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh landing-prod apps/landing-mytradingcoach/dist/ ${{ github.event.workflow_run.head_sha }}
 
   # ── Marque le commit comme déployé (base du prochain calcul `affected`) ───
   mark-deployed:

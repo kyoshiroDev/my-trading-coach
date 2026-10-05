@@ -235,8 +235,9 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
   - **Tablette/mobile `≤980px`** : **pas** de plafond → flow naturel + **scroll de page**
     (`.session-page`). Sur mobile la Pré-session repasse aussi les colonnes en `display:block;
     overflow:visible` (`@container (max-width:820px)`).
-- Listes internes toujours bornées : `.feed-list`, `.cal-events-list` gardent `overflow-y:auto`
-  borné par `max-height` sur le panneau parent (≈420px). Container-queries live : `.live-layout`
+- Listes internes bornées **à partir de 821px** : `.feed-list`, `.cal-events-list` gardent `overflow-y:auto`
+  borné par `max-height` sur le panneau parent (≈420px). **≤820px** (colonnes empilées) : plafond
+  levé, la liste s'affiche en entier et c'est la page qui scrolle — jamais de scroll dans le scroll sur mobile. Container-queries live : `.live-layout`
   1 col ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 ·
   `.ctx-grid` 4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
 

@@ -161,6 +161,12 @@
   .feed-col { min-height: 0; max-height: none; }
 }
 
+/* Mobile (colonnes empilées) : pas de liste à scroll interne dans une page qui scrolle. */
+@container (max-width: 820px) {
+  .feed-col { max-height: none; }
+  .feed-list { overflow-y: visible; }
+}
+
 /* ─── Réduction des animations (accessibilité) ─── */
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot,

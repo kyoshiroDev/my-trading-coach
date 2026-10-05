@@ -314,7 +314,7 @@ l'est (`headerSample`), pour diagnostiquer une fiche qui ne matche plus.
 
 ## Catalogue des règles prop firm (PROMPT-136, 2026-10-02)
 
-Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 259 plans au 2026-10-04 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Futures Family, OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
+Tables `PropFirm` et `PropFirmPlan` (migration `20261003120000_prop_firm_catalog`, purement additive ; 16 firms, 255 plans au 2026-10-05 : Lucid, Apex, Topstep, Tradeify, MyFundedFutures, TradeDay, Take Profit Trader, Phidias, Earn2Trade, Top One Futures, BluSky, Funded Futures Family, OneUp Trader, UProfit, Bulenox, Elite Trader Funding) :
 **miroir** du catalogue JSON `libs/shared/src/prop-firm-rules/<firm>.json`, qui reste la source de
 vérité. Ne jamais les modifier à la main ni par une migration de données : la synchro au démarrage
 de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modification.
@@ -345,8 +345,10 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   breached / reached) et chaque épisode de tilt (`kind = 'tilt'`, `level` = signal), avec ses
   chiffres en `data`. `kind` / `level` en TEXT, pas en enum : la liste grandit avec les alertes.
 - Lus par `PropRiskContextService` (bloc « prop firm » des prompts IA, #374). Cascade à la
-  suppression du compte. Pas de seed démo : rien ne les affiche, seule l'IA les lit (le compte
-  démo n'a ni temps réel ni Premium IA).
+  suppression du compte. Seed démo (#367) : rejoués sur les trades du compte Apex connecté avec
+  les vraies règles (`detectTilt`, `alertLevel`, plancher trailing EOD), cf.
+  `admin/demo-data/prop-risk.ts`. Rien ne les affiche tels quels : ils nourrissent les textes
+  fixes du compte démo (PREMIUM, aucun appel IA), récap du jour de tilt et `propNote` Apex du débrief.
 
 ## Migrations — bonnes pratiques
 

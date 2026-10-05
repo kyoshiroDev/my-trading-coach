@@ -12,7 +12,12 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { LucideDynamicIcon, LucideShieldCheck as ShieldCheck } from '@lucide/angular';
+import {
+  LucideBell as Bell,
+  LucideBellOff as BellOff,
+  LucideDynamicIcon,
+  LucideShieldCheck as ShieldCheck,
+} from '@lucide/angular';
 import { catchError, of } from 'rxjs';
 import { formatMoney } from '@mtc/shared';
 import { TradovateApi } from '@app/core/api/tradovate.api';
@@ -21,6 +26,7 @@ import { TradovateStore } from '@app/core/stores/tradovate.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-socket.service';
 import { PropAlertsService } from '@app/core/services/prop-alerts.service';
+import { AlertSoundService } from '@app/core/services/alert-sound.service';
 import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
@@ -50,11 +56,14 @@ export class LivePropFirmComponent {
   private readonly tradovateApi = inject(TradovateApi);
   protected readonly userStore = inject(UserStore);
   protected readonly alerts = inject(PropAlertsService);
+  protected readonly sound = inject(AlertSoundService);
   protected readonly showPlanModal = signal(false);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly live = inject(TradovateLiveSocketService);
 
   protected readonly ShieldIcon = ShieldCheck;
+  protected readonly BellIcon = Bell;
+  protected readonly BellOffIcon = BellOff;
 
   protected readonly account = computed(
     () => this.accounts.accounts().find((a) => a.id === this.accountId()) ?? null,

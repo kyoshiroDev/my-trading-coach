@@ -241,10 +241,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: rsync Angular dev → VPS
-        run: |
-          rsync -az --delete dist/apps/app-mytradingcoach/browser/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/app-dev/
+      # Release /opt/static/app-dev/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Angular dev → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh app-dev dist/apps/app-mytradingcoach/browser/ ${{ github.sha }}
 
   # ── Deploy Astro landing dev → VPS static ────────────────────────────────
   deploy-landing-dev:
@@ -286,7 +287,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: rsync Landing dev → VPS
-        run: |
-          rsync -az --delete apps/landing-mytradingcoach/dist/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/static/landing-dev/
+      # Release /opt/static/landing-dev/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
+      - name: Publier Landing dev → VPS
+        env:
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: bash infra/deploy-static.sh landing-dev apps/landing-mytradingcoach/dist/ ${{ github.sha }}

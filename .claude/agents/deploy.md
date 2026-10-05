@@ -206,6 +206,64 @@ Host + redirect non-www→www en middleware Traefik).
 > `/opt/infra/static/docker-compose.yml` — c'est lui qui fait foi, pas le nom du dossier.
 - Landing Astro : `apps/landing-mytradingcoach/dist/` → `/opt/static/landing-prod` → `www.mytradingcoach.app`
 
+### Releases + lien symbolique (SCA-B8-05)
+
+Plus de `rsync --delete` dans le dossier servi : pendant la copie, le site mélangeait deux versions
+(`index.html` neuf, chunks pas encore arrivés, ou anciens chunks déjà supprimés → `ChunkLoadError`).
+Chaque front se publie par `infra/deploy-static.sh <site> <build> <sha>` (appelé par ci/cd/beta.yml) :
+
+```
+/opt/static/<site>/
+├── releases/<sha12>/   version complète ; fichiers inchangés = liens physiques vers la précédente
+├── current  → releases/<sha12>   servi par nginx (root …/html/current)
+└── previous → releases/<sha12>   repli des assets hashés (onglet ouvert avant la bascule)
+```
+
+1. `static-release.sh prepare` crée `releases/<sha12>` (suffixé `-<horodatage>` si ce SHA est déjà
+   `current`/`previous` : relance de job, landing rebâtie après changement de variable GA4) ;
+2. `rsync -rlz --checksum --delete --link-dest=../../current/` : comparaison au **contenu**, dates
+   non conservées (avec `-a`, deux fichiers de même taille écrits dans la même seconde passent pour
+   identiques : vu en test) ;
+3. `static-release.sh activate` : `previous` ← ancienne `current`, `current` ← nouvelle, par
+   `rename(2)` d'un lien temporaire (jamais d'instant sans lien), puis 3 releases gardées.
+
+Le script distant `infra/static-release.sh` tourne sur le VPS via `ssh … bash -s` (pas besoin du
+dépôt cloné). Les liens sont **relatifs** : le conteneur monte le dossier du site entier, et nginx
+résout le lien à chaque requête → aucun reload ni restart à la bascule. (Monter `current`
+directement ne marcherait pas : Docker fige la cible d'un lien au démarrage du conteneur.)
+
+**Confs nginx** : `infra/static/nginx/spa-releases.conf` (app, admin) et `landing-releases.conf`
+sont les copies de référence, à recopier dans `/opt/infra/static/nginx/`. Les assets hashés
+(`*.js|css|…` côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font `try_files /current$uri /previous$uri =404`.
+
+**Retour arrière (sur le VPS)** — immédiat, sans rebuild :
+
+```bash
+bash infra/static-release.sh list app-prod        # * = current, ← = previous
+bash infra/static-release.sh rollback app-prod    # revient à previous (relancer = re-bascule)
+bash infra/static-release.sh rollback app-prod <release>
+```
+
+Depuis un poste : `ssh greg@VPS bash -s -- rollback app-prod < infra/static-release.sh`.
+
+**Transition d'un site** (une fois, quand le workflow qui le publie contient B8-05 :
+`ci.yml` → app-dev/landing-dev dès le merge sur dev ; `cd.yml` → app-prod/admin/landing-prod au
+passage sur main ; `beta.yml` → app-beta au passage sur beta). Ne pas basculer nginx avant : les
+déploiements à l'ancienne écriraient à la racine, que nginx ne servirait plus.
+
+```bash
+cd /opt/apps/mytradingcoach/<env>   # ou ssh … bash -s -- <cmd> <site> < infra/static-release.sh
+bash infra/static-release.sh migrate <site>   # release legacy-… (liens physiques) + current ; no-op si current existe
+cp infra/static/nginx/*-releases.conf /opt/infra/static/nginx/
+# /opt/infra/static/docker-compose.yml : le service monte spa-releases.conf / landing-releases.conf
+cd /opt/infra/static && docker compose up -d <service>   # recrée le conteneur (~1 s, une seule fois)
+curl -sI https://<hôte>/ ; curl -s https://<hôte>/ | grep -o 'main-[A-Z0-9]*\.js'   # version servie
+bash infra/static-release.sh cleanup-legacy <site>   # supprime les fichiers restés à la racine
+```
+
+`landing-releases.conf` est partagée par landing-prod et landing-dev, `spa-releases.conf` par toutes
+les SPA : les anciennes `spa.conf` / `landing.conf` restent tant qu'un site n'a pas migré.
+
 ⚠️ La config nginx de chaque site vit **sur le VPS** (`/opt/infra/static/nginx/*.conf`), pas dans le
 dépôt (le `nginx/nginx.conf` du dépôt est un vestige mort). Compose infra : `/opt/infra/static/`.
 La landing exige `PUBLIC_FEATURE_MULTI_ACCOUNTS=true` + `PUBLIC_FEATURE_REFERRAL=true` au build
@@ -522,6 +580,16 @@ E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingc
 (`/opt/backups/.watch-state`) n'est mémorisé qu'après un envoi réussi.
 ⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
 Tests : `WATCH_DRY=1` (affiche l'état, n'envoie rien) · `WATCH_TEST=1` (envoie un e-mail de test).
+
+**Interne — `infra/monitoring/watch-apihosts.sh`** (#420, installé dans `/opt/backups/`, cron
+`7,22,37,52 * * * *`, log `/opt/backups/watch-apihosts.log`) : e-mail 🔀 quand l'ensemble des hôtes
+Tradovate DISTINCTS stockés en base prod (`BrokerConnection.apiHosts` : `live`, `demo`,
+`reportingLive`, `reportingDemo`, connexions `CONNECTED`) change, c.-à-d. quand NinjaTrader bascule
+une prop firm sur une autre infra (cf. #286, `tradovate-hosts.ts` : l'API suit seule, l'alerte sert
+à le savoir). Une nouvelle connexion sur un hôte déjà connu ne déclenche rien. État de référence
+dans `/opt/backups/.watch-apihosts-state` (1er passage = mémorisation sans e-mail ; mémorisé
+seulement après un envoi réussi). Même chaîne Resend que ci-dessus. Tests : `WATCH_DRY=1` ·
+`WATCH_TEST=1` · `WATCH_APIHOSTS_STATE=<fichier temporaire>` pour simuler un changement.
 
 **Externe — UptimeRobot** (plan gratuit, compte `hello@mytradingcoach.app`) : sondes HTTP toutes
 les 5 min depuis l'extérieur, alerte e-mail vers `hello@mytradingcoach.app`. Elles détectent la perte
