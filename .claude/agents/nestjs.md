@@ -883,6 +883,14 @@ sont en direct.
     depuis la lecture (`renewedElsewhere`) — PAS un access token simplement loin de son échéance :
     le cron de maintien choisit sur l'échéance du refresh_token, et prenait un token inchangé pour
     un renouvellement (faux « déjà renouvelé ailleurs », prod 2026-10-05).
+  - ⚠️ **Jamais d'objet `conn` périmé jusqu'au refresh** (correctif du 2026-10-05). `refreshWithRetry`
+    **relit la connexion sous le verrou de login**, avant tout appel : déjà renouvelée (`renewedElsewhere`)
+    → token relu, aucun appel ; sinon c'est le refresh_token RELU qui part. Cause : `refreshClosings`
+    repassait l'objet lu au début de `sync()`, après la rotation faite par `run()` → refresh_token
+    déjà remplacé présenté (refusé), et le token neuf refusé à son tour juste après (2 connexions
+    prod perdues, refresh_token pourtant non échu — Tradovate semble révoquer la lignée sur
+    réutilisation, non documenté). Tout appelant qui enchaîne plusieurs `getSession` après une
+    étape qui a pu renouveler relit quand même la connexion (`topUpCurrentMonth`, `refreshClosings`).
   - ⚠️ **Refresh_token mort, renew vivant** (correctif du 2026-10-05 : 42 refus `invalid_token` en
     7 h sur 4 connexions prod). `renew` prolonge l'access token mais **ne fait pas tourner le
     refresh_token** : le token refusé restait en base et repartait 2 fois à chaque passage. Après
