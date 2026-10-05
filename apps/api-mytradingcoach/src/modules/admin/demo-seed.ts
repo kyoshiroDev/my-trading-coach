@@ -2,12 +2,13 @@ import { hashPassword } from '../auth/password-hashing';
 import { PrismaClient, SessionStatus, AccountStatus, BrokerProvider, BrokerConnectionStatus } from '@prisma/client';
 import { computeTradeStats } from '@mtc/shared';
 import { seedDefaultSetups } from '../setups/setups.defaults';
-import { type AccountKey, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
+import { type AccountKey, APEX_DAILY_LOSS_LIMIT, DEMO_ACCOUNTS, DEMO_EMAIL, round2 } from './demo-data/config';
 import { ONELINERS, PLANS, REFLECTIONS_GREEN, REFLECTIONS_RED, REFLECTION_REVENGE } from './demo-data/texts';
 import { type DemoDay, type DemoStats, net } from './demo-data/model';
 import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generate';
 import { PROFILE, isoWeek, setupRanking, usd } from './demo-data/reports';
 import { tradingDay } from '../accounts/account-rules';
+import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 
 
 /**
@@ -157,16 +158,28 @@ export async function seedTradingData(
     }
   }
 
+  // Journal de risque du compte Apex connecté (#373) : ce que le suivi en direct aurait relevé
+  // (marges, alertes, tilt). Seul un compte synchronisé est suivi en direct, d'où la vitrine.
+  const apex = DEMO_ACCOUNTS.find((x) => x.key === 'apex')!;
+  const journal = opts.brokerShowcase
+    ? buildDemoRiskJournal(days.flatMap((d) => d.trades).filter((t) => t.account === 'apex'), {
+      startingBalance: apex.startingBalance, maxDrawdown: apex.maxDrawdown, dailyLossLimit: APEX_DAILY_LOSS_LIMIT,
+    })
+    : { days: [], events: [] };
+  const sessionOf = (d: DemoDay) => (d.account === 'apex' && d.trades.length ? tradingDay(d.trades[0].tradedAt) : null);
+
   // Récaps quotidiens (J-1 → J-42) : chiffres NETS du jour, phrase selon le type de journée.
   let recaps = 0;
   for (const d of days) {
     if (d.kind === 'today' || !d.trades.length) continue;
     const s = computeTradeStats(d.trades);
     const gross = d.trades.reduce((a, t) => a + t.pnl, 0);
-    const line = d.kind === 'revenge' ? ONELINERS.revenge[0]
+    // Journée avec alerte ou tilt : le récap Premium en parle d'abord (#374).
+    const riskLine = dayRiskLine(journal.days.find((j) => j.day === sessionOf(d)), journal.events.filter((e) => e.day === sessionOf(d)));
+    const line = riskLine ?? (d.kind === 'revenge' ? ONELINERS.revenge[0]
       : s.totalPnl < 0 ? ONELINERS.red[d.daysAgo % 2]
         : gross > 0 && s.totalPnl < 25 ? ONELINERS.fees[0]
-          : ONELINERS.green[d.daysAgo % 2];
+          : ONELINERS.green[d.daysAgo % 2]);
     const emo = new Map<string, number>();
     for (const t of d.trades) { const e = t.emotion ?? d.moodStart; emo.set(e, (emo.get(e) ?? 0) + 1); }
     const dominant = [...emo.entries()].sort((a, b) => b[1] - a[1])[0][0];
@@ -217,6 +230,11 @@ export async function seedTradingData(
       { title: 'Stop systématique sur chaque trade', reason: 'Tes trades sans stop concentrent les pertes les plus lourdes.' },
     ];
     const emotionInsight = 'Tes trades en état FOCALISÉ ou CONFIANT ont le meilleur résultat net ; STRESSÉ ou FATIGUÉ, tu prends des entrées moyennes.';
+    const weekSessions = new Set(w.days.map(sessionOf).filter(Boolean));
+    const riskNote = weekRiskNote(
+      journal.days.filter((j) => weekSessions.has(j.day)),
+      journal.events.filter((e) => weekSessions.has(e.day)),
+    );
     const accounts = DEMO_ACCOUNTS.map((a) => {
       const at = trades.filter((t) => t.account === a.key);
       const as = computeTradeStats(at);
@@ -230,9 +248,12 @@ export async function seedTradingData(
         strengths: at.length ? [strengths[0]] : [],
         weaknesses: at.length ? [weaknesses[0]] : [],
         objectives: objectives.slice(0, 2),
-        propNote: a.profitTarget
-          ? `Objectif ${usd(a.profitTarget)} : estimation d'après les trades loggés, pas le calcul officiel de la firme.`
-          : `Compte funded : marge de drawdown estimée d'après les trades loggés, pas le calcul officiel de la firme.`,
+        propNote: [
+          a.key === 'apex' ? riskNote : null,
+          a.profitTarget
+            ? `Objectif ${usd(a.profitTarget)} : estimation d'après les trades loggés, pas le calcul officiel de la firme.`
+            : `Compte funded : marge de drawdown estimée d'après les trades loggés, pas le calcul officiel de la firme.`,
+        ].filter(Boolean).join(' '),
       };
     });
     const monday = dayAt(now, Math.max(...w.days.map((d) => d.daysAgo)), 0, 0);
@@ -320,6 +341,21 @@ export async function seedTradingData(
       return row;
     });
     if (closes.length) await prisma.brokerDailyClose.createMany({ data: closes });
+  }
+
+  // Séances suivies en direct : supprimées avec le compte (cascade), recréées à chaque seed.
+  if (journal.days.length) {
+    await prisma.accountRiskDay.createMany({
+      data: journal.days.map(({ day, ...r }) => ({ accountId: apexId, tradeDate: new Date(`${day}T00:00:00.000Z`), ...r })),
+    });
+  }
+  if (journal.events.length) {
+    await prisma.propRiskEvent.createMany({
+      data: journal.events.map((e) => ({
+        userId: user.id, accountId: apexId, tradeDate: new Date(`${e.day}T00:00:00.000Z`),
+        kind: e.kind, level: e.level, data: e.data, createdAt: e.at,
+      })),
+    });
   }
 
   return {
