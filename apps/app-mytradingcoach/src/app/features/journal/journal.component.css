@@ -469,5 +469,11 @@
   .day-header { gap: 6px; padding-right: 10px; }
   .week-group .day-header { padding-left: 22px; }
   .day-stats { font-size: var(--fs-2xs); gap: 5px; flex-shrink: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; }
+  /* En-tête de semaine : titre (« Semaine du … au … ») et stats sur la même ligne laissaient
+     ~70 px au titre → 4 lignes. Le titre garde sa ligne, les stats passent dessous, alignées
+     sous le titre (24 px = chevron 14 + gap 10). */
+  .week-header { flex-wrap: wrap; row-gap: 4px; }
+  .week-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .week-header .day-stats { flex-basis: 100%; justify-content: flex-start; padding-left: 24px; }
   .day-winrate, .day-commission { display: none; }
 }
