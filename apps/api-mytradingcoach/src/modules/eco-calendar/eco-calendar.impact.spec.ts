@@ -46,7 +46,7 @@ describe('classifyEcoEvent — tri façon ForexFactory', () => {
     expect(c('Initial Jobless Claims (Oct/03)', 'USD', 'US')).toBe('medium');
     expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US')).toBe('medium');
     expect(c('Tokyo CPI YoY (Sep)', 'JPY', 'JP', 'High')).toBe('medium');
-    expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US', 'Low')).toBeNull();
+    expect(c('Tokyo CPI YoY (Sep)', 'JPY', 'JP', 'Low')).toBeNull();
   });
 
   it('PIB : ni le déflateur ni le YoY (hors Chine) ne sont forts', () => {
@@ -98,5 +98,17 @@ describe('classifyEcoEvent — tri façon ForexFactory', () => {
     expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US')).toBe('medium');
     expect(c('Balance of Trade (Sep)', 'CNY', 'CN')).toBe('medium');
     expect(c('Retail Sales MoM (Aug)', 'GBP', 'UK')).toBe('high');
+  });
+
+  it('rendez-vous suivis par FF : gardés en moyen même classés Low par FMP', () => {
+    expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US', 'Low')).toBe('medium');
+    expect(c('Michigan Inflation Expectations Prel (Oct)', 'USD', 'US', 'Low')).toBe('medium');
+    expect(c('Initial Jobless Claims (Oct/03)', 'USD', 'US', 'Low')).toBe('medium');
+    expect(c('ISM Services PMI (Sep)', 'USD', 'US', 'Low')).toBe('medium');
+    expect(c('EIA Crude Oil Stocks Change', 'USD', 'US', 'Low')).toBe('medium');
+    expect(c('Ivey PMI s.a (Sep)', 'CAD', 'CA', 'Low')).toBe('medium');
+    // le bruit voisin reste écarté
+    expect(c('Continuing Jobless Claims (Sep/26)', 'USD', 'US', 'Low')).toBeNull();
+    expect(c('EIA Gasoline Stocks Change', 'USD', 'US', 'Low')).toBeNull();
   });
 });
