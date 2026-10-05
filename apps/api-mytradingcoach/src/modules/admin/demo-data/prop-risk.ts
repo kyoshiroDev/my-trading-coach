@@ -2,7 +2,7 @@
 // en direct aurait enregistrés, tirés des trades seedés avec les VRAIES règles du back.
 import { formatMoney } from '@mtc/shared';
 import { tradingDay } from '../../accounts/account-rules';
-import { alertLevel, type PropAlertLevel } from '../../integrations/tradovate/prop-alerts.service';
+import { ALERT_LEVEL_RANK as RANK, alertLevel, type PropAlertLevel } from '../../integrations/tradovate/prop-alert-levels';
 import { detectTilt, type TiltTrade } from '../../integrations/tradovate/tilt-detection';
 import { round2 } from './config';
 import { type DemoTrade, net } from './model';
@@ -31,8 +31,6 @@ export interface DemoRiskEvent {
   data: Record<string, number | null>;
   at: Date;
 }
-
-const RANK: Record<PropAlertLevel, number> = { warning: 1, critical: 2, breached: 3, reached: 4 };
 
 /**
  * Rejoue les séances du compte, trade par trade (solde réalisé, pas de latent seedé) :
