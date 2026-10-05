@@ -1030,7 +1030,7 @@
             "micros": 10,
             "scaling": false,
             "tiers": null,
-            "notes": "CONTRADICTION 25K : l'article Select Evaluation donne 1 mini / 10 micros, l'article des payouts Select dit 2 / 20 en évaluation."
+            "notes": "1 mini / 10 micros en évaluation. Les 2 minis / 20 micros de l'article des payouts Select sont le maximum du funded après scaling (support Tradeify, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -1108,8 +1108,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif. À revoir : taille max de l'évaluation 25K contradictoire."
+      "needs_review": false,
+      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif."
     },
     {
       "id": "tradeify-select-flex-c50-25k",
@@ -1156,7 +1156,7 @@
             "micros": 10,
             "scaling": false,
             "tiers": null,
-            "notes": "CONTRADICTION 25K : l'article Select Evaluation donne 1 mini / 10 micros, l'article des payouts Select dit 2 / 20 en évaluation."
+            "notes": "1 mini / 10 micros en évaluation. Les 2 minis / 20 micros de l'article des payouts Select sont le maximum du funded après scaling (support Tradeify, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -1234,8 +1234,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif. À revoir : taille max de l'évaluation 25K contradictoire."
+      "needs_review": false,
+      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif."
     },
     {
       "id": "tradeify-select-daily-25k",
@@ -1282,7 +1282,7 @@
             "micros": 10,
             "scaling": false,
             "tiers": null,
-            "notes": "CONTRADICTION 25K : l'article Select Evaluation donne 1 mini / 10 micros, l'article des payouts Select dit 2 / 20 en évaluation."
+            "notes": "1 mini / 10 micros en évaluation. Les 2 minis / 20 micros de l'article des payouts Select sont le maximum du funded après scaling (support Tradeify, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -1368,8 +1368,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif. À revoir : taille max de l'évaluation 25K contradictoire."
+      "needs_review": false,
+      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif."
     },
     {
       "id": "tradeify-select-daily-c50-25k",
@@ -1416,7 +1416,7 @@
             "micros": 10,
             "scaling": false,
             "tiers": null,
-            "notes": "CONTRADICTION 25K : l'article Select Evaluation donne 1 mini / 10 micros, l'article des payouts Select dit 2 / 20 en évaluation."
+            "notes": "1 mini / 10 micros en évaluation. Les 2 minis / 20 micros de l'article des payouts Select sont le maximum du funded après scaling (support Tradeify, 2026-10-05)."
           },
           "time_rules": {
             "must_close_by": "16:45 America/New_York",
@@ -1502,8 +1502,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif. À revoir : taille max de l'évaluation 25K contradictoire."
+      "needs_review": false,
+      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif."
     },
     {
       "id": "tradeify-select-flex-50k",
