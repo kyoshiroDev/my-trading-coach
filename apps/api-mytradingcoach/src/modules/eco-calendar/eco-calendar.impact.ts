@@ -35,6 +35,42 @@ const NOISE: RegExp[] = [
   /natural gas (storage|stocks)/i,
   /budget|treasury statement/i,
   /bank holiday|holiday/i,
+  // Détail d'une annonce déjà affichée, ou statistique que FF classe faible
+  /^(exports|imports)\b/i,
+  /construction (PMI|output)/i,
+  /credit conditions/i,
+  /\bWASDE\b/i,
+  /household spending/i,
+  /participation rate|(full|part)[- ]time employment/i,
+  /continuing (jobless )?claims|4-week average/i,
+];
+
+/** Gouverneurs et présidents de banque centrale : leurs discours sont forts. */
+const GOVERNORS = /powell|fed chair|lagarde|ECB president|bailey|ueda|macklem|bullock|\borr\b|schlegel|breman/i;
+
+/** Discours des autres membres (Fed régionales, Bundesbank, MPC…) : faibles chez FF. */
+const SPEECH = /speech|speaks|testimony|remarks/i;
+
+/** Catégories gardées seulement pour les devises où FF les classe au moins moyennes. */
+const KEEP_ONLY_FOR: { re: RegExp; ccy: string[] }[] = [
+  { re: /balance of trade|trade balance/i, ccy: ['CNY'] },
+  { re: /industrial production|manufacturing production/i, ccy: ['GBP', 'CNY'] },
+  { re: /^retail sales/i, ccy: ['USD', 'GBP', 'CAD', 'AUD', 'NZD', 'CNY'] },
+  { re: /unemployment rate|claimant count/i, ccy: ['USD', 'CAD', 'AUD', 'NZD', 'GBP'] },
+  { re: /consumer (confidence|sentiment)/i, ccy: ['USD', 'GBP'] },
+];
+
+/**
+ * Rendez-vous hebdo/mensuels que FF affiche toujours en moyen : gardés même si FMP les classe
+ * Low. Sinon une annonce vue Low au premier fetch n'est jamais stockée, et une ligne déjà
+ * stockée n'est plus resynchronisée (son résultat ne remonterait pas).
+ */
+const ALWAYS_MEDIUM: { re: RegExp; ccy: string }[] = [
+  { re: /michigan|\bUoM\b/i, ccy: 'USD' }, // sentiment + anticipations d'inflation
+  { re: /^initial jobless claims|^unemployment claims/i, ccy: 'USD' },
+  { re: /ISM (services|non-manufacturing)/i, ccy: 'USD' },
+  { re: /\bEIA\b.*crude/i, ccy: 'USD' },
+  { re: /\bIvey\b/i, ccy: 'CAD' },
 ];
 
 interface HighRule {
@@ -67,8 +103,8 @@ const HIGH: HighRule[] = [
   { re: /rate decision|federal funds rate|official bank rate|cash rate|overnight rate|policy rate|refinancing rate|deposit (facility )?rate|\bOCR\b/i },
   { re: /\bFOMC\b(?!.*member)/i, ccy: ['USD'] },
   { re: /monetary policy (statement|summary|report)|rate statement|press conference|economic projections/i },
-  // Gouverneurs (pas les autres membres, moyens chez FF)
-  { re: /powell|fed chair|lagarde|bailey|ueda|macklem|bullock|\borr\b|schlegel|breman/i },
+  // Gouverneurs (les discours des autres membres sont écartés)
+  { re: GOVERNORS },
 ];
 
 /** Nom FMP sans le suffixe de période : « Inflation Rate YoY (Sep) » → « Inflation Rate YoY ». */
@@ -96,8 +132,10 @@ export function classifyEcoEvent({ name, currency, country, fmpImpact }: Classif
 
   const base = baseName(name);
   if (NOISE.some((re) => re.test(base))) return null;
+  if (SPEECH.test(base) && !GOVERNORS.test(base)) return null;
 
   const stripped = withoutPrefix(base);
+  if (KEEP_ONLY_FOR.some((r) => r.re.test(stripped) && !r.ccy.includes(ccy))) return null;
   // Un fort passe même si FMP le classe Low (ex. certaines minutes FOMC).
   const isHigh = HIGH.some((r) => (!r.ccy || r.ccy.includes(ccy)) && (r.re.test(stripped) || r.re.test(base)));
   const cc = country?.toUpperCase();
@@ -105,5 +143,6 @@ export function classifyEcoEvent({ name, currency, country, fmpImpact }: Classif
   // CPI ou PIB allemand/français : moyens chez FF, seul l'agrégat zone euro est fort
   // (la BCE et Lagarde sont publiés sous le pays EU).
   if (isHigh) return ccy === 'EUR' && (cc === 'DE' || cc === 'FR') ? 'medium' : 'high';
+  if (ALWAYS_MEDIUM.some((r) => r.ccy === ccy && r.re.test(stripped))) return 'medium';
   return fmpImpact === 'High' || fmpImpact === 'Medium' ? 'medium' : null;
 }

@@ -4,6 +4,7 @@ import { BEHAVIORAL_MIN_TRADES, computeBehavioralGrade, computeExecutionGrade, m
 import { type AccountKey, DEMO_ACCOUNTS, DEMO_WINDOW_DAYS, INSTRUMENTS, type Rand, SETUP_PROFILES, type SetupTitle, type Sym, between, pick, rng, round2, toTick } from './config';
 import { NOTES_LOSS, NOTES_WIN } from './texts';
 import { type DemoDay, type DemoStats, type DemoTrade, meetsTargets, net, statsOf } from './model';
+import { isoWeek } from './reports';
 
 // ── Génération ─────────────────────────────────────────────────────────────
 
@@ -79,8 +80,14 @@ export function generate(now: Date, seed: number): DemoDay[] {
   while (!isWeekday(lastDay)) lastDay++;
   const weekdays: number[] = [];
   for (let d = DEMO_WINDOW_DAYS; d > lastDay; d--) if (isWeekday(d)) weekdays.push(d);
-  // Journée de revenge : premier jour ouvré à ~3 semaines.
-  const revengeDay = weekdays.find((d) => d <= 18) ?? weekdays[Math.floor(weekdays.length / 2)];
+  // Journée de revenge : milieu de la semaine ISO précédente, celle du dernier Weekly Debrief
+  // affiché — le visiteur voit l'anti-tilt et la note prop firm qui en parle dès l'arrivée.
+  const lastWeek = isoWeek(dayAt(now, 7, 12, 0));
+  const lastWeekDays = weekdays.filter((d) => {
+    const w = isoWeek(dayAt(now, d, 12, 0));
+    return w.week === lastWeek.week && w.year === lastWeek.year;
+  });
+  const revengeDay = lastWeekDays[Math.floor(lastWeekDays.length / 2)] ?? weekdays[Math.floor(weekdays.length / 2)];
   const normalDays = weekdays.filter((d) => d !== revengeDay);
 
   // Nombre de trades par jour (2 à 4), puis quotas exacts par setup (win rate maîtrisé).

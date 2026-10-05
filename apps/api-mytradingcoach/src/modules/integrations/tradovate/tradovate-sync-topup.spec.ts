@@ -68,3 +68,43 @@ describe('Synchro Tradovate — rattrapage du mois en cours', () => {
     await expect(topUp(conn())).resolves.toBe(0);
   });
 });
+
+/**
+ * Même piège, côté clôtures et payouts (prod 2026-10-05) : `refreshClosings` recevait l'objet lu au
+ * début de la synchro, après la rotation faite par `run`. Son refresh_token, déjà remplacé, partait
+ * chez Tradovate — refusé, et le token tout neuf l'a été à son tour sur 2 connexions.
+ */
+describe('Synchro Tradovate — clôtures et payouts', () => {
+  function setupClosings(relu: BrokerConnection | null) {
+    const prisma = { brokerConnection: { findUnique: vi.fn().mockResolvedValue(relu) } };
+    const connections = { getSession: vi.fn().mockResolvedValue({ token: 'AT', apiHosts: null }) };
+    const closings = { refresh: vi.fn().mockResolvedValue(undefined) };
+    const payouts = { refresh: vi.fn().mockResolvedValue(undefined) };
+    const service = new TradovateSyncService(
+      prisma as never, {} as never, connections as never, {} as never, {} as never, closings as never, payouts as never, {} as never, {} as never,
+    );
+    const refreshClosings = (c: BrokerConnection) =>
+      (service as unknown as { refreshClosings: (c: BrokerConnection) => Promise<void> }).refreshClosings(c);
+    return { refreshClosings, connections, closings, payouts };
+  }
+
+  it('relit la connexion : le jeton est demandé avec la version RELUE, jamais l’objet périmé', async () => {
+    const frais = conn({ accessTokenExpiresAt: new Date(Date.now() + 75 * 60_000) });
+    const { refreshClosings, connections, closings, payouts } = setupClosings(frais);
+
+    await refreshClosings(conn());
+
+    expect(connections.getSession).toHaveBeenCalledTimes(2);
+    for (const [c] of connections.getSession.mock.calls) expect(c).toBe(frais);
+    expect(closings.refresh.mock.calls[0][0]).toBe(frais);
+    expect(payouts.refresh.mock.calls[0][0]).toBe(frais);
+  });
+
+  it('connexion devenue « à reconnecter » ou supprimée → rien n’est relu chez Tradovate', async () => {
+    for (const relu of [conn({ status: BrokerConnectionStatus.NEEDS_RECONNECT }), null]) {
+      const { refreshClosings, connections } = setupClosings(relu);
+      await refreshClosings(conn());
+      expect(connections.getSession).not.toHaveBeenCalled();
+    }
+  });
+});

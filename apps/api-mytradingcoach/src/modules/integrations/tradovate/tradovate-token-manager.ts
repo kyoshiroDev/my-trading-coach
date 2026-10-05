@@ -198,7 +198,16 @@ export class TradovateTokenManager {
       // comme avant. Mieux vaut un refus possible qu'une connexion bloquée par un verrou.
     }
     try {
-      return await this.refreshWithRetryLocked(conn);
+      // RELECTURE sous verrou, avant tout appel : l'appelant a pu lire `conn` AVANT un
+      // renouvellement (prod 2026-10-05 : `refreshClosings` repassait l'objet lu au début de la
+      // synchro, après la rotation faite par `run`). Présenter son refresh_token, déjà remplacé,
+      // se fait refuser — et le token tout neuf l'a été à son tour juste après, sur 2 connexions.
+      const fresh = await this.deps.prisma.brokerConnection.findUnique({ where: { id: conn.id } });
+      if (fresh && this.renewedElsewhere(conn, fresh)) {
+        this.deps.logger.log(`Token Tradovate déjà renouvelé, relu en base (connexion ${conn.id}).`);
+        return decryptToken(fresh.accessTokenEnc, this.deps.tokenKey());
+      }
+      return await this.refreshWithRetryLocked(fresh?.refreshTokenEnc ? fresh : conn);
     } finally {
       if (held) await this.deps.locks.unlockLogin(conn);
     }

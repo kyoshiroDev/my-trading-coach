@@ -192,7 +192,11 @@ export class TradovateSyncService {
   }
 
   /** Best-effort : des clôtures en retard ne doivent jamais faire échouer la synchro des trades. */
-  private async refreshClosings(conn: BrokerConnection): Promise<void> {
+  private async refreshClosings(stale: BrokerConnection): Promise<void> {
+    // RELECTURE, comme topUpCurrentMonth : `run` a pu renouveler les tokens, et l'objet lu au début
+    // de la synchro présenterait un refresh_token déjà remplacé (2 connexions perdues, prod 2026-10-05).
+    const conn = await this.prisma.brokerConnection.findUnique({ where: { id: stale.id } });
+    if (!conn || conn.status !== BrokerConnectionStatus.CONNECTED) return;
     try {
       const { token, apiHosts } = await this.connections.getSession(conn);
       await this.closings.refresh(conn, token, apiHosts);
