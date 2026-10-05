@@ -345,8 +345,10 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   breached / reached) et chaque épisode de tilt (`kind = 'tilt'`, `level` = signal), avec ses
   chiffres en `data`. `kind` / `level` en TEXT, pas en enum : la liste grandit avec les alertes.
 - Lus par `PropRiskContextService` (bloc « prop firm » des prompts IA, #374). Cascade à la
-  suppression du compte. Pas de seed démo : rien ne les affiche, seule l'IA les lit (le compte
-  démo n'a ni temps réel ni Premium IA).
+  suppression du compte. Seed démo (#367) : rejoués sur les trades du compte Apex connecté avec
+  les vraies règles (`detectTilt`, `alertLevel`, plancher trailing EOD), cf.
+  `admin/demo-data/prop-risk.ts`. Rien ne les affiche tels quels : ils nourrissent les textes
+  fixes du compte démo (PREMIUM, aucun appel IA), récap du jour de tilt et `propNote` Apex du débrief.
 
 ## Migrations — bonnes pratiques
 
