@@ -1502,7 +1502,10 @@ Règles :
   JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
   immobiliers, balance courante, stocks EIA hors brut…) ; impact **fort = nos règles** (NFP, CPI, PCE,
   PIB trimestriel, ventes au détail, ISM manuf., taux directeurs, FOMC, gouverneurs), y compris quand
-  FMP dit Low ; le reste jugé High/Medium par FMP = moyen ; Low = écarté. ~90 → ~25 annonces/semaine.
+  FMP dit Low ; le reste jugé High/Medium par FMP = moyen ; Low = écarté. Écartés aussi : discours des
+  membres non gouverneurs (`SPEECH` sans `GOVERNORS`), exports/imports, PMI construction, WASDE…, et
+  `KEEP_ONLY_FOR` (balance commerciale hors CNY, production industrielle hors GBP/CNY, ventes au détail,
+  chômage et confiance des ménages hors devises où FF les montre). Semaine du 5/10 : ~90 → ~15 annonces.
   Une annonce manquante ou mal classée = une règle à ajouter dans `HIGH`/`NOISE` + un cas dans
   `eco-calendar.impact.spec.ts`.
 - `EcoEvent` est **partagé** (pas de `userId`) : le seed démo n'y écrit plus de faux events quand

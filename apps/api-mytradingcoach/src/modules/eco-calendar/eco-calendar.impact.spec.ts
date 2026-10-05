@@ -43,7 +43,6 @@ describe('classifyEcoEvent — tri façon ForexFactory', () => {
 
   it('le reste jugé High/Medium par FMP devient moyen, le Low disparaît', () => {
     expect(c('ISM Services PMI (Sep)', 'USD', 'US', 'High')).toBe('medium');
-    expect(c('Fed Waller Speech', 'USD', 'US', 'High')).toBe('medium');
     expect(c('Initial Jobless Claims (Oct/03)', 'USD', 'US')).toBe('medium');
     expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US')).toBe('medium');
     expect(c('Tokyo CPI YoY (Sep)', 'JPY', 'JP', 'High')).toBe('medium');
@@ -58,8 +57,46 @@ describe('classifyEcoEvent — tri façon ForexFactory', () => {
   it('zone euro : agrégat fort, Allemagne/France moyens, autres pays écartés', () => {
     expect(c('Inflation Rate YoY Flash (Sep)', 'EUR', 'EU')).toBe('high');
     expect(c('Inflation Rate YoY Prel (Sep)', 'EUR', 'DE')).toBe('medium');
-    expect(c('Industrial Production MoM (Aug)', 'EUR', 'DE')).toBe('medium');
+    expect(c('ZEW Economic Sentiment Index (Oct)', 'EUR', 'DE')).toBe('medium');
     expect(c('Industrial Production MoM (Aug)', 'EUR', 'IT', 'High')).toBeNull();
     expect(c('HCOB Services PMI (Sep)', 'EUR', 'ES')).toBeNull();
+  });
+
+  it('bruit restant vu sur la semaine du 5/10 : écarté', () => {
+    expect(c('Exports (Aug)', 'USD', 'US')).toBeNull();
+    expect(c('Imports (Aug)', 'USD', 'US')).toBeNull();
+    expect(c('Exports MoM (Aug)', 'EUR', 'DE')).toBeNull();
+    expect(c('Balance of Trade', 'USD', 'US')).toBeNull();
+    expect(c('Balance of Trade', 'EUR', 'FR')).toBeNull();
+    expect(c('S&P Global Construction PMI (Sep)', 'GBP', 'UK')).toBeNull();
+    expect(c('BoE Credit Conditions Survey', 'GBP', 'UK')).toBeNull();
+    expect(c('WASDE Report', 'USD', 'US')).toBeNull();
+    expect(c('Household Spending MoM (Aug)', 'JPY', 'JP')).toBeNull();
+    expect(c('Participation Rate (Sep)', 'CAD', 'CA')).toBeNull();
+    expect(c('Full Time Employment Chg (Sep)', 'CAD', 'CA')).toBeNull();
+    expect(c('Continuing Jobless Claims (Sep/26)', 'USD', 'US')).toBeNull();
+    expect(c('Industrial Production MoM', 'EUR', 'DE')).toBeNull();
+    expect(c('Retail Sales MoM', 'EUR', 'EU')).toBeNull();
+    expect(c('Unemployment Rate', 'CHF', 'CH')).toBeNull();
+    expect(c('Consumer Confidence', 'CHF', 'CH')).toBeNull();
+    expect(c('Consumer Confidence', 'JPY', 'JP')).toBeNull();
+  });
+
+  it('discours : seuls les gouverneurs restent (forts)', () => {
+    for (const n of ['Fed Waller Speech', 'Fed Logan Speech', 'Fed Musalem Speech', 'BoE Mann Speech', 'Bundesbank Nagel Speech']) {
+      expect(c(n, n.startsWith('BoE') ? 'GBP' : n.startsWith('Bundes') ? 'EUR' : 'USD', n.startsWith('Bundes') ? 'DE' : null, 'High'), n).toBeNull();
+    }
+    expect(c('BoE Gov Bailey Speech', 'GBP', 'UK')).toBe('high');
+    expect(c('ECB President Lagarde Speech', 'EUR', 'EU')).toBe('high');
+  });
+
+  it('garde ce que FF affiche cette semaine-là', () => {
+    expect(c('ISM Services PMI (Sep)', 'USD', 'US', 'High')).toBe('medium');
+    expect(c('Ivey PMI s.a (Sep)', 'CAD', 'CA')).toBe('medium');
+    expect(c('Initial Jobless Claims (Oct/03)', 'USD', 'US')).toBe('medium');
+    expect(c('ECB Monetary Policy Meeting Accounts', 'EUR', 'EU')).toBe('medium');
+    expect(c('Michigan Consumer Sentiment Prel (Oct)', 'USD', 'US')).toBe('medium');
+    expect(c('Balance of Trade (Sep)', 'CNY', 'CN')).toBe('medium');
+    expect(c('Retail Sales MoM (Aug)', 'GBP', 'UK')).toBe('high');
   });
 });
