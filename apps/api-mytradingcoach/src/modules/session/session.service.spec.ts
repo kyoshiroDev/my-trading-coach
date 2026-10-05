@@ -92,6 +92,33 @@ describe('SessionService', () => {
     });
   });
 
+  describe('getTodaySession (#456)', () => {
+    it('session active → renvoyée telle quelle', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValueOnce({ id: 's-active', status: 'ACTIVE' });
+
+      await expect(service.getTodaySession('user-1')).resolves.toEqual({ id: 's-active', status: 'ACTIVE' });
+      expect(mockPrisma.tradeSession.findFirst).toHaveBeenCalledTimes(1);
+    });
+
+    it('aucune active → dernière session clôturée du jour, avec ses trades', async () => {
+      mockPrisma.tradeSession.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 's-closed', status: 'CLOSED', trades: [] });
+
+      const res = await service.getTodaySession('user-1');
+
+      expect(res).toMatchObject({ id: 's-closed', status: 'CLOSED' });
+      const query = mockPrisma.tradeSession.findFirst.mock.calls[1][0];
+      expect(query.where).toMatchObject({
+        userId: 'user-1',
+        status: 'CLOSED',
+        startedAt: { gte: expect.any(Date) },
+      });
+      expect(query.orderBy).toEqual({ endedAt: 'desc' });
+      expect(query.include.trades).toBeDefined();
+    });
+  });
+
   describe('getTodayTrades', () => {
     it('retourne uniquement les trades du jour', async () => {
       const trades = [makeTrade(), makeTrade({ id: 'trade-2' })];

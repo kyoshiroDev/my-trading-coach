@@ -74,6 +74,8 @@ GET    /api/analytics/daily-recap/yesterday      JWT → recap de la veille
 
 POST   /api/session/start              JWT → démarrer une session, { mood: MoodState }
 GET    /api/session/active             JWT → session active en cours (null si aucune)
+GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
+                                       (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre

@@ -304,10 +304,16 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   }
 
   constructor() {
-    // Bascule sur live quand session ACTIVE
+    // Bascule sur live quand session ACTIVE ; session du jour déjà clôturée (page rechargée,
+    // #456) → une seule fois sur le Débrief, l'utilisateur reste libre de changer d'onglet.
+    let closedShown = false;
     effect(() => {
-      if (this.store.activeSession()?.status === 'ACTIVE') {
+      const status = this.store.activeSession()?.status;
+      if (status === 'ACTIVE') {
         this.activeTab.set('live');
+      } else if (status === 'CLOSED' && !closedShown) {
+        closedShown = true;
+        this.activeTab.set('debrief');
       }
     });
 
