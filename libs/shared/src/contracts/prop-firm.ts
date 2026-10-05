@@ -107,7 +107,7 @@ export interface PropFirmMaxContracts {
   minis: number | null;
   micros: number | null;
   scaling: boolean;
-  tiers?: Nullable<(PropFirmProfitTier & { minis: number; micros: number })[]>;
+  tiers?: Nullable<(PropFirmProfitTier & { minis: number; micros: number | null })[]>;
   notes: string | null;
 }
 

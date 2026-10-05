@@ -45,7 +45,7 @@ describe('PropFirmCatalogSyncService (base réelle)', () => {
     expect(phases.find((p) => p.phase === 'evaluation')?.max_drawdown).toMatchObject({ amount: 2000, type: 'trailing_eod' });
     expect(plan.sourceUrls.length).toBeGreaterThan(0);
     const firm = await prisma.propFirm.findUniqueOrThrow({ where: { id: 'apex' } });
-    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe('2026-10-02');
+    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe('2026-10-05');
     expect(firm.platforms).toContain('tradovate');
   });
 

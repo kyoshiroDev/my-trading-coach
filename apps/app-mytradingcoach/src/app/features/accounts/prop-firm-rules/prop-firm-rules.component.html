@@ -117,7 +117,7 @@
           <thead><tr><th>Profit</th><th>Contrats</th></tr></thead>
           <tbody>
             @for (t of ph.max_contracts.tiers; track t.min_profit) {
-              <tr><td>{{ fmt.tierRange(t.min_profit, t.max_profit, cur) }}</td><td>{{ t.minis }} · {{ t.micros }} µ</td></tr>
+              <tr><td>{{ fmt.tierRange(t.min_profit, t.max_profit, cur) }}</td><td>{{ t.minis }}@if (t.micros) { · {{ t.micros }} µ}</td></tr>
             }
           </tbody>
         </table>

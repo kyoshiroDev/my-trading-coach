@@ -58,7 +58,7 @@ describe('toRows', () => {
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
     expect(plans).toHaveLength(255);
-    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-02T00:00:00Z'));
+    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-05T00:00:00Z'));
   });
 
   it('mappe les colonnes de requête et garde les règles au format du catalogue', () => {
@@ -73,6 +73,12 @@ describe('toRows', () => {
     expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
     const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
     expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
+    // Scaling Legacy en PA (support Apex, 2026-10-05) : moitié arrondie à l'inférieur jusqu'au safety net.
+    const pa150 = (plans.find((p) => p.id === 'apex-legacy-150k')!.phases as { phase: string; max_contracts: { tiers: unknown } }[]).find((p) => p.phase === 'funded')!;
+    expect(pa150.max_contracts.tiers).toEqual([
+      { min_profit: 0, max_profit: 5100, minis: 8, micros: 80 },
+      { min_profit: 5101, max_profit: null, minis: 17, micros: 170 },
+    ]);
   });
 
   it('relevé du 2026-10-03 : valeurs clés des 4 nouvelles firms', () => {
@@ -100,10 +106,13 @@ describe('toRows', () => {
     expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
   });
 
-  it('LucidMaxx reste invite_only et needs_review', () => {
+  it('LucidMaxx reste invite_only, complet depuis la réponse du support (2026-10-05)', () => {
     const maxx = plans.find((p) => p.id === 'lucid-maxx-50k')!;
     expect(maxx.availability).toBe('invite_only');
-    expect(maxx.needsReview).toBe(true);
+    expect(maxx.needsReview).toBe(false);
+    const ev = (maxx.phases as { max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
+    expect(ev.max_contracts.minis).toBe(4);
+    expect(ev.max_drawdown).toMatchObject({ locks_at: 52_100, locked_floor: 50_100 });
   });
 
   it('empreinte stable entre deux lectures, sensible au moindre changement de règle', () => {
