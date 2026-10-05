@@ -70,6 +70,10 @@ export class SessionLiveComponent {
 
     // WebSocket éco : connecté/déconnecté par SessionStore selon l'état de la session (SCA-B4-03),
     // quelle que soit la page : il porte aussi le contexte marché poussé.
+
+    // Le suivi prop firm dépend des connexions Tradovate, chargées jusqu'ici par « Mes comptes »
+    // seulement : en ouverture directe ou après F5, le bloc restait masqué (#437).
+    if (!this.tradovate.loaded()) this.tradovate.load();
   }
 
   private readonly money = inject(MoneyService);
