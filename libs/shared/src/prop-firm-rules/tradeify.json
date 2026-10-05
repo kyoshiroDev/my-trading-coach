@@ -918,11 +918,11 @@
             "amount": 5250,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": null,
+            "locks_at": 155350,
             "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 155350 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $. CONTRADICTION 150K : l'article Lightning donne 5 250 $ de drawdown (déclenchement 155 350 $ par la règle drawdown + 100 $), le tableau de l'article Trailing Max Drawdowns donne un déclenchement à 156 100 $ (soit 6 000 $, la valeur des comptes d'avant le nouveau dashboard)."
+            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage (comptes funded uniquement) quand le solde de fin de journée atteint 155350 $, ou immédiatement à la première demande de payout : plancher fixe à 150100 $. 5 250 $ pour les comptes actuels ; les 6 000 $ (déclenchement 156 100 $) ne valent que pour les 150K achetés avant le nouveau dashboard, qui gardent aussi une DLL de 3 750 $ (article Lightning Funded, section « Legacy 150K Risk Parameters »)."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -982,8 +982,8 @@
         "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
         "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
       ],
-      "needs_review": true,
-      "notes": "Compte funded direct, sans évaluation. À revoir : drawdown du 150K contradictoire."
+      "needs_review": false,
+      "notes": "Compte funded direct, sans évaluation."
     },
     {
       "id": "tradeify-select-flex-25k",
