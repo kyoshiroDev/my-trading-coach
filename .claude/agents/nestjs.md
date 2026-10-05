@@ -1514,6 +1514,8 @@ Règles :
   membres non gouverneurs (`SPEECH` sans `GOVERNORS`), exports/imports, PMI construction, WASDE…, et
   `KEEP_ONLY_FOR` (balance commerciale hors CNY, production industrielle hors GBP/CNY, ventes au détail,
   chômage et confiance des ménages hors devises où FF les montre). Semaine du 5/10 : ~90 → ~15 annonces.
+  `ALWAYS_MEDIUM` (Michigan, inscriptions au chômage, ISM Services, brut EIA, Ivey) : gardés en moyen même
+  classés Low par FMP, sinon jamais stockés ou plus resynchronisés.
   Une annonce manquante ou mal classée = une règle à ajouter dans `HIGH`/`NOISE` + un cas dans
   `eco-calendar.impact.spec.ts`.
 - `EcoEvent` est **partagé** (pas de `userId`) : le seed démo n'y écrit plus de faux events quand
