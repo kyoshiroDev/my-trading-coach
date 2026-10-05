@@ -53,6 +53,15 @@ export const ACCOUNT_GONE_GRACE_MS = 2 * 60 * 60 * 1000;
  * faire limiter, voire signaler, par Tradovate. Les crons (15 min, 1 h) retentent au-delà.
  */
 export const REFUSAL_COOLDOWN_S = 10 * 60;
+/**
+ * refresh_token refusé deux fois alors que le repli `renewAccessToken` a marché : on ne le
+ * représente plus avant ce délai, on prolonge directement l'access token. `renew` ne fait pas
+ * tourner le refresh_token, donc sans ce garde-fou le même token mort repartait à chaque passage
+ * des crons — constaté en prod le 2026-10-05 : 42 refus `invalid_token` en 7 h sur 4 connexions.
+ * Le marqueur porte l'empreinte du refresh_token : dès qu'un nouveau est stocké (refresh réussi,
+ * propagation d'une sœur, reconnexion), il ne s'applique plus.
+ */
+export const REFRESH_DEAD_RETRY_S = 6 * 60 * 60;
 export const ENVS: TradovateEnv[] = ['live', 'demo'];
 
 /**

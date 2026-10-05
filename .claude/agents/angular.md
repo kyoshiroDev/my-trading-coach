@@ -323,7 +323,15 @@ envoyées à l'API sont des horodatages ISO complets.
 
 - `font-size: 16px` minimum sur tous les `input`, `select`, `textarea` — anti-zoom iOS Safari
 - `min-width: 0` sur tous les items grid/flex — anti-overflow
-- `overflow-x: hidden` sur les containers principaux
+- `overflow-x: hidden` sur les containers principaux — `.main-content` (sidebar) le porte : un
+  `overflow-y:auto` seul passe `overflow-x` à `auto` et un enfant trop large fait glisser toute la page
+- Grilles repliées en 1 colonne : `minmax(0, 1fr)`, jamais `1fr` nu (= `minmax(auto, 1fr)` : la piste
+  s'élargit au min-content du contenu, ex. heatmap, champ de lien, profil → page plus large que l'écran)
+- Barre flex passée en `flex-direction: column` : retirer le `flex-wrap: wrap` (avec le wrap, le
+  stretch ne borne plus la largeur des enfants — filtres du Journal à 997 px)
+- **Un seul scroll vertical sur mobile** : `.main-content`. Pas de bloc `overflow-y:auto` borné
+  (`max-height`, `flex:1 + min-height:0`) sous 768px — Mes comptes, calendrier éco, live feed.
+  Un débordement horizontal voulu (tableau, onglets, carrousel) porte son propre `overflow-x:auto`
 - `padding-bottom: calc(env(safe-area-inset-bottom) + Xpx)` sur les footers fixes
 - `height: 100dvh` plutôt que `100vh` — évite le bug Safari barre d'adresse
 - `viewport-fit=cover` dans `index.html`

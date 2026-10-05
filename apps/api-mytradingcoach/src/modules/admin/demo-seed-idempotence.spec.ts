@@ -100,6 +100,8 @@ function fakePrisma(calls: Call[]) {
     tradingAccount: model('tradingAccount'),
     brokerConnection: model('brokerConnection'),
     brokerDailyClose: model('brokerDailyClose'),
+    accountRiskDay: model('accountRiskDay'),
+    propRiskEvent: model('propRiskEvent'),
     // Catalogue synchronisé : les deux plans des comptes démo existent.
     propFirmPlan: { findMany: vi.fn(async () => [{ id: 'apex-eod-50k' }, { id: 'tradeify-select-flex-50k' }]) },
   };
@@ -577,3 +579,39 @@ describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => 
   });
 });
 
+describe('seedDemo — séances suivies en direct (#373 / #374)', () => {
+  const rows = (calls: Call[], model: string) =>
+    (calls.find((c) => c.model === model && c.op === 'createMany')?.args['data'] ?? []) as Record<string, unknown>[];
+
+  it('journal du compte connecté : une ligne par séance Apex, plancher trailing EOD jamais sous le départ - 2 000 $', async () => {
+    const calls: Call[] = [];
+    await seedDemo(fakePrisma(calls).prisma);
+    const days = rows(calls, 'accountRiskDay');
+    const apexId = (calls.find((c) => c.model === 'brokerConnection' && c.op === 'create')!.args['data'] as Record<string, unknown>)['accountId'];
+    expect(days.length).toBeGreaterThan(5);
+    expect(days.every((d) => d['accountId'] === apexId)).toBe(true);
+    const dates = days.map((d) => (d['tradeDate'] as Date).toISOString().slice(0, 10));
+    expect(new Set(dates).size).toBe(dates.length);
+    for (const d of days) {
+      expect(d['floorStart']).toBeGreaterThanOrEqual(48_000);
+      expect(d['floorEnd']).toBe(d['floorStart']);
+      expect(d['minDrawdownMargin']).toBeLessThanOrEqual(2_000 + 5_000);
+      expect(d['minDailyLossRemaining']).toBeLessThanOrEqual(1_000);
+    }
+  });
+
+  it('la journée de revenge laisse une trace anti-tilt, reprise par le récap de ce jour-là', async () => {
+    const calls: Call[] = [];
+    const { prisma, created } = fakePrisma(calls);
+    await seedDemo(prisma);
+    const events = rows(calls, 'propRiskEvent');
+    const revenge = events.filter((e) => e['kind'] === 'tilt' && e['level'] === 'revenge');
+    expect(revenge.length).toBeGreaterThan(0);
+    expect(events.every((e) => e['userId'] === DEMO_ID)).toBe(true);
+    // Horodaté à l'heure du trade qui déclenche, jamais dans le futur.
+    expect(events.every((e) => (e['createdAt'] as Date).getTime() <= Date.now())).toBe(true);
+    expect(created['dailyRecap'].some((r) => String(r['aiOneLiner']).startsWith('Anti-tilt'))).toBe(true);
+    expect(created['weeklyDebrief'].some((w) =>
+      JSON.stringify(w['insights']).includes('Séances suivies en direct'))).toBe(true);
+  });
+});

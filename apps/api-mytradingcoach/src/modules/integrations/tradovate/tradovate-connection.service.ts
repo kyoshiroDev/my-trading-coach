@@ -414,8 +414,8 @@ export class TradovateConnectionService {
     return this.tokens.getSession(conn);
   }
 
-  /** Renouvellement immédiat (cron de maintien) : 'refreshed' | 'reconnect' | 'retry'. */
-  refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'reconnect' | 'retry'> {
+  /** Renouvellement immédiat (cron de maintien) : 'refreshed' | 'renewed' | 'reconnect' | 'retry'. */
+  refreshNow(conn: BrokerConnection): Promise<'refreshed' | 'renewed' | 'reconnect' | 'retry'> {
     return this.tokens.refreshNow(conn);
   }
 

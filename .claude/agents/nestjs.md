@@ -879,6 +879,18 @@ sont en direct.
     fois après 2 s, en **relisant la connexion** (un autre worker du cluster a pu renouveler
     entre-temps : son access token est alors pris tel quel, sans rappeler Tradovate).
     `NEEDS_RECONNECT` n'est posé que si **deux** refus ET repli renew indisponible ou refusé.
+    « Renouvelé ailleurs » = refresh_token changé en base OU échéance de l'access token repoussée
+    depuis la lecture (`renewedElsewhere`) — PAS un access token simplement loin de son échéance :
+    le cron de maintien choisit sur l'échéance du refresh_token, et prenait un token inchangé pour
+    un renouvellement (faux « déjà renouvelé ailleurs », prod 2026-10-05).
+  - ⚠️ **Refresh_token mort, renew vivant** (correctif du 2026-10-05 : 42 refus `invalid_token` en
+    7 h sur 4 connexions prod). `renew` prolonge l'access token mais **ne fait pas tourner le
+    refresh_token** : le token refusé restait en base et repartait 2 fois à chaque passage. Après
+    deux refus + renew réussi → marqueur Redis `tradovate:refresh-dead:<id>` (6 h,
+    `REFRESH_DEAD_RETRY_S`) portant l'**empreinte** du refresh_token : tant qu'il vaut, `renew`
+    direct, refresh seulement si renew échoue (dernier recours). Un nouveau refresh_token (refresh
+    réussi, propagation, reconnexion) l'invalide de fait. `refreshNow` rend alors **`renewed`**
+    (« prolongé(s) sans refresh » dans le log du cron), plus `refreshed`.
   - ⚠️ **`refreshTokenExpiresAt` n'est pas une autorité pour TENTER.** Tradovate annonce ≈ 25 h
     (et non les 14 j de sa doc) puis refuse parfois le token bien avant. On tente dès qu'un refresh
     token existe.
