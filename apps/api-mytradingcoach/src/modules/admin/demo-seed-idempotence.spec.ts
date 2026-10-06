@@ -22,7 +22,6 @@ import { describe, it, expect, vi } from 'vitest';
 // régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
 vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
-import { tradingDay } from '../accounts/account-rules';
 import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 
 /** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
