@@ -15,7 +15,7 @@
       "tradesea"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-06",
   "plans": [
     {
       "id": "blusky-launch-50k",
@@ -78,9 +78,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -125,8 +125,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-100k",
@@ -189,9 +189,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -236,8 +236,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-launch-200k",
@@ -300,9 +300,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -347,7 +347,7 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
@@ -411,9 +411,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 1500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 1500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1400 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -458,8 +458,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-50k",
@@ -522,9 +522,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -569,8 +569,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-100k",
@@ -633,9 +633,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -680,8 +680,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": false,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
       "id": "blusky-propel-150k",
@@ -744,9 +744,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 2000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 2000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 1900 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -791,7 +791,7 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 2000 $, drawdown 1000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
@@ -855,9 +855,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3000 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 2900 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -902,7 +902,7 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
@@ -966,9 +966,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Le contrôle en séance n'est pas précisé."
+            "basis_notes": "Sim Funded : le compte démarre à 3500 $ (le profit construit en Buffer Zone) avec un solde minimum de 100 $, donc 3400 $ de marge fixe. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -1013,7 +1013,7 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ static, consistency 21 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
     },
     {
@@ -1072,9 +1072,9 @@
             "trails_on": "balance",
             "locks_at": 52000,
             "locked_floor": 50000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (50000 $) une fois 2000 $ de profit net cumulé."
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (50000 $) une fois 2000 $ de profit net cumulé. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1123,8 +1123,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+      "needs_review": false,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-100k",
@@ -1182,9 +1182,9 @@
             "trails_on": "balance",
             "locks_at": 103000,
             "locked_floor": 100000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (100000 $) une fois 3000 $ de profit net cumulé."
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (100000 $) une fois 3000 $ de profit net cumulé. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1233,8 +1233,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+      "needs_review": false,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-150k",
@@ -1292,9 +1292,9 @@
             "trails_on": "balance",
             "locks_at": 154500,
             "locked_floor": 150000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (150000 $) une fois 4500 $ de profit net cumulé."
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (150000 $) une fois 4500 $ de profit net cumulé. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1343,8 +1343,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+      "needs_review": false,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-orbit-200k",
@@ -1402,9 +1402,9 @@
             "trails_on": "balance",
             "locks_at": 203000,
             "locked_floor": 200000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (200000 $) une fois 3000 $ de profit net cumulé."
+            "basis_notes": "Sim Funded à la taille complète : le seuil suit le profit journalier clôturé dollar pour dollar et se fige au solde de départ (200000 $) une fois 3000 $ de profit net cumulé. Contrôlé en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil fait échouer le compte immédiatement (support BluSky, Mike, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.4,
@@ -1453,8 +1453,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL. Prix non relevé."
+      "needs_review": false,
+      "notes": "Orbit : deux phases, pas de Buffer Zone, pas de DLL."
     },
     {
       "id": "blusky-instant-50k",
@@ -1539,7 +1539,7 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
+      "needs_review": false,
       "notes": "Sans évaluation. Prix non relevé."
     },
     {
@@ -1550,10 +1550,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 749,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique (prix sur blusky.pro, non relevé). Pas de reset."
+        "notes": "Achat unique, 749 $ (support BluSky, Mike, chat, 2026-10-06). Pas de reset."
       },
       "phases": [
         {
@@ -1561,12 +1561,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": null,
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Montant 2000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Calcul (réalisé ou latent) et heure de reset non publiés."
+            "notes": "Montant 2000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Ne doit être dépassée à aucun moment, positions ouvertes comprises (support BluSky, Neil, chat, 2026-10-06). Heure de reset non publiée."
           },
           "max_drawdown": {
             "amount": 2500,
@@ -1574,9 +1574,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 1000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : le compte de 3 500 $ ferme sous 1 000 $."
+            "basis_notes": "Static : le compte de 3 500 $ ferme sous 1 000 $. Solde minimum statique de 1 000 $ : passer en dessous, même avec une position ouverte, fait échouer le compte (support BluSky, Neil, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.21,
@@ -1625,8 +1625,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Compte financé de 3 500 $ sans évaluation. Prix non relevé."
+      "needs_review": false,
+      "notes": "Compte financé de 3 500 $ sans évaluation."
     }
   ]
 }

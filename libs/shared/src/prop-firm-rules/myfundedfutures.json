@@ -14,7 +14,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-06",
   "plans": [
     {
       "id": "myfundedfutures-rapid-25k",
@@ -79,7 +79,7 @@
             "locked_floor": 100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 1000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 1000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. Verrouillage purement lié au solde, quand le plancher atteint 100 $ ; le premier payout ne le déclenche pas (support MyFundedFutures, Ellis, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -120,8 +120,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "myfundedfutures-rapid-50k",
@@ -186,7 +186,7 @@
             "locked_floor": 100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 2000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 2000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. Verrouillage purement lié au solde, quand le plancher atteint 100 $ ; le premier payout ne le déclenche pas (support MyFundedFutures, Ellis, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -227,8 +227,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "myfundedfutures-rapid-100k",
@@ -293,7 +293,7 @@
             "locked_floor": 100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 3000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 3000 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. Verrouillage purement lié au solde, quand le plancher atteint 100 $ ; le premier payout ne le déclenche pas (support MyFundedFutures, Ellis, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -334,8 +334,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "myfundedfutures-rapid-150k",
@@ -400,7 +400,7 @@
             "locked_floor": 100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 4500 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. CONTRADICTION : la FAQ de la page Rapid dit que le seuil se verrouille « après le premier payout »."
+            "basis_notes": "Solde de départ 0 $. Max Loss intraday qui suit le plus haut equity (réalisé + latent) à 4500 $ de distance, se verrouille quand il atteint 100 $ et ne bouge plus ; garder au moins 100 $. Verrouillage purement lié au solde, quand le plancher atteint 100 $ ; le premier payout ne le déclenche pas (support MyFundedFutures, Ellis, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -441,8 +441,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "À revoir : déclencheur du verrouillage du funded contradictoire."
+      "needs_review": false,
+      "notes": null
     },
     {
       "id": "myfundedfutures-rapid-eod-25k",
@@ -1000,7 +1000,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1041,7 +1041,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 1000,
@@ -1095,8 +1095,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
     },
     {
       "id": "myfundedfutures-builder-50k",
@@ -1122,7 +1122,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1163,7 +1163,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 2000,
@@ -1217,8 +1217,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
     },
     {
       "id": "myfundedfutures-builder-dd1500-50k",
@@ -1249,7 +1249,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 1500,
@@ -1290,7 +1290,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 1500,
@@ -1344,8 +1344,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
     },
     {
       "id": "myfundedfutures-builder-100k",
@@ -1371,7 +1371,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1412,7 +1412,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 3000,
@@ -1466,8 +1466,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
     },
     {
       "id": "myfundedfutures-builder-150k",
@@ -1493,7 +1493,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1534,7 +1534,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Heure de reprise et base non précisées."
+            "notes": "Soft pause : séance terminée pour la journée, le compte n'est pas en échec. Reprise à la séance suivante (support MyFundedFutures, Ellis, 2026-10-06). Base (réalisé ou latent) non précisée."
           },
           "max_drawdown": {
             "amount": 4500,
@@ -1573,11 +1573,11 @@
             "min_cycle_profit_schedule": null,
             "split_pct": 0.8,
             "min_amount": 1500,
-            "max_amount": 3500,
+            "max_amount": 4500,
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 4600,
-            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. La FAQ dit « jusqu'à 2 000 $ » par payout (= 50K)."
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (support MyFundedFutures, Ellis, 2026-10-06)."
           }
         }
       ],
@@ -1588,8 +1588,8 @@
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
-      "needs_review": true,
-      "notes": "Un seul compte Builder par utilisateur (deux en 25K). À revoir : l'en-tête de la page annonce « $25K & $50K » alors que les règles et le sélecteur couvrent 25K à 150K ; heure de reprise de la DLL non documentée."
+      "needs_review": false,
+      "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
     }
   ]
 }
