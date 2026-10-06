@@ -618,6 +618,13 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - `onModuleInit` gardé par `IS_CRON_WORKER === 'true'` (**obligatoire** : sinon les 8
   workers du cluster purgent/recréent le même user en concurrence) → rattrape une API
   restée éteinte plus d'une journée.
+- **Connexion démo** (`AuthService.demoLogin`, 2026-10-06) → `DemoSeedService.ensureFresh` :
+  re-seed si la démo est périmée (`isStale` : absente, sans trade, ou rien depuis le dernier jour
+  ouvré), sous verrou Redis `demo:reseed-lock` (120 s, un seul re-seed dans le cluster ; verrou
+  pris → démo actuelle servie). Un échec ne bloque jamais la connexion. Raison : le worker de
+  **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
+  `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
+  depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
 
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les

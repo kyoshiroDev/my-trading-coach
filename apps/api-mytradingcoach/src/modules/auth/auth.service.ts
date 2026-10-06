@@ -13,6 +13,7 @@ import { hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { DemoSeedService } from '../admin/demo-seed.service';
 import { SetupsService } from '../setups/setups.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -76,6 +77,7 @@ export class AuthService {
     private jwtService: JwtService,
     private resend: ResendService,
     private setups: SetupsService,
+    private demoSeed: DemoSeedService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -267,6 +269,11 @@ export class AuthService {
    * neutralise toute écriture même si le token fuite (défense en profondeur).
    */
   async demoLogin() {
+    // Démo fraîche pour chaque visiteur, même sans cron (dev) : re-seed si périmée. Un échec ne
+    // bloque jamais la connexion, la démo actuelle est servie.
+    await this.demoSeed.ensureFresh('connexion démo').catch((err: Error) =>
+      this.logger.warn(`Re-seed démo à la connexion ignoré : ${err.message}`),
+    );
     const user = await this.prisma.user.findFirst({
       where: { isDemo: true },
       select: ME_SELECT,

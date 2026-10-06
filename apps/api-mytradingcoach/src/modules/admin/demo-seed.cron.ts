@@ -1,8 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PrismaService } from '../../prisma/prisma.service';
 import { DemoSeedService } from './demo-seed.service';
-import { DEMO_EMAIL } from './demo-seed';
 import { runsCrons } from '../../config/app-role';
 
 /**
@@ -26,10 +24,7 @@ import { runsCrons } from '../../config/app-role';
 export class DemoSeedCron implements OnModuleInit {
   private readonly logger = new Logger(DemoSeedCron.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly demoSeed: DemoSeedService,
-  ) {}
+  constructor(private readonly demoSeed: DemoSeedService) {}
 
   /** 03h20 Paris : re-seed complet, hors des heures de visite. */
   @Cron('20 3 * * *', { timeZone: 'Europe/Paris' })
@@ -45,41 +40,14 @@ export class DemoSeedCron implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     if (!runsCrons()) return;
     try {
-      if (await this.isStale()) await this.reseed('boot (démo vide ou périmée)');
+      await this.demoSeed.ensureFresh('boot (démo vide ou périmée)');
     } catch (e) {
       // Un échec de seed ne doit jamais empêcher l'API de démarrer.
       this.logger.warn(`Contrôle démo au boot ignoré: ${(e as Error).message}`);
     }
   }
 
-  /** Démo absente, sans trade, ou sans trade depuis le dernier jour ouvré (aujourd'hui, ou vendredi le week-end). */
-  private async isStale(): Promise<boolean> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: DEMO_EMAIL },
-      select: { id: true },
-    });
-    if (!user) return true;
-
-    const last = await this.prisma.trade.findFirst({
-      where: { userId: user.id },
-      orderBy: { tradedAt: 'desc' },
-      select: { tradedAt: true },
-    });
-    if (!last) return true;
-
-    // Jours ouvrés uniquement : le week-end, le dernier trade attendu est vendredi.
-    const lastTradingDay = new Date();
-    lastTradingDay.setHours(0, 0, 0, 0);
-    while (lastTradingDay.getDay() === 0 || lastTradingDay.getDay() === 6) {
-      lastTradingDay.setDate(lastTradingDay.getDate() - 1);
-    }
-    return last.tradedAt < lastTradingDay;
-  }
-
   private async reseed(reason: string): Promise<void> {
-    const res = await this.demoSeed.run();
-    this.logger.log(
-      `Démo re-seedée (${reason}) : ${res.trades} trades sur ${res.accounts} comptes · WR net ${res.winRate}% · net ${res.pnl} $ (brut ${res.grossPnl} $, frais ${res.fees} $)`,
-    );
+    await this.demoSeed.run(reason);
   }
 }
