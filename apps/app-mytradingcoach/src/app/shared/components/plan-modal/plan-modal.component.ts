@@ -12,6 +12,7 @@ import {
   LucideZap as Zap,
 } from '@lucide/angular';
 import { PRICING } from '@app/core/constants/pricing.const';
+import { ProductEventsService } from '@app/core/services/product-events.service';
 import { BillingService } from '@app/core/services/billing.service';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective } from '@mtc/front-ui';
@@ -42,6 +43,11 @@ export class PlanModalComponent {
   // L'essai 30j n'est accordé qu'au mensuel (l'annuel est facturé immédiatement).
   protected interval = signal<Interval>('monthly');
   private readonly billing = inject(BillingService);
+  private readonly events = inject(ProductEventsService);
+
+  constructor() {
+    this.events.track('plan_modal_open');
+  }
   protected readonly isLoading = this.billing.starting;
   /** Essai déjà consommé (ou Premium offert reçu) : le checkout facture tout de suite, ne rien promettre. */
   protected readonly trialAvailable = inject(UserStore).trialAvailable;
@@ -78,6 +84,7 @@ export class PlanModalComponent {
   }
 
   protected confirmPlan() {
+    this.events.track('trial_click');
     this.billing.startCheckout(this.planId());
   }
 

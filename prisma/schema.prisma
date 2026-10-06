@@ -40,6 +40,7 @@ model User {
   // Compte vitrine en lecture seule (démo landing). Bloque les écritures
   // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.
   isDemo Boolean @default(false)
+  productEvents ProductEventDaily[]
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
   onboardingCompleted Boolean @default(false)
@@ -901,4 +902,22 @@ model PropFirmPlan {
   updatedAt       DateTime         @updatedAt
 
   @@index([firmId, active])
+}
+
+/// Entonnoir Premium (2026-10-07) : ce que les inscrits rencontrent dans l'app, agrégé par jour.
+/// Une ligne = (jour, user, événement, endroit) ; `count` = nombre d'occurrences ce jour-là.
+/// Sert l'entonnoir admin (users DISTINCTS par étape) : premium vu → offres ouvertes → clic essai.
+model ProductEventDaily {
+  id     String   @id @default(cuid())
+  date   DateTime @db.Date
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Liste blanche côté API (`PRODUCT_EVENTS`).
+  event  String
+  /// Écran d'origine (1er segment de la route : `ai-insights`, `session`…), '' si sans objet.
+  place  String   @default("")
+  count  Int      @default(1)
+
+  @@unique([date, userId, event, place])
+  @@index([date, event])
 }

@@ -128,3 +128,28 @@ export interface AdminAcquisitionData {
   /** Pages les plus vues sur 30 jours (10 max). */
   topPages: AdminLandingPage[];
 }
+
+/** Une étape de l'entonnoir Premium : utilisateurs DISTINCTS (hors démo et admin) sur la période. */
+export interface AdminFunnelStep {
+  key: 'premium_seen' | 'plan_modal_open' | 'trial_click' | 'checkout_success' | 'checkout_canceled';
+  users: number;
+}
+
+/** Détail par écran : où les inscrits rencontrent le Premium, ouvrent les offres, cliquent. */
+export interface AdminFunnelPlace {
+  event: 'premium_seen' | 'plan_modal_open' | 'trial_click';
+  place: string;
+  users: number;
+}
+
+/** GET /admin/funnel — de la visite au paiement, sur `days` jours (Paris). */
+export interface AdminFunnelData {
+  days: number;
+  landingVisits: number;
+  signups: number;
+  demo: { opens: number; signupClicks: number };
+  steps: AdminFunnelStep[];
+  byPlace: AdminFunnelPlace[];
+  /** État Stripe actuel (hors démo et admin) : essais en cours, abonnés payants. */
+  current: { trialing: number; paying: number };
+}

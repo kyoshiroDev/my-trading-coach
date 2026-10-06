@@ -13,6 +13,7 @@ import { hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 import { SetupsService } from '../setups/setups.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -76,6 +77,7 @@ export class AuthService {
     private jwtService: JwtService,
     private resend: ResendService,
     private setups: SetupsService,
+    private productEvents: ProductEventsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -272,6 +274,8 @@ export class AuthService {
       select: ME_SELECT,
     });
     if (!user) throw new NotFoundException('Compte démo indisponible');
+    // Entonnoir : visites de la démo (best-effort, n'échoue jamais).
+    void this.productEvents.record(user.id, 'demo_open');
 
     const access_token = await this.jwtService.signAsync(
       { sub: user.id, email: user.email },

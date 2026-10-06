@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -60,6 +61,8 @@ const mockJwt = {
   signAsync: vi.fn().mockResolvedValue('mock_token'),
 };
 
+const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
+
 const mockResend = {
   sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
   sendResetPassword: vi.fn().mockResolvedValue(undefined),
@@ -82,10 +85,19 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: ResendService, useValue: mockResend },
         { provide: SetupsService, useValue: { seedDefaults: vi.fn().mockResolvedValue(true) } },
+        { provide: ProductEventsService, useValue: mockProductEvents },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+  });
+
+  describe('demoLogin', () => {
+    it('compte la visite de la démo dans l’entonnoir', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockSafeUser, id: 'demo-id' });
+      await service.demoLogin();
+      expect(mockProductEvents.record).toHaveBeenCalledWith('demo-id', 'demo_open');
+    });
   });
 
   describe('register', () => {

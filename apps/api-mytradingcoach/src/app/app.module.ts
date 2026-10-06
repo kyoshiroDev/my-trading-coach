@@ -26,6 +26,7 @@ import { EcoCalendarModule } from '../modules/eco-calendar/eco-calendar.module';
 import { AmbassadorModule } from '../modules/ambassador/ambassador.module';
 import { ReferralModule } from '../modules/referral/referral.module';
 import { PublicModule } from '../modules/public/public.module';
+import { ProductEventsModule } from '../modules/product-events/product-events.module';
 import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
 import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
@@ -99,6 +100,7 @@ import { RedisService } from '../modules/infra/redis.service';
     AmbassadorModule,
     ReferralModule,
     PublicModule,
+    ProductEventsModule,
     ActivityTrackingModule,
     TradovateModule,
     PropFirmsModule,
