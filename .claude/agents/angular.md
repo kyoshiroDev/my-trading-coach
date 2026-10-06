@@ -139,7 +139,8 @@ la maquette design (« The Terminal »).
 - **Colonne droite de la session live** : compte de la session **éval ou funded synchronisé
   Tradovate** (`isLivePropAccount`, `live-prop-firm.util.ts`) → `mtc-live-prop-firm` (suivi prop
   firm, FREE) **à la place** de Trade rapide. `SessionLiveComponent` charge lui-même `TradovateStore`
-  s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437). Solde et latent du broker, marge avant le plancher
+  s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437). `.pf-panel` en
+  `flex: 1` : bas aligné sur le calendrier et le Live feed. Solde et latent du broker, marge avant le plancher
   et avancement objectif / payout, tout calculé par l'API (`metrics` de `GET /accounts`, règles du
   plan relié). Temps réel = `tradovate:balance` → `SelectedAccountStore.reloadSoon()` ; le panneau
   ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un

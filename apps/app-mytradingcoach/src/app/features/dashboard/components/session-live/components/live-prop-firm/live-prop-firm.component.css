@@ -7,6 +7,8 @@
 }
 
 .pf-panel {
+  /* Occupe toute la hauteur de la colonne : bas aligné sur le calendrier et le Live feed. */
+  flex: 1;
   background: var(--bg-card);
   border: 1px solid rgba(59,130,246,.2);
   border-radius: 14px;
