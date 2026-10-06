@@ -43,6 +43,16 @@ describe('DemoSeedService.ensureFresh', () => {
     expect(run).not.toHaveBeenCalled();
   });
 
+  it('séance du jour ouverte depuis le seed de 03:20 → périmée (Londres le matin, New York ensuite)', async () => {
+    const day = new Date('2026-10-06T00:00:00'); // mardi
+    const at = (h: number, m = 0) => { const d = new Date(day); d.setHours(h, m, 0, 0); return d; };
+    expect(await setup(at(2, 45)).service.isStale(at(8))).toBe(false); // avant l'ouverture
+    expect(await setup(at(2, 45)).service.isStale(at(11))).toBe(true); // Londres ouverte
+    expect(await setup(at(9, 38)).service.isStale(at(11))).toBe(false); // déjà montrée
+    expect(await setup(at(9, 38)).service.isStale(at(17))).toBe(true); // New York ouverte
+    expect(await setup(at(15, 57)).service.isStale(at(22))).toBe(false);
+  });
+
   it('week-end : un trade du vendredi suffit', async () => {
     const { service } = setup(new Date('2026-10-02T15:00:00')); // vendredi
     expect(await service.isStale(new Date('2026-10-04T10:00:00'))).toBe(false); // dimanche

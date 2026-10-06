@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { DEMO_EMAIL, seedDemo, DemoSeedResult } from './demo-seed';
+import { dayAt, demoTodaySlot } from './demo-data/generate';
 
 /** Un seul re-seed à la fois dans tout le cluster (connexions démo simultanées, cron, boot). */
 export const DEMO_RESEED_LOCK = 'demo:reseed-lock';
@@ -35,6 +36,14 @@ export class DemoSeedService {
       select: { tradedAt: true },
     });
     if (!last) return true;
+    // Une séance du jour s'est ouverte depuis le dernier seed (ex. seed de 03:20, visite à 11:00) :
+    // re-seed pour la montrer, aux heures de marché.
+    const slot = demoTodaySlot(now);
+    const weekday = now.getDay() !== 0 && now.getDay() !== 6;
+    if (weekday && slot) {
+      const [h, m] = slot.trades[slot.trades.length - 1];
+      if (last.tradedAt < dayAt(now, 0, h, m)) return true;
+    }
     const lastTradingDay = new Date(now);
     lastTradingDay.setHours(0, 0, 0, 0);
     while (lastTradingDay.getDay() === 0 || lastTradingDay.getDay() === 6) {

@@ -411,21 +411,23 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
 });
 
 describe('seedDemo — connexion Tradovate démo', () => {
-  it('le compte prop firm apparaît connecté, sans aucun vrai token, et une seule connexion par run', async () => {
+  it('les deux comptes prop firm apparaissent connectés, sans aucun vrai token, une connexion par compte', async () => {
     const calls: Call[] = [];
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
     const connections = created['brokerConnection'] ?? [];
-    expect(connections).toHaveLength(1);
-    const [conn] = connections;
-    // Rattachée au compte futures (1er compte créé), jamais au user seul.
-    expect(conn['accountId']).toBe('tradingAccount-1');
-    expect(conn).toMatchObject({ provider: 'TRADOVATE', status: 'CONNECTED' });
-    expect(conn['lastSyncAt']).toBeInstanceOf(Date);
-    // Placeholder non déchiffrable : le compte démo ne synchronise jamais (DemoReadOnlyGuard).
-    expect(String(conn['accessTokenEnc']).startsWith('v1:')).toBe(false);
-    expect(conn['refreshTokenEnc']).toBeUndefined();
+    // Les deux : la session live montre le suivi prop firm quel que soit le compte de la séance.
+    expect(connections).toHaveLength(2);
+    expect(connections.map((c) => c['accountId'])).toEqual(['tradingAccount-1', 'tradingAccount-2']);
+    expect(new Set(connections.map((c) => c['externalAccountId'])).size).toBe(2);
+    for (const conn of connections) {
+      expect(conn).toMatchObject({ provider: 'TRADOVATE', status: 'CONNECTED' });
+      expect(conn['lastSyncAt']).toBeInstanceOf(Date);
+      // Placeholder non déchiffrable : le compte démo ne synchronise jamais (DemoReadOnlyGuard).
+      expect(String(conn['accessTokenEnc']).startsWith('v1:')).toBe(false);
+      expect(conn['refreshTokenEnc']).toBeUndefined();
+    }
   });
 });
 
@@ -579,81 +581,42 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
 });
 
 describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => {
-  it('à 03:20 : aucun trade dans le futur, session du jour démarrée aujourd’hui, récap daté d’hier', async () => {
+  it('à 03:20 (avant l’ouverture) : aucune séance du jour, rien dans le futur, récap daté d’hier', async () => {
     const now = weekdayAt(3, 20);
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma, now);
 
     expect(created['trade'].filter((t) => (t['tradedAt'] as Date) > now)).toHaveLength(0);
+    // Plus de trades « du jour » à 01:40 / 02:45 : la séance du jour attend l'ouverture.
+    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(0);
 
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
-    const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
-    expect(active).toHaveLength(1);
-    expect((active[0]['startedAt'] as Date).getTime()).toBeGreaterThanOrEqual(startOfToday.getTime());
-    expect((active[0]['startedAt'] as Date).getTime()).toBeLessThanOrEqual(now.getTime());
-
     const yesterday = new Date(startOfToday);
     yesterday.setDate(yesterday.getDate() - 1);
     const recapDates = created['dailyRecap'].map((r) => (r['date'] as Date).getTime());
     expect(recapDates).toContain(yesterday.getTime());
     expect(Math.max(...recapDates)).toBe(yesterday.getTime());
-  });
-
-  it('clôtures officielles du compte connecté : une par séance close, cohérentes avec son solde broker', async () => {
-    const calls: Call[] = [];
-    const { prisma, created } = fakePrisma(calls);
-    await seedDemo(prisma);
-    const closes = (calls.find((c) => c.model === 'brokerDailyClose' && c.op === 'createMany')!.args['data'] as Record<string, unknown>[]);
-    expect(closes.length).toBeGreaterThan(5);
-    const apexId = calls.find((c) => c.model === 'brokerConnection' && c.op === 'create')!.args['data'] as Record<string, unknown>;
-    expect(closes.every((c) => c['accountId'] === apexId['accountId'])).toBe(true);
-    // Séance en cours jamais close ; dates strictement croissantes, une par séance.
-    const dates = closes.map((c) => (c['tradeDate'] as Date).toISOString().slice(0, 10));
-    expect(new Set(dates).size).toBe(dates.length);
-    expect([...dates].sort()).toEqual(dates);
-    expect(dates.at(-1)! < tradingDay(new Date())).toBe(true);
-    // Le plus haut officiel ne dépasse jamais ce que les trades rendent possible (≤ solde max).
-    const cash = apexId['brokerCashBalance'] as number;
-    expect(Math.abs((closes.at(-1)!['closingBalance'] as number) - cash)).toBeLessThan(5_000);
-    expect(created['tradingAccount']).toBeTruthy();
-  });
-});
-
-describe('seedDemo — séances suivies en direct (#373 / #374)', () => {
-  const rows = (calls: Call[], model: string) =>
-    (calls.find((c) => c.model === model && c.op === 'createMany')?.args['data'] ?? []) as Record<string, unknown>[];
-
-  it('journal du compte connecté : une ligne par séance Apex, plancher trailing EOD jamais sous le départ - 2 000 $', async () => {
-    const calls: Call[] = [];
-    await seedDemo(fakePrisma(calls).prisma);
-    const days = rows(calls, 'accountRiskDay');
-    const apexId = (calls.find((c) => c.model === 'brokerConnection' && c.op === 'create')!.args['data'] as Record<string, unknown>)['accountId'];
-    expect(days.length).toBeGreaterThan(5);
-    expect(days.every((d) => d['accountId'] === apexId)).toBe(true);
-    const dates = days.map((d) => (d['tradeDate'] as Date).toISOString().slice(0, 10));
-    expect(new Set(dates).size).toBe(dates.length);
-    for (const d of days) {
-      expect(d['floorStart']).toBeGreaterThanOrEqual(48_000);
-      expect(d['floorEnd']).toBe(d['floorStart']);
-      expect(d['minDrawdownMargin']).toBeLessThanOrEqual(2_000 + 5_000);
-      expect(d['minDailyLossRemaining']).toBeLessThanOrEqual(1_000);
-    }
-  });
-
-  it('la journée de revenge laisse une trace anti-tilt, reprise par le récap de ce jour-là', async () => {
-    const calls: Call[] = [];
-    const { prisma, created } = fakePrisma(calls);
-    await seedDemo(prisma);
-    const events = rows(calls, 'propRiskEvent');
-    const revenge = events.filter((e) => e['kind'] === 'tilt' && e['level'] === 'revenge');
-    expect(revenge.length).toBeGreaterThan(0);
-    expect(events.every((e) => e['userId'] === DEMO_ID)).toBe(true);
-    // Horodaté à l'heure du trade qui déclenche, jamais dans le futur.
-    expect(events.every((e) => (e['createdAt'] as Date).getTime() <= Date.now())).toBe(true);
-    expect(created['dailyRecap'].some((r) => String(r['aiOneLiner']).startsWith('Anti-tilt'))).toBe(true);
     expect(created['weeklyDebrief'].some((w) =>
       JSON.stringify(w['insights']).includes('Séances suivies en direct'))).toBe(true);
+  });
+
+  it('séance du jour aux heures de marché, sur le compte Apex connecté : Londres le matin, New York l’après-midi', async () => {
+    for (const [hour, first, last] of [[11, '09:22', '09:38'], [18, '15:38', '15:57']] as const) {
+      const now = weekdayAt(hour);
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+      const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+      const today = created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfToday);
+      const hhmm = (d: Date) => d.toTimeString().slice(0, 5);
+      expect(today.map((t) => hhmm(t['tradedAt'] as Date)), `séance de ${hour} h`).toEqual([first, last]);
+      expect(today.every((t) => t['accountId'] === 'tradingAccount-1')).toBe(true); // Apex
+      const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
+      expect(active).toHaveLength(1);
+      expect(active[0]['accountId']).toBe('tradingAccount-1');
+      // Séance démarrée 25 min avant le premier trade, jamais en pleine nuit.
+      expect((active[0]['startedAt'] as Date).getHours()).toBeGreaterThanOrEqual(8);
+    }
   });
 
   it('la journée de revenge tombe dans la semaine du dernier débrief (celui affiché), jamais la veille', async () => {

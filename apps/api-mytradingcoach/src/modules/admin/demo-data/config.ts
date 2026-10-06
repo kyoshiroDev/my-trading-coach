@@ -28,6 +28,8 @@ export const DEMO_ACCOUNTS = [
     maxDrawdown: 2_000,
     drawdownType: DrawdownType.TRAILING,
     propFirmPlanId: 'apex-eod-50k',
+    /** Compte Tradovate affiché sur la connexion vitrine. */
+    tradovateAccount: { id: '0', name: 'APEX-DEMO-01' },
   },
   {
     key: 'tradeify' as const,
@@ -40,6 +42,7 @@ export const DEMO_ACCOUNTS = [
     maxDrawdown: 2_000,
     drawdownType: DrawdownType.TRAILING,
     propFirmPlanId: 'tradeify-select-flex-50k',
+    tradovateAccount: { id: '1', name: 'TDFY-DEMO-01' },
   },
 ];
 export type AccountKey = (typeof DEMO_ACCOUNTS)[number]['key'];
