@@ -65,6 +65,9 @@ src/
   bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
   Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur. Capture `showcase/app-prop-firm-rules.webp`
   = dépli « Mes comptes » du compte démo Apex 50K (prod).
+- **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
+  `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
+  Nouveau CTA d'inscription → ajouter les deux attributs.
 - **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
   bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
   `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
