@@ -13,7 +13,9 @@
 //  - Comptes            -> AccountsService : FREE 1 compte ACTIVE, Premium illimite
 //
 // Concurrents : uniquement leurs pages officielles, verifiees le 2026-10-04.
-//  - FocusPips  https://focuspips.com/ (grille Basic / Premium sur la page d'accueil)
+//  - FocusPips  https://focuspips.com/pricing (grille « Compare en detail ») et
+//               https://focuspips.com/plateformes — reverifies le 2026-10-06
+//               (docs/veille-focuspips.md)
 //  - TradesViz  https://www.tradesviz.com/pricing/ (tableau Basic / Pro / Platinum),
 //               /trading-psychology/ (emotions), /blog/auto-import-trades/ (Tradovate)
 //  - Edgely     https://edgely.trade/ (FAQ) et https://edgely.trade/tarifs
@@ -52,11 +54,11 @@ const rows: Row[] = [
   { label: 'Tracking émotionnel', free: true, premium: true,
     rivals: [false, yes(), false] },
   { label: 'Analytics avancés', free: false, premium: true,
-    rivals: [yes(), yes('Pro'), yes('Pro')] },
+    rivals: [yes('Premium'), yes('Pro'), yes('Pro')] },
   { label: 'Coach IA conversationnel', free: false, premium: true,
-    rivals: [yes('Premium'), yes('Pro'), false] },
+    rivals: [txt('5 questions · illimité Premium'), yes('Pro'), false] },
   { label: 'Weekly Debrief IA automatique', hl: true, free: false, premium: true,
-    rivals: [false, false, false] },
+    rivals: [yes('Premium'), false, false] },
   { label: 'Préparation de séance', free: true, premium: true,
     rivals: [yes(), yes('Pro'), yes()] },
   { label: 'Session live + trade rapide', free: true, premium: true,
@@ -68,9 +70,9 @@ const rows: Row[] = [
   { label: 'Règles de drawdown par prop firm (16 firmes)', free: '1 compte', premium: 'illimité',
     rivals: [yes('Premium'), yes('Pro'), yes()] },
   { label: 'Synchro Tradovate', free: true, premium: true,
-    rivals: [false, yes('Gratuit'), yes('Max · bêta')] },
+    rivals: [yes('Gratuit'), yes('Gratuit'), yes('Max · bêta')] },
   { label: 'Import CSV tout broker', free: true, premium: true,
-    rivals: [false, yes('Gratuit'), txt('Tradovate, TopStepX')] },
+    rivals: [yes('Gratuit'), yes('Gratuit'), txt('Tradovate, TopStepX')] },
   { label: 'Hébergé en France 🇫🇷', free: true, premium: true,
     rivals: [false, false, false] },
   { label: 'Prix mensuel', price: true, free: '0 €', premium: `${PREMIUM_PRICE_EUR.monthly} €`,
