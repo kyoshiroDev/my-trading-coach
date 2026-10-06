@@ -16,7 +16,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Quelle est la différence avec un journal de trading classique ?',
     answer:
-      "Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un compagnon : il est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). C'est le premier outil de trading qui couvre les 3 moments : grâce à l'IA qui connaît ton profil, tes actifs et tes patterns.",
+      "Un journal de trading classique, tu l'ouvres après avoir perdu pour analyser ce qui s'est passé. MTC est un compagnon : il est là avant (il te prépare), pendant (il surveille en temps réel) et après (il débrieffe). Les 3 moments sont reliés par l'IA qui connaît ton profil, tes actifs et tes patterns.",
   },
   {
     question: 'Quels marchés sont supportés ?',
