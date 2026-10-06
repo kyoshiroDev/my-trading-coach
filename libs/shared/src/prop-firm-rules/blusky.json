@@ -1561,12 +1561,12 @@
           "profit_target": null,
           "daily_loss_limit": {
             "amount": 2000,
-            "basis": null,
+            "basis": "equity",
             "resets_at": null,
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Montant 2000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Calcul (réalisé ou latent) et heure de reset non publiés."
+            "notes": "Montant 2000 $ confirmé par le support : l'atteindre met le compte en pause jusqu'au lendemain, tant que le drawdown max n'est pas touché (réponse du 2026-10-05, formulation ambiguë). Ne doit être dépassée à aucun moment, positions ouvertes comprises (support BluSky, Neil, chat, 2026-10-06). Heure de reset non publiée."
           },
           "max_drawdown": {
             "amount": 2500,
@@ -1574,9 +1574,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 1000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : le compte de 3 500 $ ferme sous 1 000 $."
+            "basis_notes": "Static : le compte de 3 500 $ ferme sous 1 000 $. Solde minimum statique de 1 000 $ : passer en dessous, même avec une position ouverte, fait échouer le compte (support BluSky, Neil, chat, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.21,
@@ -1625,8 +1625,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": true,
-      "notes": "Compte financé de 3 500 $ sans évaluation. À revoir : contrôle en séance non confirmé pour ce compte (la réponse du support porte sur les Sim Funded Launch, Propel et Orbit)."
+      "needs_review": false,
+      "notes": "Compte financé de 3 500 $ sans évaluation."
     }
   ]
 }
