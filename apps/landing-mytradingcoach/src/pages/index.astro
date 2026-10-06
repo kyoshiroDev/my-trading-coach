@@ -3,6 +3,7 @@ import { API_URL, FEATURES } from '../config';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
+import PropFirmLive from '../components/PropFirmLive.astro';
 import DayTimeline from '../components/DayTimeline.astro';
 import Features from '../components/Features.astro';
 import CoachIA from '../components/CoachIA.astro';
@@ -64,6 +65,8 @@ try {
 >
   <Nav />
   <Hero traders={traders} />
+  <!-- Prop firms en direct juste après le Hero : la promesse du titre, prouvée (audit 2026-10-06). -->
+  <PropFirmLive />
   <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
   {/*
     « L'app en vrai » retiree le 2026-09-29 : le hero porte desormais une vraie capture avec

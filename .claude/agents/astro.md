@@ -56,6 +56,15 @@ src/
   (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
   (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
 - Aucun composant orphelin : un composant non rendu est branché ou supprimé.
+- **Hero + « Ta prop firm, en direct »** (`PropFirmLive.astro`, audit du 2026-10-06) : la home vise
+  d'abord le prop trader futures (Tradovate / NinjaTrader). Le sélecteur firm → plan → phase lit le
+  catalogue de l'app (`@mtc/shared` `PROP_FIRM_CATALOG_FILES`) réduit AU BUILD par
+  `src/data/prop-firm-catalog.ts` (JSON compact embarqué, ~50 ko) ; les libellés viennent de
+  `src/data/prop-firm-rules-view.ts` (pur, partagé rendu serveur / script). Ajouter une firm au
+  catalogue suffit : la landing suit. Éléments recréés par le script → styles en `:global()`
+  bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
+  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur. Capture `showcase/app-prop-firm-rules.webp`
+  = dépli « Mes comptes » du compte démo Apex 50K (prod).
 - **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
   bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
   `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
