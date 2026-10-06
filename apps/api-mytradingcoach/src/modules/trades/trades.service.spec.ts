@@ -186,6 +186,13 @@ describe('TradesService', () => {
         await service.create('user-123', { ...createTradeDto, accountId: 'acc-autre' });
         expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBeNull();
       });
+
+      it('session sans compte (ancienne donnée) → rattaché quel que soit le compte', async () => {
+        mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's1', accountId: null });
+        mockAccounts.accountWhere.mockResolvedValue({ accountId: 'acc-autre' });
+        await service.create('user-123', { ...createTradeDto, accountId: 'acc-autre' });
+        expect(mockPrisma.trade.create.mock.calls[0][0].data.sessionId).toBe('s1');
+      });
     });
 
     it('calcule le PnL automatiquement si entry et exit fournis', async () => {
