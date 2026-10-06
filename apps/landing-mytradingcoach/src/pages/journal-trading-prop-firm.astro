@@ -14,7 +14,7 @@ const faq = [
   },
   {
     q: "Le suivi du drawdown et de l'objectif est-il fiable ?",
-    a: "C'est une estimation calculée depuis les trades que tu enregistres dans MyTradingCoach. Ce n'est pas le calcul officiel de ta firme, qui tient compte des positions ouvertes, du fuseau et du trailing intraday. Garde toujours un œil sur la plateforme de ta prop firm pour les chiffres officiels.",
+    a: "Sur un compte Tradovate connecté, le calcul part du solde et de l'equity lus chez le broker (positions ouvertes comprises) et des clôtures officielles de chaque séance, avec les règles du plan de ta firme. Sur les autres comptes, c'est une estimation calculée depuis les trades que tu enregistres. Dans les deux cas, ce n'est pas le calcul officiel de ta firme : garde toujours un œil sur sa plateforme pour les chiffres officiels.",
   },
   {
     q: "L'analyse IA est-elle séparée par compte ?",
@@ -83,14 +83,15 @@ const faqSchema = {
       <h2>Drawdown et objectif suivis compte par compte</h2>
       <p>
         Pour chaque compte prop firm, tu vois ta marge avant le drawdown et ta
-        progression vers l'objectif. De quoi savoir où tu en es sans ouvrir trois
-        onglets.
+        progression vers l'objectif ou le prochain payout, y compris en direct pendant
+        ta séance. De quoi savoir où tu en es sans ouvrir trois onglets.
       </p>
       <p class="pf-note">
-        Important : ce suivi est une estimation calculée depuis les trades que tu
-        enregistres. Ce n'est pas le calcul officiel de ta firme (positions ouvertes,
-        fuseau, trailing intraday). Réfère-toi toujours à ta plateforme pour les chiffres
-        qui valident ou invalident ton compte.
+        Important : sur un compte Tradovate connecté, le suivi part du solde et de
+        l'equity lus chez le broker ; sur les autres comptes, c'est une estimation
+        calculée depuis les trades que tu enregistres. Ce n'est jamais le calcul officiel
+        de ta firme. Réfère-toi toujours à ta plateforme pour les chiffres qui valident ou
+        invalident ton compte.
       </p>
     </section>
 
