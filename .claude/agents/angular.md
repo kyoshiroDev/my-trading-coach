@@ -146,6 +146,13 @@ la maquette design (« The Terminal »).
   ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
   trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
   non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
+- **Trade en cours (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** :
+  `mtc-live-position` sous les mini-stats, si `liveStats().broker` existe (compte synchronisé).
+  Positions ouvertes chez le broker dès l'entrée, Réalisé / Latent (daté, « il y a 40 s ») /
+  Total = réalisé + latent (`live-position.util.ts`). Latent inconnu → « Latent indisponible pour
+  ce compte », pas de total. « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis
+  `refreshLive`. Rafraîchi par `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1
+  relecture). Jamais de polling rapide : le latent ne bouge qu'aux événements du compte.
 - **Alertes prop firm (#370, PREMIUM)** : `prop:alert` (canal `/tradovate-live`) →
   `PropAlertsService` (core/services) : toast (`warning` temporaire ; `critical` / `breached` en
   `error` sans durée) + `Notification` système si autorisée (`tag` compte:type, une alerte

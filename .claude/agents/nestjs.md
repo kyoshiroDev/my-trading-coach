@@ -779,6 +779,17 @@ export class CreateTradeDto {
   → l'IA part sans le bloc.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
+  **Choix produit du 2026-10-06 (Greg)** : on garde « jamais en boucle » (la doc Tradovate dit
+  « many times in succession is an anti-pattern »), le latent est **daté** à l'écran.
+- **Positions ouvertes décrites** (retour Val, `docs/audit-live-tradovate.md`) : un `Trade` ne naît
+  qu'à la sortie (paire de fills). Chaque synchro (donc chaque événement `position` du WebSocket)
+  écrit le détail des positions non nulles du compte (actif normalisé, sens, quantité, `netPrice`,
+  `timestamp`) dans Redis `tradovate:positions:<connexion>` (TTL 12 h, `tradovate-open-positions.ts`,
+  `TradovateBalanceService.recordOpenPositionDetails`). `GET /session/today/stats` renvoie `broker`
+  (`LiveBrokerState`, `@mtc/shared`) pour le compte de la session active : positions, latent broker
+  et leurs dates ; `null` si compte non synchronisé. Latent inconnu avec position → `openPnl: null`
+  (jamais un chiffre inventé) ; à plat → 0. Le total de session reste le RÉALISÉ : le latent est à
+  part.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 

@@ -28,6 +28,10 @@ export interface TradovatePosition {
   accountId: number;
   contractId: number;
   netPos: number;
+  /** Prix moyen de la position ouverte, calculé par Tradovate. */
+  netPrice?: number;
+  /** Dernière modification de la position (ISO). */
+  timestamp?: string;
   /** Séance de la position (Tradovate ouvre une position par séance). Sert au diagnostic. */
   tradeDate?: { year: number; month: number; day: number };
 }

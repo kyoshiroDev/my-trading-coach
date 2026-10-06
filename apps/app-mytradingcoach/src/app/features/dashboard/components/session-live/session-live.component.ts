@@ -21,6 +21,9 @@ import { LivePropFirmComponent } from './components/live-prop-firm/live-prop-fir
 import { isLivePropAccount } from './components/live-prop-firm/live-prop-firm.util';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
+import { UserStore } from '@app/core/stores/user.store';
+import { LivePositionComponent } from './components/live-position/live-position.component';
+import { LIVE_POSITION_ROLES } from './components/live-position/live-position.util';
 
 /**
  * Onglet « Session live » : cadre de la vue (CTA sans session, carte marché, mini-stats,
@@ -34,7 +37,7 @@ import { TradovateStore } from '@app/core/stores/tradovate.store';
   styleUrl: './session-live.component.css',
   imports: [
     MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, LiveEcoCalendarComponent,
-    QuickTradeComponent, LivePropFirmComponent,
+    QuickTradeComponent, LivePropFirmComponent, LivePositionComponent,
   ],
   templateUrl: './session-live.component.html',
 })
@@ -79,6 +82,13 @@ export class SessionLiveComponent {
   private readonly money = inject(MoneyService);
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tradovate = inject(TradovateStore);
+  private readonly userStore = inject(UserStore);
+
+  /** « Trade en cours » (bêta) : compte de la session synchronisé par API, rôle de test. */
+  protected readonly showLivePosition = computed(() => {
+    const role = this.userStore.user()?.role;
+    return !!role && LIVE_POSITION_ROLES.includes(role) && !!this.liveStats()?.broker;
+  });
 
   /** Compte de la session si son suivi prop firm peut remplacer Trade rapide, sinon null. */
   protected readonly propFirmAccountId = computed(() => {
