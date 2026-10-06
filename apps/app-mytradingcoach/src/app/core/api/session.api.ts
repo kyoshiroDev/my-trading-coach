@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { MoodState, SessionHistoryItem, SessionStatus, TradeSide } from '@mtc/shared';
+import type { LiveBrokerState, MoodState, SessionHistoryItem, SessionStatus, TradeSide } from '@mtc/shared';
 
 export type { MoodState };
 
@@ -33,6 +33,8 @@ export interface LiveStats {
   tradesCount: number;
   closedCount: number;
   trades: SessionTrade[];
+  /** Positions ouvertes et latent du broker (compte synchronisé par API), sinon null. */
+  broker?: LiveBrokerState | null;
 }
 
 export interface SessionTrade {

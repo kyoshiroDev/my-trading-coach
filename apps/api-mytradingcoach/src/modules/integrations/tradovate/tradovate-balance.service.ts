@@ -3,6 +3,12 @@ import type { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { RedisService } from '../../infra/redis.service';
+import {
+  OPEN_POSITIONS_TTL_S,
+  openPositionsKey,
+  type BrokerOpenPosition,
+} from './tradovate-open-positions';
 import type { TradovateCashBalanceSnapshot, TradovateEnv } from './tradovate.types';
 
 /**
@@ -60,6 +66,7 @@ export class TradovateBalanceService {
     private readonly prisma: PrismaService,
     private readonly api: TradovateApiClient,
     private readonly connections: TradovateConnectionService,
+    private readonly redis: RedisService,
   ) {}
 
   /** Lit l'instantané et le persiste. `openPositions` : compté par l'appelant s'il le connaît. */
@@ -121,6 +128,17 @@ export class TradovateBalanceService {
     await this.prisma.brokerConnection
       .update({ where: { id: connectionId }, data: { brokerOpenPositions: openPositions } })
       .catch(() => undefined);
+  }
+
+  /**
+   * Détail des positions ouvertes lu par la synchro → Redis (état live, pas en base). Best-effort :
+   * un échec laisse l'ancien état, daté, sans casser la synchro.
+   */
+  async recordOpenPositionDetails(connectionId: string, positions: BrokerOpenPosition[]): Promise<void> {
+    const value = JSON.stringify({ at: new Date().toISOString(), positions });
+    await this.redis.client
+      .set(openPositionsKey(connectionId), value, 'EX', OPEN_POSITIONS_TTL_S)
+      .catch((err: Error) => this.logger.warn(`Positions ouvertes non enregistrées (connexion ${connectionId}) : ${err.message}`));
   }
 
   /**
