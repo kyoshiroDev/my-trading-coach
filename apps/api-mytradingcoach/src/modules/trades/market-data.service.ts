@@ -10,6 +10,7 @@ import { AI_MODELS } from '../infra/ai-pricing.const';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { singleFlight } from '../../common/utils/single-flight';
 import { isBreakingNews } from './market-news.breaking';
+import { MACRO_NEWS_SYMBOL, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate } from './market-news.sources';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -36,6 +37,8 @@ export interface NewsItem {
 
 /** Titres par appel de traduction : la réponse JSON tient largement dans max_tokens. */
 const NEWS_TITLE_BATCH = 10;
+/** Titres traduits par passage du cron (20 min) : plusieurs flux, donc plus de news qu'avant. */
+const NEWS_TRANSLATE_PER_RUN = 60;
 
 @Injectable()
 export class MarketDataService {
@@ -99,11 +102,15 @@ export class MarketDataService {
       if (cached) return JSON.parse(cached) as NewsItem[];
     } catch { /* ignore */ }
 
+    // Actifs du journal (MNQ, EUR/USD…) → symboles de news FMP (QQQ, EURUSD…), macro incluse.
+    // Avant : comparaison exacte, aucun futures ne matchait et le News live se vidait dès le
+    // premier trade du jour. Rien de trouvé → toutes les news plutôt qu'un bloc vide.
     const list = (symbols || '').split(',').map(s => s.trim()).filter(Boolean);
-    const where = list.length ? { symbol: { in: list } } : {};
-    const rows = await this.prisma.marketNews.findMany({
+    const query = (where: object) => this.prisma.marketNews.findMany({
       where, orderBy: { publishedDate: 'desc' }, take: 20,
     });
+    let rows = list.length ? await query({ symbol: { in: newsSymbolsFor(list) } }) : [];
+    if (!rows.length) rows = await query({});
     const items: NewsItem[] = rows.map(r => ({
       id: r.id,
       title: r.titleFr ?? r.title,
@@ -125,16 +132,19 @@ export class MarketDataService {
   async refreshNewsBatch(): Promise<number> {
     const apiKey = this.config.get<string>('FMP_API_KEY');
     if (!apiKey) return 0;
-    const symbols = 'QQQ,SPY,BTCUSD,EURUSD,AAPL,MSFT,NVDA,TSLA';
-    const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${symbols}&limit=30&apikey=${apiKey}`;
-    let raw: NewsItem[] = [];
-    try {
-      const res = await fetchWithTimeout(url);
-      if (!res.ok) return 0;
-      raw = await res.json() as NewsItem[];
-    } catch (err) {
-      this.logger.warn(`News fetch failed: ${(err as Error).message}`);
-      return 0;
+    // Plusieurs flux, chacun sa limite (cf. market-news.sources.ts) : un flux en échec
+    // n'empêche pas les autres.
+    const raw: NewsItem[] = [];
+    for (const feed of NEWS_FEEDS) {
+      const sep = feed.path.includes('?') ? '&' : '?';
+      try {
+        const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/news/${feed.path}${sep}apikey=${apiKey}`);
+        if (!res.ok) { this.logger.warn(`News fetch ${feed.path.split('?')[0]} : HTTP ${res.status}`); continue; }
+        const data = await res.json() as NewsItem[];
+        if (Array.isArray(data)) raw.push(...data.map(it => ({ ...it, symbol: it.symbol || feed.symbol || MACRO_NEWS_SYMBOL })));
+      } catch (err) {
+        this.logger.warn(`News fetch failed: ${(err as Error).message}`);
+      }
     }
 
     // 1) Upsert sans traduction (dédup par url)
@@ -146,7 +156,7 @@ export class MarketDataService {
         create: {
           url: it.url, symbol: it.symbol, title: it.title, text: it.text ?? null,
           sentiment: it.sentiment ?? null, image: it.image ?? null, site: it.site ?? null,
-          publishedDate: new Date(it.publishedDate),
+          publishedDate: parseFmpNewsDate(it.publishedDate), // heure de New York, cf. sources
         },
       });
     }
@@ -157,7 +167,7 @@ export class MarketDataService {
     const pending = await this.prisma.marketNews.findMany({
       where: { translated: false },
       orderBy: { publishedDate: 'desc' },
-      take: 30,
+      take: NEWS_TRANSLATE_PER_RUN,
     });
     if (!pending.length) return 0;
 
