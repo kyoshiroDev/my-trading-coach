@@ -9,6 +9,7 @@ import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { singleFlight } from '../../common/utils/single-flight';
+import { isBreakingNews } from './market-news.breaking';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -29,7 +30,12 @@ export interface NewsItem {
   id: string; title: string; symbol: string; publishedDate: string;
   sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string;
   textTranslated?: boolean;
+  /** Candidate au bandeau BREAKING (macro, hors crypto, récente) : cf. market-news.breaking.ts. */
+  breaking?: boolean;
 }
+
+/** Titres par appel de traduction : la réponse JSON tient largement dans max_tokens. */
+const NEWS_TITLE_BATCH = 10;
 
 @Injectable()
 export class MarketDataService {
@@ -109,6 +115,8 @@ export class MarketDataService {
       image: r.image ?? undefined,
       site: r.site ?? undefined,
       textTranslated: r.textTranslated,
+      // Sur le titre ANGLAIS d'origine : une fois traduit, « ECB » devient « BCE ».
+      breaking: isBreakingNews({ title: r.title, symbol: r.symbol, publishedDate: r.publishedDate }),
     }));
     try { await this.redisService.client.setex(cacheKey, CACHE_TTL.NEWS, JSON.stringify(items)); } catch { /* ignore */ }
     return items;
@@ -153,28 +161,45 @@ export class MarketDataService {
     });
     if (!pending.length) return 0;
 
-    const titles = pending.map(p => p.title);
+    // Par lots : 30 titres en un seul appel à 800 tokens dépassaient le plafond, le JSON
+    // arrivait tronqué (« Unterminated string ») et AUCUN titre n'était traduit, lot
+    // retenté toutes les 20 min. Un lot illisible n'empêche pas les autres d'aboutir.
+    let translated = 0;
+    for (let i = 0; i < pending.length; i += NEWS_TITLE_BATCH) {
+      const batch = pending.slice(i, i + NEWS_TITLE_BATCH);
+      const fr = await this.translateTitles(batch.map(p => p.title));
+      if (!fr) continue;
+      await Promise.all(batch.map((p, j) =>
+        this.prisma.marketNews.update({
+          where: { id: p.id },
+          data: { titleFr: fr[j] || p.title, translated: true },
+        }),
+      ));
+      translated += batch.length;
+    }
+    return translated;
+  }
+
+  /** Titres traduits dans le même ordre, ou `null` si la réponse est inexploitable. */
+  private async translateTitles(titles: string[]): Promise<string[] | null> {
     try {
       const msg = await this.anthropicClient.create({
         model: AI_MODELS.fast,
-        max_tokens: 800,
+        max_tokens: 1200,
         messages: [{ role: 'user', content:
           `Traduis en français ces titres de news financières. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
       }, { feature: 'news_translation', userId: null });
       const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
       const s = txt.indexOf('['), e = txt.lastIndexOf(']');
-      if (s === -1 || e === -1) return 0;
-      const tr = JSON.parse(txt.slice(s, e + 1)) as { title: string }[];
-      await Promise.all(pending.map((p, i) =>
-        this.prisma.marketNews.update({
-          where: { id: p.id },
-          data: { titleFr: tr[i]?.title ?? p.title, translated: true },
-        }),
-      ));
-      return pending.length;
+      if (s === -1 || e === -1) return null;
+      const tr = JSON.parse(txt.slice(s, e + 1)) as { title?: string }[];
+      // Réponse décalée (titre manquant ou en trop) : on ne risque pas d'attribuer
+      // la traduction d'un titre à un autre.
+      if (!Array.isArray(tr) || tr.length !== titles.length) return null;
+      return tr.map(t => (typeof t?.title === 'string' ? t.title : ''));
     } catch (err) {
       this.logger.warn(`News title translation failed: ${(err as Error).message}`);
-      return 0;
+      return null;
     }
   }
 

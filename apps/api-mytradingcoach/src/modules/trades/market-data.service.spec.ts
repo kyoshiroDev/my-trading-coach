@@ -37,7 +37,7 @@ describe('MarketDataService — refreshNewsBatch (titres uniquement)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('ne traduit QUE les titres (max_tokens 800, corps jamais envoyé) et persiste titleFr', async () => {
+  it('ne traduit QUE les titres (max_tokens 1200, corps jamais envoyé) et persiste titleFr', async () => {
     const { svc, prisma, anthropicClient } = makeService();
     prisma.marketNews.findMany.mockResolvedValueOnce([
       { id: 'n1', title: 'Apple soars on earnings', text: 'A very long article body that must NOT be translated' },
@@ -52,7 +52,7 @@ describe('MarketDataService — refreshNewsBatch (titres uniquement)', () => {
     expect(count).toBe(1);
     expect(anthropicClient.create).toHaveBeenCalledOnce();
     const [params, meta] = anthropicClient.create.mock.calls[0];
-    expect(params.max_tokens).toBe(800);
+    expect(params.max_tokens).toBe(1200);
     expect(meta).toEqual({ feature: 'news_translation', userId: null });
     // Le corps de l'article ne doit jamais partir au modèle.
     expect(JSON.stringify(params)).toContain('Apple soars on earnings');
@@ -65,6 +65,39 @@ describe('MarketDataService — refreshNewsBatch (titres uniquement)', () => {
     const persisted = prisma.marketNews.update.mock.calls[0][0].data;
     expect(persisted).not.toHaveProperty('textFr');
     expect(persisted).not.toHaveProperty('textTranslated');
+  });
+
+  it('30 titres → 3 lots de 10 ; un lot tronqué ou décalé n’empêche pas les autres', async () => {
+    const { svc, prisma, anthropicClient } = makeService();
+    const rows = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, title: `Title ${i}` }));
+    prisma.marketNews.findMany.mockResolvedValueOnce(rows);
+    const ok = (from: number) => ({
+      content: [{ type: 'text', text: JSON.stringify(rows.slice(from, from + 10).map((r) => ({ title: `Titre ${r.id}` }))) }],
+    });
+    anthropicClient.create
+      .mockResolvedValueOnce(ok(0))
+      // JSON tronqué, comme en prod le 06/10 (« Unterminated string »)
+      .mockResolvedValueOnce({ content: [{ type: 'text', text: '[{"title":"Titre n10"},{"title":"Titre n1' }] })
+      .mockResolvedValueOnce(ok(20));
+
+    const count = await svc.refreshNewsBatch();
+
+    expect(anthropicClient.create).toHaveBeenCalledTimes(3);
+    expect(JSON.stringify(anthropicClient.create.mock.calls[0][0])).not.toContain('Title 10');
+    expect(count).toBe(20);
+    const ids = prisma.marketNews.update.mock.calls.map((c: [{ where: { id: string } }]) => c[0].where.id);
+    expect(ids).toContain('n0');
+    expect(ids).toContain('n29');
+    expect(ids).not.toContain('n15'); // lot illisible : reste à traduire au prochain passage
+  });
+
+  it('réponse avec un titre en moins : lot ignoré plutôt que traductions décalées', async () => {
+    const { svc, prisma, anthropicClient } = makeService();
+    prisma.marketNews.findMany.mockResolvedValueOnce([{ id: 'a', title: 'A' }, { id: 'b', title: 'B' }]);
+    anthropicClient.create.mockResolvedValueOnce({ content: [{ type: 'text', text: '[{"title":"Titre A"}]' }] });
+
+    expect(await svc.refreshNewsBatch()).toBe(0);
+    expect(prisma.marketNews.update).not.toHaveBeenCalled();
   });
 });
 
