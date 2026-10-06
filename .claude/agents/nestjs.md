@@ -1530,8 +1530,17 @@ Règles :
   `readUserPins` vidait la sélection démo).
 
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
+- **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
+  les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
+  taux / pétrole + NVDA·AAPL·MSFT, et `BTCUSD,ETHUSD` limité à 5. Avant : un seul flux, 17 news
+  Bitcoin sur 30.
+- **Dates** : FMP date ses NEWS en heure de **New York** (le calendrier éco, lui, est en UTC) →
+  `parseFmpNewsDate`. Lues comme UTC, elles étaient décalées de 4 h (5 h l'hiver).
+- **Filtre par actif** (`getNews`) : actifs du journal → symboles FMP (`newsSymbolsFor` : MNQ→QQQ,
+  MES→SPY, GC→XAUUSD, 6E→EURUSD, BTC/USDT→BTCUSD…), `MACRO` toujours incluse ; aucun résultat →
+  toutes les news. Avant : comparaison exacte, News live vide dès le premier trade du jour.
 
-- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit les **titres** par **lots de 10** (`NEWS_TITLE_BATCH`,
+- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit jusqu'à 60 **titres** par passage, par **lots de 10** (`NEWS_TITLE_BATCH`,
   `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)
   et **aucun** titre traduit pendant 48 h en prod. Un lot illisible, ou dont le nombre de titres ne
   correspond pas, est ignoré et retenté au passage suivant (jamais de traduction décalée).
