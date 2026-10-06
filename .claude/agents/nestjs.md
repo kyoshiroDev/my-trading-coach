@@ -1528,3 +1528,14 @@ Règles :
   fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
   `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
   `readUserPins` vidait la sélection démo).
+
+## News live : traduction par lots et bandeau BREAKING (2026-10-06)
+
+- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit les **titres** par **lots de 10** (`NEWS_TITLE_BATCH`,
+  `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)
+  et **aucun** titre traduit pendant 48 h en prod. Un lot illisible, ou dont le nombre de titres ne
+  correspond pas, est ignoré et retenté au passage suivant (jamais de traduction décalée).
+- `getNews` renvoie `breaking` (`market-news.breaking.ts`, pur) calculé sur le titre **anglais** d'origine
+  (`title`, pas `titleFr` : « ECB » devient « BCE ») : thèmes macro en **mots entiers** (Fed, FOMC,
+  Powell, BCE, taux, CPI, NFP, PIB, rendements, droits de douane…), **hors crypto** (symbole ou titre),
+  publiée depuis **≤ 6 h**. Le front prend la première news `breaking` ; aucune → pas de bandeau.
