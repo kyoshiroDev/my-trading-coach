@@ -67,6 +67,23 @@ export function canPublishResults(role: string | null | undefined, sessionStatus
   return !!role && RESULTS_SHARE_ROLES.includes(role) && sessionStatus === 'CLOSED';
 }
 
+export interface DebriefStats { totalPnl: number; winRate: number; tradesCount: number }
+
+/**
+ * Chiffres du débrief et de la carte : ceux de la session clôturée (calculés par l'API sur SES
+ * trades, net des frais) ; à défaut les stats du jour. Les stats du jour couvrent toute la
+ * journée, donc plusieurs sessions : elles gonflaient le P&L de la carte publiée (#457).
+ */
+export function debriefStats(
+  session: { status: string; totalPnl?: number | null; winRate?: number | null; totalTrades: number } | null | undefined,
+  todayStats: DebriefStats | null | undefined,
+): DebriefStats | null {
+  if (session?.status === 'CLOSED' && session.totalPnl != null) {
+    return { totalPnl: session.totalPnl, winRate: session.winRate ?? 0, tradesCount: session.totalTrades };
+  }
+  return todayStats ?? null;
+}
+
 /** Rien à partager sans trade ou avec un P&L nul : pas de carte vide. */
 export function hasResultsToShare(stats: { tradesCount: number; totalPnl: number } | null | undefined): boolean {
   return !!stats && stats.tradesCount > 0 && stats.totalPnl !== 0;

@@ -110,6 +110,9 @@ la maquette design (« The Terminal »).
 ```typescript
 // activeTab = signal<'morning' | 'live' | 'debrief'>('morning')
 // effect() auto-switch vers 'live' si activeSession()?.status === 'ACTIVE'
+// Chargement : GET /session/today. Session du jour déjà clôturée (page rechargée, ex. mobile
+// en arrière-plan pendant « Publier ») → réaffichée sur l'onglet Débrief une fois, trades de la
+// session + totaux de la session (debriefStats) — sinon retour Pré-session et session vide (#456)
 // Polling visibleInterval(30s) pour refreshLiveStats() pendant session active (SessionStore, SCA-B4)
 ```
 
@@ -338,7 +341,9 @@ envoyées à l'API sont des horodatages ISO complets.
 - **Un seul scroll vertical sur mobile** : `.main-content`. Pas de bloc `overflow-y:auto` borné
   (`max-height`, `flex:1 + min-height:0`) sous 768px — Mes comptes, calendrier éco, live feed.
   Un débordement horizontal voulu (tableau, onglets, carrousel) porte son propre `overflow-x:auto`
-- `padding-bottom: calc(env(safe-area-inset-bottom) + Xpx)` sur les footers fixes
+- `padding-bottom: calc(env(safe-area-inset-bottom) + Xpx)` sur les footers fixes **et sur le
+  conteneur de page** sous 768px (`.content` du dashboard / journal, `.session-page`) : avec
+  `viewport-fit=cover`, sans ça la fin de la page passe sous la barre système iOS (#440)
 - `height: 100dvh` plutôt que `100vh` — évite le bug Safari barre d'adresse
 - `viewport-fit=cover` dans `index.html`
 

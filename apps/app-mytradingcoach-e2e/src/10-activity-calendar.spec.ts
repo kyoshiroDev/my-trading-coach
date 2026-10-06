@@ -66,7 +66,7 @@ test.describe('Activity Calendar — Dashboard (beta)', () => {
     await page.route('**/api/analytics/summary', (route) =>
       route.fulfill({ json: { data: { winRate: 60, totalPnl: 700, totalTrades: 15, maxDrawdown: 120, streak: 2, topSession: 'LONDON', topSessionWinRate: 75, topHour: '10:00' } } }),
     );
-    await page.route('**/api/session/active', (route) =>
+    await page.route('**/api/session/today', (route) =>
       route.fulfill({ json: { data: null } }),
     );
     await page.route('**/api/eco-calendar/today', (route) =>
