@@ -56,6 +56,11 @@ src/
   (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
   (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
 - Aucun composant orphelin : un composant non rendu est branché ou supprimé.
+- **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
+  bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
+  `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
+  dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
+  arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
 ---
 
