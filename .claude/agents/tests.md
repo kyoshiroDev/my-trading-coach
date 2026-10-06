@@ -54,7 +54,7 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
 | Suite | Fichiers | Config | Services | Où |
 |---|---|---|---|---|
 | Unitaire | `src/**/*.spec.ts` | `vitest.config.ts` | aucun (mocks) | `pnpm nx test api-mytradingcoach` |
-| Intégration | `src/**/*.int-spec.ts` | `vitest.integration.config.mts` | Postgres + Redis | job CI `integration-referral` |
+| Intégration | `src/**/*.int-spec.ts` | `vitest.integration.config.mts` | Postgres + Redis | job CI `integration-api` (« Tests d'intégration API », toutes les specs, pas seulement le parrainage) |
 
 `*.int-spec.ts` **ne matche pas** `*.spec.ts` : les deux suites ne se mélangent jamais.
 
