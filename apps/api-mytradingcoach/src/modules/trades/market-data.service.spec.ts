@@ -242,7 +242,7 @@ describe('MarketDataService — sources et filtre des news', () => {
     await svc.refreshNewsBatch();
 
     expect(fetch).toHaveBeenCalledTimes(4);
-    expect(fetch.mock.calls.some(([u]: [string]) => u.includes('/news/general-latest?limit=20&apikey='))).toBe(true);
+    expect(fetch.mock.calls.some((c: unknown[]) => String(c[0]).includes('/news/general-latest?limit=20&apikey='))).toBe(true);
     expect(prisma.marketNews.upsert).toHaveBeenCalledWith(expect.objectContaining({
       create: expect.objectContaining({ symbol: 'MACRO', publishedDate: new Date('2026-10-06T19:35:49Z') }),
     }));
