@@ -1,7 +1,12 @@
 ---
 import { FEATURES, APP_URL } from '../config';
 // Prix : source unique @mtc/shared (cf. .claude/agents/plans.md).
-import { PREMIUM_ANNUAL_SAVINGS_EUR, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import {
+  FOUNDER_OFFER,
+  FOUNDER_REFUND_DAYS,
+  PREMIUM_ANNUAL_SAVINGS_EUR,
+  PREMIUM_PRICE_EUR,
+} from '@mtc/shared';
 
 // Ce que Premium ajoute au Gratuit : UNE liste, rendue deux fois (bloc « Ce que Premium
 // ajoute » au-dessus des prix, et carte Premium). `key` = ancres réelles du Premium
@@ -74,8 +79,44 @@ const premiumKeys = [
         <a href={`${APP_URL}/register`} class="price-cta ghost" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
 
+      <!-- FONDATEUR (#525) : absente du rendu tant que l'API ne dit pas que l'offre vend. Sans JS,
+           offre fermée, épuisée ou API injoignable → 2 cartes, Premium « Recommandé ». -->
+      <div class="price-card feat with-badge is-founder" data-founder-card hidden>
+        <div class="price-pop">Réservé aux {FOUNDER_OFFER.seats} premiers</div>
+        <div class="price-name">Fondateur</div>
+        <div class="price-amt">
+          <span class="price-amt-num">{FOUNDER_OFFER.priceMonthlyEur}</span>
+          <span class="price-amt-cur">€</span>
+          <span class="price-amt-per">/mois</span>
+        </div>
+        <div class="price-period">ou {FOUNDER_OFFER.priceAnnualEur} €/an</div>
+        <ul class="founder-promises">
+          <li>🔒 Prix bloqué à vie tant que ton abonnement reste actif</li>
+          <li>Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</li>
+        </ul>
+        <div class="founder-seats">
+          <div class="founder-seats-text"><strong data-founder-left></strong> sur {FOUNDER_OFFER.seats}</div>
+          <span class="founder-seats-bar" aria-hidden="true"><span class="founder-seats-fill"></span></span>
+        </div>
+        {FEATURES.multiAccounts && (
+          <div class="price-accts">
+            <span class="acct-n">∞</span>
+            <span class="acct-t">comptes illimités, chacun avec ses règles prop firm</span>
+          </div>
+        )}
+        <div class="price-divider"></div>
+        <div class="price-plus-lead">Tout Premium <em>inclus :</em></div>
+        <ul class="price-feats">
+          {premiumPlus.map((p) => <li>{p.text}</li>)}
+        </ul>
+        <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="price-cta prim" data-founder-cta data-ga-event="cta_founder" data-ga-place="pricing">
+          <span class="cta-main">Devenir fondateur →</span>
+          <span class="cta-sub-text">Paiement immédiat · sans essai</span>
+        </a>
+      </div>
+
       <!-- PREMIUM -->
-      <div class="price-card feat with-badge">
+      <div class="price-card feat with-badge is-premium">
         <div class="price-pop">⭐ Recommandé</div>
         <div class="price-name">Premium</div>
         <div class="price-amt">
@@ -102,6 +143,10 @@ const premiumKeys = [
       </div>
 
     </div>
+    <p class="founder-note" data-founder-note hidden>
+      Le tarif fondateur n'a pas d'essai : le plan Gratuit sert d'essai. L'essai de 30 jours reste
+      sur le Premium à {PREMIUM_PRICE_EUR.monthly} €/mois.
+    </p>
     <div class="pricing-guarantee reveal">
       <div class="guarantee-item">✓ Annulation en un clic</div>
       <div class="guarantee-item">✓ Données exportables</div>
@@ -110,6 +155,39 @@ const premiumKeys = [
     </div>
   </div>
 </section>
+
+<script>
+  import { isSelling, onFounderState, placesLabel, rememberedCta } from '../lib/founder-offer';
+
+  // Carte Fondateur : affichée seulement si l'offre vend, avec le VRAI compteur. Le changement se
+  // fait au chargement, la section est très bas dans la page : aucun décalage visible (CLS).
+  const section = document.getElementById('pricing');
+  const card = section?.querySelector<HTMLElement>('[data-founder-card]');
+  const note = section?.querySelector<HTMLElement>('[data-founder-note]');
+  if (section && card) {
+    onFounderState((s) => {
+      const selling = isSelling(s);
+      card.hidden = !selling;
+      if (note) note.hidden = !selling;
+      section.classList.toggle('has-founder', selling);
+      if (!selling) return;
+      const left = card.querySelector('[data-founder-left]');
+      if (left) left.textContent = `${placesLabel(s.seatsLeft)} restante${s.seatsLeft > 1 ? 's' : ''}`;
+      const fill = card.querySelector<HTMLElement>('.founder-seats-fill');
+      if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - s.seatsLeft) / s.seatsTotal})`;
+    });
+    // Point de clic : bandeau ou FAQ s'ils ont mené ici, sinon la carte elle-même.
+    card.querySelector<HTMLAnchorElement>('[data-founder-cta]')?.addEventListener('click', (e) => {
+      const cta = rememberedCta();
+      const a = e.currentTarget as HTMLAnchorElement;
+      if (cta === 'bandeau' || cta === 'faq') {
+        const url = new URL(a.href);
+        url.searchParams.set('cta', cta);
+        a.href = url.toString();
+      }
+    });
+  }
+</script>
 
 <style>
   .pricing { padding: 80px 5%; }
@@ -308,6 +386,64 @@ const premiumKeys = [
   }
   .guarantee-item { font-size: 12px; font-family: var(--mono); color: var(--txt3); }
 
+  /* ── Offre fondateur : 3 cartes Gratuit · Fondateur · Premium ── */
+  .price-card[hidden], .founder-note[hidden] { display: none; }
+  .has-founder .price-grid { grid-template-columns: repeat(3, 1fr); max-width: 1140px; }
+  /* Premium perd sa mise en avant au profit de la carte Fondateur. */
+  .has-founder .is-premium {
+    border-color: var(--b);
+    background: var(--card);
+    box-shadow: none;
+    padding-top: 36px;
+  }
+  .has-founder .is-premium .price-pop { display: none; }
+  .has-founder .is-premium .price-name { color: var(--txt3); }
+  .founder-promises {
+    list-style: none;
+    margin: 14px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--txt);
+  }
+  .founder-seats { margin-top: 14px; }
+  .founder-seats-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--txt2);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .founder-seats-text strong { color: var(--txt); }
+  .founder-seats-bar {
+    display: block;
+    height: 6px;
+    border-radius: 100px;
+    background: rgba(255,255,255,.08);
+    overflow: hidden;
+  }
+  .founder-seats-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), #6366f1);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .founder-note {
+    max-width: 760px;
+    margin: 16px auto 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--txt3);
+  }
+
+  @media (max-width: 1024px) {
+    .has-founder .price-grid { grid-template-columns: 1fr; max-width: 480px; }
+    /* Empilées : Fondateur en premier. */
+    .has-founder .is-founder { order: -1; }
+  }
   @media (max-width: 760px) {
     .price-grid { grid-template-columns: 1fr; gap: 20px; max-width: 480px; }
     .plus-box { max-width: 480px; padding: 16px; }
