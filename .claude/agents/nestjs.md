@@ -1084,6 +1084,9 @@ sont en direct.
 - `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
   existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
   Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+- Rattrapages **bornés à `LIVE_CATCH_UP_CONCURRENCY` (5) par process** (`createLimiter`,
+  `common/utils/concurrency.util.ts`, SCA-B6-02) : après un redémarrage, tous les clients reviennent
+  en même temps ; les suivants attendent leur tour (le WebSocket, lui, s'ouvre sans attendre).
 - **Un seul WebSocket par user, tous workers et onglets confondus** : bail Redis
   `tradovate:live:<userId>` (SET NX PX 30 s, renouvelé / rendu par script Lua « si c'est le
   mien »). Worker titulaire sans clients → il rend le bail, un autre reprend ≤ 10 s. Redis down →
