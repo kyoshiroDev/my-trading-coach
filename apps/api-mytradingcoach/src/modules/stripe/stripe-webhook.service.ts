@@ -17,6 +17,8 @@ import {
 } from './stripe.helpers';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeReferralService } from './stripe-referral.service';
+import { FounderOfferService, type FounderInterval } from '../founder-offer/founder-offer.service';
+import type { SyncedSubscription } from './stripe-subscription.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
@@ -36,6 +38,7 @@ export class StripeWebhookService {
     private readonly discord: DiscordService,
     private readonly subscriptions: StripeSubscriptionService,
     private readonly referrals: StripeReferralService,
+    private readonly founders: FounderOfferService,
     @InjectQueue(STRIPE_QUEUE)
     private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
@@ -122,6 +125,10 @@ export class StripeWebhookService {
         return this.onPaymentFailed(event.data.object as Stripe.Invoice);
       case 'invoice.payment_succeeded':
         return this.onPaymentSucceeded(event.data.object as Stripe.Invoice);
+      case 'checkout.session.expired':
+        return this.onCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+      case 'charge.refunded':
+        return this.onChargeRefunded(event.data.object as Stripe.Charge);
       default:
         this.logger.debug(`Event ignoré : ${event.type}`);
     }
@@ -148,6 +155,10 @@ export class StripeWebhookService {
 
   private async onSubscriptionChanged(subscription: Stripe.Subscription): Promise<void> {
     const synced = await this.subscriptions.syncSubscription(subscription.id);
+    // Mensuel ↔ annuel fondateur : même place, même numéro, intervalle à jour.
+    if (synced && this.isFounderPrice(synced.priceId) && (synced.interval === 'month' || synced.interval === 'year')) {
+      await this.founders.updateInterval(synced.id, synced.interval);
+    }
     if (synced?.id)
       await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
 
@@ -173,6 +184,9 @@ export class StripeWebhookService {
   }
 
   private async onSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+    // Fin RÉELLE de l'abonnement : tarif fondateur perdu (la place reste prise). Une résiliation
+    // programmée, elle, ne passe pas ici avant la fin de période.
+    await this.founders.markLost(subscription.id);
     // Récupérer l'user avant de supprimer ses données
     const user = await this.prisma.user.findFirst({
       where: { stripeSubscriptionId: subscription.id },
@@ -294,6 +308,9 @@ export class StripeWebhookService {
         `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
       );
     }
+    if (synced && invoice.billing_reason === 'subscription_create' && this.isFounderPrice(synced.priceId)) {
+      await this.onFounderFirstPayment(synced);
+    }
     await this.referrals.processReferral(invoice);
 
     // Reçu de renouvellement. La souscription initiale (subscription_create) est déjà
@@ -315,6 +332,83 @@ export class StripeWebhookService {
           `Reçu de paiement non envoyé (invoice ${invoice.id}) : ${err instanceof Error ? err.message : err}`,
         ),
       );
+  }
+
+  // ── Offre fondateur (#525) ──────────────────────────────────────────────────
+
+  /**
+   * Premier paiement au tarif fondateur : place prise et numéro attribué (idempotent), puis
+   * l'essai au prix normal éventuellement en cours est annulé (bascule, jamais deux abonnements).
+   * Sans place (cas théorique : réservation expirée ET offre complète), l'abonnement est annulé et
+   * l'admin alerté pour rembourser : personne ne garde un tarif fondateur sans place.
+   */
+  private async onFounderFirstPayment(synced: SyncedSubscription): Promise<void> {
+    const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
+    const seat = await this.founders.claimSeat({
+      userId: synced.id,
+      interval,
+      stripeSubscriptionId: synced.subscriptionId,
+      cta: synced.metadata['cta'] ?? null,
+    });
+    if (!seat) {
+      this.logger.error(
+        `[FONDATEUR] Paiement sans place | user: ${synced.id}, sub: ${synced.subscriptionId} : abonnement annulé, remboursement à faire`,
+      );
+      await this.stripe.subscriptions.cancel(synced.subscriptionId).catch(() => undefined);
+      await this.resend
+        .sendAdminAlert(
+          'Offre fondateur : paiement sans place à rembourser',
+          `Abonnement ${synced.subscriptionId} (user ${synced.id}) payé sans place disponible : annulé, remboursement manuel requis.`,
+        )
+        .catch(() => undefined);
+      return;
+    }
+    // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
+    const trials = await this.stripe.subscriptions
+      .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
+      .catch(() => null);
+    for (const t of trials?.data ?? []) {
+      if (t.id !== synced.subscriptionId) {
+        await this.stripe.subscriptions.cancel(t.id).catch((err: Error) =>
+          this.logger.warn(`Essai ${t.id} non annulé après bascule fondateur : ${err.message}`),
+        );
+      }
+    }
+  }
+
+  /** Session Checkout expirée (abandon) : la réservation fondateur rend sa place. */
+  private async onCheckoutExpired(session: Stripe.Checkout.Session): Promise<void> {
+    await this.founders.releaseReservation({ stripeSessionId: session.id });
+  }
+
+  /**
+   * Remboursement intégral sous 14 jours du 1er paiement fondateur (satisfait ou remboursé) :
+   * tarif perdu, place rendue, abonnement annulé tout de suite. Hors délai ou remboursement
+   * partiel : rien ne change côté offre.
+   */
+  private async onChargeRefunded(charge: Stripe.Charge): Promise<void> {
+    if (!charge.refunded) return; // remboursement partiel
+    const customerId = extractId(charge.customer);
+    if (!customerId) return;
+    const user = await this.prisma.user.findUnique({
+      where: { stripeCustomerId: customerId },
+      select: { id: true },
+    });
+    if (!user) return;
+    const seat = await this.founders.refundWithinWindow(user.id);
+    if (seat?.stripeSubscriptionId) {
+      await this.stripe.subscriptions.cancel(seat.stripeSubscriptionId).catch((err: Error) =>
+        this.logger.warn(`Abonnement ${seat.stripeSubscriptionId} non annulé après remboursement : ${err.message}`),
+      );
+    }
+  }
+
+  private isFounderPrice(priceId: string | null | undefined): boolean {
+    if (!priceId) return false;
+    return [
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'),
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER'),
+    ].includes(priceId);
   }
 
   /** 4 derniers chiffres de la carte débitée, best-effort : absent → ligne masquée dans le mail. */

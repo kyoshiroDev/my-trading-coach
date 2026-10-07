@@ -44,6 +44,10 @@ function makeSvc(referredBy: string | null, parrainRole: 'USER' | 'AMBASSADOR' =
     config as never, prisma as never, { client: {} } as never,
     new StripeCustomerService(prisma as never, stripe as never),
     new StripeCouponService(stripe as never),
+    {
+      eligibility: vi.fn(), reserve: vi.fn(), attachSession: vi.fn(),
+      releaseReservation: vi.fn(), hasValidReservation: vi.fn(),
+    } as never,
     stripe as never,
   );
   return { svc, create };

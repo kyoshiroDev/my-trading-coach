@@ -80,6 +80,11 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
+GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
+PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
+POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -1657,4 +1662,20 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+
+## Offre fondateur (#525, 2026-10-07)
+
+`modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
+`reserve`, `claimSeat`, `markLost`, `refundWithinWindow`, paliers), `FounderAdminService`, routes
+publique + admin. **Anti-survente** : toute prise de place est une transaction qui commence par
+`pg_advisory_xact_lock(525001)` (PgBouncer en mode session : OK). Checkout fondateur → réservation de
+35 min (session Stripe 30 min) ; 1er `invoice.payment_succeeded` (`billing_reason = subscription_create`)
+→ `claimSeat` (numéro = max jamais attribué + 1, idempotent ; `null` = pas de place → abonnement annulé +
+alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
+ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
+fondateur. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+(remboursement intégral ≤ 14 j → place rendue + abonnement annulé). `syncSubscription` n'écrase jamais
+l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
+testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
+le stubber dans `app-role-wiring.spec.ts`.
 

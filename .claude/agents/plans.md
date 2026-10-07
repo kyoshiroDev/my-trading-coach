@@ -216,3 +216,31 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 > vivent dans `libs/shared/src/pricing.ts` (`@mtc/shared`). Les `pricing.const.ts` de l'API, de
 > l'app et de l'admin en dérivent (mêmes noms d'export qu'avant). Changer un prix = ce fichier +
 > la landing `Pricing.astro` + les `STRIPE_*_PRICE_*`.
+
+## Offre fondateur (#525, 2026-10-07)
+
+Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats: 200 }`,
+`FOUNDER_ANNUAL_SAVINGS_EUR` (dérivée), `FOUNDER_REFUND_DAYS = 14`, `FOUNDER_MILESTONES`, `OFFER_CTAS`
+(`libs/shared/src/pricing.ts`). Prix Stripe : `STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER` / `_YEARLY_FOUNDER`.
+
+- **200 places**, mensuel (29 €) ET annuel (290 €) confondus. **Prix bloqué à vie** tant que
+  l'abonnement reste actif ; tout le Premium, nouveautés futures comprises.
+- Mensuel ↔ annuel fondateur autorisé (`POST /billing/interval`) : même place, même numéro.
+- **Aucun essai** (premier paiement immédiat) ; l'essai 30 j du 49 € est inchangé.
+- **Satisfait ou remboursé 14 jours** sur le 1er paiement : `charge.refunded` intégral dans les 14 j →
+  place `REFUNDED` (rendue), tarif perdu, abonnement annulé.
+- **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
+  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
+- **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
+  personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
+- **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si
+  remboursement 14 j, 1er paiement en échec définitif, ou session Checkout expirée. Une résiliation
+  ne la rend PAS. Exclus : démo, ADMIN, BETA_TESTER (une AMBASSADRICE est éligible).
+- **Perte du tarif** : résiliation programmée = gardé jusqu'à la fin (réactivation = gardé) ;
+  `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
+  (place `LOST`, reste comptée) ou au remboursement. Retour = prix normal.
+- **Non-cumul** : fondateur, code partenaire et coupon de parrainage s'excluent ; le fondateur ne
+  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
+  reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
+- **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
+

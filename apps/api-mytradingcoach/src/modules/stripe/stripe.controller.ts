@@ -13,6 +13,7 @@ import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
+import { ChangeIntervalDto } from './dto/change-interval.dto';
 import { StripeBillingService } from './stripe-billing.service';
 import { StripeWebhookService } from './stripe-webhook.service';
 
@@ -40,6 +41,8 @@ export class StripeController {
       ({
         premium_monthly: this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_MONTHLY_V2'),
         premium_yearly:  this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_YEARLY_V2'),
+        founder_monthly: this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'),
+        founder_yearly:  this.config.getOrThrow<string>('STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER'),
       })[dto.plan];
 
     const frontendUrl =
@@ -50,7 +53,21 @@ export class StripeController {
       user.email,
       priceId,
       frontendUrl,
+      {
+        offer: dto.plan.startsWith('founder') ? 'founder' : 'premium',
+        interval: dto.plan.endsWith('yearly') ? 'year' : 'month',
+        cta: dto.cta ?? null,
+      },
     );
+  }
+
+  // POST /api/billing/interval : mensuel ↔ annuel en gardant le tarif (fondateur ou normal)
+  @Post('interval')
+  async changeInterval(
+    @CurrentUser() user: { id: string },
+    @Body() dto: ChangeIntervalDto,
+  ) {
+    return this.billing.changeInterval(user.id, dto.interval);
   }
 
   // GET /api/billing/portal : Portail de gestion abonnement Stripe

@@ -324,3 +324,10 @@ l'abonnement), `stripe-webhook.service` (résiliation, client supprimé), `ambas
 Un oubli = jusqu'à 60 s de plan / rôle périmé (ex. Premium payé mais refusé). Les tests qui
 modifient ces champs directement en base doivent aussi invalider. Verrouillé par
 `auth-user-cache.int-spec.ts` (plan changé → effet immédiat, compte supprimé → 401 immédiat).
+
+## Route publique de l'offre fondateur (#525)
+
+`GET /api/pricing/founder` : `@Public`, 60 req/min/IP, `Cache-Control: public, max-age=60` (60 s max,
+derrière nginx et Traefik), lecture seule, **aucune donnée personnelle** (état de l'offre, places,
+prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytradingcoach.app`).
+
