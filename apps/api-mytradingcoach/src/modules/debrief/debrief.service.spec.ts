@@ -40,7 +40,7 @@ const mockPrisma = {
   tradingAccount: {
     findMany: vi.fn().mockResolvedValue([]),
   },
-  user: { findUnique: vi.fn().mockResolvedValue(null) },
+  user: { findUnique: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]) },
 };
 
 const mockAiService = {
@@ -196,6 +196,19 @@ describe('DebriefService', () => {
       expect(mockPrisma.weeklyDebrief.findUnique).toHaveBeenCalledWith({
         where: { userId_weekNumber_year: { userId: 'user-123', weekNumber: 26, year: 2026 } },
       });
+    });
+  });
+
+  describe('getEligibleUsers (SCA-B5-08)', () => {
+    it('seulement ceux qui ont tradé dans la semaine de refDate, mêmes bornes que generate', async () => {
+      const ref = new Date('2026-10-04T21:00:00.000Z'); // dimanche 23 h Paris
+      const { startDate, endDate } = service.getWeekInfo(ref);
+
+      await service.getEligibleUsers(ref);
+
+      const where = mockPrisma.user.findMany.mock.calls.at(-1)![0].where;
+      expect(where).toMatchObject({ isDemo: false, debriefAutomatic: true });
+      expect(where.trades).toEqual({ some: { tradedAt: { gte: startDate, lte: endDate } } });
     });
   });
 

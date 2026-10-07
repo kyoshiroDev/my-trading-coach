@@ -540,19 +540,12 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 
 ## Cron BullMQ — Weekly Debrief
 
-```typescript
-@Cron('0 23 * * 0')  // Dimanche 23h00
-async scheduledDebriefs() {
-  const users = await this.usersService.findActivePremium();
-  await Promise.all(users.map(u =>
-    this.debriefQueue.add('generate', { userId: u.id }, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: true,
-    })
-  ));
-}
-```
+`DebriefCron` (dimanche 23 h Paris, rattrapage lundi 8 h) enfile un job `generate` par utilisateur
+de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai, débrief automatique
+activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
+journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
+
+---
 
 ## Clustering — règles
 
