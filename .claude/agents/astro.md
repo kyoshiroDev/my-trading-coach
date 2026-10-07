@@ -83,8 +83,11 @@ src/
 - **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
   (`src/lib/founder-offer.ts` : une requête par page, réponse `{ data }` déballée, état gardé 60 s en
   sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien). **Le HTML
-  statique est toujours « offre fermée »** : bandeau `hidden`, carte Fondateur `hidden`, 2 cartes,
-  Premium « Recommandé ». Rien n'apparaît tant que l'API ne dit pas `open` + places > 0 (cache HTTP
+  statique est toujours « offre fermée »** : bandeau, carte Fondateur, sa note et la question FAQ sont
+  dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script seulement si l'offre
+  vend et retirés sinon → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur » visible
+  (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML). Un lien inséré après coup
+  reprend les paramètres (ref, promo, utm_*) du lien Premium. Rien n'apparaît tant que l'API ne dit pas `open` + places > 0 (cache HTTP
   de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
   - Bandeau `FounderBanner.astro`, inclus par `Nav.astro` (toutes les pages) : fixe, 32 px, la Nav
     descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans

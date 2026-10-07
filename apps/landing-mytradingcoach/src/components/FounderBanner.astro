@@ -1,6 +1,6 @@
 ---
 // Bandeau « Offre fondateur » (#525), au-dessus de la Nav sur toutes les pages (inclus par Nav).
-// Masqué dans le HTML : il n'apparaît que si l'API dit que l'offre vend (ouverte, places > 0).
+// Dans un <template> : il n'est inséré que si l'API dit que l'offre vend (ouverte, places > 0).
 // Fermée, épuisée ou API injoignable → rien (jamais de chiffre inventé).
 //
 // Zéro décalage de mise en page : le bandeau est fixe et la Nav descend par `transform` (qui ne
@@ -10,7 +10,10 @@
 import { FOUNDER_OFFER } from '@mtc/shared';
 ---
 
-<div class="offer-bar" id="offer-bar" hidden>
+{/* Gabarit inerte : aucun texte de l'offre dans le HTML rendu ni indexé. Inséré par le script
+     seulement si l'offre vend ; retiré dès qu'elle ne vend plus. */}
+<template id="offer-bar-tpl">
+<div class="offer-bar" id="offer-bar">
   <a href="/#pricing" class="offer-link" data-offer-cta="bandeau" data-ga-event="cta_founder" data-ga-place="bandeau">
     <span class="offer-long">
       🔥 <strong>Offre fondateur</strong> · Premium à <strong>{FOUNDER_OFFER.priceMonthlyEur} €/mois à vie</strong>
@@ -21,12 +24,13 @@ import { FOUNDER_OFFER } from '@mtc/shared';
   <button type="button" class="offer-close" aria-label="Fermer le bandeau de l'offre fondateur">×</button>
   <span class="offer-progress" aria-hidden="true"><span class="offer-progress-fill"></span></span>
 </div>
+</template>
 
 <script>
   import { isSelling, onFounderState, placesLabel, rememberCta } from '../lib/founder-offer';
 
   const CLOSED_KEY = 'mtc_offer_bar_closed';
-  const bar = document.getElementById('offer-bar');
+  const tpl = document.getElementById('offer-bar-tpl') as HTMLTemplateElement | null;
   const closed = () => {
     try {
       return sessionStorage.getItem(CLOSED_KEY) === '1';
@@ -35,25 +39,17 @@ import { FOUNDER_OFFER } from '@mtc/shared';
     }
   };
 
-  const hide = () => {
-    if (bar) bar.hidden = true;
+  const remove = () => {
+    document.getElementById('offer-bar')?.remove();
     document.documentElement.classList.remove('has-offer-bar');
   };
 
-  if (bar && !closed()) {
-    onFounderState((s) => {
-      if (!isSelling(s) || closed()) return hide();
-      const left = s.seatsLeft;
-      const long = bar.querySelector('[data-offer-left-long]');
-      const short = bar.querySelector('[data-offer-left-short]');
-      if (long) long.textContent = left === 1 ? "Plus qu'une place" : `Plus que ${placesLabel(left)}`;
-      if (short) short.textContent = placesLabel(left);
-      const fill = bar.querySelector<HTMLElement>('.offer-progress-fill');
-      if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - left) / s.seatsTotal})`;
-      bar.hidden = false;
-      document.documentElement.classList.add('has-offer-bar');
-    });
-
+  /** Bandeau inséré une seule fois (avant la Nav), puis seulement mis à jour. */
+  const mount = (): HTMLElement | null => {
+    const existing = document.getElementById('offer-bar');
+    if (existing || !tpl) return existing;
+    const bar = (tpl.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
+    tpl.after(bar);
     bar.querySelector('.offer-link')?.addEventListener('click', () => rememberCta('bandeau'));
     bar.querySelector('.offer-close')?.addEventListener('click', () => {
       try {
@@ -61,7 +57,24 @@ import { FOUNDER_OFFER } from '@mtc/shared';
       } catch {
         /* sans stockage : fermé pour cette page seulement */
       }
-      hide();
+      remove();
+    });
+    return bar;
+  };
+
+  if (tpl && !closed()) {
+    onFounderState((s) => {
+      if (!isSelling(s) || closed()) return remove();
+      const bar = mount();
+      if (!bar) return;
+      const left = s.seatsLeft;
+      const long = bar.querySelector('[data-offer-left-long]');
+      const short = bar.querySelector('[data-offer-left-short]');
+      if (long) long.textContent = left === 1 ? "Plus qu'une place" : `Plus que ${placesLabel(left)}`;
+      if (short) short.textContent = placesLabel(left);
+      const fill = bar.querySelector<HTMLElement>('.offer-progress-fill');
+      if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - left) / s.seatsTotal})`;
+      document.documentElement.classList.add('has-offer-bar');
     });
   }
 </script>
@@ -81,7 +94,6 @@ import { FOUNDER_OFFER } from '@mtc/shared';
     font-size: 13px;
     line-height: 1;
   }
-  .offer-bar[hidden] { display: none; }
   .offer-link {
     color: inherit;
     text-decoration: none;

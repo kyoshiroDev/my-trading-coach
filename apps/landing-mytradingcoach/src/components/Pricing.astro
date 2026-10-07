@@ -79,9 +79,11 @@ const premiumKeys = [
         <a href={`${APP_URL}/register`} class="price-cta ghost" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
 
-      <!-- FONDATEUR (#525) : absente du rendu tant que l'API ne dit pas que l'offre vend. Sans JS,
-           offre fermée, épuisée ou API injoignable → 2 cartes, Premium « Recommandé ». -->
-      <div class="price-card feat with-badge is-founder" data-founder-card hidden>
+      {/* FONDATEUR (#525) : gabarit inerte, inséré par le script seulement si l'offre vend. Sans JS,
+           offre fermée, épuisée ou API injoignable → 2 cartes, Premium « Recommandé », et aucun
+           texte de l'offre dans le HTML rendu ni indexé. */}
+      <template data-founder-tpl>
+      <div class="price-card feat with-badge is-founder" data-founder-card>
         <div class="price-pop">Réservé aux {FOUNDER_OFFER.seats} premiers</div>
         <div class="price-name">Fondateur</div>
         <div class="price-amt">
@@ -114,6 +116,7 @@ const premiumKeys = [
           <span class="cta-sub-text">Paiement immédiat · sans essai</span>
         </a>
       </div>
+      </template>
 
       <!-- PREMIUM -->
       <div class="price-card feat with-badge is-premium">
@@ -143,10 +146,12 @@ const premiumKeys = [
       </div>
 
     </div>
-    <p class="founder-note" data-founder-note hidden>
-      Le tarif fondateur n'a pas d'essai : le plan Gratuit sert d'essai. L'essai de 30 jours reste
-      sur le Premium à {PREMIUM_PRICE_EUR.monthly} €/mois.
-    </p>
+    <template data-founder-note-tpl>
+      <p class="founder-note" data-founder-note>
+        Le tarif fondateur n'a pas d'essai : le plan Gratuit sert d'essai. L'essai de 30 jours reste
+        sur le Premium à {PREMIUM_PRICE_EUR.monthly} €/mois.
+      </p>
+    </template>
     <div class="pricing-guarantee reveal">
       <div class="guarantee-item">✓ Annulation en un clic</div>
       <div class="guarantee-item">✓ Données exportables</div>
@@ -159,32 +164,67 @@ const premiumKeys = [
 <script>
   import { isSelling, onFounderState, placesLabel, rememberedCta } from '../lib/founder-offer';
 
-  // Carte Fondateur : affichée seulement si l'offre vend, avec le VRAI compteur. Le changement se
-  // fait au chargement, la section est très bas dans la page : aucun décalage visible (CLS).
+  // Carte Fondateur : insérée depuis son <template> seulement si l'offre vend, avec le VRAI
+  // compteur ; retirée sinon. Le changement se fait au chargement et la section est très bas dans
+  // la page : aucun décalage visible (CLS).
   const section = document.getElementById('pricing');
-  const card = section?.querySelector<HTMLElement>('[data-founder-card]');
-  const note = section?.querySelector<HTMLElement>('[data-founder-note]');
-  if (section && card) {
+  const cardTpl = section?.querySelector<HTMLTemplateElement>('template[data-founder-tpl]');
+  const noteTpl = section?.querySelector<HTMLTemplateElement>('template[data-founder-note-tpl]');
+
+  const clone = (t: HTMLTemplateElement) =>
+    (t.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
+
+  /** Paramètres posés par Base.astro sur les liens /register (ref, promo, utm_*) : la carte,
+   *  insérée après eux, les reprend du lien Premium (sauf `plan`). */
+  const copyTrackingParams = (to: HTMLAnchorElement) => {
+    const from = section?.querySelector<HTMLAnchorElement>('.is-premium a[href*="/register"]');
+    if (!from) return;
+    const src = new URL(from.href);
+    const dst = new URL(to.href);
+    src.searchParams.forEach((v, k) => {
+      if (k !== 'plan' && !dst.searchParams.has(k)) dst.searchParams.set(k, v);
+    });
+    to.href = dst.toString();
+  };
+
+  const mount = (): HTMLElement | null => {
+    const existing = section?.querySelector<HTMLElement>('[data-founder-card]');
+    if (existing || !section || !cardTpl) return existing ?? null;
+    const card = clone(cardTpl);
+    cardTpl.after(card);
+    if (noteTpl) noteTpl.after(clone(noteTpl));
+    const cta = card.querySelector<HTMLAnchorElement>('[data-founder-cta]');
+    if (cta) {
+      copyTrackingParams(cta);
+      // Point de clic : bandeau ou FAQ s'ils ont mené ici, sinon la carte elle-même.
+      cta.addEventListener('click', () => {
+        const remembered = rememberedCta();
+        if (remembered === 'bandeau' || remembered === 'faq') {
+          const url = new URL(cta.href);
+          url.searchParams.set('cta', remembered);
+          cta.href = url.toString();
+        }
+      });
+    }
+    return card;
+  };
+
+  const unmount = () => {
+    section?.querySelector('[data-founder-card]')?.remove();
+    section?.querySelector('[data-founder-note]')?.remove();
+    section?.classList.remove('has-founder');
+  };
+
+  if (section && cardTpl) {
     onFounderState((s) => {
-      const selling = isSelling(s);
-      card.hidden = !selling;
-      if (note) note.hidden = !selling;
-      section.classList.toggle('has-founder', selling);
-      if (!selling) return;
+      if (!isSelling(s)) return unmount();
+      const card = mount();
+      if (!card) return;
+      section.classList.add('has-founder');
       const left = card.querySelector('[data-founder-left]');
       if (left) left.textContent = `${placesLabel(s.seatsLeft)} restante${s.seatsLeft > 1 ? 's' : ''}`;
       const fill = card.querySelector<HTMLElement>('.founder-seats-fill');
       if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - s.seatsLeft) / s.seatsTotal})`;
-    });
-    // Point de clic : bandeau ou FAQ s'ils ont mené ici, sinon la carte elle-même.
-    card.querySelector<HTMLAnchorElement>('[data-founder-cta]')?.addEventListener('click', (e) => {
-      const cta = rememberedCta();
-      const a = e.currentTarget as HTMLAnchorElement;
-      if (cta === 'bandeau' || cta === 'faq') {
-        const url = new URL(a.href);
-        url.searchParams.set('cta', cta);
-        a.href = url.toString();
-      }
     });
   }
 </script>
@@ -387,7 +427,6 @@ const premiumKeys = [
   .guarantee-item { font-size: 12px; font-family: var(--mono); color: var(--txt3); }
 
   /* ── Offre fondateur : 3 cartes Gratuit · Fondateur · Premium ── */
-  .price-card[hidden], .founder-note[hidden] { display: none; }
   .has-founder .price-grid { grid-template-columns: repeat(3, 1fr); max-width: 1140px; }
   /* Premium perd sa mise en avant au profit de la carte Fondateur. */
   .has-founder .is-premium {
