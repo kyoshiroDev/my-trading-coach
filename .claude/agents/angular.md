@@ -908,3 +908,33 @@ onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc
 teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
 (`features/acquisition/funnel.util.ts`, testé).
 
+## Offre fondateur et codes partenaires (#525, 2026-10-08)
+
+- **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
+  places, place fondateur, éligibilité, `refundUntil`, code partenaire actif, intervalle). Chargé À LA
+  DEMANDE (`load()` : modale, cadenas, Profil), une fois par utilisateur, `refresh()` après paiement /
+  changement d'intervalle, délai max 10 s (une session périmée ne le fige pas). Pas dans `/auth/me`
+  (interrogé toutes les 5 min). Démo : jamais chargé.
+- **Intention du lien** : `OfferIntentService` capture `plan=founder|premium`, `promo`, `cta` au
+  démarrage (`App`, avant toute redirection) en sessionStorage `mtc_offer_intent`. `plan=founder` ou
+  `promo` → pas de checkout direct à l'inscription : `/dashboard`, puis `OfferIntentHostComponent`
+  (monté dans le shell `sidebar`, modale en `@defer`) ouvre `mtc-plan-modal` avec `[preset]`.
+  `plan=premium` seul → checkout direct comme avant. Déjà connecté sur `/register` avec une intention
+  → `/dashboard`. Jamais pour un abonné `active` / `past_due` ni la démo.
+- **`mtc-plan-modal`** : entrées `cta` (défaut `modale`) et `preset`. Options exclusives (radio) :
+  Fondateur (si `founderAvailable`), Code partenaire (une fois validé), Premium. Présélection : code du
+  lien s'il est valide, sinon fondateur, sinon Premium ; un code saisi à la main et valide est choisi.
+  Champ « Code partenaire » validé en direct (`GET /billing/partner/:code`, debounce 400 ms, raison
+  précise du refus). Checkout : fondateur → `founder_*` sans `promo` ; code → `premium_*` + `promo`
+  (jamais de cumul). Sous-titre, CTA et ligne de prix suivent l'offre choisie.
+- **`mtc-premium-lock`** : bouton (plus un lien vers `/parametres`, route inexistante) →
+  `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
+  dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
+- **Profil > Abonnement** : badge « Fondateur n° X », tarif bloqué et perte en cas de résiliation,
+  « Satisfait ou remboursé : demander le remboursement » (mailto hello@, jusqu'à `refundUntil` : le
+  remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
+  CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
+  neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.
+- Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
+  l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
+

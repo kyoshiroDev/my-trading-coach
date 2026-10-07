@@ -64,8 +64,8 @@ describe('PlanModalComponent — palier unique, plus de grille 2 colonnes', () =
     }
   });
 
-  it('le badge Premium reste à cheval sur la bordure haute', () => {
-    expect(css()).toMatch(/\.plan-col-badge\s*\{[^}]*top:\s*-11px/);
+  it('les offres sont empilées sur une colonne (fondateur, code, Premium)', () => {
+    expect(css()).toMatch(/\.offer-list\s*\{[^}]*flex-direction:\s*column/);
   });
 
   it('les glyphes texte ont laissé place aux icônes lucide', () => {

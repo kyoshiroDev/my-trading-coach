@@ -55,6 +55,8 @@
   font-family: var(--font-body);
   flex-shrink: 0;
   transition: opacity .15s;
+  border: none;
+  cursor: pointer;
 }
 
 .pl-btn:hover { opacity: .9; }

@@ -11,7 +11,13 @@
     <!-- Header -->
     <div class="plan-modal-header">
       <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
-      <p>{{ trialAvailable() ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}</p>
+      <p>
+        @if (choice() === 'founder') {
+          Paiement immédiat · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
+        } @else {
+          {{ trialFor(choice()) ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}
+        }
+      </p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
         <svg [lucideIcon]="XIcon" [size]="13"></svg>
       </button>
@@ -34,29 +40,130 @@
       </button>
     </div>
 
-    <!-- Palier unique : plus de wrapper grille, la colonne EST le bloc. -->
-    <div class="plan-col premium-col selected-col">
-      <div class="plan-col-badge">Premium</div>
-      <div class="plan-col-name">Premium</div>
-      <div class="plan-col-price">
-        @if (interval() === 'yearly') {
-          <span class="price">{{ PRICING.premium.yearly }}€</span><span class="period">/an</span>
-          <div class="plan-col-detail save">économise {{ PRICING.premium.savings }}€</div>
+    <div class="offer-list" role="radiogroup" aria-label="Offre">
+      <!-- FONDATEUR (#525) : seulement si l'utilisateur peut prendre une place. -->
+      @if (founderAvailable()) {
+        <button
+          type="button"
+          class="offer-opt founder-opt"
+          role="radio"
+          [attr.aria-checked]="choice() === 'founder'"
+          [class.selected]="choice() === 'founder'"
+          data-testid="offer-founder"
+          (click)="pick('founder')"
+        >
+          <span class="offer-head">
+            <span class="offer-name">Fondateur</span>
+            <span class="offer-price">
+              @if (interval() === 'yearly') {
+                <s>{{ PRICING.premium.yearly }} €</s> <strong>{{ PRICING.founder.yearly }} €</strong>/an
+              } @else {
+                <s>{{ PRICING.premium.monthly }} €</s> <strong>{{ PRICING.founder.monthly }} €</strong>/mois
+              }
+            </span>
+          </span>
+          <span class="offer-sum">Sans essai · statut fondateur numéroté (n° attribué au paiement)</span>
+          <span class="offer-detail">🔒 Prix bloqué tant que ton abonnement reste actif · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours</span>
+          @if (founderOffer(); as f) {
+            <span class="offer-seats">Plus que {{ f.seatsLeft }} place{{ f.seatsLeft > 1 ? 's' : '' }} sur {{ f.seatsTotal }}</span>
+          }
+        </button>
+      }
+
+      <!-- CODE PARTENAIRE : seulement une fois validé. -->
+      @if (validPartner(); as p) {
+        <button
+          type="button"
+          class="offer-opt partner-opt"
+          role="radio"
+          [attr.aria-checked]="choice() === 'partner'"
+          [class.selected]="choice() === 'partner'"
+          data-testid="offer-partner"
+          (click)="pick('partner')"
+        >
+          <span class="offer-head">
+            <span class="offer-name">Code {{ p.code }}</span>
+            <span class="offer-price">
+              @if (interval() === 'yearly') {
+                <s>{{ PRICING.premium.yearly }} €</s> <strong>{{ p.priceAnnualEur }} €</strong>/an
+              } @else {
+                <s>{{ PRICING.premium.monthly }} €</s> <strong>{{ p.priceMonthlyEur }} €</strong>/mois
+              }
+            </span>
+          </span>
+          <span class="offer-sum">
+            {{ partnerLabel() }}@if (trialFor('partner')) { · 30 jours d'essai } @else { · facturé aujourd'hui }
+          </span>
+        </button>
+      }
+
+      <!-- PREMIUM au prix normal -->
+      <button
+        type="button"
+        class="offer-opt premium-opt"
+        role="radio"
+        [attr.aria-checked]="choice() === 'premium'"
+        [class.selected]="choice() === 'premium'"
+        data-testid="offer-premium"
+        (click)="pick('premium')"
+      >
+        <span class="offer-head">
+          <span class="offer-name">Premium</span>
+          <span class="offer-price">
+            @if (interval() === 'yearly') {
+              <strong>{{ PRICING.premium.yearly }} €</strong>/an
+            } @else {
+              <strong>{{ PRICING.premium.monthly }} €</strong>/mois
+            }
+          </span>
+        </span>
+        <span class="offer-sum">
+          @if (trialFor('premium')) { 30 jours d'essai · } @else if (interval() === 'yearly') { économise {{ PRICING.premium.savings }} € · }
+          annulable en un clic
+        </span>
+      </button>
+    </div>
+
+    @if (showsBoth()) {
+      <p class="offer-no-mix">Une seule offre à la fois : fondateur ou code partenaire, jamais les deux.</p>
+    }
+
+    <ul class="plan-col-feats">
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Tout le plan Gratuit inclus</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Débrief hebdo IA</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Insights IA &amp; Chat coach</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Analytics avancés</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Score trader /100</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Comptes illimités</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Règles prop firm &amp; sync crypto</li>
+      <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Recap email 17h30</li>
+    </ul>
+
+    <!-- Code partenaire : validation en direct, raison précise du refus. -->
+    <div class="partner-field">
+      <label for="plan-partner-code">Code partenaire</label>
+      <input
+        id="plan-partner-code"
+        type="text"
+        autocomplete="off"
+        autocapitalize="characters"
+        maxlength="20"
+        placeholder="Ex. LOUIS29"
+        [value]="code()"
+        (input)="onCodeInput($any($event.target).value)"
+        data-testid="partner-code"
+      />
+      @if (validating()) {
+        <p class="partner-msg">Vérification…</p>
+      } @else if (validation(); as v) {
+        @if (v.valid) {
+          <p class="partner-msg ok">
+            {{ interval() === 'yearly' ? v.priceAnnualEur + ' €/an' : v.priceMonthlyEur + ' €/mois' }} {{ partnerLabel() }} avec {{ v.code }}
+          </p>
         } @else {
-          <span class="price">{{ PRICING.premium.monthly }}€</span><span class="period">/mois</span>
-          <div class="plan-col-detail">Facturé chaque mois</div>
+          <p class="partner-msg ko" role="alert">{{ v.message }}</p>
         }
-      </div>
-      <ul class="plan-col-feats">
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Tout le plan Gratuit inclus</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Débrief hebdo IA</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Insights IA &amp; Chat coach</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Analytics avancés</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Score trader /100</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Comptes illimités</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Règles prop firm &amp; sync crypto</li>
-        <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Recap email 17h30</li>
-      </ul>
+      }
     </div>
 
     <!-- CTA -->
@@ -64,16 +171,24 @@
       class="plan-modal-cta"
       (click)="confirmPlan()"
       [disabled]="isLoading()"
+      data-testid="plan-cta"
     >
       @if (isLoading()) {
         <span class="btn-spinner"></span> Redirection...
       } @else {
-        @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium mensuel →' }} }
-        @else { Passer à Premium annuel → }
+        @switch (choice()) {
+          @case ('founder') { Devenir fondateur → }
+          @default {
+            @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium mensuel →' }} }
+            @else { Passer à Premium annuel → }
+          }
+        }
       }
     </button>
     <p class="plan-modal-hint">
-      @if (interval() === 'monthly' && trialAvailable()) {
+      @if (choice() === 'founder') {
+        {{ ctaPriceLabel() }} · facturé aujourd'hui · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
+      } @else if (trialFor(choice())) {
         Puis {{ ctaPriceLabel() }} · carte requise · annulable en un clic
       } @else {
         {{ ctaPriceLabel() }} · facturé aujourd'hui · annulable en un clic

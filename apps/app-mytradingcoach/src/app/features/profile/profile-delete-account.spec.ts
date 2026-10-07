@@ -16,7 +16,7 @@ import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { ProfileComponent } from './profile.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
@@ -47,7 +47,8 @@ function mount(deleteMeImpl: () => unknown) {
         },
       },
       { provide: AuthService, useValue: auth },
-      { provide: BillingApi, useValue: {} },
+      // Offres (#525) : aucune, la section Abonnement reste celle d'avant.
+      { provide: BillingApi, useValue: { offers: () => EMPTY } },
       { provide: UsersApi, useValue: usersApi },
       { provide: TradesApi, useValue: { getUserAssets: vi.fn(() => of({ data: [] })) } },
       { provide: SetupsStore, useValue: { active: signal([]), archived: signal([]), load: vi.fn(), loaded: signal(true) } },

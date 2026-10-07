@@ -13,6 +13,7 @@ import {
 import { filter, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
 import { ProductEventsService } from './core/services/product-events.service';
+import { OfferIntentService } from './core/services/offer-intent.service';
 import { ConfirmDialogComponent } from '@mtc/front-ui';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 
@@ -28,6 +29,12 @@ export class App implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly seo = inject(SeoService);
   private readonly events = inject(ProductEventsService);
+
+  constructor() {
+    // Offre visée par le lien d'arrivée (#525 : plan=founder, promo=CODE, cta) : capturée AVANT
+    // toute redirection du routeur, puis proposée dans la modale une fois connecté.
+    inject(OfferIntentService).capture();
+  }
 
   ngOnInit(): void {
     this.router.events

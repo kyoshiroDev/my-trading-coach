@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { BillingApi } from '../api/billing.api';
+import { BillingApi, type CheckoutPlan } from '../api/billing.api';
 import { ToastService } from './toast.service';
 import { apiErrorMessage } from '../utils/api-error';
 
-export type CheckoutPlan = 'premium_monthly' | 'premium_yearly';
+export type { CheckoutPlan } from '../api/billing.api';
 
 /**
  * Point d'entrée UNIQUE pour lancer un paiement Stripe (essai / abonnement Premium).
@@ -22,10 +22,14 @@ export class BillingService {
    * @param onError remplace le message d'erreur par défaut (ex. inscription : le compte est
    *                créé, on continue vers le dashboard).
    */
-  startCheckout(plan: CheckoutPlan, onError?: (err: unknown) => void): void {
+  startCheckout(
+    plan: CheckoutPlan,
+    onError?: (err: unknown) => void,
+    opts: { cta?: string | null; promo?: string | null } = {},
+  ): void {
     if (this.starting()) return;
     this.starting.set(true);
-    this.api.checkout(plan).subscribe({
+    this.api.checkout(plan, opts).subscribe({
       next: (res) => this.redirect(res.data.url),
       error: (err: unknown) => {
         this.starting.set(false);

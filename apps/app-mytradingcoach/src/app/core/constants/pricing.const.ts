@@ -1,4 +1,9 @@
-import { PREMIUM_ANNUAL_SAVINGS_EUR, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import {
+  FOUNDER_OFFER,
+  FOUNDER_REFUND_DAYS,
+  PREMIUM_ANNUAL_SAVINGS_EUR,
+  PREMIUM_PRICE_EUR,
+} from '@mtc/shared';
 
 /**
  * Tarifs côté app. VALEURS : `@mtc/shared` (source unique API + app + admin) ; si les prix
@@ -11,6 +16,13 @@ export const PRICING = {
     monthly: PREMIUM_PRICE_EUR.monthly,
     yearly: PREMIUM_PRICE_EUR.annual,
     savings: PREMIUM_ANNUAL_SAVINGS_EUR, // 49×12=588 → 490 = 2 mois offerts
+  },
+  /** Offre fondateur (#525) : prix bloqué tant que l'abonnement reste actif, sans essai. */
+  founder: {
+    monthly: FOUNDER_OFFER.priceMonthlyEur,
+    yearly: FOUNDER_OFFER.priceAnnualEur,
+    seats: FOUNDER_OFFER.seats,
+    refundDays: FOUNDER_REFUND_DAYS,
   },
 } as const;
 
