@@ -85,6 +85,8 @@ GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?p
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
 POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
 POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
+GET    /api/billing/offers            → { founderOffer, founder (place, éligibilité, refundUntil), partner, subscription } (app)
+GET    /api/billing/partner/:code     (20/min) → validation du code POUR l'utilisateur (déjà utilisé, déjà abonné…)
 GET    /api/pricing/partner/:code     PUBLIC (20/min, max-age=60) → conditions du code (valid, prix, durée) ou raison du refus ; ni partenaire ni utilisations
 GET    /api/admin/partner-codes       ADMIN → codes + used/max, actifs, perdus, rendus, checkouts en cours
 POST   /api/admin/partner-codes       ADMIN → création (2 coupons Stripe créés par l'API)

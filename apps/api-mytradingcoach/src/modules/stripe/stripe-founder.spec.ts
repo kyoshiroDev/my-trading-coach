@@ -374,3 +374,39 @@ describe('webhooks code partenaire', () => {
     expect(w.cancel).toHaveBeenCalledWith('sub_p');
   });
 });
+
+describe('GET /billing/offers', () => {
+  it('fondateur depuis 3 jours : place, intervalle, remboursement possible jusqu’à J+14', async () => {
+    const b = makeBilling();
+    const since = new Date(Date.now() - 3 * 86_400_000);
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({
+        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: since,
+        founderEligible: false, founderIneligibleReason: 'already_founder',
+      }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'active' });
+
+    const res = await b.svc.offers('u1');
+    expect(res.founderOffer).toEqual({ open: true, seatsLeft: 150, seatsTotal: 200 });
+    expect(res.founder).toMatchObject({ isFounder: true, number: 12, interval: 'month', eligible: false });
+    expect(res.founder.refundUntil?.getTime()).toBe(since.getTime() + 14 * 86_400_000);
+    expect(res.subscription).toEqual({ interval: 'month', status: 'active' });
+  });
+
+  it('fondateur depuis 20 jours : plus remboursable', async () => {
+    const b = makeBilling();
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({
+        isFounder: true, founderNumber: 3, founderInterval: 'year', founderSince: new Date(Date.now() - 20 * 86_400_000),
+        founderEligible: false, founderIneligibleReason: 'already_founder',
+      }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    expect((await b.svc.offers('u1')).founder.refundUntil).toBeNull();
+  });
+});

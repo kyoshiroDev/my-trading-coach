@@ -13,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { STRIPE_CLIENT } from './stripe.client';
+import { FOUNDER_REFUND_DAYS } from '@mtc/shared';
 import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
@@ -296,6 +297,48 @@ export class StripeBillingService {
       await this.founders.releaseReservation({ stripeSessionId: s.id });
     }
     return null;
+  }
+
+  /**
+   * Offres de l'utilisateur (#525), chargées à la demande par l'app (modale de plans, cadenas,
+   * Profil) plutôt que par `/auth/me` interrogé toutes les 5 min : état public de l'offre
+   * fondateur, place et éligibilité, code partenaire actif, intervalle de l'abonnement.
+   */
+  async offers(userId: string) {
+    const [pub, founder, partner, user] = await Promise.all([
+      this.founders.publicState(),
+      this.founders.statusFor(userId, this.founderPriceIds()),
+      this.partners.statusFor(userId),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { stripeInterval: true, stripeSubscriptionStatus: true },
+      }),
+    ]);
+    const since = founder?.isFounder ? founder.founderSince : null;
+    const refundUntil = since ? new Date(since.getTime() + FOUNDER_REFUND_DAYS * 86_400_000) : null;
+    return {
+      founderOffer: { open: pub.open, seatsLeft: pub.seatsLeft, seatsTotal: pub.seatsTotal },
+      founder: {
+        isFounder: founder?.isFounder ?? false,
+        number: founder?.founderNumber ?? null,
+        interval: founder?.founderInterval ?? null,
+        since,
+        eligible: founder?.founderEligible ?? false,
+        ineligibleReason: founder?.founderIneligibleReason ?? null,
+        /** Fin du satisfait ou remboursé (null = plus remboursable). */
+        refundUntil: refundUntil && refundUntil > new Date() ? refundUntil : null,
+      },
+      partner: partner.partnerCode,
+      subscription: {
+        interval: user?.stripeInterval === 'year' ? 'year' : user?.stripeInterval === 'month' ? 'month' : null,
+        status: user?.stripeSubscriptionStatus ?? null,
+      },
+    };
+  }
+
+  /** Code partenaire saisi dans la modale : règles du code ET de l'utilisateur, raison précise. */
+  validatePartnerCode(userId: string, code: string) {
+    return this.partners.validate(code.slice(0, 40), userId);
   }
 
   /**

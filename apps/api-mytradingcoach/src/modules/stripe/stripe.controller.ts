@@ -4,12 +4,14 @@ import {
   Controller,
   Get,
   Headers,
+  Param,
   Post,
   RawBodyRequest,
   Req,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -60,6 +62,19 @@ export class StripeController {
         promo: dto.promo ?? null,
       },
     );
+  }
+
+  // GET /api/billing/offers : offre fondateur, code partenaire, intervalle (modale, Profil)
+  @Get('offers')
+  offers(@CurrentUser() user: { id: string }) {
+    return this.billing.offers(user.id);
+  }
+
+  // GET /api/billing/partner/:code : validation en direct dans la modale (20/min, anti-énumération)
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  @Get('partner/:code')
+  partnerCode(@CurrentUser() user: { id: string }, @Param('code') code: string) {
+    return this.billing.validatePartnerCode(user.id, code);
   }
 
   // POST /api/billing/interval : mensuel ↔ annuel en gardant le tarif (fondateur ou normal)
