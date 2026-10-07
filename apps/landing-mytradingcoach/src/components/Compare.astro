@@ -25,7 +25,9 @@
 // ne precise pas le palier ; « - » quand le site n'en parle pas. Dans le doute, on
 // tranche en faveur du concurrent (publicite comparative : objective et verifiable).
 // A re-verifier a chaque modification de ce tableau, et mettre a jour UPDATED.
-import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+
+const firmCount = PROP_FIRM_CATALOG_FILES.length;
 
 const UPDATED = 'octobre 2026';
 
@@ -69,7 +71,7 @@ const rows: Row[] = [
     rivals: [txt('sans IA'), false, false] },
   { label: 'Récap journalier par email', free: false, premium: true,
     rivals: [false, false, false] },
-  { label: 'Règles de drawdown par prop firm (16 firmes)', free: '1 compte', premium: 'illimité',
+  { label: `Règles de drawdown par prop firm (${firmCount} firmes)`, free: '1 compte', premium: 'illimité',
     rivals: [yes('Premium'), yes('Pro'), yes()] },
   { label: 'Synchro Tradovate', free: true, premium: true,
     // TradesViz : synchro dès Basic, mais Basic n'importe que des actions (« Assets
