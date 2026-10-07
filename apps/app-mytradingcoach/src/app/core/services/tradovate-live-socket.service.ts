@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_RECONNECT_OPTIONS } from './socket-reconnect';
 import { Subject } from 'rxjs';
 import { environment } from '@app/environments/environment';
 import { ToastService } from './toast.service';
@@ -51,8 +52,7 @@ export class TradovateLiveSocketService {
       transports: ['websocket'],
       // Fonction : relue à CHAQUE (re)connexion, donc toujours le jeton le plus récent.
       auth: (cb) => cb({ token: localStorage.getItem('access_token') ?? '' }),
-      reconnectionDelay: 1_000,
-      reconnectionDelayMax: 30_000,
+      ...SOCKET_RECONNECT_OPTIONS,
     });
     this.socket = socket;
 

@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_RECONNECT_OPTIONS } from './socket-reconnect';
 import { Subject } from 'rxjs';
 import { environment } from '@app/environments/environment';
 import type { EcoEvent } from '@mtc/shared';
@@ -19,6 +20,7 @@ export class EcoSocketService implements OnDestroy {
 
     this.socket = io(`${environment.wsUrl}/eco`, {
       transports: ['websocket'],
+      ...SOCKET_RECONNECT_OPTIONS,
     });
 
     this.socket.on('eco:new-releases', (data: { events: EcoEvent[] }) => {
