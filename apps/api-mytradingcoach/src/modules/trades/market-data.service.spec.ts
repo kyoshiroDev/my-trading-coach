@@ -272,3 +272,29 @@ describe('MarketDataService — sources et filtre des news', () => {
     expect(items).toHaveLength(1);
   });
 });
+
+describe('MarketDataService — part de la crypto dans le News live', () => {
+  const news = (n: number, symbol: string) =>
+    Array.from({ length: n }, (_, i) => ({ id: `${symbol}${i}`, title: `${symbol} ${i}`, symbol, publishedDate: new Date(), textTranslated: false }));
+
+  it('sans crypto dans les actifs : 4 crypto au plus, lecture élargie pour compléter à 20', async () => {
+    const { svc, prisma } = makeService();
+    prisma.marketNews.findMany.mockResolvedValueOnce([...news(13, 'BTCUSD'), ...news(30, 'MACRO')]);
+
+    const items = await svc.getNews('');
+
+    expect(prisma.marketNews.findMany.mock.calls[0][0].take).toBe(60);
+    expect(items).toHaveLength(20);
+    expect(items.filter((i) => i.symbol === 'BTCUSD')).toHaveLength(4);
+  });
+
+  it('trader crypto (BTC/USDT) : la crypto n’est pas plafonnée', async () => {
+    const { svc, prisma } = makeService();
+    prisma.marketNews.findMany.mockResolvedValueOnce([...news(13, 'BTCUSD'), ...news(10, 'MACRO')]);
+
+    const items = await svc.getNews('BTC/USDT');
+
+    expect(prisma.marketNews.findMany.mock.calls[0][0].where).toEqual({ symbol: { in: ['MACRO', 'BTCUSD'] } });
+    expect(items.filter((i) => i.symbol === 'BTCUSD')).toHaveLength(13);
+  });
+});
