@@ -122,6 +122,8 @@ jobs:
       # aucun appel réel ne les utilise dans ce test.
       STRIPE_PREMIUM_PRICE_MONTHLY_V2: price_ci_placeholder_monthly
       STRIPE_PREMIUM_PRICE_YEARLY_V2: price_ci_placeholder_yearly
+      STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER: price_ci_placeholder_monthly_founder
+      STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER: price_ci_placeholder_yearly_founder
       RESEND_API_KEY: re_ci_placeholder
 
     services:
