@@ -58,7 +58,7 @@ describe('toRows', () => {
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
     expect(plans).toHaveLength(255);
-    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-05T00:00:00Z'));
+    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-07T00:00:00Z'));
   });
 
   it('mappe les colonnes de requête et garde les règles au format du catalogue', () => {
@@ -69,7 +69,7 @@ describe('toRows', () => {
 
   it('Apex Legacy : abonnement mensuel, plafond libre à partir du 6e payout', () => {
     const legacy = plans.find((p) => p.id === 'apex-legacy-50k')!;
-    expect(legacy).toMatchObject({ planName: 'Legacy Full', accountSize: 50_000, needsReview: true });
+    expect(legacy).toMatchObject({ planName: 'Legacy Full', accountSize: 50_000, needsReview: false });
     expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
     const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
     expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
