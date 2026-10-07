@@ -888,3 +888,13 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   date de plus d'une minute.
 - Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
   (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.
+
+## Entonnoir Premium (2026-10-07)
+
+`core/services/product-events.service.ts` : `track(event, place?)` / `once(...)` (une fois par écran et par
+onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc-premium-lock` (`premium_seen`),
+`mtc-plan-modal` (`plan_modal_open` à l'ouverture, `trial_click` sur « Essayer »), `App` (retour Stripe
+`?checkout=success|canceled` → `checkout_return`), CTA « Créer mon compte » de la démo (sidebar). Nouveau
+teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
+(`features/acquisition/funnel.util.ts`, testé).
+

@@ -1,3 +1,4 @@
+import { ProductEventsService } from '@app/core/services/product-events.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -61,6 +62,7 @@ import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
+  protected readonly events = inject(ProductEventsService);
   private readonly auth = inject(AuthService);
   private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);

@@ -158,3 +158,42 @@ describe('AdminService.getAcquisition', () => {
     expect(res.daily.every((d) => d.visits === 0)).toBe(true);
   });
 });
+
+describe('AdminService.getFunnel', () => {
+  it('assemble l’entonnoir : visites, inscrits, démo, étapes en users distincts, détail par écran', async () => {
+    const q = (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+    q.mockReset();
+    q.mockResolvedValueOnce([{ n: 120n }]) // visites
+      .mockResolvedValueOnce([{ n: 9n }]) // inscrits
+      .mockResolvedValueOnce([{ event: 'demo_open', n: 14n }, { event: 'demo_signup_click', n: 3n }])
+      .mockResolvedValueOnce([
+        { key: 'premium_seen', n: 6n }, { key: 'plan_modal_open', n: 3n },
+        { key: 'trial_click', n: 1n }, { key: 'checkout_canceled', n: 1n },
+      ])
+      .mockResolvedValueOnce([{ event: 'premium_seen', place: 'ai-insights', n: 4n }])
+      .mockResolvedValueOnce([{ trialing: 0n, paying: 0n }]);
+
+    const f = await service.getFunnel(30);
+
+    expect(f).toMatchObject({
+      days: 30, landingVisits: 120, signups: 9,
+      demo: { opens: 14, signupClicks: 3 },
+      current: { trialing: 0, paying: 0 },
+      byPlace: [{ event: 'premium_seen', place: 'ai-insights', users: 4 }],
+    });
+    // Ordre fixe des étapes, 0 quand aucune donnée (retour Stripe réussi absent ici).
+    expect(f.steps.map((s) => [s.key, s.users])).toEqual([
+      ['premium_seen', 6], ['plan_modal_open', 3], ['trial_click', 1], ['checkout_success', 0], ['checkout_canceled', 1],
+    ]);
+  });
+
+  it('aucune visite enregistrée → 0, jamais null', async () => {
+    const q = (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+    q.mockReset();
+    q.mockResolvedValueOnce([{ n: null }]).mockResolvedValueOnce([{ n: 0n }]).mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ trialing: 0n, paying: 0n }]);
+    const f = await service.getFunnel(30);
+    expect(f.landingVisits).toBe(0);
+    expect(f.steps.every((s) => s.users === 0)).toBe(true);
+  });
+});

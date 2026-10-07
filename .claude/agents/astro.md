@@ -71,6 +71,9 @@ src/
   hiérarchisées (suivi prop firm en tête ; récap 17h30 et score regroupés), Coach IA raccourci (bloc
   « 3 étapes » retiré). **Aucune affirmation d'exclusivité** (« le seul », « le premier ») : non
   défendable face aux concurrents (cf. `docs/veille-focuspips.md`).
+- **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
+  `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
+  Nouveau CTA d'inscription → ajouter les deux attributs.
 - **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
   bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
   `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne

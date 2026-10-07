@@ -278,7 +278,7 @@
         <span class="demo-banner-text">
           🔍 <strong>Mode démo</strong><span class="demo-banner-long"> : tu explores MyTradingCoach avec des données d'exemple.</span>
         </span>
-        <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+        <a class="demo-banner-cta" [href]="landingUrl + '/#pricing'" (click)="events.track('demo_signup_click')">Créer mon compte gratuit →</a>
       </div>
     }
     <router-outlet />
@@ -296,7 +296,7 @@
         En mode démo, les données sont en lecture seule. Crée ton compte gratuit
         pour logger tes vrais trades et débloquer ton coaching personnalisé.
       </p>
-      <a class="demo-modal-cta" [href]="landingUrl + '/#pricing'">Créer mon compte gratuit →</a>
+      <a class="demo-modal-cta" [href]="landingUrl + '/#pricing'" (click)="events.track('demo_signup_click')">Créer mon compte gratuit →</a>
       <button class="demo-modal-dismiss" (click)="demo.dismiss()">Continuer la démo</button>
     </div>
   </div>

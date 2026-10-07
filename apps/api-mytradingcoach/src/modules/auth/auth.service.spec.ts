@@ -11,6 +11,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
+import { ProductEventsService } from '../product-events/product-events.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -62,6 +63,7 @@ const mockJwt = {
 };
 
 const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
+const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockResend = {
   sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
@@ -86,6 +88,7 @@ describe('AuthService', () => {
         { provide: ResendService, useValue: mockResend },
         { provide: SetupsService, useValue: { seedDefaults: vi.fn().mockResolvedValue(true) } },
         { provide: DemoSeedService, useValue: mockDemoSeed },
+        { provide: ProductEventsService, useValue: mockProductEvents },
       ],
     }).compile();
 
@@ -104,6 +107,12 @@ describe('AuthService', () => {
       mockPrisma.user.findFirst.mockResolvedValue(mockSafeUser);
       mockDemoSeed.ensureFresh.mockRejectedValueOnce(new Error('db lente'));
       await expect(service.demoLogin()).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+
+    it('compte la visite de la démo dans l’entonnoir', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ ...mockSafeUser, id: 'demo-id' });
+      await service.demoLogin();
+      expect(mockProductEvents.record).toHaveBeenCalledWith('demo-id', 'demo_open');
     });
   });
 

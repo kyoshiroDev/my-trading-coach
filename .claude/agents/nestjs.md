@@ -77,6 +77,9 @@ GET    /api/session/active             JWT → session active en cours (null si 
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
+POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
+                                       `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -1574,3 +1577,14 @@ Règles :
   (`title`, pas `titleFr` : « ECB » devient « BCE ») : thèmes macro en **mots entiers** (Fed, FOMC,
   Powell, BCE, taux, CPI, NFP, PIB, rendements, droits de douane…), **hors crypto** (symbole ou titre),
   publiée depuis **≤ 6 h**. Le front prend la première news `breaking` ; aucune → pas de bandeau.
+
+## Entonnoir Premium (2026-10-07)
+
+`modules/product-events/` : `POST /api/events` (JWT, `@DemoAllowed`, 60/min) → `ProductEventsService.record`
+→ `ProductEventDaily` (jour Paris × user × événement × écran, `INSERT … ON CONFLICT` +1, best-effort).
+Événements : `premium_seen`, `plan_modal_open`, `trial_click`, `checkout_return` (place `success` /
+`canceled`), `demo_signup_click` (front) et `demo_open` (enregistré par `AuthService.demoLogin`).
+`AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
+détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
+de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+

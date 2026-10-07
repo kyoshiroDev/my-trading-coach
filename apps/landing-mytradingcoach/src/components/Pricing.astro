@@ -68,7 +68,7 @@ const premiumKeys = [
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
           <li>Import CSV universel · Futures, Crypto, Forex</li>
         </ul>
-        <a href={`${APP_URL}/register`} class="price-cta ghost">Commencer gratuitement</a>
+        <a href={`${APP_URL}/register`} class="price-cta ghost" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
 
       <!-- PREMIUM -->
@@ -92,7 +92,7 @@ const premiumKeys = [
         <ul class="price-feats">
           {premiumPlus.map((p) => <li>{p.text}</li>)}
         </ul>
-        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim">
+        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim" data-ga-event="cta_trial" data-ga-place="pricing">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>
           <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>
