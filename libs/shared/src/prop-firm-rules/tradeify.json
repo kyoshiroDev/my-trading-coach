@@ -16,7 +16,7 @@
       "rtrader_pro"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-07",
   "plans": [
     {
       "id": "tradeify-growth-25k",
@@ -3208,6 +3208,626 @@
       ],
       "needs_review": false,
       "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif."
+    },
+    {
+      "id": "tradeify-select-flex-300k",
+      "plan_name": "Select 300K",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "flex",
+        "addon": null
+      },
+      "price": {
+        "amount": 349,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique. Édition limitée : KYC validé avant l'achat, pas de reset, 3 comptes 300K par trader, hors limite des 15 évaluations par 30 jours ; les funded V2 s'ajoutent aux 5 funded autorisés (8 au total)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 14000,
+          "daily_loss_limit": {
+            "amount": 4000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+          },
+          "max_drawdown": {
+            "amount": 8000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD : suit le plus haut solde de fin de journée, jamais à la baisse. Appliqué en temps réel sur la valeur de liquidation nette (solde + latent) : le toucher fait échouer le compte définitivement. Pas de verrouillage en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total (au plus égal : conforme), donc au moins 3 jours pour passer. Évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille complète pendant toute l'évaluation ; le scaling ne s'applique qu'en funded."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 4000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+          },
+          "max_drawdown": {
+            "amount": 8000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 308100,
+            "locked_floor": 300100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 308100 $, ou dès l'approbation d'un payout pris avant ce seuil : plancher fixe à 300100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999.99,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999.99,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 6999.99,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 7000,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Départ à 3 minis, palier selon le solde de fin de journée, effectif le lendemain, conservé une fois atteint. Identique en V1 et V2, Flex et Daily."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 750,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 250,
+            "max_amount": 10000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.tradeify.co/en/articles/16497699-300k-select-account",
+        "https://help.tradeify.co/en/articles/12853921-select-evaluation-accounts",
+        "https://help.tradeify.co/en/articles/12853966-select-flex-and-select-daily-payout-policies",
+        "https://help.tradeify.co/en/articles/10495897-rules-trailing-max-drawdowns",
+        "https://help.tradeify.co/en/articles/10468321-rules-daily-loss-limit",
+        "https://help.tradeify.co/en/articles/10468320-rules-consistency-rule",
+        "https://help.tradeify.co/en/articles/10495876-rules-permitted-times-to-trade",
+        "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
+        "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif. Évaluation : 3 jours minimum (consistency 40 %). Édition limitée : retirée de la vente une fois le stock écoulé."
+    },
+    {
+      "id": "tradeify-select-daily-300k",
+      "plan_name": "Select 300K",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "daily",
+        "addon": null
+      },
+      "price": {
+        "amount": 349,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique. Édition limitée : KYC validé avant l'achat, pas de reset, 3 comptes 300K par trader, hors limite des 15 évaluations par 30 jours ; les funded V2 s'ajoutent aux 5 funded autorisés (8 au total)."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 14000,
+          "daily_loss_limit": {
+            "amount": 4000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+          },
+          "max_drawdown": {
+            "amount": 8000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD : suit le plus haut solde de fin de journée, jamais à la baisse. Appliqué en temps réel sur la valeur de liquidation nette (solde + latent) : le toucher fait échouer le compte définitivement. Pas de verrouillage en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total (au plus égal : conforme), donc au moins 3 jours pour passer. Évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille complète pendant toute l'évaluation ; le scaling ne s'applique qu'en funded."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 3000,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+          },
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 306100,
+            "locked_floor": 300100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 306100 $ : plancher fixe à 300100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999.99,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999.99,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 6999.99,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 7000,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Départ à 3 minis, palier selon le solde de fin de journée, effectif le lendemain, conservé une fois atteint. Identique en V1 et V2, Flex et Daily."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 250,
+            "max_amount": 4000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 306100,
+            "notes": "Éligible chaque jour au-dessus du buffer (solde 306100 $), 4000 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.tradeify.co/en/articles/16497699-300k-select-account",
+        "https://help.tradeify.co/en/articles/12853921-select-evaluation-accounts",
+        "https://help.tradeify.co/en/articles/12853966-select-flex-and-select-daily-payout-policies",
+        "https://help.tradeify.co/en/articles/10495897-rules-trailing-max-drawdowns",
+        "https://help.tradeify.co/en/articles/10468321-rules-daily-loss-limit",
+        "https://help.tradeify.co/en/articles/10468320-rules-consistency-rule",
+        "https://help.tradeify.co/en/articles/10495876-rules-permitted-times-to-trade",
+        "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
+        "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif. Évaluation : 3 jours minimum (consistency 40 %). Édition limitée : retirée de la vente une fois le stock écoulé."
+    },
+    {
+      "id": "tradeify-select-flex-v1-300k",
+      "plan_name": "Select 300K V1 (achat avant le 2026-08-27)",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "payout_path": "flex",
+        "addon": null
+      },
+      "price": {
+        "amount": 449,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Version 1, plus vendue : comptes achetés avant le 2026-08-27, qui gardent ces règles à vie. Paiement unique, pas de reset ; les funded V1 comptent dans les 5 funded autorisés."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 14000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD : suit le plus haut solde de fin de journée, jamais à la baisse. Appliqué en temps réel sur la valeur de liquidation nette (solde + latent) : le toucher fait échouer le compte définitivement. Pas de verrouillage en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total (au plus égal : conforme), donc au moins 3 jours pour passer. Évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille complète pendant toute l'évaluation ; le scaling ne s'applique qu'en funded."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 306100,
+            "locked_floor": 300100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 306100 $, ou dès l'approbation d'un payout pris avant ce seuil : plancher fixe à 300100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999.99,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999.99,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 6999.99,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 7000,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Départ à 3 minis, palier selon le solde de fin de journée, effectif le lendemain, conservé une fois atteint. Identique en V1 et V2, Flex et Daily."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 750,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 250,
+            "max_amount": 10000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.tradeify.co/en/articles/16497699-300k-select-account",
+        "https://help.tradeify.co/en/articles/12853921-select-evaluation-accounts",
+        "https://help.tradeify.co/en/articles/12853966-select-flex-and-select-daily-payout-policies",
+        "https://help.tradeify.co/en/articles/10495897-rules-trailing-max-drawdowns",
+        "https://help.tradeify.co/en/articles/10468321-rules-daily-loss-limit",
+        "https://help.tradeify.co/en/articles/10468320-rules-consistency-rule",
+        "https://help.tradeify.co/en/articles/10495876-rules-permitted-times-to-trade",
+        "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
+        "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Select Flex (payout tous les 5 jours gagnants) choisi à l'activation du funded, définitif. Évaluation : 3 jours minimum (consistency 40 %)."
+    },
+    {
+      "id": "tradeify-select-daily-v1-300k",
+      "plan_name": "Select 300K V1 (achat avant le 2026-08-27)",
+      "account_size": 300000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "payout_path": "daily",
+        "addon": null
+      },
+      "price": {
+        "amount": 449,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Version 1, plus vendue : comptes achetés avant le 2026-08-27, qui gardent ces règles à vie. Paiement unique, pas de reset ; les funded V1 comptent dans les 5 funded autorisés."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 14000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 6000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD : suit le plus haut solde de fin de journée, jamais à la baisse. Appliqué en temps réel sur la valeur de liquidation nette (solde + latent) : le toucher fait échouer le compte définitivement. Pas de verrouillage en évaluation."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "profit_target",
+            "notes": "Aucun jour au-delà de 40 % du profit total (au plus égal : conforme), donc au moins 3 jours pour passer. Évaluation seulement."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Taille complète pendant toute l'évaluation ; le scaling ne s'applique qu'en funded."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2500,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+          },
+          "max_drawdown": {
+            "amount": 5000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 305100,
+            "locked_floor": 300100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Trailing EOD, appliqué en temps réel sur la valeur de liquidation nette (latent compris), hard breach. Verrouillage quand le solde de fin de journée atteint 305100 $ : plancher fixe à 300100 $."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 16,
+            "micros": 160,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499.99,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 2999.99,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4999.99,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 5000,
+                "max_profit": 6999.99,
+                "minis": 10,
+                "micros": 100
+              },
+              {
+                "min_profit": 7000,
+                "max_profit": null,
+                "minis": 16,
+                "micros": 160
+              }
+            ],
+            "notes": "Départ à 3 minis, palier selon le solde de fin de journée, effectif le lendemain, conservé une fois atteint. Identique en V1 et V2, Flex et Daily."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Toutes les positions fermées avant 16:45 ET (12:59 ET les jours fériés écourtés) ; sinon Tradeify les ferme à la clôture, sans échec du compte. Journée de trading 18:00 ET → 17:00 ET, pause 17:00-18:00 ET. News autorisées (Tier 1 compris)."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 250,
+            "max_amount": 3500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 305100,
+            "notes": "Éligible chaque jour au-dessus du buffer (solde 305100 $), 3500 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://help.tradeify.co/en/articles/16497699-300k-select-account",
+        "https://help.tradeify.co/en/articles/12853921-select-evaluation-accounts",
+        "https://help.tradeify.co/en/articles/12853966-select-flex-and-select-daily-payout-policies",
+        "https://help.tradeify.co/en/articles/10495897-rules-trailing-max-drawdowns",
+        "https://help.tradeify.co/en/articles/10468321-rules-daily-loss-limit",
+        "https://help.tradeify.co/en/articles/10468320-rules-consistency-rule",
+        "https://help.tradeify.co/en/articles/10495876-rules-permitted-times-to-trade",
+        "https://help.tradeify.co/en/articles/10495874-rules-news-trading",
+        "https://help.tradeify.co/en/articles/14369021-tradeify-pricing-reference"
+      ],
+      "needs_review": false,
+      "notes": "Parcours Select Daily (payout quotidien) choisi à l'activation du funded, définitif. Évaluation : 3 jours minimum (consistency 40 %)."
     }
   ]
 }

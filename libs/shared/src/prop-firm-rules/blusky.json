@@ -15,7 +15,7 @@
       "tradesea"
     ]
   },
-  "verified_at": "2026-10-06",
+  "verified_at": "2026-10-07",
   "plans": [
     {
       "id": "blusky-launch-50k",
@@ -1520,12 +1520,12 @@
             "split_pct": 0.8,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": null,
+            "min_amount": 500,
             "max_amount": 2500,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum."
+            "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum. Retrait minimum 500 $, montants en dollars entiers (article général « Sim Funded Payouts », 2026-10-07)."
           }
         }
       ],
