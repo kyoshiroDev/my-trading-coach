@@ -1283,6 +1283,14 @@ si aucun client connecté (`gateway.connectedCount()`), donc pas d'appel Yahoo l
 vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTTP
 `GET /market/context` reste pour le secours du front (5 min) et le premier affichage.
 
+**`/eco` authentifié (SCA-B6-03, 2026-10-07)** : `EcoCalendarGateway.handleConnection` exige le JWT
+de l'app dans `handshake.auth.token` (signature vérifiée par `JwtService`, **sans requête en base**,
+démo acceptée) ; absent / invalide / expiré → `disconnect(true)`. `maxHttpBufferSize: 1e5`, logs de
+connexion en `debug`. Front : `EcoSocketService` envoie le jeton (relu à chaque reconnexion) et
+retente de façon espacée après un refus (`io server disconnect`, 2 s → 60 s). Un onglet resté sur
+l'ancien front après le déploiement est refusé jusqu'au rechargement : il garde le secours HTTP
+(5 min), rien ne casse.
+
 ## Acquisition UTM (oct. 2026)
 
 - `POST /auth/register` accepte `acquisitionSource` / `acquisitionMedium` / `acquisitionCampaign`
