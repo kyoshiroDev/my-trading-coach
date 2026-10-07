@@ -45,14 +45,14 @@ export const SOFTWARE_APPLICATION = {
   description: 'Journal de trading intelligent avec coach IA, tracking émotionnel et Weekly Debrief automatique.',
   inLanguage: 'fr',
   offers: [
-    { '@type': 'Offer', name: 'Gratuit', price: '0', priceCurrency: 'EUR', description: 'Trades illimités, journal complet, 1 compte avec ses règles prop firm, compagnon de session, calendrier éco IA, news et contexte marché' },
+    { '@type': 'Offer', name: 'Gratuit', price: '0', priceCurrency: 'EUR', description: 'Trades illimités, journal complet, 1 compte avec ses règles prop firm, synchro Tradovate, suivi prop firm en direct, compagnon de session, calendrier éco IA, news et contexte marché' },
     {
       '@type': 'Offer',
       name: 'Premium',
       price: monthly,
       priceCurrency: 'EUR',
       priceSpecification: { '@type': 'UnitPriceSpecification', price: monthly, priceCurrency: 'EUR', unitCode: 'MON' },
-      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Weekly Debrief, alertes prop firm en direct, anti-tilt, analytics avancés et comptes illimités avec leurs règles prop firm',
+      description: 'Tout le plan Gratuit, plus IA Insights, Chat Coach IA, Weekly Debrief, alertes prop firm en direct (objectif et payout compris, avec le son), anti-tilt, analytics avancés et comptes illimités avec leurs règles prop firm',
     },
   ],
   featureList: [

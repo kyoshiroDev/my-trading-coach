@@ -13,12 +13,13 @@ const premiumPlus: PremiumPlus[] = [
   { text: '✨ IA Insights : analyse de tes patterns', key: 'L’IA analyse tes patterns : ce qui te fait gagner, ce qui te coûte' },
   { text: '📋 Weekly Debrief automatique', key: 'Un débrief IA de ta semaine, chaque dimanche, sans rien faire' },
   { text: 'Analytics avancés : heatmap, equity curve', key: 'Analytics avancés : par setup, par heure, heatmap, equity curve' },
-  { text: '🚨 Alertes prop firm en direct (Tradovate) : drawdown, perte du jour, consistency', key: 'Alertes prop firm et anti-tilt en direct pendant ta séance (Tradovate)' },
+  { text: '🚨 Alertes prop firm en direct (Tradovate) : drawdown, perte du jour, consistency, objectif atteint, payout possible', key: 'Alertes prop firm et anti-tilt en direct pendant ta séance, avec le son (Tradovate)' },
+  { text: '🔔 Alertes sonores pendant ta séance' },
   { text: '🧘 Anti-tilt en séance : revenge, taille, surtrading' },
   { text: '💬 Chat coach IA personnalisé' },
   { text: '🏆 Score trader /100 hebdomadaire' },
   { text: '📄 Export PDF rapport mensuel' },
-  { text: '🌙 Recap journalier email 17h30' },
+  { text: '🌙 Recap 17h30 et Weekly Debrief nourris par tes séances suivies en direct' },
 ];
 // Comptes illimités : déjà dans l'encart « comptes » de la carte, donc seulement dans le bloc.
 const premiumKeys = [
@@ -62,11 +63,13 @@ const premiumKeys = [
           <li>Journal complet : émotions, setup, notes</li>
           <li>🌅 Pré-session : humeur &amp; objectifs du jour</li>
           <li>⚡ Session live : trade rapide &amp; suivi</li>
+          <li>📈 Suivi prop firm en direct dans la session</li>
           <li>🌙 Débrief de session : P&amp;L, émotion, journal</li>
           <li>📅 Calendrier éco IA : analyse bull/bear</li>
           <li>📰 News live &amp; contexte marché (DXY, taux US, indices)</li>
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
-          <li>Import CSV universel · Futures, Crypto, Forex</li>
+          <li>🔗 Synchro Tradovate automatique (lecture seule) · Import CSV universel</li>
+          <li>💰 Solde broker, objectif &amp; prochain payout</li>
         </ul>
         <a href={`${APP_URL}/register`} class="price-cta ghost" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
