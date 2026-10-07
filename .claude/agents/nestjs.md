@@ -1517,7 +1517,7 @@ peu changeante → même traitement ; jamais sur une route authentifiée ou pers
 valeur inconnue → refus au boot).
 - `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
   aucun processeur BullMQ** : les files sont alimentées, pas consommées.
-- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`).
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`, `email`).
 - Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
   doit donc jamais tourner dans le web.
 
@@ -1527,6 +1527,23 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+### File e-mail (SCA-B5-02, 2026-10-07)
+
+`ResendService.send()` **met en file** (`email`, `modules/resend/email-queue.ts`) au lieu d'envoyer :
+`EmailProcessor` (worker seulement) appelle `deliver()` à débit plafonné (`EMAIL_RATE_LIMIT` : 5/s,
+global à la file ; Resend = 10 req/s par équipe, clé partagée entre environnements).
+- 5 essais, backoff exponentiel 2 s → 16 s. Passagères (`rate_limit_exceeded`, `application_error`,
+  `internal_server_error`, exception réseau du SDK) → `RetryableEmailError` → nouvel essai ;
+  définitives (quota, adresse invalide, clé) → Sentry tout de suite, pas de nouvel essai. Sentry
+  n'est prévenu d'un échec passager qu'au **dernier** essai.
+- `idempotencyKey: email/<job.id>` : un essai qui avait abouti malgré une réponse perdue ne crée pas
+  de doublon.
+- File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
+- `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
+  `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
+  pièce jointe : pas dans Redis).
+- Le job contient l'adresse et le HTML (quelques Ko) : supprimé dès l'envoi réussi, échecs gardés 7 j.
 
 ## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
 
