@@ -229,10 +229,18 @@ jobs:
             libs/*/node_modules
           key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+      # Chromium en cache entre les runs (clé = lockfile, donc version de Playwright).
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Navigateur Playwright
-        # Téléchargement parfois bloqué : sans limite, le job tournait jusqu'aux 6 h par défaut de GitHub.
+        # Sans `--with-deps` : le runner Ubuntu a déjà les bibliothèques de Chromium, et cette option
+        # tirait 32 Mo de polices du miroir apt d'Azure à ~100 Ko/s (bloqué > 5 min, le 07/10/2026).
+        # Le navigateur vient du CDN Playwright (rapide), ou du cache ci-dessus.
         timeout-minutes: 5
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install chromium
       - name: Base éphémère (migrations + compte démo)
         run: |
           pnpm exec prisma generate --config=./prisma/prisma.config.ts
