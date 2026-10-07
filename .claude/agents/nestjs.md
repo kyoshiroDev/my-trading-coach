@@ -1517,7 +1517,7 @@ peu changeante → même traitement ; jamais sur une route authentifiée ou pers
 valeur inconnue → refus au boot).
 - `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
   aucun processeur BullMQ** : les files sont alimentées, pas consommées.
-- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`, `email`).
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`, `email`, `daily-recap`).
 - Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
   doit donc jamais tourner dans le web.
 
@@ -1544,6 +1544,19 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
   pièce jointe : pas dans Redis).
 - Le job contient l'adresse et le HTML (quelques Ko) : supprimé dès l'envoi réussi, échecs gardés 7 j.
+
+### File des récaps quotidiens (SCA-B5-01, 2026-10-07)
+
+`DailyRecapCron` (17 h 30 Paris, lun-ven) ne fait plus qu'**enfiler** un job par Premium actif
+(file `daily-recap`, `modules/daily-recap/daily-recap.queue.ts`) ; `DailyRecapProcessor` (worker,
+`concurrency: 3`) génère le récap (appel IA) puis met l'e-mail en file `email`.
+- `jobId = recap-<userId>-<AAAA-MM-JJ>` (jour de Paris) et `removeOnComplete: { age: 2 j }` : relancer
+  le cron le même jour n'enfile pas de doublon. **Jamais de `:` dans un `jobId`** (BullMQ lève
+  « Custom Id cannot contain : »).
+- 3 essais, backoff 30 s ; un nouvel essai refait le même récap (`upsert` sur `userId + date`).
+- Un redémarrage du worker en pleine passe ne perd plus les récaps restants : ils attendent en file.
+- `ResendCron` (rappels de renouvellement) garde sa boucle : depuis B5-02 il ne fait qu'enfiler des
+  e-mails, il n'attend plus les envois.
 
 ## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
 
