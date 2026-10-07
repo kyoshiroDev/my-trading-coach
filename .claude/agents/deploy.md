@@ -156,6 +156,13 @@ exec node main.js
 
 ## CI/CD GitHub Actions
 
+> **Budget Actions (2026-10-07)** : tout job porte un `timeout-minutes` (≈ 3–4× sa durée normale :
+> 5 à 25 min) ; sans lui, GitHub laisse tourner un job bloqué **6 h**. Vu le 07/10 : l'installation
+> de Playwright du smoke E2E bloquée 15 min et plus (étape plafonnée à 5 min depuis). Nouveau job →
+> `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
+> sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
+> elles) : un push = un seul run.
+
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
 - `main` → deploy production (après CI verte + PR)

@@ -15,6 +15,7 @@ jobs:
   changes:
     name: Detect changed apps
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       NX_NO_CLOUD: true
@@ -58,6 +59,7 @@ jobs:
   deploy-api:
     name: Deploy API to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     needs: changes
     if: ${{ needs.changes.outputs.api == 'true' && vars.FREEZE_API_DEPLOY != 'true' }}
     environment: production
@@ -91,6 +93,7 @@ jobs:
   deploy-angular:
     name: Deploy Angular prod to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: changes
     if: ${{ needs.changes.outputs.angular == 'true' }}
     environment: production
@@ -139,6 +142,7 @@ jobs:
   deploy-admin:
     name: Deploy Admin to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: changes
     if: ${{ needs.changes.outputs.admin == 'true' }}
     environment: production
@@ -187,6 +191,7 @@ jobs:
   deploy-landing:
     name: Deploy Landing prod to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
     env:
@@ -233,6 +238,7 @@ jobs:
   mark-deployed:
     name: Tag deployed/prod
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [changes, deploy-api, deploy-angular, deploy-admin, deploy-landing]
     # Les jobs sautés (app non modifiée) ne bloquent pas ; un échec, si. API modifiée mais gelée :
     # le tag ne bouge pas, sinon ces changements ne seraient jamais redéployés au dégel.
