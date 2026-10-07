@@ -8,6 +8,7 @@ import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../modules/infra/redis.service';
 import { USER_THROTTLE_LIMIT } from './email-aware-throttler.guard';
+import { IMPORT_THROTTLE_LIMIT } from '../../modules/trades/trades.controller';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 const PREFIX = `int-b3-throttle-${RUN}-`;
@@ -23,6 +24,9 @@ async function registerToken(n: number): Promise<string> {
   });
   return ((await res.json()) as { data: { access_token: string } }).data.access_token;
 }
+// Sans fichier : la requête est refusée (400) APRÈS le throttler, elle compte donc quand même.
+const importNoFile = (token: string) =>
+  fetch(`${baseUrl}/api/trades/import`, { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: new FormData() }).then((r) => r.status);
 const list = (token: string) => fetch(`${baseUrl}/api/setups`, { headers: { authorization: `Bearer ${token}` } }).then((r) => r.status);
 
 beforeAll(async () => {
@@ -50,5 +54,14 @@ describe('Throttler — par utilisateur une fois connecté', () => {
     expect(statuses.slice(0, USER_THROTTLE_LIMIT).every((s) => s === 200)).toBe(true); // > 60 : plus la limite par IP
     expect(statuses[USER_THROTTLE_LIMIT]).toBe(429);
     expect(await list(b)).toBe(200);
+  }, 120_000);
+
+  it(`import : ${IMPORT_THROTTLE_LIMIT} par minute et par utilisateur (SCA-B1-04)`, async () => {
+    const [c, d] = [await registerToken(3), await registerToken(4)];
+    const statuses: number[] = [];
+    for (let i = 0; i < IMPORT_THROTTLE_LIMIT + 1; i++) statuses.push(await importNoFile(c));
+    expect(statuses.slice(0, IMPORT_THROTTLE_LIMIT)).not.toContain(429);
+    expect(statuses[IMPORT_THROTTLE_LIMIT]).toBe(429);
+    expect(await importNoFile(d)).not.toBe(429);
   }, 120_000);
 });

@@ -510,22 +510,31 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 
 ---
 
-## Cache Redis analytics
+## Cache Redis analytics — versionné (SCA-B1-03, 2026-10-07)
 
-```typescript
-async getSummary(userId: string) {
-  const key = `analytics:summary:${userId}`;
-  const cached = await this.redis.get(key);
-  if (cached) return JSON.parse(cached);
-  const data = await this.computeSummary(userId);
-  await this.redis.setex(key, 300, JSON.stringify(data));
-  return data;
-}
-// Invalider à chaque nouveau trade
-async onTradeCreated(userId: string) {
-  await this.redis.del(`analytics:summary:${userId}`);
-}
-```
+`AnalyticsService.withCache(userId, part, ttl, compute)` lit/écrit
+`analytics:<userId>:v<n>:<part>`, où `n` = compteur `analytics:v:<userId>` (absent → 0).
+- **Invalider = `invalidateUserCache(userId)` = `INCR` + `EXPIRE 7 j` du compteur** (O(1)). Plus de
+  SCAN/DEL : les clés de l'ancienne version ne sont plus lues et expirent par leur TTL (300 s).
+  Le compteur vit plus longtemps que tout cache : repartir de 0 ne retombe jamais sur une clé vivante.
+- Nouvelle clé analytics → passer par `withCache(userId, '<part>', …)`, jamais une clé construite à
+  la main (elle échapperait à l'invalidation).
+- Redis en panne → calcul direct, rien écrit.
+
+## Import de trades en lot (SCA-B1-01/02/04, 2026-10-07)
+
+`TradesService.importTrades` (CSV, synchro et historique Tradovate) :
+- lot vide → retour immédiat, **0 requête** (cas courant de la synchro broker) ;
+- trades existants lus sur `[min − 1 j, max + 1 j]` du lot (`importDedupeWindow`, `import-dedupe.util.ts`) :
+  la clé exacte porte la date à la ms et le rapprochement entre fuseaux est borné à ±14 h. Une ligne
+  sans date valide → tout l'historique ;
+- session active, setups, comptes et compte par défaut résolus **une fois par lot**
+  (`createImportBatch`, `import-batch.ts`, mémoïsé par promesse : un setup invalide fait échouer
+  chacune de ses lignes sans refaire la requête) ;
+- cache analytics invalidé **une fois** en fin de lot (et pas si rien n'est créé) ;
+- insertion toujours ligne par ligne (`create` + `opts.batch`) : un conflit d'unicité (import
+  concurrent) reste compté comme doublon. `createMany` du plan B1-02 non fait (changerait ce comptage).
+- `POST /trades/import` : `@Throttle` **5 / min par utilisateur** (`IMPORT_THROTTLE_LIMIT`).
 
 ---
 
