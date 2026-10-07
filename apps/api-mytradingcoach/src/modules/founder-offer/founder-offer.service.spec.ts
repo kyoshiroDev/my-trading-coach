@@ -85,9 +85,17 @@ describe('FounderOfferService — compteur et état public', () => {
   it('état public : aucune donnée personnelle, open=false si fermée', async () => {
     const state = await setup({ config: { open: false } }).service.publicState();
     expect(state).toEqual({
-      open: false, seatsTotal: 200, seatsLeft: 200,
+      open: false, ended: false, seatsTotal: 200, seatsLeft: 200,
       priceMonthlyEur: FOUNDER_OFFER.priceMonthlyEur, priceAnnualEur: FOUNDER_OFFER.priceAnnualEur,
     });
+  });
+
+  it('ouverte puis complète ou terminée → ended (FAQ « offre clôturée »)', async () => {
+    const full = await setup({ taken: FOUNDER_OFFER.seats }).service.publicState();
+    expect(full).toMatchObject({ open: false, ended: true, seatsLeft: 0 });
+    const past = await setup({ config: { endsAt: new Date(Date.now() - 1000) } }).service.publicState();
+    expect(past).toMatchObject({ open: false, ended: true });
+    expect(await setup().service.publicState()).toMatchObject({ open: true, ended: false });
   });
 
   it('réservation de 35 min : couvre la session Stripe de 30 min et le webhook', () => {

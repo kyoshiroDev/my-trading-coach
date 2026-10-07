@@ -51,6 +51,11 @@ export interface FounderCandidate {
 
 export interface FounderPublicState {
   open: boolean;
+  /**
+   * L'offre a été ouverte puis s'est arrêtée (complète ou date de fin passée) : la landing dit
+   * « offre clôturée, les fondateurs gardent leur tarif ». Faux tant qu'elle n'a jamais ouvert.
+   */
+  ended: boolean;
   seatsTotal: number;
   seatsLeft: number;
   priceMonthlyEur: number;
@@ -136,10 +141,12 @@ export class FounderOfferService {
   }
 
   /** Route publique : rien de personnel, et `open: false` dès que l'offre ne vend plus. */
-  async publicState(): Promise<FounderPublicState> {
-    const [open, seatsLeft] = await Promise.all([this.isOpen(), this.seatsLeft()]);
+  async publicState(now = new Date()): Promise<FounderPublicState> {
+    const [config, seatsLeft] = await Promise.all([this.getConfig(), this.seatsLeft()]);
+    const ended = config.open && (seatsLeft === 0 || (!!config.endsAt && config.endsAt <= now));
     return {
-      open,
+      open: config.open && !ended,
+      ended,
       seatsTotal: FOUNDER_OFFER.seats,
       seatsLeft,
       priceMonthlyEur: FOUNDER_OFFER.priceMonthlyEur,
