@@ -1313,6 +1313,7 @@ redéployer : rien à lancer sur le VPS.
   les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
   Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
 - Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- **Veille des règles** (2026-10-07) : `pnpm prop-firms:watch` + workflow hebdomadaire « Veille règles prop firm » (issue `veille-prop-firm`). Toute mise à jour d'une firm se termine par `pnpm prop-firms:watch --update` (relevé `veille/sources.json`), voir le README du catalogue.
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,

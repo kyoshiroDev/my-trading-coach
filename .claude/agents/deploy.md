@@ -160,6 +160,13 @@ exec node main.js
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
 - `main` → deploy production (après CI verte + PR)
 
+### Workflows planifiés
+- **Veille règles prop firm** (`prop-firm-watch.yml`, lundi 06:00 UTC + manuel) : `pnpm prop-firms:watch` relit les
+  sources du catalogue prop firm et ouvre ou commente une issue `veille-prop-firm` s'il y a un article modifié ou une
+  firm à revérifier (> 30 jours). Lecture seule, aucun secret (`GITHUB_TOKEN`, `issues: write`). Un `schedule` ne
+  tourne que depuis la branche par défaut (`main`) : il n'est actif qu'une fois promu en prod. Marche à suivre :
+  README de `libs/shared/src/prop-firm-rules/`, section « Veille automatique ».
+
 ### Secrets GitHub requis
 
 **Environment `production` :**

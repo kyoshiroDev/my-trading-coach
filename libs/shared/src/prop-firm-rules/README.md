@@ -22,6 +22,8 @@ Le script de validation est dans `tools/scripts/` (et non dans un `scripts/` rac
 | `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` : `lucid`, `apex`, `topstep`, `tradeify`, `myfundedfutures`, `tradeday`, `takeprofittrader`, `phidias`, `earn2trade`, `toponefutures`, `blusky`, `fundedfuturesfamily`, `oneuptrader`, `uprofit`, `bulenox`, `elitetraderfunding`. |
 | `EXTRACTION-REPORT.md` | Sources, tableau récap, plans à revoir, contradictions. |
 | `tools/scripts/validate-prop-firm-rules.ts` | Validation ajv + contrôles métier. |
+| `veille/sources.json` | Relevé de référence des sources (date publiée ou empreinte), comparé chaque semaine par la veille automatique. |
+| `tools/scripts/watch-prop-firm-sources.ts` | Veille des sources : `pnpm prop-firms:watch [--update]`. |
 
 ## Valider
 
@@ -86,9 +88,27 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 5. Ajouter le fichier à `PROP_FIRM_CATALOG_FILES` (`catalog.ts`).
 6. `pnpm prop-firms:validate`, puis compléter `EXTRACTION-REPORT.md`. Le déploiement suivant de l'API le met en base.
 
+## Veille automatique
+
+Les firms changent leurs règles sans prévenir : une règle périmée donne une alerte fausse au trader. Le workflow **« Veille règles prop firm »** (`.github/workflows/prop-firm-watch.yml`, chaque lundi 06:00 UTC, lançable à la main) relit toutes les `source_urls` avec `pnpm prop-firms:watch` et les compare au relevé de référence `veille/sources.json` :
+
+- **Date publiée** quand la source en donne une : `dateModified` du JSON-LD (centres d'aide Intercom : Lucid, BluSky, Earn2Trade, MyFundedFutures, Top One, Topstep, FFF), `edited_at` de l'API Zendesk (Take Profit Trader).
+- **Empreinte du contenu** sinon : API du centre d'aide (Phidias), CMS Directus (Bulenox), texte visible de la page (le reste). Le texte est normalisé : sans scripts, sans dates relatives (« Updated over 3 weeks ago »), sans attributs Cloudflare, sans montants au centime ni latences en ms (fils de « payouts récents »).
+- **Plusieurs versions** : chaque page à empreinte est lue 4 fois et le relevé garde toutes les versions vues. Seule une version jamais vue compte comme une modification ; une page qui sert plusieurs versions (test A/B, nouvelle offre en cours de déploiement, ex. pages de plans MyFundedFutures en octobre 2026) est signalée à part.
+- **Illisibles hors navigateur** (Apex, Tradeify, sites principaux en 403) : listées dans le rapport, à relire dans Chrome lors de la revérification mensuelle.
+
+S'il y a un article modifié ou une firm vérifiée il y a plus de 30 jours (`verified_at`), le workflow ouvre une issue `veille-prop-firm` (ou commente celle qui est ouverte). Pour la traiter : relire les articles signalés, mettre à jour le JSON de la firm et son `verified_at`, noter la réponse ou la source dans `EXTRACTION-REPORT.md`, puis :
+
+```bash
+pnpm prop-firms:validate
+pnpm prop-firms:watch --update   # enregistre le nouveau relevé (à lancer 2 ou 3 fois espacées si une page sert plusieurs versions)
+```
+
+Commiter le JSON et `veille/sources.json` ensemble, fermer l'issue.
+
 ## Re-vérifier une firm
 
-Les firms changent leurs règles souvent (Apex a remplacé toute sa gamme le 2026-03-01, Lucid a changé la consistency Pro le 2025-11-28). À refaire au moins une fois par mois et avant chaque mise en avant d'un plan :
+Les firms changent leurs règles souvent (Apex a remplacé toute sa gamme le 2026-03-01, Lucid a changé la consistency Pro le 2025-11-28). À refaire au moins une fois par mois (le workflow de veille le rappelle via `verified_at`) et avant chaque mise en avant d'un plan :
 
 1. Rouvrir chaque URL de `source_urls`. Les help centers Lucid (Intercom) et Apex (WordPress) affichent une date de mise à jour par article (`dateModified` dans le JSON-LD de la page) : comparer avec `verified_at`.
 2. Où lire les sources des firms ajoutées le 2026-10-04 (beaucoup de sites principaux bloquent les requêtes hors navigateur ou chargent leurs règles en JavaScript) :
