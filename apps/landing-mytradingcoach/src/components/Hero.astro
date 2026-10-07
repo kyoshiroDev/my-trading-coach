@@ -100,6 +100,15 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     </a>
   </div>
   <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
+  {/*
+    Preuve factuelle (audit 2026-10-06 : aucune preuve sociale sur la home). Texte seul : le
+    logo NinjaTrader reste au footer et jamais de « partenaire officiel » (clause 17, astro.md).
+  */}
+  <ul class="hero-trust">
+    <li>Référencé dans l'Ecosystem NinjaTrader</li>
+    <li>Synchro en lecture seule : aucun ordre n'est jamais passé</li>
+    <li>Règles prop firm sourcées et datées</li>
+  </ul>
 </section>
 
 <style>
@@ -407,6 +416,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     .hero-col { order: 2; }
     .hero-actions { order: 3; }
     .hero-cta-sub { order: 4; }
+    .hero-trust { order: 4; }
     .hero-shot { order: 5; margin-top: 28px; }
   }
 
@@ -453,4 +463,17 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     .pulse-ring { display: none; }
     .hero-moments { flex-direction: column; align-items: center; gap: 6px; }
   }
+  .hero-trust {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
+    margin: 14px auto 0;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-trust li { font-size: 12px; color: var(--txt2); font-family: var(--mono); display: flex; gap: 6px; }
+  .hero-trust li::before { content: '✓'; color: var(--green); }
 </style>

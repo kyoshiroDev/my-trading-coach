@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
+import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 
 // Mock argon2 globally for all tests
@@ -61,6 +62,7 @@ const mockJwt = {
   signAsync: vi.fn().mockResolvedValue('mock_token'),
 };
 
+const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
 const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockResend = {
@@ -85,6 +87,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: mockJwt },
         { provide: ResendService, useValue: mockResend },
         { provide: SetupsService, useValue: { seedDefaults: vi.fn().mockResolvedValue(true) } },
+        { provide: DemoSeedService, useValue: mockDemoSeed },
         { provide: ProductEventsService, useValue: mockProductEvents },
       ],
     }).compile();
@@ -93,6 +96,19 @@ describe('AuthService', () => {
   });
 
   describe('demoLogin', () => {
+    it('rafraîchit la démo si besoin AVANT de connecter le visiteur', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockSafeUser);
+      const res = await service.demoLogin();
+      expect(mockDemoSeed.ensureFresh).toHaveBeenCalledWith('connexion démo');
+      expect(res.access_token).toBe('mock_token');
+    });
+
+    it('un re-seed en échec ne bloque pas la connexion démo', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(mockSafeUser);
+      mockDemoSeed.ensureFresh.mockRejectedValueOnce(new Error('db lente'));
+      await expect(service.demoLogin()).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+
     it('compte la visite de la démo dans l’entonnoir', async () => {
       mockPrisma.user.findFirst.mockResolvedValue({ ...mockSafeUser, id: 'demo-id' });
       await service.demoLogin();
