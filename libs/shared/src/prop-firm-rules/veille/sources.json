@@ -1,0 +1,2148 @@
+{
+  "https://blusky.pro/": {
+    "kind": "hash",
+    "values": [
+      "2aca5f5208923792"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://bulenox.com/accounts-pricing": {
+    "kind": "hash",
+    "values": [
+      "cd2fb3e01e3f00c4"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://bulenox.com/help-center/fast-track": {
+    "kind": "hash",
+    "values": [
+      "68d345e50a64180c"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://bulenox.com/help-center/funded": {
+    "kind": "hash",
+    "values": [
+      "23ec7aef2a2cd98d"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://bulenox.com/help-center/master": {
+    "kind": "hash",
+    "values": [
+      "ec15a2946516f8ae"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://bulenox.com/help-center/momentum": {
+    "kind": "hash",
+    "values": [
+      "095b545c192d5d3b"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://bulenox.com/help-center/qualification": {
+    "kind": "hash",
+    "values": [
+      "8ecbccef19885a64"
+    ],
+    "firms": [
+      "bulenox"
+    ]
+  },
+  "https://elitetraderfunding.app/1-step-evaluation": {
+    "kind": "hash",
+    "values": [
+      "8ff3b4841bd69d96"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/diamond-hands-evaluation": {
+    "kind": "hash",
+    "values": [
+      "e297f2314071e98b"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/direct-to-funded": {
+    "kind": "hash",
+    "values": [
+      "b866dae6beefef83"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/elite": {
+    "kind": "hash",
+    "values": [
+      "0c29d24325b648e3"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/end-of-day-evaluation": {
+    "kind": "hash",
+    "values": [
+      "d3cbeaa9d32a8777"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/evaluations": {
+    "kind": "hash",
+    "values": [
+      "9c7553517ad6c4c5"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/fast-track-evaluation": {
+    "kind": "hash",
+    "values": [
+      "4500ca1bb1b3d9c2"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/help/tracking-real-time-drawdown-made-easy": {
+    "kind": "date",
+    "values": [
+      "2026-07-27T16:24:14.237Z"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/payouts": {
+    "kind": "hash",
+    "values": [
+      "f03a8b61e10e5e6f"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://elitetraderfunding.app/static-drawdown": {
+    "kind": "hash",
+    "values": [
+      "2518d056af7215bb"
+    ],
+    "firms": [
+      "elitetraderfunding"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts": {
+    "kind": "date",
+    "values": [
+      "2026-10-06T18:30:49Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/12434059-evaluation-rules": {
+    "kind": "date",
+    "values": [
+      "2026-08-12T18:37:10Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/12434092-resets": {
+    "kind": "date",
+    "values": [
+      "2026-08-12T18:38:33Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage": {
+    "kind": "date",
+    "values": [
+      "2026-08-12T18:36:32Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/14462222-understanding-the-consistency-rule": {
+    "kind": "date",
+    "values": [
+      "2026-04-06T14:29:57Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/16300846-launch-plans-phases-rules-and-costs": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T16:50:36Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs": {
+    "kind": "date",
+    "values": [
+      "2026-09-11T12:24:37Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts": {
+    "kind": "date",
+    "values": [
+      "2026-08-12T18:48:32Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/16300869-instant-funding-direct-to-funded-and-instant-sim-funded": {
+    "kind": "date",
+    "values": [
+      "2026-08-12T18:48:36Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-05T18:41:50Z"
+    ],
+    "firms": [
+      "blusky"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/11183609-reset-pricing-for-earn2trade-accounts": {
+    "kind": "date",
+    "values": [
+      "2025-05-08T09:37:08Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/2280137-what-is-the-fee-structure-on-the-live-or-livesim-accounts": {
+    "kind": "date",
+    "values": [
+      "2026-07-06T10:58:58Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3224507-what-is-the-maximum-drawdown-on-the-trader-career-path-and-the-gauntlet-mini-challenges": {
+    "kind": "date",
+    "values": [
+      "2026-05-08T09:17:10Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3224526-are-there-any-restrictions-on-when-i-can-trade-in-my-evaluation-account": {
+    "kind": "date",
+    "values": [
+      "2025-11-13T15:30:42Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3292351-what-is-the-progression-ladder-in-the-gauntlet-mini": {
+    "kind": "date",
+    "values": [
+      "2026-07-06T10:13:08Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3292356-what-is-a-trailing-drawdown": {
+    "kind": "date",
+    "values": [
+      "2023-10-30T11:08:22Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3395926-how-is-my-daily-loss-calculated": {
+    "kind": "date",
+    "values": [
+      "2024-08-27T08:46:35Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/3849975-what-is-the-maintain-consistency-rule": {
+    "kind": "date",
+    "values": [
+      "2026-05-07T13:02:36Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/5372687-how-does-end-of-day-drawdown-work": {
+    "kind": "date",
+    "values": [
+      "2022-02-01T13:07:25Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy": {
+    "kind": "date",
+    "values": [
+      "2026-07-09T10:10:23Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/5922873-what-is-the-progression-ladder-on-the-trader-career-path": {
+    "kind": "date",
+    "values": [
+      "2026-07-06T10:11:43Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/5941958-what-are-the-evaluation-rules": {
+    "kind": "date",
+    "values": [
+      "2026-07-06T10:14:18Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/6877364-what-happens-when-i-complete-my-evaluation": {
+    "kind": "date",
+    "values": [
+      "2026-07-06T11:20:43Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.earn2trade.com/en/articles/8117088-drawdown-types": {
+    "kind": "date",
+    "values": [
+      "2026-08-10T11:24:57Z"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights": {
+    "kind": "date",
+    "values": [
+      "2026-06-30T16:04:08Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained": {
+    "kind": "date",
+    "values": [
+      "2026-01-08T18:57:15Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/13134709-rapid-plan-50k-a-comprehensive-look": {
+    "kind": "date",
+    "values": [
+      "2026-08-24T20:34:27Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/16158363-rapid-eod-50k-a-comprehensive-look": {
+    "kind": "date",
+    "values": [
+      "2026-08-24T20:34:33Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/16727601-rapid-eod-25k-a-comprehensive-look": {
+    "kind": "date",
+    "values": [
+      "2026-09-02T13:30:11Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy": {
+    "kind": "date",
+    "values": [
+      "2026-08-31T12:47:27Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained": {
+    "kind": "date",
+    "values": [
+      "2026-08-24T20:34:20Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade": {
+    "kind": "date",
+    "values": [
+      "2026-08-24T20:35:05Z"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10906950-maximum-contracts-explained": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T23:09:59Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T23:54:21Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907150-understanding-the-drawdown-lock": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T14:47:15Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907367-maximum-payout-until-live-explained": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T14:34:02Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907430-understanding-the-profit-split-on-sim-funded-accounts": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T14:36:25Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907901-can-i-hold-trades-overnight": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T23:19:28Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10907951-can-i-trade-news": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T23:55:43Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10908119-trailing-drawdown-on-instant-sim-funded-accounts-how-it-works": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:57:26Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/10908767-consistency-rule-in-instant-sim-funded-accounts-explained": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:58:04Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:56:21Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/11165893-trading-hours-at-top-one-futures": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T23:21:20Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:28:30Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/12707415-ignite-accounts-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:29:11Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/12718011-ignite-accounts-15-consistency-rule": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:29:51Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/12718038-instant-sim-funded-account-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T22:55:43Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T19:15:54Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/13904722-elite-daily-v2-max-loss-limit-mll": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T18:00:30Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/13904824-elite-daily-v2-contract-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T16:22:08Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/13904852-elite-daily-v2-news-trading-rule-funded-only": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T16:24:06Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:24:02Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595053-elite-access-contract-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:28:26Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:26:52Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595145-elite-access-maximum-loss-limit-mll-eod": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:27:57Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595151-elite-access-funded-consistency-rule-40": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:30:06Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595161-elite-access-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:31:42Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14595174-elite-access-news-trading-rule": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:32:12Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/14623577-elite-access-reset-fees": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:20:38Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T19:15:03Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T19:17:27Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/15056446-elite-daily-v2-daily-payout-rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-02T16:20:12Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees": {
+    "kind": "date",
+    "values": [
+      "2026-10-06T12:13:03Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/16150794-elite-access-activation-fees-explained": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T20:33:06Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:38:58Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:41:48Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059654-elite-access-intraday-maximum-loss-limit-evaluation-phase-eod": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:42:46Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059688-elite-access-intraday-maximum-loss-limit-funded-phase-intraday": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:43:34Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059773-elite-access-intraday-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:47:57Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059891-elite-access-intraday-reset-fees": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:50:00Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17059911-elite-access-intraday-activation-fees-explained": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T21:49:22Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244414-x-ultra-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:58:08Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244455-x-ultra-evaluation-profit-target-consistency-50": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:49:57Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244484-x-ultra-daily-loss-limit-dll": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:58:23Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244517-x-ultra-maximum-drawdown-mll-eod": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:50:00Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244610-x-ultra-contract-limits-scaling": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:49:49Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244734-x-ultra-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:50:09Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244856-x-ultra-activation-fee-resets-account-limits": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:59:31Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17244951-x-ultra-other-trading-rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-01T12:50:05Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep": {
+    "kind": "date",
+    "values": [
+      "2026-06-10T14:02:45Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/10490293-daily-loss-limit-in-the-trading-combine-and-express-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-06-30T17:30:14Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions": {
+    "kind": "date",
+    "values": [
+      "2026-09-25T22:00:42Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284099-topstep-program-overview": {
+    "kind": "date",
+    "values": [
+      "2026-09-10T14:13:47Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284197-trading-combine-parameters": {
+    "kind": "date",
+    "values": [
+      "2026-09-24T20:21:06Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284204-what-is-the-maximum-loss-limit": {
+    "kind": "date",
+    "values": [
+      "2026-09-18T18:51:37Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284206-when-and-what-products-can-i-trade": {
+    "kind": "date",
+    "values": [
+      "2026-07-13T21:22:30Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284208-consistency-at-topstep": {
+    "kind": "date",
+    "values": [
+      "2026-09-17T14:21:11Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284215-express-funded-account-parameters": {
+    "kind": "date",
+    "values": [
+      "2026-08-05T19:49:02Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284223-what-is-the-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-07-16T14:03:03Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://help.topstep.com/en/articles/8284233-topstep-payout-policy": {
+    "kind": "date",
+    "values": [
+      "2026-09-30T20:32:23Z"
+    ],
+    "firms": [
+      "topstep"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/10-horaires-de-negociations-concerne-uniquement-les-comptes-fundamental": {
+    "kind": "hash",
+    "values": [
+      "db2ded46c85ef545"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/11-trading-de-news-economiques": {
+    "kind": "hash",
+    "values": [
+      "1d3d43afa6b7765e"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash": {
+    "kind": "hash",
+    "values": [
+      "ef3c8b1f0d9a9e29"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/19-regle-de-constance-de-30-sur-les-comptes-phidias-propfirm": {
+    "kind": "hash",
+    "values": [
+      "b54d5c69f77e222d"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/20-regles-compte-express-to-live-etl-e2l": {
+    "kind": "hash",
+    "values": [
+      "2574b2c97cfbb7cd"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/3-regles-generales": {
+    "kind": "hash",
+    "values": [
+      "f6ba16028653486f"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/4-regles-du-end-of-day-eod": {
+    "kind": "hash",
+    "values": [
+      "2a4ff604823a955e"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/6-demandes-de-retraits-et-nombre-de-jours-par-retrait": {
+    "kind": "hash",
+    "values": [
+      "fcbe94a42791a8fe"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/9-positions-ouvertes-over-night-et-over-week": {
+    "kind": "hash",
+    "values": [
+      "0a7d31cecb3f4a4e"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/cest-quoi-les-comptes-fundamental": {
+    "kind": "hash",
+    "values": [
+      "40af3ac1e9ca01a1"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://helpcenter.phidiaspropfirm.com/help/regles-compte-premium": {
+    "kind": "hash",
+    "values": [
+      "ff164b68ad89bf00"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:09:13Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15657092-prime-evaluation-account": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T17:30:34Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15705476-prime-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:17:11Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15715050-prime-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:10:26Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15808673-prime-consistency": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:17:23Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15808767-prime-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T17:18:58Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation": {
+    "kind": "date",
+    "values": [
+      "2026-09-10T23:10:04Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15811095-premier-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-09-10T22:12:57Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15811464-premier-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-09-10T22:20:02Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15850031-premier-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:48:32Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15850710-velocity-evaluation": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T17:31:15Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15851015-velocity-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:18:24Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15878902-velocity-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:51:01Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15879043-velocity-consistency": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:18:34Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15879485-velocity-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T19:21:49Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15879855-straight-to-funded-s2f-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:07:10Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15879981-straight-to-funded-s2f-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-09-08T16:51:20Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15880555-straight-to-funded-s2f-consistency-percentage": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:19:06Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15880602-straight-to-funded-s2f-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:19:11Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade": {
+    "kind": "date",
+    "values": [
+      "2026-09-24T20:57:48Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy": {
+    "kind": "date",
+    "values": [
+      "2026-10-05T19:16:53Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time": {
+    "kind": "date",
+    "values": [
+      "2026-08-24T15:19:53Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16302640-prime-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-08-13T17:05:56Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16302826-premier-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:18:11Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16310772-velocity-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:18:45Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16310780-straight-to-funded-s2f-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-08-11T16:19:17Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-09-14T21:28:41Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements": {
+    "kind": "date",
+    "values": [
+      "2026-09-24T16:36:34Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency": {
+    "kind": "date",
+    "values": [
+      "2026-09-15T19:01:43Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage": {
+    "kind": "date",
+    "values": [
+      "2026-09-17T15:26:40Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-09-17T15:30:31Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://myfundedfutures.com/plans/builder": {
+    "kind": "hash",
+    "values": [
+      "d0bb1c21eb49d0ab",
+      "ce0e8c930f45e2bf"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://myfundedfutures.com/plans/pro": {
+    "kind": "hash",
+    "values": [
+      "b0538b3d4d1cfd74",
+      "70991549f5dc6732"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://myfundedfutures.com/plans/rapid": {
+    "kind": "hash",
+    "values": [
+      "a808f1f5dbe3b7ee",
+      "a788009c3df6c750"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://myfundedfutures.com/plans/rapid-eod": {
+    "kind": "hash",
+    "values": [
+      "c177c5a6f8305c7f",
+      "6c08e59a6ed62a64"
+    ],
+    "firms": [
+      "myfundedfutures"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/371-how-does-the-billing-work": {
+    "kind": "hash",
+    "values": [
+      "d15b56dc64d42b65"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/372-funded-trader-rules": {
+    "kind": "hash",
+    "values": [
+      "a09dca197e77a0d7"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/376-profit-info": {
+    "kind": "hash",
+    "values": [
+      "c5e0e3cd1840da6c"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/385-evaluation-rules-parameters": {
+    "kind": "hash",
+    "values": [
+      "6a5a639aa0510bca"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/386-funded-trader-dynamic-scaling-targets": {
+    "kind": "hash",
+    "values": [
+      "675b9b031dfec971"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/388-funded-trader-trailing-drawdown": {
+    "kind": "hash",
+    "values": [
+      "9922e19692202798"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/389-rules-definitions": {
+    "kind": "hash",
+    "values": [
+      "354e796e382ea566"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/390-permissible-products-times": {
+    "kind": "hash",
+    "values": [
+      "28892a637481e2dd"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://oneuptrader.helpscoutdocs.com/article/391-important-evaluation-info": {
+    "kind": "hash",
+    "values": [
+      "320fe981940a26e4"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://phidiaspropfirm.com/accounts": {
+    "kind": "hash",
+    "values": [
+      "ab330308458ef36f"
+    ],
+    "firms": [
+      "phidias"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms": {
+    "kind": "date",
+    "values": [
+      "2026-07-28T17:06:23Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:05:24Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:05:50Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890029-lucidpro-evaluation-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:09:09Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890069-lucidpro-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:09:32Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890092-lucidpro-payouts": {
+    "kind": "date",
+    "values": [
+      "2026-08-06T15:11:02Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890109-lucidpro-consistency-percentage": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:09:57Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890122-lucidpro-daily-loss-limit": {
+    "kind": "date",
+    "values": [
+      "2026-07-26T03:55:42Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890136-lucidpro-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:11:29Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890148-luciddirect-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:12:12Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890164-luciddirect-payout-objectives": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:12:37Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890178-luciddirect-consistency-percentage": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:12:57Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890185-luciddirect-daily-loss-limit": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:13:15Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12890192-luciddirect-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:13:39Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-31T14:01:44Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-15T22:59:33Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts": {
+    "kind": "date",
+    "values": [
+      "2026-07-28T17:09:58Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:14:58Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan": {
+    "kind": "date",
+    "values": [
+      "2026-05-06T17:34:11Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-08-26T21:15:27Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/13425130-new-live-structure": {
+    "kind": "date",
+    "values": [
+      "2026-10-04T19:05:06Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/13891785-lucidmaxx-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-04T21:40:15Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/14315460-lucidmaxx-eval-rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-04T21:40:06Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/14316866-lucidmaxx-eval-pricing": {
+    "kind": "date",
+    "values": [
+      "2026-10-04T21:39:56Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation": {
+    "kind": "date",
+    "values": [
+      "2026-07-31T13:11:03Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account": {
+    "kind": "date",
+    "values": [
+      "2026-08-07T21:18:35Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts": {
+    "kind": "date",
+    "values": [
+      "2026-07-27T02:38:25Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency": {
+    "kind": "date",
+    "values": [
+      "2026-07-27T02:38:31Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown": {
+    "kind": "date",
+    "values": [
+      "2026-07-27T02:38:39Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization": {
+    "kind": "date",
+    "values": [
+      "2026-07-27T02:38:06Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit": {
+    "kind": "date",
+    "values": [
+      "2026-08-19T19:35:15Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization": {
+    "kind": "date",
+    "values": [
+      "2026-08-06T02:04:56Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/16226068-lucidpro-customization": {
+    "kind": "date",
+    "values": [
+      "2026-08-06T02:05:06Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program": {
+    "kind": "date",
+    "values": [
+      "2026-10-06T15:59:46Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
+  "https://takeprofittrader.com/": {
+    "kind": "hash",
+    "values": [
+      "1a0d7592bb09fda6"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15141145057053-Test-Subscriptions": {
+    "kind": "date",
+    "values": [
+      "2026-06-22T20:40:01Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169066911133-Rule-2-Do-Not-Exceed-Maximum-Position-Size": {
+    "kind": "date",
+    "values": [
+      "2025-11-13T17:33:04Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15169070804125-Rule-1-Hit-Your-Profit-Target": {
+    "kind": "date",
+    "values": [
+      "2025-11-13T16:36:37Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170265979165-Rule-3-Do-Not-Hit-End-Of-Day-EOD-Maximum-Trailing-Drawdown": {
+    "kind": "date",
+    "values": [
+      "2025-11-13T16:40:27Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170316538013-Rule-5-Be-Consistent": {
+    "kind": "date",
+    "values": [
+      "2026-09-22T18:25:46Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15170347090461-Rule-4-Trade-Approved-Products-During-Approved-Hours": {
+    "kind": "date",
+    "values": [
+      "2026-05-06T17:37:55Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171769361053-PRO-Account-Rules": {
+    "kind": "date",
+    "values": [
+      "2026-09-22T12:34:33Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15171820366109-How-to-Keep-Track-Of-Your-Drawdown": {
+    "kind": "date",
+    "values": [
+      "2025-11-13T20:17:53Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-06T15:31:52Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172354954525-Withdrawal-Fees": {
+    "kind": "date",
+    "values": [
+      "2025-12-28T17:24:47Z"
+    ],
+    "firms": [
+      "takeprofittrader"
+    ]
+  },
+  "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008847-what-are-the-objectives-and-rules-of-the-quick-pay-and-fast-pass-evaluation-": {
+    "kind": "date",
+    "values": [
+      "Mon, 27 Jul at 12:01 PM"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  },
+  "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008855-what-is-the-maximum-drawdown-rule-": {
+    "kind": "date",
+    "values": [
+      "Sun, 31 May at 11:07 AM"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  },
+  "https://tradeday.freshdesk.com/en/support/solutions/articles/103000008889-what-are-the-rules-for-funded-funded-sim-and-funded-live-traders-": {
+    "kind": "date",
+    "values": [
+      "Sun, 31 May at 12:48 PM"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  },
+  "https://tradeday.freshdesk.com/en/support/solutions/articles/103000018874-what-is-the-permitted-trading-times-guideline-": {
+    "kind": "date",
+    "values": [
+      "Mon, 27 Apr at 3:42 PM"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  },
+  "https://tradeday.freshdesk.com/en/support/solutions/articles/103000335937-quick-pay-funded-sim-payout-policy": {
+    "kind": "date",
+    "values": [
+      "Wed, 22 Jul at 2:21 PM"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  },
+  "https://uprofit.com/day-programs": {
+    "kind": "hash",
+    "values": [
+      "dee586fbecb6d697"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/-markets-and-trading-hours-38279727543188": {
+    "kind": "hash",
+    "values": [
+      "d3195b4e4c9e0e5e"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-100k-52062454952980": {
+    "kind": "hash",
+    "values": [
+      "0c1940e5d38cbae5"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-150k-52062432918292": {
+    "kind": "hash",
+    "values": [
+      "b7d7cb16ca4d7489"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-50k-52062400375060": {
+    "kind": "hash",
+    "values": [
+      "65f9fc202d328e8f"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-live-virtual-100k-52062625551636": {
+    "kind": "hash",
+    "values": [
+      "4ac228ea44fa5afa"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-live-virtual-150k-52062642415636": {
+    "kind": "hash",
+    "values": [
+      "cb315d9393151d02"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-live-virtual-50k-52062598543508": {
+    "kind": "hash",
+    "values": [
+      "c6dcc2dcc41a3c01"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-payout-policy-52062715698580": {
+    "kind": "hash",
+    "values": [
+      "b4d621fe891b5c42"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-trading-parameters-52062905513620": {
+    "kind": "hash",
+    "values": [
+      "9eb9f74b2d281649"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-100k-52063415195668": {
+    "kind": "hash",
+    "values": [
+      "dd63893e632aab8c"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-150k-52063440373780": {
+    "kind": "hash",
+    "values": [
+      "bceb3e9b949fa450"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-50k-52063403210132": {
+    "kind": "hash",
+    "values": [
+      "81fe95e2c65b105e"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-live-virtual-100k-52063655534228": {
+    "kind": "hash",
+    "values": [
+      "30b007801692f782"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-live-virtual-150k-52063703228692": {
+    "kind": "hash",
+    "values": [
+      "d4bff446528b12a5"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-live-virtual-50k-52063647938580": {
+    "kind": "hash",
+    "values": [
+      "047dc4658a0f3ec1"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-payout-policy-52063548100500": {
+    "kind": "hash",
+    "values": [
+      "51a85e644c54e45a"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-trading-parameters-52063207935892": {
+    "kind": "hash",
+    "values": [
+      "0a8f46aa451ea7cc"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://www.earn2trade.com/gauntlet-mini": {
+    "kind": "hash",
+    "values": [
+      "0812b6393d5cada0"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://www.earn2trade.com/trader-career-path": {
+    "kind": "hash",
+    "values": [
+      "934c3287310b1633"
+    ],
+    "firms": [
+      "earn2trade"
+    ]
+  },
+  "https://www.fundedfuturesfamily.com/": {
+    "kind": "date",
+    "values": [
+      "2026-08-31T21:26:47+00:00"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ]
+  },
+  "https://www.oneuptrader.com/": {
+    "kind": "date",
+    "values": [
+      "2026-09-16T15:30:13+00:00"
+    ],
+    "firms": [
+      "oneuptrader"
+    ]
+  },
+  "https://www.toponefutures.com/": {
+    "kind": "hash",
+    "values": [
+      "57b3f38a59d9941f"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://www.toponefutures.com/launchpad": {
+    "kind": "hash",
+    "values": [
+      "ca3f06ba738f932f"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
+  "https://www.tradeday.com/#pricing": {
+    "kind": "hash",
+    "values": [
+      "dea277ffef61df91"
+    ],
+    "firms": [
+      "tradeday"
+    ]
+  }
+}
