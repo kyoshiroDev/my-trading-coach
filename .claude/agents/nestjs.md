@@ -491,6 +491,19 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 }
 ```
 
+**Quota mensuel réservé, pas compté après (SCA-B5-06, 2026-10-07)** : `AiService.metered(userId, call)`
+fait `INCR ai:calls:<user>:<mois>` **avant** l'appel ; > `AI_MONTHLY_QUOTA` → `DECR` + 429 ; appel en
+échec → `DECR` (place rendue). Insights et chat passent par là (admin exempté). Avant : vérifier puis
+incrémenter après coup laissait 20 appels simultanés dépasser le quota. Redis down → 503 (inchangé).
+
+**Sémaphore global des appels modèle (SCA-B5-06)** : `AnthropicClientService.create` (point d'entrée
+unique) prend une place dans l'ensemble trié Redis `ai:anthropic:inflight` (script Lua atomique,
+place = jeton + échéance, expire seule si le process meurt) ; **`AI_MAX_CONCURRENCY`** places (défaut
+**4**) tous process confondus ; attente ≤ 60 s puis 503 « L'IA est très sollicitée ». Redis down → on
+laisse passer. Les gros débriefs (jusqu'à ~4 min) tiennent une place : si le chat sature le
+dimanche soir, monter `AI_MAX_CONCURRENCY`. Les 429 Anthropic : le SDK (`maxRetries: 1`) respecte
+déjà `retry-after` ; prompt caching déjà posé (`cache_control`) sur les system prompts.
+
 ---
 
 ## Gestion erreurs Anthropic
