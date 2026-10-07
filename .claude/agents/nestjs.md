@@ -1568,6 +1568,9 @@ Règles :
 - **Filtre par actif** (`getNews`) : actifs du journal → symboles FMP (`newsSymbolsFor` : MNQ→QQQ,
   MES→SPY, GC→XAUUSD, 6E→EURUSD, BTC/USDT→BTCUSD…), `MACRO` toujours incluse ; aucun résultat →
   toutes les news. Avant : comparaison exacte, News live vide dès le premier trade du jour.
+- **Part de la crypto** (`selectNewsForDisplay`) : `getNews` lit 60 news et en garde 20, dont **4 crypto
+  au plus** (`isCryptoNews` : symbole ou titre). Plafond levé si les actifs de l'utilisateur sont
+  crypto. Avant : 13 news crypto sur 20 (la crypto publie en continu et prenait le haut du tri par date).
 
 - `refreshNewsBatch` (cron 20 min, 7h-22h) traduit jusqu'à 60 **titres** par passage, par **lots de 10** (`NEWS_TITLE_BATCH`,
   `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)
