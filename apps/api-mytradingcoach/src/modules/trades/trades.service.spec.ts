@@ -11,6 +11,7 @@ import {
   TradingSession,
 } from '@prisma/client';
 import { TradesService } from './trades.service';
+import { importDedupeWindow } from './import-dedupe.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -661,6 +662,68 @@ describe('TradesService', () => {
       expect(res.duplicates).toBe(0);
     });
 
+  });
+
+  describe('importTrades — coût par lot (SCA-B1-01/02/03)', () => {
+    const at = (iso: string): Partial<CreateTradeDto> => ({ ...createTradeDto, tradedAt: iso });
+    const setups = () => (service as unknown as { setups: { assertOwnedActive: ReturnType<typeof vi.fn> } }).setups;
+
+    beforeEach(() => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      mockAnalytics.invalidateUserCache.mockClear();
+    });
+
+    it('lot vide → aucune requête', async () => {
+      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, duplicates: 0, failed: 0, total: 0 });
+      expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
+      expect(mockPrisma.tradeSession.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('trades existants lus sur [min − 1 j, max + 1 j] du lot seulement', async () => {
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-03T08:00:00.000Z')]);
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toEqual({
+        userId: 'user-123',
+        tradedAt: { gte: new Date('2026-10-02T08:00:00.000Z'), lte: new Date('2026-10-06T10:00:00.000Z') },
+      });
+    });
+
+    it('une ligne sans date → tout l’historique, par prudence', () => {
+      expect(importDedupeWindow([{ tradedAt: '2026-10-05T10:00:00.000Z' }, { tradedAt: null }])).toEqual({});
+      expect(importDedupeWindow([{ tradedAt: 'pas une date' }])).toEqual({});
+    });
+
+    it('session, setup, compte et compte par défaut résolus une fois pour tout le lot', async () => {
+      const rows = ['2026-10-05T10:00:00.000Z', '2026-10-05T11:00:00.000Z', '2026-10-05T12:00:00.000Z'].map(at);
+
+      const res = await service.importTrades('user-123', rows);
+
+      expect(res.created).toBe(3);
+      expect(mockPrisma.tradeSession.findFirst).toHaveBeenCalledOnce();
+      expect(setups().assertOwnedActive).toHaveBeenCalledOnce();
+      expect(mockAccounts.ensureDefaultAccountId).toHaveBeenCalledOnce();
+    });
+
+    it('setup invalide → chacune de ses lignes échoue, sans refaire la requête', async () => {
+      setups().assertOwnedActive.mockRejectedValueOnce(new Error('Setup invalide'));
+
+      const res = await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-05T11:00:00.000Z')]);
+
+      expect(res).toMatchObject({ created: 0, failed: 2 });
+      expect(setups().assertOwnedActive).toHaveBeenCalledOnce();
+    });
+
+    it('cache analytics invalidé une seule fois par lot, et pas si rien n’est créé', async () => {
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-05T11:00:00.000Z')]);
+      expect(mockAnalytics.invalidateUserCache).toHaveBeenCalledOnce();
+
+      mockAnalytics.invalidateUserCache.mockClear();
+      mockPrisma.trade.create.mockRejectedValue(new Error('boom'));
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z')]);
+      expect(mockAnalytics.invalidateUserCache).not.toHaveBeenCalled();
+    });
   });
 
   describe('countDuplicates / removeDuplicates', () => {
