@@ -40,7 +40,7 @@ export const FAQ: readonly FaqItem[] = [
   },
   {
     question: 'Quelle est la différence entre Gratuit et Premium ?',
-    answer: `Le plan Gratuit couvre tout le quotidien : journal illimité, trades illimités, pré-session matin, session live avec trade rapide, débrief de session, 1 compte avec ses règles prop firm, et l'IA mutualisée (calendrier éco avec analyse IA, news live et contexte marché en temps réel : DXY, taux US, indices). Le plan Premium (${monthly}€/mois ou ${annual}€/an) ajoute l'IA personnelle et la profondeur : IA Insights, Chat coach personnalisé, Weekly Debrief automatique, alertes prop firm en direct et anti-tilt, score trader, analytics avancés et comptes illimités avec leurs règles prop firm.`,
+    answer: `Le plan Gratuit couvre tout le quotidien : journal illimité, trades illimités, pré-session matin, session live avec trade rapide et suivi prop firm en direct, débrief de session, 1 compte avec ses règles prop firm et sa synchro Tradovate, et l'IA mutualisée (calendrier éco avec analyse IA, news live et contexte marché en temps réel : DXY, taux US, indices). Le plan Premium (${monthly}€/mois ou ${annual}€/an) ajoute l'IA personnelle et la profondeur : IA Insights, Chat coach personnalisé, Weekly Debrief automatique, alertes prop firm en direct (objectif et payout compris, avec le son) et anti-tilt, score trader, analytics avancés et comptes illimités avec leurs règles prop firm.`,
   },
   {
     question: 'Où sont hébergées mes données ?',
