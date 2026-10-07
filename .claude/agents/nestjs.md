@@ -534,6 +534,16 @@ déjà `retry-after` ; prompt caching déjà posé (`cache_control`) sur les sys
   la main (elle échapperait à l'invalidation).
 - Redis en panne → calcul direct, rien écrit.
 
+## Notes comportementales (barème B) — recalcul (SCA-B5-04, 2026-10-07)
+
+`trades/behavioral-grades.ts` : `behavioralGradeUpdates(trades)` (pur : médianes du compte, une
+passe, seulement les trades sans stop dont la note change) puis `writeGradeUpdates` : **un
+`UPDATE "Trade" … FROM (VALUES …)` par paquet de 1 000**, tous dans une transaction, filtré sur
+`accountId` (plus un UPDATE Prisma par trade). Volontairement **synchrone et sur tout le compte** :
+la réponse de création d'un trade porte sa note, et un nouveau trade décale les médianes de tous.
+(Le plan B5-04 proposait job asynchrone + fenêtre ±1 j : non retenu, cela change ce que voit
+l'utilisateur.) Validé sur vraie base : `behavioral-grades.int-spec.ts`.
+
 ## Import de trades en lot (SCA-B1-01/02/04, 2026-10-07)
 
 `TradesService.importTrades` (CSV, synchro et historique Tradovate) :
