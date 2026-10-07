@@ -48,6 +48,7 @@ function makeSvc(referredBy: string | null, parrainRole: 'USER' | 'AMBASSADOR' =
       eligibility: vi.fn(), reserve: vi.fn(), attachSession: vi.fn(),
       releaseReservation: vi.fn(), hasValidReservation: vi.fn(),
     } as never,
+    { validate: vi.fn(), reserve: vi.fn(), couponFor: vi.fn() } as never,
     stripe as never,
   );
   return { svc, create };

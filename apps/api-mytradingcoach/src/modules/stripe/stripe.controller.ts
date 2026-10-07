@@ -57,6 +57,7 @@ export class StripeController {
         offer: dto.plan.startsWith('founder') ? 'founder' : 'premium',
         interval: dto.plan.endsWith('yearly') ? 'year' : 'month',
         cta: dto.cta ?? null,
+        promo: dto.promo ?? null,
       },
     );
   }

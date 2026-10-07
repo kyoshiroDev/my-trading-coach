@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, Length } from 'class-validator';
 import { OFFER_CTAS, type OfferCta } from '@mtc/shared';
 
 export const CHECKOUT_PLANS = ['premium_monthly', 'premium_yearly', 'founder_monthly', 'founder_yearly'] as const;
@@ -15,4 +15,10 @@ export class CreateCheckoutDto {
   @IsOptional()
   @IsIn(OFFER_CTAS)
   cta?: OfferCta;
+
+  /** Code partenaire (#525), uniquement sur un plan premium_* (jamais sur le tarif fondateur). */
+  @IsOptional()
+  @IsString()
+  @Length(3, 40)
+  promo?: string;
 }

@@ -47,7 +47,9 @@ function makeSvc() {
   };
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, discord as never,
-    subscriptions, referrals, founders as never, queue as never, stripe,
+    subscriptions, referrals, founders as never,
+    { claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null), isRefundableFirstPayment: vi.fn().mockResolvedValue(false) } as never,
+    queue as never, stripe,
   );
   return { svc, prisma, resend, discord, retrieve, listInvoicePayments };
 }

@@ -85,6 +85,11 @@ GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?p
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
 POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
 POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
+GET    /api/pricing/partner/:code     PUBLIC (20/min, max-age=60) → conditions du code (valid, prix, durée) ou raison du refus ; ni partenaire ni utilisations
+GET    /api/admin/partner-codes       ADMIN → codes + used/max, actifs, perdus, rendus, checkouts en cours
+POST   /api/admin/partner-codes       ADMIN → création (2 coupons Stripe créés par l'API)
+PATCH  /api/admin/partner-codes/:id   ADMIN → modification / activation (sans effet sur les abonnés)
+GET    /api/admin/partner-codes/:id/users  ADMIN → abonnés du code
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -1678,4 +1683,10 @@ fondateur. Webhooks ajoutés : `checkout.session.expired` (réservation rendue),
 l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
 testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
 le stubber dans `app-role-wiring.spec.ts`.
+
+Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
+pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans
+`CreateCheckoutDto` → offre `partner` (metadata `partnerCode`), prix normal + `discounts` du coupon de
+l'intervalle. Le module fournit son propre `stripeClientProvider`. Concurrence testée sur vraie base :
+`partner-code.int-spec.ts`. MRR : `UsersService.realMrr` (base) et `monthlyOf` après remise (admin).
 

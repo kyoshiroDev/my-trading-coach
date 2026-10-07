@@ -21,10 +21,12 @@ import {
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService, type FounderIneligibility } from '../founder-offer/founder-offer.service';
 import { StripeCouponService } from './stripe-coupon.service';
+import { PartnerCodeService } from '../partner-codes/partner-code.service';
+import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
 import { StripeStatusResponse, CachedStripeStatus } from './stripe.types';
 
 /** Offre achetée au checkout. */
-export type CheckoutOffer = 'premium' | 'founder';
+export type CheckoutOffer = 'premium' | 'founder' | 'partner';
 
 /** Refus du checkout fondateur : message clair, le Premium au prix normal reste possible. */
 const FOUNDER_REFUSALS: Record<FounderIneligibility, string> = {
@@ -49,6 +51,7 @@ export class StripeBillingService {
     private readonly customers: StripeCustomerService,
     private readonly coupons: StripeCouponService,
     private readonly founders: FounderOfferService,
+    private readonly partners: PartnerCodeService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
   ) {}
 
@@ -108,10 +111,15 @@ export class StripeBillingService {
     userEmail: string,
     priceId: string,
     returnUrl: string,
-    opts: { offer?: CheckoutOffer; interval?: 'month' | 'year'; cta?: string | null } = {},
+    opts: { offer?: CheckoutOffer; interval?: 'month' | 'year'; cta?: string | null; promo?: string | null } = {},
   ): Promise<{ url: string }> {
-    const offer: CheckoutOffer = opts.offer ?? 'premium';
+    let offer: CheckoutOffer = opts.offer ?? 'premium';
     const isFounder = offer === 'founder';
+    const interval = opts.interval ?? (this.isAnnualPrice(priceId) ? 'year' : 'month');
+    // Fondateur et code partenaire ne se cumulent jamais : l'utilisateur choisit l'un ou l'autre.
+    if (isFounder && opts.promo) {
+      throw new BadRequestException("Un code partenaire ne s'applique pas au tarif fondateur : choisis l'un ou l'autre.");
+    }
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
@@ -140,12 +148,32 @@ export class StripeBillingService {
       if (!eligible) throw new BadRequestException(FOUNDER_REFUSALS[reason ?? 'closed']);
     }
 
+    // ── Code partenaire : validé avant tout (raison précise du refus) ──────────
+    // Non-cumul avec le parrainage : on garde le plus avantageux sur la 1re année. Si le −10 %
+    // filleul coûte moins cher que le code, le code n'est pas consommé.
+    const referralCoupon = isFounder ? false : await this.referralApplies(user.referredBy);
+    let partnerCode: string | null = null;
+    if (opts.promo && !isFounder) {
+      if (!this.isMonthlyPrice(priceId) && !this.isAnnualPrice(priceId)) {
+        throw new BadRequestException("Ce code partenaire ne s'applique qu'au Premium au prix normal.");
+      }
+      const v = await this.partners.validate(opts.promo, userId);
+      if (!v.valid) throw new BadRequestException(`${v.message} Tu peux toujours passer Premium au prix normal.`);
+      const partnerCost = partnerFirstYearCost(v, interval);
+      if (referralCoupon && referralFirstYearCost(interval) <= partnerCost) {
+        this.logger.log(`Code ${v.code} non appliqué : parrainage plus avantageux | user: ${userId}`);
+      } else {
+        partnerCode = v.code;
+        offer = 'partner';
+      }
+    }
+
     // ── Une session Checkout par OFFRE ─────────────────────────────────────────
     // Une session encore ouverte n'est reprise que pour la MÊME offre et le MÊME prix ; sinon elle
     // est expirée (sa réservation fondateur rendue). Avant : n'importe quelle session ouverte était
     // reprise, un fondateur pouvait retomber sur sa session à 49 € et inversement.
     if (user.stripeCustomerId) {
-      const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId);
+      const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId, partnerCode);
       if (reused) {
         this.logger.log(`Session checkout existante réutilisée | user: ${userId}, offer: ${offer}`);
         return { url: reused };
@@ -156,7 +184,9 @@ export class StripeBillingService {
     const customerId = await this.customers.ensureStripeCustomer(userId, userEmail);
 
     const cta = opts.cta ?? null;
-    const metadata: Record<string, string> = { userId, offer, priceId, ...(cta ? { cta } : {}) };
+    const metadata: Record<string, string> = {
+      userId, offer, priceId, ...(cta ? { cta } : {}), ...(partnerCode ? { partnerCode } : {}),
+    };
 
     // Fondateur : AUCUN essai, aucun coupon, aucun code promo (jamais deux remises). Le parrainage
     // n'est pas appliqué : le tarif fondateur est toujours le moins cher sur la 1re année
@@ -174,29 +204,30 @@ export class StripeBillingService {
     // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
     // on garde les codes promo manuels ouverts (prix normal uniquement).
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-    if (!isFounder && user.referredBy) {
-      const parrain = await this.prisma.user.findFirst({
-        where: { referralCode: user.referredBy },
-        select: { role: true },
-      });
-      if (parrain && parrain.role !== Role.AMBASSADOR) {
-        if (this.isAnnualPrice(priceId)) {
-          discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
-        } else if (this.isMonthlyPrice(priceId)) {
-          discounts = [{ coupon: await this.coupons.ensureReferralCoupon('monthly') }];
-        }
+    if (!partnerCode && referralCoupon) {
+      if (this.isAnnualPrice(priceId)) {
+        discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
+      } else if (this.isMonthlyPrice(priceId)) {
+        discounts = [{ coupon: await this.coupons.ensureReferralCoupon('monthly') }];
       }
+    }
+
+    // Fondateur : la place est RÉSERVÉE avant la session (409 s'il n'y en a plus), sous verrou.
+    // Code partenaire : une utilisation réservée (409 si le quota vient d'être atteint) et le
+    // coupon de l'intervalle choisi, sur le prix NORMAL (essai conservé).
+    let reservation: { id: string } | null = null;
+    if (isFounder) {
+      reservation = await this.founders.reserve(userId, interval, cta);
+    } else if (partnerCode) {
+      const reserved = await this.partners.reserve(userId, partnerCode, interval, cta);
+      reservation = reserved.reservation;
+      discounts = [{ coupon: this.partners.couponFor(reserved.partnerCode, interval) }];
     }
     const promotions = isFounder
       ? {}
       : discounts
         ? { discounts }
         : { allow_promotion_codes: true };
-
-    // Fondateur : la place est RÉSERVÉE avant la session (409 s'il n'y en a plus), sous verrou.
-    const reservation = isFounder
-      ? await this.founders.reserve(userId, opts.interval ?? 'month', cta)
-      : null;
 
     let session: Stripe.Checkout.Session;
     try {
@@ -235,7 +266,7 @@ export class StripeBillingService {
     if (reservation) await this.founders.attachSession(reservation.id, session.id);
 
     this.logger.log(
-      `Checkout créé | user: ${userId}, offer: ${offer}, trial: ${trialGranted}, price: ${priceId}`,
+      `Checkout créé | user: ${userId}, offer: ${offer}${partnerCode ? ` (${partnerCode})` : ''}, trial: ${trialGranted}, price: ${priceId}`,
     );
 
     return { url: session.url };
@@ -249,13 +280,17 @@ export class StripeBillingService {
     customerId: string,
     offer: CheckoutOffer,
     priceId: string,
+    partnerCode: string | null = null,
   ): Promise<string | null> {
     const open = await this.stripe.checkout.sessions
       .list({ customer: customerId, status: 'open', limit: 10 })
       .catch(() => null);
     for (const s of open?.data ?? []) {
-      const sameOffer = (s.metadata?.['offer'] ?? 'premium') === offer && s.metadata?.['priceId'] === priceId;
-      const reservationOk = offer !== 'founder' || (await this.founders.hasValidReservation(s.id));
+      const sameOffer =
+        (s.metadata?.['offer'] ?? 'premium') === offer &&
+        s.metadata?.['priceId'] === priceId &&
+        (s.metadata?.['partnerCode'] ?? null) === partnerCode;
+      const reservationOk = offer === 'premium' || (await this.founders.hasValidReservation(s.id));
       if (sameOffer && reservationOk && s.url) return s.url;
       await this.stripe.checkout.sessions.expire(s.id).catch(() => undefined);
       await this.founders.releaseReservation({ stripeSessionId: s.id });
@@ -285,14 +320,35 @@ export class StripeBillingService {
         : interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_V2' : 'STRIPE_PREMIUM_PRICE_MONTHLY_V2',
     );
     if (!item || current === target) return { changed: false };
+    // Code partenaire : coupon de l'AUTRE intervalle, aux conditions figées de l'abonné et pour les
+    // mois de remise restants (aucune remise perdue par le changement).
+    const redemption = founder ? null : await this.partners.activeForSubscription(sub.id);
+    const coupon = redemption ? await this.partners.couponForIntervalChange(redemption, interval) : null;
     await this.stripe.subscriptions.update(
       sub.id,
-      { items: [{ id: item.id, price: target }], proration_behavior: 'always_invoice' },
+      {
+        items: [{ id: item.id, price: target }],
+        proration_behavior: 'always_invoice',
+        ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
+      },
       { idempotencyKey: `interval-${sub.id}-${target}` },
     );
     await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
     this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
     return { changed: true };
+  }
+
+  /**
+   * Le −10 % filleul s'applique-t-il ? RÉSERVÉ au parrainage classique : jamais pour les filleuls
+   * d'ambassadeur (l'ambassadeur touche déjà ses 20 % via le webhook : sinon double coût).
+   */
+  private async referralApplies(referredBy: string | null): Promise<boolean> {
+    if (!referredBy) return false;
+    const parrain = await this.prisma.user.findFirst({
+      where: { referralCode: referredBy },
+      select: { role: true },
+    });
+    return !!parrain && parrain.role !== Role.AMBASSADOR;
   }
 
   /** Prix fondateur (mensuel et annuel) de la config. */

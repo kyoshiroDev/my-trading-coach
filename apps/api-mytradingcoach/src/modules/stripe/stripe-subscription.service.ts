@@ -174,6 +174,8 @@ export class StripeSubscriptionService {
         const res = await this.stripe.subscriptions.list({
           status,
           limit: 100,
+          // Remises développées : le MRR Stripe se calcule après remise (#525).
+          expand: ['data.discounts'],
           ...(startingAfter ? { starting_after: startingAfter } : {}),
         });
         out.push(...res.data);

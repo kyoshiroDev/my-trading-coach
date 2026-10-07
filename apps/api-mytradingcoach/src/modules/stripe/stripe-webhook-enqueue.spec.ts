@@ -31,7 +31,7 @@ function makeSvc(opts: { enqueueFails?: boolean } = {}) {
 
   const svc = new StripeWebhookService(
     config as never, prisma as never, {} as never, {} as never,
-    {} as never, {} as never, {} as never, queue as never, stripe as never,
+    {} as never, {} as never, {} as never, {} as never, queue as never, stripe as never,
   );
   return { svc, stripeEvent, queue };
 }

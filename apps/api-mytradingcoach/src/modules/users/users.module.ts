@@ -1,3 +1,4 @@
+import { PartnerCodeModule } from '../partner-codes/partner-code.module';
 import { FounderOfferModule } from '../founder-offer/founder-offer.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
@@ -6,7 +7,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 
 @Module({
-  imports: [PrismaModule, AmbassadorModule, FounderOfferModule],
+  imports: [PrismaModule, AmbassadorModule, FounderOfferModule, PartnerCodeModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

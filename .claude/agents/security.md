@@ -331,3 +331,6 @@ modifient ces champs directement en base doivent aussi invalider. Verrouillé pa
 derrière nginx et Traefik), lecture seule, **aucune donnée personnelle** (état de l'offre, places,
 prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytradingcoach.app`).
 
+`GET /api/pricing/partner/:code` : `@Public`, **20 req/min/IP** (anti-énumération), paramètre tronqué à
+40 caractères, ne renvoie ni le libellé (nom du partenaire) ni le nombre d'utilisations.
+

@@ -18,6 +18,7 @@ import {
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { FounderOfferService, type FounderInterval } from '../founder-offer/founder-offer.service';
+import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import type { SyncedSubscription } from './stripe-subscription.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
@@ -39,6 +40,7 @@ export class StripeWebhookService {
     private readonly subscriptions: StripeSubscriptionService,
     private readonly referrals: StripeReferralService,
     private readonly founders: FounderOfferService,
+    private readonly partners: PartnerCodeService,
     @InjectQueue(STRIPE_QUEUE)
     private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
@@ -187,6 +189,12 @@ export class StripeWebhookService {
     // Fin RÉELLE de l'abonnement : tarif fondateur perdu (la place reste prise). Une résiliation
     // programmée, elle, ne passe pas ici avant la fin de période.
     await this.founders.markLost(subscription.id);
+    // Remise partenaire : perdue ; mais si le 1er paiement réel a échoué (fin d'essai impayée),
+    // l'utilisation revient au quota du code.
+    const neverPaid =
+      subscription.cancellation_details?.reason === 'payment_failed' &&
+      !(await this.hasRealPayment(subscription.id));
+    await (neverPaid ? this.partners.release(subscription.id) : this.partners.markLost(subscription.id));
     // Récupérer l'user avant de supprimer ses données
     const user = await this.prisma.user.findFirst({
       where: { stripeSubscriptionId: subscription.id },
@@ -308,8 +316,18 @@ export class StripeWebhookService {
         `Paiement réussi | subscription: ${subscriptionId} synchronisée`,
       );
     }
-    if (synced && invoice.billing_reason === 'subscription_create' && this.isFounderPrice(synced.priceId)) {
-      await this.onFounderFirstPayment(synced);
+    if (synced && invoice.billing_reason === 'subscription_create') {
+      if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced);
+      // Code partenaire : utilisation comptée dès la 1re facture (0 € pendant l'essai compris).
+      else if (synced.metadata['partnerCode']) {
+        await this.partners.claim({
+          userId: synced.id,
+          code: synced.metadata['partnerCode'],
+          stripeSubscriptionId: synced.subscriptionId,
+          interval: synced.interval === 'year' ? 'year' : 'month',
+          cta: synced.metadata['cta'] ?? null,
+        });
+      }
     }
     await this.referrals.processReferral(invoice);
 
@@ -396,11 +414,33 @@ export class StripeWebhookService {
     });
     if (!user) return;
     const seat = await this.founders.refundWithinWindow(user.id);
-    if (seat?.stripeSubscriptionId) {
-      await this.stripe.subscriptions.cancel(seat.stripeSubscriptionId).catch((err: Error) =>
-        this.logger.warn(`Abonnement ${seat.stripeSubscriptionId} non annulé après remboursement : ${err.message}`),
+    let toCancel = seat?.stripeSubscriptionId ?? null;
+    // Code partenaire : 1er paiement réel remboursé sous 14 jours → l'utilisation revient au quota.
+    if (!toCancel) {
+      const redemption = await this.prisma.partnerRedemption.findFirst({
+        where: { userId: user.id, status: 'ACTIVE' },
+      });
+      if (
+        redemption?.stripeSubscriptionId &&
+        (await this.partners.isRefundableFirstPayment(redemption.stripeSubscriptionId))
+      ) {
+        await this.partners.release(redemption.stripeSubscriptionId);
+        toCancel = redemption.stripeSubscriptionId;
+      }
+    }
+    if (toCancel) {
+      await this.stripe.subscriptions.cancel(toCancel).catch((err: Error) =>
+        this.logger.warn(`Abonnement ${toCancel} non annulé après remboursement : ${err.message}`),
       );
     }
+  }
+
+  /** Au moins une facture réellement payée (> 0 €) sur l'abonnement. */
+  private async hasRealPayment(subscriptionId: string): Promise<boolean> {
+    const paid = await this.stripe.invoices
+      .list({ subscription: subscriptionId, status: 'paid', limit: 10 })
+      .catch(() => null);
+    return (paid?.data ?? []).some((i) => (i.amount_paid ?? 0) > 0);
   }
 
   private isFounderPrice(priceId: string | null | undefined): boolean {

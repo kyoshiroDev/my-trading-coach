@@ -46,14 +46,19 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
     releaseReservation: vi.fn(),
     hasValidReservation: vi.fn().mockResolvedValue(true),
   };
+  const partners = {
+    validate: vi.fn(), reserve: vi.fn(), couponFor: vi.fn(),
+    activeForSubscription: vi.fn().mockResolvedValue(null), couponForIntervalChange: vi.fn(),
+  };
   const svc = new StripeBillingService(
     config as never, prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never,
     new StripeCustomerService(prisma as never, stripe as never),
     new StripeCouponService(stripe as never),
     founders as never,
+    partners as never,
     stripe as never,
   );
-  return { svc, create, expire, founders, stripe };
+  return { svc, create, expire, founders, partners, stripe };
 }
 
 const founder = (svc: StripeBillingService, price = 'price_29', interval: 'month' | 'year' = 'month') =>
@@ -160,6 +165,7 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
   const list = vi.fn().mockResolvedValue({ data: [{ id: 'sub_trial' }, { id: sub.id }] });
   const stripe = {
     subscriptions: { retrieve: vi.fn().mockResolvedValue(stripeSub), cancel, list },
+    invoices: { list: vi.fn().mockResolvedValue({ data: [] }) },
     invoicePayments: { list: vi.fn().mockResolvedValue({ data: [] }) },
   } as never;
   const resend = { sendAdminAlert: vi.fn().mockResolvedValue(undefined), sendPaymentSucceeded: vi.fn().mockResolvedValue(undefined) };
@@ -172,7 +178,9 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
   const referrals = { processReferral: vi.fn() } as unknown as StripeReferralService;
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, { syncDiscordRole: vi.fn().mockResolvedValue(undefined) } as never,
-    subscriptions, referrals, founders as never, { add: vi.fn() } as never, stripe,
+    subscriptions, referrals, founders as never,
+    { claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null), isRefundableFirstPayment: vi.fn().mockResolvedValue(false) } as never,
+    { add: vi.fn() } as never, stripe,
   );
   return { svc, founders, cancel, resend, prisma };
 }
@@ -264,5 +272,105 @@ describe('synchro : bascule sans écraser l’abonnement fondateur', () => {
     const sync = new StripeSubscriptionService(prisma as never, { client: { del: vi.fn() } } as never, stripe as never);
     expect(await sync.syncSubscription('sub_trial')).toBeNull();
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+// ── Codes partenaires ──────────────────────────────────────────────────────────
+
+const LOUIS = { valid: true, code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '' };
+
+function partnerBilling(over: Parameters<typeof makeBilling>[0] & { validation?: object; parrainRole?: string } = {}) {
+  const b = makeBilling(over);
+  b.partners.validate.mockResolvedValue(over.validation ?? LOUIS);
+  b.partners.reserve.mockResolvedValue({ reservation: { id: 'res_p' }, partnerCode: { id: 'pc1' } });
+  b.partners.couponFor.mockImplementation((_c: unknown, i: string) => (i === 'year' ? 'cp_200' : 'cp_20'));
+  return b;
+}
+const withPromo = (svc: StripeBillingService, price = 'price_49', interval: 'month' | 'year' = 'month') =>
+  svc.createCheckoutSession('u1', 'u1@test.com', price, 'https://app', { offer: 'premium', interval, promo: 'louis29', cta: 'promo' });
+
+describe('checkout avec code partenaire', () => {
+  it('mensuel : prix NORMAL + coupon −20 €, essai 30 j conservé, parrainage non cumulé', async () => {
+    const { svc, create, partners } = partnerBilling();
+    await withPromo(svc);
+    const params = create.mock.calls[0][0];
+    expect(params.line_items).toEqual([{ price: 'price_49', quantity: 1 }]);
+    expect(params.discounts).toEqual([{ coupon: 'cp_20' }]);
+    expect(params.subscription_data.trial_period_days).toBe(30);
+    expect(params).not.toHaveProperty('allow_promotion_codes');
+    expect(params.metadata).toMatchObject({ offer: 'partner', partnerCode: 'LOUIS29', cta: 'promo' });
+    expect(partners.reserve).toHaveBeenCalledWith('u1', 'LOUIS29', 'month', 'promo');
+  });
+
+  it('annuel : coupon −200 € (290,00 € pile), pas d’essai', async () => {
+    const { svc, create } = partnerBilling();
+    await withPromo(svc, 'price_490', 'year');
+    expect(create.mock.calls[0][0].discounts).toEqual([{ coupon: 'cp_200' }]);
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_period_days');
+  });
+
+  it('code refusé → raison précise + prix normal toujours possible, rien de réservé', async () => {
+    const { svc, create, partners } = partnerBilling({
+      validation: { valid: false, code: 'LOUIS29', reason: 'exhausted', message: 'Ce code partenaire a atteint son nombre maximum de personnes.' },
+    });
+    await expect(withPromo(svc)).rejects.toThrow(/nombre maximum.*prix normal/);
+    expect(partners.reserve).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('jamais sur le tarif fondateur (choix explicite)', async () => {
+    const { svc } = partnerBilling();
+    await expect(
+      svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', promo: 'LOUIS29' }),
+    ).rejects.toThrow(/choisis/);
+  });
+
+  it('remise moins bonne que le parrainage → −10 % filleul appliqué, code non consommé', async () => {
+    const { svc, create, partners } = partnerBilling({
+      validation: { ...LOUIS, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 },
+    });
+    await withPromo(svc);
+    expect(partners.reserve).not.toHaveBeenCalled();
+    expect(create.mock.calls[0][0].metadata.offer).toBe('premium');
+    expect(create.mock.calls[0][0].discounts[0].coupon).not.toBe('cp_20');
+  });
+});
+
+describe('webhooks code partenaire', () => {
+  it('1re facture (0 € d’essai comprise) → utilisation comptée, coupon de l’intervalle', async () => {
+    const { svc, founders } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'LOUIS29', cta: 'promo' } });
+    const partners = (svc as unknown as { partners: { claim: ReturnType<typeof vi.fn> } }).partners;
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_p', 'subscription_create'), amount_paid: 0 }));
+    expect(partners.claim).toHaveBeenCalledWith({
+      userId: 'u1', code: 'LOUIS29', stripeSubscriptionId: 'sub_p', interval: 'month', cta: 'promo',
+    });
+    expect(founders.claimSeat).not.toHaveBeenCalled();
+  });
+
+  it('abonnement terminé → remise perdue ; fin d’essai impayée → utilisation rendue', async () => {
+    const lost = makeWebhook({ id: 'sub_p', price: 'price_49' });
+    const p1 = (lost.svc as unknown as { partners: Record<string, ReturnType<typeof vi.fn>> }).partners;
+    await lost.svc.processWebhookEvent(event('customer.subscription.deleted', { id: 'sub_p', customer: 'cus_1' }));
+    expect(p1.markLost).toHaveBeenCalledWith('sub_p');
+
+    const unpaid = makeWebhook({ id: 'sub_p', price: 'price_49' });
+    const p2 = (unpaid.svc as unknown as { partners: Record<string, ReturnType<typeof vi.fn>> }).partners;
+    await unpaid.svc.processWebhookEvent(event('customer.subscription.deleted', {
+      id: 'sub_p', customer: 'cus_1', cancellation_details: { reason: 'payment_failed' },
+    }));
+    expect(p2.release).toHaveBeenCalledWith('sub_p');
+    expect(p2.markLost).not.toHaveBeenCalled();
+  });
+
+  it('1er paiement réel remboursé sous 14 jours → utilisation rendue et abonnement annulé', async () => {
+    const w = makeWebhook({ id: 'sub_p', price: 'price_49' });
+    const p = (w.svc as unknown as { partners: Record<string, ReturnType<typeof vi.fn>> }).partners;
+    (w.prisma as unknown as { partnerRedemption: unknown }).partnerRedemption = {
+      findFirst: vi.fn().mockResolvedValue({ stripeSubscriptionId: 'sub_p' }),
+    };
+    p.isRefundableFirstPayment.mockResolvedValueOnce(true);
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1' }));
+    expect(p.release).toHaveBeenCalledWith('sub_p');
+    expect(w.cancel).toHaveBeenCalledWith('sub_p');
   });
 });

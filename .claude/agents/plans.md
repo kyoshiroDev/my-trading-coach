@@ -244,3 +244,35 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
 - **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
 
+## Codes partenaires (#525, 2026-10-07)
+
+`modules/partner-codes/` (`PartnerCodeService`, fonctions pures dans `partner-code.util.ts`).
+
+- Un formateur donne un code (ex. `LOUIS29`) : Premium à un prix réduit **réglable code par code**
+  (mensuel et annuel entre 1 € et le prix normal − 1, entiers). Ces abonnés ne sont **pas** fondateurs
+  et ne prennent **aucune** place.
+- Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
+  **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
+  remise des abonnés) ; `active`.
+- **Prix pile** : coupon Stripe `amount_off` EUR = prix normal − prix remisé, **de l'intervalle choisi**
+  (−20 € → 29,00 €, −200 € → 290,00 €), appliqué côté serveur sur le prix NORMAL. Coupons créés par
+  l'API, identifiant déterministe `mtc-partner-<centimes>-<forever|N>`. Sur l'annuel, un coupon N mois
+  remise chaque facture émise pendant N mois (la 1re année seulement si N ≤ 12).
+- **Essai 30 j conservé** (mensuel, règles actuelles) : c'est le prix normal remisé.
+- Une utilisation par personne, seulement si **jamais abonnée** (aucun abonnement Stripe passé ou en
+  cours, jamais fondateur ; un mois offert hors Stripe ne compte pas). Démo et ADMIN exclus.
+- Modifier un code ne change rien pour les abonnés existants : conditions **figées** dans
+  `PartnerRedemption` ; prix ou durée modifiés → nouveaux coupons pour les futurs abonnés.
+- Jamais sur un prix fondateur (choix explicite, 400 si les deux). Avec un parrainage : le plus
+  avantageux sur la 1re année (`partnerFirstYearCost` vs `referralFirstYearCost`) ; si le −10 % gagne,
+  le code n'est pas consommé.
+- Utilisation comptée à la 1re facture (`subscription_create`, 0 € d'essai compris). Rendue au quota si
+  remboursement du 1er paiement réel sous 14 j ou fin d'essai impayée (`cancellation_details.reason =
+  payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
+- Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
+  figées, pour les mois de remise restants.
+- **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
+  normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
+  (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
+- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+
