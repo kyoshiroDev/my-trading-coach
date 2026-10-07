@@ -454,3 +454,10 @@ Migration `20261003160000_b2_index_cleanup` :
   main en `CREATE INDEX CONCURRENTLY` (hors transaction), puis migration vide qui le constate.
 - Avant un `DROP INDEX` en migration : vérifier sa présence sous ce nom exact sur prod, beta et dev
   (un index absent fait échouer la migration au déploiement).
+
+## ProductEventDaily (2026-10-07)
+
+Entonnoir Premium : `@@unique([date, userId, event, place])` (upsert atomique +1), `@@index([date, event])`,
+FK `User` `onDelete: Cascade` (suppression de compte = ses événements). Migration écrite à la main
+(`20261007090000_product_event_daily`), même forme que `LandingVisitDaily`.
+

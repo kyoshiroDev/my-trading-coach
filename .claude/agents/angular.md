@@ -146,6 +146,13 @@ la maquette design (« The Terminal »).
   ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
   trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
   non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
+- **Trade en cours (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** :
+  `mtc-live-position` sous les mini-stats, si `liveStats().broker` existe (compte synchronisé).
+  Positions ouvertes chez le broker dès l'entrée, Réalisé / Latent (daté, « il y a 40 s ») /
+  Total = réalisé + latent (`live-position.util.ts`). Latent inconnu → « Latent indisponible pour
+  ce compte », pas de total. « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis
+  `refreshLive`. Rafraîchi par `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1
+  relecture). Jamais de polling rapide : le latent ne bouge qu'aux événements du compte.
 - **Alertes prop firm (#370, PREMIUM)** : `prop:alert` (canal `/tradovate-live`) →
   `PropAlertsService` (core/services) : toast (`warning` temporaire ; `critical` / `breached` en
   `error` sans durée) + `Notification` système si autorisée (`tag` compte:type, une alerte
@@ -881,3 +888,13 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   date de plus d'une minute.
 - Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
   (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.
+
+## Entonnoir Premium (2026-10-07)
+
+`core/services/product-events.service.ts` : `track(event, place?)` / `once(...)` (une fois par écran et par
+onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc-premium-lock` (`premium_seen`),
+`mtc-plan-modal` (`plan_modal_open` à l'ouverture, `trial_click` sur « Essayer »), `App` (retour Stripe
+`?checkout=success|canceled` → `checkout_return`), CTA « Créer mon compte » de la démo (sidebar). Nouveau
+teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
+(`features/acquisition/funnel.util.ts`, testé).
+

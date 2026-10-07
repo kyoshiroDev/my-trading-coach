@@ -95,6 +95,12 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
+  /** Entonnoir Premium sur 30 jours : visites → inscrits → Premium vu → offres → essai → Stripe. */
+  @Get('funnel')
+  getFunnel() {
+    return this.adminService.getFunnel(30);
+  }
+
   /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */
   @Get('acquisition')
   getAcquisition() {

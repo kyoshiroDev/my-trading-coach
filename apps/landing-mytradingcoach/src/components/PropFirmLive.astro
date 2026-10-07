@@ -1,0 +1,297 @@
+---
+// Section « Ta prop firm, en direct » (home, juste après le Hero) — audit landing 2026-10-06 :
+// la cible qui convertit (prop traders futures sur Tradovate / NinjaTrader) ne voyait ses règles,
+// sa marge et ses payouts qu'à mi-page, ou pas du tout. Le visiteur choisit SA firm et SON plan :
+// les règles affichées sont celles du catalogue de l'app (@mtc/shared), pas un texte marketing.
+import { APP_URL } from '../config';
+import { buildPropFirmCatalog } from '../data/prop-firm-catalog';
+import { PHASE_LABEL, ruleRows } from '../data/prop-firm-rules-view';
+
+const catalog = buildPropFirmCatalog();
+const planCount = catalog.reduce((n, f) => n + f.plans.length, 0);
+
+// Sélection par défaut : le plan de la capture (Apex 50K EOD), sinon le premier du catalogue.
+const firm = catalog.find((f) => f.id === 'apex') ?? catalog[0];
+const plan = firm.plans.find((p) => p.size === 50000 && /EOD/.test(p.label)) ?? firm.plans[0];
+const phase = plan.phases[0];
+const rows = ruleRows(phase, plan.currency);
+const verified = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+// JSON embarqué : « < » échappé pour ne jamais fermer la balise <script>.
+const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
+---
+
+<section class="pfl" id="prop-firm">
+  <div class="pfl-wrap">
+    <div class="reveal pfl-head">
+      <span class="sec-label">Prop firms</span>
+      <h2>Ta firm, ton plan. <em>Tes vraies règles.</em></h2>
+      <p class="sec-sub">
+        {catalog.length} prop firms futures, {planCount} plans. Choisis le tien : MyTradingCoach
+        applique ses règles officielles à ton compte et te dit ce qu'il te reste avant le drawdown,
+        l'objectif ou le prochain payout.
+      </p>
+    </div>
+
+    <div class="pfl-grid reveal">
+      <div class="pfl-card" data-pf-root data-firm={firm.id} data-plan={plan.id}>
+        <div class="pfl-pickers">
+          <label class="pfl-field">
+            <span>Prop firm</span>
+            <select data-pf-firm>
+              {catalog.map((f) => <option value={f.id} selected={f.id === firm.id}>{f.name}</option>)}
+            </select>
+          </label>
+          <label class="pfl-field">
+            <span>Plan</span>
+            <select data-pf-plan>
+              {firm.plans.map((p) => <option value={p.id} selected={p.id === plan.id}>{p.label}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div class="pfl-phases" role="group" aria-label="Phase du compte" data-pf-phases>
+          {plan.phases.map((p, i) => (
+            <button type="button" class={i === 0 ? 'on' : undefined} aria-pressed={i === 0 ? 'true' : 'false'} data-phase={i}>
+              {PHASE_LABEL[p.phase]}
+            </button>
+          ))}
+        </div>
+
+        <dl class="pfl-rules" aria-live="polite" data-pf-rules>
+          {rows.map((r) => (
+            <div class="pfl-rule">
+              <dt>{r.label}</dt>
+              <dd>
+                <span class="pfl-v">{r.value}</span>
+                {r.detail && <span class="pfl-d">{r.detail}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p class="pfl-src" data-pf-src>Règles officielles {firm.name}, relevées le {verified(firm.verifiedAt)}.</p>
+      </div>
+
+      <figure class="pfl-shot">
+        <img
+          src="/showcase/app-prop-firm-rules.webp"
+          width="1568"
+          height="493"
+          loading="lazy"
+          decoding="async"
+          alt="Compte Apex 50K EOD Trail dans MyTradingCoach : solde et equity lus chez le broker, marge calculée avec les règles officielles, plus haut de clôture officiel, objectif restant, puis les règles du plan (objectif, drawdown, perte journalière, taille max, horaires)."
+        />
+        <figcaption>Capture réelle · compte de démonstration relié à Tradovate</figcaption>
+        <ul class="pfl-points">
+          <li><strong>Solde et equity lus chez Tradovate</strong>, positions ouvertes comprises, au lieu d'une estimation</li>
+          <li><strong>Plus haut de clôture officiel</strong> de chaque séance, pour les règles EOD</li>
+          <li><strong>Marge, objectif et prochain payout</strong> en direct pendant ta séance, payouts détectés chez le broker</li>
+          <li><strong>Alertes avant la casse</strong> : drawdown, perte du jour, consistency <span class="pfl-prem">Premium</span></li>
+        </ul>
+      </figure>
+    </div>
+
+    <div class="pfl-cta reveal">
+      <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="prop-firm">Suivre mon compte prop firm gratuitement</a>
+      <p>Règles et suivi en direct : gratuit · Alertes avant la casse : Premium · Ce n'est pas le calcul officiel de ta firme, garde un œil sur sa plateforme.</p>
+    </div>
+  </div>
+  <script type="application/json" id="pf-data" set:html={data} />
+</section>
+
+<script>
+  import { PHASE_LABEL, ruleRows, type CompactFirm, type CompactPlan } from '../data/prop-firm-rules-view';
+
+  const root = document.querySelector<HTMLElement>('[data-pf-root]');
+  const raw = document.getElementById('pf-data')?.textContent;
+  if (root && raw) {
+    const catalog = JSON.parse(raw) as CompactFirm[];
+    const firmSel = root.querySelector<HTMLSelectElement>('[data-pf-firm]')!;
+    const planSel = root.querySelector<HTMLSelectElement>('[data-pf-plan]')!;
+    const phasesEl = root.querySelector<HTMLElement>('[data-pf-phases]')!;
+    const rulesEl = root.querySelector<HTMLElement>('[data-pf-rules]')!;
+    const srcEl = root.querySelector<HTMLElement>('[data-pf-src]')!;
+
+    const el = (tag: string, cls?: string, text?: string) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    };
+    const verified = (iso: string) =>
+      new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    let firm = catalog.find((f) => f.id === root.dataset.firm) ?? catalog[0];
+    let plan: CompactPlan = firm.plans.find((p) => p.id === root.dataset.plan) ?? firm.plans[0];
+    let phase = 0;
+
+    const renderRules = () => {
+      const rows = ruleRows(plan.phases[phase], plan.currency);
+      rulesEl.replaceChildren(
+        ...rows.map((r) => {
+          const row = el('div', 'pfl-rule');
+          const dd = el('dd');
+          dd.append(el('span', 'pfl-v', r.value));
+          if (r.detail) dd.append(el('span', 'pfl-d', r.detail));
+          row.append(el('dt', undefined, r.label), dd);
+          return row;
+        }),
+      );
+      phasesEl.querySelectorAll('button').forEach((b, i) => {
+        b.classList.toggle('on', i === phase);
+        b.setAttribute('aria-pressed', String(i === phase));
+      });
+    };
+
+    const renderPhases = () => {
+      phase = 0;
+      phasesEl.replaceChildren(
+        ...plan.phases.map((p, i) => {
+          const b = el('button', undefined, PHASE_LABEL[p.phase]) as HTMLButtonElement;
+          b.type = 'button';
+          b.addEventListener('click', () => {
+            phase = i;
+            renderRules();
+          });
+          return b;
+        }),
+      );
+      renderRules();
+    };
+
+    const renderPlans = () => {
+      planSel.replaceChildren(...firm.plans.map((p) => {
+        const o = el('option', undefined, p.label) as HTMLOptionElement;
+        o.value = p.id;
+        return o;
+      }));
+      plan = firm.plans.find((p) => p.size === 50000) ?? firm.plans[0];
+      planSel.value = plan.id;
+      srcEl.textContent = `Règles officielles ${firm.name}, relevées le ${verified(firm.verifiedAt)}.`;
+      renderPhases();
+    };
+
+    firmSel.addEventListener('change', () => {
+      firm = catalog.find((f) => f.id === firmSel.value) ?? firm;
+      renderPlans();
+    });
+    planSel.addEventListener('change', () => {
+      plan = firm.plans.find((p) => p.id === planSel.value) ?? plan;
+      renderPhases();
+    });
+    // Boutons de phase rendus au build : on leur branche le même comportement.
+    renderPhases();
+  }
+</script>
+
+<style>
+  .pfl { padding: 80px 5%; }
+  .pfl-wrap { max-width: 1200px; margin: 0 auto; }
+  .pfl-head { text-align: center; max-width: 680px; margin: 0 auto; }
+
+  .pfl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 28px;
+    margin-top: 44px;
+    align-items: start;
+  }
+
+  .pfl-card {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .pfl-pickers { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .pfl-field { display: flex; flex-direction: column; gap: 6px; }
+  .pfl-field span {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt3);
+  }
+  .pfl-field select {
+    width: 100%;
+    background: var(--bg3);
+    color: var(--txt);
+    border: 1px solid var(--b2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: var(--body);
+    font-size: 14px;
+  }
+  .pfl-field select:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .pfl-phases { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* Boutons, lignes de règles : recréés par le script, donc sans l'attribut de portée
+     d'Astro → sélecteurs :global(), bornés à la section. */
+  .pfl-phases :global(button) {
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--txt2);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--body);
+  }
+  .pfl-phases :global(button:hover) { border-color: var(--blue); color: var(--txt); }
+  .pfl-phases :global(button.on) { background: rgba(59,130,246,.16); border-color: var(--blue); color: var(--txt); }
+
+  .pfl-rules { margin: 0; display: flex; flex-direction: column; }
+  .pfl-rules :global(.pfl-rule) {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 12px;
+    padding: 11px 0;
+    border-top: 1px solid var(--b);
+  }
+  .pfl-rules :global(dt) { font-size: 13px; color: var(--txt3); }
+  .pfl-rules :global(dd) { margin: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pfl-rules :global(.pfl-v) { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--txt); }
+  .pfl-rules :global(.pfl-d) { font-size: 12.5px; color: var(--txt2); line-height: 1.45; }
+  .pfl-src { margin: 0; font-size: 11.5px; color: var(--txt3); font-family: var(--mono); }
+
+  .pfl-shot { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .pfl-shot img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid var(--b2);
+    box-shadow: 0 24px 60px -30px rgba(59,130,246,.45);
+  }
+  .pfl-shot figcaption { font-family: var(--mono); font-size: 11px; color: var(--txt3); text-align: right; }
+  .pfl-points { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .pfl-points li {
+    font-size: 14px; color: var(--txt2); line-height: 1.5; display: flex; gap: 10px;
+  }
+  .pfl-points li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .pfl-points strong { color: var(--txt); font-weight: 600; }
+  .pfl-prem {
+    font-family: var(--mono); font-size: 11px; color: var(--blue2);
+    border: 1px solid var(--b2); border-radius: 4px; padding: 0 5px; margin-left: 4px; white-space: nowrap;
+  }
+
+  .pfl-cta { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .pfl-cta p { margin: 0; font-size: 12px; color: var(--txt3); font-family: var(--mono); max-width: 640px; }
+  /* Copie locale : Astro isole les styles par composant (cf. Features.astro). */
+  .btn-p {
+    background: var(--blue); color: #fff; padding: 14px 28px;
+    border-radius: 10px; font-size: 15px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
+  }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
+
+  @media (max-width: 900px) {
+    .pfl-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .pfl { padding: 64px 16px; }
+    .pfl-card { padding: 16px; }
+    .pfl-rules :global(.pfl-rule) { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>

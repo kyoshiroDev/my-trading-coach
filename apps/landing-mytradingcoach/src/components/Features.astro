@@ -1,5 +1,7 @@
 ---
 import { APP_URL } from '../config';
+import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+const firmCount = PROP_FIRM_CATALOG_FILES.length;
 ---
 
 <section class="features" id="features">
@@ -8,72 +10,55 @@ import { APP_URL } from '../config';
       <span class="sec-label">Fonctionnalités</span>
       <h2>Tout ce dont un trader <em>sérieux</em> a besoin</h2>
     </div>
+    {/*
+      9 cartes egales ramenees a 6 et hierarchisees (audit 2026-10-06) : le suivi prop firm en tete,
+      la synchro qui l'alimente, puis le rituel ; le recap 17h30 (deja dans la timeline et les
+      tarifs) rejoint la carte IA, le multi-marche la carte synchro.
+    */}
     <div class="feat-grid rstag">
       <div class="feat-card featured">
         <span class="feat-num">01</span>
-        <div class="feat-ico ic-green">☀️</div>
-        <h3>Pré-session matin</h3>
-        <p>Mood check, recap de la veille, objectifs de la semaine rappelés avant de trader.</p>
-        <span class="feat-tag tag-free">✓ Gratuit</span>
+        <div class="feat-ico ic-amber">📐</div>
+        <h3>Suivi prop firm en direct</h3>
+        <p>Les règles officielles du plan de ta firme ({firmCount} firmes) appliquées à ton compte : marge avant le plancher sur ton solde broker réel, plus haut de clôture officiel, objectif et prochain payout, payouts détectés.</p>
+        <span class="feat-tag tag-free">✓ Gratuit · alertes en Premium</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">02</span>
-        <div class="feat-ico ic-blue">⚡</div>
-        <h3>Session live</h3>
-        <p>Live feed de tes trades en temps réel. Logger un trade en 3 secondes. Clôture avec détection SL/TP/Manuel automatique.</p>
+        <div class="feat-ico ic-sky">🔗</div>
+        <h3>Synchro Tradovate &amp; import CSV</h3>
+        <p>Connecte Tradovate : ton historique remonte à la connexion, puis tes trades et leurs frais arrivent en direct, en lecture seule. Futures, crypto, forex : l'import CSV structure l'historique de tout autre broker, P&amp;L exact en ticks.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card featured">
         <span class="feat-num">03</span>
-        <div class="feat-ico ic-purple">📅</div>
-        <h3>Calendrier éco IA</h3>
-        <p>Events économiques filtrés pour tes actifs. Quand un résultat tombe, l'IA analyse immédiatement : bull ou bear pour NQ, BTC, EUR/USD.</p>
+        <div class="feat-ico ic-green">☀️</div>
+        <h3>Pré-session &amp; session live</h3>
+        <p>Humeur, recap de la veille et objectifs avant de trader. Pendant : live feed de tes trades, trade rapide en 3 secondes, contexte marché et news.</p>
         <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">04</span>
-        <div class="feat-ico ic-purple">🌙</div>
-        <h3>Recap journalier 17h30</h3>
-        <p>Email automatique à la clôture des marchés : P&amp;L, win rate, émotion dominante, phrase coaching IA personnalisée.</p>
-        <span class="feat-tag tag-prem">★ Premium</span>
+        <div class="feat-ico ic-purple">📅</div>
+        <h3>Calendrier éco IA</h3>
+        <p>Les annonces filtrées pour tes actifs. Quand un résultat tombe, l'IA dit tout de suite : bull ou bear pour NQ, BTC, EUR/USD.</p>
+        <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">05</span>
         <div class="feat-ico ic-cyan">💬</div>
-        <h3>Coach IA qui te connaît</h3>
-        <p>Tu définis ton profil une fois : scalper ICT, day trader SMC, swing trader Price Action. L'IA intègre ce contexte dans chaque analyse.</p>
+        <h3>IA qui connaît ta stratégie</h3>
+        <p>Weekly Debrief chaque dimanche, IA Insights sur tes patterns, recap email à 17h30 et coach : tout est analysé avec ton profil (scalper ICT, day trader SMC…), pas un trader moyen.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
       </div>
       <div class="feat-card">
         <span class="feat-num">06</span>
         <div class="feat-ico ic-blue">📊</div>
-        <h3>Analytics avancés</h3>
-        <p>Heatmap horaire, equity curve, drawdown max, top actifs, performance par setup. Tout ce qu'un prop trader professionnel suit.</p>
+        <h3>Analytics avancés &amp; score /100</h3>
+        <p>Heatmap horaire, equity curve, performance par setup, anti-tilt en séance, et un score hebdo sur 5 axes : discipline, risque, consistance, émotions, performance.</p>
         <span class="feat-tag tag-prem">★ Premium</span>
-      </div>
-      <div class="feat-card">
-        <span class="feat-num">07</span>
-        <div class="feat-ico ic-sky">🔗</div>
-        <h3>Synchro Tradovate &amp; import CSV</h3>
-        <p>Connecte ton compte Tradovate : dès la connexion, tes nouveaux trades et leurs frais remontent en direct, en lecture seule. Ton historique passé ne vient pas avec la synchro : il s'importe à part, depuis l'export CSV de Tradovate. Pour Binance, MetaTrader, Bybit, IBKR ou tout autre broker, l'import CSV détecte et structure ton historique.</p>
-        <span class="feat-tag tag-free">✓ Gratuit</span>
-      </div>
-      <div class="feat-card">
-        <span class="feat-num">08</span>
-        <div class="feat-ico ic-amber">🏆</div>
-        <h3>Score trader /100</h3>
-        <p>Score hebdomadaire sur 5 axes : discipline, risque, consistance, émotions, performance. Suis ta progression réelle.</p>
-        <span class="feat-tag tag-prem">★ Premium</span>
-      </div>
-      <div class="feat-card">
-        <span class="feat-num">09</span>
-        <div class="feat-ico ic-green">⚙️</div>
-        <h3>Multi-marché natif</h3>
-        <p>Futures CME (NQ, ES, MES, Gold, 6E), Crypto spot/levier, Forex, Indices CFD. P&amp;L exact en ticks avec multiplicateurs officiels.</p>
-        <span class="feat-tag tag-free">✓ Gratuit</span>
       </div>
     </div>
-
     {/*
       Relais de conversion au milieu du parcours. Les boutons etaient a 7 % puis plus rien
       jusqu'a 58 % : 7 000 px, six ecrans, sans aucun moyen de s'inscrire. Un visiteur
@@ -81,7 +66,7 @@ import { APP_URL } from '../config';
     */}
     <div class="feat-cta reveal">
       <p>Tout ce que tu viens de lire est utilisable aujourd'hui.</p>
-      <a href={`${APP_URL}/register`} class="btn-p">Commencer gratuitement</a>
+      <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="features">Commencer gratuitement</a>
       <span class="feat-cta-note">Gratuit, trades illimités, sans carte bancaire</span>
     </div>
   </div>

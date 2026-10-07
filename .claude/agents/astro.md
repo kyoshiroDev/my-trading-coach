@@ -56,6 +56,29 @@ src/
   (`.wrap` = conteneur 1100 px). Exception tolérée : valeurs uniques de dessin dans `components/mockup/`
   (positions, largeurs de barres). Survol : `:hover` en CSS, jamais `onmouseover`.
 - Aucun composant orphelin : un composant non rendu est branché ou supprimé.
+- **Hero + « Ta prop firm, en direct »** (`PropFirmLive.astro`, audit du 2026-10-06) : la home vise
+  d'abord le prop trader futures (Tradovate / NinjaTrader). Le sélecteur firm → plan → phase lit le
+  catalogue de l'app (`@mtc/shared` `PROP_FIRM_CATALOG_FILES`) réduit AU BUILD par
+  `src/data/prop-firm-catalog.ts` (JSON compact embarqué, ~50 ko) ; les libellés viennent de
+  `src/data/prop-firm-rules-view.ts` (pur, partagé rendu serveur / script). Ajouter une firm au
+  catalogue suffit : la landing suit. Éléments recréés par le script → styles en `:global()`
+  bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
+  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur. Capture `showcase/app-prop-firm-rules.webp`
+  = dépli « Mes comptes » du compte démo Apex 50K (prod).
+- **Structure de la home après l'audit du 2026-10-06** : Hero prop firm (+ ligne de confiance
+  factuelle `.hero-trust`, ordonnée après les CTA en mobile), « Ta prop firm, en direct », timeline
+  d'un prop trader (trade qui arrive seul, marge en direct, anti-tilt), **6 cartes** fonctionnalités
+  hiérarchisées (suivi prop firm en tête ; récap 17h30 et score regroupés), Coach IA raccourci (bloc
+  « 3 étapes » retiré). **Aucune affirmation d'exclusivité** (« le seul », « le premier ») : non
+  défendable face aux concurrents (cf. `docs/veille-focuspips.md`).
+- **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
+  `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
+  Nouveau CTA d'inscription → ajouter les deux attributs.
+- **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
+  bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
+  `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
+  dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
+  arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
 ---
 
@@ -94,11 +117,12 @@ Règles :
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
-- `Features.astro` (carte 07 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
-  mon historique ? ») présentent la **connexion Tradovate** comme voie principale : **dès la
-  connexion, les nouveaux trades + frais remontent en direct**, en lecture seule. Ne jamais écrire
-  que la synchro « rattrape » l'historique : le passé s'importe à part (export CSV Tradovate).
-  L'import CSV couvre aussi les autres brokers (audit UX 2026-09-27).
+- `Features.astro` (carte 02 « Synchro Tradovate & import CSV ») et `FAQ.astro` (« Puis-je importer
+  mon historique ? ») présentent la **connexion Tradovate** comme voie principale, en lecture seule.
+  **Depuis l'import d'historique par la Reporting API, tout l'historique remonte à la connexion**
+  (`launchFullImport`, cf. nestjs.md « toute la vie du compte ») puis les trades + frais arrivent en
+  direct. L'ancienne règle « le passé s'importe à part en CSV » est périmée (corrigée le 2026-10-06).
+  L'import CSV couvre aussi les autres brokers.
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
   « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
   footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.

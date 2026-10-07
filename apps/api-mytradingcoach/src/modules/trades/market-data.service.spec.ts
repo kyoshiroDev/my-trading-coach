@@ -225,3 +225,50 @@ describe('MarketDataService — une seule traduction IA par news (SCA-B3-05)', (
     expect(texts.every((t) => t === 'Fed holds rates')).toBe(true);
   });
 });
+
+describe('MarketDataService — sources et filtre des news', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('interroge chaque flux ; news générales rangées sous MACRO, date lue en heure de New York', async () => {
+    const { svc, prisma } = makeService();
+    const fetch = vi.fn().mockImplementation((url: string) => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(url.includes('general-latest')
+        ? [{ url: 'u1', title: 'Fed holds rates', publishedDate: '2026-10-06 15:35:49' }]
+        : []),
+    }));
+    vi.stubGlobal('fetch', fetch);
+
+    await svc.refreshNewsBatch();
+
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(fetch.mock.calls.some((c: unknown[]) => String(c[0]).includes('/news/general-latest?limit=20&apikey='))).toBe(true);
+    expect(prisma.marketNews.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({ symbol: 'MACRO', publishedDate: new Date('2026-10-06T19:35:49Z') }),
+    }));
+  });
+
+  it('un flux en erreur n’empêche pas les autres', async () => {
+    const { svc, prisma } = makeService();
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => url.includes('forex')
+      ? Promise.resolve({ ok: false, status: 429, json: () => Promise.resolve({}) })
+      : Promise.resolve({ ok: true, json: () => Promise.resolve([{ url: url, symbol: 'SPY', title: 't', publishedDate: '2026-10-06 10:00:00' }]) })));
+
+    await svc.refreshNewsBatch();
+
+    expect(prisma.marketNews.upsert).toHaveBeenCalledTimes(3);
+  });
+
+  it('actifs du journal (MNQ) → news QQQ + macro ; rien trouvé → toutes les news', async () => {
+    const { svc, prisma } = makeService();
+    prisma.marketNews.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      { id: 'x', title: 'T', symbol: 'SPY', publishedDate: new Date(), textTranslated: false },
+    ]);
+
+    const items = await svc.getNews('MNQ');
+
+    expect(prisma.marketNews.findMany.mock.calls[0][0].where).toEqual({ symbol: { in: ['MACRO', 'QQQ'] } });
+    expect(prisma.marketNews.findMany.mock.calls[1][0].where).toEqual({});
+    expect(items).toHaveLength(1);
+  });
+});

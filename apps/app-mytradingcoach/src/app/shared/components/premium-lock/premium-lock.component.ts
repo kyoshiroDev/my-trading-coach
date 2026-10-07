@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ProductEventsService } from '@app/core/services/product-events.service';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -26,4 +27,9 @@ import { RouterLink } from '@angular/router';
 export class PremiumLockComponent {
   readonly title    = input<string>('Fonctionnalité Premium');
   readonly subtitle = input<string>('');
+
+  constructor() {
+    // Entonnoir : un inscrit rencontre le Premium sur cet écran (une fois par onglet).
+    inject(ProductEventsService).once('premium_seen');
+  }
 }

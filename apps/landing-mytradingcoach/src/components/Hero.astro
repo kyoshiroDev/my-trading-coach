@@ -1,10 +1,12 @@
 ---
 import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
-import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 // Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
 // dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
 const { traders = 0 } = Astro.props;
 const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
+// Nombre de firms du catalogue de l'app : jamais un chiffre en dur.
+const firmCount = PROP_FIRM_CATALOG_FILES.length;
 ---
 
 <!-- BANNER -->
@@ -19,7 +21,7 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 
   <div class="hero-badge hero-badge-top">
     <div class="bdot"></div>
-    <span>Le premier compagnon de trading IA : <span class="nowrap">multi-marché</span></span>
+    <span>Prop firms futures · <span class="nowrap">synchro Tradovate</span></span>
   </div>
 
   <div class="hero-grid">
@@ -31,24 +33,31 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     </div>
   )}
 
+  {/*
+    Repositionne le 2026-10-06 (audit landing) : la cible qui convertit est le prop trader
+    futures sur Tradovate / NinjaTrader. L'ancien titre (« Tu trades seul. Ton compagnon,
+    lui, ne dort pas. ») ne disait ni pour qui ni quoi ; le compagnon IA passe en second.
+  */}
   <h1>
-    Tu trades seul.<br />
-    <em>Ton compagnon,</em><br />
-    <span class="gline">lui, ne dort pas.</span>
+    Ne grille plus<br />
+    <em>ton compte</em><br />
+    <span class="gline">prop firm.</span>
   </h1>
 
   <p class="hero-sub">
-    Avant ta session, il te prépare. Pendant, il surveille.
-    Après, il débrieffe. Le seul <strong>journal de trading IA</strong>
-    qui fonctionne comme un <strong>compagnon qui connaît ton profil</strong> :     tes actifs, ta stratégie, tes patterns. Crypto, Futures, Forex.
+    Connecte Tradovate : tes trades arrivent seuls, et ta <strong>marge de drawdown</strong>,
+    ton objectif et ton <strong>prochain payout</strong> se calculent en direct avec les
+    <strong>règles officielles de ta firme</strong>. Un <strong>coach IA</strong> te prépare
+    avant la séance, te surveille pendant et te débriefe après. Crypto et forex : l'import CSV
+    fait le reste.
   </p>
 
   <div class="hero-moments">
-    <div class="hero-moment avant">☀️ Avant, il prépare</div>
+    <div class="hero-moment avant">📐 {firmCount} prop firms, règles au plan près</div>
     <div class="hero-moment-sep">·</div>
-    <div class="hero-moment pendant">⚡ Pendant, il surveille</div>
+    <div class="hero-moment pendant">⚡ Marge et payout en direct</div>
     <div class="hero-moment-sep">·</div>
-    <div class="hero-moment apres">🌙 Après, il débrieffe</div>
+    <div class="hero-moment apres">🚨 Alertes avant la casse</div>
   </div>
 
 
@@ -83,14 +92,23 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
   </div>
 
   <div class="hero-actions">
-    <a href={`${APP_URL}/register`} class="btn-p hero-cta-main">
+    <a href={`${APP_URL}/register`} class="btn-p hero-cta-main" data-ga-event="cta_signup" data-ga-place="hero">
       Commencer gratuitement
     </a>
-    <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo">
+    <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo" data-ga-event="cta_demo" data-ga-place="hero">
       🔍 Tester la démo
     </a>
   </div>
   <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
+  {/*
+    Preuve factuelle (audit 2026-10-06 : aucune preuve sociale sur la home). Texte seul : le
+    logo NinjaTrader reste au footer et jamais de « partenaire officiel » (clause 17, astro.md).
+  */}
+  <ul class="hero-trust">
+    <li>Référencé dans l'Ecosystem NinjaTrader</li>
+    <li>Synchro en lecture seule : aucun ordre n'est jamais passé</li>
+    <li>Règles prop firm sourcées et datées</li>
+  </ul>
 </section>
 
 <style>
@@ -398,6 +416,7 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     .hero-col { order: 2; }
     .hero-actions { order: 3; }
     .hero-cta-sub { order: 4; }
+    .hero-trust { order: 4; }
     .hero-shot { order: 5; margin-top: 28px; }
   }
 
@@ -444,4 +463,17 @@ const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
     .pulse-ring { display: none; }
     .hero-moments { flex-direction: column; align-items: center; gap: 6px; }
   }
+  .hero-trust {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
+    margin: 14px auto 0;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-trust li { font-size: 12px; color: var(--txt2); font-family: var(--mono); display: flex; gap: 6px; }
+  .hero-trust li::before { content: '✓'; color: var(--green); }
 </style>

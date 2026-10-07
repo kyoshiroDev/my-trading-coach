@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import type { ChartConfiguration } from 'chart.js';
-import { AdminApi, AcquisitionData } from '../../core/api/admin.api';
+import { AdminApi, AcquisitionData, FunnelData } from '../../core/api/admin.api';
+import { funnelRows, placeLabel, placeRows } from './funnel.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
 
@@ -23,6 +24,12 @@ export class AcquisitionComponent {
 
   protected readonly data = signal<AcquisitionData | null>(null);
   protected readonly error = signal<string | null>(null);
+
+  /** Entonnoir Premium (GET /admin/funnel) : chargé à part, une panne ne masque pas l'acquisition. */
+  protected readonly funnel = signal<FunnelData | null>(null);
+  protected readonly funnelSteps = computed(() => funnelRows(this.funnel()));
+  protected readonly funnelPlaces = computed(() => placeRows(this.funnel()));
+  protected readonly placeLabel = placeLabel;
 
   /** Visites et pages vues par jour sur 30 jours. */
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
@@ -46,6 +53,10 @@ export class AcquisitionComponent {
   });
 
   constructor() {
+    this.api.funnel().pipe(
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((r) => { if (r) this.funnel.set(r.data); });
     this.api.acquisition().pipe(
       catchError((e: unknown) => { this.error.set(e instanceof Error ? e.message : 'Erreur de chargement'); return of(null); }),
       takeUntilDestroyed(this.destroyRef),

@@ -69,6 +69,20 @@ export function quantityFor(r: Rand, asset: Sym, setup: SetupTitle): number {
   return 3 + Math.floor(r() * 3); // 3 à 5 micros
 }
 
+/**
+ * Séance « du jour » de la démo selon l'heure (Paris) : un trader français sur les indices US.
+ * Avant 09:45, pas encore de séance (la veille est complète, la Pré-session est l'écran du
+ * moment) ; le matin, l'ouverture de Londres ; à partir de 16:15, l'ouverture de New York.
+ * AVANT : les trades du jour étaient placés juste avant le run, donc à 01:40 / 02:45 pour le
+ * re-seed de 03:20, et le timer de séance dépassait 22 h le soir.
+ */
+export function demoTodaySlot(now: Date): { trades: [number, number][] } | null {
+  const m = now.getHours() * 60 + now.getMinutes();
+  if (m < 9 * 60 + 45) return null;
+  if (m < 16 * 60 + 15) return { trades: [[9, 22], [9, 38]] };
+  return { trades: [[15, 38], [15, 57]] };
+}
+
 export function generate(now: Date, seed: number): DemoDay[] {
   const r = rng(seed);
   // JOURS OUVRÉS UNIQUEMENT (lundi-vendredi), y compris « aujourd'hui » et le dernier jour :
@@ -151,12 +165,13 @@ export function generate(now: Date, seed: number): DemoDay[] {
     days.push({ daysAgo: d, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'yesterday', trades: [a, b] });
   }
 
-  // Aujourd'hui (J-0), jour ouvré seulement : session ACTIVE, trades placés AVANT `now`.
-  if (tradesToday) {
-    const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
-    const clamp = (ms: number) => new Date(Math.max(startOfDay.getTime() + 5 * 60_000, ms));
-    const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: clamp(now.getTime() - 100 * 60_000), daysAgo: 0, moodStart: 'FOCUSED', emotion: 'CONFIDENT' });
-    const b = buildTrade(r, { account: 'apex', setup: 'Scalping', win: true, asset: 'MES', quantity: 5, at: clamp(now.getTime() - 35 * 60_000), daysAgo: 0, moodStart: 'FOCUSED', forceNoStop: true, emotion: null });
+  // Aujourd'hui (J-0), jour ouvré et séance ouverte (`demoTodaySlot`) : session ACTIVE sur le
+  // compte Apex connecté (panneau de suivi prop firm de la session live), trades AVANT `now`.
+  const slot = demoTodaySlot(now);
+  if (tradesToday && slot) {
+    const [[h1, m1], [h2, m2]] = slot.trades;
+    const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: dayAt(now, 0, h1, m1), daysAgo: 0, moodStart: 'FOCUSED', emotion: 'CONFIDENT' });
+    const b = buildTrade(r, { account: 'apex', setup: 'Scalping', win: true, asset: 'MES', quantity: 5, at: dayAt(now, 0, h2, m2), daysAgo: 0, moodStart: 'FOCUSED', forceNoStop: true, emotion: null });
     days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades: [a, b] });
   }
 

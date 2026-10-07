@@ -4,6 +4,53 @@
     <span class="page-meta">visites landing sans cookie · source = utm_source, sinon site d'origine</span>
   </div>
 
+  @if (funnel(); as f) {
+    <div class="card funnel-card">
+      <div class="card-head">
+        <span class="card-label">Entonnoir Premium · {{ f.days }} jours</span>
+        <span class="card-label muted">users distincts, hors démo et admin</span>
+      </div>
+      <div class="card-body">
+        <ol class="funnel">
+          @for (s of funnelSteps(); track s.label) {
+            <li class="funnel-step">
+              <div class="funnel-txt">
+                <span class="funnel-label">{{ s.label }}</span>
+                <span class="funnel-hint">{{ s.hint }}</span>
+              </div>
+              <div class="funnel-bar"><span [style.width.%]="s.width"></span></div>
+              <span class="funnel-val td-mono">{{ s.value }}</span>
+              <span class="funnel-rate td-mono">{{ s.rate === null ? '' : s.rate + ' %' }}</span>
+            </li>
+          }
+        </ol>
+        <p class="funnel-foot">
+          Démo : {{ f.demo.opens }} ouverture(s) · {{ f.demo.signupClicks }} clic(s) « Créer mon compte »
+          · Stripe aujourd'hui : {{ f.current.trialing }} essai(s) en cours, {{ f.current.paying }} payant(s)
+          @if (f.steps[4].users) { · {{ f.steps[4].users }} retour(s) Stripe annulé(s) }
+        </p>
+        @if (funnelPlaces().length) {
+          <table class="tbl">
+            <caption class="sr-only">Entonnoir Premium par écran</caption>
+            <thead><tr><th scope="col">Écran</th><th scope="col" class="num">Premium vu</th><th scope="col" class="num">Offres ouvertes</th><th scope="col" class="num">Clic essai</th></tr></thead>
+            <tbody>
+              @for (p of funnelPlaces(); track p.place) {
+                <tr>
+                  <td data-label="Écran">{{ placeLabel(p.place) }}</td>
+                  <td data-label="Premium vu" class="td-mono num">{{ p.seen }}</td>
+                  <td data-label="Offres ouvertes" class="td-mono num">{{ p.opened }}</td>
+                  <td data-label="Clic essai" class="td-mono num">{{ p.clicked }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="empty">Aucun contact avec le Premium enregistré pour l'instant</div>
+        }
+      </div>
+    </div>
+  }
+
   @if (data(); as d) {
     <div class="kpi-strip cols-5">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Visites 7j</div><div class="kpi-value teal">{{ d.totals.visits7d }}</div><div class="kpi-sub">landing, toutes sources</div></div>

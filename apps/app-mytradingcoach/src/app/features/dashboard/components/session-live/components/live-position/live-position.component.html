@@ -1,0 +1,61 @@
+<section class="lp-card" data-testid="live-position">
+  <header class="lp-head">
+    <span class="lp-title">Trade en cours</span>
+    <span class="lp-beta">BÊTA</span>
+    <mtc-info-tooltip label="Comment ces chiffres sont calculés" [text]="tooltip" />
+    <button class="lp-refresh" type="button" [disabled]="refreshing()" (click)="refresh()">
+      {{ refreshing() ? 'Lecture…' : 'Actualiser' }}
+    </button>
+  </header>
+
+  @if (totals().hasPosition) {
+    <ul class="lp-positions">
+      @for (p of broker()!.openPositions; track p.asset + p.side) {
+        <li class="lp-pos" data-testid="live-position-row">
+          <span class="lp-side" [class.long]="p.side === 'LONG'" [class.short]="p.side === 'SHORT'">
+            {{ p.side === 'LONG' ? '▲ LONG' : '▼ SHORT' }}
+          </span>
+          <span class="lp-asset">{{ p.quantity }} × {{ p.asset }}</span>
+          @if (p.entryPrice !== null) {
+            <span class="lp-entry">@ {{ p.entryPrice }}</span>
+          }
+          <span class="lp-since">{{ sinceLabel(p.since) }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="lp-flat">Aucune position ouverte chez Tradovate.</p>
+  }
+
+  <div class="lp-figures">
+    <div class="lp-fig">
+      <div class="lp-val" [class.green]="totals().realized > 0" [class.red]="totals().realized < 0">
+        {{ fmt(totals().realized) }}
+      </div>
+      <div class="lp-lbl">Réalisé</div>
+    </div>
+    <div class="lp-fig">
+      @if (totals().latent !== null) {
+        <div class="lp-val" [class.green]="totals().latent! > 0" [class.red]="totals().latent! < 0"
+             data-testid="live-latent">
+          {{ fmt(totals().latent!) }}
+        </div>
+        <div class="lp-lbl">Latent · {{ latentAge() }}</div>
+      } @else {
+        <div class="lp-val lp-na" data-testid="live-latent-na">-</div>
+        <div class="lp-lbl">Latent indisponible pour ce compte</div>
+      }
+    </div>
+    <div class="lp-fig">
+      @if (totals().total !== null) {
+        <div class="lp-val" [class.green]="totals().total! > 0" [class.red]="totals().total! < 0"
+             data-testid="live-total">
+          {{ fmt(totals().total!) }}
+        </div>
+      } @else {
+        <div class="lp-val lp-na">-</div>
+      }
+      <div class="lp-lbl">Total</div>
+    </div>
+  </div>
+</section>

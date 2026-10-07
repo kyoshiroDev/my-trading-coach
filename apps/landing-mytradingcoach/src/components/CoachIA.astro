@@ -10,8 +10,7 @@ import { APP_URL } from '../config';
       <span class="sec-label">Coach IA Personnalisé</span>
       <h2>Une IA qui te connaît.<br /><em>Vraiment.</em></h2>
       <p class="sec-sub intro">
-        Tous les journaux de trading analysent tes stats.
-        MyTradingCoach est le seul à analyser tes stats
+        Analyser tes stats, beaucoup de journaux le font. MyTradingCoach les analyse
         <strong>en connaissant ta stratégie</strong>.
         C'est la différence entre un robot et un coach.
       </p>
@@ -72,104 +71,6 @@ import { APP_URL } from '../config';
       </div>
     </div>
 
-    <!-- 3 étapes en cartes -->
-    <div class="steps-wrap reveal">
-
-      <div class="step-card">
-        <div class="step-card-top">
-          <span class="step-badge">01</span>
-          <div class="step-icon">⚡</div>
-        </div>
-        <h3 class="step-card-title">Tu définis ton profil</h3>
-        <p class="step-card-desc">
-          Style, stratégie, sessions, fréquence normale.
-          5 minutes. Une fois. L'IA sait tout avant d'analyser.
-        </p>
-        <div class="step-card-tags">
-          <span class="step-tag-pill style">⚡ Scalping</span>
-          <span class="step-tag-pill strat">ICT</span>
-          <span class="step-tag-pill strat">Order Blocks</span>
-          <span class="step-tag-pill session">📍 London</span>
-          <span class="step-tag-pill strat">FVG</span>
-        </div>
-      </div>
-
-      <div class="step-arrow-h" aria-hidden="true">
-        <svg width="40" height="16" viewBox="0 0 40 16" fill="none">
-          <path d="M0 8h36M30 2l6 6-6 6" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="step-arrow-v" aria-hidden="true">
-        <svg width="16" height="40" viewBox="0 0 16 40" fill="none">
-          <path d="M8 0v36M2 30l6 6 6-6" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-
-      <div class="step-card">
-        <div class="step-card-top">
-          <span class="step-badge">02</span>
-          <div class="step-icon">📖</div>
-        </div>
-        <h3 class="step-card-title">Tu journalises tes trades</h3>
-        <p class="step-card-desc">
-          30 secondes par trade. L'IA connaît ton contexte :           elle sait interpréter chaque entrée sans jugement hors sujet.
-        </p>
-        <div class="step-trade-preview">
-          <div class="step-trade-row">
-            <span class="trade-pill long">LONG</span>
-            <span class="trade-asset">MES</span>
-            <span class="trade-meta">London · 8h32</span>
-            <span class="trade-pnl pos">+$225</span>
-          </div>
-          <div class="step-trade-row">
-            <span class="trade-pill short">SHORT</span>
-            <span class="trade-asset">NQ</span>
-            <span class="trade-meta">NY · 15h10</span>
-            <span class="trade-pnl neg">-$180</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="step-arrow-h" aria-hidden="true">
-        <svg width="40" height="16" viewBox="0 0 40 16" fill="none">
-          <path d="M0 8h36M30 2l6 6-6 6" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="step-arrow-v" aria-hidden="true">
-        <svg width="16" height="40" viewBox="0 0 16 40" fill="none">
-          <path d="M8 0v36M2 30l6 6 6-6" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-
-      <div class="step-card step-card-accent">
-        <div class="step-card-top">
-          <span class="step-badge active">03</span>
-          <div class="step-icon">🎯</div>
-        </div>
-        <h3 class="step-card-title">L'IA t'analyse <em>vraiment</em></h3>
-        <p class="step-card-desc">
-          Debrief hebdo, insights quotidiens, objectifs :           tout adapté à ta stratégie. Pas à un trader fictif.
-        </p>
-        <div class="step-insight-pill">
-          <span class="insight-dot"></span>
-          "6 pertes sur 7 entre 15h-16h NY sur OB invalidés"
-        </div>
-      </div>
-
-    </div>
-
-
-    {/*
-      La vraie capture, deplacee ici depuis la section « L'app en vrai » le 2026-09-29.
-      L'argument generique-vs-personnalise s'appuyait sur deux encarts illustres ; il se
-      termine desormais sur l'ecran reel. La preuve arrive la ou l'argument se fait, au lieu
-      d'occuper une section a part qui entrait en concurrence avec celle-ci et avec le
-      Weekly Debrief : trois blocs parlaient d'IA a la suite, pour 29 % de la page.
-    */}
     <figure class="coach-shot reveal">
       <img
         src="/showcase/app-ai.webp"
@@ -187,7 +88,7 @@ import { APP_URL } from '../config';
 
     <!-- CTA -->
     <div class="coach-cta reveal">
-      <a href={`${APP_URL}/register`} class="btn-p">
+      <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="coach">
         Commencer gratuitement
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5">
@@ -316,79 +217,39 @@ import { APP_URL } from '../config';
     padding: 4px 8px; border-radius: 6px; letter-spacing: 1px;
   }
 
-  /* ── 3 cartes étapes ── */
-  .steps-wrap {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto 1fr;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 80px;
-  }
-  .step-card {
-    background: var(--card); border: 1px solid var(--b);
-    border-radius: 16px; padding: 24px;
-    display: flex; flex-direction: column; gap: 14px;
-    height: 100%; transition: border-color .2s, transform .2s;
-  }
-  .step-card:hover { border-color: var(--b2); transform: translateY(-3px); }
-  .step-card-accent {
-    border-color: rgba(59,130,246,.3);
-    background: linear-gradient(135deg, var(--card), rgba(59,130,246,.04));
-  }
-  .step-card-accent:hover { border-color: var(--blue); }
-  .step-card-top { display: flex; align-items: center; justify-content: space-between; }
-  .step-badge {
-    font-size: 10px; font-family: var(--mono); font-weight: 700;
-    letter-spacing: 1px; color: var(--blue2);
-    background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
-    padding: 3px 10px; border-radius: 100px;
-  }
-  .step-badge.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-  .step-icon { font-size: 22px; }
-  .step-card-title {
-    font-family: var(--disp); font-size: 17px; font-weight: 700;
-    color: var(--txt); letter-spacing: -.2px; line-height: 1.3;
-  }
-  .step-card-title em { color: var(--blue2); font-style: normal; }
-  .step-card-desc { font-size: 13px; color: var(--txt2); line-height: 1.65; flex: 1; }
-  .step-card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
-  .step-tag-pill {
-    font-size: 11px; font-family: var(--mono);
-    padding: 2px 9px; border-radius: 100px; white-space: nowrap;
-  }
-  .step-tag-pill.style { background: rgba(34,211,238,.08); color: var(--pulse); border: 1px solid rgba(34,211,238,.15); }
-  .step-tag-pill.strat { background: rgba(59,130,246,.08); color: var(--blue2); border: 1px solid rgba(59,130,246,.15); }
-  .step-tag-pill.session { background: rgba(16,185,129,.08); color: #10b981; border: 1px solid rgba(16,185,129,.15); }
-  .step-trade-preview { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
-  .step-trade-row {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--bg3); border: 1px solid var(--b);
-    border-radius: 8px; padding: 7px 10px; font-size: 11px;
-  }
-  .trade-pill { font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
-  .trade-pill.long  { background: rgba(16,185,129,.15); color: #10b981; }
-  .trade-pill.short { background: rgba(239,68,68,.15); color: #ef4444; }
-  .trade-asset { font-family: var(--mono); font-weight: 600; color: var(--txt); }
-  .trade-meta  { color: var(--txt3); flex: 1; }
-  .trade-pnl   { font-family: var(--mono); font-weight: 700; flex-shrink: 0; }
-  .trade-pnl.pos { color: #10b981; }
-  .trade-pnl.neg { color: #ef4444; }
-  .step-insight-pill {
-    display: flex; align-items: flex-start; gap: 8px;
-    font-size: 11px; font-style: italic; color: var(--txt2);
-    background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.15);
-    border-radius: 8px; padding: 10px 12px; line-height: 1.5; margin-top: 2px;
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   .insight-dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--blue2); flex-shrink: 0; margin-top: 4px;
     box-shadow: 0 0 6px var(--blue);
   }
-  .step-arrow-h {
-    display: flex; align-items: center; justify-content: center;
-    color: var(--b2); padding: 0 12px; flex-shrink: 0;
-  }
-  .step-arrow-v { display: none; }
+
+
 
 
   /* CTA */
@@ -415,9 +276,5 @@ import { APP_URL } from '../config';
     .coach-compare { grid-template-columns: 1fr; gap: 16px; }
     .coach-divider { flex-direction: row; padding-top: 0; }
     .coach-divider-line { width: 60px; height: 1px; }
-    .steps-wrap { grid-template-columns: 1fr; gap: 0; }
-    .step-arrow-h { display: none; }
-    .step-arrow-v { display: flex; justify-content: center; color: var(--b2); padding: 8px 0; }
-    .step-card { height: auto; }
   }
 </style>

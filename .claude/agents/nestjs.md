@@ -77,6 +77,9 @@ GET    /api/session/active             JWT → session active en cours (null si 
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
+POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
+                                       `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -618,6 +621,21 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - `onModuleInit` gardé par `IS_CRON_WORKER === 'true'` (**obligatoire** : sinon les 8
   workers du cluster purgent/recréent le même user en concurrence) → rattrape une API
   restée éteinte plus d'une journée.
+- **Connexion démo** (`AuthService.demoLogin`, 2026-10-06) → `DemoSeedService.ensureFresh` :
+  re-seed si la démo est périmée (`isStale` : absente, sans trade, ou rien depuis le dernier jour
+  ouvré), sous verrou Redis `demo:reseed-lock` (120 s, un seul re-seed dans le cluster ; verrou
+  pris → démo actuelle servie). Un échec ne bloque jamais la connexion. Raison : le worker de
+  **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
+  `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
+  depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
+- **Séance du jour aux heures de marché** (`demoTodaySlot`, `demo-data/generate.ts`) : avant 09:45
+  aucune séance du jour (veille complète, Pré-session) ; 09:45–16:15 Londres (trades 09:22 / 09:38) ;
+  après, New York (15:38 / 15:57). `isStale` re-seede quand un créneau s'est ouvert depuis le dernier
+  seed (seed de 03:20 puis visite à 11:00). Avant : trades « du jour » à 01:40 / 02:45, timer > 22 h.
+- **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
+  et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
+  live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
+  bouton « Connecter » orange sur Tradeify.
 
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
@@ -779,6 +797,17 @@ export class CreateTradeDto {
   → l'IA part sans le bloc.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
+  **Choix produit du 2026-10-06 (Greg)** : on garde « jamais en boucle » (la doc Tradovate dit
+  « many times in succession is an anti-pattern »), le latent est **daté** à l'écran.
+- **Positions ouvertes décrites** (retour Val, `docs/audit-live-tradovate.md`) : un `Trade` ne naît
+  qu'à la sortie (paire de fills). Chaque synchro (donc chaque événement `position` du WebSocket)
+  écrit le détail des positions non nulles du compte (actif normalisé, sens, quantité, `netPrice`,
+  `timestamp`) dans Redis `tradovate:positions:<connexion>` (TTL 12 h, `tradovate-open-positions.ts`,
+  `TradovateBalanceService.recordOpenPositionDetails`). `GET /session/today/stats` renvoie `broker`
+  (`LiveBrokerState`, `@mtc/shared`) pour le compte de la session active : positions, latent broker
+  et leurs dates ; `null` si compte non synchronisé. Latent inconnu avec position → `openPnl: null`
+  (jamais un chiffre inventé) ; à plat → 0. Le total de session reste le RÉALISÉ : le latent est à
+  part.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
@@ -1530,8 +1559,17 @@ Règles :
   `readUserPins` vidait la sélection démo).
 
 ## News live : traduction par lots et bandeau BREAKING (2026-10-06)
+- **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
+  les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
+  taux / pétrole + NVDA·AAPL·MSFT, et `BTCUSD,ETHUSD` limité à 5. Avant : un seul flux, 17 news
+  Bitcoin sur 30.
+- **Dates** : FMP date ses NEWS en heure de **New York** (le calendrier éco, lui, est en UTC) →
+  `parseFmpNewsDate`. Lues comme UTC, elles étaient décalées de 4 h (5 h l'hiver).
+- **Filtre par actif** (`getNews`) : actifs du journal → symboles FMP (`newsSymbolsFor` : MNQ→QQQ,
+  MES→SPY, GC→XAUUSD, 6E→EURUSD, BTC/USDT→BTCUSD…), `MACRO` toujours incluse ; aucun résultat →
+  toutes les news. Avant : comparaison exacte, News live vide dès le premier trade du jour.
 
-- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit les **titres** par **lots de 10** (`NEWS_TITLE_BATCH`,
+- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit jusqu'à 60 **titres** par passage, par **lots de 10** (`NEWS_TITLE_BATCH`,
   `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)
   et **aucun** titre traduit pendant 48 h en prod. Un lot illisible, ou dont le nombre de titres ne
   correspond pas, est ignoré et retenté au passage suivant (jamais de traduction décalée).
@@ -1539,3 +1577,14 @@ Règles :
   (`title`, pas `titleFr` : « ECB » devient « BCE ») : thèmes macro en **mots entiers** (Fed, FOMC,
   Powell, BCE, taux, CPI, NFP, PIB, rendements, droits de douane…), **hors crypto** (symbole ou titre),
   publiée depuis **≤ 6 h**. Le front prend la première news `breaking` ; aucune → pas de bandeau.
+
+## Entonnoir Premium (2026-10-07)
+
+`modules/product-events/` : `POST /api/events` (JWT, `@DemoAllowed`, 60/min) → `ProductEventsService.record`
+→ `ProductEventDaily` (jour Paris × user × événement × écran, `INSERT … ON CONFLICT` +1, best-effort).
+Événements : `premium_seen`, `plan_modal_open`, `trial_click`, `checkout_return` (place `success` /
+`canceled`), `demo_signup_click` (front) et `demo_open` (enregistré par `AuthService.demoLogin`).
+`AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
+détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
+de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+

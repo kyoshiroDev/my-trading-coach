@@ -12,6 +12,7 @@ import { TradovateBalanceService } from './tradovate-balance.service';
 import { TradovateClosingsService } from './tradovate-closings.service';
 import { TradovatePayoutsService } from './tradovate-payouts.service';
 import { TradovateHistoryService } from './tradovate-history.service';
+import { toOpenPositions } from './tradovate-open-positions';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
@@ -260,7 +261,11 @@ export class TradovateSyncService {
     const fills = await this.sessionEntities<TradovateFill>(get, '/fill/list', '/fill/items', fillIds);
     const fees = await this.optionalFees(get, fillIds);
 
-    const contractIds = [...new Set([...fills.values()].map((f) => f.contractId))];
+    // Contrats des fills ET des positions ouvertes (symbole de la carte « Trade en cours »).
+    const contractIds = [...new Set([
+      ...[...fills.values()].map((f) => f.contractId),
+      ...accountPositions.filter((p) => p.netPos !== 0).map((p) => p.contractId),
+    ])];
     const contracts = await this.items<TradovateContract>(get, '/contract/items', contractIds);
     const maturityIds = [...new Set([...contracts.values()].map((c) => c.contractMaturityId))];
     const maturities = await this.items<TradovateContractMaturity>(
@@ -288,6 +293,9 @@ export class TradovateSyncService {
     // Solde et equity du broker : une synchro = un événement (trade, cron, rattrapage), jamais
     // une boucle. Best-effort, n'échoue pas la synchro.
     await this.balance.captureSnapshot(conn, token, apiHosts, openPositions);
+    // Positions ouvertes décrites (actif, sens, quantité, prix moyen) : visibles dès l'entrée
+    // dans la session live, alors que le `Trade` n'existe qu'à la sortie.
+    await this.balance.recordOpenPositionDetails(conn.id, toOpenPositions(accountPositions, externalId, contracts));
     // Ce que Tradovate a renvoyé, pas seulement ce qui a été créé : distingue
     // « rien renvoyé » de « données écartées » (autre compte du login, paire orpheline).
     this.logger.log(

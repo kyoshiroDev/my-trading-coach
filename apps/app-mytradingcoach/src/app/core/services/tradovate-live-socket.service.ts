@@ -69,7 +69,12 @@ export class TradovateLiveSocketService {
     socket.on('connect_error', () => this.connected.set(false));
     socket.on('tradovate:trades', (e: TradovateLiveTrades) => this.onTrades(e));
     // Solde / equity poussés par le broker : marges et soldes de « Mes comptes » à jour.
-    socket.on('tradovate:balance', () => this.accounts.reloadSoon());
+    // Session en cours : positions ouvertes et latent relus dans la vue live (une synchro
+    // suit chaque entrée / sortie de position, même sans trade créé).
+    socket.on('tradovate:balance', () => {
+      this.accounts.reloadSoon();
+      if (this.session.hasActiveSession()) this.session.refreshLiveSoon();
+    });
     // Alerte prop firm « avant la casse » (Premium) : décidée par le serveur.
     socket.on('prop:alert', (e: PropAlertEvent) => this.alerts.handle(e));
     // Anti-tilt (Premium) : nudge non bloquant sur le dernier trade synchronisé.

@@ -276,6 +276,16 @@ export class SessionStore {
     this.refreshLiveStats();
   }
 
+  private liveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Rafale d'événements broker (solde, position) → UNE relecture des stats. */
+  refreshLiveSoon(delayMs = 800): void {
+    if (this.liveRefreshTimer) clearTimeout(this.liveRefreshTimer);
+    this.liveRefreshTimer = setTimeout(() => {
+      this.liveRefreshTimer = null;
+      this.refreshLiveStats();
+    }, delayMs);
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private refreshLiveStats(): void {
