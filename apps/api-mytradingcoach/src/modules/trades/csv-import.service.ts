@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Plan, Role, EmotionState } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
 import {
@@ -26,7 +26,6 @@ import {
 import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 
-const MODEL = AI_MODELS.analysis;
 
 
 // Limites différenciées : un broker connu est parsé localement (sans IA),
@@ -740,7 +739,7 @@ ${echantillon}`;
 
     if (response.stop_reason === 'max_tokens') return null;
 
-    const brut = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    const brut = responseText(response);
     // Le modele peut preceder le JSON d'une explication : on prend le bloc, sinon les accolades.
     const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/);
     const candidat = bloc
@@ -772,7 +771,7 @@ ${echantillon}`;
     const prompt = this.buildPrompt(filename, chunk, styleNote);
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: AI_MODELS.analysis,
         max_tokens: AI_CHUNK_MAX_TOKENS,
         system: [
           {
@@ -799,8 +798,7 @@ ${echantillon}`;
       );
     }
 
-    const text =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = responseText(response);
     const clean = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')

@@ -19,26 +19,12 @@ import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared'
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import type { EcoAnalysis } from '@mtc/shared';
 
-const MODEL = AI_MODELS.analysis;
-/**
- * Calendrier eco : seule IA qu'un compte FREE peut declencher, donc la seule dont le cout
- * suit l'audience. `ai-pricing.const.ts` la range depuis le debut dans les « taches courtes
- * et frequentes » du modele rapide, mais les deux appels partaient sur `analysis` — trois
- * fois le prix pour un JSON court (sentiment bull/bear par actif, une recommandation).
- *
- * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
- * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
- * contre ~0,002 $ en fast, soit -67 % sur ce poste.
- *
- * Le chat et le recap quotidien restent sur `MODEL` : ils sont PREMIUM et valent l'analyse.
- */
-const ECO_MODEL = AI_MODELS.fast;
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
@@ -213,7 +199,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     try {
       response = await this.anthropicClient.create(
         {
-          model: MODEL,
+          model: AI_MODELS.analysis,
           max_tokens: 512,
           system: [
             {
@@ -230,13 +216,13 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       handleAnthropicError(err, this.logger);
     }
 
-    const content = response?.content?.[0];
-    if (!content || content.type !== 'text')
+    const text = response ? responseText(response) : '';
+    if (!text)
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    return { response: content.text };
+    return { response: text };
   }
 
   // ── Daily recap one-liner ─────────────────────────────────────────────────
@@ -370,7 +356,7 @@ Règles :
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: AI_MODELS.analysis,
         max_tokens: 200,
         system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
 Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
@@ -381,9 +367,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       { feature: 'daily_recap', userId: data.userId },
     );
 
-    return response.content[0]?.type === 'text'
-      ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
-      : '';
+    return responseText(response).trim().replace(/^["']|["']$/g, '');
   }
 
   // ── Eco calendar : morning analysis + released event ─────────────────────
@@ -427,6 +411,19 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     return out;
   }
 
+  /**
+   * Calendrier eco (cet appel et analyzeEcoResult) sur `AI_MODELS.fast` : seule IA qu'un compte
+   * FREE peut declencher, donc la seule dont le cout suit l'audience. Les deux appels partaient
+   * sur `analysis`, trois fois le prix pour un JSON court (sentiment bull/bear par actif, une
+   * recommandation).
+   *
+   * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
+   * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
+   * contre ~0,002 $ en fast, soit -67 % sur ce poste.
+   *
+   * Le chat et le recap quotidien restent sur `AI_MODELS.analysis` : ils sont PREMIUM et
+   * valent l'analyse.
+   */
   async analyzeEcoEvents(data: {
     userId: string;
     events: Array<{ time: string; name: string; impact: string; currency: string }>;
@@ -446,14 +443,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: ECO_MODEL,
+        model: AI_MODELS.fast,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoAnalysis>(text);
   }
 
@@ -485,14 +482,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: ECO_MODEL,
+        model: AI_MODELS.fast,
         max_tokens: 700,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoResultAnalysis>(text);
   }
 

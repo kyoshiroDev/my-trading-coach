@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
 
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
@@ -273,7 +273,7 @@ export class EcoCalendarService {
         },
         { feature: 'eco_translation', userId: null },
       );
-      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const txt = responseText(msg);
       const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
       if (s === -1 || e === -1) return {};
       return JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;

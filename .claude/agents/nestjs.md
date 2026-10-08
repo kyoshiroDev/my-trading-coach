@@ -324,7 +324,7 @@ async analyze(summary: string): Promise<Pattern[]> {
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
   });
-  return JSON.parse(this.clean(res.content[0].text)).patterns;
+  return JSON.parse(this.clean(responseText(res))).patterns; // jamais content[0] (bloc thinking, refus)
 }
 ```
 
@@ -1233,9 +1233,26 @@ part de lignes et non la perfection.
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
-- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ; un
-  test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
+- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
+  alias local (`AI_MODELS.analysis` = `claude-sonnet-4-6`, `AI_MODELS.fast` = `claude-haiku-5-5`) ;
+  un test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
   une seule relance, chaque échec tracé (sans le contenu envoyé).
+  - **Réflexion coupée par défaut** : Haiku 5.5 réfléchit si `thinking` est absent, ce qui mange
+    `max_tokens` et se facture. `AnthropicClientService.create` applique `AI_THINKING_OFF` quand
+    l'appel ne précise pas `thinking` : Haiku 5.5 → `disabled`. Un modèle absent de la table
+    (Sonnet 4.6) part **sans** champ `thinking`, comme avant (testé). Pour activer la réflexion sur
+    un appel, passer `thinking` explicitement.
+  - **Lire la réponse avec `responseText(response)`**, jamais `content[0]` : un bloc `thinking`
+    peut venir en premier, et un refus (`stop_reason: 'refusal'`, nouveau sur les 5.5, tracé en
+    warn) peut revenir sans contenu. Haiku 5.5 n'a pas de repli serveur (`fallbacks` interdit).
+  - **Paramètres refusés par Haiku 5.5** (400) : `temperature` / `top_p` / `top_k` non par défaut,
+    `budget_tokens`, préremplissage d'un tour assistant final. Aucun n'est utilisé.
+  - **Effort** : non envoyé (défaut `medium` sur Haiku 5.5, sans effet tant que la réflexion est
+    coupée).
+  - **Sonnet 5.5 : à retenter plus tard** (testé le 2026-10-08, pas adopté). Chat coupé à
+    `max_tokens: 512` (~420-500 tokens contre ~160-220 en Sonnet 4.6, l'effort ne raccourcit pas),
+    débrief JSON illisible 1 fois sur 8. Il refuse aussi `thinking: disabled` (400) : y couper la
+    réflexion avec `between_tools`, sans autre champ, effort `high` au plus. Détail dans `plans.md`.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /

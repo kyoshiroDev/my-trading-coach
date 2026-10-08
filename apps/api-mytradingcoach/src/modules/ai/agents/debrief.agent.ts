@@ -6,8 +6,20 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AnthropicClientService } from '../../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../../infra/anthropic-client.service';
 import { AI_MODELS } from '../../infra/ai-pricing.const';
+
+/**
+ * Budget de sortie du débrief : base + marge par compte, plafonné (un seul appel, coût maîtrisé
+ * même avec plusieurs comptes). 4096 tronquait l'analyse détaillée des users multi-comptes
+ * → JSON invalide. Relevé de 25 % le 2026-10-08 (2000 + 900/compte, plafond 8192 → 2500 +
+ * 1125/compte, plafond 10240) : sur Sonnet 4.6, un débrief à 2 comptes sortait jusqu'à
+ * 3 230 jetons sur 3 800 (85 %). Gratuit tant que le plafond n'est pas atteint : seuls les
+ * jetons produits sont facturés.
+ */
+export function debriefMaxTokens(accountCount: number): number {
+  return Math.min(10_240, 2_500 + accountCount * 1_125);
+}
 
 @Injectable()
 export class DebriefAgent {
@@ -29,11 +41,7 @@ export class DebriefAgent {
       return { overview: { summary: '(débrief IA disponible en production)' }, accounts: [] };
     }
 
-    // Borne le budget de sortie : base + marge par compte, plafonné (un seul appel,
-    // coût maîtrisé même avec plusieurs comptes). Plafond 8192 + marge/compte élargie :
-    // 4096 tronquait l'analyse détaillée des users multi-comptes → JSON invalide.
-    const accountCount = data.accounts?.length ?? 1;
-    const maxTokens = Math.min(8192, 2000 + accountCount * 900);
+    const maxTokens = debriefMaxTokens(data.accounts?.length ?? 1);
 
     let response: Anthropic.Message;
     try {
@@ -56,8 +64,8 @@ export class DebriefAgent {
       handleAnthropicError(err, this.logger);
     }
 
-    const block = response.content[0];
-    if (block.type !== 'text') {
+    const text = responseText(response);
+    if (!text) {
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -65,9 +73,9 @@ export class DebriefAgent {
     }
 
     try {
-      return parseAnthropicJson(block.text);
+      return parseAnthropicJson(text);
     } catch {
-      this.logger.error('Failed to parse debrief AI response', block.text);
+      this.logger.error('Failed to parse debrief AI response', text);
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,

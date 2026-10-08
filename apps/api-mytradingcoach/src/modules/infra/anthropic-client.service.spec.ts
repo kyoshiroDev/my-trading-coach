@@ -8,7 +8,8 @@ vi.mock('@anthropic-ai/sdk', () => ({
   }),
 }));
 
-import { AI_SEMAPHORE_KEY, AI_SEMAPHORE_WAIT_MS, AnthropicClientService, aiMaxConcurrency, requestTimeoutMs } from './anthropic-client.service';
+import { AI_SEMAPHORE_KEY, AI_SEMAPHORE_WAIT_MS, AnthropicClientService, aiMaxConcurrency, requestTimeoutMs, responseText } from './anthropic-client.service';
+import { AI_MODELS } from './ai-pricing.const';
 import { AiLoggerService } from './ai-logger.service';
 
 describe('AnthropicClientService', () => {
@@ -19,7 +20,7 @@ describe('AnthropicClientService', () => {
   const redis = { client: { eval: vi.fn(), zrem: vi.fn() } };
 
   const PARAMS = {
-    model: 'claude-haiku-4-5-20251001',
+    model: AI_MODELS.fast,
     max_tokens: 10,
     messages: [{ role: 'user', content: 'hi' }],
   };
@@ -57,15 +58,15 @@ describe('AnthropicClientService', () => {
 
     expect(mockCreate).toHaveBeenCalledOnce();
     expect(res.usage.output_tokens).toBe(50);
-    // Haiku : 1$/Mtok input + 5$/Mtok output → (100*1 + 50*5)/1e6 = 0.00035
+    // Haiku 5.5 : 0,10 $/Mtok input + 0,50 $/Mtok output → (100*0.1 + 50*0.5)/1e6
     expect(prismaCreate).toHaveBeenCalledWith({
       data: {
         userId: null,
         feature: 'news_translation',
-        model: 'claude-haiku-4-5-20251001',
+        model: AI_MODELS.fast,
         inputTokens: 100,
         outputTokens: 50,
-        costUsd: (100 * 1 + 50 * 5) / 1_000_000,
+        costUsd: (100 * 0.1 + 50 * 0.5) / 1_000_000,
       },
     });
   });
@@ -76,6 +77,46 @@ describe('AnthropicClientService', () => {
     await svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' });
     expect(mockCreate).toHaveBeenCalledWith(expect.anything(), { timeout: 60_000 });
     expect(requestTimeoutMs(8192)).toBe(245_760);
+  });
+
+  it('Haiku 5.5 sans `thinking` précisé → envoyé sans réflexion ; un réglage explicite est respecté', async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockResolvedValue({ content: [], usage: { input_tokens: 1, output_tokens: 1 } });
+    await svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' });
+    expect(mockCreate.mock.calls[0][0].thinking).toEqual({ type: 'disabled' });
+
+    await svc.create({ ...PARAMS, thinking: { type: 'adaptive' } } as never, { feature: 'chat', userId: 'u1' });
+    expect(mockCreate.mock.calls[1][0].thinking).toEqual({ type: 'adaptive' });
+
+    await svc.create({ ...PARAMS, model: 'mystery-model-9' } as never, { feature: 'chat', userId: 'u1' });
+    expect(mockCreate.mock.calls[2][0]).not.toHaveProperty('thinking');
+  });
+
+  it('modèle d’analyse (Sonnet 4.6) : requête envoyée telle quelle, sans champ thinking', async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockResolvedValue({ content: [], usage: { input_tokens: 1, output_tokens: 1 } });
+    const params = { ...PARAMS, model: AI_MODELS.analysis };
+    await svc.create(params as never, { feature: 'chat', userId: 'u1' });
+    expect(AI_MODELS.analysis).toBe('claude-sonnet-4-6');
+    expect(mockCreate.mock.calls[0][0]).toEqual(params);
+    expect(mockCreate.mock.calls[0][0]).not.toHaveProperty('thinking');
+  });
+
+  it('cache compris dans le prompt : au-delà de 100K, palier long de Haiku 5.5', async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: 'ok' }],
+      usage: { input_tokens: 1_000, output_tokens: 100, cache_read_input_tokens: 120_000, cache_creation_input_tokens: 0 },
+    });
+    await svc.create(PARAMS as never, { feature: 'csv_import', userId: 'u1' });
+    expect(prismaCreate.mock.calls[0][0].data.costUsd).toBeCloseTo((1_000 * 0.5 + 100 * 2.5) / 1_000_000, 12);
+  });
+
+  it('responseText : lit les blocs texte par type, vide sur un refus sans contenu', () => {
+    const msg = (content: unknown[]) => ({ content }) as never;
+    expect(responseText(msg([{ type: 'thinking', thinking: '', signature: 's' }, { type: 'text', text: '{"a":1}' }]))).toBe('{"a":1}');
+    expect(responseText(msg([{ type: 'text', text: 'a' }, { type: 'text', text: 'b' }]))).toBe('ab');
+    expect(responseText(msg([]))).toBe('');
   });
 
   it("échec du SDK : relancé tel quel, rien n'est facturé dans le journal d'usage", async () => {

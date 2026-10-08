@@ -3,6 +3,19 @@ import Anthropic from '@anthropic-ai/sdk';
 import { randomUUID } from 'node:crypto';
 import { AiLoggerService } from './ai-logger.service';
 import { RedisService } from './redis.service';
+import { AI_THINKING_OFF } from './ai-pricing.const';
+
+/**
+ * Texte de la réponse : les blocs `text` mis bout à bout, '' s'il n'y en a pas. Lire par type et
+ * non `content[0]` : un modèle qui réfléchit commence par un bloc `thinking`, et un refus
+ * (`stop_reason: 'refusal'`) peut revenir sans aucun contenu.
+ */
+export function responseText(response: Anthropic.Message): string {
+  return response.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('');
+}
 
 /**
  * Délai max d'un appel, proportionnel à la réponse demandée : ~30 ms par token de sortie,
@@ -67,6 +80,9 @@ export class AnthropicClientService {
         'IA désactivée sur cet environnement (AI_ENABLED!=true)',
       );
     }
+    // Pas de réflexion sauf demande explicite de l'appelant (cf. AI_THINKING_OFF).
+    const thinkingOff = AI_THINKING_OFF[params.model];
+    if (thinkingOff && params.thinking === undefined) params = { ...params, thinking: thinkingOff };
     const timeout = requestTimeoutMs(params.max_tokens);
     const slot = await this.acquireSlot(timeout, meta.feature);
     const startedAt = Date.now();
@@ -83,6 +99,9 @@ export class AnthropicClientService {
       throw err;
     } finally {
       if (slot) await this.releaseSlot(slot);
+    }
+    if (response.stop_reason === 'refusal') {
+      this.logger.warn(`Appel IA refusé par le modèle : feature=${meta.feature} model=${params.model}`);
     }
     this.aiLogger.log({
       userId: meta.userId,

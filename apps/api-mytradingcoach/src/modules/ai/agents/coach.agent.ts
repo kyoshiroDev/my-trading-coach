@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parseAnthropicJson } from './parse-json.util';
 import { handleAnthropicError } from './anthropic-errors.util';
 import { Pattern } from './pattern.agent';
-import { AnthropicClientService } from '../../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../../infra/anthropic-client.service';
 import { NO_EM_DASH_RULE } from '../prompts/style.prompt';
 import { AI_MODELS } from '../../infra/ai-pricing.const';
 
@@ -54,8 +54,8 @@ export class CoachAgent {
       handleAnthropicError(err, this.logger);
     }
 
-    const block = response.content[0];
-    if (block.type !== 'text') {
+    const text = responseText(response);
+    if (!text) {
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -63,10 +63,10 @@ export class CoachAgent {
     }
 
     try {
-      const parsed = parseAnthropicJson(block.text) as { advice: Advice[] };
+      const parsed = parseAnthropicJson(text) as { advice: Advice[] };
       return parsed.advice ?? [];
     } catch {
-      this.logger.error('Failed to parse coach response', block.text);
+      this.logger.error('Failed to parse coach response', text);
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
