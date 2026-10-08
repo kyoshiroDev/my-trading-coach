@@ -18,6 +18,8 @@ describe('UserDetailService', () => {
       findMany: ReturnType<typeof vi.fn>;
       groupBy: ReturnType<typeof vi.fn>;
     };
+    founderSeat: { findUnique: ReturnType<typeof vi.fn> };
+    partnerRedemption: { findUnique: ReturnType<typeof vi.fn> };
   };
 
   beforeEach(() => {
