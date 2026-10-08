@@ -546,7 +546,17 @@ export class UsersService {
         skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
-        select: userSelect,
+        // Montant réellement payé (#525) : place fondateur ou code partenaire de l'abonné.
+        select: {
+          ...userSelect,
+          founderSeat: { select: { number: true, status: true } },
+          partnerRedemption: {
+            select: {
+              status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true,
+              partnerCode: { select: { code: true } },
+            },
+          },
+        },
       }),
       this.prisma.user.count({ where: stripeWhere }),
       this.prisma.user.findMany({
@@ -556,14 +566,14 @@ export class UsersService {
       }),
     ]);
 
+    // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
+    // `{ data: { data: … } }` et la page admin Abonnements lisait des champs vides (plantage).
     return {
-      data: {
-        stripeUsers,
-        betaTesters,
-        total: stripeTotal + betaTesters.length,
-        page,
-        limit,
-      },
+      stripeUsers,
+      betaTesters,
+      total: stripeTotal + betaTesters.length,
+      page,
+      limit,
     };
   }
 

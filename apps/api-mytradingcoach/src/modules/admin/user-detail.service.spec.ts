@@ -33,6 +33,9 @@ describe('UserDetailService', () => {
         findMany: vi.fn().mockResolvedValue([]),
         groupBy: vi.fn().mockResolvedValue([]),
       },
+      // Offre fondateur / code partenaire (#525) : aucun par défaut.
+      founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
+      partnerRedemption: { findUnique: vi.fn().mockResolvedValue(null) },
     };
     service = new UserDetailService(prisma as unknown as PrismaService);
   });
@@ -129,4 +132,26 @@ describe('UserDetailService', () => {
     expect(r.topAssets).toEqual([]);
     expect(r.profile.tradingStrategy).toEqual([]);
   });
+
+  it('fondateur et code partenaire (#525) : numéro, statut, date de perte, conditions figées', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'u1', name: null, email: 'f@test.com', plan: 'FREE', role: 'USER',
+      stripeSubscriptionStatus: null, referralCode: null, createdAt: new Date(), lastSeenAt: null,
+      tradingStrategy: [], tradingSessions: [], startingCapital: 0,
+    });
+    prisma.founderSeat.findUnique.mockResolvedValue({
+      number: 12, status: 'LOST', interval: 'year', cta: 'bandeau',
+      takenAt: new Date('2026-10-10T10:00:00Z'), endedAt: new Date('2027-10-10T10:00:00Z'),
+    });
+    prisma.partnerRedemption.findUnique.mockResolvedValue(null);
+    const d = await service.getUserDetail('u1');
+    expect(d.offer).toEqual({
+      founder: {
+        number: 12, status: 'LOST', interval: 'year', cta: 'bandeau',
+        takenAt: '2026-10-10T10:00:00.000Z', endedAt: '2027-10-10T10:00:00.000Z',
+      },
+      partner: null,
+    });
+  });
 });
+

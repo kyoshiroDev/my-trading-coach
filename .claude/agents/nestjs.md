@@ -1694,3 +1694,11 @@ pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`
 l'intervalle. Le module fournit son propre `stripeClientProvider`. Concurrence testée sur vraie base :
 `partner-code.int-spec.ts`. MRR : `UsersService.realMrr` (base) et `monthlyOf` après remise (admin).
 
+Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l'intercepteur ajoute
+`{ data }` ; l'ancien `{ data: { … } }` donnait `{ data: { data } }` et faisait planter la page admin
+Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. `AdminUserDetail.offer`
+(fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
+quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·
+Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
+digest même sans inscription.
+
