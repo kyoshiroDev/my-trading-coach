@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BadRequestException } from '@nestjs/common';
 import { EmailCampaignService } from './email-campaign.service';
 import { CAMPAIGNS_BY_KEY } from '../resend/campaigns/campaign-registry';
-import { founderLaunchTemplate, FOUNDER_LAUNCH_URL } from '../resend/campaigns/campaign-templates';
+import { founderLaunchTemplate, founderLaunchUrl } from '../resend/campaigns/campaign-templates';
 
 // Campagne founder_launch (#525) : ciblage, texte, envoi test obligatoire et refus si l'offre ne vend
 // pas. Prisma, Resend, Redis et l'offre fondateur sont simulés.
@@ -54,8 +54,8 @@ describe('campagne founder_launch : ciblage et texte', () => {
     });
   });
 
-  it('texte validé : objet, prénom (ou « Salut, »), places restantes, lien de la campagne avec cta=email', () => {
-    const named = founderLaunchTemplate({ userName: 'Ana', appUrl: '', unsubUrl: 'U', seatsLeft: 187 });
+  it('texte validé : objet, prénom (ou « Salut, »), places restantes, lien direct dans l’app avec cta=email', () => {
+    const named = founderLaunchTemplate({ userName: 'Ana', appUrl: 'https://app.test/', unsubUrl: 'U', seatsLeft: 187 });
     expect(named.subject).toBe('200 places à 29 €/mois, à vie');
     expect(named.html).toContain('Salut Ana,');
     expect(named.html).toContain('187 places sur 200');
@@ -63,7 +63,7 @@ describe('campagne founder_launch : ciblage et texte', () => {
     expect(named.html).toContain('Le trading comporte un risque de perte en capital.');
     expect(named.html).toContain('href="U"'); // désinscription
     // Lettre de Greg : sa signature (logo intégré), expéditeur support@, réponses sur hello@, version texte.
-    expect(named.html).toContain('Grégory Tahir');
+    expect(named.html).toContain('Grégory');
     expect(named.html).toContain('src="cid:logo-mtc"');
     expect(named.html).not.toContain('Greg, fondateur de MyTradingCoach'); // pas de double signature
     expect(named).toMatchObject({
@@ -73,13 +73,18 @@ describe('campagne founder_launch : ciblage et texte', () => {
     });
     expect(named.text).toContain('Salut Ana,');
     expect(named.text).toContain('Il reste 187 places sur 200.');
-    expect(named.text).toContain('Grégory Tahir');
+    expect(named.text).toContain('Grégory');
+    expect(named.text!.indexOf('P.S.')).toBeGreaterThan(named.text!.indexOf('Grégory'));
     expect(named.text).toContain('Me désinscrire des e-mails : U');
     expect(founderLaunchTemplate({ userName: '<b>x</b>', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut &lt;b&gt;x&lt;/b&gt;,');
-    expect(FOUNDER_LAUNCH_URL).toBe(
-      'https://www.mytradingcoach.app/?utm_source=email&utm_medium=campaign&utm_campaign=fondateur&cta=email#pricing',
-    );
-    expect(named.html).toContain(FOUNDER_LAUNCH_URL);
+    expect(named.html).toContain('jusqu&#39;à 240 € économisés par an'.replace('&#39;', "'"));
+    expect(named.html).toContain('Quand elles sont parties, c&#39;est 49 €.'.replace('&#39;', "'"));
+    expect(named.html).toContain('<b>P.S.</b>');
+    // Les destinataires ont un compte : lien direct dans l'app, l'intention survit à la connexion.
+    const url = 'https://app.test/dashboard?plan=founder&cta=email&utm_source=email&utm_medium=campaign&utm_campaign=fondateur';
+    expect(founderLaunchUrl('https://app.test/')).toBe(url);
+    expect(named.html.split(url).length - 1).toBe(2); // bouton + P.S.
+    expect(named.text).toContain(`Je prends ma place fondateur : ${url}`);
     expect(founderLaunchTemplate({ userName: '', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut,');
     expect(founderLaunchTemplate({ userName: '  Greg Tahir ', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut Greg,');
   });

@@ -24,7 +24,7 @@ const SIGNATURE_HTML = `<table cellpadding="0" cellspacing="0" border="0" style=
       <img src="cid:${LOGO_CID}" alt="MyTradingCoach" width="40" height="40" style="display:block;width:40px;height:40px;border:0">
     </td>
     <td valign="middle" style="vertical-align:middle;border-left:2px solid #3b82f6;padding-left:14px">
-      <div style="font-family:Arial,sans-serif;font-weight:800;font-size:15px;color:#111827;margin-bottom:2px">Grégory Tahir</div>
+      <div style="font-family:Arial,sans-serif;font-weight:800;font-size:15px;color:#111827;margin-bottom:2px">Grégory</div>
       <div style="font-family:Arial,sans-serif;font-size:12.5px;color:#5f6368;margin-bottom:8px">Fondateur — <b style="color:#3b82f6">MyTrading</b><b style="color:#8b5cf6">Coach</b></div>
       <div style="font-family:Arial,sans-serif;font-size:12px;color:#5f6368;line-height:1.6">
         <div><a href="https://mytradingcoach.app" style="color:#1a73e8;text-decoration:none">mytradingcoach.app</a>&nbsp;·&nbsp;<a href="mailto:hello@mytradingcoach.app" style="color:#1a73e8;text-decoration:none">hello@mytradingcoach.app</a></div>
@@ -35,7 +35,7 @@ const SIGNATURE_HTML = `<table cellpadding="0" cellspacing="0" border="0" style=
 </table>`;
 
 const SIGNATURE_TEXT = `--
-Grégory Tahir
+Grégory
 Fondateur — MyTradingCoach
 mytradingcoach.app · hello@mytradingcoach.app
 Le copilote IA pour traders futures & prop firm`;
@@ -48,6 +48,9 @@ export function gregLetter(p: {
   preheader: string;
   bodyHtml: string;
   bodyText: string;
+  /** P.S. placé sous la signature (la partie la plus lue d'une lettre). */
+  postscriptHtml?: string;
+  postscriptText?: string;
   legal?: string;
   unsubUrl: string;
 }): { html: string; text: string } {
@@ -60,10 +63,11 @@ export function gregLetter(p: {
 <div style="max-width:560px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;color:#1a1a1a">
 ${p.bodyHtml}
 ${SIGNATURE_HTML}
+${p.postscriptHtml ?? ''}
 ${legalHtml}
 <p style="margin:18px 0 0;font-size:12px;color:#6b7280">Tu reçois cet e-mail parce que tu as un compte MyTradingCoach. <a href="${p.unsubUrl}" style="color:#6b7280">Me désinscrire des e-mails</a></p>
 </div></body></html>`;
-  const text = [p.bodyText, SIGNATURE_TEXT, p.legal ?? '', `Me désinscrire des e-mails : ${p.unsubUrl}`]
+  const text = [p.bodyText, SIGNATURE_TEXT, p.postscriptText ?? '', p.legal ?? '', `Me désinscrire des e-mails : ${p.unsubUrl}`]
     .filter(Boolean)
     .join('\n\n');
   return { html, text };

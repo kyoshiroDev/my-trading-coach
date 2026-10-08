@@ -101,8 +101,9 @@ src/
     clôturée (`ended`), **hors `FAQ` donc hors JSON-LD**. La question « code partenaire » est dans `FAQ`.
   - Point de clic `cta` : `carte` par défaut ; `bandeau` / `faq` retenus en sessionStorage `mtc_cta`
     et posés sur le lien de la carte au clic. **Jamais d'UTM sur un lien interne.**
-    `?cta=email` (lien de la campagne `founder_launch`) est capté par `captureCtaFromUrl()` et retenu
-    de la même façon ; aucune autre valeur n'est acceptée depuis l'URL.
+    `?cta=email` (lien e-mail pointant sur la landing) est capté par `captureCtaFromUrl()` et retenu
+    de la même façon ; aucune autre valeur n'est acceptée depuis l'URL. (La campagne `founder_launch`
+    pointe, elle, directement dans l'app.)
   - `?promo=CODE` (script de `Base.astro`) : format `^[A-Z0-9_-]{3,20}$`, gardé 30 j en localStorage
     `mtc_promo` (comme `ref`), ajouté à tous les liens `/register`, à côté des UTM d'origine.
   - JSON-LD : prix NORMAL uniquement. CGU : clauses `#offre-fondateur` et `#codes-partenaires`.

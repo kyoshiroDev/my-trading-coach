@@ -16,7 +16,6 @@ import {
 import { GREG_FROM, GREG_LOGO_ATTACHMENT, GREG_REPLY_TO, gregLetter } from './greg-letter';
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
-const LANDING_URL = (process.env['LANDING_URL'] ?? 'https://www.mytradingcoach.app').replace(/\/+$/, '');
 
 export interface CampaignContent {
   subject: string;
@@ -202,47 +201,60 @@ export function announcementTemplate(
 }
 
 // ── Lancement de l'offre fondateur (#525) ──────────────────────────────────────
-// Texte validé par Greg (prompt #525) : à reprendre tel quel. `cta=email` voyage jusqu'à l'app.
+// Lettre de Greg (version validée le 2026-10-08). Les destinataires ont déjà un compte : le lien va
+// droit dans l'app, qui garde l'intention (`plan=founder`, `cta=email`) pendant la connexion puis
+// ouvre la modale fondateur, d'où l'on passe au paiement.
 
-/** Lien de la campagne : UTM de la campagne + point de clic `email`, vers les tarifs de la landing. */
-export const FOUNDER_LAUNCH_URL =
-  `${LANDING_URL}/?utm_source=email&utm_medium=campaign&utm_campaign=fondateur&cta=email#pricing`;
+/** Lien de la campagne : app (connexion si besoin) + intention fondateur + UTM de la campagne. */
+export const founderLaunchUrl = (appUrl: string) =>
+  `${appUrl.replace(/\/+$/, '')}/dashboard?plan=founder&cta=email&utm_source=email&utm_medium=campaign&utm_campaign=fondateur`;
 
-export function founderLaunchTemplate({ userName, unsubUrl, seatsLeft }: CampaignBuildCtx): CampaignContent {
+export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }: CampaignBuildCtx): CampaignContent {
   const seats = seatsLeft ?? FOUNDER_OFFER.seats;
   // {prénom} : `name` est libre (« Greg Tahir ») → premier mot ; vide → « Salut, ».
   const firstName = userName.trim().split(/\s+/)[0] ?? '';
   const hello = firstName ? `Salut ${firstName},` : 'Salut,';
   const { seats: total, priceMonthlyEur: m, priceAnnualEur: y } = FOUNDER_OFFER;
-  const intro = `Tu t'es inscrit sur MyTradingCoach, merci. On ouvre l'offre fondateur, réservée aux ${total} premiers abonnés :`;
-  const premium = "Premium, c'est tout le gratuit, plus : le coach IA personnel, le debrief de la semaine, les analyses avancées, les alertes prop firm avant la casse, l'anti-tilt en séance et les comptes illimités.";
+  const { monthly: normalM, annual: normalY } = PREMIUM_PRICE_EUR;
+  const saved = (normalM - m) * 12;
+  const url = founderLaunchUrl(appUrl);
+
+  const hook = "Le plus dur en trading, ce n'est pas de trouver un setup : c'est de ne pas tout perdre sur une mauvaise séance. C'est pour ça que j'ai construit MyTradingCoach.";
+  const intro = `Aujourd'hui, j'ouvre l'offre fondateur, réservée aux ${total} premiers : ceux qui construisent l'outil avec moi.`;
+  const concrete = 'Concrètement, Premium te prévient avant que tu atteignes ta perte journalière max de prop firm, et te signale en direct quand tu passes en revenge trading ou en surtrading. Tu as aussi le coach IA, le debrief de la semaine et les comptes illimités.';
   const free = 'Si le gratuit te suffit, aucun souci : il reste gratuit, sans limite de trades.';
+  const ps = 'Le prix fondateur ne bouge plus tant que tu restes abonné. Et si ça ne te convient pas, je te rembourse ton premier paiement sous 14 jours, sans discussion.';
 
   const p = 'style="margin:0 0 16px;line-height:1.55"';
+  const link = (label: string) =>
+    `<a href="${url}" style="color:#1a73e8;font-weight:600;text-decoration:none">${label}</a>`;
   const bodyHtml = `<p ${p}>${escapeHtml(hello)}</p>
+<p ${p}>${hook}</p>
 <p ${p}>${intro}</p>
 <ul style="margin:0 0 16px;padding-left:22px;line-height:1.55">
-  <li style="margin-bottom:6px">Premium à <b>${m} €/mois</b> au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou <b>${y} €/an</b> au lieu de ${PREMIUM_PRICE_EUR.annual} €</li>
+  <li style="margin-bottom:6px">Premium à <b>${m} €/mois</b> au lieu de ${normalM} € (ou <b>${y} €/an</b> au lieu de ${normalY} €) : <b>jusqu'à ${saved} € économisés par an</b></li>
   <li style="margin-bottom:6px"><b>Prix bloqué à vie</b>, tant que ton abonnement reste actif</li>
-  <li style="margin-bottom:6px">Satisfait ou remboursé pendant 14 jours</li>
+  <li style="margin-bottom:6px"><b>Satisfait ou remboursé 14 jours</b> : tu ne prends aucun risque</li>
 </ul>
-<p ${p}>${premium}</p>
-<p ${p}>Il reste <b>${seats} places sur ${total}</b>. Le compteur est en direct sur le site.</p>
+<p ${p}>${concrete}</p>
+<p ${p}>Il reste <b>${seats} places sur ${total}</b>. Quand elles sont parties, c'est ${normalM} €.</p>
 <table cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#3b82f6">
-  <a href="${FOUNDER_LAUNCH_URL}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">Devenir fondateur</a>
+  <a href="${url}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">Je prends ma place fondateur</a>
 </td></tr></table>
 <p ${p}>${free}</p>`;
+  const postscript = `<p style="margin:18px 0 0;line-height:1.55"><b>P.S.</b> ${ps} → ${link('Devenir fondateur')}</p>`;
   const bodyText = [
     hello,
+    hook,
     intro,
     [
-      `- Premium à ${m} €/mois au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou ${y} €/an au lieu de ${PREMIUM_PRICE_EUR.annual} €`,
+      `- Premium à ${m} €/mois au lieu de ${normalM} € (ou ${y} €/an au lieu de ${normalY} €) : jusqu'à ${saved} € économisés par an`,
       '- Prix bloqué à vie, tant que ton abonnement reste actif',
-      '- Satisfait ou remboursé pendant 14 jours',
+      '- Satisfait ou remboursé 14 jours : tu ne prends aucun risque',
     ].join('\n'),
-    premium,
-    `Il reste ${seats} places sur ${total}. Le compteur est en direct sur le site.`,
-    `Devenir fondateur : ${FOUNDER_LAUNCH_URL}`,
+    concrete,
+    `Il reste ${seats} places sur ${total}. Quand elles sont parties, c'est ${normalM} €.`,
+    `Je prends ma place fondateur : ${url}`,
     free,
   ].join('\n\n');
 
@@ -250,6 +262,8 @@ export function founderLaunchTemplate({ userName, unsubUrl, seatsLeft }: Campaig
     preheader: "L'offre fondateur MyTradingCoach est ouverte. Premier arrivé, premier servi.",
     bodyHtml,
     bodyText,
+    postscriptHtml: postscript,
+    postscriptText: `P.S. ${ps} → ${url}`,
     legal: 'Le trading comporte un risque de perte en capital.',
     unsubUrl,
   });

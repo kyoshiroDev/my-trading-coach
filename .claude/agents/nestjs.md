@@ -1273,7 +1273,9 @@ part de lignes et non la perfection.
   prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
   les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
   `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
-  passé à `dispatch(…, { seatsLeft })` ; lien `FOUNDER_LAUNCH_URL` (`LANDING_URL` + UTM + `cta=email`).
+  passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
+  + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
+  modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
 - **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
   (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
   avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,

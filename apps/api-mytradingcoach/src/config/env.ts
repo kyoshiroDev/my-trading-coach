@@ -35,8 +35,6 @@ export const ENV_VARS: EnvVar[] = [
   // Clé publiable renvoyée à la page de paiement de l'app ; absente → page Stripe (repli).
   // Campagnes (#525) : seule adresse des envois test (jamais saisie dans l'admin) ; défaut hello@.
   { name: 'CAMPAIGN_TEST_EMAIL', level: 'optional', check: (v) => (/^[^@\s]+@[^@\s]+$/.test(v) ? undefined : 'doit être une adresse e-mail') },
-  // Landing visée par les liens des campagnes (défaut : https://www.mytradingcoach.app).
-  { name: 'LANDING_URL', level: 'optional', check: (v) => (/^https?:\/\//.test(v) ? undefined : 'doit commencer par http(s)://') },
   { name: 'STRIPE_PUBLIC_KEY', level: 'production', check: (v) => (v.startsWith('pk_') ? undefined : 'doit commencer par pk_') },
   { name: 'RESEND_API_KEY', level: 'required' },
   // Sans REDIS_HOST, l'API vise localhost : cache, files de jobs et temps réel hors service.
