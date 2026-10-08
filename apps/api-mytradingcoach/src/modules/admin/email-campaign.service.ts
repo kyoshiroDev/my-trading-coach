@@ -197,7 +197,8 @@ export class EmailCampaignService {
       select: { email: true, name: true },
       take: 20,
     });
-    const userName = recipients[0]?.name ?? 'Trader';
+    // Nom vide : chaque modèle applique son repli (« Trader », ou « Salut, » pour founder_launch).
+    const userName = recipients[0]?.name ?? '';
     const sampleUnsub = this.dispatch.buildUnsubUrl('apercu-token');
     const seatsLeft = type === 'founder_launch' ? (await this.founderSelling()).seatsLeft : undefined;
     const content = this.render(type, { userName, unsubUrl: sampleUnsub, seatsLeft }, subject, body);

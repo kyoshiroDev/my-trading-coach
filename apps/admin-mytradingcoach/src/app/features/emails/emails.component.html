@@ -18,7 +18,7 @@
             <div class="camp-desc">{{ c.desc }}</div>
             <span class="camp-target">{{ c.targetDesc }} · <span class="n">{{ c.newCount }} nouveau{{ c.newCount !== 1 ? 'x' : '' }}</span> / {{ c.targetCount }} au total@if (c.alreadyContacted > 0) { · {{ c.alreadyContacted }} déjà contacté{{ c.alreadyContacted !== 1 ? 's' : '' }} }@if (c.automated) { · <span class="badge-auto">auto</span> }</span>
             @if (c.requiresConsent) {
-              <span class="camp-target">{{ c.withConsent }} avec consentement · {{ c.withoutConsent }} sans (non contactés)</span>
+              <span class="camp-target camp-consent">{{ c.withConsent }} avec consentement · {{ c.withoutConsent }} sans (non contactés)</span>
             }
           </div>
           <div class="camp-right">

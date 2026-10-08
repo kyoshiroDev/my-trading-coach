@@ -73,7 +73,7 @@ export class EmailsComponent {
     const c = this.sendCampaignModal();
     if (!c) return false;
     if (c.type === 'announcement' && !this.announcementSubject().trim()) return false;
-    if (c.requiresTest && !this.tested()) return false;
+    if (c.requiresTest && (!this.tested() || this.sendCount() === 0)) return false;
     return true;
   });
 

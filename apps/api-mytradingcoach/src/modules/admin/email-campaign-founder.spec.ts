@@ -67,6 +67,7 @@ describe('campagne founder_launch : ciblage et texte', () => {
     );
     expect(named.html).toContain(FOUNDER_LAUNCH_URL);
     expect(founderLaunchTemplate({ userName: '', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut,');
+    expect(founderLaunchTemplate({ userName: '  Greg Tahir ', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut Greg,');
   });
 });
 

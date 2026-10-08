@@ -209,9 +209,11 @@ export function founderLaunchTemplate({ userName, unsubUrl, seatsLeft }: Campaig
     <span style="${FONT}font-size:14px;color:#9db4ce;margin-left:8px;">${html}</span>
   </div>`;
   const seats = seatsLeft ?? FOUNDER_OFFER.seats;
+  // {prénom} : `name` est libre (« Greg Tahir ») → premier mot ; vide → « Salut, ».
+  const firstName = userName.trim().split(/\s+/)[0] ?? '';
   const content =
     card(`
-      <p style="${p}">${userName ? `Salut ${userName},` : 'Salut,'}</p>
+      <p style="${p}">${firstName ? `Salut ${firstName},` : 'Salut,'}</p>
       <p style="${p}">Tu t'es inscrit sur MyTradingCoach, merci. On ouvre l'offre fondateur, réservée aux ${FOUNDER_OFFER.seats} premiers abonnés :</p>
       <div style="margin:4px 0 16px 0;">
         ${bullet(`Premium à <strong style="${strong}">${FOUNDER_OFFER.priceMonthlyEur} €/mois</strong> au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou <strong style="${strong}">${FOUNDER_OFFER.priceAnnualEur} €/an</strong> au lieu de ${PREMIUM_PRICE_EUR.annual} €`)}
