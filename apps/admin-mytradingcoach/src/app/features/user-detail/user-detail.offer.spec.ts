@@ -28,7 +28,7 @@ function makeData(identity: Partial<Identity> = {}): UserDetailData {
       tradesPerDayMin: null, tradesPerDayMax: null, strategyDescription: null, startingCapital: 0,
     },
     usage: { totalTrades: 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 },
-    topAssets: [], sessions: [],
+    topAssets: [], offer: { founder: null, partner: null }, sessions: [],
   };
 }
 

@@ -23,6 +23,20 @@
       </div>
     </div>
 
+    <!-- MRR réellement payé, découpé (#525) : prix normal, fondateurs (29 € / 290/12), codes partenaires. -->
+    @if (s.mrrBreakdown; as b) {
+      <div class="card" data-testid="mrr-breakdown">
+        <div class="card-head"><span class="card-label">MRR par tarif</span><span class="card-label muted">montant réellement payé</span></div>
+        <div class="card-body">
+          <div class="mini-stats">
+            <div class="mini"><span class="mini-v teal">€{{ b.normal | number:'1.0-0' }}</span><span class="mini-l">Prix normal</span></div>
+            <div class="mini"><span class="mini-v blue">€{{ b.founder | number:'1.0-0' }}</span><span class="mini-l">Fondateurs</span></div>
+            <div class="mini"><span class="mini-v purple">€{{ b.partner | number:'1.0-0' }}</span><span class="mini-l">Codes partenaires</span></div>
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="card">
       <div class="card-head"><span class="card-label">Aperçu</span></div>
       <div class="card-body slim">

@@ -1,0 +1,55 @@
+/* Onglets Fondateurs et Codes partenaires (#525) — design system global (.card, .tbl, .badge, .btn),
+   champs repris de la page Ambassadeurs (.field, .field-input). */
+.muted { color: var(--text3); }
+.num, .tbl th.num { text-align: right; }
+.u-link { color: var(--text); text-decoration: none; }
+.u-link:hover { color: var(--teal); }
+
+.offer-head { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.offer-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.offer-stats { display: flex; gap: 16px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--text2); }
+.offer-stats strong { color: var(--teal); }
+.recap { font-family: var(--mono); font-size: 11px; color: var(--text3); margin: 0; }
+
+.confirm-box { border: 1px solid var(--border2); border-radius: var(--r-sm); padding: 12px 14px; background: var(--bg3); max-width: 520px; }
+.confirm-text { font-size: 13px; line-height: 1.6; color: var(--text2); margin: 0 0 10px; }
+.confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+.field { display: block; margin-bottom: 14px; }
+.field.inline { margin-bottom: 0; }
+.field-lbl { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.field-lbl .opt { color: var(--text3); }
+.field-input, .field-select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-sm);
+  padding: 9px 11px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.card-head .field-select { width: auto; padding: 5px 9px; font-size: 11px; }
+.field-input:focus, .field-select:focus { outline: none; border-color: var(--teal); }
+.err-text { color: var(--red, #ef4444); font-size: 12px; margin: 0; }
+.ok-text { color: var(--teal); font-size: 12px; margin: 0; }
+
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; }
+
+/* Codes partenaires */
+.code-form { padding: 16px 18px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.choice { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--text2); }
+.choice label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.choice .field-input { width: 90px; }
+.help { font-size: 11px; color: var(--text3); margin: 6px 0 0; line-height: 1.5; }
+.preview { font-family: var(--mono); font-size: 12px; color: var(--text); background: var(--teal-dim); border: 1px solid rgba(0,212,170,.25); border-radius: var(--r-sm); padding: 10px 12px; margin: 4px 0 14px; }
+.form-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.note { font-size: 11px; color: var(--text3); margin: 0; padding: 10px 18px 0; }
+.users-list { padding: 8px 18px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.users-list .row { display: flex; gap: 12px; align-items: center; }
+
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .field-input { font-size: 16px; }
+}

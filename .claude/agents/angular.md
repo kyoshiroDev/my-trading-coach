@@ -938,3 +938,21 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 
+### Admin : offre fondateur et codes partenaires (#525)
+
+- Dashboard : 7e KPI « Fondateurs » (`X / 200`, `N actifs · R restantes`, barre fine, badge « fermée »)
+  → `/subscriptions?filtre=fondateurs`. La bande `dash-kpis` passe à 7 colonnes.
+- Abonnements : KPI `cols-5` (+ Fondateurs) et onglets `section-tabs` Abonnements / Fondateurs /
+  Codes partenaires, pilotés par `?filtre=fondateurs|codes`. Composants `founders-tab` (interrupteur
+  « Ouvrir l'offre » avec confirmation DANS la page, date de fin, récap par clic, tableau filtrable et
+  paginé, liens vers la fiche) et `partner-codes-tab` (formulaire création / modification, aperçu en
+  une phrase, aide « effet sur l'annuel », liste « utilisés / max », activer / désactiver, abonnés par
+  code). Styles partagés `offers-tabs.css` (champs repris de la page Ambassadeurs).
+- Colonne « Montant » = montant réellement payé (`realAmountLabel`, `core/utils/offers.util.ts`, testé)
+  + étiquette « Fondateur n° X » / « Code X ».
+- Revenus : carte « MRR par tarif » (`mrrBreakdown` : normal / fondateurs / codes partenaires).
+- Fiche utilisateur : badge « Fondateur n° X » ou « Code X », ligne avec date, intervalle et « Tarif
+  perdu le … » / « Remboursé le … », ou conditions figées du code (`AdminUserDetail.offer`).
+- Maquette `admin-mytradingcoach.html` absente en local au moment du #525 : design repris des
+  composants existants (KPI, `.tbl`, `.badge`, `.section-tabs`, champs Ambassadeurs).
+

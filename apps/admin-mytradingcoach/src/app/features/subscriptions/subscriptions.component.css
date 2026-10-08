@@ -2,3 +2,6 @@
 .muted { color: var(--text3); }
 .num, .tbl th.num { text-align: right; }
 .muted-av { background: var(--bg4); color: var(--text3); }
+.offer-tag { margin-left: 4px; }
+.section-tabs { margin-bottom: 14px; }
+.section-tabs .tab { background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
