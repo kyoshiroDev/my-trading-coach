@@ -134,8 +134,10 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   Le sens (long/short) n'est **jamais** pris sur parole : mesuré 3/5 seulement pour les deux
   modèles, il est tranché par le signe du P&L. Si la forme ne tient pas, si trop de lignes sont
   inexploitables, ou si le sens n'est pas vérifiable (export sans prix d'entrée, type Binance
-  Futures), on **retombe sur l'ancien chemin ligne par ligne** — `AI_BATCH` = 120 lignes, borne
-  de sortie et non de coût (~40 jetons de JSON par trade contre `max_tokens: 8192`).
+  Futures), on **retombe sur l'ancien chemin ligne par ligne** — `AI_BATCH` = **25** lignes, borne
+  de sortie et non de coût : jusqu'à ~140 jetons de JSON par trade (mesuré le 2026-10-08, colonne de
+  notes remplie), contre `max_tokens: 8192`. À 120 lignes, Sonnet 4.6 atteignait le plafond et l'import
+  échouait ; à 25, le pire lot mesuré tient en 37 % du plafond (règle : ≤ 50 %, testée).
   Ordre de grandeur : 1000 imports gratuits de 2000 lignes ≈ **3 $** par mapping, contre
   ≈ 1430 $ par l'ancien chemin. Le taux de repli pilote la facture : un repli coûte 186 fois
   un mapping réussi. Ne pas ouvrir l'import IA au FREE sans surveiller ce taux, ni sans quota
