@@ -18,7 +18,7 @@ const PRICES: Record<string, string> = {
 };
 const config = { get: (k: string) => PRICES[k], getOrThrow: (k: string) => PRICES[k] ?? 'sk_test_dummy' };
 
-function makeBilling(over: { user?: object; existingSub?: object | null; openSessions?: object[]; eligible?: boolean; reason?: string; pk?: string } = {}) {
+function makeBilling(over: { user?: object; existingSub?: object | null; openSessions?: object[]; eligible?: boolean; reason?: string; pk?: string; methods?: Record<string, boolean> } = {}) {
   const cfg = over.pk
     ? { get: (k: string) => (k === 'STRIPE_PUBLIC_KEY' ? over.pk : PRICES[k]), getOrThrow: config.getOrThrow }
     : config;
@@ -44,6 +44,14 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
     checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: over.openSessions ?? [] }), create, expire, retrieve } },
     coupons: { retrieve: vi.fn().mockResolvedValue({}), create: vi.fn() },
     customers: { search: vi.fn(), create: vi.fn() },
+    paymentMethodConfigurations: {
+      list: vi.fn().mockResolvedValue({
+        data: [{
+          is_default: true, active: true,
+          ...Object.fromEntries(Object.entries(over.methods ?? { card: true, link: true, klarna: true }).map(([k, v]) => [k, { available: v }])),
+        }],
+      }),
+    },
   };
   const founders = {
     eligibility: vi.fn().mockResolvedValue({ eligible: over.eligible ?? true, reason: over.reason ?? null }),
@@ -58,7 +66,8 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
     activeForSubscription: vi.fn().mockResolvedValue(null), couponForIntervalChange: vi.fn(),
   };
   const svc = new StripeBillingService(
-    cfg as never, prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never,
+    cfg as never, prisma as never,
+    { client: { del: vi.fn().mockResolvedValue(1), get: vi.fn().mockResolvedValue(null), setex: vi.fn().mockResolvedValue('OK') } } as never,
     new StripeCustomerService(prisma as never, stripe as never),
     new StripeCouponService(stripe as never),
     founders as never,
@@ -502,6 +511,12 @@ describe('checkout sur la page de l’app (ui elements)', () => {
     });
     expect(create.mock.calls[0][0].discounts).toEqual([{ coupon: 'cp_20' }]);
     expect('summary' in res && res.summary).toMatchObject({ offer: 'partner', recurringEur: 29, normalEur: 49, partnerCode: 'LOUIS29', partnerDurationMonths: null });
+  });
+
+  it('moyen désactivé sur le compte Stripe (Klarna) : retiré de la page, la session est créée', async () => {
+    const { svc, create } = makeBilling({ ...elements, methods: { card: true, link: true, klarna: false } });
+    await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
+    expect(create.mock.calls[0][0].payment_method_types).toEqual(['card', 'link']);
   });
 
   it('sans STRIPE_PUBLIC_KEY : repli sur la page Stripe (URL)', async () => {

@@ -40,8 +40,14 @@ export type CheckoutUi = 'hosted' | 'elements';
  * passée APPEL PAR APPEL. Le client reste épinglé en 2024-06-20 pour tout le reste (webhooks, MRR…).
  */
 export const ELEMENTS_API_VERSION = '2026-08-26.dahlia';
-/** Moyens proposés sur la page de l'app : carte (CB, Apple Pay, Google Pay), Link, Klarna. */
-export const ELEMENTS_PAYMENT_METHODS = ['card', 'link', 'klarna'];
+/**
+ * Moyens proposés sur la page de l'app : carte (CB, Apple Pay, Google Pay), Link, Klarna. Croisés
+ * avec ceux ACTIVÉS sur le compte Stripe : un moyen désactivé dans le dashboard est retiré au lieu
+ * de faire échouer la session ; la carte reste toujours proposée.
+ */
+export const ELEMENTS_PAYMENT_METHODS = ['card', 'link', 'klarna'] as const;
+const ELEMENTS_METHODS_CACHE_KEY = 'stripe:elements-payment-methods';
+const ELEMENTS_METHODS_CACHE_SECONDS = 600;
 
 /** Récapitulatif affiché par la page de paiement de l'app (le montant du jour vient de la session). */
 export interface CheckoutSummary {
@@ -314,7 +320,7 @@ export class StripeBillingService {
       ui === 'elements'
         ? {
             ui_mode: 'elements',
-            payment_method_types: ELEMENTS_PAYMENT_METHODS,
+            payment_method_types: await this.elementsPaymentMethods(),
             return_url: `${returnUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
             ...(discounts && !isFounder ? { discounts } : {}),
           }
@@ -401,6 +407,22 @@ export class StripeBillingService {
       await this.founders.releaseReservation({ stripeSessionId: s.id });
     }
     return null;
+  }
+
+  /** Notre liste de moyens, limitée à ceux activés sur le compte (config par défaut, cache 10 min). */
+  private async elementsPaymentMethods(): Promise<string[]> {
+    const cached = await this.redis.get(ELEMENTS_METHODS_CACHE_KEY).catch(() => null);
+    if (cached) return JSON.parse(cached) as string[];
+    const configs = await this.stripe.paymentMethodConfigurations.list({ limit: 20 }).catch(() => null);
+    const config = configs?.data.find((c) => c.is_default && c.active) ?? configs?.data.find((c) => c.active);
+    if (!config) return ['card']; // Stripe injoignable : la carte, sans mettre en cache
+    const enabled = ELEMENTS_PAYMENT_METHODS.filter(
+      (type) => type === 'card' || (config as unknown as Record<string, { available?: boolean } | undefined>)[type]?.available === true,
+    );
+    await this.redis
+      .setex(ELEMENTS_METHODS_CACHE_KEY, ELEMENTS_METHODS_CACHE_SECONDS, JSON.stringify(enabled))
+      .catch(() => null);
+    return enabled;
   }
 
   private async elementsClientSecret(sessionId: string): Promise<string | null> {
