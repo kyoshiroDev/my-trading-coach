@@ -558,3 +558,153 @@ export function renewalReminderTemplate(params: {
     html: emailWrapper(content, `Expiration le ${dateStr}.`),
   };
 }
+// ── Offre fondateur et codes partenaires (#525) ─────────────────────────────────
+
+const longDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function rulesList(rules: string[]): string {
+  return `<div style="margin:16px 0;">${rules
+    .map(
+      (r) => `<div style="margin-bottom:8px;">
+        <span style="color:#60a5fa;">✓</span>
+        <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">${r}</span>
+      </div>`,
+    )
+    .join('')}</div>`;
+}
+
+/** Confirmation fondateur : numéro, prix bloqué, règles (perte à la résiliation, remboursement 14 j). */
+export function founderWelcomeTemplate(params: {
+  userName: string;
+  number: number;
+  /** Ex. « 29,00 € par mois ». */
+  priceLabel: string;
+  refundUntil: Date;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, number, priceLabel, refundUntil, appUrl } = params;
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Offre fondateur</p>
+    <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Tu es fondateur n° ${number} 🎉
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Salut ${userName || 'Trader'}, merci de faire partie des 200 premiers. Tout Premium est actif,
+      nouveautés à venir comprises, à <strong style="color:#e2eaf5;">${priceLabel}</strong>.
+    </p>
+    ${rulesList([
+      'Prix bloqué tant que ton abonnement reste actif, même si le prix normal augmente.',
+      'Si tu résilies, le prix fondateur est perdu définitivement.',
+      `Satisfait ou remboursé jusqu’au ${longDate(refundUntil)} : il suffit de répondre à cet e-mail.`,
+    ])}
+    ${cta('Ouvrir MyTradingCoach →', `${appUrl}/dashboard`)}
+  `, 'rgba(59,130,246,.35)');
+  return {
+    subject: `🎉 Tu es fondateur n° ${number}`,
+    html: emailWrapper(content, `Prix bloqué à ${priceLabel} tant que ton abonnement reste actif.`),
+  };
+}
+
+/** Confirmation d'abonnement avec un code partenaire : rappel des conditions obtenues. */
+export function partnerWelcomeTemplate(params: {
+  userName: string;
+  code: string;
+  /** Ex. « 29,00 € par mois ». */
+  priceLabel: string;
+  /** Ex. « 49,00 € par mois ». */
+  normalPriceLabel: string;
+  /** null = à vie (tant que l'abonnement reste actif). */
+  durationMonths: number | null;
+  trialEndsAt: Date | null;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, code, priceLabel, normalPriceLabel, durationMonths, trialEndsAt, appUrl } = params;
+  const duration = durationMonths === null
+    ? 'tant que ton abonnement reste actif'
+    : `pendant ${durationMonths} mois, puis ${normalPriceLabel}`;
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Code partenaire ${code}</p>
+    <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton tarif partenaire est activé 🚀
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Salut ${userName || 'Trader'}, ton Premium est actif avec le code <strong style="color:#e2eaf5;">${code}</strong>.
+    </p>
+    ${rulesList([
+      ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)} : aucun prélèvement avant.`] : []),
+      `Ensuite <strong style="color:#e2eaf5;">${priceLabel}</strong>, ${duration}.`,
+      'Ces conditions sont figées : elles ne changent pas même si le code évolue.',
+      'Si tu résilies, le tarif partenaire est perdu.',
+    ])}
+    ${cta('Ouvrir MyTradingCoach →', `${appUrl}/dashboard`)}
+  `, 'rgba(59,130,246,.35)');
+  return {
+    subject: `🚀 Ton tarif partenaire ${code} est activé`,
+    html: emailWrapper(content, `${priceLabel} avec le code ${code}.`),
+  };
+}
+
+/** Échec de paiement d'un fondateur ou d'un abonné partenaire : le tarif est en jeu. */
+export function tariffAtRiskTemplate(params: {
+  userName: string;
+  kind: 'founder' | 'partner';
+  /** Ex. « 29,00 € par mois ». */
+  priceLabel: string;
+  attemptCount: number;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  const { userName, kind, priceLabel, attemptCount, portalUrl } = params;
+  const tariff = kind === 'founder' ? 'tarif fondateur' : 'tarif partenaire';
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#f59e0b;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton ${tariff} est en jeu
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Salut ${userName || 'Trader'}, ton dernier paiement n’est pas passé${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
+      Rien n’est perdu pour l’instant : on réessaie dans les prochains jours.
+    </p>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
+      Si aucun paiement ne passe, l’abonnement s’arrête et ton ${tariff} à
+      <strong style="color:#e2eaf5;">${priceLabel}</strong> est perdu définitivement.
+      Mets ta carte à jour pour le garder.
+    </p>
+    ${cta('Mettre à jour ma carte →', portalUrl)}
+  `, 'rgba(245,158,11,.35)');
+  return {
+    subject: `⚠️ Ton ${tariff} est en jeu`,
+    html: emailWrapper(content, `Mets ta carte à jour pour garder ${priceLabel}.`, ACCENT.alert),
+  };
+}
+
+/** Rappel avant la reconduction d'un abonnement ANNUEL : date et montant réellement prélevé. */
+export function annualRenewalReminderTemplate(params: {
+  userName: string;
+  /** Montant réel de la prochaine facture, remises comprises. Ex. « 290,00 € ». */
+  amount: string;
+  renewalDate: Date;
+  /** Tarif conservé (fondateur n° X, code partenaire) : précisé dans le message. */
+  keptTariff: string | null;
+  portalUrl: string;
+}): { subject: string; html: string } {
+  const { userName, amount, renewalDate, keptTariff, portalUrl } = params;
+  const dateStr = longDate(renewalDate);
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ton abonnement annuel se renouvelle le ${dateStr}
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Salut ${userName || 'Trader'}, ton abonnement Premium annuel sera reconduit automatiquement le
+      <strong style="color:#e2eaf5;">${dateStr}</strong> pour <strong style="color:#e2eaf5;">${amount}</strong>${keptTariff ? ` (${keptTariff} conservé)` : ''}.
+    </p>
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 20px 0;line-height:1.7;">
+      Rien à faire pour continuer. Pour l’arrêter, résilie avant cette date depuis ton profil : tu gardes Premium jusqu’à la fin de la période payée.
+    </p>
+    ${cta('Gérer mon abonnement →', portalUrl)}
+  `, 'rgba(59,130,246,.3)');
+  return {
+    subject: `Ton abonnement annuel se renouvelle le ${dateStr}`,
+    html: emailWrapper(content, `${amount} le ${dateStr}.`),
+  };
+}

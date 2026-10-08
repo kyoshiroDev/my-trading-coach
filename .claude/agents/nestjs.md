@@ -1698,6 +1698,15 @@ renouvellement : rien). `syncSubscription` n'écrase jamais
 l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
 testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
 le stubber dans `app-role-wiring.spec.ts`.
+**E-mails transactionnels (#525, phase F)** : 1er paiement fondateur → `sendFounderWelcome` (« Tu es
+fondateur n° X », prix, fin du remboursement à 14 j) ; 1re facture avec code partenaire →
+`sendPartnerWelcome` (conditions figées, essai) ; `checkout.session.completed` d'une offre `founder` /
+`partner` → PAS de bienvenue Premium générique (pas de doublon) ; `invoice.payment_failed` d'un
+fondateur ou d'un code partenaire actifs → `sendTariffAtRisk` (« ton tarif est en jeu », lien
+`/profil?tab=params`) au lieu de l'e-mail d'échec générique ; `invoice.upcoming` d'un abonnement
+ANNUEL → `sendAnnualRenewalReminder` (montant réel `amount_due`, date, tarif conservé). Le cron du
+rappel à J-7 exclut donc les annuels (`stripeInterval` ≠ `year`). ⚠️ `invoice.upcoming` doit être
+abonné sur les endpoints Stripe (à faire en prod au déploiement) et son délai réglé dans le dashboard.
 
 Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
 pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans

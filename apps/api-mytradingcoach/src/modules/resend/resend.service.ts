@@ -7,6 +7,10 @@ import { Resend } from 'resend';
 import { RedisService } from '../infra/redis.service';
 import { EMAIL_JOB_OPTIONS, EMAIL_QUEUE, RETRYABLE_EMAIL_ERRORS, RetryableEmailError, type EmailJob } from './email-queue';
 import {
+  annualRenewalReminderTemplate,
+  founderWelcomeTemplate,
+  partnerWelcomeTemplate,
+  tariffAtRiskTemplate,
   dailyRecapTemplate,
   debriefReadyTemplate,
   paymentFailedTemplate,
@@ -194,6 +198,63 @@ export class ResendService {
     const portalUrl = `${this.frontendUrl}/settings`;
     const { subject, html } = renewalReminderTemplate({ ...params, portalUrl });
     await this.send({ to: params.to, subject, html });
+  }
+
+  // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
+
+  /** Page Profil > Paramètres : « Gérer mon abonnement » ouvre le portail Stripe (carte). */
+  private get billingUrl(): string {
+    return `${this.frontendUrl}/profil?tab=params`;
+  }
+
+  async sendFounderWelcome(params: {
+    to: string;
+    userName: string;
+    number: number;
+    priceLabel: string;
+    refundUntil: Date;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = founderWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendPartnerWelcome(params: {
+    to: string;
+    userName: string;
+    code: string;
+    priceLabel: string;
+    normalPriceLabel: string;
+    durationMonths: number | null;
+    trialEndsAt: Date | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = partnerWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendTariffAtRisk(params: {
+    to: string;
+    userName: string;
+    kind: 'founder' | 'partner';
+    priceLabel: string;
+    attemptCount: number;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = tariffAtRiskTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendAnnualRenewalReminder(params: {
+    to: string;
+    userName: string;
+    amount: string;
+    renewalDate: Date;
+    keptTariff: string | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = annualRenewalReminderTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
   }
 
   // ── Daily Recap ───────────────────────────────────────────────────────────

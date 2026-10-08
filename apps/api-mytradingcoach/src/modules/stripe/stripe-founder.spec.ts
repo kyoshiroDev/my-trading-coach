@@ -191,9 +191,13 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     invoices: { list: invoicesList },
     invoicePayments: { list: vi.fn().mockResolvedValue({ data: [] }) },
   } as never;
-  const resend = { sendAdminAlert: vi.fn().mockResolvedValue(undefined), sendPaymentSucceeded: vi.fn().mockResolvedValue(undefined) };
+  const ok = () => vi.fn().mockResolvedValue(undefined);
+  const resend = {
+    sendAdminAlert: ok(), sendPaymentSucceeded: ok(), sendPaymentFailed: ok(), sendWelcomePremium: ok(),
+    sendFounderWelcome: ok(), sendPartnerWelcome: ok(), sendTariffAtRisk: ok(), sendAnnualRenewalReminder: ok(),
+  };
   const founders = {
-    claimSeat: vi.fn().mockResolvedValue({ number: 12 }), markLost: vi.fn(), releaseReservation: vi.fn(),
+    claimSeat: vi.fn().mockResolvedValue({ number: 12, takenAt: new Date('2026-10-08T10:00:00Z') }), markLost: vi.fn(), releaseReservation: vi.fn(),
     refundFirstPayment: vi.fn().mockResolvedValue({ status: 'REFUNDED' }), updateInterval: vi.fn(),
   };
   const partners = {
@@ -542,5 +546,80 @@ describe('checkout sur la page de l’app (ui elements)', () => {
     await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
     expect(expire).toHaveBeenCalledWith('cs_hosted');
     expect(create.mock.calls[0][0].ui_mode).toBe('elements');
+  });
+});
+
+// ── E-mails transactionnels (#525, phase F) ────────────────────────────────────
+
+/** Montants fr-FR : espaces insécables normalisées pour lire les attentes. */
+const plain = (v: unknown) => JSON.parse(JSON.stringify(v).replace(/[\u00a0\u202f]/g, ' '));
+
+describe('e-mails fondateur et code partenaire', () => {
+  it('1er paiement fondateur → « Tu es fondateur n° X », prix et fin du remboursement (14 j)', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(plain(resend.sendFounderWelcome.mock.calls[0][0])).toEqual({
+      to: 'u1@test.com', userName: 'U', number: 12, priceLabel: '29,00 € par mois',
+      refundUntil: '2026-10-22T10:00:00.000Z',
+    });
+  });
+
+  it('checkout terminé d’une offre fondateur ou partenaire → pas de bienvenue Premium générique', async () => {
+    const f = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await f.svc.processWebhookEvent(event('checkout.session.completed', {
+      mode: 'subscription', subscription: 'sub_f', client_reference_id: 'u1', metadata: { offer: 'founder' },
+    }));
+    expect(f.resend.sendWelcomePremium).not.toHaveBeenCalled();
+    const n = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    await n.svc.processWebhookEvent(event('checkout.session.completed', {
+      mode: 'subscription', subscription: 'sub_n', client_reference_id: 'u1', metadata: { offer: 'premium' },
+    }));
+    expect(n.resend.sendWelcomePremium).toHaveBeenCalled();
+  });
+
+  it('1re facture avec code partenaire → conditions figées rappelées', async () => {
+    const { svc, resend, partners } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'louis29' } });
+    partners.claim.mockResolvedValue({ priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_p', 'subscription_create'), amount_paid: 0 }));
+    expect(plain(resend.sendPartnerWelcome.mock.calls[0][0])).toMatchObject({
+      code: 'LOUIS29', priceLabel: '29,00 € par mois', normalPriceLabel: '49,00 € par mois', durationMonths: null,
+    });
+  });
+
+  it('paiement échoué d’un fondateur → « ton tarif fondateur est en jeu », pas l’e-mail générique', async () => {
+    const { svc, resend, prisma } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', interval: 'year', number: 12 });
+    await svc.processWebhookEvent(event('invoice.payment_failed', { customer: 'cus_1', attempt_count: 2 }));
+    expect(plain(resend.sendTariffAtRisk.mock.calls[0][0])).toEqual({
+      to: 'u1@test.com', userName: 'U', kind: 'founder', priceLabel: '290,00 € par an', attemptCount: 2,
+    });
+    expect(resend.sendPaymentFailed).not.toHaveBeenCalled();
+  });
+
+  it('paiement échoué sans tarif conservé → e-mail d’échec habituel', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    await svc.processWebhookEvent(event('invoice.payment_failed', { customer: 'cus_1', attempt_count: 1 }));
+    expect(resend.sendPaymentFailed).toHaveBeenCalled();
+    expect(resend.sendTariffAtRisk).not.toHaveBeenCalled();
+  });
+
+  it('invoice.upcoming d’un annuel → rappel de reconduction avec le montant réel et le tarif conservé', async () => {
+    const { svc, resend, prisma } = makeWebhook({ id: 'sub_f', price: 'price_290' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'u1@test.com', name: 'U', stripeInterval: 'year', isDemo: false });
+    prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', interval: 'year', number: 12 });
+    await svc.processWebhookEvent(event('invoice.upcoming', {
+      customer: 'cus_1', amount_due: 29000, currency: 'eur', next_payment_attempt: 1_800_000_000, period_end: 1_799_000_000,
+    }));
+    expect(plain(resend.sendAnnualRenewalReminder.mock.calls[0][0])).toEqual({
+      to: 'u1@test.com', userName: 'U', amount: '290,00 €',
+      renewalDate: new Date(1_800_000_000 * 1000).toISOString(), keptTariff: 'tarif fondateur n° 12',
+    });
+  });
+
+  it('invoice.upcoming d’un mensuel → rien (rappel du cron)', async () => {
+    const { svc, resend, prisma } = makeWebhook({ id: 'sub_n', price: 'price_49' });
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'u1@test.com', name: 'U', stripeInterval: 'month', isDemo: false });
+    await svc.processWebhookEvent(event('invoice.upcoming', { customer: 'cus_1', amount_due: 4900, currency: 'eur', next_payment_attempt: 1 }));
+    expect(resend.sendAnnualRenewalReminder).not.toHaveBeenCalled();
   });
 });
