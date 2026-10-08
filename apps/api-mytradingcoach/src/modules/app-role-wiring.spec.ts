@@ -43,6 +43,8 @@ vi.mock('./stripe/stripe-customer.service', () => stub('StripeCustomerService'))
 vi.mock('./stripe/stripe-referral.service', () => stub('StripeReferralService'));
 vi.mock('./stripe/stripe-subscription.service', () => stub('StripeSubscriptionService'));
 vi.mock('./stripe/stripe-webhook.service', () => stub('StripeWebhookService'));
+vi.mock('./founder-offer/founder-offer.module', () => stub('FounderOfferModule'));
+vi.mock('./partner-codes/partner-code.module', () => stub('PartnerCodeModule'));
 
 async function providersOf(path: string, exportName: string, env: Record<string, string | undefined>): Promise<string[]> {
   vi.resetModules();

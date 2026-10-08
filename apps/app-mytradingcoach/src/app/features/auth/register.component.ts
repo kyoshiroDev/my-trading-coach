@@ -16,7 +16,7 @@ import {
 } from '@lucide/angular';
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
-import { ToastService } from '../../core/services/toast.service';
+import { OfferIntentService } from '../../core/services/offer-intent.service';
 
 /** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
 const UTM_STORAGE_KEY = 'mtc_utm';
@@ -44,7 +44,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly toast = inject(ToastService);
+  private readonly offerIntent = inject(OfferIntentService);
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
@@ -65,8 +65,22 @@ export class RegisterComponent {
   protected readonly isPremiumFlow = signal(
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
+  /**
+   * Lien d'offre (#525 : plan=founder ou promo=CODE) : pas de checkout direct, la modale de plans
+   * s'ouvre après l'inscription avec l'offre du lien présélectionnée (choix sans cumul).
+   */
+  protected readonly offerFlow = computed(() =>
+    this.offerIntent.needsChoice() ? this.offerIntent.pending() : null,
+  );
   protected readonly referralCode = signal(this.resolveReferralCode());
   private readonly acquisition = this.resolveAcquisition();
+
+  constructor() {
+    // Déjà connecté (lien de la landing ou d'un e-mail) : pas de second compte, on ouvre l'app ;
+    // l'offre du lien (capturée au démarrage) s'y affiche dans la modale.
+    this.offerIntent.capture(window.location.search);
+    if (this.auth.isAuthenticated() && this.offerIntent.pending()) this.router.navigate(['/dashboard']);
+  }
 
   /**
    * UTM d'acquisition : query params `utm_*` (transmis par la landing) prioritaires,
@@ -181,13 +195,12 @@ export class RegisterComponent {
           } catch {
             /* sessionStorage indisponible */
           }
-          if (this.isPremiumFlow()) {
-            // Compte créé mais paiement indisponible : on continue, sans le cacher.
-            this.billing.startCheckout('premium_monthly', () => {
-              this.isLoading.set(false);
-              this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
-              this.router.navigate(['/dashboard']);
-            });
+          if (this.offerFlow()) {
+            // La modale (OfferIntentHost, dans le shell) prend le relais.
+            this.router.navigate(['/dashboard']);
+          } else if (this.isPremiumFlow()) {
+            // Page de paiement : un échec y est affiché, avec le retour au tableau de bord.
+            this.billing.startCheckout('premium_monthly');
           } else {
             this.router.navigate(['/dashboard']);
           }

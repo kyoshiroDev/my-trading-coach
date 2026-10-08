@@ -13,14 +13,74 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { STRIPE_CLIENT } from './stripe.client';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
 import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
   billingCacheKey,
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
+import { CHECKOUT_TTL_MS, FounderOfferService, type FounderIneligibility } from '../founder-offer/founder-offer.service';
 import { StripeCouponService } from './stripe-coupon.service';
+import { PartnerCodeService } from '../partner-codes/partner-code.service';
+import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
 import { StripeStatusResponse, CachedStripeStatus } from './stripe.types';
+
+/** Offre achetée au checkout. */
+export type CheckoutOffer = 'premium' | 'founder' | 'partner';
+
+/**
+ * Page de paiement : `hosted` = page Stripe (redirection), `elements` = page de paiement de l'app
+ * (Checkout Elements : formulaire Stripe intégré, récapitulatif à nous).
+ */
+export type CheckoutUi = 'hosted' | 'elements';
+
+/**
+ * Version d'API des sessions `elements` : celle de Stripe.js (`@stripe/stripe-js`, train dahlia),
+ * passée APPEL PAR APPEL. Le client reste épinglé en 2024-06-20 pour tout le reste (webhooks, MRR…).
+ */
+export const ELEMENTS_API_VERSION = '2026-08-26.dahlia';
+/**
+ * Moyens proposés sur la page de l'app : carte (CB, Apple Pay, Google Pay), Link, Klarna. Croisés
+ * avec ceux ACTIVÉS sur le compte Stripe : un moyen désactivé dans le dashboard est retiré au lieu
+ * de faire échouer la session ; la carte reste toujours proposée.
+ */
+export const ELEMENTS_PAYMENT_METHODS = ['card', 'link', 'klarna'] as const;
+const ELEMENTS_METHODS_CACHE_KEY = 'stripe:elements-payment-methods';
+const ELEMENTS_METHODS_CACHE_SECONDS = 600;
+
+/** Récapitulatif affiché par la page de paiement de l'app (le montant du jour vient de la session). */
+export interface CheckoutSummary {
+  offer: CheckoutOffer;
+  interval: 'month' | 'year';
+  /** Montant récurrent de l'intervalle après remise fondateur ou partenaire (€). */
+  recurringEur: number;
+  /** Prix normal de l'intervalle (€), pour le prix barré. */
+  normalEur: number;
+  /** Jours d'essai accordés (0 = prélèvement immédiat). */
+  trialDays: number;
+  partnerCode: string | null;
+  /** Durée de la remise partenaire en mois (null = à vie). */
+  partnerDurationMonths: number | null;
+  /** Remise filleul −10 % sur la première année. */
+  referralDiscount: boolean;
+  /** Places fondateur restantes (offre fondateur uniquement). */
+  seatsLeft: number | null;
+}
+
+export type CheckoutStart =
+  | { url: string }
+  | { clientSecret: string; publishableKey: string; summary: CheckoutSummary };
+
+/** Refus du checkout fondateur : message clair, le Premium au prix normal reste possible. */
+const FOUNDER_REFUSALS: Record<FounderIneligibility, string> = {
+  closed: "L'offre fondateur n'est pas ouverte. Tu peux passer Premium au prix normal.",
+  sold_out: "Il n'y a plus de place fondateur. Tu peux passer Premium au prix normal.",
+  excluded: "Ce compte n'est pas éligible à l'offre fondateur.",
+  already_founder: 'Tu es déjà fondateur.',
+  tariff_lost: "Le tarif fondateur a été perdu pour ce compte (résiliation ou remboursement). Tu peux passer Premium au prix normal.",
+  subscribed: "Tu as déjà un abonnement en cours. Le tarif fondateur s'adresse aux nouveaux abonnés.",
+};
 
 /** Routes /billing de l'utilisateur : statut, checkout, portail client. */
 @Injectable()
@@ -34,6 +94,8 @@ export class StripeBillingService {
     private readonly redisService: RedisService,
     private readonly customers: StripeCustomerService,
     private readonly coupons: StripeCouponService,
+    private readonly founders: FounderOfferService,
+    private readonly partners: PartnerCodeService,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
   ) {}
 
@@ -93,99 +155,384 @@ export class StripeBillingService {
     userEmail: string,
     priceId: string,
     returnUrl: string,
-  ): Promise<{ url: string }> {
+    opts: {
+      offer?: CheckoutOffer;
+      interval?: 'month' | 'year';
+      cta?: string | null;
+      promo?: string | null;
+      ui?: CheckoutUi;
+    } = {},
+  ): Promise<CheckoutStart> {
+    let offer: CheckoutOffer = opts.offer ?? 'premium';
+    // Page de l'app seulement si la clé publiable est configurée ; sinon la page Stripe (le paiement
+    // ne casse jamais faute de STRIPE_PUBLIC_KEY sur un environnement).
+    const publishableKey = this.config.get<string>('STRIPE_PUBLIC_KEY') ?? '';
+    const ui: CheckoutUi = opts.ui === 'elements' && publishableKey ? 'elements' : 'hosted';
+    if (opts.ui === 'elements' && ui === 'hosted') {
+      this.logger.warn('STRIPE_PUBLIC_KEY absente : page de paiement Stripe à la place de celle de l’app');
+    }
+    const isFounder = offer === 'founder';
+    const interval = opts.interval ?? (this.isAnnualPrice(priceId) ? 'year' : 'month');
+    // Fondateur et code partenaire ne se cumulent jamais : l'utilisateur choisit l'un ou l'autre.
+    if (isFounder && opts.promo) {
+      throw new BadRequestException("Un code partenaire ne s'applique pas au tarif fondateur : choisis l'un ou l'autre.");
+    }
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new BadRequestException('Utilisateur introuvable');
 
     // ── Vérification abonnement actif (double check Stripe) ───────────────────
+    // Exception : un essai au prix normal peut BASCULER au tarif fondateur (prélèvement immédiat,
+    // l'essai est annulé au premier paiement fondateur : webhook invoice.payment_succeeded).
     if (user.stripeSubscriptionId) {
       const existing = await this.stripe.subscriptions
         .retrieve(user.stripeSubscriptionId)
         .catch(() => null);
 
       if (existing && ACTIVE_STATUSES.has(existing.status)) {
-        throw new ConflictException(
-          'Un abonnement actif existe déjà. Utilisez le portail de facturation pour le modifier.',
-        );
+        const existingPrice = existing.items.data[0]?.price.id ?? '';
+        const canSwitchToFounder =
+          isFounder && existing.status === 'trialing' && !this.founderPriceIds().includes(existingPrice);
+        if (!canSwitchToFounder) {
+          throw new ConflictException(
+            'Un abonnement actif existe déjà. Utilisez le portail de facturation pour le modifier.',
+          );
+        }
       }
     }
 
-    // ── Réutiliser une session checkout en attente ─────────────────────────────
-    if (user.stripeCustomerId) {
-      const openSessions = await this.stripe.checkout.sessions
-        .list({ customer: user.stripeCustomerId, status: 'open', limit: 1 })
-        .catch(() => null);
+    if (isFounder) {
+      const { eligible, reason } = await this.founders.eligibility(user, this.founderPriceIds());
+      if (!eligible) throw new BadRequestException(FOUNDER_REFUSALS[reason ?? 'closed']);
+    }
 
-      if (openSessions?.data[0]?.url) {
-        this.logger.log(
-          `Session checkout existante réutilisée | user: ${userId}`,
-        );
-        return { url: openSessions.data[0].url };
+    // ── Code partenaire : validé avant tout (raison précise du refus) ──────────
+    // Non-cumul avec le parrainage : on garde le plus avantageux sur la 1re année. Si le −10 %
+    // filleul coûte moins cher que le code, le code n'est pas consommé.
+    const referralCoupon = isFounder ? false : await this.referralApplies(user.referredBy);
+    let partnerCode: string | null = null;
+    let partnerTerms: { recurringEur: number; durationMonths: number | null } | null = null;
+    if (opts.promo && !isFounder) {
+      if (!this.isMonthlyPrice(priceId) && !this.isAnnualPrice(priceId)) {
+        throw new BadRequestException("Ce code partenaire ne s'applique qu'au Premium au prix normal.");
+      }
+      const v = await this.partners.validate(opts.promo, userId);
+      if (!v.valid) throw new BadRequestException(`${v.message} Tu peux toujours passer Premium au prix normal.`);
+      const partnerCost = partnerFirstYearCost(v, interval);
+      if (referralCoupon && referralFirstYearCost(interval) <= partnerCost) {
+        this.logger.log(`Code ${v.code} non appliqué : parrainage plus avantageux | user: ${userId}`);
+      } else {
+        partnerCode = v.code;
+        partnerTerms = {
+          recurringEur: interval === 'year' ? v.priceAnnualEur : v.priceMonthlyEur,
+          durationMonths: v.durationMonths,
+        };
+        offer = 'partner';
+      }
+    }
+
+    // Fondateur : AUCUN essai, aucun coupon, aucun code promo (jamais deux remises). Le parrainage
+    // n'est pas appliqué : le tarif fondateur est toujours le moins cher sur la 1re année
+    // (29 × 12 = 348 € contre 49 × 12 × 0,9 = 529,20 € ; 290 € contre 441 €).
+    // Premium : essai 30j MENSUEL uniquement, si jamais utilisé ; l'annuel est facturé immédiatement.
+    const trialGranted = !isFounder && !user.trialUsed && this.isMonthlyPrice(priceId);
+    const normalEur = interval === 'year' ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly;
+    const summary = async (): Promise<CheckoutSummary> => ({
+      offer,
+      interval,
+      recurringEur: isFounder
+        ? interval === 'year' ? FOUNDER_OFFER.priceAnnualEur : FOUNDER_OFFER.priceMonthlyEur
+        : partnerTerms?.recurringEur ?? normalEur,
+      normalEur,
+      trialDays: trialGranted ? TRIAL_PERIOD_DAYS : 0,
+      partnerCode,
+      partnerDurationMonths: partnerTerms?.durationMonths ?? null,
+      referralDiscount: !isFounder && !partnerCode && referralCoupon,
+      seatsLeft: isFounder ? await this.founders.seatsLeft() : null,
+    });
+
+    // ── Une session Checkout par OFFRE ─────────────────────────────────────────
+    // Une session encore ouverte n'est reprise que pour la MÊME offre, le MÊME prix et la MÊME page
+    // de paiement ; sinon elle est expirée (sa réservation fondateur rendue). Avant : n'importe quelle
+    // session ouverte était reprise, un fondateur pouvait retomber sur sa session à 49 € et inversement.
+    if (user.stripeCustomerId) {
+      const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId, partnerCode, ui);
+      if (reused) {
+        this.logger.log(`Session checkout existante réutilisée | user: ${userId}, offer: ${offer}, ui: ${ui}`);
+        return 'url' in reused ? reused : { clientSecret: reused.clientSecret, publishableKey, summary: await summary() };
       }
     }
 
     // ── Créer ou récupérer le customer Stripe ─────────────────────────────────
     const customerId = await this.customers.ensureStripeCustomer(userId, userEmail);
 
-    // ── Créer la session ───────────────────────────────────────────────────────
-    // Essai 30j MENSUEL uniquement : accordé si jamais utilisé ET prix mensuel.
-    // L'annuel est facturé immédiatement (pas d'essai → évite contestations sur 490€).
-    const trialGranted = !user.trialUsed && this.isMonthlyPrice(priceId);
+    const cta = opts.cta ?? null;
+    const metadata: Record<string, string> = {
+      userId, offer, priceId, ui, ...(cta ? { cta } : {}), ...(partnerCode ? { partnerCode } : {}),
+    };
+
     const subscriptionData = trialGranted
-      ? { trial_period_days: TRIAL_PERIOD_DAYS, metadata: { userId } }
-      : { metadata: { userId } };
+      ? { trial_period_days: TRIAL_PERIOD_DAYS, metadata }
+      : { metadata };
 
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
     // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
     // classique : jamais pour les filleuls d'ambassadeur (l'ambassadeur touche déjà ses
     // 20% via le webhook : sinon double coût). Même test de rôle que processReferral.
     // Stripe interdit discounts + allow_promotion_codes ensemble → si pas de coupon,
-    // on garde les codes promo manuels ouverts.
+    // on garde les codes promo manuels ouverts (prix normal uniquement).
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
-    if (user.referredBy) {
-      const parrain = await this.prisma.user.findFirst({
-        where: { referralCode: user.referredBy },
-        select: { role: true },
-      });
-      if (parrain && parrain.role !== Role.AMBASSADOR) {
-        if (this.isAnnualPrice(priceId)) {
-          discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
-        } else if (this.isMonthlyPrice(priceId)) {
-          discounts = [{ coupon: await this.coupons.ensureReferralCoupon('monthly') }];
-        }
+    if (!partnerCode && referralCoupon) {
+      if (this.isAnnualPrice(priceId)) {
+        discounts = [{ coupon: await this.coupons.ensureReferralCoupon('annual') }];
+      } else if (this.isMonthlyPrice(priceId)) {
+        discounts = [{ coupon: await this.coupons.ensureReferralCoupon('monthly') }];
       }
     }
 
-    const session = await this.stripe.checkout.sessions.create(
-      {
-        customer: customerId,
-        payment_method_types: ['card'],
-        line_items: [{ price: priceId, quantity: 1 }],
-        mode: 'subscription',
-        subscription_data: subscriptionData,
-        success_url: `${returnUrl}/dashboard?checkout=success`,
-        cancel_url: `${returnUrl}/dashboard?checkout=canceled`,
-        locale: 'fr',
-        ...(discounts ? { discounts } : { allow_promotion_codes: true }),
-        client_reference_id: userId,
-        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-      },
-      {
-        idempotencyKey: `checkout-${userId}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
-      },
-    );
+    // Fondateur : la place est RÉSERVÉE avant la session (409 s'il n'y en a plus), sous verrou.
+    // Code partenaire : une utilisation réservée (409 si le quota vient d'être atteint) et le
+    // coupon de l'intervalle choisi, sur le prix NORMAL (essai conservé).
+    let reservation: { id: string } | null = null;
+    if (isFounder) {
+      reservation = await this.founders.reserve(userId, interval, cta);
+    } else if (partnerCode) {
+      const reserved = await this.partners.reserve(userId, partnerCode, interval, cta);
+      reservation = reserved.reservation;
+      discounts = [{ coupon: this.partners.couponFor(reserved.partnerCode, interval) }];
+    }
+    const promotions = isFounder
+      ? {}
+      : discounts
+        ? { discounts }
+        : { allow_promotion_codes: true };
+    // Rappel des conditions juste au-dessus du bouton de paiement (fondateur et code partenaire).
+    const submitMessage = isFounder
+      ? `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le 1er paiement. Si tu résilies, le prix fondateur est perdu.`
+      : partnerCode
+        ? `Code ${partnerCode} : tes conditions sont figées à la souscription, même si le code change ensuite.`
+        : null;
+    const customText = submitMessage ? { custom_text: { submit: { message: submitMessage } } } : {};
 
-    if (!session.url) {
+    // Page Stripe : carte seule, codes promo manuels, rappel des conditions au-dessus du bouton.
+    // Page de l'app : carte (CB, Apple Pay, Google Pay), Link et Klarna ; le récapitulatif, les
+    // conditions et la mention légale sont rendus par l'app (pas de champ code promo).
+    const uiParams: Partial<Stripe.Checkout.SessionCreateParams> =
+      ui === 'elements'
+        ? {
+            ui_mode: 'elements',
+            payment_method_types: await this.elementsPaymentMethods(),
+            return_url: `${returnUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            ...(discounts && !isFounder ? { discounts } : {}),
+          }
+        : {
+            payment_method_types: ['card'],
+            success_url: `${returnUrl}/dashboard?checkout=success`,
+            cancel_url: `${returnUrl}/dashboard?checkout=canceled`,
+            ...promotions,
+            ...customText,
+          };
+
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await this.stripe.checkout.sessions.create(
+        {
+          customer: customerId,
+          line_items: [{ price: priceId, quantity: 1 }],
+          mode: 'subscription',
+          subscription_data: subscriptionData,
+          locale: 'fr',
+          ...uiParams,
+          metadata,
+          client_reference_id: userId,
+          expires_at: Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000),
+        },
+        {
+          idempotencyKey: reservation
+            ? `checkout-${userId}-${offer}-${ui}-${reservation.id}`
+            : `checkout-${userId}-${offer}-${ui}-${priceId}-${Math.floor(Date.now() / (30 * 60 * 1000))}`,
+          ...(ui === 'elements' ? { apiVersion: ELEMENTS_API_VERSION } : {}),
+        },
+      );
+    } catch (err) {
+      if (reservation) await this.founders.releaseReservation({ id: reservation.id });
+      throw err;
+    }
+
+    const clientSecret = ui === 'elements' ? session.client_secret : null;
+    if (ui === 'elements' ? !clientSecret : !session.url) {
+      if (reservation) await this.founders.releaseReservation({ id: reservation.id });
       throw new InternalServerErrorException(
         'Impossible de créer la session Stripe',
       );
     }
+    if (reservation) await this.founders.attachSession(reservation.id, session.id);
 
     this.logger.log(
-      `Checkout créé | user: ${userId}, trial: ${trialGranted}, price: ${priceId}`,
+      `Checkout créé | user: ${userId}, offer: ${offer}${partnerCode ? ` (${partnerCode})` : ''}, trial: ${trialGranted}, price: ${priceId}, ui: ${ui}`,
     );
 
-    return { url: session.url };
+    return clientSecret
+      ? { clientSecret, publishableKey, summary: await summary() }
+      : { url: session.url ?? '' };
+  }
+
+  /**
+   * Reprend une session Checkout ouverte de la même offre et du même prix (réservation fondateur
+   * encore valide), sinon expire les sessions ouvertes et rend leurs réservations.
+   */
+  private async reuseOrExpireOpenSessions(
+    customerId: string,
+    offer: CheckoutOffer,
+    priceId: string,
+    partnerCode: string | null = null,
+    ui: CheckoutUi = 'hosted',
+  ): Promise<{ url: string } | { clientSecret: string } | null> {
+    const open = await this.stripe.checkout.sessions
+      .list({ customer: customerId, status: 'open', limit: 10 })
+      .catch(() => null);
+    for (const s of open?.data ?? []) {
+      const sameOffer =
+        (s.metadata?.['offer'] ?? 'premium') === offer &&
+        s.metadata?.['priceId'] === priceId &&
+        (s.metadata?.['partnerCode'] ?? null) === partnerCode &&
+        (s.metadata?.['ui'] ?? 'hosted') === ui;
+      const reservationOk = offer === 'premium' || (await this.founders.hasValidReservation(s.id));
+      if (sameOffer && reservationOk) {
+        if (ui === 'hosted' && s.url) return { url: s.url };
+        // La clé de session ne se lit qu'avec la version d'API qui l'a créée.
+        const clientSecret = ui === 'elements' ? await this.elementsClientSecret(s.id) : null;
+        if (clientSecret) return { clientSecret };
+      }
+      await this.stripe.checkout.sessions.expire(s.id).catch(() => undefined);
+      await this.founders.releaseReservation({ stripeSessionId: s.id });
+    }
+    return null;
+  }
+
+  /** Notre liste de moyens, limitée à ceux activés sur le compte (config par défaut, cache 10 min). */
+  private async elementsPaymentMethods(): Promise<string[]> {
+    const cached = await this.redis.get(ELEMENTS_METHODS_CACHE_KEY).catch(() => null);
+    if (cached) return JSON.parse(cached) as string[];
+    const configs = await this.stripe.paymentMethodConfigurations.list({ limit: 20 }).catch(() => null);
+    const config = configs?.data.find((c) => c.is_default && c.active) ?? configs?.data.find((c) => c.active);
+    if (!config) return ['card']; // Stripe injoignable : la carte, sans mettre en cache
+    const enabled = ELEMENTS_PAYMENT_METHODS.filter(
+      (type) => type === 'card' || (config as unknown as Record<string, { available?: boolean } | undefined>)[type]?.available === true,
+    );
+    await this.redis
+      .setex(ELEMENTS_METHODS_CACHE_KEY, ELEMENTS_METHODS_CACHE_SECONDS, JSON.stringify(enabled))
+      .catch(() => null);
+    return enabled;
+  }
+
+  private async elementsClientSecret(sessionId: string): Promise<string | null> {
+    const s = await this.stripe.checkout.sessions
+      .retrieve(sessionId, {}, { apiVersion: ELEMENTS_API_VERSION })
+      .catch(() => null);
+    return s?.client_secret ?? null;
+  }
+
+  /**
+   * Offres de l'utilisateur (#525), chargées à la demande par l'app (modale de plans, cadenas,
+   * Profil) plutôt que par `/auth/me` interrogé toutes les 5 min : état public de l'offre
+   * fondateur, place et éligibilité, code partenaire actif, intervalle de l'abonnement.
+   */
+  async offers(userId: string) {
+    const [pub, founder, partner, user] = await Promise.all([
+      this.founders.publicState(),
+      this.founders.statusFor(userId, this.founderPriceIds()),
+      this.partners.statusFor(userId),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { stripeInterval: true, stripeSubscriptionStatus: true },
+      }),
+    ]);
+    const since = founder?.isFounder ? founder.founderSince : null;
+    const refundUntil = since ? new Date(since.getTime() + FOUNDER_REFUND_DAYS * 86_400_000) : null;
+    return {
+      founderOffer: { open: pub.open, seatsLeft: pub.seatsLeft, seatsTotal: pub.seatsTotal },
+      founder: {
+        isFounder: founder?.isFounder ?? false,
+        number: founder?.founderNumber ?? null,
+        interval: founder?.founderInterval ?? null,
+        since,
+        eligible: founder?.founderEligible ?? false,
+        ineligibleReason: founder?.founderIneligibleReason ?? null,
+        /** Fin du satisfait ou remboursé (null = plus remboursable). */
+        refundUntil: refundUntil && refundUntil > new Date() ? refundUntil : null,
+      },
+      partner: partner.partnerCode,
+      subscription: {
+        interval: user?.stripeInterval === 'year' ? 'year' : user?.stripeInterval === 'month' ? 'month' : null,
+        status: user?.stripeSubscriptionStatus ?? null,
+      },
+    };
+  }
+
+  /** Code partenaire saisi dans la modale : règles du code ET de l'utilisateur, raison précise. */
+  validatePartnerCode(userId: string, code: string) {
+    return this.partners.validate(code.slice(0, 40), userId);
+  }
+
+  /**
+   * Changement mensuel ↔ annuel par NOTRE flux (le portail n'autorise aucun changement de
+   * formule) : un fondateur reste sur un prix fondateur (même place, même numéro), un abonné
+   * normal sur un prix normal. Proratisé et facturé tout de suite (`always_invoice`).
+   */
+  async changeInterval(userId: string, interval: 'month' | 'year'): Promise<{ changed: boolean }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.stripeSubscriptionId) throw new BadRequestException("Aucun abonnement à modifier.");
+    const sub = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+    if (!ACTIVE_STATUSES.has(sub.status)) throw new BadRequestException("L'abonnement n'est pas actif.");
+    if (sub.status === 'trialing' && interval === 'year') {
+      throw new BadRequestException("Pendant l'essai, l'annuel n'est pas disponible : il est facturé sans essai.");
+    }
+    const item = sub.items.data[0];
+    const current = item?.price.id ?? '';
+    const founder = this.founderPriceIds().includes(current);
+    const target = this.config.getOrThrow<string>(
+      founder
+        ? interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER' : 'STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER'
+        : interval === 'year' ? 'STRIPE_PREMIUM_PRICE_YEARLY_V2' : 'STRIPE_PREMIUM_PRICE_MONTHLY_V2',
+    );
+    if (!item || current === target) return { changed: false };
+    // Code partenaire : coupon de l'AUTRE intervalle, aux conditions figées de l'abonné et pour les
+    // mois de remise restants (aucune remise perdue par le changement).
+    const redemption = founder ? null : await this.partners.activeForSubscription(sub.id);
+    const coupon = redemption ? await this.partners.couponForIntervalChange(redemption, interval) : null;
+    await this.stripe.subscriptions.update(
+      sub.id,
+      {
+        items: [{ id: item.id, price: target }],
+        proration_behavior: 'always_invoice',
+        ...(redemption ? { discounts: coupon ? [{ coupon }] : [] } : {}),
+      },
+      { idempotencyKey: `interval-${sub.id}-${target}` },
+    );
+    await this.redis.del(billingCacheKey(userId)).catch(() => undefined);
+    this.logger.log(`Intervalle changé | user: ${userId}, ${current} → ${target}${founder ? ' (fondateur)' : ''}`);
+    return { changed: true };
+  }
+
+  /**
+   * Le −10 % filleul s'applique-t-il ? RÉSERVÉ au parrainage classique : jamais pour les filleuls
+   * d'ambassadeur (l'ambassadeur touche déjà ses 20 % via le webhook : sinon double coût).
+   */
+  private async referralApplies(referredBy: string | null): Promise<boolean> {
+    if (!referredBy) return false;
+    const parrain = await this.prisma.user.findFirst({
+      where: { referralCode: referredBy },
+      select: { role: true },
+    });
+    return !!parrain && parrain.role !== Role.AMBASSADOR;
+  }
+
+  /** Prix fondateur (mensuel et annuel) de la config. */
+  founderPriceIds(): string[] {
+    return [
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER') ?? '',
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER') ?? '',
+    ].filter(Boolean);
   }
 
   // ── Customer Portal ───────────────────────────────────────────────────────────

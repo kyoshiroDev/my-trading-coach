@@ -88,6 +88,31 @@ src/
   dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
   arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
+- **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
+  (`src/lib/founder-offer.ts` : une requête par page, réponse `{ data }` déballée, état gardé 60 s en
+  sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien). **Le HTML
+  statique est toujours « offre fermée »** : bandeau, carte Fondateur, sa note et la question FAQ sont
+  dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script seulement si l'offre
+  vend et retirés sinon → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur » visible
+  (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML). Un lien inséré après coup
+  reprend les paramètres (ref, promo, utm_*) du lien Premium. Rien n'apparaît tant que l'API ne dit pas `open` + places > 0 (cache HTTP
+  de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
+  - Bandeau `FounderBanner.astro`, inclus par `Nav.astro` (toutes les pages) : fixe, 32 px, la Nav
+    descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans
+    marge → attribut `data-offer-shift` (bandeau « Fait en France » du Hero). Ancres :
+    `scroll-padding-top: 92px` quand le bandeau est là. Fermeture mémorisée (sessionStorage
+    `mtc_offer_bar_closed`).
+  - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
+    → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier. Même liste
+    `premiumPlus` que la carte Premium (« Tout Premium inclus »).
+  - FAQ : `FOUNDER_FAQ` (variantes `open` / `ended`) affichée seulement si l'offre vend ou s'est
+    clôturée (`ended`), **hors `FAQ` donc hors JSON-LD**. La question « code partenaire » est dans `FAQ`.
+  - Point de clic `cta` : `carte` par défaut ; `bandeau` / `faq` retenus en sessionStorage `mtc_cta`
+    et posés sur le lien de la carte au clic. **Jamais d'UTM sur un lien interne.**
+  - `?promo=CODE` (script de `Base.astro`) : format `^[A-Z0-9_-]{3,20}$`, gardé 30 j en localStorage
+    `mtc_promo` (comme `ref`), ajouté à tous les liens `/register`, à côté des UTM d'origine.
+  - JSON-LD : prix NORMAL uniquement. CGU : clauses `#offre-fondateur` et `#codes-partenaires`.
+
 ---
 
 ## Compliance NinjaTrader Ecosystem (PROMPT-201)

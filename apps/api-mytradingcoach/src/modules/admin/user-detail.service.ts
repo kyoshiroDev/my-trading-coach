@@ -112,6 +112,35 @@ export class UserDetailService {
     const winRate = Math.round(uStats.winRate);
     const topAssets = topAssetRows.map((a) => ({ asset: a.asset, count: a._count.asset }));
 
+    // ── Offre fondateur / code partenaire (#525) ──
+    const [seat, redemption] = await Promise.all([
+      this.prisma.founderSeat.findUnique({ where: { userId: id } }),
+      this.prisma.partnerRedemption.findUnique({ where: { userId: id }, include: { partnerCode: { select: { code: true } } } }),
+    ]);
+    const offer = {
+      founder: seat
+        ? {
+            number: seat.number,
+            status: seat.status,
+            interval: seat.interval === 'year' ? ('year' as const) : ('month' as const),
+            takenAt: seat.takenAt.toISOString(),
+            endedAt: seat.endedAt?.toISOString() ?? null,
+            cta: seat.cta,
+          }
+        : null,
+      partner: redemption
+        ? {
+            code: redemption.partnerCode.code,
+            priceMonthlyEur: redemption.priceMonthlyEur,
+            priceAnnualEur: redemption.priceAnnualEur,
+            durationMonths: redemption.durationMonths,
+            status: redemption.status,
+            since: redemption.createdAt.toISOString(),
+            endedAt: redemption.endedAt?.toISOString() ?? null,
+          }
+        : null,
+    };
+
     return {
       identity: {
         id: user.id,
@@ -150,6 +179,7 @@ export class UserDetailService {
       },
       usage: { totalTrades, tradesThisMonth, totalPnl, winRate },
       topAssets,
+      offer,
       sessions,
     };
   }

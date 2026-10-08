@@ -10,6 +10,13 @@ export interface AdminUser {
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
+  /** Abonnés Stripe seulement (#525) : place fondateur et code partenaire, pour le montant réel. */
+  founderSeat?: { number: number; status: FounderSeatStatus } | null;
+  partnerRedemption?: {
+    status: 'ACTIVE' | 'LOST' | 'RELEASED';
+    priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null; createdAt: string;
+    partnerCode: { code: string };
+  } | null;
 }
 
 export interface AdminStats {
@@ -25,6 +32,51 @@ export interface AdminStats {
   tradersActifs7d: number; tradersActifs30d: number;
   // Comptes supprimés (trace RGPD) : distinct du churn d'abonnement.
   comptesSupprimesMois: number; comptesSupprimesTotal: number;
+  /** MRR réellement payé, découpé (#525). */
+  mrrBreakdown?: { normal: number; founder: number; partner: number };
+}
+
+// ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
+
+export type FounderSeatStatus = 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
+
+export interface AdminFoundersData {
+  offer: { open: boolean; endsAt: string | null; seatsTotal: number };
+  totals: {
+    taken: number; active: number; lost: number; refunded: number; released: number; seatsLeft: number;
+    byCta: { cta: string | null; count: number }[];
+  };
+  page: number; pageSize: number; total: number;
+  rows: {
+    number: number; status: FounderSeatStatus; interval: 'month' | 'year'; cta: string | null;
+    takenAt: string; endedAt: string | null;
+    userId: string | null; email: string | null;
+    source: string | null; medium: string | null; campaign: string | null;
+  }[];
+}
+
+export interface AdminPartnerCode {
+  id: string; code: string; label: string;
+  priceMonthlyEur: number; priceAnnualEur: number;
+  durationMonths: number | null; maxRedemptions: number | null; expiresAt: string | null;
+  active: boolean; createdAt: string;
+  conditions: string;
+  used: number; activeSubscribers: number; lost: number; released: number; pendingCheckouts: number;
+}
+
+export interface PartnerCodeInput {
+  code: string; label: string;
+  priceMonthlyEur: number; priceAnnualEur: number;
+  durationMonths: number | null; maxRedemptions: number | null; expiresAt: string | null;
+  active?: boolean;
+}
+
+export interface AdminPartnerCodeUsers {
+  code: string; label: string;
+  redemptions: {
+    id: string; status: 'ACTIVE' | 'LOST' | 'RELEASED'; createdAt: string; endedAt: string | null; cta: string | null;
+    user: { id: string; email: string; name: string | null; stripeInterval: string | null } | null;
+  }[];
 }
 
 export interface AdminOnlineUser {
@@ -211,6 +263,26 @@ export class AdminApi {
     return this.http.post<{ data: { trialEndsAt: string } }>(`${this.usersBase}/${id}/offer-premium`, days ? { days } : {});
   }
   stats()               { return this.http.get<{ data: AdminStats }>(`${this.usersBase}/stats`); }
+
+  // Offre fondateur et codes partenaires (#525)
+  founders(params: { status?: FounderSeatStatus | null; page?: number } = {}) {
+    const query: Record<string, string> = { page: String(params.page ?? 1) };
+    if (params.status) query['status'] = params.status;
+    return this.http.get<{ data: AdminFoundersData }>(`${this.adminBase}/founders`, { params: query });
+  }
+  setFounderOffer(dto: { open?: boolean; endsAt?: string | null }) {
+    return this.http.patch<{ data: unknown }>(`${this.adminBase}/founder-offer`, dto);
+  }
+  partnerCodes() { return this.http.get<{ data: AdminPartnerCode[] }>(`${this.adminBase}/partner-codes`); }
+  createPartnerCode(dto: PartnerCodeInput) {
+    return this.http.post<{ data: unknown }>(`${this.adminBase}/partner-codes`, dto);
+  }
+  updatePartnerCode(id: string, dto: Partial<Omit<PartnerCodeInput, 'code'>>) {
+    return this.http.patch<{ data: unknown }>(`${this.adminBase}/partner-codes/${id}`, dto);
+  }
+  partnerCodeUsers(id: string) {
+    return this.http.get<{ data: AdminPartnerCodeUsers }>(`${this.adminBase}/partner-codes/${id}/users`);
+  }
   online()              { return this.http.get<{ data: AdminOnlineUser[] }>(`${this.usersBase}/online`); }
   subscriptions()       { return this.http.get<{ data: SubscriptionsData }>(`${this.usersBase}/subscriptions`); }
   aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }

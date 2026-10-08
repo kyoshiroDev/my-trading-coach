@@ -26,3 +26,23 @@ export const TRIAL_PERIOD_DAYS = 30;
  * comptent. FREE : 1 compte · PREMIUM : illimité.
  */
 export const ACCOUNT_LIMITS = { free: 1, premium: null } as const;
+
+/**
+ * Offre fondateur (#525) : Premium à prix bloqué à vie pour les 200 premiers abonnés
+ * (mensuel et annuel confondus), sans essai, satisfait ou remboursé 14 jours.
+ * Règles complètes : `.claude/agents/plans.md`, section « Offre fondateur ».
+ */
+export const FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats: 200 } as const;
+
+/** Économie annuelle fondateur, DÉRIVÉE (29 × 12 − 290 = 58 €) : jamais écrite en dur. */
+export const FOUNDER_ANNUAL_SAVINGS_EUR = FOUNDER_OFFER.priceMonthlyEur * 12 - FOUNDER_OFFER.priceAnnualEur;
+
+/** Fenêtre du satisfait ou remboursé fondateur, sur le PREMIER paiement. */
+export const FOUNDER_REFUND_DAYS = 14;
+
+/** Paliers notifiés à hello@ (places prises), une fois chacun. */
+export const FOUNDER_MILESTONES = [50, 100, 150, 190, 200] as const;
+
+/** Points de clic suivis jusqu'au checkout (`cta`). */
+export const OFFER_CTAS = ['bandeau', 'carte', 'faq', 'modale', 'cadenas', 'profil', 'email'] as const;
+export type OfferCta = (typeof OFFER_CTAS)[number];

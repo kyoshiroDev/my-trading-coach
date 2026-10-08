@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { offerDigestLines } from './offer-digest.util';
 
 const DAY_MS = 24 * 3600_000;
 
@@ -31,14 +32,20 @@ export class SignupDigestCron {
       select: { email: true, name: true, createdAt: true },
       orderBy: { createdAt: 'asc' },
     });
-    if (users.length === 0) return 0;
+    // Offre fondateur et codes partenaires (#525) : une ligne d'état, plus un palier franchi.
+    const offers = await offerDigestLines(this.prisma, since).catch(() => [] as string[]);
+    const milestone = offers.some((l) => l.startsWith('Palier atteint'));
+    if (users.length === 0 && !milestone) return 0;
 
     const fmt = (d: Date) => d.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
     const lines = users.map((u) => `- ${fmt(u.createdAt)} · ${u.name ?? '(nom non renseigné)'} · ${u.email}`);
+    const offerBlock = offers.length ? `\n\n${offers.join('\n')}` : '';
     await this.resend
       .sendAdminAlert(
-        `🆕 ${users.length} inscription${users.length > 1 ? 's' : ''} sur les dernières 24 h`,
-        `Du ${fmt(since)} au ${fmt(now)} :\n\n${lines.join('\n')}`,
+        users.length
+          ? `🆕 ${users.length} inscription${users.length > 1 ? 's' : ''} sur les dernières 24 h`
+          : '🏁 Offre fondateur : palier atteint',
+        `Du ${fmt(since)} au ${fmt(now)} :\n\n${lines.length ? lines.join('\n') : 'Aucune inscription.'}${offerBlock}`,
       )
       .catch((err: unknown) => this.logger.error(`Récap des inscriptions non envoyé : ${String(err)}`));
     this.logger.log(`Récap des inscriptions : ${users.length} nouvel(s) inscrit(s).`); // pas d'e-mail dans les logs

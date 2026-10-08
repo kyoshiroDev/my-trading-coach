@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import * as angularCore from '@angular/core';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { PlanModalComponent } from './plan-modal.component';
 import { BillingApi } from '@app/core/api/billing.api';
+import { BillingService } from '@app/core/services/billing.service';
+
+const billingService = { startCheckout: vi.fn() };
 
 const resolveComponentResources = (
   angularCore as Record<string, unknown>
@@ -23,6 +26,9 @@ const mockBillingApi = {
   checkout: vi
     .fn()
     .mockReturnValue(of({ data: { url: 'https://checkout.stripe.com/test' } })),
+  // Offres (#525) : aucune par défaut → Premium au prix normal seulement.
+  offers: vi.fn().mockReturnValue(EMPTY),
+  validatePartnerCode: vi.fn(),
 };
 
 describe('PlanModalComponent', () => {
@@ -34,7 +40,10 @@ describe('PlanModalComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [PlanModalComponent],
-      providers: [{ provide: BillingApi, useValue: mockBillingApi }],
+      providers: [
+        { provide: BillingApi, useValue: mockBillingApi },
+        { provide: BillingService, useValue: billingService },
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     });
     TestBed.overrideComponent(PlanModalComponent, {
@@ -92,12 +101,12 @@ describe('PlanModalComponent', () => {
     const c = instance();
     c.setInterval('yearly');
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_yearly');
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: null });
   });
 
   it('confirmPlan() par défaut → checkout("premium_monthly")', () => {
     const c = instance();
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_monthly');
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'modale', promo: null });
   });
 });

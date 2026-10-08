@@ -1,9 +1,11 @@
 ---
 import { APP_URL } from '../config';
+import FounderBanner from './FounderBanner.astro';
 
 // false sur les pages où un CTA de conversion n'a pas sa place (ex. /disclaimer).
 const { stickyCta = true } = Astro.props;
 ---
+<FounderBanner />
 <div class="nav-bar">
   <a href="/" class="nav-logo">
     <img src="/icon/logo-navbar.svg" alt="MyTradingCoach : Journal de trading IA" height="32" style="display:block" />

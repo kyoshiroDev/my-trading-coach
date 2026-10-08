@@ -40,3 +40,32 @@ describe('SignupDigestCron — un récap par jour au lieu d’un e-mail par insc
     });
   });
 });
+
+describe('SignupDigestCron — offres (#525)', () => {
+  const withOffers = (o: { taken: number; before: number }) => ({
+    user: { findMany: vi.fn().mockResolvedValue([]) },
+    founderOfferConfig: { findUnique: vi.fn().mockResolvedValue({ open: true }) },
+    founderSeat: {
+      count: vi.fn().mockImplementation(({ where }) =>
+        Promise.resolve(where.takenAt ? o.before : o.taken)),
+    },
+    partnerCode: { findMany: vi.fn().mockResolvedValue([]) },
+    partnerRedemption: { groupBy: vi.fn().mockResolvedValue([]) },
+  });
+
+  it('aucun inscrit mais un palier franchi → e-mail du palier avec la ligne fondateurs', async () => {
+    const p = withOffers({ taken: 100, before: 97 });
+    const c = new SignupDigestCron(p as never, resend as never);
+    await c.sendDigest(NOW);
+    const [subject, body] = resend.sendAdminAlert.mock.calls[0];
+    expect(subject).toContain('palier atteint');
+    expect(body).toContain('Fondateurs : 100 / 200');
+    expect(body).toContain('Palier atteint : 100 places');
+  });
+
+  it('aucun inscrit, aucun palier → toujours aucun e-mail', async () => {
+    const c = new SignupDigestCron(withOffers({ taken: 40, before: 40 }) as never, resend as never);
+    expect(await c.sendDigest(NOW)).toBe(0);
+    expect(resend.sendAdminAlert).not.toHaveBeenCalled();
+  });
+});

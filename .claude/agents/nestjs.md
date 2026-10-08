@@ -80,6 +80,18 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
+GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
+PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
+POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
+GET    /api/billing/offers            → { founderOffer, founder (place, éligibilité, refundUntil), partner, subscription } (app)
+GET    /api/billing/partner/:code     (20/min) → validation du code POUR l'utilisateur (déjà utilisé, déjà abonné…)
+GET    /api/pricing/partner/:code     PUBLIC (20/min, max-age=60) → conditions du code (valid, prix, durée) ou raison du refus ; ni partenaire ni utilisations
+GET    /api/admin/partner-codes       ADMIN → codes + used/max, actifs, perdus, rendus, checkouts en cours
+POST   /api/admin/partner-codes       ADMIN → création (2 coupons Stripe créés par l'API)
+PATCH  /api/admin/partner-codes/:id   ADMIN → modification / activation (sans effet sur les abonnés)
+GET    /api/admin/partner-codes/:id/users  ADMIN → abonnés du code
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -1684,4 +1696,47 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+
+## Offre fondateur (#525, 2026-10-07)
+
+`modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
+`reserve`, `claimSeat`, `markLost`, `refundFirstPayment`, paliers), `FounderAdminService`, routes
+publique + admin. **Anti-survente** : toute prise de place est une transaction qui commence par
+`pg_advisory_xact_lock(525001)` (PgBouncer en mode session : OK). Checkout fondateur → réservation de
+35 min (session Stripe 30 min) ; 1er `invoice.payment_succeeded` (`billing_reason = subscription_create`)
+→ `claimSeat` (numéro = max jamais attribué + 1, idempotent ; `null` = pas de place → abonnement annulé +
+alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
+ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
+fondateur. `custom_text.submit` au-dessus du bouton de paiement : fondateur (remboursement 14 j, tarif
+perdu si résiliation) et code partenaire (conditions figées) ; rien au prix normal. Le rendu de la page
+(logo, nom, couleurs) vient du Branding du compte Stripe et du nom / de la description / de l'image du
+produit, pas du code. **Page de paiement de l'app** : `POST /billing/checkout` avec `ui: 'elements'`
+→ session `ui_mode: 'elements'` créée en version d'API `2026-08-26.dahlia` (option PAR APPEL,
+`ELEMENTS_API_VERSION` ; le client reste en 2024-06-20), `payment_method_types` = NOTRE liste (carte, Link, Klarna) croisée avec les moyens activés sur le compte
+(config par défaut, cache Redis 10 min) : un moyen désactivé est retiré, la carte reste toujours,
+`return_url` = `/dashboard?checkout=success&session_id=…`, pas de `custom_text` ni de codes promo
+manuels ; renvoie `{ clientSecret, publishableKey, summary }` (récapitulatif : offre, montants,
+essai, code, places). Sans `STRIPE_PUBLIC_KEY` → repli `{ url }` (page Stripe). Une session ouverte
+n'est reprise que pour la même page (`metadata.ui`) ; la clé d'une session `elements` se relit en
+dahlia. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+(remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
+PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
+renouvellement : rien). `syncSubscription` n'écrase jamais
+l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
+testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
+le stubber dans `app-role-wiring.spec.ts`.
+
+Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
+pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans
+`CreateCheckoutDto` → offre `partner` (metadata `partnerCode`), prix normal + `discounts` du coupon de
+l'intervalle. Le module fournit son propre `stripeClientProvider`. Concurrence testée sur vraie base :
+`partner-code.int-spec.ts`. MRR : `UsersService.realMrr` (base) et `monthlyOf` après remise (admin).
+
+Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l'intercepteur ajoute
+`{ data }` ; l'ancien `{ data: { … } }` donnait `{ data: { data } }` et faisait planter la page admin
+Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. `AdminUserDetail.offer`
+(fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
+quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·
+Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
+digest même sans inscription.
 

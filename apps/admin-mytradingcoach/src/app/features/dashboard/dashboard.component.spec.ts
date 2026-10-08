@@ -26,6 +26,8 @@ function pt(date: string, newSignups: number, mrr = 0): MetricsHistoryPoint {
 function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
   const adminApi = {
     stats: vi.fn(() => of({ data: stats })),
+    // Offre fondateur (#525) : KPI non testé ici.
+    founders: vi.fn(() => of({ data: null })),
     online: vi.fn(() => of({ data: [] })),
     retention: vi.fn(() => of({ data: null })),
     metricsHistory: vi.fn(() => of({ data: history })),

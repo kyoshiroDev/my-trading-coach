@@ -10,12 +10,17 @@
 .kpi-link { cursor: pointer; text-decoration: none; color: inherit; }
 .kpi-link:hover { border-color: rgba(255,255,255,.12); }
 
-/* 6 KPIs sur une ligne (MRR, users, premium, ambassadeurs, churn, supprimés).
-   La bande n'occupe plus que 2 colonnes sur 3 depuis que le rail « connectés »
-   remonte à sa hauteur : `repeat(7)` laissait en plus une colonne vide. */
+/* 7 KPIs sur une ligne (MRR, users, premium, ambassadeurs, churn, supprimés, fondateurs).
+   La bande n'occupe que 2 colonnes sur 3 (le rail « connectés » remonte à sa hauteur). */
 @media (min-width: 1024px) {
-  .kpi-strip.dash-kpis { grid-template-columns: repeat(6, 1fr); }
+  .kpi-strip.dash-kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 }
+
+/* KPI Fondateurs (#525) : « 37 / 200 », barre fine, badge « fermée » */
+.kpi-of { font-size: 14px; color: var(--text3); }
+.kpi-flag { margin-left: 6px; padding: 1px 6px; letter-spacing: .04em; text-transform: none; }
+.kpi-bar { display: block; height: 3px; border-radius: 3px; background: rgba(255,255,255,.06); overflow: hidden; margin-top: 2px; }
+.kpi-bar-fill { display: block; height: 100%; background: var(--teal); transform-origin: left; }
 
 /* Fidélisation : entonnoir 5 stats (activation → traders actifs 7j/30j → J+7 → fantômes) */
 @media (min-width: 1024px) {

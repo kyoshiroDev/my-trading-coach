@@ -51,6 +51,28 @@ export interface AdminUserDetail {
     winRate: number;
   };
   topAssets: { asset: string; count: number }[];
+  /** Offre fondateur / code partenaire (#525). `null` si aucun. */
+  offer: {
+    founder: {
+      number: number;
+      /** ACTIVE · LOST (tarif perdu) · REFUNDED (remboursé) · RELEASED (1er paiement en échec). */
+      status: 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
+      interval: 'month' | 'year';
+      takenAt: string;
+      /** Date de perte du tarif (fin d'abonnement ou remboursement). */
+      endedAt: string | null;
+      cta: string | null;
+    } | null;
+    partner: {
+      code: string;
+      priceMonthlyEur: number;
+      priceAnnualEur: number;
+      durationMonths: number | null;
+      status: 'ACTIVE' | 'LOST' | 'RELEASED';
+      since: string;
+      endedAt: string | null;
+    } | null;
+  };
   sessions: {
     date: string;
     trades: number;

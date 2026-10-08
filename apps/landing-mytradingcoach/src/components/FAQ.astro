@@ -1,6 +1,6 @@
 ---
 // Texte : src/data/faq.ts (même source que le JSON-LD FAQPage de la home).
-import { FAQ } from '../data/faq';
+import { FAQ, FOUNDER_FAQ } from '../data/faq';
 ---
 
 <section class="faq-section" id="faq">
@@ -10,6 +10,23 @@ import { FAQ } from '../data/faq';
       <h2>Tout ce que tu veux <em>savoir</em></h2>
     </div>
     <div class="faq-list reveal">
+      {/* Gabarit inerte : inséré seulement si l'offre vend ou s'est clôturée (aucun texte de
+           l'offre dans le HTML rendu ni indexé avant). */}
+      <template data-founder-faq-tpl>
+      <div class="faq-item" data-founder-faq>
+        <button class="faq-q" aria-expanded="false" aria-controls="faq-a-founder">
+          {FOUNDER_FAQ.question}
+          <span class="faq-arrow" aria-hidden="true">▼</span>
+        </button>
+        <div class="faq-a" id="faq-a-founder" role="region">
+          <span data-founder-faq-open>
+            {FOUNDER_FAQ.open}
+            <a href="#pricing" class="faq-founder-link" data-offer-cta="faq">Voir l'offre fondateur →</a>
+          </span>
+          <span data-founder-faq-ended hidden>{FOUNDER_FAQ.ended}</span>
+        </div>
+      </div>
+      </template>
       {FAQ.map((item, i) => (
         <div class={i === 0 ? 'faq-item open' : 'faq-item'}>
           {/* `aria-controls` lie la question a sa reponse : sans lui, un lecteur d'ecran
@@ -79,6 +96,9 @@ import { FAQ } from '../data/faq';
     font-weight: 300;
   }
   .faq-item.open .faq-a { display: block; }
+  .faq-a [hidden] { display: none; }
+  .faq-founder-link { display: inline-block; margin-top: 8px; color: var(--blue2); text-decoration: none; }
+  .faq-founder-link:hover { text-decoration: underline; }
 
   @media (max-width: 768px) {
     .faq-section { padding: 64px 16px; }
@@ -91,18 +111,43 @@ import { FAQ } from '../data/faq';
 </style>
 
 <script>
-  document.querySelectorAll('.faq-q').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const item = btn.closest('.faq-item');
-      const wasOpen = item?.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(x => {
-        x.classList.remove('open');
-        x.querySelector('.faq-q')?.setAttribute('aria-expanded', 'false');
-      });
-      if (!wasOpen && item) {
-        item.classList.add('open');
-        btn.setAttribute('aria-expanded', 'true');
-      }
+  import { isSelling, onFounderState, rememberCta } from '../lib/founder-offer';
+
+  /** Bascule ouvert / fermé d'une question (une seule ouverte à la fois). */
+  const toggle = (btn: Element) => {
+    const item = btn.closest('.faq-item');
+    const wasOpen = item?.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach((x) => {
+      x.classList.remove('open');
+      x.querySelector('.faq-q')?.setAttribute('aria-expanded', 'false');
     });
+    if (!wasOpen && item) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  };
+
+  // Question « offre fondateur » : insérée depuis son <template> si l'offre vend ou s'est
+  // clôturée, jamais avant ; retirée sinon.
+  const faqTpl = document.querySelector<HTMLTemplateElement>('template[data-founder-faq-tpl]');
+  if (faqTpl) {
+    onFounderState((s) => {
+      const selling = isSelling(s);
+      let item = document.querySelector<HTMLElement>('[data-founder-faq]');
+      if (!(selling || !!s?.ended)) return item?.remove();
+      if (!item) {
+        item = (faqTpl.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
+        faqTpl.after(item);
+        const q = item.querySelector('.faq-q');
+        q?.addEventListener('click', () => toggle(q));
+        item.querySelector('.faq-founder-link')?.addEventListener('click', () => rememberCta('faq'));
+      }
+      item.querySelector<HTMLElement>('[data-founder-faq-open]')!.hidden = !selling;
+      item.querySelector<HTMLElement>('[data-founder-faq-ended]')!.hidden = selling;
+    });
+  }
+
+  document.querySelectorAll('.faq-q').forEach((btn) => {
+    btn.addEventListener('click', () => toggle(btn));
   });
 </script>

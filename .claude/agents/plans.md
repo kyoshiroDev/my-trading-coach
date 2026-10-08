@@ -236,3 +236,70 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 > vivent dans `libs/shared/src/pricing.ts` (`@mtc/shared`). Les `pricing.const.ts` de l'API, de
 > l'app et de l'admin en dérivent (mêmes noms d'export qu'avant). Changer un prix = ce fichier +
 > la landing `Pricing.astro` + les `STRIPE_*_PRICE_*`.
+
+## Offre fondateur (#525, 2026-10-07)
+
+Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats: 200 }`,
+`FOUNDER_ANNUAL_SAVINGS_EUR` (dérivée), `FOUNDER_REFUND_DAYS = 14`, `FOUNDER_MILESTONES`, `OFFER_CTAS`
+(`libs/shared/src/pricing.ts`). Prix Stripe : `STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER` / `_YEARLY_FOUNDER`.
+
+- **200 places**, mensuel (29 €) ET annuel (290 €) confondus. **Prix bloqué à vie** tant que
+  l'abonnement reste actif ; tout le Premium, nouveautés futures comprises.
+- Mensuel ↔ annuel fondateur autorisé (`POST /billing/interval`) : même place, même numéro.
+- **Aucun essai** (premier paiement immédiat) ; l'essai 30 j du 49 € est inchangé.
+- **Satisfait ou remboursé 14 jours** sur le 1er paiement (engagement affiché). Côté code, **tout
+  remboursement INTÉGRAL du 1er paiement, quel que soit le délai** (c'est Greg qui décide) → place
+  `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.
+  La charge est rapprochée de la 1re facture payée (> 0 €) par facture ou PaymentIntent.
+- **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
+  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
+- **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
+  personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
+- **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si
+  remboursement intégral du 1er paiement, 1er paiement en échec définitif, ou session Checkout expirée. Une résiliation
+  ne la rend PAS. Exclus : démo, ADMIN, BETA_TESTER (une AMBASSADRICE est éligible).
+- **Perte du tarif** : résiliation programmée = gardé jusqu'à la fin (réactivation = gardé) ;
+  `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
+  (place `LOST`, reste comptée) ou au remboursement. Retour = prix normal.
+- **Non-cumul** : fondateur, code partenaire et coupon de parrainage s'excluent ; le fondateur ne
+  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
+  reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
+- **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
+
+## Codes partenaires (#525, 2026-10-07)
+
+`modules/partner-codes/` (`PartnerCodeService`, fonctions pures dans `partner-code.util.ts`).
+
+- Un formateur donne un code (ex. `LOUIS29`) : Premium à un prix réduit **réglable code par code**
+  (mensuel et annuel entre 1 € et le prix normal − 1, entiers). Ces abonnés ne sont **pas** fondateurs
+  et ne prennent **aucune** place.
+- Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
+  **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
+  remise des abonnés) ; `active`.
+- **Prix pile** : coupon Stripe `amount_off` EUR = prix normal − prix remisé, **de l'intervalle choisi**
+  (−20 € → 29,00 €, −200 € → 290,00 €), appliqué côté serveur sur le prix NORMAL. Coupons créés par
+  l'API, identifiant déterministe `mtc-partner-<centimes>-<forever|N>`. Sur l'annuel, un coupon N mois
+  remise chaque facture émise pendant N mois (la 1re année seulement si N ≤ 12).
+- **Essai 30 j conservé** (mensuel, règles actuelles) : c'est le prix normal remisé.
+- Une utilisation par personne, seulement si **jamais abonnée** (aucun abonnement Stripe passé ou en
+  cours, jamais fondateur ; un mois offert hors Stripe ne compte pas). Démo et ADMIN exclus.
+- Modifier un code ne change rien pour les abonnés existants : conditions **figées** dans
+  `PartnerRedemption` ; prix ou durée modifiés → nouveaux coupons pour les futurs abonnés.
+- Jamais sur un prix fondateur (choix explicite, 400 si les deux). Avec un parrainage : le plus
+  avantageux sur la 1re année (`partnerFirstYearCost` vs `referralFirstYearCost`) ; si le −10 % gagne,
+  le code n'est pas consommé.
+- Utilisation comptée à la 1re facture (`subscription_create`, 0 € d'essai compris). Rendue au quota si
+  remboursement intégral du 1er paiement réel (quel que soit le délai) ou fin d'essai impayée (`cancellation_details.reason =
+  payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
+- Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
+  figées, pour les mois de remise restants.
+- **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
+  normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
+  (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
+- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+- **Satisfait ou remboursé (choix #525)** : demande par e-mail à hello@ depuis Profil > Abonnement
+  (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
+  `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.
+- **Points d'affichage (cohérence)** : landing (bandeau, carte, FAQ), app (modale, cadenas, Profil,
+  « Continuer en Premium »), API (checkout, webhooks), e-mails (phase F).
+

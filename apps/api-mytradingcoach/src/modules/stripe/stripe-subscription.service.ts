@@ -8,6 +8,21 @@ import { ACTIVE_STATUSES, billingCacheKey, extractId } from './stripe.helpers';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 
 /** État d'abonnement : synchro DB ← Stripe et invalidation du cache de facturation. */
+/** Résultat d'une synchro : l'utilisateur et l'abonnement tel que Stripe le décrit. */
+export interface SyncedSubscription {
+  id: string;
+  email: string;
+  name: string | null;
+  stripeSubscriptionStatus: string | null;
+  currentPeriodEnd: Date | null;
+  subscriptionId: string;
+  customerId: string;
+  priceId: string | null;
+  /** 'month' | 'year' */
+  interval: string | null;
+  metadata: Record<string, string>;
+}
+
 @Injectable()
 export class StripeSubscriptionService {
   private get redis() { return this.redisService.client; }
@@ -26,13 +41,7 @@ export class StripeSubscriptionService {
    */
   async syncSubscription(
     subscriptionId: string,
-  ): Promise<{
-    id: string;
-    email: string;
-    name: string | null;
-    stripeSubscriptionStatus: string | null;
-    currentPeriodEnd: Date | null;
-  } | null> {
+  ): Promise<SyncedSubscription | null> {
     let subscription: Stripe.Subscription;
 
     try {
@@ -66,6 +75,21 @@ export class StripeSubscriptionService {
 
     const status: Stripe.Subscription['status'] = subscription.status;
     const isActive = ACTIVE_STATUSES.has(status);
+
+    // Un abonnement INACTIF (essai annulé lors d'une bascule vers le tarif fondateur, ancien
+    // abonnement) ne remplace jamais l'abonnement ACTIF d'un autre id : sinon l'événement tardif de
+    // l'ancien abonnement repasserait le fondateur en FREE.
+    if (
+      !isActive &&
+      user.stripeSubscriptionId &&
+      user.stripeSubscriptionId !== subscription.id &&
+      ACTIVE_STATUSES.has((user.stripeSubscriptionStatus ?? '') as Stripe.Subscription['status'])
+    ) {
+      this.logger.log(
+        `Sync ignorée | user: ${user.id}, sub inactive ${subscription.id} (${status}) ≠ sub active ${user.stripeSubscriptionId}`,
+      );
+      return null;
+    }
 
     const firstItem = subscription.items.data[0];
     const priceId = firstItem?.price.id ?? null;
@@ -112,6 +136,11 @@ export class StripeSubscriptionService {
       name: user.name,
       stripeSubscriptionStatus: status,
       currentPeriodEnd: periodEnd,
+      subscriptionId: subscription.id,
+      customerId,
+      priceId,
+      interval,
+      metadata: subscription.metadata ?? {},
     };
   }
 
@@ -145,6 +174,8 @@ export class StripeSubscriptionService {
         const res = await this.stripe.subscriptions.list({
           status,
           limit: 100,
+          // Remises développées : le MRR Stripe se calcule après remise (#525).
+          expand: ['data.discounts'],
           ...(startingAfter ? { starting_after: startingAfter } : {}),
         });
         out.push(...res.data);

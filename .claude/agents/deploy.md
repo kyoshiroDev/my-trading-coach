@@ -403,8 +403,24 @@ ANTHROPIC_API_KEY=sk-ant-...
 AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_MONTHLY=price_...
-STRIPE_PRICE_YEARLY=price_...
+STRIPE_PREMIUM_PRICE_MONTHLY_V2=price_...      # Premium 49 €/mois
+STRIPE_PREMIUM_PRICE_YEARLY_V2=price_...       # Premium 490 €/an
+STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER=price_... # offre fondateur 29 €/mois (#525), REQUISE au boot
+STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER=price_...  # offre fondateur 290 €/an (#525), REQUISE au boot
+# ⚠️ Les deux prix fondateur sont `required` (config/env.ts) : à poser dans .env.dev / .env.prod
+# AVANT de déployer le code qui les lit, sinon l'API refuse de démarrer.
+STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_test_ en dev/beta)
+# Absente → l'API retombe sur la page Stripe hébergée (avertissement au boot en prod).
+# Apple Pay sur la page de l'app : vérifier le domaine app.mytradingcoach.app dans Stripe
+# (Paramètres → Moyens de paiement → Domaines). Link et Klarna doivent être activés dans Stripe.
+# Webhooks Stripe (10 événements, version 2026-03-25.dahlia, état au 2026-10-08) :
+#   prod  → compte live, destination api_prod (https://api.mytradingcoach.app/api/billing/webhook)
+#   dev   → compte de test, we_1UOOBL3gvVCzVhyJP7gXcDZ4 (https://dev.api…) → STRIPE_WEBHOOK_SECRET de .env.dev
+#   beta  → compte de test, we_1UOOBM3gvVCzVhyJNT0ODsMl (https://beta.api…) → STRIPE_WEBHOOK_SECRET de .env.beta
+#   Événements : charge.refunded, checkout.session.completed, checkout.session.expired, customer.deleted,
+#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded.
+#   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
+# Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
 MAIL_FROM=noreply@mytradingcoach.app
 FRONTEND_URL=https://app.mytradingcoach.app

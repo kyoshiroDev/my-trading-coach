@@ -45,7 +45,10 @@ import {
   SetupFormValue,
   EditableSetup,
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
-import { DialogDirective } from '@mtc/front-ui';
+import { ConfirmService, DialogDirective } from '@mtc/front-ui';
+import { OffersStore } from '../../core/stores/offers.store';
+import { PRICING } from '../../core/constants/pricing.const';
+import { partnerDurationLabel } from '../../shared/components/plan-modal/plan-modal.component';
 import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
 
 type ProfileTab = 'trader' | 'params';
@@ -69,6 +72,9 @@ export class ProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
+  protected readonly offersStore = inject(OffersStore);
+  protected readonly PRICING = PRICING;
 
   protected readonly checkoutParam = toSignal(
     this.route.queryParamMap.pipe(map((p) => p.get('checkout'))),
@@ -176,6 +182,9 @@ export class ProfileComponent implements OnInit {
   ngOnInit(): void {
     if (this.route.snapshot.queryParamMap.get('checkout') === 'success') {
       this.userStore.refreshUser();
+      this.offersStore.refresh();
+    } else {
+      this.offersStore.load();
     }
     // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
@@ -293,6 +302,74 @@ export class ProfileComponent implements OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  // ── Offre fondateur, code partenaire, intervalle (#525) ──
+
+  /** « 29 €/mois » ou « 290 €/an » selon l'intervalle de l'abonnement fondateur. */
+  protected readonly founderPrice = computed(() => {
+    const yearly = this.offersStore.offers()?.founder.interval === 'year';
+    return yearly ? `${PRICING.founder.yearly} €/an` : `${PRICING.founder.monthly} €/mois`;
+  });
+
+  /** « 29 €/mois à vie » · « 29 €/mois jusqu'au 31/12/2026 » (conditions figées de l'abonné). */
+  protected readonly partnerTariff = computed(() => {
+    const o = this.offersStore.offers();
+    const p = o?.partner;
+    if (!p) return null;
+    const yearly = o.subscription.interval === 'year';
+    const price = yearly ? `${p.priceAnnualEur} €/an` : `${p.priceMonthlyEur} €/mois`;
+    if (!p.endsAt) return `${price} à vie`;
+    return `${price} jusqu'au ${new Date(p.endsAt).toLocaleDateString('fr-FR')}`;
+  });
+
+  /** Mensuel ↔ annuel par notre flux (le portail ne change pas de formule) : abonnement payant. */
+  protected readonly intervalSwitch = computed(() => {
+    const o = this.offersStore.offers();
+    if (!o || o.subscription.status !== 'active' || !o.subscription.interval) return null;
+    const toYear = o.subscription.interval === 'month';
+    let price: string;
+    if (o.founder.isFounder) price = toYear ? `${PRICING.founder.yearly} €/an` : `${PRICING.founder.monthly} €/mois`;
+    else if (o.partner) {
+      const p = o.partner;
+      price = `${toYear ? `${p.priceAnnualEur} €/an` : `${p.priceMonthlyEur} €/mois`} ${partnerDurationLabel(
+        p.durationMonths, toYear ? 'yearly' : 'monthly')}`;
+    } else price = toYear ? `${PRICING.premium.yearly} €/an` : `${PRICING.premium.monthly} €/mois`;
+    return { to: (toYear ? 'year' : 'month') as 'year' | 'month', label: toYear ? "Passer à l'annuel" : 'Passer au mensuel', price };
+  });
+  protected readonly changingInterval = signal(false);
+
+  /** Satisfait ou remboursé : demande par e-mail à hello@ (remboursement fait dans Stripe). */
+  protected readonly refundMailto = computed(() => {
+    const f = this.offersStore.offers()?.founder;
+    if (!f?.refundUntil) return null;
+    const subject = `Remboursement fondateur n° ${f.number}`;
+    const body = `Bonjour,\n\nJe demande le remboursement de mon premier paiement fondateur (satisfait ou remboursé ${PRICING.founder.refundDays} jours).\nCompte : ${this.userStore.user()?.email ?? ''}\n\nMerci.`;
+    return `mailto:hello@mytradingcoach.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+
+  protected async changeInterval() {
+    const s = this.intervalSwitch();
+    if (!s || this.changingInterval()) return;
+    const ok = await this.confirm.ask({
+      title: s.label,
+      message: `Ton abonnement passe à ${s.price}. Le changement est proratisé et facturé tout de suite ; ${
+        this.offersStore.isFounder() ? 'tu gardes ta place et ton numéro de fondateur.' : 'tu gardes ton tarif.'}`,
+      confirmLabel: 'Confirmer',
+    });
+    if (!ok) return;
+    this.changingInterval.set(true);
+    this.billingApi
+      .changeInterval(s.to)
+      .pipe(finalize(() => this.changingInterval.set(false)), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.toast.success(s.to === 'year' ? 'Tu es passé à l’annuel.' : 'Tu es passé au mensuel.');
+          this.offersStore.refresh();
+          this.userStore.refreshUser();
+        },
+        error: (err) => this.toast.error(apiErrorMessage(err, 'Le changement n’a pas pu se faire. Réessaie dans un instant.')),
+      });
   }
 
   protected openPortal() {
