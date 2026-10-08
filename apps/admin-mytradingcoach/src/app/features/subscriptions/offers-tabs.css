@@ -1,5 +1,8 @@
 /* Onglets Fondateurs et Codes partenaires (#525) — design system global (.card, .tbl, .badge, .btn),
    champs repris de la page Ambassadeurs (.field, .field-input). */
+/* l'onglet prolonge la colonne de .screen : sans ça, .card.fill n'est pas calée sur la hauteur et se fait couper.
+   relative : le <caption class="sr-only"> (absolu) reste dans le cadre défilant au lieu d'allonger le document. */
+:host { position: relative; display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
 .muted { color: var(--text3); }
 .num, .tbl th.num { text-align: right; }
 .u-link { color: var(--text); text-decoration: none; }
