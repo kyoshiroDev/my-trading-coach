@@ -36,7 +36,11 @@ describe('PropFirmCatalogSyncService (base réelle)', () => {
     expect(await service.sync()).toEqual({ status: 'unchanged' });
     const firmIds = ['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday'];
     expect(await prisma.propFirm.count({ where: { id: { in: firmIds } } })).toBe(6);
-    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: firmIds }, active: true } })).toBe(116);
+    // Nombre attendu lu dans le catalogue : un plan ajouté ou retiré ne casse plus le test.
+    const expectedPlans = (PROP_FIRM_CATALOG_FILES as { firm: { id: string }; plans: unknown[] }[])
+      .filter((f) => firmIds.includes(f.firm.id))
+      .reduce((n, f) => n + f.plans.length, 0);
+    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: firmIds }, active: true } })).toBe(expectedPlans);
   });
 
   it('les règles relues depuis le Json repassent le schéma Zod', async () => {

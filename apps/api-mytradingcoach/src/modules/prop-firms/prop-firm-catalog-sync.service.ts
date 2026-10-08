@@ -89,7 +89,7 @@ export class PropFirmCatalogSyncService implements OnApplicationBootstrap {
           deactivated: plan.planIdsToDeactivate.length,
         };
       },
-      // Premier passage = 6 firms + 116 plans : large marge sur le délai par défaut (5 s).
+      // Premier passage = tout le catalogue (firms + plans) : large marge sur le délai par défaut (5 s).
       { timeout: 30_000 },
     );
   }
