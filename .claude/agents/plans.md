@@ -150,15 +150,32 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   des fichiers que les utilisateurs envoient, au lieu de couter a chaque import.
   Prealable toujours valable avant d'ouvrir aux FREE : il n'existe **aucun quota sur l'import**.
 
-**Modèle par appel** — `AI_MODELS.fast` (Haiku) pour les tâches courtes et fréquentes : traductions news,
-contexte marché, **et les deux appels du calendrier éco** (`ECO_MODEL` dans `ai.service.ts`, depuis le
-2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
+**Modèle par appel** — `AI_MODELS.fast` (**Haiku 5.5**, `claude-haiku-5-5`) pour les tâches courtes et
+fréquentes : traductions news, contexte marché, mapping des CSV inconnus, **et les deux appels du
+calendrier éco** (depuis le 2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
 le coût suit l'audience : il n'a rien à faire sur `analysis`. Son coût ne suit pas le nombre d'users mais
 le nombre de **signatures d'actifs distinctes** (cache partagé par `(date, assetsKey)`, top 5 actifs du
-trader) — ≈ 0,002 $ l'appel. `analysis` (Sonnet) reste pour le chat, le recap quotidien, le débrief, les
-insights et l'import CSV inconnu, tous PREMIUM.
+trader) — ≈ 0,0002 $ l'appel en Haiku 5.5. `analysis` (**Sonnet 4.6**, `claude-sonnet-4-6`) reste pour le
+chat, le recap quotidien, le débrief, les insights et les lots d'import CSV inconnu, tous PREMIUM.
 
-**Coût IA réel constaté** (admin, 30 j) : ≈ **4,60 USD total**. Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
+**Sonnet 5.5 : testé le 2026-10-08, pas adopté, à retenter plus tard.** Qualité au moins égale et 2 / 10 $
+au lieu de 3 / 15 $, mais deux blocages mesurés sur de vrais appels : le **chat coach est coupé** (il
+ignore « 3-5 phrases », ~420-500 tokens contre `max_tokens: 512`, ni l'effort `low`/`medium` ni une
+consigne renforcée ne règlent le problème) et le **débrief** a renvoyé un JSON illisible **1 fois sur 8**.
+Pour le retenter : revoir le plafond du chat et la robustesse du JSON du débrief (sorties structurées).
+Sur Sonnet 5.5, `thinking: disabled` est une 400 : couper la réflexion avec `between_tools`.
+
+**Tarifs** (USD / million de tokens, `MODEL_PRICING` dans `modules/infra/ai-pricing.const.ts`) :
+Haiku 5.5 = 0,10 entrée / 0,50 sortie jusqu'à 100K tokens de prompt, **0,50 / 2,50 sur tout l'appel
+au-delà** (`longPrompt`, jugé sur le prompt cache compris) ; Sonnet 4.6 = 3 / 15. Avant le 2026-10-08 :
+Haiku 4.5 = 1 / 5. Haiku 5.5 produit **~25-50 % de tokens en plus** pour le même texte (mesuré :
+×1,25 à ×1,48 en entrée selon le prompt) : raisonner en coût par appel, pas en prix au token.
+
+**Coût IA réel constaté** (prod, 30 j au 2026-10-08) : **14,63 USD facturés** (Cost API), dont 13,80 $
+de traductions (`eco_translation` 8,38 $ pour 4 834 appels, `news_translation` 5,41 $). Projection avec
+Haiku 5.5 (Sonnet 4.6 inchangé) sur les mêmes volumes, tokenizer inclus : **≈ 2,3 $ / mois (-84 %)**,
+dont ≈ 1,8 $ de traductions.
+Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
 
 ---
 
