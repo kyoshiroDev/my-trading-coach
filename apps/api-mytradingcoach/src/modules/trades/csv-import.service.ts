@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Plan, Role, EmotionState } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
 import {
@@ -740,7 +740,7 @@ ${echantillon}`;
 
     if (response.stop_reason === 'max_tokens') return null;
 
-    const brut = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    const brut = responseText(response);
     // Le modele peut preceder le JSON d'une explication : on prend le bloc, sinon les accolades.
     const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/);
     const candidat = bloc
@@ -799,8 +799,7 @@ ${echantillon}`;
       );
     }
 
-    const text =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = responseText(response);
     const clean = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')

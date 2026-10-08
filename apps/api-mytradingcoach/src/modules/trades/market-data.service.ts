@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
@@ -202,7 +202,7 @@ export class MarketDataService {
         messages: [{ role: 'user', content:
           `Traduis en français ces titres de news financières. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
       }, { feature: 'news_translation', userId: null });
-      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const txt = responseText(msg);
       const s = txt.indexOf('['), e = txt.lastIndexOf(']');
       if (s === -1 || e === -1) return null;
       const tr = JSON.parse(txt.slice(s, e + 1)) as { title?: string }[];
@@ -254,7 +254,7 @@ export class MarketDataService {
         messages: [{ role: 'user', content:
           `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${text}` }],
       }, { feature: 'news_translation', userId: null });
-      const fr = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '';
+      const fr = responseText(msg).trim();
       if (!fr) return original;
       await this.prisma.marketNews.update({
         where: { id },

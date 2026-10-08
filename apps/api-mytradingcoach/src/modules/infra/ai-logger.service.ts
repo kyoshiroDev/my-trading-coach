@@ -12,12 +12,20 @@ export class AiLoggerService {
     userId: string | null;
     feature: string;
     model: string;
-    usage: { input_tokens: number; output_tokens: number };
+    usage: {
+      input_tokens: number;
+      output_tokens: number;
+      cache_read_input_tokens?: number | null;
+      cache_creation_input_tokens?: number | null;
+    };
   }): void {
     const inputTokens = opts.usage.input_tokens;
     const outputTokens = opts.usage.output_tokens;
+    // Le palier de prix (Haiku 5.5 au-delà de 100K) se juge sur le prompt entier, cache compris.
+    const promptTokens =
+      inputTokens + (opts.usage.cache_read_input_tokens ?? 0) + (opts.usage.cache_creation_input_tokens ?? 0);
     // Coût au tarif réel du modèle appelé (Haiku ≠ Sonnet) : cf. ai-pricing.const.ts
-    const cost = costUsd(opts.model, inputTokens, outputTokens);
+    const cost = costUsd(opts.model, inputTokens, outputTokens, promptTokens);
 
     this.prisma.aiUsageLog
       .create({

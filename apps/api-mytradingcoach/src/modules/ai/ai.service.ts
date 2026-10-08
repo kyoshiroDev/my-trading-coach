@@ -19,7 +19,7 @@ import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared'
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
 import { AI_MODELS } from '../infra/ai-pricing.const';
@@ -230,13 +230,13 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       handleAnthropicError(err, this.logger);
     }
 
-    const content = response?.content?.[0];
-    if (!content || content.type !== 'text')
+    const text = response ? responseText(response) : '';
+    if (!text)
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    return { response: content.text };
+    return { response: text };
   }
 
   // ── Daily recap one-liner ─────────────────────────────────────────────────
@@ -381,9 +381,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       { feature: 'daily_recap', userId: data.userId },
     );
 
-    return response.content[0]?.type === 'text'
-      ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
-      : '';
+    return responseText(response).trim().replace(/^["']|["']$/g, '');
   }
 
   // ── Eco calendar : morning analysis + released event ─────────────────────
@@ -453,7 +451,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoAnalysis>(text);
   }
 
@@ -492,7 +490,7 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoResultAnalysis>(text);
   }
 

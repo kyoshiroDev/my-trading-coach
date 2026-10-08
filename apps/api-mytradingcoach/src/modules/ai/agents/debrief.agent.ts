@@ -6,7 +6,7 @@ import {
   buildDebriefPrompt,
   DEBRIEF_SYSTEM_PROMPT,
 } from '../prompts/debrief.prompt';
-import { AnthropicClientService } from '../../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../../infra/anthropic-client.service';
 import { AI_MODELS } from '../../infra/ai-pricing.const';
 
 @Injectable()
@@ -56,8 +56,8 @@ export class DebriefAgent {
       handleAnthropicError(err, this.logger);
     }
 
-    const block = response.content[0];
-    if (block.type !== 'text') {
+    const text = responseText(response);
+    if (!text) {
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -65,9 +65,9 @@ export class DebriefAgent {
     }
 
     try {
-      return parseAnthropicJson(block.text);
+      return parseAnthropicJson(text);
     } catch {
-      this.logger.error('Failed to parse debrief AI response', block.text);
+      this.logger.error('Failed to parse debrief AI response', text);
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
