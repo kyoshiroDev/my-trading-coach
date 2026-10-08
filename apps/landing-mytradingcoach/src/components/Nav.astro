@@ -114,8 +114,8 @@ const { stickyCta = true } = Astro.props;
     z-index: 201;
   }
 
-  /* ── Desktop nav ── */
-  @media (min-width: 768px) {
+  /* ── Desktop nav ── (à partir de 1024 px : en tablette, les 5 liens + le CTA ne tiennent pas) */
+  @media (min-width: 1024px) {
     .nav-links {
       display: flex;
       align-items: center;
@@ -153,8 +153,8 @@ const { stickyCta = true } = Astro.props;
     }
   }
 
-  /* ── Mobile ── */
-  @media (max-width: 767px) {
+  /* ── Mobile et tablette : menu hamburger ── */
+  @media (max-width: 1023px) {
     /* État fermé : caché */
     .nav-links {
       display: none !important;

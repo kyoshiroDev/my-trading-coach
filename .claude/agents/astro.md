@@ -63,8 +63,16 @@ src/
   `src/data/prop-firm-rules-view.ts` (pur, partagé rendu serveur / script). Ajouter une firm au
   catalogue suffit : la landing suit. Éléments recréés par le script → styles en `:global()`
   bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
-  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur. Capture `showcase/app-prop-firm-rules.webp`
-  = dépli « Mes comptes » du compte démo Apex 50K (prod).
+  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur (idem `Compare.astro` et `MultiComptes.astro`).
+  Mise en page (2026-10-08) : carrousel `PropFirmMarquee.astro` sous le sous-titre (noms en wordmark,
+  pas de logos ; clic = choix de la firm via `data-pf-pick`, géré par le script de PropFirmLive),
+  sélecteur à gauche, **panneau de tuiles** à droite (objectif, drawdown + plancher figé, perte du jour,
+  consistency, taille max, clôture en heure de Paris comme l'app, payout en funded), puis CTA, mention
+  « Calcul indicatif : la plateforme de ta firm fait foi. » et captures en pleine largeur avec switch
+  Évaluation / Funded : `showcase/app-prop-firm-rules.webp` (Apex 50K éval) et
+  `showcase/app-prop-firm-funded.webp` (Tradeify 50K funded), dépli « Mes comptes » du compte démo (prod),
+  barre latérale repliée, complet jusqu'à « Sources officielles ». Mobile : tuiles sur 2 colonnes, capture
+  à 820 px défilable. Nav : menu hamburger jusqu'à 1023 px (les liens ne tiennent pas en tablette).
 - **Structure de la home après l'audit du 2026-10-06** : Hero prop firm (+ ligne de confiance
   factuelle `.hero-trust`, ordonnée après les CTA en mobile), « Ta prop firm, en direct », timeline
   d'un prop trader (trade qui arrive seul, marge en direct, anti-tilt), **6 cartes** fonctionnalités
