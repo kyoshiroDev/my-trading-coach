@@ -22,12 +22,16 @@ export class AiUsageComponent {
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
 
-  /** Libellé court d'un identifiant de modèle Anthropic. */
+  /**
+   * Libellé court d'un identifiant de modèle Anthropic, version comprise :
+   * 'claude-haiku-5-5' → 'Haiku 5.5', 'claude-haiku-4-5-20251001' → 'Haiku 4.5', 'claude-opus' → 'Opus'.
+   */
   protected modelLabel(model: string): string {
-    if (model.includes('haiku')) return 'Haiku 4.5';
-    if (model.includes('sonnet')) return 'Sonnet 4.6';
-    if (model.includes('opus')) return 'Opus';
-    return model;
+    const m = model.match(/(haiku|sonnet|opus|fable|mythos)(?:-(\d+)(?:-(\d{1,2})(?!\d))?)?/);
+    if (!m) return model;
+    const [, family, major, minor] = m;
+    const name = family[0].toUpperCase() + family.slice(1);
+    return major ? `${name} ${major}${minor ? '.' + minor : ''}` : name;
   }
 
   /** Variante de barre/pastille (Haiku en bleu, Sonnet en teal). */
@@ -35,13 +39,19 @@ export class AiUsageComponent {
     return model.includes('haiku') ? 'haiku' : '';
   }
 
-  // Split du hero (réel) : Haiku vs Sonnet depuis la Cost API.
-  protected readonly haikuBilled = computed(
-    () => this.data()?.billed.byModel.find((m) => m.model.includes('haiku')) ?? null,
-  );
-  protected readonly sonnetBilled = computed(
-    () => this.data()?.billed.byModel.find((m) => m.model.includes('sonnet')) ?? null,
-  );
+  // Split du hero (réel) : Haiku vs Sonnet depuis la Cost API, toutes versions de la famille
+  // additionnées (pendant une migration, 4.5 et 5.5 coexistent sur les 30 jours).
+  protected readonly haikuBilled = computed(() => this.familyBilled('haiku'));
+  protected readonly sonnetBilled = computed(() => this.familyBilled('sonnet'));
+
+  private familyBilled(family: string): { costUsd: number; pct: number } | null {
+    const rows = this.data()?.billed.byModel.filter((m) => m.model.includes(family)) ?? [];
+    if (!rows.length) return null;
+    return {
+      costUsd: rows.reduce((s, r) => s + r.costUsd, 0),
+      pct: rows.reduce((s, r) => s + r.pct, 0),
+    };
+  }
 
   /** Bloc réel vide ET jamais rafraîchi → Cost API non configurée (clé Admin manquante). */
   protected readonly billedNotConfigured = computed(() => {

@@ -44,13 +44,19 @@ export class AnthropicCostService implements OnModuleInit {
     this.logger.log(`Refresh coût Anthropic: ${rows} lignes, total 30j ≈ $${total30d.toFixed(2)}`);
   }
 
-  /** 'claude-haiku-4-5' / 'claude-sonnet-4-6' / 'claude-opus' depuis la description, sinon 'other'. */
+  /**
+   * Identifiant du modèle depuis la description, version comprise : « Claude Haiku 5.5 … » →
+   * 'claude-haiku-5-5', « Claude Sonnet 4.6 … » → 'claude-sonnet-4-6'. Sans version lisible →
+   * 'claude-haiku' / 'claude-sonnet' / … ; pas un modèle (web search, code execution…) → 'other'.
+   * La version compte : pendant une migration, deux générations coexistent sur les 30 jours.
+   */
   private parseModel(description: string): string {
     const d = (description ?? '').toLowerCase();
-    if (d.includes('haiku')) return 'claude-haiku-4-5';
-    if (d.includes('sonnet')) return 'claude-sonnet-4-6';
-    if (d.includes('opus')) return 'claude-opus';
-    return 'other'; // web search, code execution, etc.
+    const m = d.match(/\b(haiku|sonnet|opus|fable|mythos)\b(?:[\s-]+(\d+)(?:[.-](\d{1,2})(?!\d))?)?/);
+    if (!m) return 'other';
+    const [, family, major, minor] = m;
+    if (!major) return `claude-${family}`;
+    return minor ? `claude-${family}-${major}-${minor}` : `claude-${family}-${major}`;
   }
 
   /**

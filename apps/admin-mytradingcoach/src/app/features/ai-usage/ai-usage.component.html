@@ -28,13 +28,13 @@
       </div>
       <div class="kpi">
         <div class="kpi-top blue"></div>
-        <div class="kpi-label">Haiku 4.5 (réel)</div>
+        <div class="kpi-label">Haiku (réel)</div>
         <div class="kpi-value blue">{{ haikuBilled() ? '$' + (haikuBilled()!.costUsd | number:'1.2-2') : '-' }}</div>
         <div class="kpi-sub">{{ haikuBilled() ? haikuBilled()!.pct + '% du total' : 'aucune donnée' }}</div>
       </div>
       <div class="kpi">
         <div class="kpi-top teal"></div>
-        <div class="kpi-label">Sonnet 4.6 (réel)</div>
+        <div class="kpi-label">Sonnet (réel)</div>
         <div class="kpi-value text">{{ sonnetBilled() ? '$' + (sonnetBilled()!.costUsd | number:'1.2-2') : '-' }}</div>
         <div class="kpi-sub">{{ sonnetBilled() ? sonnetBilled()!.pct + '% du total' : 'aucune donnée' }}</div>
       </div>
