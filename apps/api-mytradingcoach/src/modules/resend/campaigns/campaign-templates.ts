@@ -13,12 +13,19 @@ import {
   marketingFooter,
 } from '../templates';
 
+import { GREG_FROM, GREG_LOGO_ATTACHMENT, GREG_REPLY_TO, gregLetter } from './greg-letter';
+
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
 const LANDING_URL = (process.env['LANDING_URL'] ?? 'https://www.mytradingcoach.app').replace(/\/+$/, '');
 
 export interface CampaignContent {
   subject: string;
   html: string;
+  /** Lettre personnelle (greg-letter) : version texte, expéditeur, réponse, logo intégré. */
+  text?: string;
+  from?: string;
+  replyTo?: string;
+  attachments?: { filename: string; content: string; contentId: string }[];
 }
 
 export interface CampaignBuildCtx {
@@ -202,35 +209,60 @@ export const FOUNDER_LAUNCH_URL =
   `${LANDING_URL}/?utm_source=email&utm_medium=campaign&utm_campaign=fondateur&cta=email#pricing`;
 
 export function founderLaunchTemplate({ userName, unsubUrl, seatsLeft }: CampaignBuildCtx): CampaignContent {
-  const p = `${FONT}font-size:14px;color:#9db4ce;margin:0 0 14px 0;line-height:1.7;`;
-  const strong = 'color:#e2eaf5;';
-  const bullet = (html: string) => `<div style="margin-bottom:8px;">
-    <span style="color:#60a5fa;">•</span>
-    <span style="${FONT}font-size:14px;color:#9db4ce;margin-left:8px;">${html}</span>
-  </div>`;
   const seats = seatsLeft ?? FOUNDER_OFFER.seats;
   // {prénom} : `name` est libre (« Greg Tahir ») → premier mot ; vide → « Salut, ».
   const firstName = userName.trim().split(/\s+/)[0] ?? '';
-  const content =
-    card(`
-      <p style="${p}">${firstName ? `Salut ${firstName},` : 'Salut,'}</p>
-      <p style="${p}">Tu t'es inscrit sur MyTradingCoach, merci. On ouvre l'offre fondateur, réservée aux ${FOUNDER_OFFER.seats} premiers abonnés :</p>
-      <div style="margin:4px 0 16px 0;">
-        ${bullet(`Premium à <strong style="${strong}">${FOUNDER_OFFER.priceMonthlyEur} €/mois</strong> au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou <strong style="${strong}">${FOUNDER_OFFER.priceAnnualEur} €/an</strong> au lieu de ${PREMIUM_PRICE_EUR.annual} €`)}
-        ${bullet(`<strong style="${strong}">Prix bloqué à vie</strong>, tant que ton abonnement reste actif`)}
-        ${bullet('Satisfait ou remboursé pendant 14 jours')}
-      </div>
-      <p style="${p}">Premium, c'est tout le gratuit, plus : le coach IA personnel, le debrief de la semaine, les analyses avancées, les alertes prop firm avant la casse, l'anti-tilt en séance et les comptes illimités.</p>
-      <p style="${p}">Il reste <strong style="${strong}">${seats} places sur ${FOUNDER_OFFER.seats}</strong>. Le compteur est en direct sur le site.</p>
-      ${cta('Devenir fondateur', FOUNDER_LAUNCH_URL)}
-      <p style="${p}margin-top:18px;">Si le gratuit te suffit, aucun souci : il reste gratuit, sans limite de trades.</p>
-      <p style="${p}">Greg, fondateur de MyTradingCoach</p>
-      ${divider}
-      <p style="${FONT}font-size:12px;color:#6b8299;margin:0;font-style:italic;">Le trading comporte un risque de perte en capital.</p>
-    `) + marketingFooter(unsubUrl);
+  const hello = firstName ? `Salut ${firstName},` : 'Salut,';
+  const { seats: total, priceMonthlyEur: m, priceAnnualEur: y } = FOUNDER_OFFER;
+  const intro = `Tu t'es inscrit sur MyTradingCoach, merci. On ouvre l'offre fondateur, réservée aux ${total} premiers abonnés :`;
+  const premium = "Premium, c'est tout le gratuit, plus : le coach IA personnel, le debrief de la semaine, les analyses avancées, les alertes prop firm avant la casse, l'anti-tilt en séance et les comptes illimités.";
+  const free = 'Si le gratuit te suffit, aucun souci : il reste gratuit, sans limite de trades.';
 
+  const p = 'style="margin:0 0 16px;line-height:1.55"';
+  const bodyHtml = `<p ${p}>${escapeHtml(hello)}</p>
+<p ${p}>${intro}</p>
+<ul style="margin:0 0 16px;padding-left:22px;line-height:1.55">
+  <li style="margin-bottom:6px">Premium à <b>${m} €/mois</b> au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou <b>${y} €/an</b> au lieu de ${PREMIUM_PRICE_EUR.annual} €</li>
+  <li style="margin-bottom:6px"><b>Prix bloqué à vie</b>, tant que ton abonnement reste actif</li>
+  <li style="margin-bottom:6px">Satisfait ou remboursé pendant 14 jours</li>
+</ul>
+<p ${p}>${premium}</p>
+<p ${p}>Il reste <b>${seats} places sur ${total}</b>. Le compteur est en direct sur le site.</p>
+<table cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#3b82f6">
+  <a href="${FOUNDER_LAUNCH_URL}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">Devenir fondateur</a>
+</td></tr></table>
+<p ${p}>${free}</p>`;
+  const bodyText = [
+    hello,
+    intro,
+    [
+      `- Premium à ${m} €/mois au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou ${y} €/an au lieu de ${PREMIUM_PRICE_EUR.annual} €`,
+      '- Prix bloqué à vie, tant que ton abonnement reste actif',
+      '- Satisfait ou remboursé pendant 14 jours',
+    ].join('\n'),
+    premium,
+    `Il reste ${seats} places sur ${total}. Le compteur est en direct sur le site.`,
+    `Devenir fondateur : ${FOUNDER_LAUNCH_URL}`,
+    free,
+  ].join('\n\n');
+
+  const letter = gregLetter({
+    preheader: "L'offre fondateur MyTradingCoach est ouverte. Premier arrivé, premier servi.",
+    bodyHtml,
+    bodyText,
+    legal: 'Le trading comporte un risque de perte en capital.',
+    unsubUrl,
+  });
   return {
-    subject: `${FOUNDER_OFFER.seats} places à ${FOUNDER_OFFER.priceMonthlyEur} €/mois, à vie`,
-    html: emailWrapper(content, "L'offre fondateur MyTradingCoach est ouverte. Premier arrivé, premier servi."),
+    subject: `${total} places à ${m} €/mois, à vie`,
+    html: letter.html,
+    text: letter.text,
+    from: GREG_FROM,
+    replyTo: GREG_REPLY_TO,
+    attachments: [GREG_LOGO_ATTACHMENT],
   };
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }

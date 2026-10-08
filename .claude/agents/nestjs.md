@@ -1274,6 +1274,12 @@ part de lignes et non la perfection.
   les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
   `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
   passé à `dispatch(…, { seatsLeft })` ; lien `FOUNDER_LAUNCH_URL` (`LANDING_URL` + UTM + `cta=email`).
+- **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
+  (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
+  avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
+  réponses sur hello@, version texte. `CampaignContent` porte `text/from/replyTo/attachments`, que
+  `dispatch` et l'envoi test transmettent à `EmailJob`. Pas de ligne « Greg, … » dans le corps : la
+  signature suffit (jamais deux signatures). Aperçu admin : `inlineLogoForPreview` (data URI).
 
 ## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
 

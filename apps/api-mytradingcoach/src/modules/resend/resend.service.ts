@@ -372,12 +372,20 @@ export class ResendService {
    */
   async deliver(params: EmailJob, queued?: { lastAttempt: boolean; idempotencyKey: string }): Promise<void> {
     const to = maskEmail(params.to);
-    this.logger.debug(`Envoi email | from: "${this.from}" to: "${to}" subject: "${params.subject}"`);
+    this.logger.debug(`Envoi email | from: "${params.from ?? this.from}" to: "${to}" subject: "${params.subject}"`);
 
     for (let attempt = 0; ; attempt++) {
       const { data, error } = await this.resend.emails
         .send(
-          { from: this.from, to: params.to, subject: params.subject, html: params.html, replyTo: this.replyTo },
+          {
+            from: params.from ?? this.from,
+            to: params.to,
+            subject: params.subject,
+            html: params.html,
+            replyTo: params.replyTo ?? this.replyTo,
+            ...(params.text ? { text: params.text } : {}),
+            ...(params.attachments?.length ? { attachments: params.attachments } : {}),
+          },
           queued ? { idempotencyKey: queued.idempotencyKey } : undefined,
         )
         // Le SDK renvoie d'ordinaire l'erreur ; une exception (réseau) est traitée comme passagère.

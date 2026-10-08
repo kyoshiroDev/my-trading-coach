@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from './resend.service';
 import { EmailCampaign } from './campaigns/campaign-registry';
-import type { CampaignBuildCtx } from './campaigns/campaign-templates';
+import type { CampaignBuildCtx, CampaignContent } from './campaigns/campaign-templates';
 
 const DAY_MS = 24 * 3600e3;
 
@@ -132,10 +132,11 @@ export class EmailDispatchService {
     const unsubToken = await this.ensureUnsubToken(user);
     const unsubUrl = this.buildUnsubUrl(unsubToken);
 
-    const { subject, html } =
+    const content: CampaignContent =
       override ?? campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
+    const { subject, html, text, from, replyTo, attachments } = content;
 
-    await this.resend.send({ to: user.email, subject, html });
+    await this.resend.send({ to: user.email, subject, html, text, from, replyTo, attachments });
     await this.prisma.emailSend.create({
       data: { campaignKey: campaign.key, userId: user.id, kind: campaign.kind },
     });

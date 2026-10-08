@@ -62,6 +62,20 @@ describe('campagne founder_launch : ciblage et texte', () => {
     expect(named.html).toContain('Premier arrivé, premier servi.');
     expect(named.html).toContain('Le trading comporte un risque de perte en capital.');
     expect(named.html).toContain('href="U"'); // désinscription
+    // Lettre de Greg : sa signature (logo intégré), expéditeur support@, réponses sur hello@, version texte.
+    expect(named.html).toContain('Grégory Tahir');
+    expect(named.html).toContain('src="cid:logo-mtc"');
+    expect(named.html).not.toContain('Greg, fondateur de MyTradingCoach'); // pas de double signature
+    expect(named).toMatchObject({
+      from: 'Grégory · MyTradingCoach <support@mytradingcoach.app>',
+      replyTo: 'hello@mytradingcoach.app',
+      attachments: [expect.objectContaining({ contentId: 'logo-mtc', filename: 'logo.png' })],
+    });
+    expect(named.text).toContain('Salut Ana,');
+    expect(named.text).toContain('Il reste 187 places sur 200.');
+    expect(named.text).toContain('Grégory Tahir');
+    expect(named.text).toContain('Me désinscrire des e-mails : U');
+    expect(founderLaunchTemplate({ userName: '<b>x</b>', appUrl: '', unsubUrl: 'U' }).html).toContain('Salut &lt;b&gt;x&lt;/b&gt;,');
     expect(FOUNDER_LAUNCH_URL).toBe(
       'https://www.mytradingcoach.app/?utm_source=email&utm_medium=campaign&utm_campaign=fondateur&cta=email#pricing',
     );
@@ -83,6 +97,9 @@ describe('campagne founder_launch : envoi test et envoi réel', () => {
     expect(mail.to).toBe('hello@mytradingcoach.app');
     expect(mail.html).toContain('Salut Alex,');
     expect(mail.html).toContain('187 places sur 200');
+    expect(mail).toMatchObject({ from: 'Grégory · MyTradingCoach <support@mytradingcoach.app>', replyTo: 'hello@mytradingcoach.app' });
+    expect(mail.attachments).toHaveLength(1);
+    expect(mail.text).toContain('Salut Alex,');
     expect(dispatch.dispatch).not.toHaveBeenCalled();
     expect(prisma.emailSend.create).not.toHaveBeenCalled();
     expect(prisma.emailCampaignLog.create).not.toHaveBeenCalled();

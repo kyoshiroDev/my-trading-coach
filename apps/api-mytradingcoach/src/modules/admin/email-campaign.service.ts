@@ -12,6 +12,7 @@ import { renderEmailMarkdown } from '@mtc/shared';
 import { ResendService } from '../resend/resend.service';
 import { FounderOfferService } from '../founder-offer/founder-offer.service';
 import { RedisService } from '../infra/redis.service';
+import { inlineLogoForPreview } from '../resend/campaigns/greg-letter';
 
 /** Seule adresse des envois test : configuration, jamais saisie dans l'admin. */
 const testEmail = () => process.env['CAMPAIGN_TEST_EMAIL'] ?? 'hello@mytradingcoach.app';
@@ -202,7 +203,7 @@ export class EmailCampaignService {
     const sampleUnsub = this.dispatch.buildUnsubUrl('apercu-token');
     const seatsLeft = type === 'founder_launch' ? (await this.founderSelling()).seatsLeft : undefined;
     const content = this.render(type, { userName, unsubUrl: sampleUnsub, seatsLeft }, subject, body);
-    return { html: content.html, recipients };
+    return { html: inlineLogoForPreview(content.html), recipients };
   }
 
   /**
@@ -224,7 +225,8 @@ export class EmailCampaignService {
       body,
     );
     const to = testEmail();
-    await this.resend.send({ to, subject: `[TEST] ${content.subject}`, html: content.html });
+    const { html, text, from, replyTo, attachments } = content;
+    await this.resend.send({ to, subject: `[TEST] ${content.subject}`, html, text, from, replyTo, attachments });
     await this.redis.setex(testKey(type), TEST_TTL_SECONDS, this.contentHash(type, subject, body));
     return { to, subject: `[TEST] ${content.subject}` };
   }
