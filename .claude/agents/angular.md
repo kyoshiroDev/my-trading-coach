@@ -863,8 +863,17 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
   avec `loadError = computed(() => !!resource.error())` (Dashboard, Analytics, Scoring en exemple).
-- **Paiement** : `inject(BillingService).startCheckout(plan)` (`core/services/billing.service.ts`),
-  jamais `BillingApi.checkout` directement.
+- **Paiement** : `inject(BillingService).startCheckout(plan, { cta, promo })`
+  (`core/services/billing.service.ts`), jamais `BillingApi.checkout` directement. Il ouvre la
+  **page de paiement de l'app** `/paiement?plan=…&cta=…&promo=…` (`features/checkout/`, hors coque,
+  `authGuard`), commune à TOUTES les offres (fondateur, code partenaire, Premium avec ou sans essai,
+  mensuel ou annuel). La page appelle `BillingService.createSession` (`ui: 'elements'`), monte le
+  formulaire Stripe (Checkout Elements, `@stripe/stripe-js` épinglé 9.17.0 = Stripe.js `dahlia`) :
+  Apple Pay / Google Pay / Link en boutons express, carte (CB co-badgée reconnue) et Klarna dans le
+  formulaire. Textes par offre : `checkout-copy.ts` (fonction pure, testée) ; montant du jour lu dans
+  la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
+  publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
+  (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la

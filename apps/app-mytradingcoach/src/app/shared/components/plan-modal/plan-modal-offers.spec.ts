@@ -5,6 +5,7 @@ import * as angularCore from '@angular/core';
 import { of } from 'rxjs';
 import { PlanModalComponent, partnerDurationLabel } from './plan-modal.component';
 import { BillingApi, type BillingOffers } from '@app/core/api/billing.api';
+import { BillingService } from '@app/core/services/billing.service';
 import { OffersStore } from '@app/core/stores/offers.store';
 import type { OfferIntent } from '@app/core/services/offer-intent.service';
 
@@ -39,6 +40,9 @@ function offers(founderOpen: boolean): BillingOffers {
   };
 }
 
+// La modale ouvre la page de paiement (BillingService.startCheckout) : c'est ce qu'on vérifie.
+const billingService = { startCheckout: vi.fn() };
+
 const billingApi = {
   checkout: vi.fn().mockReturnValue(of({ data: { url: 'https://checkout.stripe.test/s' } })),
   offers: vi.fn(),
@@ -72,6 +76,7 @@ async function setup(opts: { founderOpen: boolean; preset?: OfferIntent | null; 
     imports: [PlanModalComponent],
     providers: [
       { provide: BillingApi, useValue: billingApi },
+      { provide: BillingService, useValue: billingService },
       { provide: OffersStore, useValue: fakeStore },
     ],
     schemas: [NO_ERRORS_SCHEMA],
@@ -104,14 +109,14 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
     const c = await setup({ founderOpen: true });
     expect(c.choice()).toBe('founder');
     c.confirmPlan();
-    expect(billingApi.checkout).toHaveBeenCalledWith('founder_monthly', { cta: 'modale', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('founder_monthly', { cta: 'modale', promo: null });
   });
 
   it('annuel fondateur → founder_yearly', async () => {
     const c = await setup({ founderOpen: true });
     c.setInterval('yearly');
     c.confirmPlan();
-    expect(billingApi.checkout).toHaveBeenCalledWith('founder_yearly', { cta: 'modale', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('founder_yearly', { cta: 'modale', promo: null });
   });
 
   it('lien plan=founder ET promo valide : le code est présélectionné, le fondateur reste à côté', async () => {
@@ -121,7 +126,7 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
     expect(c.showsBoth()).toBe(true);
     c.confirmPlan();
     // Prix NORMAL + code : la remise est appliquée par l'API (coupon), jamais sur un prix fondateur.
-    expect(billingApi.checkout).toHaveBeenCalledWith('premium_monthly', { cta: 'bandeau', promo: 'LOUIS29' });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'bandeau', promo: 'LOUIS29' });
   });
 
   it('jamais de cumul : choisir le fondateur n’envoie pas le code', async () => {
@@ -129,7 +134,7 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
     await vi.advanceTimersByTimeAsync(500);
     c.pick('founder');
     c.confirmPlan();
-    expect(billingApi.checkout).toHaveBeenCalledWith('founder_monthly', { cta: 'bandeau', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('founder_monthly', { cta: 'bandeau', promo: null });
   });
 
   it('code du lien refusé : raison affichée, présélection fondateur', async () => {
@@ -151,13 +156,13 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
     expect(c.choice()).toBe('partner');
     c.setInterval('yearly');
     c.confirmPlan();
-    expect(billingApi.checkout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: 'LOUIS29' });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: 'LOUIS29' });
   });
 
   it('point de clic de l’écran (cadenas, profil) transmis au checkout', async () => {
     const c = await setup({ founderOpen: true, cta: 'cadenas' });
     c.confirmPlan();
-    expect(billingApi.checkout).toHaveBeenCalledWith('founder_monthly', { cta: 'cadenas', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('founder_monthly', { cta: 'cadenas', promo: null });
   });
 });
 

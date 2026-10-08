@@ -16,7 +16,6 @@ import {
 } from '@lucide/angular';
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
-import { ToastService } from '../../core/services/toast.service';
 import { OfferIntentService } from '../../core/services/offer-intent.service';
 
 /** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
@@ -45,7 +44,6 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly toast = inject(ToastService);
   private readonly offerIntent = inject(OfferIntentService);
 
   protected readonly EyeIcon = Eye;
@@ -201,12 +199,8 @@ export class RegisterComponent {
             // La modale (OfferIntentHost, dans le shell) prend le relais.
             this.router.navigate(['/dashboard']);
           } else if (this.isPremiumFlow()) {
-            // Compte créé mais paiement indisponible : on continue, sans le cacher.
-            this.billing.startCheckout('premium_monthly', () => {
-              this.isLoading.set(false);
-              this.toast.warning('Ton compte est créé. Le paiement n’a pas pu démarrer : tu peux lancer ton essai depuis ton Profil.');
-              this.router.navigate(['/dashboard']);
-            });
+            // Page de paiement : un échec y est affiché, avec le retour au tableau de bord.
+            this.billing.startCheckout('premium_monthly');
           } else {
             this.router.navigate(['/dashboard']);
           }

@@ -5,6 +5,9 @@ import * as angularCore from '@angular/core';
 import { EMPTY, of } from 'rxjs';
 import { PlanModalComponent } from './plan-modal.component';
 import { BillingApi } from '@app/core/api/billing.api';
+import { BillingService } from '@app/core/services/billing.service';
+
+const billingService = { startCheckout: vi.fn() };
 
 const resolveComponentResources = (
   angularCore as Record<string, unknown>
@@ -37,7 +40,10 @@ describe('PlanModalComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [PlanModalComponent],
-      providers: [{ provide: BillingApi, useValue: mockBillingApi }],
+      providers: [
+        { provide: BillingApi, useValue: mockBillingApi },
+        { provide: BillingService, useValue: billingService },
+      ],
       schemas: [NO_ERRORS_SCHEMA],
     });
     TestBed.overrideComponent(PlanModalComponent, {
@@ -95,12 +101,12 @@ describe('PlanModalComponent', () => {
     const c = instance();
     c.setInterval('yearly');
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: null });
   });
 
   it('confirmPlan() par défaut → checkout("premium_monthly")', () => {
     const c = instance();
     c.confirmPlan();
-    expect(mockBillingApi.checkout).toHaveBeenCalledWith('premium_monthly', { cta: 'modale', promo: null });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'modale', promo: null });
   });
 });

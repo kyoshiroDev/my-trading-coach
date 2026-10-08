@@ -71,7 +71,8 @@ export class PlanModalComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly offersStore = inject(OffersStore);
 
-  protected readonly isLoading = this.billing.starting;
+  /** La page de paiement prend le relais aussitôt (navigation) : pas d'attente dans la modale. */
+  protected readonly isLoading = signal(false);
   /** Essai déjà consommé (ou Premium offert reçu) : le checkout facture tout de suite, ne rien promettre. */
   protected readonly trialAvailable = inject(UserStore).trialAvailable;
 
@@ -221,7 +222,7 @@ export class PlanModalComponent implements OnInit {
     this.events.track('trial_click');
     const choice = this.choice();
     this.intent.clear();
-    this.billing.startCheckout(this.planId(), undefined, {
+    this.billing.startCheckout(this.planId(), {
       cta: this.preset()?.cta ?? this.cta(),
       promo: choice === 'partner' ? this.validPartner()!.code : null,
     });

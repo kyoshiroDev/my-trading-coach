@@ -1,0 +1,87 @@
+<a class="back" routerLink="/dashboard" data-testid="checkout-back">
+  <svg [lucideIcon]="icons.ArrowLeft" [size]="14" />
+  Retour à l'app
+</a>
+
+<div class="wrap">
+  <main class="grid">
+    <section class="summary">
+      <div class="head">
+        <div class="brand">
+          <span class="brand-mark">
+            <svg width="20" height="20" viewBox="0 0 64 64" aria-hidden="true">
+              <polyline points="8,32 14,32 18,20 22,44 26,12 30,40 34,24 38,32 56,32" fill="none" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span class="brand-name">MyTrading<b>Coach</b></span>
+        </div>
+
+        @if (copy(); as c) {
+          <div><span class="eyebrow" data-testid="checkout-eyebrow"><span class="dot"></span>{{ c.eyebrow }}</span></div>
+          <h1 data-testid="checkout-title">{{ c.title }}</h1>
+          <p class="lead">{{ c.lead }}</p>
+          <div class="price">
+            <span class="amount" data-testid="checkout-price">{{ c.price }}<span class="cur">€</span></span>
+            <span class="per">{{ c.per }}</span>
+            @if (c.was) { <span class="was">{{ c.was }}</span> }
+          </div>
+          <p class="note">{{ c.note }}</p>
+        } @else if (status() === 'loading') {
+          <div class="skeleton title"></div>
+          <div class="skeleton line"></div>
+          <div class="skeleton price-line"></div>
+        }
+      </div>
+
+      @if (copy(); as c) {
+        <div class="details">
+          <ul class="features">
+            @for (f of features; track f) {
+              <li><svg [lucideIcon]="icons.Check" [size]="16" />{{ f }}</li>
+            }
+          </ul>
+          <div class="assure">
+            @for (a of c.assurances; track a.strong) {
+              <div>
+                <svg [lucideIcon]="assuranceIcons[a.icon]" [size]="18" />
+                <span><strong>{{ a.strong }}</strong> {{ a.text }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <aside class="card" #card [style.min-height.px]="cardMinHeight()" data-testid="checkout-card">
+      @if (status() === 'error') {
+        <div class="failed" role="alert" data-testid="checkout-error">
+          <p class="failed-title">Le paiement n'a pas pu démarrer</p>
+          <p class="failed-text">{{ fatalError() }}</p>
+          <a class="pay as-link" routerLink="/dashboard">Revenir au tableau de bord</a>
+        </div>
+      } @else {
+        <p class="who">Abonnement pour <strong>{{ email() }}</strong></p>
+        <div #expressHost></div>
+        @if (showOr()) { <div class="or">ou par carte</div> }
+        @if (status() === 'loading') { <div class="loading">Préparation du paiement…</div> }
+        <div class="payment" #paymentHost></div>
+
+        @if (copy(); as c) {
+          <div class="total">
+            <div class="row big"><span>À payer aujourd'hui</span><span class="v" data-testid="checkout-today">{{ today() }}</span></div>
+            <div class="row"><span>{{ c.thenLabel }}</span><span class="v">{{ c.thenAmount }}</span></div>
+          </div>
+
+          <button class="pay" type="button" data-testid="checkout-pay" [disabled]="status() !== 'ready' || paying()" (click)="confirm()">
+            {{ paying() ? 'Paiement en cours…' : ctaLabel() }}
+          </button>
+          <p class="error" role="alert">{{ payError() }}</p>
+          <p class="legal">
+            En t'abonnant, tu autorises MyTradingCoach à {{ c.legal }} jusqu'à résiliation. Paiement opéré par Stripe.
+            <a [href]="cguUrl" target="_blank" rel="noopener">Conditions générales</a>.
+          </p>
+        }
+      }
+    </aside>
+  </main>
+</div>

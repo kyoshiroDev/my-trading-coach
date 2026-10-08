@@ -288,6 +288,9 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
 
 - Jamais de fond blanc, jamais de thème clair.
 - Background le plus sombre : `var(--bg)` = `#080c14`. Jamais `#000` ni `#fff`.
+- **Seule exception (validée par Greg, #525)** : le panneau du formulaire de la page de paiement
+  (`features/checkout`) est clair (`#ffffff`, champs `#f8fafc`) pour la lisibilité du paiement. Ses
+  couleurs sont locales au composant (`--pay-*`) ; le reste de la page suit le thème sombre.
 
 ---
 

@@ -20,6 +20,29 @@ export type PartnerValidation =
   | ({ valid: true } & PartnerConditions)
   | { valid: false; code: string; reason: string; message: string };
 
+/** Récapitulatif renvoyé avec la session de la page de paiement de l'app. */
+export interface CheckoutSummary {
+  offer: 'premium' | 'founder' | 'partner';
+  interval: BillingInterval;
+  /** Montant récurrent après remise fondateur ou partenaire (€). */
+  recurringEur: number;
+  /** Prix normal de l'intervalle (€), pour le prix barré. */
+  normalEur: number;
+  /** Jours d'essai (0 = prélèvement immédiat). */
+  trialDays: number;
+  partnerCode: string | null;
+  /** null = remise à vie. */
+  partnerDurationMonths: number | null;
+  /** −10 % filleul sur la première année. */
+  referralDiscount: boolean;
+  seatsLeft: number | null;
+}
+
+/** `POST /billing/checkout` : clé de session (page de l'app) ou URL (page Stripe, repli). */
+export type CheckoutStart =
+  | { url: string }
+  | { clientSecret: string; publishableKey: string; summary: CheckoutSummary };
+
 /** `GET /billing/offers` : offre fondateur, code partenaire actif, intervalle (#525). */
 export interface BillingOffers {
   founderOffer: { open: boolean; seatsLeft: number; seatsTotal: number };
@@ -42,11 +65,12 @@ export class BillingApi {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/billing`;
 
-  checkout(plan: CheckoutPlan, opts: { cta?: string | null; promo?: string | null } = {}) {
-    return this.http.post<{ data: { url: string } }>(`${this.base}/checkout`, {
+  checkout(plan: CheckoutPlan, opts: { cta?: string | null; promo?: string | null; ui?: 'hosted' | 'elements' } = {}) {
+    return this.http.post<{ data: CheckoutStart }>(`${this.base}/checkout`, {
       plan,
       ...(opts.cta ? { cta: opts.cta } : {}),
       ...(opts.promo ? { promo: opts.promo } : {}),
+      ...(opts.ui ? { ui: opts.ui } : {}),
     });
   }
 
