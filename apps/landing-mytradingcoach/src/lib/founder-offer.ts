@@ -108,6 +108,19 @@ export function rememberCta(cta: string): void {
   }
 }
 
+/**
+ * Lien entrant portant un point de clic (campagne e-mail : `?cta=email`) : retenu pour la session,
+ * comme un clic sur le bandeau, jusqu'au CTA de la carte puis à l'app. Seul `email` est accepté
+ * depuis l'URL (les autres points de clic sont posés par la page elle-même).
+ */
+export function captureCtaFromUrl(): void {
+  try {
+    if (new URL(window.location.href).searchParams.get('cta') === 'email') rememberCta('email');
+  } catch {
+    /* URL illisible : rien à retenir */
+  }
+}
+
 export function rememberedCta(): string | null {
   try {
     return sessionStorage.getItem(CTA_KEY);

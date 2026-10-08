@@ -7,6 +7,10 @@ import { Resend } from 'resend';
 import { RedisService } from '../infra/redis.service';
 import { EMAIL_JOB_OPTIONS, EMAIL_QUEUE, RETRYABLE_EMAIL_ERRORS, RetryableEmailError, type EmailJob } from './email-queue';
 import {
+  annualRenewalReminderTemplate,
+  founderWelcomeTemplate,
+  partnerWelcomeTemplate,
+  tariffAtRiskTemplate,
   dailyRecapTemplate,
   debriefReadyTemplate,
   paymentFailedTemplate,
@@ -196,6 +200,63 @@ export class ResendService {
     await this.send({ to: params.to, subject, html });
   }
 
+  // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
+
+  /** Page Profil > Paramètres : « Gérer mon abonnement » ouvre le portail Stripe (carte). */
+  private get billingUrl(): string {
+    return `${this.frontendUrl}/profil?tab=params`;
+  }
+
+  async sendFounderWelcome(params: {
+    to: string;
+    userName: string;
+    number: number;
+    priceLabel: string;
+    refundUntil: Date;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = founderWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendPartnerWelcome(params: {
+    to: string;
+    userName: string;
+    code: string;
+    priceLabel: string;
+    normalPriceLabel: string;
+    durationMonths: number | null;
+    trialEndsAt: Date | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = partnerWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendTariffAtRisk(params: {
+    to: string;
+    userName: string;
+    kind: 'founder' | 'partner';
+    priceLabel: string;
+    attemptCount: number;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = tariffAtRiskTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendAnnualRenewalReminder(params: {
+    to: string;
+    userName: string;
+    amount: string;
+    renewalDate: Date;
+    keptTariff: string | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = annualRenewalReminderTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
+  }
+
   // ── Daily Recap ───────────────────────────────────────────────────────────
 
   async sendDailyRecap(
@@ -311,12 +372,20 @@ export class ResendService {
    */
   async deliver(params: EmailJob, queued?: { lastAttempt: boolean; idempotencyKey: string }): Promise<void> {
     const to = maskEmail(params.to);
-    this.logger.debug(`Envoi email | from: "${this.from}" to: "${to}" subject: "${params.subject}"`);
+    this.logger.debug(`Envoi email | from: "${params.from ?? this.from}" to: "${to}" subject: "${params.subject}"`);
 
     for (let attempt = 0; ; attempt++) {
       const { data, error } = await this.resend.emails
         .send(
-          { from: this.from, to: params.to, subject: params.subject, html: params.html, replyTo: this.replyTo },
+          {
+            from: params.from ?? this.from,
+            to: params.to,
+            subject: params.subject,
+            html: params.html,
+            replyTo: params.replyTo ?? this.replyTo,
+            ...(params.text ? { text: params.text } : {}),
+            ...(params.attachments?.length ? { attachments: params.attachments } : {}),
+          },
           queued ? { idempotencyKey: queued.idempotencyKey } : undefined,
         )
         // Le SDK renvoie d'ordinaire l'erreur ; une exception (réseau) est traitée comme passagère.

@@ -48,6 +48,15 @@ describe('ResendCron', () => {
     );
   });
 
+  it('annuels exclus : leur rappel de reconduction part du webhook invoice.upcoming (montant réel)', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([]);
+    await cron.checkRenewalReminders();
+    expect(mockPrisma.user.findMany.mock.calls[0][0].where.OR).toEqual([
+      { stripeInterval: null },
+      { stripeInterval: { not: 'year' } },
+    ]);
+  });
+
   it("ne fait rien si aucun user n'expire dans 7 jours", async () => {
     mockPrisma.user.findMany.mockResolvedValue([]);
     await cron.checkRenewalReminders();

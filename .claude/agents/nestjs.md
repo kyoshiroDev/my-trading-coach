@@ -1286,6 +1286,21 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+- **Envoi test des campagnes** (#525) : `POST /admin/campaigns/:type/test` → UN e-mail vers
+  `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
+  (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
+  prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
+  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
+  passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
+  + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
+  modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
+- **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
+  (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
+  avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
+  réponses sur hello@, version texte. `CampaignContent` porte `text/from/replyTo/attachments`, que
+  `dispatch` et l'envoi test transmettent à `EmailJob`. Pas de ligne « Greg, … » dans le corps : la
+  signature suffit (jamais deux signatures). Aperçu admin : `inlineLogoForPreview` (data URI).
 
 ## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
 
@@ -1725,6 +1740,15 @@ renouvellement : rien). `syncSubscription` n'écrase jamais
 l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
 testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
 le stubber dans `app-role-wiring.spec.ts`.
+**E-mails transactionnels (#525, phase F)** : 1er paiement fondateur → `sendFounderWelcome` (« Tu es
+fondateur n° X », prix, fin du remboursement à 14 j) ; 1re facture avec code partenaire →
+`sendPartnerWelcome` (conditions figées, essai) ; `checkout.session.completed` d'une offre `founder` /
+`partner` → PAS de bienvenue Premium générique (pas de doublon) ; `invoice.payment_failed` d'un
+fondateur ou d'un code partenaire actifs → `sendTariffAtRisk` (« ton tarif est en jeu », lien
+`/profil?tab=params`) au lieu de l'e-mail d'échec générique ; `invoice.upcoming` d'un abonnement
+ANNUEL → `sendAnnualRenewalReminder` (montant réel `amount_due`, date, tarif conservé). Le cron du
+rappel à J-7 exclut donc les annuels (`stripeInterval` ≠ `year`). ⚠️ `invoice.upcoming` doit être
+abonné sur les endpoints Stripe (à faire en prod au déploiement) et son délai réglé dans le dashboard.
 
 Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
 pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans

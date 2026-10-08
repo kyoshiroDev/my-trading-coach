@@ -840,6 +840,10 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - Aperçu des campagnes (admin `/emails`) : **toujours** le HTML renvoyé par
   `POST /admin/campaigns/:type/preview` (le vrai template envoyé), jamais un rendu reconstruit côté
   front. Objet/contenu d'une annonce → nouvel appel après 400 ms de pause (`switchMap`).
+- Campagnes `requiresTest` (`founder_launch`) : bouton « Envoyer un test à {testEmail} » (adresse
+  donnée par l'API, jamais saisie) ; « Envoyer à N inscrits » désactivé tant que le contenu actuel
+  n'est pas testé (`testedCurrent`, revérifié par le serveur), puis confirmation « Envoyer à N
+  inscrits ? ». Pas de case « force » pour ces campagnes. Ciblés avec / sans consentement affichés.
 
 ## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
 
@@ -929,7 +933,10 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   `promo` → pas de checkout direct à l'inscription : `/dashboard`, puis `OfferIntentHostComponent`
   (monté dans le shell `sidebar`, modale en `@defer`) ouvre `mtc-plan-modal` avec `[preset]`.
   `plan=premium` seul → checkout direct comme avant. Déjà connecté sur `/register` avec une intention
-  → `/dashboard`. Jamais pour un abonné `active` / `past_due` ni la démo.
+  → `/dashboard`. Jamais pour un abonné `active` / `past_due` ni la démo. Compte déjà Premium
+  autrement (admin, bêta, Premium offert, essai) venu d'un lien : modale seulement si
+  `founderAvailable` (offres chargées), sinon intention oubliée — jamais de modale « 49 € » à
+  quelqu'un qui a déjà Premium (lien de la campagne fondateur).
 - **`mtc-plan-modal`** : entrées `cta` (défaut `modale`) et `preset`. Options exclusives (radio) :
   Fondateur (si `founderAvailable`), Code partenaire (une fois validé), Premium. Présélection : code du
   lien s'il est valide, sinon fondateur, sinon Premium ; un code saisi à la main et valide est choisi.

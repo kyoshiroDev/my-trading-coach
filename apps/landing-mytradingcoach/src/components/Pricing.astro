@@ -162,7 +162,9 @@ const premiumKeys = [
 </section>
 
 <script>
-  import { isSelling, onFounderState, placesLabel, rememberedCta } from '../lib/founder-offer';
+  import { captureCtaFromUrl, isSelling, onFounderState, placesLabel, rememberedCta } from '../lib/founder-offer';
+
+  captureCtaFromUrl();
 
   // Carte Fondateur : insérée depuis son <template> seulement si l'offre vend, avec le VRAI
   // compteur ; retirée sinon. Le changement se fait au chargement et la section est très bas dans
@@ -196,10 +198,10 @@ const premiumKeys = [
     const cta = card.querySelector<HTMLAnchorElement>('[data-founder-cta]');
     if (cta) {
       copyTrackingParams(cta);
-      // Point de clic : bandeau ou FAQ s'ils ont mené ici, sinon la carte elle-même.
+      // Point de clic : bandeau, FAQ ou campagne e-mail s'ils ont mené ici, sinon la carte elle-même.
       cta.addEventListener('click', () => {
         const remembered = rememberedCta();
-        if (remembered === 'bandeau' || remembered === 'faq') {
+        if (remembered === 'bandeau' || remembered === 'faq' || remembered === 'email') {
           const url = new URL(cta.href);
           url.searchParams.set('cta', remembered);
           cta.href = url.toString();

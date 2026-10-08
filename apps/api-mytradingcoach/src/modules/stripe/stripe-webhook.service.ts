@@ -22,6 +22,12 @@ import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import type { SyncedSubscription } from './stripe-subscription.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+
+/** « 29,00 € par mois » / « 290,00 € par an ». */
+function priceLabel(eur: number, interval: string | null): string {
+  return `${formatInvoiceAmount(Math.round(eur * 100), 'eur')} ${interval === 'year' ? 'par an' : 'par mois'}`;
+}
 
 /**
  * Webhooks Stripe, en deux temps :
@@ -131,6 +137,8 @@ export class StripeWebhookService {
         return this.onCheckoutExpired(event.data.object as Stripe.Checkout.Session);
       case 'charge.refunded':
         return this.onChargeRefunded(event.data.object as Stripe.Charge);
+      case 'invoice.upcoming':
+        return this.onInvoiceUpcoming(event.data.object as Stripe.Invoice);
       default:
         this.logger.debug(`Event ignoré : ${event.type}`);
     }
@@ -143,7 +151,9 @@ export class StripeWebhookService {
     if (session.mode !== 'subscription' || !subscriptionId) return;
 
     const user = await this.subscriptions.syncSubscription(subscriptionId);
-    if (user && session.client_reference_id) {
+    // Fondateur et code partenaire ont leur propre confirmation (au 1er paiement) : pas de doublon.
+    const offer = session.metadata?.['offer'];
+    if (user && session.client_reference_id && offer !== 'founder' && offer !== 'partner') {
       await this.resend.sendWelcomePremium({
         to: user.email,
         userName: user.name ?? '',
@@ -286,15 +296,27 @@ export class StripeWebhookService {
     if (!customerId) return;
     const user = await this.prisma.user.findUnique({
       where: { stripeCustomerId: customerId },
-      select: { email: true, name: true },
+      select: { id: true, email: true, name: true },
     });
     if (!user) return;
 
-    await this.resend.sendPaymentFailed({
-      to: user.email,
-      userName: user.name ?? '',
-      attemptCount,
-    });
+    // Fondateur ou code partenaire : rien n'est perdu pendant les relances, mais le tarif est en jeu.
+    const kept = await this.keptTariff(user.id);
+    if (kept) {
+      await this.resend.sendTariffAtRisk({
+        to: user.email,
+        userName: user.name ?? '',
+        kind: kept.kind,
+        priceLabel: kept.priceLabel,
+        attemptCount,
+      });
+    } else {
+      await this.resend.sendPaymentFailed({
+        to: user.email,
+        userName: user.name ?? '',
+        attemptCount,
+      });
+    }
     await this.resend
       .sendAdminAlert(
         `⚠️ Paiement échoué : ${user.email}`,
@@ -320,13 +342,14 @@ export class StripeWebhookService {
       if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced);
       // Code partenaire : utilisation comptée dès la 1re facture (0 € pendant l'essai compris).
       else if (synced.metadata['partnerCode']) {
-        await this.partners.claim({
+        const redemption = await this.partners.claim({
           userId: synced.id,
           code: synced.metadata['partnerCode'],
           stripeSubscriptionId: synced.subscriptionId,
           interval: synced.interval === 'year' ? 'year' : 'month',
           cta: synced.metadata['cta'] ?? null,
         });
+        if (redemption) await this.sendPartnerWelcome(synced, redemption);
       }
     }
     await this.referrals.processReferral(invoice);
@@ -381,6 +404,15 @@ export class StripeWebhookService {
         .catch(() => undefined);
       return;
     }
+    await this.resend
+      .sendFounderWelcome({
+        to: synced.email,
+        userName: synced.name ?? '',
+        number: seat.number,
+        priceLabel: priceLabel(interval === 'year' ? FOUNDER_OFFER.priceAnnualEur : FOUNDER_OFFER.priceMonthlyEur, interval),
+        refundUntil: new Date(seat.takenAt.getTime() + FOUNDER_REFUND_DAYS * 86_400_000),
+      })
+      .catch((err: Error) => this.logger.warn(`Confirmation fondateur non envoyée (user ${synced.id}) : ${err.message}`));
     // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
     const trials = await this.stripe.subscriptions
       .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
@@ -392,6 +424,75 @@ export class StripeWebhookService {
         );
       }
     }
+  }
+
+  /** Confirmation d'un abonnement avec code partenaire : conditions figées, essai éventuel. */
+  private async sendPartnerWelcome(
+    synced: SyncedSubscription,
+    redemption: { priceMonthlyEur: number; priceAnnualEur: number; durationMonths: number | null },
+  ): Promise<void> {
+    const yearly = synced.interval === 'year';
+    await this.resend
+      .sendPartnerWelcome({
+        to: synced.email,
+        userName: synced.name ?? '',
+        code: synced.metadata['partnerCode'].toUpperCase(),
+        priceLabel: priceLabel(yearly ? redemption.priceAnnualEur : redemption.priceMonthlyEur, synced.interval),
+        normalPriceLabel: priceLabel(yearly ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly, synced.interval),
+        durationMonths: redemption.durationMonths,
+        trialEndsAt: synced.stripeSubscriptionStatus === 'trialing' ? synced.currentPeriodEnd : null,
+      })
+      .catch((err: Error) => this.logger.warn(`Confirmation partenaire non envoyée (user ${synced.id}) : ${err.message}`));
+  }
+
+  /** Tarif conservé par l'abonné (place fondateur ou code partenaire actifs), sinon null. */
+  private async keptTariff(
+    userId: string,
+  ): Promise<{ kind: 'founder' | 'partner'; priceLabel: string; label: string } | null> {
+    const [seat, redemption, user] = await Promise.all([
+      this.prisma.founderSeat.findUnique({ where: { userId } }),
+      this.prisma.partnerRedemption.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        include: { partnerCode: { select: { code: true } } },
+      }),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { stripeInterval: true } }),
+    ]);
+    if (seat?.status === 'ACTIVE') {
+      const eur = seat.interval === 'year' ? FOUNDER_OFFER.priceAnnualEur : FOUNDER_OFFER.priceMonthlyEur;
+      return { kind: 'founder', priceLabel: priceLabel(eur, seat.interval), label: `tarif fondateur n° ${seat.number}` };
+    }
+    if (redemption) {
+      const interval = user?.stripeInterval ?? 'month';
+      const eur = interval === 'year' ? redemption.priceAnnualEur : redemption.priceMonthlyEur;
+      return { kind: 'partner', priceLabel: priceLabel(eur, interval), label: `tarif partenaire ${redemption.partnerCode.code}` };
+    }
+    return null;
+  }
+
+  /**
+   * Facture à venir (événement envoyé par Stripe X jours avant l'échéance, réglage du dashboard) :
+   * rappel de reconduction des abonnements ANNUELS, avec le montant réellement prélevé (remises
+   * comprises). Les mensuels gardent le rappel du cron. Un mail raté ne rejoue pas l'événement.
+   */
+  private async onInvoiceUpcoming(invoice: Stripe.Invoice): Promise<void> {
+    const customerId = extractId(invoice.customer);
+    if (!customerId) return;
+    const user = await this.prisma.user.findUnique({
+      where: { stripeCustomerId: customerId },
+      select: { id: true, email: true, name: true, stripeInterval: true, isDemo: true },
+    });
+    if (!user || user.isDemo || user.stripeInterval !== 'year') return;
+    const when = invoice.next_payment_attempt ?? invoice.period_end;
+    const kept = await this.keptTariff(user.id);
+    await this.resend
+      .sendAnnualRenewalReminder({
+        to: user.email,
+        userName: user.name ?? '',
+        amount: formatInvoiceAmount(invoice.amount_due, invoice.currency),
+        renewalDate: new Date(when * 1000),
+        keptTariff: kept?.label ?? null,
+      })
+      .catch((err: Error) => this.logger.warn(`Rappel de reconduction non envoyé (user ${user.id}) : ${err.message}`));
   }
 
   /** Session Checkout expirée (abandon) : la réservation fondateur rend sa place. */

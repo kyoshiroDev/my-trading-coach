@@ -121,6 +121,11 @@ export interface CampaignMeta {
   targetCount: number; // users dans le segment (matching)
   alreadyContacted: number; // ont déjà reçu cette campagne
   newCount: number; // nouveaux destinataires (matching - alreadyContacted)
+  withConsent: number; // ciblés ayant accepté le marketing (seuls destinataires possibles)
+  withoutConsent: number;
+  requiresTest: boolean; // envoi réel bloqué tant qu'aucun test n'a été fait sur le contenu actuel
+  testedCurrent: boolean;
+  testEmail: string; // adresse des envois test (configuration serveur)
 }
 
 export interface AdminAmbassador {
@@ -307,6 +312,12 @@ export class AdminApi {
   previewCampaign(type: string, subject?: string, content?: string) {
     return this.http.post<{ data: { html: string; recipients: { email: string; name: string | null }[] } }>(
       `${this.adminBase}/campaigns/${type}/preview`, { subject, content },
+    );
+  }
+  /** Envoi test : un seul e-mail vers l'adresse de test configurée côté serveur. */
+  testCampaign(type: string, subject?: string, content?: string) {
+    return this.http.post<{ data: { to: string; subject: string } }>(
+      `${this.adminBase}/campaigns/${type}/test`, { subject, content },
     );
   }
   sendCampaign(type: string, subject?: string, content?: string, force = false) {

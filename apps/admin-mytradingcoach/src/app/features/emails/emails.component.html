@@ -17,6 +17,9 @@
             <div class="camp-title">{{ c.label }}</div>
             <div class="camp-desc">{{ c.desc }}</div>
             <span class="camp-target">{{ c.targetDesc }} · <span class="n">{{ c.newCount }} nouveau{{ c.newCount !== 1 ? 'x' : '' }}</span> / {{ c.targetCount }} au total@if (c.alreadyContacted > 0) { · {{ c.alreadyContacted }} déjà contacté{{ c.alreadyContacted !== 1 ? 's' : '' }} }@if (c.automated) { · <span class="badge-auto">auto</span> }</span>
+            @if (c.requiresConsent) {
+              <span class="camp-target camp-consent">{{ c.withConsent }} avec consentement · {{ c.withoutConsent }} sans (non contactés)</span>
+            }
           </div>
           <div class="camp-right">
             <span class="camp-when">{{ c.lastSent ? ('Dernier · ' + (c.lastSent | date:'dd/MM HH:mm') + ' · ' + c.lastCount + ' envoyés') : 'Jamais envoyé' }}</span>
@@ -104,14 +107,14 @@
             <input id="announce-subject" type="text" class="field-input"
               placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
               [ngModel]="announcementSubject()"
-              (ngModelChange)="announcementSubject.set($event)" />
+              (ngModelChange)="announcementSubject.set($event); contentChanged()" />
           </div>
           <div class="field-group">
             <label class="field-label" for="announce-body">Contenu</label>
             <textarea id="announce-body" class="field-textarea" rows="8"
               placeholder="# Titre de section&#10;**mot important** en gras&#10;- élément de liste&#10;&#10;Ligne vide = nouveau paragraphe."
               [ngModel]="announcementBody()"
-              (ngModelChange)="announcementBody.set($event)">
+              (ngModelChange)="announcementBody.set($event); contentChanged()">
             </textarea>
           </div>
         }
@@ -124,6 +127,12 @@
             <span class="summary-label">Déjà contactés</span>
             <span class="summary-val">{{ sendCampaignModal()!.alreadyContacted }}</span>
           </div>
+          @if (sendCampaignModal()!.requiresConsent) {
+            <div class="summary-row">
+              <span class="summary-label">Consentement marketing</span>
+              <span class="summary-val">{{ sendCampaignModal()!.withConsent }} avec · {{ sendCampaignModal()!.withoutConsent }} sans</span>
+            </div>
+          }
           <div class="summary-row">
             <span class="summary-label">Cible</span>
             <span class="summary-val">{{ sendCampaignModal()!.targetDesc }}</span>
@@ -135,10 +144,23 @@
             </div>
           }
         </div>
-        <label class="force-toggle">
-          <input type="checkbox" [ngModel]="force()" (ngModelChange)="force.set($event)" />
-          <span>Renvoyer à tous ceux qui matchent ({{ sendCampaignModal()!.targetCount }}), y compris déjà contactés</span>
-        </label>
+        @if (sendCampaignModal()!.requiresTest) {
+          <div class="test-box" [class.test-ok]="tested()">
+            <span>
+              @if (tested()) { ✅ Test envoyé sur le contenu actuel. }
+              @else { Envoie d'abord un test : l'envoi réel reste bloqué tant que le contenu actuel n'a pas été testé. }
+            </span>
+            <button class="btn" [disabled]="testing()" (click)="doTest()">
+              @if (testing()) { Envoi du test… }
+              @else { <svg [lucideIcon]="SendIcon" [size]="12"></svg> Envoyer un test à {{ sendCampaignModal()!.testEmail }} }
+            </button>
+          </div>
+        } @else {
+          <label class="force-toggle">
+            <input type="checkbox" [ngModel]="force()" (ngModelChange)="force.set($event)" />
+            <span>Renvoyer à tous ceux qui matchent ({{ sendCampaignModal()!.targetCount }}), y compris déjà contactés</span>
+          </label>
+        }
         <div class="warning-box">
           @if (sendCampaignModal()!.requiresConsent) {
             ⚠️ Campagne marketing : seuls les users <strong>consentants</strong> et hors plafond de fréquence recevront l'email. Le compte réel peut être inférieur.
@@ -148,14 +170,29 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="sendCampaignModal.set(null)">Annuler</button>
-        <button class="btn-primary" [disabled]="sending() || !canSend()" (click)="doSend()">
-          @if (sending()) { Envoi en cours... }
-          @else {
-            <svg [lucideIcon]="SendIcon" [size]="13"></svg>
-            Envoyer à {{ sendCount() }} {{ sendCount() === 1 ? 'personne' : 'personnes' }}
+        @if (sendCampaignModal()!.requiresTest && confirming()) {
+          <span class="confirm-q">Envoyer à {{ sendCount() }} inscrit{{ sendCount() !== 1 ? 's' : '' }} ?</span>
+          <button class="btn-secondary" [disabled]="sending()" (click)="confirming.set(false)">Non</button>
+          <button class="btn-primary" [disabled]="sending() || !canSend()" (click)="doSend()">
+            @if (sending()) { Envoi en cours... } @else { Oui, envoyer }
+          </button>
+        } @else {
+          <button class="btn-secondary" (click)="sendCampaignModal.set(null)">Annuler</button>
+          @if (sendCampaignModal()!.requiresTest) {
+            <button class="btn-primary" [disabled]="!canSend()" (click)="confirming.set(true)">
+              <svg [lucideIcon]="SendIcon" [size]="13"></svg>
+              Envoyer à {{ sendCount() }} inscrit{{ sendCount() !== 1 ? 's' : '' }}
+            </button>
+          } @else {
+            <button class="btn-primary" [disabled]="sending() || !canSend()" (click)="doSend()">
+              @if (sending()) { Envoi en cours... }
+              @else {
+                <svg [lucideIcon]="SendIcon" [size]="13"></svg>
+                Envoyer à {{ sendCount() }} {{ sendCount() === 1 ? 'personne' : 'personnes' }}
+              }
+            </button>
           }
-        </button>
+        }
       </div>
     </div>
   </div>

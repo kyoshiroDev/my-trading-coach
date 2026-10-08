@@ -1,10 +1,11 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import {
   CampaignBuildCtx,
   CampaignContent,
   announcementTemplate,
   discordTemplate,
   firstTradeTemplate,
+  founderLaunchTemplate,
   premiumTemplate,
   profileTemplate,
   reengagementTemplate,
@@ -132,6 +133,27 @@ export const CAMPAIGNS: EmailCampaign[] = [
       trades: { none: { tradedAt: { gte: new Date(now.getTime() - 7 * DAY) } } },
     }),
     build: reengagementTemplate,
+  },
+  {
+    // Lancement de l'offre fondateur (#525) : une seule fois par personne, consentement requis.
+    // Exclus : abonnés payants, fondateurs (même tarif perdu), codes partenaires actifs, bêta-testeurs.
+    // Un essai Stripe ou un mois offert reste ciblé : il peut basculer au tarif fondateur.
+    key: 'founder_launch',
+    label: 'Offre fondateur (lancement)',
+    description: "Annonce l'ouverture de l'offre fondateur aux inscrits non abonnés.",
+    kind: 'marketing',
+    requiresConsent: true,
+    automated: false,
+    priority: 50,
+    segment: () => ({
+      AND: [
+        { role: { not: Role.BETA_TESTER } },
+        { OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'past_due'] } }] },
+        { founderSeat: { is: null } },
+        { NOT: { partnerRedemption: { is: { status: 'ACTIVE' } } } },
+      ],
+    }),
+    build: founderLaunchTemplate,
   },
   {
     key: 'announcement',
