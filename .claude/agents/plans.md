@@ -122,7 +122,8 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   - Calendrier éco : cache BDD `ecoAnalysisCache` par `(date, assetsKey)`, `userId:'shared'`.
   - News : `marketNews` partagé (cron) ; traduction Haiku **1×/article**, `userId:null`, cachée.
 - **BORNÉ** — 1/user/période, `max_tokens` capé → **PREMIUM** :
-  - Weekly Debrief : 1/user/semaine.
+  - Weekly Debrief : 1/user/semaine. `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)
+    (`debriefMaxTokens`, relevé de 25 % le 2026-10-08 : à 2 comptes, Sonnet 4.6 montait à 85 % de 3 800).
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.
