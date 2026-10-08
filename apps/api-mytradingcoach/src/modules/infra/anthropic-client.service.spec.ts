@@ -92,6 +92,16 @@ describe('AnthropicClientService', () => {
     expect(mockCreate.mock.calls[2][0]).not.toHaveProperty('thinking');
   });
 
+  it('modèle d’analyse (Sonnet 4.6) : requête envoyée telle quelle, sans champ thinking', async () => {
+    process.env['AI_ENABLED'] = 'true';
+    mockCreate.mockResolvedValue({ content: [], usage: { input_tokens: 1, output_tokens: 1 } });
+    const params = { ...PARAMS, model: AI_MODELS.analysis };
+    await svc.create(params as never, { feature: 'chat', userId: 'u1' });
+    expect(AI_MODELS.analysis).toBe('claude-sonnet-4-6');
+    expect(mockCreate.mock.calls[0][0]).toEqual(params);
+    expect(mockCreate.mock.calls[0][0]).not.toHaveProperty('thinking');
+  });
+
   it('cache compris dans le prompt : au-delà de 100K, palier long de Haiku 5.5', async () => {
     process.env['AI_ENABLED'] = 'true';
     mockCreate.mockResolvedValueOnce({
