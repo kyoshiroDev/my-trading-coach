@@ -227,14 +227,16 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   l'abonnement reste actif ; tout le Premium, nouveautés futures comprises.
 - Mensuel ↔ annuel fondateur autorisé (`POST /billing/interval`) : même place, même numéro.
 - **Aucun essai** (premier paiement immédiat) ; l'essai 30 j du 49 € est inchangé.
-- **Satisfait ou remboursé 14 jours** sur le 1er paiement : `charge.refunded` intégral dans les 14 j →
-  place `REFUNDED` (rendue), tarif perdu, abonnement annulé.
+- **Satisfait ou remboursé 14 jours** sur le 1er paiement (engagement affiché). Côté code, **tout
+  remboursement INTÉGRAL du 1er paiement, quel que soit le délai** (c'est Greg qui décide) → place
+  `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.
+  La charge est rapprochée de la 1re facture payée (> 0 €) par facture ou PaymentIntent.
 - **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
   l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
 - **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
   personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
 - **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si
-  remboursement 14 j, 1er paiement en échec définitif, ou session Checkout expirée. Une résiliation
+  remboursement intégral du 1er paiement, 1er paiement en échec définitif, ou session Checkout expirée. Une résiliation
   ne la rend PAS. Exclus : démo, ADMIN, BETA_TESTER (une AMBASSADRICE est éligible).
 - **Perte du tarif** : résiliation programmée = gardé jusqu'à la fin (réactivation = gardé) ;
   `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
@@ -267,7 +269,7 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   avantageux sur la 1re année (`partnerFirstYearCost` vs `referralFirstYearCost`) ; si le −10 % gagne,
   le code n'est pas consommé.
 - Utilisation comptée à la 1re facture (`subscription_create`, 0 € d'essai compris). Rendue au quota si
-  remboursement du 1er paiement réel sous 14 j ou fin d'essai impayée (`cancellation_details.reason =
+  remboursement intégral du 1er paiement réel (quel que soit le délai) ou fin d'essai impayée (`cancellation_details.reason =
   payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
 - Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
   figées, pour les mois de remise restants.

@@ -400,9 +400,10 @@ export class StripeWebhookService {
   }
 
   /**
-   * Remboursement intégral sous 14 jours du 1er paiement fondateur (satisfait ou remboursé) :
-   * tarif perdu, place rendue, abonnement annulé tout de suite. Hors délai ou remboursement
-   * partiel : rien ne change côté offre.
+   * Remboursement INTÉGRAL du PREMIER paiement réel (fondateur ou code partenaire), quel que soit
+   * le délai : c'est l'admin qui décide de rembourser (une demande faite au 13e jour peut être
+   * traitée au 15e). Place fondateur rendue et tarif perdu, ou utilisation du code rendue ;
+   * abonnement annulé tout de suite. Remboursement partiel, ou d'un renouvellement : rien ne change.
    */
   private async onChargeRefunded(charge: Stripe.Charge): Promise<void> {
     if (!charge.refunded) return; // remboursement partiel
@@ -413,26 +414,39 @@ export class StripeWebhookService {
       select: { id: true },
     });
     if (!user) return;
-    const seat = await this.founders.refundWithinWindow(user.id);
-    let toCancel = seat?.stripeSubscriptionId ?? null;
-    // Code partenaire : 1er paiement réel remboursé sous 14 jours → l'utilisation revient au quota.
-    if (!toCancel) {
-      const redemption = await this.prisma.partnerRedemption.findFirst({
-        where: { userId: user.id, status: 'ACTIVE' },
-      });
-      if (
-        redemption?.stripeSubscriptionId &&
-        (await this.partners.isRefundableFirstPayment(redemption.stripeSubscriptionId))
-      ) {
-        await this.partners.release(redemption.stripeSubscriptionId);
-        toCancel = redemption.stripeSubscriptionId;
-      }
-    }
-    if (toCancel) {
-      await this.stripe.subscriptions.cancel(toCancel).catch((err: Error) =>
-        this.logger.warn(`Abonnement ${toCancel} non annulé après remboursement : ${err.message}`),
-      );
-    }
+    const [seat, redemption] = await Promise.all([
+      this.prisma.founderSeat.findUnique({ where: { userId: user.id } }),
+      this.prisma.partnerRedemption.findFirst({ where: { userId: user.id, status: 'ACTIVE' } }),
+    ]);
+    const founderSub = seat?.status === 'ACTIVE' ? seat.stripeSubscriptionId : null;
+    const subscriptionId = founderSub ?? redemption?.stripeSubscriptionId ?? null;
+    if (!subscriptionId || !(await this.isFirstPaymentCharge(subscriptionId, charge))) return;
+
+    if (founderSub) await this.founders.refundFirstPayment(user.id);
+    else await this.partners.release(subscriptionId);
+    await this.stripe.subscriptions.cancel(subscriptionId).catch((err: Error) =>
+      this.logger.warn(`Abonnement ${subscriptionId} non annulé après remboursement : ${err.message}`),
+    );
+  }
+
+  /**
+   * La charge remboursée est-elle le PREMIER paiement réel (> 0 €) de l'abonnement ? Comparaison
+   * par facture ou par PaymentIntent (l'essai à 0 € d'un code partenaire n'est pas un paiement).
+   */
+  private async isFirstPaymentCharge(subscriptionId: string, charge: Stripe.Charge): Promise<boolean> {
+    const paid = await this.stripe.invoices
+      .list({ subscription: subscriptionId, status: 'paid', limit: 100 })
+      .catch(() => null);
+    const first = (paid?.data ?? [])
+      .filter((i) => (i.amount_paid ?? 0) > 0)
+      .sort((a, b) => a.created - b.created)[0];
+    if (!first) return false;
+    // Champs de l'API épinglée 2024-06-20 (absents des types du SDK récent).
+    const c = charge as unknown as { invoice?: string | { id: string } | null; payment_intent?: string | { id: string } | null };
+    const i = first as unknown as { payment_intent?: string | { id: string } | null };
+    const chargeInvoice = extractId(c.invoice ?? null);
+    const chargePi = extractId(c.payment_intent ?? null);
+    return (!!chargeInvoice && chargeInvoice === first.id) || (!!chargePi && chargePi === extractId(i.payment_intent ?? null));
   }
 
   /** Au moins une facture réellement payée (> 0 €) sur l'abonnement. */

@@ -100,14 +100,14 @@ describe('anti-survente : la dernière place', () => {
 });
 
 describe('numéros jamais réattribués, places rendues ou gardées', () => {
-  it('remboursement sous 14 jours → place rendue, mais le numéro suivant est 201, pas 200', async () => {
+  it('premier paiement remboursé → place rendue, mais le numéro suivant est 201, pas 200', async () => {
     await reset();
     await takeSeats(FOUNDER_OFFER.seats - 1);
     const [a, b] = await Promise.all([newUser('refund'), newUser('next')]);
     await founders.reserve(a.id, 'month', null);
     await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_refund' });
 
-    const refunded = await founders.refundWithinWindow(a.id);
+    const refunded = await founders.refundFirstPayment(a.id);
     expect(refunded?.status).toBe('REFUNDED');
     expect(await founders.seatsLeft()).toBe(1);
 

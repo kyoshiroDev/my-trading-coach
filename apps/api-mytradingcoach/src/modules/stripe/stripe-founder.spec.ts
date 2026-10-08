@@ -156,22 +156,28 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
+    partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
   };
   const stripeSub = {
     id: sub.id, status: 'active', customer: 'cus_1', trial_end: null, metadata: sub.metadata ?? {},
     items: { data: [{ price: { id: sub.price, recurring: { interval: sub.interval ?? 'month' } }, current_period_end: 1_900_000_000 }] },
   };
   const cancel = vi.fn().mockResolvedValue({});
+  const invoicesList = vi.fn().mockResolvedValue({ data: [] });
   const list = vi.fn().mockResolvedValue({ data: [{ id: 'sub_trial' }, { id: sub.id }] });
   const stripe = {
     subscriptions: { retrieve: vi.fn().mockResolvedValue(stripeSub), cancel, list },
-    invoices: { list: vi.fn().mockResolvedValue({ data: [] }) },
+    invoices: { list: invoicesList },
     invoicePayments: { list: vi.fn().mockResolvedValue({ data: [] }) },
   } as never;
   const resend = { sendAdminAlert: vi.fn().mockResolvedValue(undefined), sendPaymentSucceeded: vi.fn().mockResolvedValue(undefined) };
   const founders = {
     claimSeat: vi.fn().mockResolvedValue({ number: 12 }), markLost: vi.fn(), releaseReservation: vi.fn(),
-    refundWithinWindow: vi.fn().mockResolvedValue(null), updateInterval: vi.fn(),
+    refundFirstPayment: vi.fn().mockResolvedValue({ status: 'REFUNDED' }), updateInterval: vi.fn(),
+  };
+  const partners = {
+    claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null),
   };
   const redis = { client: { del: vi.fn().mockResolvedValue(1) } };
   const subscriptions = new StripeSubscriptionService(prisma as never, redis as never, stripe);
@@ -179,10 +185,10 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, { syncDiscordRole: vi.fn().mockResolvedValue(undefined) } as never,
     subscriptions, referrals, founders as never,
-    { claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null), isRefundableFirstPayment: vi.fn().mockResolvedValue(false) } as never,
+    partners as never,
     { add: vi.fn() } as never, stripe,
   );
-  return { svc, founders, cancel, resend, prisma };
+  return { svc, founders, partners, cancel, resend, prisma, invoicesList };
 }
 
 const invoice = (subId: string, billing_reason: string) => ({
@@ -228,16 +234,35 @@ describe('webhooks fondateur', () => {
     expect(founders.releaseReservation).toHaveBeenCalledWith({ stripeSessionId: 'cs_1' });
   });
 
-  it('remboursement intégral sous 14 jours → place rendue et abonnement annulé ; partiel → rien', async () => {
-    const full = makeWebhook({ id: 'sub_f', price: 'price_29' });
-    full.founders.refundWithinWindow.mockResolvedValueOnce({ stripeSubscriptionId: 'sub_f' });
-    await full.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1' }));
-    expect(full.founders.refundWithinWindow).toHaveBeenCalledWith('u1');
-    expect(full.cancel).toHaveBeenCalledWith('sub_f');
+  it('remboursement intégral du 1er paiement, même au 20e jour → place rendue et abonnement annulé', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    w.invoicesList.mockResolvedValue({ data: [{ id: 'in_first', amount_paid: 2900, created: 1_000, payment_intent: 'pi_1' }] });
+    await w.svc.processWebhookEvent(event('charge.refunded', {
+      refunded: true, customer: 'cus_1', invoice: 'in_first', created: Math.floor(Date.now() / 1000) - 20 * 86_400,
+    }));
+    expect(w.founders.refundFirstPayment).toHaveBeenCalledWith('u1');
+    expect(w.cancel).toHaveBeenCalledWith('sub_f');
+  });
 
-    const partial = makeWebhook({ id: 'sub_f', price: 'price_29' });
-    await partial.svc.processWebhookEvent(event('charge.refunded', { refunded: false, customer: 'cus_1' }));
-    expect(partial.founders.refundWithinWindow).not.toHaveBeenCalled();
+  it('remboursement partiel → rien ne change', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: false, customer: 'cus_1', invoice: 'in_first' }));
+    expect(w.founders.refundFirstPayment).not.toHaveBeenCalled();
+    expect(w.cancel).not.toHaveBeenCalled();
+  });
+
+  it('remboursement intégral d’un RENOUVELLEMENT → la place reste prise', async () => {
+    const w = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    w.prisma.founderSeat.findUnique.mockResolvedValue({ status: 'ACTIVE', stripeSubscriptionId: 'sub_f' });
+    w.invoicesList.mockResolvedValue({ data: [
+      { id: 'in_renew', amount_paid: 2900, created: 2_000, payment_intent: 'pi_2' },
+      { id: 'in_first', amount_paid: 2900, created: 1_000, payment_intent: 'pi_1' },
+    ] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', invoice: 'in_renew' }));
+    expect(w.founders.refundFirstPayment).not.toHaveBeenCalled();
+    expect(w.cancel).not.toHaveBeenCalled();
   });
 
   it('abonnement terminé → tarif fondateur perdu', async () => {
@@ -362,16 +387,23 @@ describe('webhooks code partenaire', () => {
     expect(p2.markLost).not.toHaveBeenCalled();
   });
 
-  it('1er paiement réel remboursé sous 14 jours → utilisation rendue et abonnement annulé', async () => {
+  it('code avec essai : 1er paiement RÉEL remboursé (repéré par son PaymentIntent) → utilisation rendue', async () => {
     const w = makeWebhook({ id: 'sub_p', price: 'price_49' });
-    const p = (w.svc as unknown as { partners: Record<string, ReturnType<typeof vi.fn>> }).partners;
-    (w.prisma as unknown as { partnerRedemption: unknown }).partnerRedemption = {
-      findFirst: vi.fn().mockResolvedValue({ stripeSubscriptionId: 'sub_p' }),
-    };
-    p.isRefundableFirstPayment.mockResolvedValueOnce(true);
-    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1' }));
-    expect(p.release).toHaveBeenCalledWith('sub_p');
+    w.prisma.partnerRedemption.findFirst.mockResolvedValue({ stripeSubscriptionId: 'sub_p' });
+    w.invoicesList.mockResolvedValue({ data: [
+      { id: 'in_real', amount_paid: 2900, created: 3_000, payment_intent: 'pi_real' },
+      { id: 'in_trial', amount_paid: 0, created: 1_000, payment_intent: null },
+    ] });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: true, customer: 'cus_1', payment_intent: 'pi_real' }));
+    expect(w.partners.release).toHaveBeenCalledWith('sub_p');
     expect(w.cancel).toHaveBeenCalledWith('sub_p');
+  });
+
+  it('code : remboursement partiel → l’utilisation reste comptée', async () => {
+    const w = makeWebhook({ id: 'sub_p', price: 'price_49' });
+    w.prisma.partnerRedemption.findFirst.mockResolvedValue({ stripeSubscriptionId: 'sub_p' });
+    await w.svc.processWebhookEvent(event('charge.refunded', { refunded: false, customer: 'cus_1', payment_intent: 'pi_real' }));
+    expect(w.partners.release).not.toHaveBeenCalled();
   });
 });
 

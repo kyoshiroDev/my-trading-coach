@@ -6,7 +6,7 @@ import {
   Role,
   type FounderSeat,
 } from '@prisma/client';
-import { FOUNDER_MILESTONES, FOUNDER_OFFER, FOUNDER_REFUND_DAYS } from '@mtc/shared';
+import { FOUNDER_MILESTONES, FOUNDER_OFFER } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
@@ -349,21 +349,22 @@ export class FounderOfferService {
   }
 
   /**
-   * Remboursement du PREMIER paiement dans les 14 jours : tarif perdu ET place rendue. Hors délai,
-   * ou place déjà terminée, rien ne change (`null`).
+   * Remboursement INTÉGRAL du premier paiement fondateur (décidé par l'admin, quel que soit le
+   * délai) : place rendue (REFUNDED), tarif perdu définitivement. Le webhook vérifie que la charge
+   * remboursée est bien le premier paiement ; ici, seule une place ACTIVE change.
    */
-  async refundWithinWindow(userId: string, now = new Date()): Promise<FounderSeat | null> {
+  async refundFirstPayment(userId: string, now = new Date()): Promise<FounderSeat | null> {
     const seat = await this.prisma.founderSeat.findUnique({ where: { userId } });
     if (!seat || seat.status !== FounderSeatStatus.ACTIVE) return null;
-    if (now.getTime() - seat.takenAt.getTime() > FOUNDER_REFUND_DAYS * 86_400_000) return null;
     const updated = await this.prisma.founderSeat.update({
       where: { number: seat.number },
       data: { status: FounderSeatStatus.REFUNDED, endedAt: now },
     });
     await this.invalidateSeatsLeft();
-    this.logger.log(`Fondateur n° ${seat.number} : remboursé sous ${FOUNDER_REFUND_DAYS} jours, place rendue`);
+    this.logger.log(`Fondateur n° ${seat.number} : premier paiement remboursé, place rendue`);
     return updated;
   }
+
 
   // ── Paliers ────────────────────────────────────────────────────────────────
 

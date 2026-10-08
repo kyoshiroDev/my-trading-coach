@@ -1673,7 +1673,7 @@ de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
 ## Offre fondateur (#525, 2026-10-07)
 
 `modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
-`reserve`, `claimSeat`, `markLost`, `refundWithinWindow`, paliers), `FounderAdminService`, routes
+`reserve`, `claimSeat`, `markLost`, `refundFirstPayment`, paliers), `FounderAdminService`, routes
 publique + admin. **Anti-survente** : toute prise de place est une transaction qui commence par
 `pg_advisory_xact_lock(525001)` (PgBouncer en mode session : OK). Checkout fondateur → réservation de
 35 min (session Stripe 30 min) ; 1er `invoice.payment_succeeded` (`billing_reason = subscription_create`)
@@ -1681,7 +1681,9 @@ publique + admin. **Anti-survente** : toute prise de place est une transaction q
 alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
 ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
 fondateur. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
-(remboursement intégral ≤ 14 j → place rendue + abonnement annulé). `syncSubscription` n'écrase jamais
+(remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
+PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
+renouvellement : rien). `syncSubscription` n'écrase jamais
 l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
 testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
 le stubber dans `app-role-wiring.spec.ts`.

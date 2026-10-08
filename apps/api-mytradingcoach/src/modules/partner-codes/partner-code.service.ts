@@ -15,7 +15,7 @@ import {
   type PartnerRedemption,
 } from '@prisma/client';
 import Stripe from 'stripe';
-import { FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { PREMIUM_PRICE_EUR } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STRIPE_CLIENT } from '../stripe/stripe.client';
 import { RESERVATION_TTL_MS } from '../founder-offer/founder-offer.service';
@@ -354,7 +354,7 @@ export class PartnerCodeService {
     return this.end(stripeSubscriptionId, PartnerRedemptionStatus.LOST, now);
   }
 
-  /** Remboursé sous 14 jours ou 1er paiement en échec : l'utilisation revient au quota. */
+  /** Premier paiement remboursé intégralement (quel que soit le délai) ou en échec : l'utilisation revient au quota. */
   async release(stripeSubscriptionId: string, now = new Date()) {
     return this.end(stripeSubscriptionId, PartnerRedemptionStatus.RELEASED, now);
   }
@@ -375,16 +375,6 @@ export class PartnerCodeService {
     });
   }
 
-  /** Le paiement remboursé est-il le PREMIER paiement réel, et dans les 14 jours ? */
-  async isRefundableFirstPayment(stripeSubscriptionId: string, now = new Date()): Promise<boolean> {
-    const paid = await this.stripe.invoices
-      .list({ subscription: stripeSubscriptionId, status: 'paid', limit: 10 })
-      .catch(() => null);
-    const real = (paid?.data ?? []).filter((i) => (i.amount_paid ?? 0) > 0);
-    if (real.length !== 1) return false;
-    const paidAt = (real[0].status_transitions?.paid_at ?? real[0].created) * 1000;
-    return now.getTime() - paidAt <= FOUNDER_REFUND_DAYS * 86_400_000;
-  }
 
   /**
    * Changement d'intervalle : coupon de l'AUTRE intervalle aux conditions FIGÉES de l'abonné

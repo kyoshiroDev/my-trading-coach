@@ -469,7 +469,7 @@ Migration `20261007192237_offre_fondateur`, additive. **Registres** plutôt que 
   (`open = false`, `endsAt` null, `notifiedMilestones` = paliers déjà notifiés).
 - `FounderSeat` : `number` = PK (1 à 200, `CHECK >= 1`), **jamais supprimé ni réattribué** (le user
   supprimé → `userId` null, la place reste comptée). `status` ACTIVE / LOST (abonnement terminé, place
-  gardée) / REFUNDED (14 jours, place rendue) / RELEASED (1er paiement en échec, place rendue). Places
+  gardée) / REFUNDED (1er paiement remboursé intégralement, place rendue) / RELEASED (1er paiement en échec, place rendue). Places
   prises = `status IN (ACTIVE, LOST)` + réservations FOUNDER non expirées, index `[status]`.
 - `PartnerCode` (`code` en MAJUSCULES, unique) + `PartnerRedemption` (une par personne, `userId`
   unique, conditions **figées** à l'utilisation, coupon appliqué). Quota = redemptions non RELEASED +

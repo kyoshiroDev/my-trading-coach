@@ -103,23 +103,26 @@ describe('FounderOfferService — compteur et état public', () => {
   });
 });
 
-describe('FounderOfferService.refundWithinWindow — satisfait ou remboursé 14 jours', () => {
+describe('FounderOfferService.refundFirstPayment — remboursement intégral, quel que soit le délai', () => {
   const now = new Date('2026-10-20T12:00:00Z');
 
   it('premier paiement il y a 10 jours → REFUNDED (place rendue, tarif perdu)', async () => {
     const { service, prisma } = setup({ seat: { number: 7, status: 'ACTIVE', takenAt: new Date('2026-10-10T12:00:00Z') } });
-    const seat = await service.refundWithinWindow('u1', now);
+    const seat = await service.refundFirstPayment('u1', now);
     expect(prisma.founderSeat.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { number: 7 }, data: expect.objectContaining({ status: 'REFUNDED' }),
     }));
     expect(seat?.status).toBe('REFUNDED');
   });
 
-  it('au-delà de 14 jours, ou place déjà terminée → rien ne change', async () => {
-    const late = setup({ seat: { number: 7, status: 'ACTIVE', takenAt: new Date('2026-10-01T12:00:00Z') } });
-    expect(await late.service.refundWithinWindow('u1', now)).toBeNull();
-    expect(late.prisma.founderSeat.update).not.toHaveBeenCalled();
+  it('remboursé au 15e jour (demande faite au 13e) → place rendue quand même', async () => {
+    const { service } = setup({ seat: { number: 7, status: 'ACTIVE', takenAt: new Date('2026-10-05T12:00:00Z') } });
+    expect((await service.refundFirstPayment('u1', now))?.status).toBe('REFUNDED');
+  });
+
+  it('place déjà terminée (perdue ou remboursée) → rien ne change', async () => {
     const lost = setup({ seat: { number: 7, status: 'LOST', takenAt: new Date('2026-10-15T12:00:00Z') } });
-    expect(await lost.service.refundWithinWindow('u1', now)).toBeNull();
+    expect(await lost.service.refundFirstPayment('u1', now)).toBeNull();
+    expect(lost.prisma.founderSeat.update).not.toHaveBeenCalled();
   });
 });
