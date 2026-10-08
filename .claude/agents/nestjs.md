@@ -1680,7 +1680,10 @@ publique + admin. **Anti-survente** : toute prise de place est une transaction q
 → `claimSeat` (numéro = max jamais attribué + 1, idempotent ; `null` = pas de place → abonnement annulé +
 alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
 ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
-fondateur. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+fondateur. `custom_text.submit` au-dessus du bouton de paiement : fondateur (remboursement 14 j, tarif
+perdu si résiliation) et code partenaire (conditions figées) ; rien au prix normal. Le rendu de la page
+(logo, nom, couleurs) vient du Branding du compte Stripe et du nom / de la description / de l'image du
+produit, pas du code. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
 (remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
 PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
 renouvellement : rien). `syncSubscription` n'écrase jamais

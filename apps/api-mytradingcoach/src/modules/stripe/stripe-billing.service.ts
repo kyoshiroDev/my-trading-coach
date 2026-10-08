@@ -229,6 +229,13 @@ export class StripeBillingService {
       : discounts
         ? { discounts }
         : { allow_promotion_codes: true };
+    // Rappel des conditions juste au-dessus du bouton de paiement (fondateur et code partenaire).
+    const submitMessage = isFounder
+      ? `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le 1er paiement. Si tu résilies, le prix fondateur est perdu.`
+      : partnerCode
+        ? `Code ${partnerCode} : tes conditions sont figées à la souscription, même si le code change ensuite.`
+        : null;
+    const customText = submitMessage ? { custom_text: { submit: { message: submitMessage } } } : {};
 
     let session: Stripe.Checkout.Session;
     try {
@@ -243,6 +250,7 @@ export class StripeBillingService {
           cancel_url: `${returnUrl}/dashboard?checkout=canceled`,
           locale: 'fr',
           ...promotions,
+          ...customText,
           metadata,
           client_reference_id: userId,
           expires_at: Math.floor((Date.now() + CHECKOUT_TTL_MS) / 1000),
