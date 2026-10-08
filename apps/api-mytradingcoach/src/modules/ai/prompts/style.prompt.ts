@@ -38,5 +38,9 @@ export const NO_EM_DASH_RULE = `Dans tout texte que tu rédiges (y compris à l'
  * redigee sans accents (« Redige dans un francais correct ») a produit « Le pair reagira »,
  * soit l'anglicisme que la regle interdit nommement, plus un accent manquant. Le modele imite
  * le registre de la consigne. Ne pas desaccentuer ce texte.
+ *
+ * Tutoiement explicite depuis le passage a Haiku 5.5 (2026-10-08) : sans consigne, Haiku 4.5
+ * ecrivait ses recommandations a l'infinitif (« Eviter… »), Haiku 5.5 vouvoie (« Evitez… »),
+ * alors que toute l'app tutoie le trader.
  */
-export const FRENCH_RULE = `Écris dans un français correct, accentué et naturel. Conjugue au présent de l'indicatif pour décrire un fait actuel, jamais à l'imparfait. Accorde les noms et les adjectifs. N'emploie aucun anglicisme dans la phrase : écris « une paire » et non « un pair », « un graphique » et non « un chart », « un ton » et non « une tone ». Les termes techniques de trading d'usage courant en anglais (breakout, stop, drawdown, spread, range) restent en anglais et prennent un s au pluriel.`;
+export const FRENCH_RULE = `Tutoie le trader, n'emploie jamais « vous ». Écris dans un français correct, accentué et naturel. Conjugue au présent de l'indicatif pour décrire un fait actuel, jamais à l'imparfait. Accorde les noms et les adjectifs. N'emploie aucun anglicisme dans la phrase : écris « une paire » et non « un pair », « un graphique » et non « un chart », « un ton » et non « une tone ». Les termes techniques de trading d'usage courant en anglais (breakout, stop, drawdown, spread, range) restent en anglais et prennent un s au pluriel.`;
