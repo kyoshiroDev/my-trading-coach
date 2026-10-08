@@ -45,7 +45,11 @@ describe('PropFirmCatalogSyncService (base réelle)', () => {
     expect(phases.find((p) => p.phase === 'evaluation')?.max_drawdown).toMatchObject({ amount: 2000, type: 'trailing_eod' });
     expect(plan.sourceUrls.length).toBeGreaterThan(0);
     const firm = await prisma.propFirm.findUniqueOrThrow({ where: { id: 'apex' } });
-    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe('2026-10-05');
+    // Date lue dans le catalogue, pas figée : chaque revérification d'Apex (2026-10-05, puis
+    // 2026-10-07 avec #526) cassait ce test sans que la synchro soit en cause.
+    const apexFile = (PROP_FIRM_CATALOG_FILES as { firm: { id: string }; verified_at: string }[])
+      .find((f) => f.firm.id === 'apex');
+    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe(apexFile?.verified_at);
     expect(firm.platforms).toContain('tradovate');
   });
 

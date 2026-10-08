@@ -28,7 +28,7 @@ export class DebriefCron {
   async scheduledDebriefs() {
     this.logger.log('Starting weekly debrief generation...');
     const now = new Date();
-    const eligibleUsers = await this.debriefService.getEligibleUsers();
+    const eligibleUsers = await this.debriefService.getEligibleUsers(now);
 
     await Promise.all(
       eligibleUsers.map((user) =>
@@ -53,7 +53,7 @@ export class DebriefCron {
     const refDate = this.debriefService.lastCompletedWeekRef(now);
     const { weekNumber, year } = this.debriefService.getWeekInfo(refDate);
 
-    const eligibleUsers = await this.debriefService.getEligibleUsers();
+    const eligibleUsers = await this.debriefService.getEligibleUsers(refDate);
     if (eligibleUsers.length === 0) return;
 
     const existing = await this.prisma.weeklyDebrief.findMany({

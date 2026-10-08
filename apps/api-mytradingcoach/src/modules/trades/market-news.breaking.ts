@@ -26,13 +26,18 @@ const CRYPTO_TITLE = /\b(bitcoin|btc|ether(eum)?|crypto(currency|currencies)?|st
 /** Au-delà, une news n'est plus « breaking ». */
 export const BREAKING_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
+/** News crypto, par son symbole ou son titre (une news Nvidia peut parler de Bitcoin). */
+export function isCryptoNews(news: { title: string; symbol?: string | null }): boolean {
+  return (!!news.symbol && CRYPTO_SYMBOL.test(news.symbol)) || CRYPTO_TITLE.test(news.title ?? '');
+}
+
 export function isBreakingNews(
   news: { title: string; symbol?: string | null; publishedDate: Date | string },
   now: Date = new Date(),
 ): boolean {
   const title = news.title ?? '';
   if (!MACRO.test(title)) return false;
-  if ((news.symbol && CRYPTO_SYMBOL.test(news.symbol)) || CRYPTO_TITLE.test(title)) return false;
+  if (isCryptoNews(news)) return false;
   const age = now.getTime() - new Date(news.publishedDate).getTime();
   return Number.isFinite(age) && age >= 0 && age <= BREAKING_MAX_AGE_MS;
 }

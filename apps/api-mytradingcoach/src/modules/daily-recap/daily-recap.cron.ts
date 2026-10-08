@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DailyRecapService } from './daily-recap.service';
-import { ResendService } from '../resend/resend.service';
-import { userAmountsCurrency } from '../../common/utils/user-currency.util';
-import { mapWithConcurrency } from '../../common/utils/concurrency.util';
-
-const RECAP_CONCURRENCY = 4;
+import { DAILY_RECAP_JOB_OPTIONS, DAILY_RECAP_QUEUE, dailyRecapJobId, type DailyRecapJob } from './daily-recap.queue';
 
 @Injectable()
 export class DailyRecapCron {
@@ -14,14 +11,12 @@ export class DailyRecapCron {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly dailyRecapService: DailyRecapService,
-    private readonly resend: ResendService,
+    @InjectQueue(DAILY_RECAP_QUEUE) private readonly recapQueue: Queue<DailyRecapJob>,
   ) {}
 
   // 17h30 Paris, lundi-vendredi : fermeture session London/NY overlap
   @Cron('30 17 * * 1-5', { timeZone: 'Europe/Paris' })
   async generateDailyRecaps() {
-    this.logger.log('Generating daily recaps...');
     const today = new Date();
 
     const activeUsers = await this.prisma.user.findMany({
@@ -32,28 +27,19 @@ export class DailyRecapCron {
           some: { tradedAt: { gte: new Date(today.toDateString()) } },
         },
       },
-      select: { id: true, email: true, name: true, plan: true },
+      select: { id: true },
     });
 
-    // 4 à la fois : Resend plafonne à 10 requêtes/s, et chaque récap interroge la base.
-    await mapWithConcurrency(
-      activeUsers,
-      RECAP_CONCURRENCY,
-      async (user) => {
-        try {
-          const recap = await this.dailyRecapService.generateRecap(
-            user.id,
-            today,
-          );
-          if (recap && recap.tradesCount > 0) {
-            await this.resend.sendDailyRecap(user, recap, await userAmountsCurrency(this.prisma, user.id));
-          }
-        } catch (err) {
-          this.logger.error(`Recap failed for user ${user.id}`, err);
-        }
-      },
+    // Un job par utilisateur, id stable par jour : relancer le cron n'enfile pas de doublon.
+    // La génération (IA) et l'envoi se font dans DailyRecapProcessor, sur le worker.
+    await this.recapQueue.addBulk(
+      activeUsers.map((u) => ({
+        name: 'generate',
+        data: { userId: u.id, at: today.toISOString() },
+        opts: { ...DAILY_RECAP_JOB_OPTIONS, jobId: dailyRecapJobId(u.id, today) },
+      })),
     );
 
-    this.logger.log(`Daily recaps done : ${activeUsers.length} users processed`);
+    this.logger.log(`Daily recaps : ${activeUsers.length} récaps mis en file`);
   }
 }

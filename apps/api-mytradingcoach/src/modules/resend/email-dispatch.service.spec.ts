@@ -33,6 +33,7 @@ const mockPrisma = {
       'campaignKey' in args.where ? lastForCampaign(args) : lastMarketing(args),
     ),
     create: vi.fn().mockResolvedValue({}),
+    groupBy: vi.fn(),
   },
   user: { update: vi.fn().mockResolvedValue({}) },
 };
@@ -120,6 +121,50 @@ describe('EmailDispatchService', () => {
     expect(await service.canSend(campaign, { id: 'u1', marketingConsent: true }, { force: true })).toBe(true);
     // force mais SANS consentement → toujours refusé
     expect(await service.canSend(campaign, { id: 'u1', marketingConsent: false }, { force: true })).toBe(false);
+  });
+
+  describe('allowedUsers : même décision que canSend, 2 requêtes par page (SCA-B5-07)', () => {
+    const users = [
+      { id: 'jamais', marketingConsent: true },
+      { id: 'oneshot-deja', marketingConsent: true },
+      { id: 'marketing-recent', marketingConsent: true },
+      { id: 'sans-consentement', marketingConsent: false },
+    ];
+    beforeEach(() => {
+      mockPrisma.emailSend.groupBy.mockImplementation(async (args: { where: Record<string, unknown> }) =>
+        'campaignKey' in args.where
+          ? [{ userId: 'oneshot-deja', _max: { sentAt: new Date(Date.now() - 30 * DAY) } }]
+          : [{ userId: 'marketing-recent', _max: { sentAt: new Date(Date.now() - DAY) } }],
+      );
+    });
+
+    it('applique consentement, oneShot et plafond marketing en lot', async () => {
+      const allowed = await service.allowedUsers(baseCampaign({}), users);
+
+      expect([...allowed]).toEqual(['jamais']);
+      expect(mockPrisma.emailSend.groupBy).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.emailSend.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('identique à canSend utilisateur par utilisateur', async () => {
+      const campaign = baseCampaign({});
+      const allowed = await service.allowedUsers(campaign, users);
+      for (const u of users) {
+        lastForCampaign.mockResolvedValue(u.id === 'oneshot-deja' ? { sentAt: new Date(Date.now() - 30 * DAY) } : null);
+        lastMarketing.mockResolvedValue(u.id === 'marketing-recent' ? { sentAt: new Date(Date.now() - DAY) } : null);
+        expect(await service.canSend(campaign, u), u.id).toBe(allowed.has(u.id));
+      }
+    });
+
+    it('transactionnel : pas de requête marketing', async () => {
+      await service.allowedUsers(baseCampaign({ kind: 'transactional', requiresConsent: false }), users);
+      expect(mockPrisma.emailSend.groupBy).toHaveBeenCalledOnce();
+    });
+
+    it('page vide → aucune requête', async () => {
+      expect((await service.allowedUsers(baseCampaign({}), [])).size).toBe(0);
+      expect(mockPrisma.emailSend.groupBy).not.toHaveBeenCalled();
+    });
   });
 
   it('dispatch envoie, logge et génère un unsubToken si absent', async () => {

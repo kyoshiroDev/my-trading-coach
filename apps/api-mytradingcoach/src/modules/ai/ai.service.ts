@@ -75,13 +75,9 @@ export class AiService {
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
-    if (role !== Role.ADMIN) {
-      await this.checkQuota(userId);
-      await this.checkInsightsCooldown(userId);
-    }
-    const result = await this.orchestrator.runInsightsFlow(userId);
-    if (role !== Role.ADMIN) await this.incrementQuota(userId);
-    return result;
+    if (role === Role.ADMIN) return this.orchestrator.runInsightsFlow(userId);
+    await this.checkInsightsCooldown(userId);
+    return this.metered(userId, () => this.orchestrator.runInsightsFlow(userId));
   }
 
   // ── Chat : direct Anthropic call with trader context ─────────────────────
@@ -94,10 +90,18 @@ export class AiService {
     isDemo = false,
   ) {
     if (isDemo) return { response: DEMO_CHAT_REPLY }; // réponse figée, zéro appel modèle
-    if (userRole !== Role.ADMIN) {
-      await this.checkQuota(userId);
+    if (userRole === Role.ADMIN) return this.chatCall(userId, message, history);
+    return this.metered(userId, async () => {
       await this.checkDailyLimit(userId, 'chat', 50);
-    }
+      return this.chatCall(userId, message, history);
+    });
+  }
+
+  private async chatCall(
+    userId: string,
+    message: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) {
 
     const recentTrades = await this.prisma.trade.findMany({
       where: { userId },
@@ -226,7 +230,6 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       handleAnthropicError(err, this.logger);
     }
 
-    if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
     const content = response?.content?.[0];
     if (!content || content.type !== 'text')
       throw new HttpException(
@@ -546,9 +549,35 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
   // ── Quota management ──────────────────────────────────────────────────────
 
-  private async checkQuota(userId: string) {
-    const count = await this.getQuotaCount(userId);
-    if (count >= AI_MONTHLY_QUOTA) {
+  /**
+   * Appel décompté du quota mensuel (SCA-B5-06) : la place est RÉSERVÉE avant l'appel (INCR), pas
+   * comptée après. Avant, vérifier puis incrémenter laissait 20 appels simultanés passer tous la
+   * vérification. Appel en échec → place rendue.
+   */
+  private async metered<T>(userId: string, call: () => Promise<T>): Promise<T> {
+    await this.reserveQuota(userId);
+    try {
+      return await call();
+    } catch (err) {
+      await this.refundQuota(userId);
+      throw err;
+    }
+  }
+
+  private async reserveQuota(userId: string): Promise<void> {
+    const key = this.quotaKey(userId);
+    let count: number;
+    try {
+      count = await this.redisService.client.incr(key);
+      if (count === 1) await this.redisService.client.expire(key, 60 * 60 * 24 * 31);
+    } catch {
+      this.logger.error('Redis unavailable : quota check failed, blocking AI call');
+      throw new ServiceUnavailableException(
+        'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
+      );
+    }
+    if (count > AI_MONTHLY_QUOTA) {
+      await this.refundQuota(userId);
       throw new HttpException(
         `Quota IA mensuel atteint (${AI_MONTHLY_QUOTA} appels/mois)`,
         HttpStatus.TOO_MANY_REQUESTS,
@@ -556,30 +585,11 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     }
   }
 
-  private async getQuotaCount(userId: string): Promise<number> {
-    const key = this.quotaKey(userId);
+  private async refundQuota(userId: string): Promise<void> {
     try {
-      const val = await this.redisService.client.get(key);
-      return val ? parseInt(val) : 0;
+      await this.redisService.client.decr(this.quotaKey(userId));
     } catch {
-      this.logger.error(
-        'Redis unavailable : quota check failed, blocking AI call',
-      );
-      throw new ServiceUnavailableException(
-        'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
-      );
-    }
-  }
-
-  private async incrementQuota(userId: string): Promise<void> {
-    const key = this.quotaKey(userId);
-    try {
-      const count = await this.redisService.client.incr(key);
-      if (count === 1) {
-        await this.redisService.client.expire(key, 60 * 60 * 24 * 31);
-      }
-    } catch {
-      this.logger.warn('Redis unavailable, quota not incremented');
+      this.logger.warn('Redis unavailable, quota non rendu');
     }
   }
 

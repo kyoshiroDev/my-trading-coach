@@ -11,6 +11,8 @@ import {
   TradingSession,
 } from '@prisma/client';
 import { TradesService } from './trades.service';
+import { behavioralGradeUpdates, GRADE_UPDATE_CHUNK, writeGradeUpdates, type GradedTrade } from './behavioral-grades';
+import { importDedupeWindow } from './import-dedupe.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
@@ -55,6 +57,7 @@ const createTradeDto: CreateTradeDto = {
 
 const mockPrisma = {
   $queryRaw: vi.fn(),
+  $executeRaw: vi.fn().mockResolvedValue(0),
   trade: {
     findMany: vi.fn(),
     findUnique: vi.fn(),
@@ -663,6 +666,68 @@ describe('TradesService', () => {
 
   });
 
+  describe('importTrades — coût par lot (SCA-B1-01/02/03)', () => {
+    const at = (iso: string): Partial<CreateTradeDto> => ({ ...createTradeDto, tradedAt: iso });
+    const setups = () => (service as unknown as { setups: { assertOwnedActive: ReturnType<typeof vi.fn> } }).setups;
+
+    beforeEach(() => {
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      mockPrisma.trade.create.mockResolvedValue(mockTrade);
+      mockAnalytics.invalidateUserCache.mockClear();
+    });
+
+    it('lot vide → aucune requête', async () => {
+      expect(await service.importTrades('user-123', [])).toEqual({ created: 0, duplicates: 0, failed: 0, total: 0 });
+      expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
+      expect(mockPrisma.tradeSession.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('trades existants lus sur [min − 1 j, max + 1 j] du lot seulement', async () => {
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-03T08:00:00.000Z')]);
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toEqual({
+        userId: 'user-123',
+        tradedAt: { gte: new Date('2026-10-02T08:00:00.000Z'), lte: new Date('2026-10-06T10:00:00.000Z') },
+      });
+    });
+
+    it('une ligne sans date → tout l’historique, par prudence', () => {
+      expect(importDedupeWindow([{ tradedAt: '2026-10-05T10:00:00.000Z' }, { tradedAt: null }])).toEqual({});
+      expect(importDedupeWindow([{ tradedAt: 'pas une date' }])).toEqual({});
+    });
+
+    it('session, setup, compte et compte par défaut résolus une fois pour tout le lot', async () => {
+      const rows = ['2026-10-05T10:00:00.000Z', '2026-10-05T11:00:00.000Z', '2026-10-05T12:00:00.000Z'].map(at);
+
+      const res = await service.importTrades('user-123', rows);
+
+      expect(res.created).toBe(3);
+      expect(mockPrisma.tradeSession.findFirst).toHaveBeenCalledOnce();
+      expect(setups().assertOwnedActive).toHaveBeenCalledOnce();
+      expect(mockAccounts.ensureDefaultAccountId).toHaveBeenCalledOnce();
+    });
+
+    it('setup invalide → chacune de ses lignes échoue, sans refaire la requête', async () => {
+      setups().assertOwnedActive.mockRejectedValueOnce(new Error('Setup invalide'));
+
+      const res = await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-05T11:00:00.000Z')]);
+
+      expect(res).toMatchObject({ created: 0, failed: 2 });
+      expect(setups().assertOwnedActive).toHaveBeenCalledOnce();
+    });
+
+    it('cache analytics invalidé une seule fois par lot, et pas si rien n’est créé', async () => {
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z'), at('2026-10-05T11:00:00.000Z')]);
+      expect(mockAnalytics.invalidateUserCache).toHaveBeenCalledOnce();
+
+      mockAnalytics.invalidateUserCache.mockClear();
+      mockPrisma.trade.create.mockRejectedValue(new Error('boom'));
+      await service.importTrades('user-123', [at('2026-10-05T10:00:00.000Z')]);
+      expect(mockAnalytics.invalidateUserCache).not.toHaveBeenCalled();
+    });
+  });
+
   describe('countDuplicates / removeDuplicates', () => {
     const dupRows = [
       { id: 'a', asset: 'BTC/USDT', side: TradeSide.LONG, tradedAt: new Date('2026-01-01T10:00:00Z'), entry: 100, exit: 110, pnl: 10 },
@@ -810,36 +875,48 @@ describe('TradesService', () => {
         executionMethod: null,
       }));
 
+    const asGraded = (t: GradedTradeFixture[]) => t as unknown as GradedTrade[];
+
     it('19 trades clôturés → historique insuffisant → aucune note posée', async () => {
       mockPrisma.trade.findMany.mockResolvedValue(buildTrades(19));
       await service.recomputeBehavioralGrades('acc-1');
       expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1); // une seule passe, pas de N+1
-      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
+      expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
 
-    it('20 trades → grades comportementaux posés (BEHAVIORAL), en une transaction', async () => {
-      mockPrisma.trade.findMany.mockResolvedValue(buildTrades(20));
-      await service.recomputeBehavioralGrades('acc-1');
-      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1);
+    it('20 trades → grades comportementaux (BEHAVIORAL), écrits en UNE requête groupée (SCA-B5-04)', async () => {
+      const trades = buildTrades(20);
       // 1er trade : ni perte précédente ni prior same-day loss → 1 critère → null (pas d'update).
       // Trades 1..19 : perte contenue + revenge (>10 min) + taille constante → EXCELLENT.
-      expect(mockPrisma.trade.update).toHaveBeenCalledTimes(19);
-      const call = mockPrisma.trade.update.mock.calls[0][0];
-      expect(call.data.executionGrade).toBe('EXCELLENT');
-      expect(call.data.executionMethod).toBe('BEHAVIORAL');
+      const updates = behavioralGradeUpdates(asGraded(trades));
+      expect(updates).toHaveLength(19);
+      expect(updates.every((u) => u.grade === 'EXCELLENT' && u.method === 'BEHAVIORAL')).toBe(true);
+
+      mockPrisma.trade.findMany.mockResolvedValue(trades);
+      await service.recomputeBehavioralGrades('acc-1');
+      expect(mockPrisma.trade.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.$executeRaw).toHaveBeenCalledOnce(); // plus 19 UPDATE séparés
+      expect(mockPrisma.trade.update).not.toHaveBeenCalled();
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('trade AVEC stop loss ignoré par le barème comportemental (barème A conservé)', async () => {
+    it('trade AVEC stop loss ignoré par le barème comportemental (barème A conservé)', () => {
       const trades = buildTrades(20);
       trades[5].stopLoss = 42; // ce trade relève du barème A → non touché
       trades[5].executionGrade = 'BON';
       trades[5].executionMethod = 'STOP_BASED';
-      mockPrisma.trade.findMany.mockResolvedValue(trades);
-      await service.recomputeBehavioralGrades('acc-1');
-      const updatedIds = mockPrisma.trade.update.mock.calls.map((c) => c[0].where.id);
-      expect(updatedIds).not.toContain('t5');
+      expect(behavioralGradeUpdates(asGraded(trades)).map((u) => u.id)).not.toContain('t5');
+    });
+
+    it(`notes déjà à jour → rien d'écrit ; 2 500 changements → ${Math.ceil(2500 / GRADE_UPDATE_CHUNK)} requêtes dans une transaction`, async () => {
+      await writeGradeUpdates(mockPrisma as never, 'acc-1', []);
+      expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
+
+      const many = Array.from({ length: 2500 }, (_, i) => ({ id: `t${i}`, score: 80, grade: 'BON' as const, method: 'BEHAVIORAL' as const }));
+      await writeGradeUpdates(mockPrisma as never, 'acc-1', many);
+      expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(3);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 

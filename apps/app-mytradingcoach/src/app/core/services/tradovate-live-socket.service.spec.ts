@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { SOCKET_RECONNECT_OPTIONS } from './socket-reconnect';
 import { TradovateLiveSocketService, type TradovateLiveTrades } from './tradovate-live-socket.service';
 import { ToastService } from './toast.service';
 import { SelectedAccountStore } from '../stores/selected-account.store';
@@ -60,6 +61,12 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     localStorage.setItem('access_token', 'jwt-app');
   });
   afterEach(() => vi.useRealTimers());
+
+  it('reconnexion étalée après un redémarrage de l’API (SCA-B4-07)', () => {
+    const { service } = setup();
+    service.connect();
+    expect(fake.sockets[0].opts).toMatchObject(SOCKET_RECONNECT_OPTIONS);
+  });
 
   it('une seule connexion, sur /tradovate-live, authentifiée avec le jeton courant (relu à chaque reconnexion)', () => {
     const { service } = setup();

@@ -6,6 +6,7 @@ import {
   LIVE_LEASE_RENEW_MS,
   TradovateLiveService,
   liveLeaseKey,
+  LIVE_CATCH_UP_CONCURRENCY,
 } from './tradovate-live.service';
 import type { LiveSocket } from './tradovate-live.connection';
 import { TradovateException } from './tradovate.errors';
@@ -102,6 +103,27 @@ describe('Tradovate live — présence dans l’app', () => {
     expect(sockets).toHaveLength(1);
     expect(sockets[0].url).toBe('wss://demo.tradovateapi.com/v1/websocket');
     expect(service.openConnectionCount()).toBe(1);
+  });
+
+  it(`20 users qui reviennent ensemble → au plus ${LIVE_CATCH_UP_CONCURRENCY} rattrapages simultanés (SCA-B6-02)`, async () => {
+    const { service, sync } = setup();
+    let running = 0;
+    let peak = 0;
+    const done: (() => void)[] = [];
+    sync.sync.mockImplementation(async () => {
+      peak = Math.max(peak, ++running);
+      await new Promise<void>((resolve) => done.push(resolve));
+      running--;
+      return { created: 0, duplicates: 0, failed: 0, total: 0 };
+    });
+
+    for (let i = 0; i < 20; i++) await service.attach(`u${i}`, `tab-${i}`);
+    await settle();
+    expect(running).toBe(LIVE_CATCH_UP_CONCURRENCY);
+
+    while (done.length) { done.shift()!(); await settle(); }
+    expect(peak).toBe(LIVE_CATCH_UP_CONCURRENCY);
+    expect(sync.sync).toHaveBeenCalledTimes(20);
   });
 
   it('plusieurs onglets → UN seul WebSocket et un seul rattrapage', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MACRO_NEWS_SYMBOL, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate } from './market-news.sources';
+import { MACRO_NEWS_SYMBOL, NEWS_CRYPTO_MAX, NEWS_DISPLAY_COUNT, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate, selectNewsForDisplay } from './market-news.sources';
 
 describe('parseFmpNewsDate — FMP date ses news en heure de New York', () => {
   it('heure d’été (EDT, UTC-4) : 15:35 à New York = 19:35 UTC = 21:35 à Paris', () => {
@@ -39,5 +39,33 @@ describe('NEWS_FEEDS', () => {
     expect(crypto?.path).toContain('limit=5');
     // Plus de BTCUSD dans le flux des indices (17 news crypto sur 30 le 06/10/2026).
     expect(NEWS_FEEDS.filter((f) => f.path.includes('BTCUSD'))).toHaveLength(1);
+  });
+});
+
+describe('selectNewsForDisplay — crypto plafonnée à 4 sur 20', () => {
+  // Cas vu en prod le 07/10/2026 : 13 news crypto sur les 20 plus récentes.
+  const rows = [
+    ...Array.from({ length: 13 }, (_, i) => ({ title: `Bitcoin news ${i}`, symbol: i % 2 ? 'BTCUSD' : 'ETHUSD' })),
+    ...Array.from({ length: 20 }, (_, i) => ({ title: `Macro news ${i}`, symbol: 'MACRO' })),
+  ];
+
+  it('garde 4 crypto au plus et complète avec les news suivantes', () => {
+    const out = selectNewsForDisplay(rows);
+    expect(out).toHaveLength(NEWS_DISPLAY_COUNT);
+    expect(out.filter((r) => r.symbol !== 'MACRO')).toHaveLength(NEWS_CRYPTO_MAX);
+    expect(out.slice(0, 4).every((r) => r.symbol !== 'MACRO')).toBe(true); // l'ordre par date est conservé
+  });
+
+  it('une news d’un autre symbole qui parle de Bitcoin compte comme crypto', () => {
+    const out = selectNewsForDisplay([
+      ...Array.from({ length: 5 }, (_, i) => ({ title: `Nvidia buys bitcoin ${i}`, symbol: 'NVDA' })),
+      { title: 'Fed holds rates', symbol: 'MACRO' },
+    ]);
+    expect(out.map((r) => r.symbol)).toEqual(['NVDA', 'NVDA', 'NVDA', 'NVDA', 'MACRO']);
+  });
+
+  it('trader crypto : pas de plafond', () => {
+    const out = selectNewsForDisplay(rows, { keepCrypto: true });
+    expect(out.filter((r) => r.symbol !== 'MACRO')).toHaveLength(13);
   });
 });

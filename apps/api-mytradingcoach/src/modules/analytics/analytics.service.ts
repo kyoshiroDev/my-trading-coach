@@ -60,6 +60,14 @@ export function bestByWinRate(groups: { key: string; wins: number; losses: numbe
   return top;
 }
 
+/** Compteur de version du cache analytics d'un utilisateur (SCA-B1-03). */
+function versionKey(userId: string): string {
+  return `analytics:v:${userId}`;
+}
+// Plus long que tout TTL de cache analytics (300 s) : un compteur expiré qui repart de 0 ne peut
+// plus retomber sur une clé encore vivante écrite sous une ancienne version 0.
+const VERSION_TTL_S = 7 * 24 * 3600;
+
 @Injectable()
 export class AnalyticsService {
 
@@ -68,20 +76,33 @@ export class AnalyticsService {
     private readonly redisService: RedisService,
   ) {}
 
-  private async withCache<T>(key: string, ttl: number, compute: () => Promise<T>): Promise<T> {
+  /**
+   * Cache versionné (SCA-B1-03) : `analytics:<user>:v<n>:<part>`, n = compteur `analytics:v:<user>`.
+   * Invalider = incrémenter le compteur (O(1)) : les clés de l'ancienne version ne sont plus lues
+   * et expirent d'elles-mêmes (TTL). Plus de parcours de clés à chaque trade écrit.
+   */
+  private async withCache<T>(userId: string, part: string, ttl: number, compute: () => Promise<T>): Promise<T> {
+    let key: string | null = null;
     try {
+      const version = (await this.redisService.client.get(versionKey(userId))) ?? '0';
+      key = `analytics:${userId}:v${version}:${part}`;
       const cached = await this.redisService.client.get(key);
       if (cached) return JSON.parse(cached) as T;
     } catch { /* Redis indisponible */ }
     const result = await compute();
-    try { await this.redisService.client.setex(key, ttl, JSON.stringify(result)); } catch { /* ignore */ }
+    if (key) {
+      try { await this.redisService.client.setex(key, ttl, JSON.stringify(result)); } catch { /* ignore */ }
+    }
     return result;
   }
 
   async invalidateUserCache(userId: string): Promise<void> {
     try {
-      const keys = await this.redisService.scanKeys(`analytics:${userId}:*`);
-      if (keys.length > 0) await this.redisService.client.del(...keys);
+      await this.redisService.client
+        .multi()
+        .incr(versionKey(userId))
+        .expire(versionKey(userId), VERSION_TTL_S)
+        .exec();
     } catch { /* Redis indisponible */ }
   }
 
@@ -93,48 +114,48 @@ export class AnalyticsService {
    * `to = maintenant` : à la milliseconde, chaque ouverture créait une clé neuve (0 % de cache,
    * et une clé Redis de plus par ouverture ; mesuré au test de charge B9 du 2026-10-01).
    * Seule la clé est arrondie, le calcul garde les vraies bornes. Fraîcheur : toute écriture de
-   * trade vide déjà `analytics:<user>:*` (invalidateUserCache).
+   * trade change déjà la version du cache de l'utilisateur (invalidateUserCache).
    */
   private rangeKey(from?: Date, to?: Date): string {
     return from || to ? `:range:${minuteKey(from)}:${minuteKey(to)}` : '';
   }
 
   async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
-    const key = `analytics:${userId}:summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
-    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
+    const key = `summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
   }
   async getBySetup(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
+    return this.withCache(userId, `setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
   }
   async getByEmotion(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:emotion${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId, accountId));
+    return this.withCache(userId, `emotion${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId, accountId));
   }
   async getByHour(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:hour${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId, accountId));
+    return this.withCache(userId, `hour${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId, accountId));
   }
   async getEquityCurve(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:equity${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId, accountId));
+    return this.withCache(userId, `equity${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId, accountId));
   }
   async getEquityCurveCurrentMonth(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:equity:month${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId, accountId));
+    return this.withCache(userId, `equity:month${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId, accountId));
   }
   async getTopAssets(userId: string, accountId?: string) {
-    return this.withCache(`analytics:${userId}:topassets${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId, accountId));
+    return this.withCache(userId, `topassets${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId, accountId));
   }
   async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
-    return this.withCache(`analytics:${userId}:activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
+    return this.withCache(userId, `activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
   }
   // Activité journalière (P&L par jour) sur une plage glissante : l'agrégation jour/semaine/mois
   // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
   async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `analytics:${userId}:activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
-    return this.withCache(key, CACHE_TTL.ANALYTICS, async () => ({
+    const key = `activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, async () => ({
       days: await this.computeDailyActivity(userId, { from, to }, accountId),
     }));
   }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `analytics:${userId}:equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
-    return this.withCache(key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
+    const key = `equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
   }
 
   /** Win rate en % : gains / (gains + pertes), break-even exclus ; `empty` si aucun décisif. */

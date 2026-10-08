@@ -322,7 +322,13 @@ export class DebriefService {
    * le Weekly Debrief automatique est une feature Premium.
    * → plan PREMIUM, rôle ADMIN/BETA_TESTER, ou essai (trial) en cours.
    */
-  getEligibleUsers() {
+  /**
+   * Destinataires du débrief automatique de la semaine de `refDate` : seulement ceux qui ont tradé
+   * cette semaine-là (SCA-B5-08, décision du 2026-10-07) — une semaine vide coûtait un appel IA et
+   * un e-mail sans contenu. Mêmes bornes que `generate` (getWeekInfo).
+   */
+  getEligibleUsers(refDate: Date) {
+    const { startDate, endDate } = this.getWeekInfo(refDate);
     return this.prisma.user.findMany({
       where: {
         isDemo: false,
@@ -333,8 +339,9 @@ export class DebriefService {
           { role: Role.BETA_TESTER },
           { trialEndsAt: { gt: new Date() } },
         ],
+        trades: { some: { tradedAt: { gte: startDate, lte: endDate } } },
       },
-      select: { id: true, email: true },
+      select: { id: true },
     });
   }
 

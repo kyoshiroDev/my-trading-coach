@@ -20,7 +20,8 @@ import {
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
-import { CrossSourcePool } from './import-dedupe.util';
+import { CrossSourcePool, importDedupeWindow } from './import-dedupe.util';
+import { ACTIVE_SESSION_SELECT, createImportBatch, type ImportBatch } from './import-batch';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -60,31 +61,33 @@ export class TradesService {
   async create(
     userId: string,
     dto: CreateTradeDto,
-    opts: { deferBehavioral?: boolean; importHash?: string; source?: TradeSource } = {},
+    opts: { deferBehavioral?: boolean; importHash?: string; source?: TradeSource; batch?: ImportBatch } = {},
   ) {
+    // Import en lot (SCA-B1-02) : session, setups et comptes résolus une fois pour tout le lot,
+    // cache invalidé une seule fois à la fin (importTrades).
+    const batch = opts.batch;
     // Le setup doit appartenir au user et être actif (sinon 400). Validation
     // STRICTE conservée pour la création manuelle : `setupId` y est obligatoire
     // (CreateTradeDto + ValidationPipe global), donc la garde ci-dessous ne relâche
     // rien sur ce chemin. Elle ne s'ouvre que pour l'import en lot, qui appelle
     // `create()` directement avec un setup déjà résolu (resolveBatchSetupId) —
     // éventuellement absent si le user n'a plus aucun setup actif.
-    if (dto.setupId) await this.setups.assertOwnedActive(userId, dto.setupId);
+    if (dto.setupId) await (batch ? batch.ownedSetup(dto.setupId) : this.setups.assertOwnedActive(userId, dto.setupId));
     const pnl = calculatePnl(dto);
     const riskReward = calculateRiskReward(dto);
 
-    const activeSession = await this.prisma.tradeSession.findFirst({
-      where: { userId, status: SessionStatus.ACTIVE },
-      select: { id: true, accountId: true, moodStart: true },
-    });
+    const activeSession = batch ? batch.activeSession : await this.findActiveSession(userId);
 
     // accountId : fourni (validé) → sinon hérité de la session active → sinon compte
     // par défaut (anti-NULL : jamais de trade sans compte).
     let accountId: string | undefined;
     if (dto.accountId && dto.accountId !== 'all') {
-      accountId = (await this.accounts.accountWhere(userId, dto.accountId)).accountId;
+      accountId = batch
+        ? await batch.account(dto.accountId)
+        : (await this.accounts.accountWhere(userId, dto.accountId)).accountId;
     }
     if (!accountId) accountId = activeSession?.accountId ?? undefined;
-    if (!accountId) accountId = await this.accounts.ensureDefaultAccountId(userId);
+    if (!accountId) accountId = await (batch ? batch.defaultAccount() : this.accounts.ensureDefaultAccountId(userId));
 
     const rr = dto.riskReward ?? riskReward;
     // Barème A (stop présent) : intrinsèque, calculé ici. Trade SANS stop → barème B
@@ -138,7 +141,7 @@ export class TradesService {
         tradeSession: { select: { moodStart: true } },
       },
     });
-    await this.analyticsService.invalidateUserCache(userId);
+    if (!batch) await this.analyticsService.invalidateUserCache(userId);
 
     // Le nouveau trade décale les médianes du compte → recalcul du barème comportemental
     // (sauf import : différé pour une seule passe par compte, cf. importTrades).
@@ -192,8 +195,11 @@ export class TradesService {
     failed: number;
     total: number;
   }> {
+    // Lot vide (synchro broker sans nouveau trade, le cas courant) : aucune requête (SCA-B1-01).
+    if (dtos.length === 0) return { created: 0, duplicates: 0, failed: 0, total: 0 };
+
     const existing = await this.prisma.trade.findMany({
-      where: { userId },
+      where: { userId, ...importDedupeWindow(dtos) },
       select: { asset: true, side: true, tradedAt: true, entry: true, exit: true, pnl: true },
     });
     // Même trade déjà en base mais daté dans un autre fuseau (export CSV sans fuseau ↔ API en
@@ -216,6 +222,7 @@ export class TradesService {
     const affectedAccounts = new Set<string>();
     // Rang de chaque clé DANS la source : deux lignes identiques sont deux trades (cf. occurrenceHash).
     const inSource = new Map<string, number>();
+    const batch = await this.importBatch(userId);
 
     for (const dto of dtos) {
       if (otherTimezone.take(dto)) {
@@ -236,6 +243,7 @@ export class TradesService {
           deferBehavioral: true,
           importHash: hash,
           source,
+          batch,
         });
         if (t.accountId) affectedAccounts.add(t.accountId);
         created++;
@@ -251,8 +259,25 @@ export class TradesService {
     for (const accountId of affectedAccounts) {
       await this.recomputeBehavioralGrades(accountId);
     }
+    // Cache analytics invalidé une fois pour tout le lot (SCA-B1-03), pas à chaque ligne.
+    if (created > 0) await this.analyticsService.invalidateUserCache(userId);
 
     return { created, duplicates, failed, total: dtos.length };
+  }
+
+  private findActiveSession(userId: string) {
+    return this.prisma.tradeSession.findFirst({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: ACTIVE_SESSION_SELECT,
+    });
+  }
+
+  private importBatch(userId: string): Promise<ImportBatch> {
+    return createImportBatch(userId, {
+      activeSession: () => this.findActiveSession(userId),
+      setups: this.setups,
+      accounts: this.accounts,
+    });
   }
 
 

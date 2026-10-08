@@ -9,8 +9,8 @@ import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { singleFlight } from '../../common/utils/single-flight';
-import { isBreakingNews } from './market-news.breaking';
-import { MACRO_NEWS_SYMBOL, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate } from './market-news.sources';
+import { isBreakingNews, isCryptoNews } from './market-news.breaking';
+import { MACRO_NEWS_SYMBOL, NEWS_DISPLAY_COUNT, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate, selectNewsForDisplay } from './market-news.sources';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -106,11 +106,14 @@ export class MarketDataService {
     // Avant : comparaison exacte, aucun futures ne matchait et le News live se vidait dès le
     // premier trade du jour. Rien de trouvé → toutes les news plutôt qu'un bloc vide.
     const list = (symbols || '').split(',').map(s => s.trim()).filter(Boolean);
+    const wanted = list.length ? newsSymbolsFor(list) : [];
+    // Marge de lecture : la crypto plafonnée laisse sa place aux news suivantes.
     const query = (where: object) => this.prisma.marketNews.findMany({
-      where, orderBy: { publishedDate: 'desc' }, take: 20,
+      where, orderBy: { publishedDate: 'desc' }, take: NEWS_DISPLAY_COUNT * 3,
     });
-    let rows = list.length ? await query({ symbol: { in: newsSymbolsFor(list) } }) : [];
-    if (!rows.length) rows = await query({});
+    let found = wanted.length ? await query({ symbol: { in: wanted } }) : [];
+    if (!found.length) found = await query({});
+    const rows = selectNewsForDisplay(found, { keepCrypto: wanted.some(s => isCryptoNews({ title: '', symbol: s })) });
     const items: NewsItem[] = rows.map(r => ({
       id: r.id,
       title: r.titleFr ?? r.title,

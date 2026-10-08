@@ -165,7 +165,7 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 1. **Landing** (`Pricing.astro` + JSON-LD `Base.astro` + CGU) — ce qui est promis.
 2. **Front app** — affichage + accès (`isPremium`, badges PREMIUM, `premium-lock`).
 3. **Guard backend** (`PremiumGuard`) sur le controller (le `StarterGuard` a été supprimé).
-4. **Éligibilité asynchrone** (crons) — `debrief.getEligibleUsers()`, `daily-recap` (where plan).
+4. **Éligibilité asynchrone** (crons) — `debrief.getEligibleUsers(refDate)`, `daily-recap` (where plan).
 
 > L'incohérence historique à ne jamais reproduire : « feature vendue sur la landing mais cron d'éligibilité restreint » → le client paie une IA jamais livrée.
 
@@ -186,6 +186,9 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Analytics avancés** (`by-setup`, `by-hour`) : `PremiumGuard`.
 - **Activité / calendrier** (`activity/:year/:month`, `activity/range`, `activity/current-month`) : **FREE**, aucun guard. Ce sont les données propres de l'utilisateur (le *quoi*) — on ne verrouille pas la vue de ses propres données. Le guard qui vivait sur `:year/:month` était en plus contournable via `activity/range`, qui sert la même donnée (PROMPT-185). Contrat verrouillé par `analytics.controller.spec.ts`.
 - **Weekly Debrief** : controller `PremiumGuard` **ET** cron `getEligibleUsers()` doivent matcher → `plan === PREMIUM` ou `role ∈ {ADMIN, BETA_TESTER}` ou essai.
+  Le débrief **automatique** (cron dimanche + rattrapage lundi + régénération admin « tous ») ne vise
+  que ceux qui ont **tradé dans la semaine** (`getEligibleUsers(refDate)`, SCA-B5-08, décision du
+  2026-10-07) : semaine vide = ni appel IA ni e-mail. La génération manuelle depuis l'app reste ouverte.
 - **Daily recap** : PREMIUM only.
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).
 - **Suivi prop firm de la session live** (#369) : **FREE**, aucun guard — mêmes données que « Mes comptes » (on ne verrouille pas la vue de ses propres données), sur le compte de la session.

@@ -8,7 +8,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   }),
 }));
 
-import { AnthropicClientService, requestTimeoutMs } from './anthropic-client.service';
+import { AI_SEMAPHORE_KEY, AI_SEMAPHORE_WAIT_MS, AnthropicClientService, aiMaxConcurrency, requestTimeoutMs } from './anthropic-client.service';
 import { AiLoggerService } from './ai-logger.service';
 
 describe('AnthropicClientService', () => {
@@ -16,6 +16,7 @@ describe('AnthropicClientService', () => {
   const prisma = { aiUsageLog: { create: prismaCreate } };
   let svc: AnthropicClientService;
   let origEnabled: string | undefined;
+  const redis = { client: { eval: vi.fn(), zrem: vi.fn() } };
 
   const PARAMS = {
     model: 'claude-haiku-4-5-20251001',
@@ -27,7 +28,9 @@ describe('AnthropicClientService', () => {
     vi.clearAllMocks();
     origEnabled = process.env['AI_ENABLED'];
     const aiLogger = new AiLoggerService(prisma as never);
-    svc = new AnthropicClientService(aiLogger);
+    redis.client.eval.mockReset().mockResolvedValue(1);
+    redis.client.zrem.mockReset().mockResolvedValue(1);
+    svc = new AnthropicClientService(aiLogger, redis as never);
   });
   afterEach(() => {
     if (origEnabled !== undefined) process.env['AI_ENABLED'] = origEnabled;
@@ -80,5 +83,47 @@ describe('AnthropicClientService', () => {
     mockCreate.mockRejectedValueOnce(Object.assign(new Error('overloaded'), { status: 529 }));
     await expect(svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' })).rejects.toThrow('overloaded');
     expect(prismaCreate).not.toHaveBeenCalled();
+  });
+
+  describe('sémaphore global (SCA-B5-06)', () => {
+    beforeEach(() => {
+      process.env['AI_ENABLED'] = 'true';
+      mockCreate.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }], usage: { input_tokens: 1, output_tokens: 1 } });
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('prend une place avant l’appel et la rend après, même en échec', async () => {
+      await svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' });
+      expect(redis.client.eval.mock.calls[0]).toEqual(expect.arrayContaining([AI_SEMAPHORE_KEY, aiMaxConcurrency()]));
+      const token = redis.client.eval.mock.calls[0][6]; // (script, 1, clé, now, max, échéance, jeton, ttl)
+      expect(redis.client.zrem).toHaveBeenCalledWith(AI_SEMAPHORE_KEY, token);
+
+      mockCreate.mockRejectedValueOnce(new Error('boom'));
+      await expect(svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' })).rejects.toThrow('boom');
+      expect(redis.client.zrem).toHaveBeenCalledTimes(2);
+    });
+
+    it('aucune place libérée en 60 s → 503, le modèle n’est pas appelé', async () => {
+      vi.useFakeTimers();
+      redis.client.eval.mockResolvedValue(0);
+      const call = svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' });
+      const assertion = expect(call).rejects.toMatchObject({ status: 503 });
+      await vi.advanceTimersByTimeAsync(AI_SEMAPHORE_WAIT_MS + 1_000);
+      await assertion;
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('Redis indisponible → l’appel passe sans limite globale', async () => {
+      redis.client.eval.mockRejectedValue(new Error('down'));
+      await expect(svc.create(PARAMS as never, { feature: 'chat', userId: 'u1' })).resolves.toBeDefined();
+      expect(redis.client.zrem).not.toHaveBeenCalled();
+    });
+
+    it('AI_MAX_CONCURRENCY : entier positif, sinon 4', () => {
+      expect(aiMaxConcurrency('8')).toBe(8);
+      expect(aiMaxConcurrency(undefined)).toBe(4);
+      expect(aiMaxConcurrency('0')).toBe(4);
+      expect(aiMaxConcurrency('abc')).toBe(4);
+    });
   });
 });

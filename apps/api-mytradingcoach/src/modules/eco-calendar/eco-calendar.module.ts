@@ -7,9 +7,11 @@ import { EcoCalendarCron } from './eco-calendar.cron';
 import { EcoCalendarGateway } from './eco-calendar.gateway';
 import { MarketContextCron } from './market-context.cron';
 import { TradesModule } from '../trades/trades.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, AiModule, TradesModule],
+  // AuthModule : JwtService pour authentifier le handshake du socket /eco (SCA-B6-03).
+  imports: [PrismaModule, AiModule, TradesModule, AuthModule],
   controllers: [EcoCalendarController],
   providers: [EcoCalendarService, EcoCalendarCron, EcoCalendarGateway, MarketContextCron],
   exports: [EcoCalendarService],

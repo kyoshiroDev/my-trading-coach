@@ -156,9 +156,23 @@ exec node main.js
 
 ## CI/CD GitHub Actions
 
+> **Budget Actions (2026-10-07)** : tout job porte un `timeout-minutes` (≈ 3–4× sa durée normale :
+> 5 à 25 min) ; sans lui, GitHub laisse tourner un job bloqué **6 h**. Vu le 07/10 : l'installation
+> de Playwright du smoke E2E bloquée 15 min et plus (étape plafonnée à 5 min depuis). Nouveau job →
+> `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
+> sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
+> elles) : un push = un seul run.
+
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
 - `main` → deploy production (après CI verte + PR)
+
+### Workflows planifiés
+- **Veille règles prop firm** (`prop-firm-watch.yml`, lundi 06:00 UTC + manuel) : `pnpm prop-firms:watch` relit les
+  sources du catalogue prop firm et ouvre ou commente une issue `veille-prop-firm` s'il y a un article modifié ou une
+  firm à revérifier (> 30 jours). Lecture seule, aucun secret (`GITHUB_TOKEN`, `issues: write`). Un `schedule` ne
+  tourne que depuis la branche par défaut (`main`) : il n'est actif qu'une fois promu en prod. Marche à suivre :
+  README de `libs/shared/src/prop-firm-rules/`, section « Veille automatique ».
 
 ### Secrets GitHub requis
 
@@ -386,6 +400,7 @@ REDIS_PASSWORD=...
 JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
 ANTHROPIC_API_KEY=sk-ant-...
+AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_MONTHLY=price_...

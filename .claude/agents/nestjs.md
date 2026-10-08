@@ -491,6 +491,19 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 }
 ```
 
+**Quota mensuel réservé, pas compté après (SCA-B5-06, 2026-10-07)** : `AiService.metered(userId, call)`
+fait `INCR ai:calls:<user>:<mois>` **avant** l'appel ; > `AI_MONTHLY_QUOTA` → `DECR` + 429 ; appel en
+échec → `DECR` (place rendue). Insights et chat passent par là (admin exempté). Avant : vérifier puis
+incrémenter après coup laissait 20 appels simultanés dépasser le quota. Redis down → 503 (inchangé).
+
+**Sémaphore global des appels modèle (SCA-B5-06)** : `AnthropicClientService.create` (point d'entrée
+unique) prend une place dans l'ensemble trié Redis `ai:anthropic:inflight` (script Lua atomique,
+place = jeton + échéance, expire seule si le process meurt) ; **`AI_MAX_CONCURRENCY`** places (défaut
+**4**) tous process confondus ; attente ≤ 60 s puis 503 « L'IA est très sollicitée ». Redis down → on
+laisse passer. Les gros débriefs (jusqu'à ~4 min) tiennent une place : si le chat sature le
+dimanche soir, monter `AI_MAX_CONCURRENCY`. Les 429 Anthropic : le SDK (`maxRetries: 1`) respecte
+déjà `retry-after` ; prompt caching déjà posé (`cache_control`) sur les system prompts.
+
 ---
 
 ## Gestion erreurs Anthropic
@@ -510,40 +523,52 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 
 ---
 
-## Cache Redis analytics
+## Cache Redis analytics — versionné (SCA-B1-03, 2026-10-07)
 
-```typescript
-async getSummary(userId: string) {
-  const key = `analytics:summary:${userId}`;
-  const cached = await this.redis.get(key);
-  if (cached) return JSON.parse(cached);
-  const data = await this.computeSummary(userId);
-  await this.redis.setex(key, 300, JSON.stringify(data));
-  return data;
-}
-// Invalider à chaque nouveau trade
-async onTradeCreated(userId: string) {
-  await this.redis.del(`analytics:summary:${userId}`);
-}
-```
+`AnalyticsService.withCache(userId, part, ttl, compute)` lit/écrit
+`analytics:<userId>:v<n>:<part>`, où `n` = compteur `analytics:v:<userId>` (absent → 0).
+- **Invalider = `invalidateUserCache(userId)` = `INCR` + `EXPIRE 7 j` du compteur** (O(1)). Plus de
+  SCAN/DEL : les clés de l'ancienne version ne sont plus lues et expirent par leur TTL (300 s).
+  Le compteur vit plus longtemps que tout cache : repartir de 0 ne retombe jamais sur une clé vivante.
+- Nouvelle clé analytics → passer par `withCache(userId, '<part>', …)`, jamais une clé construite à
+  la main (elle échapperait à l'invalidation).
+- Redis en panne → calcul direct, rien écrit.
+
+## Notes comportementales (barème B) — recalcul (SCA-B5-04, 2026-10-07)
+
+`trades/behavioral-grades.ts` : `behavioralGradeUpdates(trades)` (pur : médianes du compte, une
+passe, seulement les trades sans stop dont la note change) puis `writeGradeUpdates` : **un
+`UPDATE "Trade" … FROM (VALUES …)` par paquet de 1 000**, tous dans une transaction, filtré sur
+`accountId` (plus un UPDATE Prisma par trade). Volontairement **synchrone et sur tout le compte** :
+la réponse de création d'un trade porte sa note, et un nouveau trade décale les médianes de tous.
+(Le plan B5-04 proposait job asynchrone + fenêtre ±1 j : non retenu, cela change ce que voit
+l'utilisateur.) Validé sur vraie base : `behavioral-grades.int-spec.ts`.
+
+## Import de trades en lot (SCA-B1-01/02/04, 2026-10-07)
+
+`TradesService.importTrades` (CSV, synchro et historique Tradovate) :
+- lot vide → retour immédiat, **0 requête** (cas courant de la synchro broker) ;
+- trades existants lus sur `[min − 1 j, max + 1 j]` du lot (`importDedupeWindow`, `import-dedupe.util.ts`) :
+  la clé exacte porte la date à la ms et le rapprochement entre fuseaux est borné à ±14 h. Une ligne
+  sans date valide → tout l'historique ;
+- session active, setups, comptes et compte par défaut résolus **une fois par lot**
+  (`createImportBatch`, `import-batch.ts`, mémoïsé par promesse : un setup invalide fait échouer
+  chacune de ses lignes sans refaire la requête) ;
+- cache analytics invalidé **une fois** en fin de lot (et pas si rien n'est créé) ;
+- insertion toujours ligne par ligne (`create` + `opts.batch`) : un conflit d'unicité (import
+  concurrent) reste compté comme doublon. `createMany` du plan B1-02 non fait (changerait ce comptage).
+- `POST /trades/import` : `@Throttle` **5 / min par utilisateur** (`IMPORT_THROTTLE_LIMIT`).
 
 ---
 
 ## Cron BullMQ — Weekly Debrief
 
-```typescript
-@Cron('0 23 * * 0')  // Dimanche 23h00
-async scheduledDebriefs() {
-  const users = await this.usersService.findActivePremium();
-  await Promise.all(users.map(u =>
-    this.debriefQueue.add('generate', { userId: u.id }, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: true,
-    })
-  ));
-}
-```
+`DebriefCron` (dimanche 23 h Paris, rattrapage lundi 8 h) enfile un job `generate` par utilisateur
+de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai, débrief automatique
+activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
+journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
+
+---
 
 ## Clustering — règles
 
@@ -1082,6 +1107,9 @@ sont en direct.
 - `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
   existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
   Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+- Rattrapages **bornés à `LIVE_CATCH_UP_CONCURRENCY` (5) par process** (`createLimiter`,
+  `common/utils/concurrency.util.ts`, SCA-B6-02) : après un redémarrage, tous les clients reviennent
+  en même temps ; les suivants attendent leur tour (le WebSocket, lui, s'ouvre sans attendre).
 - **Un seul WebSocket par user, tous workers et onglets confondus** : bail Redis
   `tradovate:live:<userId>` (SET NX PX 30 s, renouvelé / rendu par script Lua « si c'est le
   mien »). Worker titulaire sans clients → il rend le bail, un autre reprend ≤ 10 s. Redis down →
@@ -1278,6 +1306,14 @@ si aucun client connecté (`gateway.connectedCount()`), donc pas d'appel Yahoo l
 vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTTP
 `GET /market/context` reste pour le secours du front (5 min) et le premier affichage.
 
+**`/eco` authentifié (SCA-B6-03, 2026-10-07)** : `EcoCalendarGateway.handleConnection` exige le JWT
+de l'app dans `handshake.auth.token` (signature vérifiée par `JwtService`, **sans requête en base**,
+démo acceptée) ; absent / invalide / expiré → `disconnect(true)`. `maxHttpBufferSize: 1e5`, logs de
+connexion en `debug`. Front : `EcoSocketService` envoie le jeton (relu à chaque reconnexion) et
+retente de façon espacée après un refus (`io server disconnect`, 2 s → 60 s). Un onglet resté sur
+l'ancien front après le déploiement est refusé jusqu'au rechargement : il garde le secours HTTP
+(5 min), rien ne casse.
+
 ## Acquisition UTM (oct. 2026)
 
 - `POST /auth/register` accepte `acquisitionSource` / `acquisitionMedium` / `acquisitionCampaign`
@@ -1313,6 +1349,7 @@ redéployer : rien à lancer sur le VPS.
   les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
   Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
 - Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- **Veille des règles** (2026-10-07) : `pnpm prop-firms:watch` + workflow hebdomadaire « Veille règles prop firm » (issue `veille-prop-firm`). Toute mise à jour d'une firm se termine par `pnpm prop-firms:watch --update` (relevé `veille/sources.json`), voir le README du catalogue.
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,
@@ -1517,7 +1554,7 @@ peu changeante → même traitement ; jamais sur une route authentifiée ou pers
 valeur inconnue → refus au boot).
 - `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
   aucun processeur BullMQ** : les files sont alimentées, pas consommées.
-- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`).
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`, `email`, `daily-recap`).
 - Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
   doit donc jamais tourner dans le web.
 
@@ -1527,6 +1564,36 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+### File e-mail (SCA-B5-02, 2026-10-07)
+
+`ResendService.send()` **met en file** (`email`, `modules/resend/email-queue.ts`) au lieu d'envoyer :
+`EmailProcessor` (worker seulement) appelle `deliver()` à débit plafonné (`EMAIL_RATE_LIMIT` : 5/s,
+global à la file ; Resend = 10 req/s par équipe, clé partagée entre environnements).
+- 5 essais, backoff exponentiel 2 s → 16 s. Passagères (`rate_limit_exceeded`, `application_error`,
+  `internal_server_error`, exception réseau du SDK) → `RetryableEmailError` → nouvel essai ;
+  définitives (quota, adresse invalide, clé) → Sentry tout de suite, pas de nouvel essai. Sentry
+  n'est prévenu d'un échec passager qu'au **dernier** essai.
+- `idempotencyKey: email/<job.id>` : un essai qui avait abouti malgré une réponse perdue ne crée pas
+  de doublon.
+- File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
+- `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
+  `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
+  pièce jointe : pas dans Redis).
+- Le job contient l'adresse et le HTML (quelques Ko) : supprimé dès l'envoi réussi, échecs gardés 7 j.
+
+### File des récaps quotidiens (SCA-B5-01, 2026-10-07)
+
+`DailyRecapCron` (17 h 30 Paris, lun-ven) ne fait plus qu'**enfiler** un job par Premium actif
+(file `daily-recap`, `modules/daily-recap/daily-recap.queue.ts`) ; `DailyRecapProcessor` (worker,
+`concurrency: 3`) génère le récap (appel IA) puis met l'e-mail en file `email`.
+- `jobId = recap-<userId>-<AAAA-MM-JJ>` (jour de Paris) et `removeOnComplete: { age: 2 j }` : relancer
+  le cron le même jour n'enfile pas de doublon. **Jamais de `:` dans un `jobId`** (BullMQ lève
+  « Custom Id cannot contain : »).
+- 3 essais, backoff 30 s ; un nouvel essai refait le même récap (`upsert` sur `userId + date`).
+- Un redémarrage du worker en pleine passe ne perd plus les récaps restants : ils attendent en file.
+- `ResendCron` (rappels de renouvellement) garde sa boucle : depuis B5-02 il ne fait qu'enfiler des
+  e-mails, il n'attend plus les envois.
 
 ## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
 
@@ -1568,6 +1635,9 @@ Règles :
 - **Filtre par actif** (`getNews`) : actifs du journal → symboles FMP (`newsSymbolsFor` : MNQ→QQQ,
   MES→SPY, GC→XAUUSD, 6E→EURUSD, BTC/USDT→BTCUSD…), `MACRO` toujours incluse ; aucun résultat →
   toutes les news. Avant : comparaison exacte, News live vide dès le premier trade du jour.
+- **Part de la crypto** (`selectNewsForDisplay`) : `getNews` lit 60 news et en garde 20, dont **4 crypto
+  au plus** (`isCryptoNews` : symbole ou titre). Plafond levé si les actifs de l'utilisateur sont
+  crypto. Avant : 13 news crypto sur 20 (la crypto publie en continu et prenait le haut du tri par date).
 
 - `refreshNewsBatch` (cron 20 min, 7h-22h) traduit jusqu'à 60 **titres** par passage, par **lots de 10** (`NEWS_TITLE_BATCH`,
   `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)

@@ -18,6 +18,7 @@ jobs:
   commitlint:
     name: Commitlint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -49,6 +50,7 @@ jobs:
   build-landing:
     name: Build Astro Landing
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -88,6 +90,7 @@ jobs:
   integration-api:
     name: Tests d'intégration API
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: checks
     # STRIPE_SECRET_KEY_TEST vit dans l'environment `development` (comme les secrets
     # VPS et E2E_*), pas au niveau dépôt : sans cette ligne le secret serait vide et
@@ -187,6 +190,7 @@ jobs:
   deploy-api-dev:
     name: Deploy API dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
@@ -216,6 +220,7 @@ jobs:
   deploy-app-dev:
     name: Deploy Angular dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
@@ -255,6 +260,7 @@ jobs:
   deploy-landing-dev:
     name: Deploy Landing dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build-landing]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production

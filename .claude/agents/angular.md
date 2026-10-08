@@ -888,6 +888,16 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   date de plus d'une minute.
 - Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
   (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.
+- **Tout nouveau socket** (`io(...)`) étale ses reconnexions avec `...SOCKET_RECONNECT_OPTIONS`
+  (`core/services/socket-reconnect.ts`, SCA-B4-07) : 1er essai entre 1 et 9 s, plafond 60 s. Sans ça,
+  tous les onglets reviennent ensemble après un redémarrage de l'API.
+- **Socket authentifié** (`/eco`, `/tradovate-live`) : `auth: (cb) => cb({ token: localStorage… })`
+  (fonction : jeton relu à chaque reconnexion), garde `if (this.socket) return;` dans `connect()`, et
+  nouvel essai espacé sur `disconnect` avec la raison `io server disconnect` (socket.io ne retente
+  pas seul après un refus du serveur).
+- **Dashboard** : les `effect` qui rechargent les analytics « après un nouveau trade / compte »
+  ignorent tout tant que le store n'est pas `loaded()` (SCA-B4-04) : le premier chargement 0 → N
+  n'est pas un ajout. Même garde pour toute réaction « le compteur a bougé ».
 
 ## Entonnoir Premium (2026-10-07)
 
