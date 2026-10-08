@@ -1200,7 +1200,9 @@ Ordre de résolution d'un import, à ne pas réarranger :
 3. Le fichier ressemble-t-il à un export de trades ? Sinon message neutre, sans upsell.
 4. Chemin IA (`PremiumGuard` + `AI_ENABLED`) : d'abord un **mapping** (un appel, ~0,003 $,
    coût indépendant de la taille), et seulement s'il échoue le repli ligne par ligne
-   (`AI_BATCH` = 120, ~1,43 $ pour 2000 lignes).
+   (`AI_BATCH` = 25 depuis le 2026-10-08 : à 120, la sortie dépassait `max_tokens` 8192 ; un test
+   impose `AI_BATCH × WORST_TOKENS_PER_TRADE ≤ 50 %` du plafond. Coût du repli inchangé, ~1,4 $
+   pour 2000 lignes : la sortie suit le nombre de trades, seule l'entête est répétée).
 
 Fichiers : `trades/csv-mapping.ts` (types, validation de forme, application, contrôle du P&L,
 `headerSignature`), `trades/broker-mapping.service.ts` (lecture/écriture des fiches),
