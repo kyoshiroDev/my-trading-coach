@@ -5,6 +5,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, debounce, of, switchMap, timer } from 'rxjs';
 import {
@@ -44,6 +45,11 @@ export class EmailsComponent {
   protected readonly previewRecipients  = signal<{ email: string; name: string | null }[]>([]);
   protected readonly sendCampaignModal  = signal<CampaignMeta | null>(null);
   protected readonly sending            = signal(false);
+  protected readonly testing            = signal(false);
+  /** Le test a été fait sur le contenu actuel (au chargement, ou dans cette modale). */
+  protected readonly tested             = signal(false);
+  /** 2e étape : « Envoyer à N inscrits ? » avant l'envoi réel. */
+  protected readonly confirming         = signal(false);
   protected readonly toast              = signal<{ message: string; error?: boolean } | null>(null);
 
   protected readonly announcementSubject = signal('');
@@ -54,6 +60,7 @@ export class EmailsComponent {
   protected readonly sendCount = computed(() => {
     const c = this.sendCampaignModal();
     if (!c) return 0;
+    if (c.requiresTest) return c.withConsent; // oneShot marketing, sans « force »
     return this.force() ? c.targetCount : c.newCount;
   });
 
@@ -65,7 +72,8 @@ export class EmailsComponent {
   protected readonly canSend = computed(() => {
     const c = this.sendCampaignModal();
     if (!c) return false;
-    if (c.type === 'announcement') return !!this.announcementSubject().trim();
+    if (c.type === 'announcement' && !this.announcementSubject().trim()) return false;
+    if (c.requiresTest && !this.tested()) return false;
     return true;
   });
 
@@ -120,7 +128,34 @@ export class EmailsComponent {
       this.announcementBody.set('');
     }
     this.force.set(false);
+    this.tested.set(c.testedCurrent);
+    this.confirming.set(false);
     this.sendCampaignModal.set(c);
+  }
+
+  /** Contenu d'annonce modifié : le test précédent ne vaut plus (le serveur le vérifie aussi). */
+  contentChanged(): void {
+    this.tested.set(false);
+    this.confirming.set(false);
+  }
+
+  doTest(): void {
+    const c = this.sendCampaignModal();
+    if (!c) return;
+    this.testing.set(true);
+    this.adminApi.testCampaign(c.type, this.announcementSubject(), this.announcementBody())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: r => {
+          this.testing.set(false);
+          this.tested.set(true);
+          this.showToast(`✅ Test envoyé à ${r.data.to}`);
+        },
+        error: (e: HttpErrorResponse) => {
+          this.testing.set(false);
+          this.showToast(`❌ ${e.error?.message ?? 'Erreur lors de l\'envoi test'}`, true);
+        },
+      });
   }
 
   doSend(): void {
@@ -137,7 +172,11 @@ export class EmailsComponent {
           this.showToast(`✅ ${r.data.success} emails envoyés · ${r.data.errors} erreurs${skipped}`);
           this.load();
         },
-        error: () => { this.sending.set(false); this.showToast('❌ Erreur lors de l\'envoi', true); },
+        error: (e: HttpErrorResponse) => {
+          this.sending.set(false);
+          this.confirming.set(false);
+          this.showToast(`❌ ${e.error?.message ?? 'Erreur lors de l\'envoi'}`, true);
+        },
       });
   }
 

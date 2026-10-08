@@ -1267,6 +1267,13 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+- **Envoi test des campagnes** (#525) : `POST /admin/campaigns/:type/test` → UN e-mail vers
+  `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
+  (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
+  prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
+  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
+  passé à `dispatch(…, { seatsLeft })` ; lien `FOUNDER_LAUNCH_URL` (`LANDING_URL` + UTM + `cta=email`).
 
 ## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
 

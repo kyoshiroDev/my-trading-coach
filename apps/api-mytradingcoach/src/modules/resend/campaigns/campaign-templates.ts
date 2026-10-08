@@ -2,6 +2,7 @@
 // Chaque template marketing DOIT inclure marketingFooter(unsubUrl) en pied.
 // Réutilise les helpers de style partagés (emailWrapper/card/cta/divider/FONT).
 
+import { FOUNDER_OFFER, PREMIUM_PRICE_EUR } from '@mtc/shared';
 import {
   ACCENT,
   FONT,
@@ -13,6 +14,7 @@ import {
 } from '../templates';
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
+const LANDING_URL = (process.env['LANDING_URL'] ?? 'https://www.mytradingcoach.app').replace(/\/+$/, '');
 
 export interface CampaignContent {
   subject: string;
@@ -23,6 +25,8 @@ export interface CampaignBuildCtx {
   userName: string;
   appUrl: string;
   unsubUrl: string;
+  /** Places fondateur restantes, calculées au moment de l'envoi (campagne founder_launch). */
+  seatsLeft?: number;
 }
 
 // ── Premier trade (J+1) ─────────────────────────────────────────────────────
@@ -187,5 +191,44 @@ export function announcementTemplate(
   return {
     subject: override?.subject?.trim() || '📣 Nouveauté MyTradingCoach',
     html: emailWrapper(content),
+  };
+}
+
+// ── Lancement de l'offre fondateur (#525) ──────────────────────────────────────
+// Texte validé par Greg (prompt #525) : à reprendre tel quel. `cta=email` voyage jusqu'à l'app.
+
+/** Lien de la campagne : UTM de la campagne + point de clic `email`, vers les tarifs de la landing. */
+export const FOUNDER_LAUNCH_URL =
+  `${LANDING_URL}/?utm_source=email&utm_medium=campaign&utm_campaign=fondateur&cta=email#pricing`;
+
+export function founderLaunchTemplate({ userName, unsubUrl, seatsLeft }: CampaignBuildCtx): CampaignContent {
+  const p = `${FONT}font-size:14px;color:#9db4ce;margin:0 0 14px 0;line-height:1.7;`;
+  const strong = 'color:#e2eaf5;';
+  const bullet = (html: string) => `<div style="margin-bottom:8px;">
+    <span style="color:#60a5fa;">•</span>
+    <span style="${FONT}font-size:14px;color:#9db4ce;margin-left:8px;">${html}</span>
+  </div>`;
+  const seats = seatsLeft ?? FOUNDER_OFFER.seats;
+  const content =
+    card(`
+      <p style="${p}">${userName ? `Salut ${userName},` : 'Salut,'}</p>
+      <p style="${p}">Tu t'es inscrit sur MyTradingCoach, merci. On ouvre l'offre fondateur, réservée aux ${FOUNDER_OFFER.seats} premiers abonnés :</p>
+      <div style="margin:4px 0 16px 0;">
+        ${bullet(`Premium à <strong style="${strong}">${FOUNDER_OFFER.priceMonthlyEur} €/mois</strong> au lieu de ${PREMIUM_PRICE_EUR.monthly} €, ou <strong style="${strong}">${FOUNDER_OFFER.priceAnnualEur} €/an</strong> au lieu de ${PREMIUM_PRICE_EUR.annual} €`)}
+        ${bullet(`<strong style="${strong}">Prix bloqué à vie</strong>, tant que ton abonnement reste actif`)}
+        ${bullet('Satisfait ou remboursé pendant 14 jours')}
+      </div>
+      <p style="${p}">Premium, c'est tout le gratuit, plus : le coach IA personnel, le debrief de la semaine, les analyses avancées, les alertes prop firm avant la casse, l'anti-tilt en séance et les comptes illimités.</p>
+      <p style="${p}">Il reste <strong style="${strong}">${seats} places sur ${FOUNDER_OFFER.seats}</strong>. Le compteur est en direct sur le site.</p>
+      ${cta('Devenir fondateur', FOUNDER_LAUNCH_URL)}
+      <p style="${p}margin-top:18px;">Si le gratuit te suffit, aucun souci : il reste gratuit, sans limite de trades.</p>
+      <p style="${p}">Greg, fondateur de MyTradingCoach</p>
+      ${divider}
+      <p style="${FONT}font-size:12px;color:#6b8299;margin:0;font-style:italic;">Le trading comporte un risque de perte en capital.</p>
+    `) + marketingFooter(unsubUrl);
+
+  return {
+    subject: `${FOUNDER_OFFER.seats} places à ${FOUNDER_OFFER.priceMonthlyEur} €/mois, à vie`,
+    html: emailWrapper(content, "L'offre fondateur MyTradingCoach est ouverte. Premier arrivé, premier servi."),
   };
 }

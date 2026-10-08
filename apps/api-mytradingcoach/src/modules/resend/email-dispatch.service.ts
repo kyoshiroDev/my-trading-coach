@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from './resend.service';
 import { EmailCampaign } from './campaigns/campaign-registry';
+import type { CampaignBuildCtx } from './campaigns/campaign-templates';
 
 const DAY_MS = 24 * 3600e3;
 
@@ -125,13 +126,14 @@ export class EmailDispatchService {
     campaign: EmailCampaign,
     user: DispatchUser,
     override?: { subject: string; html: string },
+    extra: Partial<CampaignBuildCtx> = {},
   ): Promise<boolean> {
     const appUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
     const unsubToken = await this.ensureUnsubToken(user);
     const unsubUrl = this.buildUnsubUrl(unsubToken);
 
     const { subject, html } =
-      override ?? campaign.build({ userName: user.name ?? '', appUrl, unsubUrl });
+      override ?? campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
 
     await this.resend.send({ to: user.email, subject, html });
     await this.prisma.emailSend.create({
