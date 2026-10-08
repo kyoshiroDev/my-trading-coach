@@ -1608,6 +1608,14 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 - Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
   appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
   polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- **Verrou de relance par libellé** (`eco:label-tr:<nom>`, `SET NX EX` 12 h, `claimForTranslation`) : un
+  libellé n'est soumis au modèle qu'une fois par 12 h, réussite ou échec. Sans lui, tout libellé en
+  échec (JSON tronqué, clé renvoyée modifiée, panne) repartait au modèle à chaque polling : ~603
+  appels/jour, 4 834 `eco_translation` sur 30 jours au 2026-10-08. Redis indisponible → traduction
+  reportée (jamais de rafale). Régime attendu : ~30-50 appels/mois.
+- `translateEventNames(dates)` couvre **toutes les dates enregistrées par le fetch** (FMP renvoie la
+  veille et le lendemain), et la propagation se fait par nom sur les lignes `nameFr: null` : un jour
+  jamais demandé (dimanche, « OPEC Meeting ») gardait sinon ses libellés en anglais.
 - **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
   ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
   JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
