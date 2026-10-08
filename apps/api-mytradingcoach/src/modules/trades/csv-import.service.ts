@@ -26,7 +26,6 @@ import {
 import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 
-const MODEL = AI_MODELS.analysis;
 
 
 // Limites différenciées : un broker connu est parsé localement (sans IA),
@@ -772,7 +771,7 @@ ${echantillon}`;
     const prompt = this.buildPrompt(filename, chunk, styleNote);
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: AI_MODELS.analysis,
         max_tokens: AI_CHUNK_MAX_TOKENS,
         system: [
           {

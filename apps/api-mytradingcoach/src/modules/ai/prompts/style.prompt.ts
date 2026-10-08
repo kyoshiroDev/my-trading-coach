@@ -22,7 +22,7 @@ export const NO_EM_DASH_RULE = `Dans tout texte que tu rédiges (y compris à l'
  * Qualite du francais des textes generes.
  *
  * Ajoutee le 2026-09-28 en meme temps que le passage du calendrier eco sur le modele
- * rapide (`ECO_MODEL`) : la comparaison des deux modeles sur le prompt reel a montre que
+ * rapide (`AI_MODELS.fast`) : la comparaison des deux modeles sur le prompt reel a montre que
  * le modele rapide produit un contenu juste mais glisse sur la langue, la ou le modele
  * d'analyse ne glissait pas. Deux fautes relevees dans une seule reponse, toutes deux
  * affichees telles quelles a l'utilisateur :
