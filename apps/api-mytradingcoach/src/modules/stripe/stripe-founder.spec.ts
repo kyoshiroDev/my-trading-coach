@@ -18,7 +18,10 @@ const PRICES: Record<string, string> = {
 };
 const config = { get: (k: string) => PRICES[k], getOrThrow: (k: string) => PRICES[k] ?? 'sk_test_dummy' };
 
-function makeBilling(over: { user?: object; existingSub?: object | null; openSessions?: object[]; eligible?: boolean; reason?: string } = {}) {
+function makeBilling(over: { user?: object; existingSub?: object | null; openSessions?: object[]; eligible?: boolean; reason?: string; pk?: string } = {}) {
+  const cfg = over.pk
+    ? { get: (k: string) => (k === 'STRIPE_PUBLIC_KEY' ? over.pk : PRICES[k]), getOrThrow: config.getOrThrow }
+    : config;
   const user = {
     id: 'u1', stripeSubscriptionId: null, stripeCustomerId: 'cus_1', trialUsed: false, referredBy: 'PARRAIN',
     ...over.user,
@@ -31,11 +34,14 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
       update: vi.fn().mockResolvedValue({}),
     },
   };
-  const create = vi.fn().mockResolvedValue({ id: 'cs_new', url: 'https://checkout.stripe.test/new' });
+  const create = vi.fn().mockImplementation(async (p: { ui_mode?: string }) =>
+    p.ui_mode === 'elements' ? { id: 'cs_el', url: null, client_secret: 'cs_el_secret' } : { id: 'cs_new', url: 'https://checkout.stripe.test/new' },
+  );
+  const retrieve = vi.fn().mockResolvedValue({ id: 'cs_open', client_secret: 'cs_open_secret' });
   const expire = vi.fn().mockResolvedValue({});
   const stripe = {
     subscriptions: { retrieve: vi.fn().mockResolvedValue(over.existingSub ?? null) },
-    checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: over.openSessions ?? [] }), create, expire } },
+    checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: over.openSessions ?? [] }), create, expire, retrieve } },
     coupons: { retrieve: vi.fn().mockResolvedValue({}), create: vi.fn() },
     customers: { search: vi.fn(), create: vi.fn() },
   };
@@ -45,20 +51,21 @@ function makeBilling(over: { user?: object; existingSub?: object | null; openSes
     attachSession: vi.fn(),
     releaseReservation: vi.fn(),
     hasValidReservation: vi.fn().mockResolvedValue(true),
+    seatsLeft: vi.fn().mockResolvedValue(199),
   };
   const partners = {
     validate: vi.fn(), reserve: vi.fn(), couponFor: vi.fn(),
     activeForSubscription: vi.fn().mockResolvedValue(null), couponForIntervalChange: vi.fn(),
   };
   const svc = new StripeBillingService(
-    config as never, prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never,
+    cfg as never, prisma as never, { client: { del: vi.fn().mockResolvedValue(1) } } as never,
     new StripeCustomerService(prisma as never, stripe as never),
     new StripeCouponService(stripe as never),
     founders as never,
     partners as never,
     stripe as never,
   );
-  return { svc, create, expire, founders, partners, stripe };
+  return { svc, create, expire, retrieve, founders, partners, stripe };
 }
 
 const founder = (svc: StripeBillingService, price = 'price_29', interval: 'month' | 'year' = 'month') =>
@@ -445,5 +452,80 @@ describe('GET /billing/offers', () => {
     });
     Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
     expect((await b.svc.offers('u1')).founder.refundUntil).toBeNull();
+  });
+});
+
+// ── Page de paiement de l'app (Checkout Elements) ───────────────────────────────
+
+describe('checkout sur la page de l’app (ui elements)', () => {
+  const elements = { pk: 'pk_test_123' };
+
+  it('fondateur : session elements en dahlia, carte + Link + Klarna, retour sur le dashboard, récapitulatif', async () => {
+    const { svc, create } = makeBilling(elements);
+    const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', {
+      offer: 'founder', interval: 'month', cta: 'carte', ui: 'elements',
+    });
+    const [params, opts] = create.mock.calls[0];
+    expect(params.ui_mode).toBe('elements');
+    expect(params.payment_method_types).toEqual(['card', 'link', 'klarna']);
+    expect(params.return_url).toBe('https://app/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}');
+    expect(params).not.toHaveProperty('success_url');
+    expect(params).not.toHaveProperty('custom_text');
+    expect(params).not.toHaveProperty('allow_promotion_codes');
+    expect(params).not.toHaveProperty('discounts');
+    expect(params.subscription_data).not.toHaveProperty('trial_period_days');
+    expect(params.metadata).toMatchObject({ offer: 'founder', ui: 'elements' });
+    expect(opts.apiVersion).toBe('2026-08-26.dahlia');
+    expect(res).toEqual({
+      clientSecret: 'cs_el_secret',
+      publishableKey: 'pk_test_123',
+      summary: {
+        offer: 'founder', interval: 'month', recurringEur: 29, normalEur: 49, trialDays: 0,
+        partnerCode: null, partnerDurationMonths: null, referralDiscount: false, seatsLeft: 199,
+      },
+    });
+  });
+
+  it('Premium mensuel : essai 30 jours et remise filleul conservés', async () => {
+    const { svc, create } = makeBilling(elements);
+    const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
+    const params = create.mock.calls[0][0];
+    expect(params.subscription_data.trial_period_days).toBe(30);
+    expect(params.discounts).toBeDefined();
+    expect('summary' in res && res.summary).toMatchObject({ offer: 'premium', recurringEur: 49, trialDays: 30, referralDiscount: true, seatsLeft: null });
+  });
+
+  it('code partenaire : coupon de l’intervalle et conditions dans le récapitulatif', async () => {
+    const { svc, create } = partnerBilling(elements);
+    const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', {
+      offer: 'premium', interval: 'month', promo: 'louis29', ui: 'elements',
+    });
+    expect(create.mock.calls[0][0].discounts).toEqual([{ coupon: 'cp_20' }]);
+    expect('summary' in res && res.summary).toMatchObject({ offer: 'partner', recurringEur: 29, normalEur: 49, partnerCode: 'LOUIS29', partnerDurationMonths: null });
+  });
+
+  it('sans STRIPE_PUBLIC_KEY : repli sur la page Stripe (URL)', async () => {
+    const { svc, create } = makeBilling();
+    const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
+    expect(create.mock.calls[0][0]).not.toHaveProperty('ui_mode');
+    expect(res).toEqual({ url: 'https://checkout.stripe.test/new' });
+  });
+
+  it('session elements ouverte de la même offre → reprise (clé relue en dahlia), sans nouvelle session', async () => {
+    const open = { id: 'cs_open', url: null, metadata: { offer: 'premium', priceId: 'price_49', ui: 'elements' } };
+    const { svc, create, retrieve, expire } = makeBilling({ ...elements, openSessions: [open] });
+    const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
+    expect(retrieve).toHaveBeenCalledWith('cs_open', {}, { apiVersion: '2026-08-26.dahlia' });
+    expect(create).not.toHaveBeenCalled();
+    expect(expire).not.toHaveBeenCalled();
+    expect(res).toMatchObject({ clientSecret: 'cs_open_secret' });
+  });
+
+  it('session de la page Stripe ouverte pour la même offre → expirée, nouvelle session elements', async () => {
+    const open = { id: 'cs_hosted', url: 'https://checkout.stripe.test/old', metadata: { offer: 'premium', priceId: 'price_49' } };
+    const { svc, create, expire } = makeBilling({ ...elements, openSessions: [open] });
+    await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { ui: 'elements' });
+    expect(expire).toHaveBeenCalledWith('cs_hosted');
+    expect(create.mock.calls[0][0].ui_mode).toBe('elements');
   });
 });

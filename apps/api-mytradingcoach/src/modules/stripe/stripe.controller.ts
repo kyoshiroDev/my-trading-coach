@@ -60,6 +60,7 @@ export class StripeController {
         interval: dto.plan.endsWith('yearly') ? 'year' : 'month',
         cta: dto.cta ?? null,
         promo: dto.promo ?? null,
+        ui: dto.ui ?? 'hosted',
       },
     );
   }

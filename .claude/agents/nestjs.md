@@ -1683,7 +1683,14 @@ ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `al
 fondateur. `custom_text.submit` au-dessus du bouton de paiement : fondateur (remboursement 14 j, tarif
 perdu si résiliation) et code partenaire (conditions figées) ; rien au prix normal. Le rendu de la page
 (logo, nom, couleurs) vient du Branding du compte Stripe et du nom / de la description / de l'image du
-produit, pas du code. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+produit, pas du code. **Page de paiement de l'app** : `POST /billing/checkout` avec `ui: 'elements'`
+→ session `ui_mode: 'elements'` créée en version d'API `2026-08-26.dahlia` (option PAR APPEL,
+`ELEMENTS_API_VERSION` ; le client reste en 2024-06-20), `payment_method_types` carte + Link + Klarna,
+`return_url` = `/dashboard?checkout=success&session_id=…`, pas de `custom_text` ni de codes promo
+manuels ; renvoie `{ clientSecret, publishableKey, summary }` (récapitulatif : offre, montants,
+essai, code, places). Sans `STRIPE_PUBLIC_KEY` → repli `{ url }` (page Stripe). Une session ouverte
+n'est reprise que pour la même page (`metadata.ui`) ; la clé d'une session `elements` se relit en
+dahlia. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
 (remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
 PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
 renouvellement : rien). `syncSubscription` n'écrase jamais

@@ -409,6 +409,10 @@ STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER=price_... # offre fondateur 29 €/mois (#5
 STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER=price_...  # offre fondateur 290 €/an (#525), REQUISE au boot
 # ⚠️ Les deux prix fondateur sont `required` (config/env.ts) : à poser dans .env.dev / .env.prod
 # AVANT de déployer le code qui les lit, sinon l'API refuse de démarrer.
+STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_test_ en dev/beta)
+# Absente → l'API retombe sur la page Stripe hébergée (avertissement au boot en prod).
+# Apple Pay sur la page de l'app : vérifier le domaine app.mytradingcoach.app dans Stripe
+# (Paramètres → Moyens de paiement → Domaines). Link et Klarna doivent être activés dans Stripe.
 RESEND_API_KEY=re_...
 MAIL_FROM=noreply@mytradingcoach.app
 FRONTEND_URL=https://app.mytradingcoach.app

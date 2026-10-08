@@ -21,4 +21,9 @@ export class CreateCheckoutDto {
   @IsString()
   @Length(3, 40)
   promo?: string;
+
+  /** `elements` : page de paiement de l'app (clé de session) ; défaut `hosted` : page Stripe (URL). */
+  @IsOptional()
+  @IsIn(['hosted', 'elements'])
+  ui?: 'hosted' | 'elements';
 }
