@@ -102,6 +102,11 @@ model User {
   referrals       ReferralCommission[] @relation("AmbassadorCommissions")
   parrainRewards  ReferralReward[]     @relation("ParrainRewards")
   brokerConnections BrokerConnection[]
+  /// Offre fondateur (#525) : place prise (registre, une par personne au plus).
+  founderSeat       FounderSeat?
+  /// Code partenaire utilisé (une seule fois par personne, conditions figées).
+  partnerRedemption PartnerRedemption?
+  checkoutReservations CheckoutReservation[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -921,3 +926,128 @@ model ProductEventDaily {
   @@unique([date, userId, event, place])
   @@index([date, event])
 }
+
+// ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
+// Registres plutôt que des champs copiés sur User : un numéro de fondateur n'est jamais
+// réattribué (la ligne survit à la suppression du compte, `userId` passe à null), et les
+// compteurs (places, utilisations d'un code) tiennent en UNE requête indexée sur `status`.
+
+/// Configuration de l'offre fondateur : une seule ligne (id = 1). Fermée par défaut.
+model FounderOfferConfig {
+  id                 Int       @id @default(1)
+  open               Boolean   @default(false)
+  /// Date de fin optionnelle (null = jusqu'à épuisement des places).
+  endsAt             DateTime?
+  /// Paliers déjà notifiés à hello@ (50, 100, 150, 190, 200) : un e-mail par palier, jamais deux.
+  notifiedMilestones Int[]     @default([])
+  updatedAt          DateTime  @updatedAt
+}
+
+enum FounderSeatStatus {
+  /// Abonnement en cours au tarif fondateur.
+  ACTIVE
+  /// Abonnement terminé : tarif perdu, la place reste prise (« 200 personnes »).
+  LOST
+  /// Remboursé sous 14 jours : tarif perdu, la place revient au compteur.
+  REFUNDED
+  /// Premier paiement en échec définitif : la place revient au compteur.
+  RELEASED
+}
+
+/// Une place fondateur = un numéro (1 à 200), attribué au premier paiement réussi.
+model FounderSeat {
+  number               Int               @id
+  userId               String?           @unique
+  user                 User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status               FounderSeatStatus @default(ACTIVE)
+  /// 'month' | 'year' : intervalle actuel (mensuel ↔ annuel garde la place).
+  interval             String
+  /// Point de clic d'origine (bandeau, carte, faq, modale, cadenas, profil, email).
+  cta                  String?
+  stripeSubscriptionId String?
+  takenAt              DateTime          @default(now())
+  /// Fin du tarif : perte (abonnement terminé), remboursement ou libération.
+  endedAt              DateTime?
+
+  @@index([status])
+}
+
+/// Code partenaire (ex. LOUIS29). `code` stocké en MAJUSCULES : unicité insensible à la casse.
+model PartnerCode {
+  id                    String                @id @default(cuid())
+  code                  String                @unique
+  label                 String
+  priceMonthlyEur       Int
+  priceAnnualEur        Int
+  /// null = à vie (tant que l'abonnement est actif), sinon N mois puis prix normal.
+  durationMonths        Int?
+  /// null = illimité.
+  maxRedemptions        Int?
+  /// Fin d'UTILISATION du code (n'arrête pas la remise de ceux qui l'ont déjà).
+  expiresAt             DateTime?
+  active                Boolean               @default(true)
+  /// Coupons Stripe des FUTURS abonnés (un coupon ne se modifie pas : nouveaux à chaque changement).
+  stripeCouponMonthlyId String
+  stripeCouponAnnualId  String
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  redemptions           PartnerRedemption[]
+  reservations          CheckoutReservation[]
+}
+
+enum PartnerRedemptionStatus {
+  ACTIVE
+  /// Abonnement terminé : remise perdue, l'utilisation reste comptée.
+  LOST
+  /// Remboursé ou premier paiement en échec : l'utilisation revient au quota.
+  RELEASED
+}
+
+/// Utilisation d'un code : conditions OBTENUES figées (modifier le code ne les change pas).
+model PartnerRedemption {
+  id                   String                  @id @default(cuid())
+  partnerCodeId        String
+  partnerCode          PartnerCode             @relation(fields: [partnerCodeId], references: [id], onDelete: Restrict)
+  /// Une seule utilisation de code partenaire par personne.
+  userId               String?                 @unique
+  user                 User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  priceMonthlyEur      Int
+  priceAnnualEur       Int
+  durationMonths       Int?
+  /// Coupon appliqué (celui de l'intervalle choisi, ou de l'autre après changement).
+  stripeCouponId       String
+  status               PartnerRedemptionStatus @default(ACTIVE)
+  cta                  String?
+  stripeSubscriptionId String?
+  createdAt            DateTime                @default(now())
+  endedAt              DateTime?
+
+  @@index([partnerCodeId, status])
+}
+
+enum CheckoutReservationKind {
+  FOUNDER
+  PARTNER
+}
+
+/// Réservation anti-survente pendant une session Checkout (30 min, durée minimale Stripe).
+/// Compteur = places / utilisations prises + réservations non expirées, sous verrou Postgres.
+model CheckoutReservation {
+  id              String                  @id @default(cuid())
+  kind            CheckoutReservationKind
+  userId          String
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerCodeId   String?
+  partnerCode     PartnerCode?            @relation(fields: [partnerCodeId], references: [id], onDelete: Cascade)
+  /// 'month' | 'year'
+  interval        String
+  cta             String?
+  stripeSessionId String?                 @unique
+  expiresAt       DateTime
+  createdAt       DateTime                @default(now())
+
+  @@index([kind, expiresAt])
+  @@index([partnerCodeId, expiresAt])
+  @@index([userId])
+}
+

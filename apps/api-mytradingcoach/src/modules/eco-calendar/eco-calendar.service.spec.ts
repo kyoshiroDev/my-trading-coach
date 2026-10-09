@@ -668,12 +668,12 @@ describe('EcoCalendarService', () => {
         { nameEn: 'CPI', nameFr: 'Indice des prix à la consommation' },
       ]);
 
-      await service['translateEventNames'](DATE);
+      await service['translateEventNames']([DATE]);
 
       expect(mockAnthropic.create).not.toHaveBeenCalled();
       expect(mockPrisma.ecoLabelTranslation.upsert).not.toHaveBeenCalled();
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { date: DATE, name: 'CPI' }, data: { nameFr: 'Indice des prix à la consommation' } }),
+        expect.objectContaining({ where: { name: 'CPI', nameFr: null }, data: { nameFr: 'Indice des prix à la consommation' } }),
       );
     });
 
@@ -685,7 +685,7 @@ describe('EcoCalendarService', () => {
         usage: { input_tokens: 5, output_tokens: 5 },
       });
 
-      await service['translateEventNames'](DATE);
+      await service['translateEventNames']([DATE]);
 
       expect(mockAnthropic.create).toHaveBeenCalledOnce();
       // Job système : feature dédiée + userId null pour le log automatique.
@@ -700,7 +700,7 @@ describe('EcoCalendarService', () => {
         }),
       );
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { date: DATE, name: 'Widget Index' }, data: { nameFr: 'Indice Widget' } }),
+        expect.objectContaining({ where: { name: 'Widget Index', nameFr: null }, data: { nameFr: 'Indice Widget' } }),
       );
     });
 
@@ -712,17 +712,17 @@ describe('EcoCalendarService', () => {
         usage: { input_tokens: 5, output_tokens: 5 },
       });
 
-      await service['translateEventNames'](DATE);
+      await service['translateEventNames']([DATE]);
 
       expect(mockAnthropic.create).toHaveBeenCalledOnce();
       const promptStr = JSON.stringify(mockAnthropic.create.mock.calls[0][0]);
       expect(promptStr).toContain('New Label');
       expect(promptStr).not.toContain('CPI'); // le connu n'est pas renvoyé au modèle
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { date: DATE, name: 'CPI' }, data: { nameFr: 'Indice des prix' } }),
+        expect.objectContaining({ where: { name: 'CPI', nameFr: null }, data: { nameFr: 'Indice des prix' } }),
       );
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { date: DATE, name: 'New Label' }, data: { nameFr: 'Nouveau libellé' } }),
+        expect.objectContaining({ where: { name: 'New Label', nameFr: null }, data: { nameFr: 'Nouveau libellé' } }),
       );
     });
 
@@ -734,14 +734,63 @@ describe('EcoCalendarService', () => {
         .mockResolvedValueOnce({ content: [{ type: 'text', text: '{"Label 0": "Libellé 0", "Label 1": "Lib' }] })
         .mockResolvedValueOnce({ content: [{ type: 'text', text: '{"Label 15":"Libellé 15"}' }] });
 
-      await service['translateEventNames'](DATE);
+      await service['translateEventNames']([DATE]);
 
       expect(mockAnthropic.create).toHaveBeenCalledTimes(2);
       expect(JSON.stringify(mockAnthropic.create.mock.calls[0][0])).not.toContain('Label 15');
       expect(mockPrisma.ecoLabelTranslation.upsert).toHaveBeenCalledOnce();
       expect(mockPrisma.ecoEvent.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { date: DATE, name: 'Label 15' }, data: { nameFr: 'Libellé 15' } }),
+        expect.objectContaining({ where: { name: 'Label 15', nameFr: null }, data: { nameFr: 'Libellé 15' } }),
       );
+    });
+
+    it('cherche les libellés à traduire sur toutes les dates données', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([]);
+      await service['translateEventNames'](['2026-10-04', '2026-10-05']);
+      expect(mockPrisma.ecoEvent.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { date: { in: ['2026-10-04', '2026-10-05'] }, nameFr: null } }),
+      );
+    });
+
+    it('libellé déjà soumis dans la fenêtre (verrou pris) → aucun appel modèle', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([{ name: 'Widget Index' }]);
+      mockPrisma.ecoLabelTranslation.findMany.mockResolvedValueOnce([]);
+      mockRedisService.client.set.mockResolvedValueOnce(null); // SET NX refusé
+
+      await service['translateEventNames']([DATE]);
+
+      expect(mockAnthropic.create).not.toHaveBeenCalled();
+    });
+
+    it('traduction en échec → verrou 12 h posé : le polling suivant ne relance pas le modèle', async () => {
+      const locks = new Set<string>();
+      mockRedisService.client.set.mockImplementation(async (key: string) => {
+        if (locks.has(key)) return null;
+        locks.add(key);
+        return 'OK';
+      });
+      mockPrisma.ecoLabelTranslation.findMany.mockResolvedValue([]);
+      mockPrisma.ecoEvent.findMany.mockResolvedValue([{ name: 'OPEC Meeting' }]);
+      mockAnthropic.create.mockResolvedValue({ content: [{ type: 'text', text: '{"OPEC Meeting": "Réun' }] });
+
+      for (let minute = 0; minute < 60; minute++) await service['translateEventNames']([DATE]);
+
+      expect(mockAnthropic.create).toHaveBeenCalledOnce();
+      expect(mockRedisService.client.set).toHaveBeenCalledWith('eco:label-tr:OPEC Meeting', '1', 'EX', 12 * 3600, 'NX');
+      mockRedisService.client.set.mockReset().mockResolvedValue('OK');
+      mockPrisma.ecoLabelTranslation.findMany.mockReset().mockResolvedValue([]);
+      mockPrisma.ecoEvent.findMany.mockReset();
+      mockAnthropic.create.mockReset();
+    });
+
+    it('Redis indisponible → traduction reportée, aucun appel modèle', async () => {
+      mockPrisma.ecoEvent.findMany.mockResolvedValueOnce([{ name: 'Widget Index' }]);
+      mockPrisma.ecoLabelTranslation.findMany.mockResolvedValueOnce([]);
+      mockRedisService.client.set.mockRejectedValueOnce(new Error('down'));
+
+      await service['translateEventNames']([DATE]);
+
+      expect(mockAnthropic.create).not.toHaveBeenCalled();
     });
   });
 });

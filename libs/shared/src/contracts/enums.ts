@@ -71,6 +71,16 @@ export type BrokerProvider = (typeof BrokerProvider)[keyof typeof BrokerProvider
 export const BrokerConnectionStatus = { CONNECTED: 'CONNECTED', NEEDS_RECONNECT: 'NEEDS_RECONNECT' } as const;
 export type BrokerConnectionStatus = (typeof BrokerConnectionStatus)[keyof typeof BrokerConnectionStatus];
 
+// Offre fondateur et codes partenaires (#525).
+export const FounderSeatStatus = { ACTIVE: 'ACTIVE', LOST: 'LOST', REFUNDED: 'REFUNDED', RELEASED: 'RELEASED' } as const;
+export type FounderSeatStatus = (typeof FounderSeatStatus)[keyof typeof FounderSeatStatus];
+
+export const PartnerRedemptionStatus = { ACTIVE: 'ACTIVE', LOST: 'LOST', RELEASED: 'RELEASED' } as const;
+export type PartnerRedemptionStatus = (typeof PartnerRedemptionStatus)[keyof typeof PartnerRedemptionStatus];
+
+export const CheckoutReservationKind = { FOUNDER: 'FOUNDER', PARTNER: 'PARTNER' } as const;
+export type CheckoutReservationKind = (typeof CheckoutReservationKind)[keyof typeof CheckoutReservationKind];
+
 /** Tous les enums ci-dessus, par nom Prisma : utilisé par le test de synchronisation. */
 export const CONTRACT_ENUMS = {
   TradeSide,
@@ -88,4 +98,7 @@ export const CONTRACT_ENUMS = {
   Plan,
   BrokerProvider,
   BrokerConnectionStatus,
+  FounderSeatStatus,
+  PartnerRedemptionStatus,
+  CheckoutReservationKind,
 } as const;

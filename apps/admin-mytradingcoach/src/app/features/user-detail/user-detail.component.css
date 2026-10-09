@@ -80,3 +80,4 @@
 
 @media (max-width: 1024px) { .ud-g2 { grid-template-columns: 1fr; } .ud-g3 { grid-template-columns: 1fr; } }
 @media (min-width: 1025px) and (max-width: 1280px) { .ud-g3 { grid-template-columns: 1fr 1fr; } }
+.s-v .red { color: var(--red); }

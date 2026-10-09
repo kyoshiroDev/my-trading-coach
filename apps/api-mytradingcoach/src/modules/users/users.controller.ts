@@ -14,6 +14,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
+import { ConfigService } from '@nestjs/config';
+import { FounderOfferService } from '../founder-offer/founder-offer.service';
+import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -23,11 +26,28 @@ import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decora
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly founders: FounderOfferService,
+    private readonly partners: PartnerCodeService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Get('me')
-  getMe(@CurrentUser() user: { id: string }) {
-    return this.usersService.findById(user.id);
+  async getMe(@CurrentUser() user: { id: string }) {
+    const me = await this.usersService.findById(user.id);
+    if (!me) return me;
+    // Offre fondateur (#525) : statut, numéro, éligibilité (modale, cadenas, Profil) ; code
+    // partenaire actif et ses conditions figées.
+    const founderPriceIds = [
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER') ?? '',
+      this.config.get<string>('STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER') ?? '',
+    ].filter(Boolean);
+    const [founder, partner] = await Promise.all([
+      this.founders.statusFor(me.id, founderPriceIds),
+      this.partners.statusFor(me.id),
+    ]);
+    return { ...me, ...(founder ?? {}), ...partner };
   }
 
   @Patch('me')

@@ -52,6 +52,12 @@
 .badge-auto { display: inline-block; padding: 1px 6px; border-radius: 5px; background: rgba(99,155,255,.14); color: var(--teal); font-size: var(--fs-2xs); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
 .force-toggle { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 12px; color: var(--text2); line-height: 1.4; cursor: pointer; }
 .force-toggle input { margin-top: 2px; accent-color: var(--teal); cursor: pointer; }
+/* Envoi test obligatoire (founder_launch) + confirmation de l'envoi réel */
+.camp-consent { display: block; margin-top: 4px; }
+.test-box { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 12px 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--text2); line-height: 1.4; }
+.test-box.test-ok { border-color: var(--teal); color: var(--text); }
+.test-box .btn { flex-shrink: 0; }
+.confirm-q { margin-right: auto; font-size: 12px; font-weight: 600; color: var(--text); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 768px) {

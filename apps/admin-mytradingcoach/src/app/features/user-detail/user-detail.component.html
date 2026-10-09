@@ -18,6 +18,11 @@
             <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-free]="d.identity.plan==='FREE'">{{ d.identity.plan }}</span>
             <span class="badge" [class.b-ok]="status()==='actif'" [class.b-free]="status()!=='actif'">● {{ statusLabel() }}</span>
             @if (d.identity.role !== 'USER') { <span class="role-tag purple">{{ d.identity.role }}</span> }
+            @if (d.offer?.founder; as f) {
+              <span class="badge" [class.b-ok]="f.status === 'ACTIVE'" [class.b-free]="f.status !== 'ACTIVE'" data-testid="founder-badge">Fondateur n° {{ f.number }}</span>
+            } @else if (d.offer?.partner; as p) {
+              <span class="badge b-beta" data-testid="partner-badge">Code {{ p.code }}</span>
+            }
           </span>
         </div>
       </div>
@@ -97,6 +102,26 @@
                 [attr.title]="offerBlocked()"
                 (click)="offerPremium()">{{ offering() ? 'En cours…' : offerLabel() }}</button>
             </div>
+            @if (d.offer?.founder; as f) {
+              <!-- Offre fondateur (#525) -->
+              <div class="srow" data-testid="founder-row">
+                <span class="s-l">Fondateur n° {{ f.number }}</span>
+                <span class="s-v">
+                  depuis le {{ f.takenAt | date:'dd/MM/yyyy' }} · {{ f.interval === 'year' ? 'annuel' : 'mensuel' }}
+                  @if (f.status === 'LOST' && f.endedAt) { · <span class="red">Tarif perdu le {{ f.endedAt | date:'dd/MM/yyyy' }}</span> }
+                  @if (f.status === 'REFUNDED' && f.endedAt) { · <span class="red">Remboursé le {{ f.endedAt | date:'dd/MM/yyyy' }}, tarif perdu</span> }
+                </span>
+              </div>
+            }
+            @if (d.offer?.partner; as p) {
+              <div class="srow" data-testid="partner-row">
+                <span class="s-l">Code partenaire {{ p.code }}</span>
+                <span class="s-v">
+                  {{ partnerConditions(p) }}
+                  @if (p.status !== 'ACTIVE' && p.endedAt) { · <span class="red">remise {{ p.status === 'LOST' ? 'perdue' : 'rendue' }} le {{ p.endedAt | date:'dd/MM/yyyy' }}</span> }
+                </span>
+              </div>
+            }
             <div class="srow"><span class="s-l">Rôle / Source</span><span class="s-v">{{ d.identity.role }} · {{ sourceLabel() }}</span></div>
             <div class="srow"><span class="s-l">Inscrit</span><span class="s-v">{{ d.identity.createdAt | date:'dd/MM/yyyy' }} · J+{{ d.kpis.daysSinceSignup }}</span></div>
             <div class="srow"><span class="s-l">Dernière activité</span><span class="s-v" [class.teal]="status() === 'actif'">{{ d.identity.lastActivityAt ? lastActivity() : 'jamais' }}</span></div>

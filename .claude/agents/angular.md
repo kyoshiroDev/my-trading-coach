@@ -840,6 +840,10 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - Aperçu des campagnes (admin `/emails`) : **toujours** le HTML renvoyé par
   `POST /admin/campaigns/:type/preview` (le vrai template envoyé), jamais un rendu reconstruit côté
   front. Objet/contenu d'une annonce → nouvel appel après 400 ms de pause (`switchMap`).
+- Campagnes `requiresTest` (`founder_launch`) : bouton « Envoyer un test à {testEmail} » (adresse
+  donnée par l'API, jamais saisie) ; « Envoyer à N inscrits » désactivé tant que le contenu actuel
+  n'est pas testé (`testedCurrent`, revérifié par le serveur), puis confirmation « Envoyer à N
+  inscrits ? ». Pas de case « force » pour ces campagnes. Ciblés avec / sans consentement affichés.
 
 ## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
 
@@ -863,8 +867,17 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
   avec `loadError = computed(() => !!resource.error())` (Dashboard, Analytics, Scoring en exemple).
-- **Paiement** : `inject(BillingService).startCheckout(plan)` (`core/services/billing.service.ts`),
-  jamais `BillingApi.checkout` directement.
+- **Paiement** : `inject(BillingService).startCheckout(plan, { cta, promo })`
+  (`core/services/billing.service.ts`), jamais `BillingApi.checkout` directement. Il ouvre la
+  **page de paiement de l'app** `/paiement?plan=…&cta=…&promo=…` (`features/checkout/`, hors coque,
+  `authGuard`), commune à TOUTES les offres (fondateur, code partenaire, Premium avec ou sans essai,
+  mensuel ou annuel). La page appelle `BillingService.createSession` (`ui: 'elements'`), monte le
+  formulaire Stripe (Checkout Elements, `@stripe/stripe-js` épinglé 9.17.0 = Stripe.js `dahlia`) :
+  Apple Pay / Google Pay / Link en boutons express, carte (CB co-badgée reconnue) et Klarna dans le
+  formulaire. Textes par offre : `checkout-copy.ts` (fonction pure, testée) ; montant du jour lu dans
+  la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
+  publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
+  (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
@@ -907,4 +920,55 @@ onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc
 `?checkout=success|canceled` → `checkout_return`), CTA « Créer mon compte » de la démo (sidebar). Nouveau
 teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
 (`features/acquisition/funnel.util.ts`, testé).
+
+## Offre fondateur et codes partenaires (#525, 2026-10-08)
+
+- **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
+  places, place fondateur, éligibilité, `refundUntil`, code partenaire actif, intervalle). Chargé À LA
+  DEMANDE (`load()` : modale, cadenas, Profil), une fois par utilisateur, `refresh()` après paiement /
+  changement d'intervalle, délai max 10 s (une session périmée ne le fige pas). Pas dans `/auth/me`
+  (interrogé toutes les 5 min). Démo : jamais chargé.
+- **Intention du lien** : `OfferIntentService` capture `plan=founder|premium`, `promo`, `cta` au
+  démarrage (`App`, avant toute redirection) en sessionStorage `mtc_offer_intent`. `plan=founder` ou
+  `promo` → pas de checkout direct à l'inscription : `/dashboard`, puis `OfferIntentHostComponent`
+  (monté dans le shell `sidebar`, modale en `@defer`) ouvre `mtc-plan-modal` avec `[preset]`.
+  `plan=premium` seul → checkout direct comme avant. Déjà connecté sur `/register` avec une intention
+  → `/dashboard`. Jamais pour un abonné `active` / `past_due` ni la démo. Compte déjà Premium
+  autrement (admin, bêta, Premium offert, essai) venu d'un lien : modale seulement si
+  `founderAvailable` (offres chargées), sinon intention oubliée — jamais de modale « 49 € » à
+  quelqu'un qui a déjà Premium (lien de la campagne fondateur).
+- **`mtc-plan-modal`** : entrées `cta` (défaut `modale`) et `preset`. Options exclusives (radio) :
+  Fondateur (si `founderAvailable`), Code partenaire (une fois validé), Premium. Présélection : code du
+  lien s'il est valide, sinon fondateur, sinon Premium ; un code saisi à la main et valide est choisi.
+  Champ « Code partenaire » validé en direct (`GET /billing/partner/:code`, debounce 400 ms, raison
+  précise du refus). Checkout : fondateur → `founder_*` sans `promo` ; code → `premium_*` + `promo`
+  (jamais de cumul). Sous-titre, CTA et ligne de prix suivent l'offre choisie.
+- **`mtc-premium-lock`** : bouton (plus un lien vers `/parametres`, route inexistante) →
+  `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
+  dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
+- **Profil > Abonnement** : badge « Fondateur n° X », tarif bloqué et perte en cas de résiliation,
+  « Satisfait ou remboursé : demander le remboursement » (mailto hello@, jusqu'à `refundUntil` : le
+  remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
+  CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
+  neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.
+- Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
+  l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
+
+### Admin : offre fondateur et codes partenaires (#525)
+
+- Dashboard : 7e KPI « Fondateurs » (`X / 200`, `N actifs · R restantes`, barre fine, badge « fermée »)
+  → `/subscriptions?filtre=fondateurs`. La bande `dash-kpis` passe à 7 colonnes.
+- Abonnements : KPI `cols-5` (+ Fondateurs) et onglets `section-tabs` Abonnements / Fondateurs /
+  Codes partenaires, pilotés par `?filtre=fondateurs|codes`. Composants `founders-tab` (interrupteur
+  « Ouvrir l'offre » avec confirmation DANS la page, date de fin, récap par clic, tableau filtrable et
+  paginé, liens vers la fiche) et `partner-codes-tab` (formulaire création / modification, aperçu en
+  une phrase, aide « effet sur l'annuel », liste « utilisés / max », activer / désactiver, abonnés par
+  code). Styles partagés `offers-tabs.css` (champs repris de la page Ambassadeurs).
+- Colonne « Montant » = montant réellement payé (`realAmountLabel`, `core/utils/offers.util.ts`, testé)
+  + étiquette « Fondateur n° X » / « Code X ».
+- Revenus : carte « MRR par tarif » (`mrrBreakdown` : normal / fondateurs / codes partenaires).
+- Fiche utilisateur : badge « Fondateur n° X » ou « Code X », ligne avec date, intervalle et « Tarif
+  perdu le … » / « Remboursé le … », ou conditions figées du code (`AdminUserDetail.offer`).
+- Maquette `admin-mytradingcoach.html` absente en local au moment du #525 : design repris des
+  composants existants (KPI, `.tbl`, `.badge`, `.section-tabs`, champs Ambassadeurs).
 

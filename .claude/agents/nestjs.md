@@ -80,6 +80,18 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
+GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
+PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
+POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
+GET    /api/billing/offers            → { founderOffer, founder (place, éligibilité, refundUntil), partner, subscription } (app)
+GET    /api/billing/partner/:code     (20/min) → validation du code POUR l'utilisateur (déjà utilisé, déjà abonné…)
+GET    /api/pricing/partner/:code     PUBLIC (20/min, max-age=60) → conditions du code (valid, prix, durée) ou raison du refus ; ni partenaire ni utilisations
+GET    /api/admin/partner-codes       ADMIN → codes + used/max, actifs, perdus, rendus, checkouts en cours
+POST   /api/admin/partner-codes       ADMIN → création (2 coupons Stripe créés par l'API)
+PATCH  /api/admin/partner-codes/:id   ADMIN → modification / activation (sans effet sur les abonnés)
+GET    /api/admin/partner-codes/:id/users  ADMIN → abonnés du code
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -324,7 +336,7 @@ async analyze(summary: string): Promise<Pattern[]> {
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
   });
-  return JSON.parse(this.clean(res.content[0].text)).patterns;
+  return JSON.parse(this.clean(responseText(res))).patterns; // jamais content[0] (bloc thinking, refus)
 }
 ```
 
@@ -1200,7 +1212,9 @@ Ordre de résolution d'un import, à ne pas réarranger :
 3. Le fichier ressemble-t-il à un export de trades ? Sinon message neutre, sans upsell.
 4. Chemin IA (`PremiumGuard` + `AI_ENABLED`) : d'abord un **mapping** (un appel, ~0,003 $,
    coût indépendant de la taille), et seulement s'il échoue le repli ligne par ligne
-   (`AI_BATCH` = 120, ~1,43 $ pour 2000 lignes).
+   (`AI_BATCH` = 25 depuis le 2026-10-08 : à 120, la sortie dépassait `max_tokens` 8192 ; un test
+   impose `AI_BATCH × WORST_TOKENS_PER_TRADE ≤ 50 %` du plafond. Coût du repli inchangé, ~1,4 $
+   pour 2000 lignes : la sortie suit le nombre de trades, seule l'entête est répétée).
 
 Fichiers : `trades/csv-mapping.ts` (types, validation de forme, application, contrôle du P&L,
 `headerSignature`), `trades/broker-mapping.service.ts` (lecture/écriture des fiches),
@@ -1231,9 +1245,26 @@ part de lignes et non la perfection.
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
-- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ; un
-  test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
+- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
+  alias local (`AI_MODELS.analysis` = `claude-sonnet-4-6`, `AI_MODELS.fast` = `claude-haiku-5-5`) ;
+  un test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
   une seule relance, chaque échec tracé (sans le contenu envoyé).
+  - **Réflexion coupée par défaut** : Haiku 5.5 réfléchit si `thinking` est absent, ce qui mange
+    `max_tokens` et se facture. `AnthropicClientService.create` applique `AI_THINKING_OFF` quand
+    l'appel ne précise pas `thinking` : Haiku 5.5 → `disabled`. Un modèle absent de la table
+    (Sonnet 4.6) part **sans** champ `thinking`, comme avant (testé). Pour activer la réflexion sur
+    un appel, passer `thinking` explicitement.
+  - **Lire la réponse avec `responseText(response)`**, jamais `content[0]` : un bloc `thinking`
+    peut venir en premier, et un refus (`stop_reason: 'refusal'`, nouveau sur les 5.5, tracé en
+    warn) peut revenir sans contenu. Haiku 5.5 n'a pas de repli serveur (`fallbacks` interdit).
+  - **Paramètres refusés par Haiku 5.5** (400) : `temperature` / `top_p` / `top_k` non par défaut,
+    `budget_tokens`, préremplissage d'un tour assistant final. Aucun n'est utilisé.
+  - **Effort** : non envoyé (défaut `medium` sur Haiku 5.5, sans effet tant que la réflexion est
+    coupée).
+  - **Sonnet 5.5 : à retenter plus tard** (testé le 2026-10-08, pas adopté). Chat coupé à
+    `max_tokens: 512` (~420-500 tokens contre ~160-220 en Sonnet 4.6, l'effort ne raccourcit pas),
+    débrief JSON illisible 1 fois sur 8. Il refuse aussi `thinking: disabled` (400) : y couper la
+    réflexion avec `between_tools`, sans autre champ, effort `high` au plus. Détail dans `plans.md`.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
@@ -1255,6 +1286,21 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+- **Envoi test des campagnes** (#525) : `POST /admin/campaigns/:type/test` → UN e-mail vers
+  `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
+  (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
+  prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
+  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
+  passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
+  + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
+  modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
+- **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
+  (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
+  avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
+  réponses sur hello@, version texte. `CampaignContent` porte `text/from/replyTo/attachments`, que
+  `dispatch` et l'envoi test transmettent à `EmailJob`. Pas de ligne « Greg, … » dans le corps : la
+  signature suffit (jamais deux signatures). Aperçu admin : `inlineLogoForPreview` (data URI).
 
 ## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
 
@@ -1606,6 +1652,14 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 - Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
   appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
   polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- **Verrou de relance par libellé** (`eco:label-tr:<nom>`, `SET NX EX` 12 h, `claimForTranslation`) : un
+  libellé n'est soumis au modèle qu'une fois par 12 h, réussite ou échec. Sans lui, tout libellé en
+  échec (JSON tronqué, clé renvoyée modifiée, panne) repartait au modèle à chaque polling : ~603
+  appels/jour, 4 834 `eco_translation` sur 30 jours au 2026-10-08. Redis indisponible → traduction
+  reportée (jamais de rafale). Régime attendu : ~30-50 appels/mois.
+- `translateEventNames(dates)` couvre **toutes les dates enregistrées par le fetch** (FMP renvoie la
+  veille et le lendemain), et la propagation se fait par nom sur les lignes `nameFr: null` : un jour
+  jamais demandé (dimanche, « OPEC Meeting ») gardait sinon ses libellés en anglais.
 - **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
   ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
   JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
@@ -1657,4 +1711,56 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+
+## Offre fondateur (#525, 2026-10-07)
+
+`modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
+`reserve`, `claimSeat`, `markLost`, `refundFirstPayment`, paliers), `FounderAdminService`, routes
+publique + admin. **Anti-survente** : toute prise de place est une transaction qui commence par
+`pg_advisory_xact_lock(525001)` (PgBouncer en mode session : OK). Checkout fondateur → réservation de
+35 min (session Stripe 30 min) ; 1er `invoice.payment_succeeded` (`billing_reason = subscription_create`)
+→ `claimSeat` (numéro = max jamais attribué + 1, idempotent ; `null` = pas de place → abonnement annulé +
+alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
+ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
+fondateur. `custom_text.submit` au-dessus du bouton de paiement : fondateur (remboursement 14 j, tarif
+perdu si résiliation) et code partenaire (conditions figées) ; rien au prix normal. Le rendu de la page
+(logo, nom, couleurs) vient du Branding du compte Stripe et du nom / de la description / de l'image du
+produit, pas du code. **Page de paiement de l'app** : `POST /billing/checkout` avec `ui: 'elements'`
+→ session `ui_mode: 'elements'` créée en version d'API `2026-08-26.dahlia` (option PAR APPEL,
+`ELEMENTS_API_VERSION` ; le client reste en 2024-06-20), `payment_method_types` = NOTRE liste (carte, Link, Klarna) croisée avec les moyens activés sur le compte
+(config par défaut, cache Redis 10 min) : un moyen désactivé est retiré, la carte reste toujours,
+`return_url` = `/dashboard?checkout=success&session_id=…`, pas de `custom_text` ni de codes promo
+manuels ; renvoie `{ clientSecret, publishableKey, summary }` (récapitulatif : offre, montants,
+essai, code, places). Sans `STRIPE_PUBLIC_KEY` → repli `{ url }` (page Stripe). Une session ouverte
+n'est reprise que pour la même page (`metadata.ui`) ; la clé d'une session `elements` se relit en
+dahlia. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+(remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
+PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
+renouvellement : rien). `syncSubscription` n'écrase jamais
+l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
+testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
+le stubber dans `app-role-wiring.spec.ts`.
+**E-mails transactionnels (#525, phase F)** : 1er paiement fondateur → `sendFounderWelcome` (« Tu es
+fondateur n° X », prix, fin du remboursement à 14 j) ; 1re facture avec code partenaire →
+`sendPartnerWelcome` (conditions figées, essai) ; `checkout.session.completed` d'une offre `founder` /
+`partner` → PAS de bienvenue Premium générique (pas de doublon) ; `invoice.payment_failed` d'un
+fondateur ou d'un code partenaire actifs → `sendTariffAtRisk` (« ton tarif est en jeu », lien
+`/profil?tab=params`) au lieu de l'e-mail d'échec générique ; `invoice.upcoming` d'un abonnement
+ANNUEL → `sendAnnualRenewalReminder` (montant réel `amount_due`, date, tarif conservé). Le cron du
+rappel à J-7 exclut donc les annuels (`stripeInterval` ≠ `year`). ⚠️ `invoice.upcoming` doit être
+abonné sur les endpoints Stripe (à faire en prod au déploiement) et son délai réglé dans le dashboard.
+
+Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
+pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans
+`CreateCheckoutDto` → offre `partner` (metadata `partnerCode`), prix normal + `discounts` du coupon de
+l'intervalle. Le module fournit son propre `stripeClientProvider`. Concurrence testée sur vraie base :
+`partner-code.int-spec.ts`. MRR : `UsersService.realMrr` (base) et `monthlyOf` après remise (admin).
+
+Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l'intercepteur ajoute
+`{ data }` ; l'ancien `{ data: { … } }` donnait `{ data: { data } }` et faisait planter la page admin
+Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. `AdminUserDetail.offer`
+(fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
+quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·
+Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
+digest même sans inscription.
 

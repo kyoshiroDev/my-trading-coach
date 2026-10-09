@@ -41,9 +41,15 @@ function makeSvc() {
   const referrals = new StripeReferralService(
     config as never, prisma as never, new StripeCustomerService(prisma as never, stripe), stripe,
   );
+  const founders = {
+    claimSeat: vi.fn(), markLost: vi.fn(), releaseReservation: vi.fn(),
+    refundWithinWindow: vi.fn(), updateInterval: vi.fn(),
+  };
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, discord as never,
-    subscriptions, referrals, queue as never, stripe,
+    subscriptions, referrals, founders as never,
+    { claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null), isRefundableFirstPayment: vi.fn().mockResolvedValue(false) } as never,
+    queue as never, stripe,
   );
   return { svc, prisma, resend, discord, retrieve, listInvoicePayments };
 }

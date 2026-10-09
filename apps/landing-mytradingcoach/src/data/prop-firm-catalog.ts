@@ -1,7 +1,7 @@
 /**
  * Catalogue prop firm (@mtc/shared, la même source que l'app) réduit à ce que montre la
  * landing. Exécuté AU BUILD seulement : le navigateur reçoit ce JSON compact, pas les 16
- * fichiers complets (sources, notes, horaires…).
+ * fichiers complets (sources, notes…).
  */
 import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import type { CompactFirm, CompactPhase, CompactPlan, PhaseKind } from './prop-firm-rules-view';
@@ -10,10 +10,12 @@ import type { CompactFirm, CompactPhase, CompactPlan, PhaseKind } from './prop-f
 interface RawPhase {
   phase: PhaseKind;
   profit_target: number | null;
-  max_drawdown: { amount: number; type: string } | null;
+  max_drawdown: { amount: number; type: string; locked_floor?: number | null } | null;
   daily_loss_limit: { amount: number; tiers?: unknown[] | null } | null;
   consistency: { max_single_day_pct?: number | null; applies_to?: string | null } | null;
   payout: { min_days?: number | null; min_daily_profit?: number | null; split_pct?: number | null; min_amount?: number | null } | null;
+  max_contracts?: { minis: number | null; micros: number | null; scaling?: boolean } | null;
+  time_rules?: { must_close_by: string | null; overnight_allowed: boolean | null } | null;
 }
 interface RawPlan {
   id: string;
@@ -50,7 +52,9 @@ function phase(p: RawPhase): CompactPhase {
   return {
     phase: p.phase,
     target: p.profit_target ?? null,
-    dd: p.max_drawdown ? { amount: p.max_drawdown.amount, type: p.max_drawdown.type } : null,
+    dd: p.max_drawdown
+      ? { amount: p.max_drawdown.amount, type: p.max_drawdown.type, lockFloor: p.max_drawdown.locked_floor ?? null }
+      : null,
     dll: p.daily_loss_limit ? { amount: p.daily_loss_limit.amount, tiered: (p.daily_loss_limit.tiers?.length ?? 0) > 1 } : null,
     consistency: c ? { pct: c, appliesTo: p.consistency?.applies_to ?? null } : null,
     payout: p.payout
@@ -61,6 +65,10 @@ function phase(p: RawPhase): CompactPhase {
           minAmount: p.payout.min_amount ?? null,
         }
       : null,
+    contracts: p.max_contracts
+      ? { minis: p.max_contracts.minis, micros: p.max_contracts.micros, scaling: p.max_contracts.scaling === true }
+      : null,
+    close: p.time_rules ? { at: p.time_rules.must_close_by, overnight: p.time_rules.overnight_allowed } : null,
   };
 }
 

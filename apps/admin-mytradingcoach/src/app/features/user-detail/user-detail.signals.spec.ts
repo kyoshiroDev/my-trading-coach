@@ -30,6 +30,7 @@ function makeData(over: {
     },
     usage: { totalTrades: over.totalTrades ?? 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 },
     topAssets: [],
+    offer: { founder: null, partner: null },
     sessions: Array.from({ length: over.sessions ?? 0 }, () => ({
       date: '2026-06-05T09:00:00.000Z', trades: 1, pnl: 0, winRate: 0, emotion: null, durationMinutes: null,
     })),

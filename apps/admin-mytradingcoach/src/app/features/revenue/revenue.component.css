@@ -9,3 +9,4 @@
 .diverge-row.red { color: var(--red); }
 .diverge-row.amber { color: var(--amber); }
 .card-action { cursor: pointer; }
+.mini-v.purple { color: var(--purple); }

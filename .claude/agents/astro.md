@@ -63,8 +63,16 @@ src/
   `src/data/prop-firm-rules-view.ts` (pur, partagé rendu serveur / script). Ajouter une firm au
   catalogue suffit : la landing suit. Éléments recréés par le script → styles en `:global()`
   bornés à la section (sinon sans l'attribut de portée Astro, donc sans style). Nombre de firms du
-  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur. Capture `showcase/app-prop-firm-rules.webp`
-  = dépli « Mes comptes » du compte démo Apex 50K (prod).
+  Hero = `PROP_FIRM_CATALOG_FILES.length`, jamais en dur (idem `Compare.astro` et `MultiComptes.astro`).
+  Mise en page (2026-10-08) : carrousel `PropFirmMarquee.astro` sous le sous-titre (noms en wordmark,
+  pas de logos ; clic = choix de la firm via `data-pf-pick`, géré par le script de PropFirmLive),
+  sélecteur à gauche, **panneau de tuiles** à droite (objectif, drawdown + plancher figé, perte du jour,
+  consistency, taille max, clôture en heure de Paris comme l'app, payout en funded), puis CTA, mention
+  « Calcul indicatif : la plateforme de ta firm fait foi. » et captures en pleine largeur avec switch
+  Évaluation / Funded : `showcase/app-prop-firm-rules.webp` (Apex 50K éval) et
+  `showcase/app-prop-firm-funded.webp` (Tradeify 50K funded), dépli « Mes comptes » du compte démo (prod),
+  barre latérale repliée, complet jusqu'à « Sources officielles ». Mobile : tuiles sur 2 colonnes, capture
+  à 820 px défilable. Nav : menu hamburger jusqu'à 1023 px (les liens ne tiennent pas en tablette).
 - **Structure de la home après l'audit du 2026-10-06** : Hero prop firm (+ ligne de confiance
   factuelle `.hero-trust`, ordonnée après les CTA en mobile), « Ta prop firm, en direct », timeline
   d'un prop trader (trade qui arrive seul, marge en direct, anti-tilt), **6 cartes** fonctionnalités
@@ -79,6 +87,34 @@ src/
   `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
   dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
   arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
+
+- **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
+  (`src/lib/founder-offer.ts` : une requête par page, réponse `{ data }` déballée, état gardé 60 s en
+  sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien). **Le HTML
+  statique est toujours « offre fermée »** : bandeau, carte Fondateur, sa note et la question FAQ sont
+  dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script seulement si l'offre
+  vend et retirés sinon → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur » visible
+  (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML). Un lien inséré après coup
+  reprend les paramètres (ref, promo, utm_*) du lien Premium. Rien n'apparaît tant que l'API ne dit pas `open` + places > 0 (cache HTTP
+  de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
+  - Bandeau `FounderBanner.astro`, inclus par `Nav.astro` (toutes les pages) : fixe, 32 px, la Nav
+    descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans
+    marge → attribut `data-offer-shift` (bandeau « Fait en France » du Hero). Ancres :
+    `scroll-padding-top: 92px` quand le bandeau est là. Fermeture mémorisée (sessionStorage
+    `mtc_offer_bar_closed`).
+  - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
+    → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier. Même liste
+    `premiumPlus` que la carte Premium (« Tout Premium inclus »).
+  - FAQ : `FOUNDER_FAQ` (variantes `open` / `ended`) affichée seulement si l'offre vend ou s'est
+    clôturée (`ended`), **hors `FAQ` donc hors JSON-LD**. La question « code partenaire » est dans `FAQ`.
+  - Point de clic `cta` : `carte` par défaut ; `bandeau` / `faq` retenus en sessionStorage `mtc_cta`
+    et posés sur le lien de la carte au clic. **Jamais d'UTM sur un lien interne.**
+    `?cta=email` (lien e-mail pointant sur la landing) est capté par `captureCtaFromUrl()` et retenu
+    de la même façon ; aucune autre valeur n'est acceptée depuis l'URL. (La campagne `founder_launch`
+    pointe, elle, directement dans l'app.)
+  - `?promo=CODE` (script de `Base.astro`) : format `^[A-Z0-9_-]{3,20}$`, gardé 30 j en localStorage
+    `mtc_promo` (comme `ref`), ajouté à tous les liens `/register`, à côté des UTM d'origine.
+  - JSON-LD : prix NORMAL uniquement. CGU : clauses `#offre-fondateur` et `#codes-partenaires`.
 
 ---
 

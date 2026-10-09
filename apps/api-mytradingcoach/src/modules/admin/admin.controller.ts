@@ -125,6 +125,15 @@ export class AdminController {
     return this.emailCampaign.preview(type, body.subject, body.content);
   }
 
+  /** Envoi test : un seul e-mail vers CAMPAIGN_TEST_EMAIL (hello@), sans EmailSend. */
+  @Post('campaigns/:type/test')
+  testCampaign(
+    @Param('type') type: CampaignType,
+    @Body() body: CampaignContentDto,
+  ) {
+    return this.emailCampaign.sendTest(type, body.subject, body.content);
+  }
+
   @Post('campaigns/:type/send')
   sendCampaign(
     @Param('type') type: CampaignType,

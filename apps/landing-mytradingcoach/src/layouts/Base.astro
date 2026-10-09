@@ -116,6 +116,36 @@ const robots = noindex
     })();
   </script>
 
+  <!-- Code partenaire (#525) : ?promo=CODE sur n'importe quelle page (post, bio, DM, e-mail),
+       gardé 30 j comme le parrainage et ajouté à tous les CTA d'inscription. Ne remplace PAS la
+       source d'acquisition (utm_*) : les deux voyagent ensemble jusqu'à l'app. Format vérifié
+       ici, conditions vérifiées par l'API au checkout. -->
+  <script is:inline>
+    (function () {
+      try {
+        var KEY = 'mtc_promo', MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+        var fromUrl = (new URL(window.location.href).searchParams.get('promo') || '').trim().toUpperCase();
+        if (!/^[A-Z0-9_-]{3,20}$/.test(fromUrl)) fromUrl = '';
+        if (fromUrl) {
+          try { localStorage.setItem(KEY, JSON.stringify({ code: fromUrl, ts: Date.now() })); } catch (e) {}
+        }
+        var promo = fromUrl;
+        if (!promo) {
+          try {
+            var o = JSON.parse(localStorage.getItem(KEY) || 'null');
+            if (o && o.code && (Date.now() - o.ts) < MAX_AGE) promo = o.code;
+          } catch (e) {}
+        }
+        if (!promo) return;
+        document.querySelectorAll('a[href*="/register"]').forEach(function (a) {
+          try {
+            var h = new URL(a.href);
+            if (!h.searchParams.get('promo')) { h.searchParams.set('promo', promo); a.href = h.toString(); }
+          } catch (e) {}
+        });
+      } catch (e) {}
+    })();
+  </script>
   <!-- Acquisition : source de la visite = utm_* du lien, sinon site d'origine (referrer
        externe, medium « referral »), gardée en sessionStorage pour toute la session.
        1) propagée aux CTA d'inscription (→ User.acquisition* à l'inscription) ;

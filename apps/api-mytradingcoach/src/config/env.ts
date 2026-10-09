@@ -29,6 +29,13 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'STRIPE_WEBHOOK_SECRET', level: 'required' },
   { name: 'STRIPE_PREMIUM_PRICE_MONTHLY_V2', level: 'required' },
   { name: 'STRIPE_PREMIUM_PRICE_YEARLY_V2', level: 'required' },
+  // Offre fondateur (#525) : 29 €/mois et 290 €/an, metadata tier=founder, tax_behavior inclusive.
+  { name: 'STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER', level: 'required' },
+  { name: 'STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER', level: 'required' },
+  // Clé publiable renvoyée à la page de paiement de l'app ; absente → page Stripe (repli).
+  // Campagnes (#525) : seule adresse des envois test (jamais saisie dans l'admin) ; défaut hello@.
+  { name: 'CAMPAIGN_TEST_EMAIL', level: 'optional', check: (v) => (/^[^@\s]+@[^@\s]+$/.test(v) ? undefined : 'doit être une adresse e-mail') },
+  { name: 'STRIPE_PUBLIC_KEY', level: 'production', check: (v) => (v.startsWith('pk_') ? undefined : 'doit commencer par pk_') },
   { name: 'RESEND_API_KEY', level: 'required' },
   // Sans REDIS_HOST, l'API vise localhost : cache, files de jobs et temps réel hors service.
   { name: 'REDIS_HOST', level: 'production' },

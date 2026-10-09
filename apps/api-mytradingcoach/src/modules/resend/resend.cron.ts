@@ -28,6 +28,8 @@ export class ResendCron {
         plan: 'PREMIUM',
         notificationsEmail: true,
         stripeCurrentPeriodEnd: { gte: start, lte: end },
+        // Annuels : rappel de reconduction avec le montant réel via le webhook invoice.upcoming.
+        OR: [{ stripeInterval: null }, { stripeInterval: { not: 'year' } }],
       },
       select: { email: true, name: true, stripeCurrentPeriodEnd: true },
     });

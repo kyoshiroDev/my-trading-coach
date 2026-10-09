@@ -397,16 +397,33 @@ export class AdminService {
       }),
     ]);
 
-    // MRR réel Stripe : somme des montants normalisés au mois (année / 12).
-    const monthlyOf = (s: { items: { data: { quantity?: number | null; price: { unit_amount: number | null; recurring: { interval: string } | null } }[] } }) => {
+    // MRR réel Stripe : somme des montants normalisés au mois (année / 12), APRÈS remise (#525 :
+    // fondateur, code partenaire, parrainage). Une remise `amount_off` s'applique par facture.
+    type Coupon = { amount_off?: number | null; percent_off?: number | null } | null | undefined;
+    type SubLike = {
+      items: { data: { quantity?: number | null; price: { unit_amount: number | null; recurring: { interval: string } | null } }[] };
+      discounts?: unknown[];
+    };
+    const couponOf = (d: unknown): Coupon => {
+      const x = d as { coupon?: Coupon; source?: { coupon?: Coupon | string } } | string;
+      if (typeof x === 'string') return null; // non développé : ignoré
+      return x.coupon ?? (typeof x.source?.coupon === 'object' ? x.source.coupon : null);
+    };
+    const monthlyOf = (s: SubLike) => {
       let total = 0;
+      let yearly = false;
       for (const item of s.items.data) {
         const qty = item.quantity ?? 1;
         const amount = (item.price.unit_amount ?? 0) / 100;
-        const perMonth = item.price.recurring?.interval === 'year' ? amount / 12 : amount;
-        total += perMonth * qty;
+        yearly = item.price.recurring?.interval === 'year';
+        total += (yearly ? amount / 12 : amount) * qty;
       }
-      return total;
+      for (const d of s.discounts ?? []) {
+        const c = couponOf(d);
+        if (c?.percent_off) total *= 1 - c.percent_off / 100;
+        else if (c?.amount_off) total -= c.amount_off / 100 / (yearly ? 12 : 1);
+      }
+      return Math.max(0, total);
     };
     const mrrStripe = Math.round(stripeSubs.reduce((sum, s) => sum + monthlyOf(s), 0));
 

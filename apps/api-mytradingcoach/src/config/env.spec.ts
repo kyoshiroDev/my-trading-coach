@@ -24,8 +24,13 @@ describe('checkEnv', () => {
 
   it('environnement complet et valide → rien à signaler', () => {
     const key = Buffer.alloc(32, 1).toString('base64');
-    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', SENTRY_DSN: 'https://k@o.ingest.sentry.io/1', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000' };
+    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', SENTRY_DSN: 'https://k@o.ingest.sentry.io/1', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000', STRIPE_PUBLIC_KEY: 'pk_live_x' };
     expect(checkEnv(env, true)).toEqual({ errors: [], warnings: [] });
+  });
+
+  it('clé publiable Stripe : absente en prod → avertissement ; format vérifié', () => {
+    expect(checkEnv(allRequired, true).warnings).toContain('STRIPE_PUBLIC_KEY manquante (indispensable en production)');
+    expect(checkEnv({ ...allRequired, STRIPE_PUBLIC_KEY: 'sk_live_x' }, false).warnings).toHaveLength(1);
   });
 
   it('production sans SENTRY_DSN → avertissement (aucune erreur suivie sinon)', () => {
