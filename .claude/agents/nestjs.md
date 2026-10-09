@@ -1620,8 +1620,10 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   `internal_server_error`, exception réseau du SDK) → `RetryableEmailError` → nouvel essai ;
   définitives (quota, adresse invalide, clé) → Sentry tout de suite, pas de nouvel essai. Sentry
   n'est prévenu d'un échec passager qu'au **dernier** essai.
-- `idempotencyKey: email/<job.id>` : un essai qui avait abouti malgré une réponse perdue ne crée pas
-  de doublon.
+- `idempotencyKey: email/<job.id>/<job.timestamp>` : un essai qui avait abouti malgré une réponse
+  perdue ne crée pas de doublon. Jamais `job.id` seul : c'est un compteur par Redis (prod, beta, dev
+  et local repartent chacun de 1), et Resend refuse une clé revue sous 24 h avec un autre contenu
+  (`invalid_idempotent_request`, non réessayée → e-mail perdu, récap du 2026-10-09).
 - File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
 - `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
   `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
