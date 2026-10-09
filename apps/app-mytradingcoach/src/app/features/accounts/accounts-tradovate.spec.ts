@@ -359,6 +359,13 @@ describe('Mes comptes — solde lu chez le broker', () => {
     expect(tvApi.refreshBalance).toHaveBeenCalledWith('a');
   });
 
+  it('position ouverte au latent jamais lu → « - », pas 0', () => {
+    const { q, click } = setup({ accounts: [withBroker('a', { ...live, openPnl: 0, openPnlKnown: false })], connections: [conn('a')] });
+    click('account-expand-a');
+    const line = q('account-broker-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(line).toContain('(latent -, 1 position ouverte');
+  });
+
   it('solde de départ incompatible avec le broker : avertissement explicite', () => {
     const { q, click } = setup({ accounts: [withBroker('a', { ...live, referenceMismatch: true })], connections: [conn('a')] });
     click('account-expand-a');
