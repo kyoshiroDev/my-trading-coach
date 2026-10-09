@@ -645,6 +645,12 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
+> `TradovateBackgroundRefreshCron` (SCA-B5-03, 2026-10-09) : verrou Redis `tradovate:background-refresh`
+> (SET NX, 30 min, rendu par son seul propriétaire) → un passage qui démarre pendant le précédent est
+> **sauté** ; utilisateurs traités **5 en parallèle**, les connexions d'un même utilisateur l'une
+> après l'autre (login Tradovate partagé). Budget de passés complets décidé avant le parallélisme.
+> Non fait : file BullMQ par connexion et étalement du mois sur l'heure (hash % 4).
+
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
 `seedDemo()` génère des dates **relatives au moment du run**. Appelé une seule fois
