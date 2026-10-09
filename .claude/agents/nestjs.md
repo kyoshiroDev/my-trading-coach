@@ -1282,6 +1282,8 @@ part de lignes et non la perfection.
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
   optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
+  En local, la valeur va dans le `.env` racine (commun) : `.env.development` / `.env.local` ne
+  portent que DATABASE_*, REDIS_* et NODE_ENV (`envFilePath: [<contexte>, '.env']`, le premier gagne).
 - **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
   chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
 

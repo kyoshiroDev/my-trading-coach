@@ -48,10 +48,12 @@ import { RedisService } from '../modules/infra/redis.service';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env['NODE_ENV'] === 'development'
-          ? '.env.development'
-          : '.env.local',
+      // Le fichier propre au contexte ne porte que ses adresses DB/Redis et NODE_ENV ; le reste
+      // vient de .env. Le premier fichier gagne, un fichier absent (conteneur) est ignoré.
+      envFilePath: [
+        process.env['NODE_ENV'] === 'development' ? '.env.development' : '.env.local',
+        '.env',
+      ],
     }),
     // Limite par défaut : 300 requêtes / minute par UTILISATEUR connecté, 60 / minute / IP sinon
     // (SCA-B3-03 ; IP réelle : `trust proxy` dans main.ts). Compteurs Redis communs aux workers.
