@@ -51,6 +51,8 @@ export class ResendService {
   private readonly resend: Resend;
   private readonly from: string;
   private readonly frontendUrl: string;
+  /** Page Profil > Paramètres : « Gérer mon abonnement » ouvre le portail Stripe (carte). */
+  private readonly billingUrl: string;
   private readonly logger = new Logger(ResendService.name);
 
   private readonly replyTo: string;
@@ -70,6 +72,8 @@ export class ResendService {
     this.frontendUrl =
       this.config.get<string>('FRONTEND_URL') ??
       'https://app.mytradingcoach.app';
+    // Champ, pas un getter : le double des tests d'intégration est dérivé du prototype.
+    this.billingUrl = `${this.frontendUrl}/profil?tab=params`;
     this.logger.log(
       `ResendService init | from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
     );
@@ -201,11 +205,6 @@ export class ResendService {
   }
 
   // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
-
-  /** Page Profil > Paramètres : « Gérer mon abonnement » ouvre le portail Stripe (carte). */
-  private get billingUrl(): string {
-    return `${this.frontendUrl}/profil?tab=params`;
-  }
 
   async sendFounderWelcome(params: {
     to: string;
