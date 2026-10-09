@@ -153,6 +153,13 @@ la maquette design (« The Terminal »).
   ce compte », pas de total. « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis
   `refreshLive`. Rafraîchi par `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1
   relecture). Jamais de polling rapide : le latent ne bouge qu'aux événements du compte.
+  **Cohérence avec le suivi du compte** : les deux panneaux lisent le même relevé broker par deux
+  requêtes (`GET /session/today/stats` sondé 30 s, `GET /accounts`). `SessionLiveComponent`
+  compare `liveStats.broker.openPnlAt` et `metrics.broker.equityAt` (`laggingBrokerPanel`) et relit
+  le panneau en retard, une fois par écart (pas de boucle). Côté API, « à plat » = compteur
+  `brokerOpenPositions` en base pour les deux (Redis = détail des lignes seulement).
+- **News live (ticker)** : vitesse constante (`SPEED_PX_S` = 40 px/s) — durée d'animation calculée
+  sur la longueur mesurée d'un tour (`ResizeObserver`), jamais une durée fixe (trop rapide à 20 titres).
 - **Alertes prop firm (#370, PREMIUM)** : `prop:alert` (canal `/tradovate-live`) →
   `PropAlertsService` (core/services) : toast (`warning` temporaire ; `critical` / `breached` en
   `error` sans durée) + `Notification` système si autorisée (`tag` compte:type, une alerte
