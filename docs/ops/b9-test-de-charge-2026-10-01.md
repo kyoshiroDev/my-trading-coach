@@ -241,7 +241,7 @@ Nettoyage : 2 000 comptes purgés (base dev revenue à 11 Mo, `VACUUM FULL`), cl
 du Redis partagé (db 1 uniquement), `LOAD_TEST_KEY` et collecteur retirés, `DB_POOL_MAX=2` et pool 6
 rétablis sur dev, API beta relancée — dev, beta et prod `healthy`.
 
-## Test n°6 (2026-10-09, 22 h 15) — après B5, B6 et B7, sur beta en format prod (#480)
+## Test n°6 (2026-10-09, 22 h 15) — après B5, B6 et B7, sur beta en format prod (#550)
 
 Plan scalabilité livré sur dev puis promu sur beta (PR #549) : file e-mail, imports par lots,
 cache versionné des statistiques, notes comportementales en SQL, XLSX isolé, verrous de crons,
