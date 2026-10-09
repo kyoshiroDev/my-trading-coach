@@ -266,4 +266,32 @@ describe('ResendService', () => {
       expect(maskEmail('invalide')).toBe('***');
     });
   });
+
+  describe('RESEND_DRY_RUN (tests de charge, #487)', () => {
+    const build = (env: Record<string, string>) =>
+      new ResendService(
+        { getOrThrow: () => 're_test_key', get: (k: string) => env[k] } as unknown as ConfigService,
+        { client: redisClient } as unknown as RedisService,
+        emailQueue as never,
+      );
+
+    it('beta : rien n’est envoyé (file ET envois directs), aucun compteur ni alerte', async () => {
+      const svc = build({ RESEND_DRY_RUN: 'true', FRONTEND_URL: 'https://beta.app.mytradingcoach.app' });
+
+      await svc.deliver({ to: 'a@test.com', subject: 's', html: 'h' });
+      await svc.sendAdminAlert('sujet', 'corps');
+
+      expect(mockSend).not.toHaveBeenCalled();
+      expect(redisClient.incr).not.toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    });
+
+    it('prod : RESEND_DRY_RUN ignoré, l’e-mail part', async () => {
+      const svc = build({ RESEND_DRY_RUN: 'true', FRONTEND_URL: 'https://app.mytradingcoach.app' });
+
+      await svc.deliver({ to: 'a@test.com', subject: 's', html: 'h' });
+
+      expect(mockSend).toHaveBeenCalledOnce();
+    });
+  });
 });

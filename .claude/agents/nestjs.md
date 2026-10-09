@@ -1655,6 +1655,9 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   et local repartent chacun de 1), et Resend refuse une clé revue sous 24 h avec un autre contenu
   (`invalid_idempotent_request`, non réessayée → e-mail perdu, récap du 2026-10-09).
 - File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
+- **`RESEND_DRY_RUN=true`** (tests de charge sur beta, #487) : l'appel d'envoi du client Resend est
+  remplacé par un journal `[RESEND DRY RUN]` (file ET envois directs), sans compteur ni alerte de quota.
+  **Ignoré si `FRONTEND_URL` = l'app de prod** (garde-fou : jamais d'e-mail de prod qui disparaît).
 - `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
   `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
   pièce jointe : pas dans Redis).

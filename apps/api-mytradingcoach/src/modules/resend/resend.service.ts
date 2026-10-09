@@ -29,6 +29,9 @@ const CONTACT_INBOX = 'hello@mytradingcoach.app';
 // Plan gratuit Resend : 100 e-mails/jour (remise à zéro à minuit UTC), 3 000/mois. Décision du
 // 2026-10-01 : passer au plan Pro dès qu'on dépasse 80 envois/jour → alerte Sentry à ce seuil.
 export const RESEND_DAILY_WARN = 80;
+// Adresse de l'app de prod : RESEND_DRY_RUN y est ignoré (garde-fou, voir le constructeur).
+const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
+
 // Envoi direct (file indisponible) : quelques essais sur place en cas de 429 ou de panne passagère.
 // Depuis la file, c'est BullMQ qui réessaie (EMAIL_JOB_OPTIONS).
 const DIRECT_RETRY_DELAYS_MS = [1000, 2000, 4000];
@@ -56,6 +59,12 @@ export class ResendService {
   private readonly logger = new Logger(ResendService.name);
 
   private readonly replyTo: string;
+  /**
+   * `RESEND_DRY_RUN=true` (tests de charge sur beta, #487) : chaque e-mail est journalisé au lieu
+   * d'être envoyé. Pas d'adresses inexistantes chez Resend (réputation du domaine), pas de quota
+   * consommé. Ignoré en prod : un e-mail de prod ne doit jamais pouvoir disparaître ainsi.
+   */
+  private readonly dryRun: boolean;
 
   constructor(
     private readonly config: ConfigService,
@@ -77,6 +86,18 @@ export class ResendService {
     this.logger.log(
       `ResendService init | from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
     );
+    const dryRunAsked = this.config.get<string>('RESEND_DRY_RUN') === 'true';
+    this.dryRun = dryRunAsked && this.frontendUrl !== PROD_FRONTEND_URL;
+    if (dryRunAsked && !this.dryRun) this.logger.error('RESEND_DRY_RUN ignoré : environnement de prod');
+    if (this.dryRun) {
+      this.logger.warn('RESEND_DRY_RUN actif : AUCUN e-mail ne part (journalisés seulement)');
+      // Point unique : couvre la file (deliver) ET les envois directs (alerte admin, ambassadeur).
+      this.resend.emails.send = (async (payload: { to: string | string[]; subject: string }) => {
+        const to = (Array.isArray(payload.to) ? payload.to : [payload.to]).map(maskEmail).join(', ');
+        this.logger.log(`[RESEND DRY RUN] "${payload.subject}" → ${to} (non envoyé)`);
+        return { data: { id: 'dry-run' }, error: null, headers: null };
+      }) as unknown as Resend['emails']['send'];
+    }
   }
 
   // ── Bienvenue FREE ─────────────────────────────────────────────────────────
@@ -392,7 +413,7 @@ export class ResendService {
 
       if (!error) {
         this.logger.log(`[RESEND OK] "${params.subject}" → ${to} (id: ${data?.id})`);
-        await this.countSent();
+        if (!this.dryRun) await this.countSent(); // simulation : pas d'alerte de quota pour rien
         return;
       }
 
