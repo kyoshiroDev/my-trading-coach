@@ -10,7 +10,9 @@ OUT=${1:?fichier CSV}
 DB=/opt/infra/databases
 PW=$(grep -m1 -oP 'password=\K[^ ,"]+' $DB/docker-compose.yml | head -1)
 RPW=$(grep -m1 -oP 'requirepass \K\S+' $DB/docker-compose.beta.yml)
-WATCH="mtc_api_beta mtc_api_prod mtc_postgres mtc_pgbouncer mtc_redis_beta mtc_traefik"
+# Conteneurs API trouvés par leur nom : la prod tourne en blue/green (mtc_api_prod_blue / _green
+# + mtc_api_prod_worker), le nom change à chaque déploiement.
+WATCH="$(docker ps --format '{{.Names}}' | grep -E '^mtc_api_(beta|prod_(blue|green|worker))$' | sort | tr '\n' ' ')mtc_postgres mtc_pgbouncer mtc_redis_beta mtc_traefik"
 START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 mib() { awk '{v=$1; u=$1; gsub(/[0-9.]/,"",u); if(u=="GiB")v*=1024; else if(u=="KiB")v/=1024; else if(u=="B")v/=1048576; printf "%d", v}'; }
 
