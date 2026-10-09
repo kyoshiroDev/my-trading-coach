@@ -476,3 +476,22 @@ Migration `20261007192237_offre_fondateur`, additive. **Registres** plutôt que 
   réservations PARTNER non expirées, index `[partnerCodeId, status]`.
 - `CheckoutReservation` : anti-survente pendant la session Checkout (30 min), `stripeSessionId` unique.
 
+
+## Rétention des données (SCA-B5-09, 2026-10-09)
+
+`modules/retention/retention.cron.ts` — le **1er du mois à 4 h 30 Paris** (après les dumps de 3 h),
+worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en boucle, table par table
+(une table en échec ne bloque pas les autres). Décisions de Greg du 2026-10-07 :
+
+| Table | Colonne | Conservation |
+|---|---|---|
+| `MarketNews` | `publishedDate` | 30 jours |
+| `StripeEvent` | `processedAt` | 90 jours (Stripe ne rejoue pas au-delà de 3 j) |
+| `AiUsageLog` | `createdAt` | 13 mois (détail des coûts IA perdu au-delà) |
+| `UserDailyActivity` | `date` | 24 mois |
+
+- **`EmailSend` n'est JAMAIS purgée** : c'est l'anti-doublon des campagnes « une seule fois »
+  (`EmailDispatchService.canSend`). La purger ferait renvoyer une campagne one-shot.
+- Nouvelle table qui grossit sans fin → décider sa conservation et l'ajouter à `RETENTION_RULES`
+  (liste figée : ses noms entrent tels quels dans le SQL). Validé sur vraie base :
+  `retention.int-spec.ts`.
