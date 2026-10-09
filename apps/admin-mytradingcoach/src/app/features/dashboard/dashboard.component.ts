@@ -10,6 +10,7 @@ import {
   AdminOnlineUser,
   RetentionData,
   MetricsHistoryPoint,
+  AdminFoundersData,
 } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
@@ -30,6 +31,12 @@ export class DashboardComponent {
 
   protected readonly now = new Date();
   protected readonly stats = signal<AdminStats | null>(null);
+  /** Offre fondateur (#525) : places prises / 200, actifs, restantes, ouverte ou fermée. */
+  protected readonly founders = signal<AdminFoundersData | null>(null);
+  protected readonly founderFill = computed(() => {
+    const f = this.founders();
+    return f ? `scaleX(${Math.min(1, f.totals.taken / f.offer.seatsTotal)})` : 'scaleX(0)';
+  });
   protected readonly retention = signal<RetentionData | null>(null);
   protected readonly history = signal<MetricsHistoryPoint[]>([]);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
@@ -172,6 +179,8 @@ export class DashboardComponent {
   constructor() {
     this.adminApi.stats().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.stats.set(r.data));
+    this.adminApi.founders().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => this.founders.set(r?.data ?? null));
 
     this.adminApi.online().pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.onlineUsers.set(r.data));

@@ -19,3 +19,26 @@ export async function mapWithConcurrency<T, R>(
   await Promise.all(Array.from({ length: Math.min(Math.max(1, limit), items.length) }, worker));
   return results;
 }
+
+/**
+ * Limiteur partagé : au plus `limit` tâches à la fois, les suivantes attendent leur tour (ordre
+ * d'arrivée). Pour des tâches qui arrivent au fil de l'eau (connexions de clients), là où
+ * `mapWithConcurrency` traite une liste connue d'avance. Une tâche qui échoue libère sa place.
+ */
+export function createLimiter(limit: number): <R>(task: () => Promise<R>) => Promise<R> {
+  let active = 0;
+  const queue: (() => void)[] = [];
+  const release = (): void => {
+    active--;
+    queue.shift()?.();
+  };
+  return async <R>(task: () => Promise<R>): Promise<R> => {
+    if (active >= Math.max(1, limit)) await new Promise<void>((resolve) => queue.push(resolve));
+    active++;
+    try {
+      return await task();
+    } finally {
+      release();
+    }
+  };
+}

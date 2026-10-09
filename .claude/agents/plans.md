@@ -122,7 +122,8 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   - Calendrier éco : cache BDD `ecoAnalysisCache` par `(date, assetsKey)`, `userId:'shared'`.
   - News : `marketNews` partagé (cron) ; traduction Haiku **1×/article**, `userId:null`, cachée.
 - **BORNÉ** — 1/user/période, `max_tokens` capé → **PREMIUM** :
-  - Weekly Debrief : 1/user/semaine.
+  - Weekly Debrief : 1/user/semaine. `max_tokens` = min(10 240, 2 500 + 1 125 × comptes)
+    (`debriefMaxTokens`, relevé de 25 % le 2026-10-08 : à 2 comptes, Sonnet 4.6 montait à 85 % de 3 800).
 - **SCALE AVEC L'USAGE** — O(users × engagement) → **PREMIUM** :
   - Chat coach, IA Insights à la demande, recap quotidien.
 - L'import IA (broker inconnu → Anthropic, gardé `NODE_ENV=production`) est une IA **personnelle** → **PREMIUM**.
@@ -134,8 +135,10 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   Le sens (long/short) n'est **jamais** pris sur parole : mesuré 3/5 seulement pour les deux
   modèles, il est tranché par le signe du P&L. Si la forme ne tient pas, si trop de lignes sont
   inexploitables, ou si le sens n'est pas vérifiable (export sans prix d'entrée, type Binance
-  Futures), on **retombe sur l'ancien chemin ligne par ligne** — `AI_BATCH` = 120 lignes, borne
-  de sortie et non de coût (~40 jetons de JSON par trade contre `max_tokens: 8192`).
+  Futures), on **retombe sur l'ancien chemin ligne par ligne** — `AI_BATCH` = **25** lignes, borne
+  de sortie et non de coût : jusqu'à ~140 jetons de JSON par trade (mesuré le 2026-10-08, colonne de
+  notes remplie), contre `max_tokens: 8192`. À 120 lignes, Sonnet 4.6 atteignait le plafond et l'import
+  échouait ; à 25, le pire lot mesuré tient en 37 % du plafond (règle : ≤ 50 %, testée).
   Ordre de grandeur : 1000 imports gratuits de 2000 lignes ≈ **3 $** par mapping, contre
   ≈ 1430 $ par l'ancien chemin. Le taux de repli pilote la facture : un repli coûte 186 fois
   un mapping réussi. Ne pas ouvrir l'import IA au FREE sans surveiller ce taux, ni sans quota
@@ -148,15 +151,32 @@ On tiér par **structure de coût**, PAS par « IA vs pas d'IA ».
   des fichiers que les utilisateurs envoient, au lieu de couter a chaque import.
   Prealable toujours valable avant d'ouvrir aux FREE : il n'existe **aucun quota sur l'import**.
 
-**Modèle par appel** — `AI_MODELS.fast` (Haiku) pour les tâches courtes et fréquentes : traductions news,
-contexte marché, **et les deux appels du calendrier éco** (`ECO_MODEL` dans `ai.service.ts`, depuis le
-2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
+**Modèle par appel** — `AI_MODELS.fast` (**Haiku 5.5**, `claude-haiku-5-5`) pour les tâches courtes et
+fréquentes : traductions news, contexte marché, mapping des CSV inconnus, **et les deux appels du
+calendrier éco** (depuis le 2026-09-28). Le calendrier éco est la **seule IA qu'un compte FREE peut déclencher**, donc la seule dont
 le coût suit l'audience : il n'a rien à faire sur `analysis`. Son coût ne suit pas le nombre d'users mais
 le nombre de **signatures d'actifs distinctes** (cache partagé par `(date, assetsKey)`, top 5 actifs du
-trader) — ≈ 0,002 $ l'appel. `analysis` (Sonnet) reste pour le chat, le recap quotidien, le débrief, les
-insights et l'import CSV inconnu, tous PREMIUM.
+trader) — ≈ 0,0002 $ l'appel en Haiku 5.5. `analysis` (**Sonnet 4.6**, `claude-sonnet-4-6`) reste pour le
+chat, le recap quotidien, le débrief, les insights et les lots d'import CSV inconnu, tous PREMIUM.
 
-**Coût IA réel constaté** (admin, 30 j) : ≈ **4,60 USD total**. Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
+**Sonnet 5.5 : testé le 2026-10-08, pas adopté, à retenter plus tard.** Qualité au moins égale et 2 / 10 $
+au lieu de 3 / 15 $, mais deux blocages mesurés sur de vrais appels : le **chat coach est coupé** (il
+ignore « 3-5 phrases », ~420-500 tokens contre `max_tokens: 512`, ni l'effort `low`/`medium` ni une
+consigne renforcée ne règlent le problème) et le **débrief** a renvoyé un JSON illisible **1 fois sur 8**.
+Pour le retenter : revoir le plafond du chat et la robustesse du JSON du débrief (sorties structurées).
+Sur Sonnet 5.5, `thinking: disabled` est une 400 : couper la réflexion avec `between_tools`.
+
+**Tarifs** (USD / million de tokens, `MODEL_PRICING` dans `modules/infra/ai-pricing.const.ts`) :
+Haiku 5.5 = 0,10 entrée / 0,50 sortie jusqu'à 100K tokens de prompt, **0,50 / 2,50 sur tout l'appel
+au-delà** (`longPrompt`, jugé sur le prompt cache compris) ; Sonnet 4.6 = 3 / 15. Avant le 2026-10-08 :
+Haiku 4.5 = 1 / 5. Haiku 5.5 produit **~25-50 % de tokens en plus** pour le même texte (mesuré :
+×1,25 à ×1,48 en entrée selon le prompt) : raisonner en coût par appel, pas en prix au token.
+
+**Coût IA réel constaté** (prod, 30 j au 2026-10-08) : **14,63 USD facturés** (Cost API), dont 13,80 $
+de traductions (`eco_translation` 8,38 $ pour 4 834 appels, `news_translation` 5,41 $). Projection avec
+Haiku 5.5 (Sonnet 4.6 inchangé) sur les mêmes volumes, tokenizer inclus : **≈ 2,3 $ / mois (-84 %)**,
+dont ≈ 1,8 $ de traductions.
+Le coût IA n'est PAS un sujet ; ne pas sur-optimiser. Autoritatif = Anthropic Cost Report API.
 
 ---
 
@@ -165,7 +185,7 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 1. **Landing** (`Pricing.astro` + JSON-LD `Base.astro` + CGU) — ce qui est promis.
 2. **Front app** — affichage + accès (`isPremium`, badges PREMIUM, `premium-lock`).
 3. **Guard backend** (`PremiumGuard`) sur le controller (le `StarterGuard` a été supprimé).
-4. **Éligibilité asynchrone** (crons) — `debrief.getEligibleUsers()`, `daily-recap` (where plan).
+4. **Éligibilité asynchrone** (crons) — `debrief.getEligibleUsers(refDate)`, `daily-recap` (where plan).
 
 > L'incohérence historique à ne jamais reproduire : « feature vendue sur la landing mais cron d'éligibilité restreint » → le client paie une IA jamais livrée.
 
@@ -186,6 +206,9 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Analytics avancés** (`by-setup`, `by-hour`) : `PremiumGuard`.
 - **Activité / calendrier** (`activity/:year/:month`, `activity/range`, `activity/current-month`) : **FREE**, aucun guard. Ce sont les données propres de l'utilisateur (le *quoi*) — on ne verrouille pas la vue de ses propres données. Le guard qui vivait sur `:year/:month` était en plus contournable via `activity/range`, qui sert la même donnée (PROMPT-185). Contrat verrouillé par `analytics.controller.spec.ts`.
 - **Weekly Debrief** : controller `PremiumGuard` **ET** cron `getEligibleUsers()` doivent matcher → `plan === PREMIUM` ou `role ∈ {ADMIN, BETA_TESTER}` ou essai.
+  Le débrief **automatique** (cron dimanche + rattrapage lundi + régénération admin « tous ») ne vise
+  que ceux qui ont **tradé dans la semaine** (`getEligibleUsers(refDate)`, SCA-B5-08, décision du
+  2026-10-07) : semaine vide = ni appel IA ni e-mail. La génération manuelle depuis l'app reste ouverte.
 - **Daily recap** : PREMIUM only.
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).
 - **Suivi prop firm de la session live** (#369) : **FREE**, aucun guard — mêmes données que « Mes comptes » (on ne verrouille pas la vue de ses propres données), sur le compte de la session.
@@ -213,3 +236,70 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 > vivent dans `libs/shared/src/pricing.ts` (`@mtc/shared`). Les `pricing.const.ts` de l'API, de
 > l'app et de l'admin en dérivent (mêmes noms d'export qu'avant). Changer un prix = ce fichier +
 > la landing `Pricing.astro` + les `STRIPE_*_PRICE_*`.
+
+## Offre fondateur (#525, 2026-10-07)
+
+Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats: 200 }`,
+`FOUNDER_ANNUAL_SAVINGS_EUR` (dérivée), `FOUNDER_REFUND_DAYS = 14`, `FOUNDER_MILESTONES`, `OFFER_CTAS`
+(`libs/shared/src/pricing.ts`). Prix Stripe : `STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER` / `_YEARLY_FOUNDER`.
+
+- **200 places**, mensuel (29 €) ET annuel (290 €) confondus. **Prix bloqué à vie** tant que
+  l'abonnement reste actif ; tout le Premium, nouveautés futures comprises.
+- Mensuel ↔ annuel fondateur autorisé (`POST /billing/interval`) : même place, même numéro.
+- **Aucun essai** (premier paiement immédiat) ; l'essai 30 j du 49 € est inchangé.
+- **Satisfait ou remboursé 14 jours** sur le 1er paiement (engagement affiché). Côté code, **tout
+  remboursement INTÉGRAL du 1er paiement, quel que soit le délai** (c'est Greg qui décide) → place
+  `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.
+  La charge est rapprochée de la 1re facture payée (> 0 €) par facture ou PaymentIntent.
+- **Bascule** : un essai Stripe à 49 € ou un mois offert peut passer fondateur (prélèvement immédiat,
+  l'essai est annulé au 1er paiement fondateur ; jamais de prolongation ni de cumul).
+- **Lancement contrôlé** : `FounderOfferConfig.open` (fermé par défaut), `endsAt` optionnel. Fermé =
+  personne d'éligible, `open: false` sur `GET /pricing/founder`, rien d'affiché.
+- **Places** : prise au 1er paiement réussi (numéro 1 à 200, jamais réattribué). Rendue seulement si
+  remboursement intégral du 1er paiement, 1er paiement en échec définitif, ou session Checkout expirée. Une résiliation
+  ne la rend PAS. Exclus : démo, ADMIN, BETA_TESTER (une AMBASSADRICE est éligible).
+- **Perte du tarif** : résiliation programmée = gardé jusqu'à la fin (réactivation = gardé) ;
+  `past_due` = rien perdu (e-mail « ton tarif est en jeu ») ; perdu à `customer.subscription.deleted`
+  (place `LOST`, reste comptée) ou au remboursement. Retour = prix normal.
+- **Non-cumul** : fondateur, code partenaire et coupon de parrainage s'excluent ; le fondateur ne
+  reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
+  reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
+- **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
+
+## Codes partenaires (#525, 2026-10-07)
+
+`modules/partner-codes/` (`PartnerCodeService`, fonctions pures dans `partner-code.util.ts`).
+
+- Un formateur donne un code (ex. `LOUIS29`) : Premium à un prix réduit **réglable code par code**
+  (mensuel et annuel entre 1 € et le prix normal − 1, entiers). Ces abonnés ne sont **pas** fondateurs
+  et ne prennent **aucune** place.
+- Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
+  **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
+  remise des abonnés) ; `active`.
+- **Prix pile** : coupon Stripe `amount_off` EUR = prix normal − prix remisé, **de l'intervalle choisi**
+  (−20 € → 29,00 €, −200 € → 290,00 €), appliqué côté serveur sur le prix NORMAL. Coupons créés par
+  l'API, identifiant déterministe `mtc-partner-<centimes>-<forever|N>`. Sur l'annuel, un coupon N mois
+  remise chaque facture émise pendant N mois (la 1re année seulement si N ≤ 12).
+- **Essai 30 j conservé** (mensuel, règles actuelles) : c'est le prix normal remisé.
+- Une utilisation par personne, seulement si **jamais abonnée** (aucun abonnement Stripe passé ou en
+  cours, jamais fondateur ; un mois offert hors Stripe ne compte pas). Démo et ADMIN exclus.
+- Modifier un code ne change rien pour les abonnés existants : conditions **figées** dans
+  `PartnerRedemption` ; prix ou durée modifiés → nouveaux coupons pour les futurs abonnés.
+- Jamais sur un prix fondateur (choix explicite, 400 si les deux). Avec un parrainage : le plus
+  avantageux sur la 1re année (`partnerFirstYearCost` vs `referralFirstYearCost`) ; si le −10 % gagne,
+  le code n'est pas consommé.
+- Utilisation comptée à la 1re facture (`subscription_create`, 0 € d'essai compris). Rendue au quota si
+  remboursement intégral du 1er paiement réel (quel que soit le délai) ou fin d'essai impayée (`cancellation_details.reason =
+  payment_failed` sans paiement). Abonnement terminé → remise perdue (`LOST`, reste comptée).
+- Changement d'intervalle (`POST /billing/interval`) : coupon de l'autre intervalle aux conditions
+  figées, pour les mois de remise restants.
+- **MRR** (base et Stripe) sur le montant **réellement payé** : découpé `mrrBreakdown`
+  normal / fondateur / partenaires (`realMonthlyEur`). Le MRR Stripe déduit les remises
+  (`expand: data.discounts`). Reste : le −10 % filleul n'est pas déduit du MRR base (écart connu).
+- Commission ambassadeur : 20 % de `invoice.amount_paid`, donc déjà sur le montant remisé.
+- **Satisfait ou remboursé (choix #525)** : demande par e-mail à hello@ depuis Profil > Abonnement
+  (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
+  `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.
+- **Points d'affichage (cohérence)** : landing (bandeau, carte, FAQ), app (modale, cadenas, Profil,
+  « Continuer en Premium »), API (checkout, webhooks), e-mails (phase F).
+

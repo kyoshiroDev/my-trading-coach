@@ -10,7 +10,7 @@ import { Plan, Role, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
-import { PRICING_EUR } from '../../common/constants/pricing.const';
+import { realMonthlyEur } from '../partner-codes/partner-code.util';
 import { CompleteOnboardingDto } from './dto/onboarding.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
@@ -290,16 +290,17 @@ export class UsersService {
       this.prisma.deletedAccount.count(),
     ]);
 
-    // MRR/ARR sur le palier payant unique Premium (49€/mois · 490€/an).
-    const mrr = premiumMonthly * PRICING_EUR.PREMIUM.monthly
-      + Math.round((premiumAnnual * PRICING_EUR.PREMIUM.annual) / 12);
+    // MRR/ARR sur le montant RÉELLEMENT payé (#525) : 49 € / 490/12 au prix normal, 29 € / 290/12
+    // en fondateur, prix remisé d'un code partenaire tant que la remise court (puis prix normal).
+    const mrrBreakdown = await this.realMrr(REAL_USERS, now);
+    const mrr = mrrBreakdown.normal + mrrBreakdown.founder + mrrBreakdown.partner;
     const arr = mrr * 12;
 
     const monthly = premiumMonthly;
     const annual = premiumAnnual;
 
     return {
-      mrr, arr,
+      mrr, arr, mrrBreakdown,
       totalUsers,
       totalPremium,
       premiumMonthly, premiumAnnual,
@@ -308,6 +309,36 @@ export class UsersService {
       betaTesters, ambassadors,
       tradersActifs7d, tradersActifs30d,
       comptesSupprimesMois, comptesSupprimesTotal,
+    };
+  }
+
+  /** MRR découpé normal / fondateur / partenaires, abonnements `active` uniquement (arrondi à l'euro). */
+  private async realMrr(where: Prisma.UserWhereInput, now: Date) {
+    const paying = await this.prisma.user.findMany({
+      where: { ...where, plan: 'PREMIUM', stripeSubscriptionStatus: 'active', stripeInterval: { in: ['month', 'year'] } },
+      select: {
+        stripeInterval: true,
+        founderSeat: { select: { status: true } },
+        partnerRedemption: {
+          select: { status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true },
+        },
+      },
+    });
+    const sums = { normal: 0, founder: 0, partner: 0 };
+    for (const u of paying) {
+      const interval = u.stripeInterval === 'year' ? 'year' : 'month';
+      const founder = u.founderSeat?.status === 'ACTIVE';
+      const r = u.partnerRedemption?.status === 'ACTIVE' ? u.partnerRedemption : null;
+      const partner = r ? { ...r, since: r.createdAt } : null;
+      const amount = realMonthlyEur({ interval, founder, partner, now });
+      const normal = realMonthlyEur({ interval, now });
+      const bucket = founder ? 'founder' : partner && amount !== normal ? 'partner' : 'normal';
+      sums[bucket] += amount;
+    }
+    return {
+      normal: Math.round(sums.normal),
+      founder: Math.round(sums.founder),
+      partner: Math.round(sums.partner),
     };
   }
 
@@ -515,7 +546,17 @@ export class UsersService {
         skip,
         take: limit,
         orderBy: { stripeCurrentPeriodEnd: 'desc' },
-        select: userSelect,
+        // Montant réellement payé (#525) : place fondateur ou code partenaire de l'abonné.
+        select: {
+          ...userSelect,
+          founderSeat: { select: { number: true, status: true } },
+          partnerRedemption: {
+            select: {
+              status: true, priceMonthlyEur: true, priceAnnualEur: true, durationMonths: true, createdAt: true,
+              partnerCode: { select: { code: true } },
+            },
+          },
+        },
       }),
       this.prisma.user.count({ where: stripeWhere }),
       this.prisma.user.findMany({
@@ -525,14 +566,14 @@ export class UsersService {
       }),
     ]);
 
+    // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
+    // `{ data: { data: … } }` et la page admin Abonnements lisait des champs vides (plantage).
     return {
-      data: {
-        stripeUsers,
-        betaTesters,
-        total: stripeTotal + betaTesters.length,
-        page,
-        limit,
-      },
+      stripeUsers,
+      betaTesters,
+      total: stripeTotal + betaTesters.length,
+      page,
+      limit,
     };
   }
 

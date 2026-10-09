@@ -2,13 +2,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MoodState, Prisma, SessionStatus } from '@prisma/client';
+import { BrokerProvider, MoodState, Prisma, SessionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
-import type { SessionHistoryItem } from '@mtc/shared';
+import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
+import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
 
 // Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
 export type { SessionHistoryItem };
@@ -308,7 +309,10 @@ export class SessionService {
   }
 
   async getLiveStats(userId: string) {
-    const todayTrades = await this.getTodayTrades(userId);
+    const [todayTrades, broker] = await Promise.all([
+      this.getTodayTrades(userId),
+      this.getLiveBrokerState(userId),
+    ]);
     // Stats via le helper unique (BE exclus du win rate).
     const stats = computeTradeStats(todayTrades);
 
@@ -318,6 +322,38 @@ export class SessionService {
       tradesCount: todayTrades.length,
       closedCount: stats.closed,
       trades: todayTrades,
+      broker,
+    };
+  }
+
+  /**
+   * Positions ouvertes et latent du compte de la session active, lus chez le broker (Tradovate).
+   * Le `Trade` n'existe qu'à la sortie : sans ça, une position ouverte était invisible et le total
+   * MTC (réalisé seul) ne pouvait pas coïncider avec celui du broker (réalisé + latent).
+   */
+  private async getLiveBrokerState(userId: string): Promise<LiveBrokerState | null> {
+    const active = await this.prisma.tradeSession.findFirst({
+      where: { userId, status: SessionStatus.ACTIVE },
+      select: { accountId: true },
+    });
+    if (!active?.accountId) return null;
+    const conn = await this.prisma.brokerConnection.findFirst({
+      where: { accountId: active.accountId, provider: BrokerProvider.TRADOVATE, account: { userId } },
+      select: { id: true, brokerOpenPnl: true, brokerEquityAt: true, brokerOpenPositions: true },
+    });
+    if (!conn) return null;
+
+    const raw = await this.redisService.client.get(openPositionsKey(conn.id)).catch(() => null);
+    const state = parseOpenPositions(raw);
+    // « À plat » = compteur en base, la même règle que le suivi du compte (`accounts.service`) :
+    // les deux panneaux de la session live doivent dire la même chose. Redis ne donne que le détail.
+    const flat = conn.brokerOpenPositions === 0;
+    const openPositions = flat ? [] : (state?.positions ?? []);
+    return {
+      openPositions,
+      positionsAt: state?.at ?? null,
+      openPnl: flat ? 0 : conn.brokerOpenPnl,
+      openPnlAt: conn.brokerEquityAt?.toISOString() ?? null,
     };
   }
 

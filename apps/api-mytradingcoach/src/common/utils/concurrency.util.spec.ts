@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapWithConcurrency } from './concurrency.util';
+import { createLimiter, mapWithConcurrency } from './concurrency.util';
 
 describe('mapWithConcurrency', () => {
   it('ne dépasse jamais la limite et conserve l’ordre des résultats', async () => {
@@ -18,5 +18,32 @@ describe('mapWithConcurrency', () => {
 
   it('liste vide → aucun appel', async () => {
     expect(await mapWithConcurrency([], 4, async () => 1)).toEqual([]);
+  });
+});
+
+describe('createLimiter', () => {
+  it('jamais plus de N tâches à la fois, toutes exécutées dans l’ordre d’arrivée', async () => {
+    const limit = createLimiter(2);
+    let running = 0;
+    let peak = 0;
+    const order: number[] = [];
+    await Promise.all(
+      [1, 2, 3, 4, 5].map((n) =>
+        limit(async () => {
+          peak = Math.max(peak, ++running);
+          order.push(n);
+          await new Promise((r) => setTimeout(r, 5));
+          running--;
+        }),
+      ),
+    );
+    expect(peak).toBe(2);
+    expect(order).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('une tâche qui échoue libère sa place et propage l’erreur', async () => {
+    const limit = createLimiter(1);
+    await expect(limit(async () => { throw new Error('boom'); })).rejects.toThrow('boom');
+    await expect(limit(async () => 'ok')).resolves.toBe('ok');
   });
 });

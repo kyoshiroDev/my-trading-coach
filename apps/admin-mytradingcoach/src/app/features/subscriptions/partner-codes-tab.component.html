@@ -1,0 +1,119 @@
+<div class="card">
+  <div class="card-head">
+    <span class="card-label">{{ editingId() ? 'Modifier le code ' + code() : 'Nouveau code partenaire' }}</span>
+  </div>
+  <div class="code-form">
+    <div class="form-grid">
+      <label class="field">
+        <span class="field-lbl">Code</span>
+        <input class="field-input" type="text" maxlength="20" placeholder="LOUIS29" [value]="code()" [disabled]="!!editingId()"
+          (input)="code.set($any($event.target).value.toUpperCase())" data-testid="pc-code" />
+      </label>
+      <label class="field">
+        <span class="field-lbl">Libellé <span class="opt">(partenaire, visible seulement ici)</span></span>
+        <input class="field-input" type="text" maxlength="100" placeholder="Louis · formation futures" [value]="label()"
+          (input)="label.set($any($event.target).value)" data-testid="pc-label" />
+      </label>
+      <label class="field">
+        <span class="field-lbl">Prix mensuel (€, au lieu de {{ PREMIUM.monthly }})</span>
+        <input class="field-input" type="number" min="1" [max]="PREMIUM.monthly - 1" [value]="priceMonthly()"
+          (input)="priceMonthly.set(num($any($event.target).value))" data-testid="pc-monthly" />
+      </label>
+      <label class="field">
+        <span class="field-lbl">Prix annuel (€, au lieu de {{ PREMIUM.annual }})</span>
+        <input class="field-input" type="number" min="1" [max]="PREMIUM.annual - 1" [value]="priceAnnual()"
+          (input)="priceAnnual.set(num($any($event.target).value))" data-testid="pc-annual" />
+      </label>
+      <div class="field">
+        <span class="field-lbl">Durée</span>
+        <div class="choice" role="radiogroup" aria-label="Durée de la remise">
+          <label><input type="radio" name="pc-duration" [checked]="lifetime()" (change)="lifetime.set(true)" data-testid="pc-lifetime" /> À vie</label>
+          <label><input type="radio" name="pc-duration" [checked]="!lifetime()" (change)="lifetime.set(false)" data-testid="pc-months-radio" /> N mois</label>
+          @if (!lifetime()) {
+            <input class="field-input" type="number" min="1" [value]="months()" aria-label="Nombre de mois"
+              (input)="months.set(num($any($event.target).value))" data-testid="pc-months" />
+          }
+        </div>
+        <p class="help">{{ durationHelp() }}</p>
+      </div>
+      <div class="field">
+        <span class="field-lbl">Nombre de personnes</span>
+        <div class="choice" role="radiogroup" aria-label="Nombre de personnes">
+          <label><input type="radio" name="pc-people" [checked]="unlimited()" (change)="unlimited.set(true)" data-testid="pc-unlimited" /> Illimité</label>
+          <label><input type="radio" name="pc-people" [checked]="!unlimited()" (change)="unlimited.set(false)" /> N personnes</label>
+          @if (!unlimited()) {
+            <input class="field-input" type="number" min="1" [value]="maxPeople()" aria-label="Nombre de personnes"
+              (input)="maxPeople.set(num($any($event.target).value))" data-testid="pc-max" />
+          }
+        </div>
+      </div>
+      <label class="field">
+        <span class="field-lbl">Fin d'utilisation <span class="opt">(optionnelle, n'arrête pas la remise des abonnés)</span></span>
+        <input class="field-input" type="date" [value]="expiresAt()" (input)="expiresAt.set($any($event.target).value)" data-testid="pc-expires" />
+      </label>
+    </div>
+
+    <p class="preview" data-testid="pc-preview">{{ preview() }}</p>
+    @if (invalid(); as why) { <p class="help">{{ why }}</p> }
+    @if (formError(); as e) { <p class="err-text" data-testid="pc-error">{{ e }}</p> }
+    @if (formOk(); as ok) { <p class="ok-text">{{ ok }}</p> }
+    <div class="form-actions">
+      @if (editingId()) { <button class="btn" (click)="resetForm()">Annuler</button> }
+      <button class="btn btn-primary" [disabled]="!!invalid() || saving()" (click)="submit()" data-testid="pc-submit">
+        {{ saving() ? 'En cours…' : editingId() ? 'Enregistrer' : 'Créer le code' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="card-label">Codes partenaires</span><span class="card-label muted">{{ codes()?.length ?? 0 }}</span></div>
+  <p class="note">Modifier un code ne change rien pour les abonnés existants : leurs conditions sont figées à la souscription.</p>
+  @if (codes(); as list) {
+    <table class="tbl">
+      <caption class="sr-only">Codes partenaires</caption>
+      <thead><tr><th scope="col">Code</th><th scope="col">Conditions</th><th scope="col" class="num">Utilisés / max</th><th scope="col">Fin</th><th scope="col">Statut</th><th scope="col">Actions</th></tr></thead>
+      <tbody>
+        @for (c of list; track c.id) {
+          <tr>
+            <td data-label="Code"><div class="u-name td-mono">{{ c.code }}</div><div class="u-mail">{{ c.label }}</div></td>
+            <td data-label="Conditions" class="td-mono">{{ c.conditions }}</td>
+            <td data-label="Utilisés / max" class="td-mono num" data-testid="pc-usage">
+              {{ usageLabel(c.used, c.maxRedemptions) }}@if (c.pendingCheckouts) { <span class="muted"> (+{{ c.pendingCheckouts }} en cours)</span> }
+            </td>
+            <td data-label="Fin" class="td-mono muted">{{ c.expiresAt ? (c.expiresAt | date:'dd/MM/yyyy') : '-' }}</td>
+            <td data-label="Statut"><span class="badge" [class.b-ok]="c.active" [class.b-free]="!c.active">{{ c.active ? 'actif' : 'inactif' }}</span></td>
+            <td data-label="Actions">
+              <div class="form-actions">
+                <button class="btn" (click)="toggleUsers(c)">Abonnés ({{ c.activeSubscribers }})</button>
+                <button class="btn" (click)="edit(c)">Modifier</button>
+                <button class="btn" (click)="toggleActive(c)" data-testid="pc-toggle">{{ c.active ? 'Désactiver' : 'Activer' }}</button>
+              </div>
+            </td>
+          </tr>
+          @if (openUsersId() === c.id) {
+            <tr><td colspan="6">
+              <div class="users-list">
+                @if (users(); as u) {
+                  @for (r of u.redemptions; track r.id) {
+                    <div class="row">
+                      @if (r.user) { <a class="u-link" [routerLink]="['/users', r.user.id]">{{ r.user.email }}</a> } @else { <span class="muted">compte supprimé</span> }
+                      <span class="td-mono muted">{{ r.createdAt | date:'dd/MM/yyyy' }}</span>
+                      <span class="badge" [class.b-ok]="r.status === 'ACTIVE'" [class.b-free]="r.status !== 'ACTIVE'">{{ r.status === 'ACTIVE' ? 'actif' : r.status === 'LOST' ? 'perdu' : 'rendu' }}</span>
+                    </div>
+                  } @empty { <span class="muted">Personne n'a encore utilisé ce code.</span> }
+                } @else { <span class="muted">Chargement…</span> }
+              </div>
+            </td></tr>
+          }
+        } @empty {
+          <tr><td colspan="6" class="empty">Aucun code partenaire</td></tr>
+        }
+      </tbody>
+    </table>
+  } @else if (loadError()) {
+    <div class="empty">Codes indisponibles</div>
+  } @else {
+    <div class="empty">Chargement…</div>
+  }
+</div>

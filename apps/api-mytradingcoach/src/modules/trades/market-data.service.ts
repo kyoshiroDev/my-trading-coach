@@ -2,13 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { INSTRUMENTS } from './instruments.const';
 import { NO_EM_DASH_RULE } from '../ai/prompts/style.prompt';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { fetchWithTimeout } from '../../common/utils/fetch-timeout';
 import { singleFlight } from '../../common/utils/single-flight';
+import { isBreakingNews, isCryptoNews } from './market-news.breaking';
+import { MACRO_NEWS_SYMBOL, NEWS_DISPLAY_COUNT, NEWS_FEEDS, newsSymbolsFor, parseFmpNewsDate, selectNewsForDisplay } from './market-news.sources';
 
 export interface MarketContextItem { value: number | null; changePct: number | null; source: 'fmp' | 'yahoo' | 'binance'; }
 export interface TreasuryRates {
@@ -29,7 +31,14 @@ export interface NewsItem {
   id: string; title: string; symbol: string; publishedDate: string;
   sentiment?: 'bull' | 'bear' | 'neutral'; url?: string; text?: string; image?: string; site?: string;
   textTranslated?: boolean;
+  /** Candidate au bandeau BREAKING (macro, hors crypto, récente) : cf. market-news.breaking.ts. */
+  breaking?: boolean;
 }
+
+/** Titres par appel de traduction : la réponse JSON tient largement dans max_tokens. */
+const NEWS_TITLE_BATCH = 10;
+/** Titres traduits par passage du cron (20 min) : plusieurs flux, donc plus de news qu'avant. */
+const NEWS_TRANSLATE_PER_RUN = 60;
 
 @Injectable()
 export class MarketDataService {
@@ -93,11 +102,18 @@ export class MarketDataService {
       if (cached) return JSON.parse(cached) as NewsItem[];
     } catch { /* ignore */ }
 
+    // Actifs du journal (MNQ, EUR/USD…) → symboles de news FMP (QQQ, EURUSD…), macro incluse.
+    // Avant : comparaison exacte, aucun futures ne matchait et le News live se vidait dès le
+    // premier trade du jour. Rien de trouvé → toutes les news plutôt qu'un bloc vide.
     const list = (symbols || '').split(',').map(s => s.trim()).filter(Boolean);
-    const where = list.length ? { symbol: { in: list } } : {};
-    const rows = await this.prisma.marketNews.findMany({
-      where, orderBy: { publishedDate: 'desc' }, take: 20,
+    const wanted = list.length ? newsSymbolsFor(list) : [];
+    // Marge de lecture : la crypto plafonnée laisse sa place aux news suivantes.
+    const query = (where: object) => this.prisma.marketNews.findMany({
+      where, orderBy: { publishedDate: 'desc' }, take: NEWS_DISPLAY_COUNT * 3,
     });
+    let found = wanted.length ? await query({ symbol: { in: wanted } }) : [];
+    if (!found.length) found = await query({});
+    const rows = selectNewsForDisplay(found, { keepCrypto: wanted.some(s => isCryptoNews({ title: '', symbol: s })) });
     const items: NewsItem[] = rows.map(r => ({
       id: r.id,
       title: r.titleFr ?? r.title,
@@ -109,6 +125,8 @@ export class MarketDataService {
       image: r.image ?? undefined,
       site: r.site ?? undefined,
       textTranslated: r.textTranslated,
+      // Sur le titre ANGLAIS d'origine : une fois traduit, « ECB » devient « BCE ».
+      breaking: isBreakingNews({ title: r.title, symbol: r.symbol, publishedDate: r.publishedDate }),
     }));
     try { await this.redisService.client.setex(cacheKey, CACHE_TTL.NEWS, JSON.stringify(items)); } catch { /* ignore */ }
     return items;
@@ -117,16 +135,19 @@ export class MarketDataService {
   async refreshNewsBatch(): Promise<number> {
     const apiKey = this.config.get<string>('FMP_API_KEY');
     if (!apiKey) return 0;
-    const symbols = 'QQQ,SPY,BTCUSD,EURUSD,AAPL,MSFT,NVDA,TSLA';
-    const url = `https://financialmodelingprep.com/stable/news/stock?symbols=${symbols}&limit=30&apikey=${apiKey}`;
-    let raw: NewsItem[] = [];
-    try {
-      const res = await fetchWithTimeout(url);
-      if (!res.ok) return 0;
-      raw = await res.json() as NewsItem[];
-    } catch (err) {
-      this.logger.warn(`News fetch failed: ${(err as Error).message}`);
-      return 0;
+    // Plusieurs flux, chacun sa limite (cf. market-news.sources.ts) : un flux en échec
+    // n'empêche pas les autres.
+    const raw: NewsItem[] = [];
+    for (const feed of NEWS_FEEDS) {
+      const sep = feed.path.includes('?') ? '&' : '?';
+      try {
+        const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/news/${feed.path}${sep}apikey=${apiKey}`);
+        if (!res.ok) { this.logger.warn(`News fetch ${feed.path.split('?')[0]} : HTTP ${res.status}`); continue; }
+        const data = await res.json() as NewsItem[];
+        if (Array.isArray(data)) raw.push(...data.map(it => ({ ...it, symbol: it.symbol || feed.symbol || MACRO_NEWS_SYMBOL })));
+      } catch (err) {
+        this.logger.warn(`News fetch failed: ${(err as Error).message}`);
+      }
     }
 
     // 1) Upsert sans traduction (dédup par url)
@@ -138,7 +159,7 @@ export class MarketDataService {
         create: {
           url: it.url, symbol: it.symbol, title: it.title, text: it.text ?? null,
           sentiment: it.sentiment ?? null, image: it.image ?? null, site: it.site ?? null,
-          publishedDate: new Date(it.publishedDate),
+          publishedDate: parseFmpNewsDate(it.publishedDate), // heure de New York, cf. sources
         },
       });
     }
@@ -149,32 +170,49 @@ export class MarketDataService {
     const pending = await this.prisma.marketNews.findMany({
       where: { translated: false },
       orderBy: { publishedDate: 'desc' },
-      take: 30,
+      take: NEWS_TRANSLATE_PER_RUN,
     });
     if (!pending.length) return 0;
 
-    const titles = pending.map(p => p.title);
+    // Par lots : 30 titres en un seul appel à 800 tokens dépassaient le plafond, le JSON
+    // arrivait tronqué (« Unterminated string ») et AUCUN titre n'était traduit, lot
+    // retenté toutes les 20 min. Un lot illisible n'empêche pas les autres d'aboutir.
+    let translated = 0;
+    for (let i = 0; i < pending.length; i += NEWS_TITLE_BATCH) {
+      const batch = pending.slice(i, i + NEWS_TITLE_BATCH);
+      const fr = await this.translateTitles(batch.map(p => p.title));
+      if (!fr) continue;
+      await Promise.all(batch.map((p, j) =>
+        this.prisma.marketNews.update({
+          where: { id: p.id },
+          data: { titleFr: fr[j] || p.title, translated: true },
+        }),
+      ));
+      translated += batch.length;
+    }
+    return translated;
+  }
+
+  /** Titres traduits dans le même ordre, ou `null` si la réponse est inexploitable. */
+  private async translateTitles(titles: string[]): Promise<string[] | null> {
     try {
       const msg = await this.anthropicClient.create({
         model: AI_MODELS.fast,
-        max_tokens: 800,
+        max_tokens: 1200,
         messages: [{ role: 'user', content:
           `Traduis en français ces titres de news financières. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec un tableau JSON d'objets {title} dans le même ordre, sans texte autour.\n\n${JSON.stringify(titles)}` }],
       }, { feature: 'news_translation', userId: null });
-      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const txt = responseText(msg);
       const s = txt.indexOf('['), e = txt.lastIndexOf(']');
-      if (s === -1 || e === -1) return 0;
-      const tr = JSON.parse(txt.slice(s, e + 1)) as { title: string }[];
-      await Promise.all(pending.map((p, i) =>
-        this.prisma.marketNews.update({
-          where: { id: p.id },
-          data: { titleFr: tr[i]?.title ?? p.title, translated: true },
-        }),
-      ));
-      return pending.length;
+      if (s === -1 || e === -1) return null;
+      const tr = JSON.parse(txt.slice(s, e + 1)) as { title?: string }[];
+      // Réponse décalée (titre manquant ou en trop) : on ne risque pas d'attribuer
+      // la traduction d'un titre à un autre.
+      if (!Array.isArray(tr) || tr.length !== titles.length) return null;
+      return tr.map(t => (typeof t?.title === 'string' ? t.title : ''));
     } catch (err) {
       this.logger.warn(`News title translation failed: ${(err as Error).message}`);
-      return 0;
+      return null;
     }
   }
 
@@ -216,7 +254,7 @@ export class MarketDataService {
         messages: [{ role: 'user', content:
           `Traduis en français ce texte de news financière. ${NO_EM_DASH_RULE} Réponds UNIQUEMENT avec la traduction, sans préambule ni guillemets.\n\n${text}` }],
       }, { feature: 'news_translation', userId: null });
-      const fr = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '';
+      const fr = responseText(msg).trim();
       if (!fr) return original;
       await this.prisma.marketNews.update({
         where: { id },

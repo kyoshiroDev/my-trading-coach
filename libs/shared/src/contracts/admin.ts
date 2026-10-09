@@ -51,6 +51,28 @@ export interface AdminUserDetail {
     winRate: number;
   };
   topAssets: { asset: string; count: number }[];
+  /** Offre fondateur / code partenaire (#525). `null` si aucun. */
+  offer: {
+    founder: {
+      number: number;
+      /** ACTIVE · LOST (tarif perdu) · REFUNDED (remboursé) · RELEASED (1er paiement en échec). */
+      status: 'ACTIVE' | 'LOST' | 'REFUNDED' | 'RELEASED';
+      interval: 'month' | 'year';
+      takenAt: string;
+      /** Date de perte du tarif (fin d'abonnement ou remboursement). */
+      endedAt: string | null;
+      cta: string | null;
+    } | null;
+    partner: {
+      code: string;
+      priceMonthlyEur: number;
+      priceAnnualEur: number;
+      durationMonths: number | null;
+      status: 'ACTIVE' | 'LOST' | 'RELEASED';
+      since: string;
+      endedAt: string | null;
+    } | null;
+  };
   sessions: {
     date: string;
     trades: number;
@@ -127,4 +149,29 @@ export interface AdminAcquisitionData {
   daily: AdminLandingDay[];
   /** Pages les plus vues sur 30 jours (10 max). */
   topPages: AdminLandingPage[];
+}
+
+/** Une étape de l'entonnoir Premium : utilisateurs DISTINCTS (hors démo et admin) sur la période. */
+export interface AdminFunnelStep {
+  key: 'premium_seen' | 'plan_modal_open' | 'trial_click' | 'checkout_success' | 'checkout_canceled';
+  users: number;
+}
+
+/** Détail par écran : où les inscrits rencontrent le Premium, ouvrent les offres, cliquent. */
+export interface AdminFunnelPlace {
+  event: 'premium_seen' | 'plan_modal_open' | 'trial_click';
+  place: string;
+  users: number;
+}
+
+/** GET /admin/funnel — de la visite au paiement, sur `days` jours (Paris). */
+export interface AdminFunnelData {
+  days: number;
+  landingVisits: number;
+  signups: number;
+  demo: { opens: number; signupClicks: number };
+  steps: AdminFunnelStep[];
+  byPlace: AdminFunnelPlace[];
+  /** État Stripe actuel (hors démo et admin) : essais en cours, abonnés payants. */
+  current: { trialing: number; paying: number };
 }

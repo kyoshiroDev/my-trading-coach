@@ -13,7 +13,7 @@
       "deepchart"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-06",
   "plans": [
     {
       "id": "phidias-e2l-25k",
@@ -39,9 +39,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 24500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -54,10 +54,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -71,9 +71,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 24500,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 24500 $ (capital 25000 $ moins 500 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -86,10 +86,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": null,
@@ -118,8 +118,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun."
     },
     {
       "id": "phidias-e2l-50k",
@@ -145,9 +145,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 49350,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -160,10 +160,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -177,9 +177,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 49350,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 49350 $ (capital 50000 $ moins 650 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -192,10 +192,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": null,
@@ -224,8 +224,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun."
     },
     {
       "id": "phidias-e2l-100k",
@@ -251,9 +251,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 99200,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -266,10 +266,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -283,9 +283,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 99200,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 99200 $ (capital 100000 $ moins 800 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -298,10 +298,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": null,
@@ -330,8 +330,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun."
     },
     {
       "id": "phidias-e2l-150k",
@@ -357,9 +357,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 149000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -372,10 +372,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -389,9 +389,9 @@
             "trails_on": null,
             "locks_at": null,
             "locked_floor": 149000,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil."
+            "basis_notes": "Static : seuil de liquidation fixe à 149000 $ (capital 150000 $ moins 1000 $), ne suit jamais les gains. Liquidé si le solde atteint ou passe sous ce seuil. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": null,
@@ -404,10 +404,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": null,
@@ -436,8 +436,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "5 comptes E2L maximum par trader. Le site affiche « 1 » jour minimum dans son comparatif, mais 0 dans la fiche de chaque taille et l'article E2L dit « aucun » : retenu aucun."
     },
     {
       "id": "phidias-fundamental-50k",
@@ -463,9 +463,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 3,
@@ -478,10 +478,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -495,9 +495,9 @@
             "trails_on": "balance",
             "locks_at": 52600,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -514,10 +514,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": 10,
@@ -548,8 +548,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     },
     {
       "id": "phidias-fundamental-100k",
@@ -575,9 +575,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 3,
@@ -590,10 +590,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -607,9 +607,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -626,10 +626,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": 10,
@@ -660,8 +660,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     },
     {
       "id": "phidias-fundamental-150k",
@@ -687,9 +687,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 3,
@@ -702,10 +702,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": null
         },
@@ -719,9 +719,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -738,10 +738,10 @@
             "notes": null
           },
           "time_rules": {
-            "must_close_by": "21:59 Etc/UTC",
+            "must_close_by": "22:59 Europe/Paris",
             "news_trading_allowed": true,
             "overnight_allowed": false,
-            "notes": "Tout fermer avant la fin de journée (article Horaires : 21:59 UTC, heure fixe qui ne suit pas l'heure d'été ; l'article EOD place la fin de session à 22:00 UTC+2). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
+            "notes": "Tout fermer avant la fin de séance, 22:59 heure de Paris toute l'année (20:59 UTC en été, 21:59 UTC en hiver), soit 16:59 à New York hors semaines de décalage des changements d'heure (support Phidias, 2026-10-06). Oubli = disqualification. Produits qui ferment plus tôt et jours fériés : à la charge du trader."
           },
           "payout": {
             "min_days": 10,
@@ -772,8 +772,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     },
     {
       "id": "phidias-premium-50k",
@@ -799,9 +799,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 2500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 1,
@@ -831,9 +831,9 @@
             "trails_on": "balance",
             "locks_at": 52600,
             "locked_floor": 50100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 50100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 52600 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -884,8 +884,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     },
     {
       "id": "phidias-premium-100k",
@@ -911,9 +911,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 3000 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 1,
@@ -943,9 +943,9 @@
             "trails_on": "balance",
             "locks_at": 103100,
             "locked_floor": 100100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 100100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 103100 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -996,8 +996,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     },
     {
       "id": "phidias-premium-150k",
@@ -1023,9 +1023,9 @@
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais."
+            "basis_notes": "EOD : seuil recalculé à la clôture, 4500 $ sous le plus haut solde de clôture (profits réalisés seulement), fixe pendant la journée. En évaluation le trailing ne se fige jamais. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": null,
           "min_trading_days": 1,
@@ -1055,9 +1055,9 @@
             "trails_on": "balance",
             "locks_at": 154600,
             "locked_floor": 150100,
-            "enforced_on": null,
+            "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $."
+            "basis_notes": "EOD comme en évaluation ; sur le compte CASH le trailing s'arrête à 150100 $ (capital + 100 $), atteint quand le plus haut solde de clôture vaut 154600 $. Contrôle permanent sur l'equity en temps réel, pertes latentes comprises : une position ouverte qui passe sous le seuil déclenche la liquidation sans attendre sa clôture ; seul le niveau du seuil est recalculé en fin de journée (support Phidias, 2026-10-06)."
           },
           "consistency": {
             "max_single_day_pct": 0.3,
@@ -1108,8 +1108,8 @@
         "https://helpcenter.phidiaspropfirm.com/help/17-liste-des-tarifs-d-activations-des-comptes-phidias-cash",
         "https://phidiaspropfirm.com/accounts"
       ],
-      "needs_review": true,
-      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K. Liquidation décrite sur le « solde » / « capital » sans préciser si le P&L latent compte en séance : enforced_on à null (le calcul MTC compare l'equity, cas prudent)."
+      "needs_review": false,
+      "notes": "Pas de Daily Loss Limit. Plancher CASH 150K (150 100 $) relevé dans l'article des retraits, l'article EOD ne chiffre que 50K et 100K."
     }
   ]
 }

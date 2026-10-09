@@ -34,7 +34,7 @@ const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
     requirements: [{ key: 'profit', met: false, current: 820, required: 3000, unit: 'usd' }],
   },
   broker: {
-    cashBalance: 50820, equity: 50170, openPnl: -650, openPositions: 1,
+    cashBalance: 50820, equity: 50170, openPnl: -650, openPnlKnown: true, openPositions: 1,
     balanceAt: new Date(Date.now() - 60_000).toISOString(), equityAt: null, referenceMismatch: false,
   },
   estimated: true, disclaimer: 'estimé',
@@ -81,6 +81,13 @@ function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean;
 
 describe('Session live — suivi prop firm', () => {
   beforeEach(() => TestBed.resetTestingModule());
+
+  it('position ouverte au latent jamais lu → « - », pas un 0 inventé (comme Trade en cours)', () => {
+    const m = metrics();
+    const { text } = setup({ ...m, broker: { ...m.broker!, openPnl: 0, openPnlKnown: false } });
+    expect(text('live-prop-firm-open-pnl-na')).toBe('-');
+    expect(text('live-prop-firm-open-pnl')).toBe('');
+  });
 
   it('affiche solde et latent du broker, la marge avant le plancher et l’objectif du plan', () => {
     const { text } = setup(metrics());

@@ -1,0 +1,130 @@
+/*
+ * Page de paiement : récapitulatif sur le thème de l'app, formulaire sur un panneau CLAIR.
+ * Panneau clair = exception à la charte « dark only », validée par Greg (lisibilité du paiement) :
+ * ses couleurs sont locales au composant, nulle part ailleurs.
+ */
+:host {
+  --pay-surface: #ffffff;
+  --pay-field: #f8fafc;
+  --pay-line: #e2e8f0;
+  --pay-ink: #0f172a;
+  --pay-ink-2: #475569;
+  --pay-ink-3: #64748b;
+  --pay-ink-4: #94a3b8;
+  --pay-danger: #dc2626;
+
+  display: block;
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: radial-gradient(900px 480px at 15% -10%, var(--blue-glow), transparent 60%);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Retour à l'app : coin haut gauche de l'écran en desktop */
+.back {
+  position: fixed; top: 24px; left: 28px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--text-2); text-decoration: none; font-size: 13px;
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: rgba(11, 18, 25, 0.6); backdrop-filter: blur(8px);
+  transition: color 0.15s, border-color 0.15s;
+}
+.back:hover { color: var(--text); border-color: var(--border-hover); }
+
+/* Centré verticalement ; colonnes alignées en haut (rien ne bouge quand le formulaire change). */
+.wrap {
+  max-width: 1040px; min-height: 100vh; margin: 0 auto; padding: 32px 24px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.grid {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  grid-template-areas: 'summary pay'; column-gap: 56px; align-items: start;
+}
+.summary { grid-area: summary; position: sticky; top: 32px; padding-top: 8px; }
+.card { grid-area: pay; }
+
+.brand { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--grad-brand, linear-gradient(135deg, var(--blue), #8b5cf6)); display: grid; place-items: center; }
+.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.3px; }
+.brand-name b { color: var(--blue-bright); font-weight: 700; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--blue-bright); background: var(--blue-glow);
+  border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 999px; padding: 5px 12px;
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue-bright); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.6px; line-height: 1.2; margin: 18px 0 8px; }
+.lead { color: var(--text-2); margin: 0 0 28px; max-width: 46ch; }
+
+.price { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.price .amount { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 34px; letter-spacing: -1px; }
+.price .amount .cur { font-size: 22px; margin-left: 4px; color: var(--text-2); font-weight: 500; }
+.price .per { color: var(--text-2); font-size: 14px; }
+.price .was { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-3); text-decoration: line-through; font-size: 14px; }
+.note { margin: 10px 0 0; color: var(--text-2); font-size: 13px; }
+
+.features { list-style: none; padding: 0; margin: 32px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+.features li { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); font-size: 13.5px; }
+.features svg.lucide { flex: 0 0 16px; margin-top: 3px; color: var(--blue-bright); }
+
+.assure { display: grid; gap: 12px; padding: 20px 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-2); }
+.assure div { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; color: var(--text-2); }
+.assure strong { color: var(--text); font-weight: 500; }
+.assure svg.lucide { flex: 0 0 18px; margin-top: 1px; color: var(--text-3); }
+
+.skeleton { border-radius: 8px; background: var(--bg-3); margin-top: 16px; }
+.skeleton.title { height: 30px; width: 70%; }
+.skeleton.line { height: 16px; width: 90%; }
+.skeleton.price-line { height: 38px; width: 40%; }
+
+/* Panneau de paiement clair */
+.card {
+  background: var(--pay-surface); color: var(--pay-ink);
+  border: 1px solid rgba(15, 23, 42, 0.06); border-radius: 18px; padding: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+.who { font-size: 12.5px; color: var(--pay-ink-3); margin: 0 0 16px; }
+.who strong { color: var(--pay-ink); font-weight: 500; }
+.or { display: flex; align-items: center; gap: 12px; margin: 14px 0; font-size: 12px; color: var(--pay-ink-4); }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--pay-line); }
+.loading { padding: 48px 0; text-align: center; font-size: 13px; color: var(--pay-ink-4); }
+
+.total { margin: 18px 0 14px; padding-top: 14px; border-top: 1px solid var(--pay-line); display: grid; gap: 6px; }
+.row { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--pay-ink-2); }
+.row .v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--pay-ink); white-space: nowrap; }
+.row.big { font-size: 14px; color: var(--pay-ink); font-weight: 500; }
+.row.big .v { font-weight: 600; }
+
+.pay {
+  display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px;
+  background: var(--blue); color: #fff; font-family: var(--font-body); font-weight: 600; font-size: 15px;
+  text-align: center; text-decoration: none; cursor: pointer; transition: background 0.15s, transform 0.15s;
+}
+.pay:hover:not(:disabled) { background: #2f74e8; transform: translateY(-1px); }
+.pay:disabled { opacity: 0.55; cursor: not-allowed; }
+.error { color: var(--pay-danger); font-size: 13px; margin: 12px 0 0; min-height: 1em; }
+.error:empty { margin: 0; }
+.legal { margin: 12px 0 0; font-size: 11.5px; color: var(--pay-ink-3); line-height: 1.6; }
+.legal a { color: var(--pay-ink-2); }
+
+.failed { padding: 8px 0; }
+.failed-title { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 0 0 8px; color: var(--pay-ink); }
+.failed-text { margin: 0 0 20px; color: var(--pay-ink-2); font-size: 14px; }
+
+@media (max-width: 860px) {
+  .back { position: static; margin: 16px 16px 0; }
+  .wrap { min-height: 0; display: block; padding: 20px 16px 48px; }
+  .grid { grid-template-columns: 1fr; grid-template-areas: 'head' 'pay' 'details'; row-gap: 28px; }
+  .summary { display: contents; }
+  .head { grid-area: head; }
+  .details { grid-area: details; }
+  .brand { margin-bottom: 20px; }
+  h1 { font-size: 24px; }
+  .features { grid-template-columns: 1fr; margin-top: 0; }
+  .card { padding: 22px 18px; min-height: 0 !important; }
+}

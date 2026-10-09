@@ -1,9 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
 import * as Sentry from '@sentry/nestjs';
+import type { Queue } from 'bullmq';
 import { Resend } from 'resend';
 import { RedisService } from '../infra/redis.service';
+import { EMAIL_JOB_OPTIONS, EMAIL_QUEUE, RETRYABLE_EMAIL_ERRORS, RetryableEmailError, type EmailJob } from './email-queue';
 import {
+  annualRenewalReminderTemplate,
+  founderWelcomeTemplate,
+  partnerWelcomeTemplate,
+  tariffAtRiskTemplate,
   dailyRecapTemplate,
   debriefReadyTemplate,
   paymentFailedTemplate,
@@ -22,8 +29,12 @@ const CONTACT_INBOX = 'hello@mytradingcoach.app';
 // Plan gratuit Resend : 100 e-mails/jour (remise à zéro à minuit UTC), 3 000/mois. Décision du
 // 2026-10-01 : passer au plan Pro dès qu'on dépasse 80 envois/jour → alerte Sentry à ce seuil.
 export const RESEND_DAILY_WARN = 80;
-// Resend : 10 requêtes/s par équipe ; au-delà → `rate_limit_exceeded` (429). On réessaie.
-const RATE_LIMIT_RETRY_DELAYS_MS = [1000, 2000, 4000];
+// Adresse de l'app de prod : RESEND_DRY_RUN y est ignoré (garde-fou, voir le constructeur).
+const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
+
+// Envoi direct (file indisponible) : quelques essais sur place en cas de 429 ou de panne passagère.
+// Depuis la file, c'est BullMQ qui réessaie (EMAIL_JOB_OPTIONS).
+const DIRECT_RETRY_DELAYS_MS = [1000, 2000, 4000];
 const QUOTA_ERRORS = new Set(['daily_quota_exceeded', 'monthly_quota_exceeded']);
 
 /** `jean.dupont@gmail.com` → `j***@gmail.com` : diagnostic possible sans adresse complète dans les logs. */
@@ -43,13 +54,22 @@ export class ResendService {
   private readonly resend: Resend;
   private readonly from: string;
   private readonly frontendUrl: string;
+  /** Page Profil > Paramètres : « Gérer mon abonnement » ouvre le portail Stripe (carte). */
+  private readonly billingUrl: string;
   private readonly logger = new Logger(ResendService.name);
 
   private readonly replyTo: string;
+  /**
+   * `RESEND_DRY_RUN=true` (tests de charge sur beta, #487) : chaque e-mail est journalisé au lieu
+   * d'être envoyé. Pas d'adresses inexistantes chez Resend (réputation du domaine), pas de quota
+   * consommé. Ignoré en prod : un e-mail de prod ne doit jamais pouvoir disparaître ainsi.
+   */
+  private readonly dryRun: boolean;
 
   constructor(
     private readonly config: ConfigService,
     private readonly redis: RedisService,
+    @InjectQueue(EMAIL_QUEUE) private readonly emailQueue: Queue<EmailJob>,
   ) {
     const apiKey = this.config.getOrThrow<string>('RESEND_API_KEY');
     this.resend = new Resend(apiKey);
@@ -61,9 +81,23 @@ export class ResendService {
     this.frontendUrl =
       this.config.get<string>('FRONTEND_URL') ??
       'https://app.mytradingcoach.app';
+    // Champ, pas un getter : le double des tests d'intégration est dérivé du prototype.
+    this.billingUrl = `${this.frontendUrl}/profil?tab=params`;
     this.logger.log(
       `ResendService init | from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
     );
+    const dryRunAsked = this.config.get<string>('RESEND_DRY_RUN') === 'true';
+    this.dryRun = dryRunAsked && this.frontendUrl !== PROD_FRONTEND_URL;
+    if (dryRunAsked && !this.dryRun) this.logger.error('RESEND_DRY_RUN ignoré : environnement de prod');
+    if (this.dryRun) {
+      this.logger.warn('RESEND_DRY_RUN actif : AUCUN e-mail ne part (journalisés seulement)');
+      // Point unique : couvre la file (deliver) ET les envois directs (alerte admin, ambassadeur).
+      this.resend.emails.send = (async (payload: { to: string | string[]; subject: string }) => {
+        const to = (Array.isArray(payload.to) ? payload.to : [payload.to]).map(maskEmail).join(', ');
+        this.logger.log(`[RESEND DRY RUN] "${payload.subject}" → ${to} (non envoyé)`);
+        return { data: { id: 'dry-run' }, error: null, headers: null };
+      }) as unknown as Resend['emails']['send'];
+    }
   }
 
   // ── Bienvenue FREE ─────────────────────────────────────────────────────────
@@ -191,6 +225,58 @@ export class ResendService {
     await this.send({ to: params.to, subject, html });
   }
 
+  // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────
+
+  async sendFounderWelcome(params: {
+    to: string;
+    userName: string;
+    number: number;
+    priceLabel: string;
+    refundUntil: Date;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = founderWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendPartnerWelcome(params: {
+    to: string;
+    userName: string;
+    code: string;
+    priceLabel: string;
+    normalPriceLabel: string;
+    durationMonths: number | null;
+    trialEndsAt: Date | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = partnerWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendTariffAtRisk(params: {
+    to: string;
+    userName: string;
+    kind: 'founder' | 'partner';
+    priceLabel: string;
+    attemptCount: number;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = tariffAtRiskTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendAnnualRenewalReminder(params: {
+    to: string;
+    userName: string;
+    amount: string;
+    renewalDate: Date;
+    keptTariff: string | null;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = annualRenewalReminderTemplate({ ...rest, portalUrl: this.billingUrl });
+    await this.send({ to, subject, html });
+  }
+
   // ── Daily Recap ───────────────────────────────────────────────────────────
 
   async sendDailyRecap(
@@ -283,32 +369,62 @@ export class ResendService {
 
   // ── Envoi générique ────────────────────────────────────────────────────────
 
-  async send(params: {
-    to: string;
-    subject: string;
-    html: string;
-  }): Promise<void> {
+  /**
+   * Met l'e-mail en file (SCA-B5-02) : `EmailProcessor` l'envoie à débit plafonné et réessaie les
+   * erreurs passagères. File indisponible (Redis en panne) → envoi direct, pour ne pas le perdre.
+   * Ne lève jamais : un e-mail raté ne doit pas faire échouer l'action qui l'a déclenché.
+   */
+  async send(params: EmailJob): Promise<void> {
+    try {
+      await this.emailQueue.add('send', params, EMAIL_JOB_OPTIONS);
+    } catch (err) {
+      this.logger.warn(`File e-mail indisponible, envoi direct à ${maskEmail(params.to)} : ${String(err)}`);
+      await this.deliver(params);
+    }
+  }
+
+  /**
+   * Envoi effectif à Resend.
+   * - Direct (sans `queued`) : quelques essais sur place, puis abandon signalé à Sentry.
+   * - Depuis la file : un seul essai ; une erreur passagère lève `RetryableEmailError` pour que
+   *   BullMQ réessaie, sauf au dernier essai où l'abandon est signalé. `idempotencyKey` : un essai
+   *   qui avait abouti chez Resend malgré une réponse perdue n'envoie pas de doublon.
+   */
+  async deliver(params: EmailJob, queued?: { lastAttempt: boolean; idempotencyKey: string }): Promise<void> {
     const to = maskEmail(params.to);
-    this.logger.debug(`Envoi email | from: "${this.from}" to: "${to}" subject: "${params.subject}"`);
+    this.logger.debug(`Envoi email | from: "${params.from ?? this.from}" to: "${to}" subject: "${params.subject}"`);
 
     for (let attempt = 0; ; attempt++) {
-      const { data, error } = await this.resend.emails.send({
-        from: this.from,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-        replyTo: this.replyTo,
-      });
+      const { data, error } = await this.resend.emails
+        .send(
+          {
+            from: params.from ?? this.from,
+            to: params.to,
+            subject: params.subject,
+            html: params.html,
+            replyTo: params.replyTo ?? this.replyTo,
+            ...(params.text ? { text: params.text } : {}),
+            ...(params.attachments?.length ? { attachments: params.attachments } : {}),
+          },
+          queued ? { idempotencyKey: queued.idempotencyKey } : undefined,
+        )
+        // Le SDK renvoie d'ordinaire l'erreur ; une exception (réseau) est traitée comme passagère.
+        .catch((err: unknown) => ({ data: null, error: { name: 'application_error', message: String(err) } }));
 
       if (!error) {
         this.logger.log(`[RESEND OK] "${params.subject}" → ${to} (id: ${data?.id})`);
-        await this.countSent();
+        if (!this.dryRun) await this.countSent(); // simulation : pas d'alerte de quota pour rien
         return;
       }
 
-      if (error.name === 'rate_limit_exceeded' && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
-        await this.sleep(RATE_LIMIT_RETRY_DELAYS_MS[attempt]);
+      const retryable = RETRYABLE_EMAIL_ERRORS.has(error.name);
+      if (retryable && !queued && attempt < DIRECT_RETRY_DELAYS_MS.length) {
+        await this.sleep(DIRECT_RETRY_DELAYS_MS[attempt]);
         continue;
+      }
+      if (retryable && queued && !queued.lastAttempt) {
+        this.logger.warn(`[RESEND RETRY] "${params.subject}" → ${to} | ${error.name} : ${error.message}`);
+        throw new RetryableEmailError(error.name, error.message);
       }
 
       this.logger.error(`[RESEND ERROR] "${params.subject}" → ${to} | ${error.name} : ${error.message}`);
@@ -318,9 +434,8 @@ export class ResendService {
         level: QUOTA_ERRORS.has(error.name) ? 'fatal' : 'error',
         fingerprint: ['resend-send-failed', error.name],
         tags: { resend_error: error.name },
-        extra: { subject: params.subject, message: error.message, attempts: attempt + 1 },
+        extra: { subject: params.subject, message: error.message, attempts: attempt + 1, queued: !!queued },
       });
-      // Ne pas throw : un email raté ne doit pas faire échouer le job BullMQ
       return;
     }
   }

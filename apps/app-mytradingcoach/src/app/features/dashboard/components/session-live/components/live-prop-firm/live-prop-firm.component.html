@@ -37,8 +37,12 @@
       @if (broker(); as b) {
         <div class="pf-open">
           <div class="pf-lbl">Latent</div>
-          <div class="pf-mid" [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0"
-               data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</div>
+          @if (b.openPnlKnown) {
+            <div class="pf-mid" [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0"
+                 data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</div>
+          } @else {
+            <div class="pf-mid" data-testid="live-prop-firm-open-pnl-na">-</div>
+          }
           <div class="pf-sub">{{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }}</div>
         </div>
       }

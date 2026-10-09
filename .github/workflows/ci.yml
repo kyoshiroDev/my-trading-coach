@@ -18,6 +18,7 @@ jobs:
   commitlint:
     name: Commitlint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -49,6 +50,7 @@ jobs:
   build-landing:
     name: Build Astro Landing
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -76,17 +78,19 @@ jobs:
           PUBLIC_FEATURE_MULTI_ACCOUNTS: 'true'
           PUBLIC_FEATURE_REFERRAL: 'true'
 
-  # ── Intégration parrainage : webhook signé → BullMQ → Postgres ────────────
-  # Déterministe et sans dépendance externe : le test SIGNE lui-même l'événement
+  # ── Tests d'intégration API : toutes les specs *.int-spec.ts (Postgres + Redis) ──
+  # Trades, analytics, synchro Tradovate, catalogue prop firm, parrainage… Le parrainage
+  # (webhook signé → BullMQ → Postgres) est déterministe et sans dépendance externe : le test SIGNE lui-même l'événement
   # avec STRIPE_WEBHOOK_SECRET, que l'API utilise pour vérifier — donc ni Stripe CLI
   # (`stripe listen`, impossible à joindre sur un runner éphémère) ni compte Stripe.
   # Vérifie la règle de coexistence : ambassadeur → 20 % sans mois offert,
   # parrain normal → mois offert sans 20 %, auto-parrainage → rien.
   # Le test Playwright qui clique dans la vraie page Stripe reste MANUEL
   # (cf. apps/app-mytradingcoach-e2e/README.md) : trop lent et trop fragile ici.
-  integration-referral:
-    name: Intégration parrainage (webhook signé)
+  integration-api:
+    name: Tests d'intégration API
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: checks
     # STRIPE_SECRET_KEY_TEST vit dans l'environment `development` (comme les secrets
     # VPS et E2E_*), pas au niveau dépôt : sans cette ligne le secret serait vide et
@@ -118,6 +122,8 @@ jobs:
       # aucun appel réel ne les utilise dans ce test.
       STRIPE_PREMIUM_PRICE_MONTHLY_V2: price_ci_placeholder_monthly
       STRIPE_PREMIUM_PRICE_YEARLY_V2: price_ci_placeholder_yearly
+      STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER: price_ci_placeholder_monthly_founder
+      STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER: price_ci_placeholder_yearly_founder
       RESEND_API_KEY: re_ci_placeholder
 
     services:
@@ -178,7 +184,7 @@ jobs:
       - name: Prisma migrate (base d'intégration)
         run: pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
 
-      - name: Intégration parrainage
+      - name: Tests d'intégration API
         run: pnpm exec vitest run --config vitest.integration.config.mts
         working-directory: apps/api-mytradingcoach
 
@@ -186,6 +192,7 @@ jobs:
   deploy-api-dev:
     name: Deploy API dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
@@ -215,6 +222,7 @@ jobs:
   deploy-app-dev:
     name: Deploy Angular dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production
@@ -254,6 +262,7 @@ jobs:
   deploy-landing-dev:
     name: Deploy Landing dev to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build-landing]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     environment: production

@@ -35,8 +35,10 @@ const mockRedisService = {
     expire: vi.fn().mockResolvedValue(1),
     ttl: vi.fn().mockResolvedValue(-1),
     keys: vi.fn().mockResolvedValue([]),
+    multi: vi.fn(),
   },
 };
+const redisMulti = { incr: vi.fn(), expire: vi.fn(), exec: vi.fn() };
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
 
@@ -82,6 +84,44 @@ describe('AnalyticsService', () => {
       vi.mocked(groupTrades).mockClear();
       await service.getEquityCurveDaily('user-123', undefined, to);
       expect(vi.mocked(groupTrades).mock.calls[0][1]).toMatchObject({ userId: 'user-123', to });
+    });
+  });
+
+  describe('cache versionné (SCA-B1-03)', () => {
+    beforeEach(() => {
+      mockRedisService.client.get.mockReset().mockResolvedValue(null);
+      mockRedisService.client.setex.mockClear();
+      redisMulti.incr.mockReset().mockReturnValue(redisMulti);
+      redisMulti.expire.mockReset().mockReturnValue(redisMulti);
+      redisMulti.exec.mockReset().mockResolvedValue([]);
+      mockRedisService.client.multi.mockReset().mockReturnValue(redisMulti);
+    });
+
+    it('la clé porte la version courante de l’utilisateur (0 sans compteur)', async () => {
+      await service.getBySetup('user-123');
+      mockRedisService.client.get.mockImplementation(async (k: string) => (k === 'analytics:v:user-123' ? '7' : null));
+      await service.getBySetup('user-123');
+
+      const keys = mockRedisService.client.setex.mock.calls.map((c) => c[0]);
+      expect(keys).toEqual(['analytics:user-123:v0:setup', 'analytics:user-123:v7:setup']);
+    });
+
+    it('invalider = INCR + EXPIRE du compteur, sans parcourir ni supprimer de clés', async () => {
+      await service.invalidateUserCache('user-123');
+
+      expect(redisMulti.incr).toHaveBeenCalledWith('analytics:v:user-123');
+      expect(redisMulti.expire).toHaveBeenCalledWith('analytics:v:user-123', 7 * 24 * 3600);
+      expect(mockRedisService.client.keys).not.toHaveBeenCalled();
+      expect(mockRedisService.client.del).not.toHaveBeenCalled();
+    });
+
+    it('Redis en panne → calcul direct, rien d’écrit, invalidation sans erreur', async () => {
+      mockRedisService.client.get.mockRejectedValue(new Error('down'));
+      mockRedisService.client.multi.mockImplementation(() => { throw new Error('down'); });
+
+      await expect(service.getBySetup('user-123')).resolves.toBeDefined();
+      expect(mockRedisService.client.setex).not.toHaveBeenCalled();
+      await expect(service.invalidateUserCache('user-123')).resolves.toBeUndefined();
     });
   });
 

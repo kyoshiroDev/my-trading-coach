@@ -7,6 +7,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { EcoCalendarData } from '@app/core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '@app/core/api/session.api';
@@ -21,6 +22,10 @@ import { LivePropFirmComponent } from './components/live-prop-firm/live-prop-fir
 import { isLivePropAccount } from './components/live-prop-firm/live-prop-firm.util';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
+import { UserStore } from '@app/core/stores/user.store';
+import { LivePositionComponent } from './components/live-position/live-position.component';
+import { LIVE_POSITION_ROLES, laggingBrokerPanel } from './components/live-position/live-position.util';
+import { SessionStore } from '@app/core/stores/session.store';
 
 /**
  * Onglet « Session live » : cadre de la vue (CTA sans session, carte marché, mini-stats,
@@ -34,7 +39,7 @@ import { TradovateStore } from '@app/core/stores/tradovate.store';
   styleUrl: './session-live.component.css',
   imports: [
     MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, LiveEcoCalendarComponent,
-    QuickTradeComponent, LivePropFirmComponent,
+    QuickTradeComponent, LivePropFirmComponent, LivePositionComponent,
   ],
   templateUrl: './session-live.component.html',
 })
@@ -74,11 +79,38 @@ export class SessionLiveComponent {
     // Le suivi prop firm dépend des connexions Tradovate, chargées jusqu'ici par « Mes comptes »
     // seulement : en ouverture directe ou après F5, le bloc restait masqué (#437).
     if (!this.tradovate.loaded()) this.tradovate.load();
+
+    // « Trade en cours » et « Suivi du compte » affichés ensemble : le plus en retard des deux est
+    // relu dès que l'autre a un relevé broker plus récent, pour qu'ils montrent le même latent.
+    effect(() => {
+      const id = this.propFirmAccountId();
+      if (!id || !this.showLivePosition()) return;
+      const liveAt = this.liveStats()?.broker?.openPnlAt;
+      const accountAt = this.accounts.accounts().find((a) => a.id === id)?.metrics?.broker?.equityAt;
+      const lagging = laggingBrokerPanel(liveAt, accountAt);
+      // Une seule relecture par écart : si elle ne le comble pas (relevé pas encore écrit), pas de boucle.
+      const gap = `${liveAt}|${accountAt}`;
+      if (!lagging || gap === this.lastBrokerGap) return;
+      this.lastBrokerGap = gap;
+      untracked(() => {
+        if (lagging === 'account') this.accounts.reloadSoon();
+        else if (lagging === 'live') this.sessionStore.refreshLiveSoon();
+      });
+    });
   }
 
   private readonly money = inject(MoneyService);
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tradovate = inject(TradovateStore);
+  private readonly userStore = inject(UserStore);
+  private readonly sessionStore = inject(SessionStore);
+  private lastBrokerGap: string | null = null;
+
+  /** « Trade en cours » (bêta) : compte de la session synchronisé par API, rôle de test. */
+  protected readonly showLivePosition = computed(() => {
+    const role = this.userStore.user()?.role;
+    return !!role && LIVE_POSITION_ROLES.includes(role) && !!this.liveStats()?.broker;
+  });
 
   /** Compte de la session si son suivi prop firm peut remplacer Trade rapide, sinon null. */
   protected readonly propFirmAccountId = computed(() => {

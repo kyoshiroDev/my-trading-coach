@@ -454,3 +454,44 @@ Migration `20261003160000_b2_index_cleanup` :
   main en `CREATE INDEX CONCURRENTLY` (hors transaction), puis migration vide qui le constate.
 - Avant un `DROP INDEX` en migration : vérifier sa présence sous ce nom exact sur prod, beta et dev
   (un index absent fait échouer la migration au déploiement).
+
+## ProductEventDaily (2026-10-07)
+
+Entonnoir Premium : `@@unique([date, userId, event, place])` (upsert atomique +1), `@@index([date, event])`,
+FK `User` `onDelete: Cascade` (suppression de compte = ses événements). Migration écrite à la main
+(`20261007090000_product_event_daily`), même forme que `LandingVisitDaily`.
+
+## Offre fondateur et codes partenaires (#525, 2026-10-07)
+
+Migration `20261007192237_offre_fondateur`, additive. **Registres** plutôt que des champs copiés sur
+`User` (choix justifié dans #525) :
+- `FounderOfferConfig` : ligne unique (`CHECK id = 1`), insérée **fermée** par la migration
+  (`open = false`, `endsAt` null, `notifiedMilestones` = paliers déjà notifiés).
+- `FounderSeat` : `number` = PK (1 à 200, `CHECK >= 1`), **jamais supprimé ni réattribué** (le user
+  supprimé → `userId` null, la place reste comptée). `status` ACTIVE / LOST (abonnement terminé, place
+  gardée) / REFUNDED (1er paiement remboursé intégralement, place rendue) / RELEASED (1er paiement en échec, place rendue). Places
+  prises = `status IN (ACTIVE, LOST)` + réservations FOUNDER non expirées, index `[status]`.
+- `PartnerCode` (`code` en MAJUSCULES, unique) + `PartnerRedemption` (une par personne, `userId`
+  unique, conditions **figées** à l'utilisation, coupon appliqué). Quota = redemptions non RELEASED +
+  réservations PARTNER non expirées, index `[partnerCodeId, status]`.
+- `CheckoutReservation` : anti-survente pendant la session Checkout (30 min), `stripeSessionId` unique.
+
+
+## Rétention des données (SCA-B5-09, 2026-10-09)
+
+`modules/retention/retention.cron.ts` — le **1er du mois à 4 h 30 Paris** (après les dumps de 3 h),
+worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en boucle, table par table
+(une table en échec ne bloque pas les autres). Décisions de Greg du 2026-10-07 :
+
+| Table | Colonne | Conservation |
+|---|---|---|
+| `MarketNews` | `publishedDate` | 30 jours |
+| `StripeEvent` | `processedAt` | 90 jours (Stripe ne rejoue pas au-delà de 3 j) |
+| `AiUsageLog` | `createdAt` | 13 mois (détail des coûts IA perdu au-delà) |
+| `UserDailyActivity` | `date` | 24 mois |
+
+- **`EmailSend` n'est JAMAIS purgée** : c'est l'anti-doublon des campagnes « une seule fois »
+  (`EmailDispatchService.canSend`). La purger ferait renvoyer une campagne one-shot.
+- Nouvelle table qui grossit sans fin → décider sa conservation et l'ajouter à `RETENTION_RULES`
+  (liste figée : ses noms entrent tels quels dans le SQL). Validé sur vraie base :
+  `retention.int-spec.ts`.

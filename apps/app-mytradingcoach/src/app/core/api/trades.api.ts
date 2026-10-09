@@ -61,6 +61,8 @@ export interface NewsItem {
   image?: string;
   site?: string;
   textTranslated?: boolean;
+  /** Éligible au bandeau BREAKING (macro, hors crypto, < 6 h), décidé par l'API sur le titre d'origine. */
+  breaking?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

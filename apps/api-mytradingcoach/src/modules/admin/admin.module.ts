@@ -9,7 +9,7 @@ import { MetricsSnapshotCron } from './metrics-snapshot.cron';
 import { SignupDigestCron } from './signup-digest.cron';
 import { DeletedAccountService } from './deleted-account.service';
 import { UserDetailService } from './user-detail.service';
-import { DemoSeedService } from './demo-seed.service';
+import { DemoSeedModule } from './demo-seed.module';
 import { DemoSeedCron } from './demo-seed.cron';
 import { ResendModule } from '../resend/resend.module';
 import { UsersModule } from '../users/users.module';
@@ -20,12 +20,13 @@ import { VpsModule } from '../vps/vps.module';
 import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { ReferralModule } from '../referral/referral.module';
 import { TradesModule } from '../trades/trades.module';
+import { FounderOfferModule } from '../founder-offer/founder-offer.module';
 import { AdminBrokerMappingsController } from './admin-broker-mappings.controller';
 
 @Module({
-  imports: [ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule, AmbassadorModule, ReferralModule, TradesModule],
+  imports: [DemoSeedModule, ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule, AmbassadorModule, ReferralModule, TradesModule, FounderOfferModule],
   // Toutes les routes admin vivent sous /admin (guard au niveau de chaque classe).
   controllers: [AdminController, AdminUsersController, AdminAmbassadorsController, AdminBrokerMappingsController],
-  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, SignupDigestCron, DeletedAccountService, UserDetailService, DemoSeedService, DemoSeedCron],
+  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, SignupDigestCron, DeletedAccountService, UserDetailService, DemoSeedCron],
 })
 export class AdminModule {}

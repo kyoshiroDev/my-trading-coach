@@ -24,7 +24,7 @@ import { AutoCampaignsCron } from './auto-campaigns.cron';
 
 const mockPrisma = { user: { findMany: vi.fn() } };
 const mockDispatch = {
-  canSend: vi.fn().mockResolvedValue(true),
+  allowedUsers: vi.fn(async (_c: unknown, users: { id: string }[]) => new Set(users.map((u) => u.id))),
   dispatch: vi.fn().mockResolvedValue(true),
 };
 
@@ -71,5 +71,30 @@ describe('AutoCampaignsCron', () => {
     const guard = where.AND.find((c: Record<string, unknown>) => 'isDemo' in c);
     expect(guard.isDemo).toBe(false);
     expect(guard.role).toEqual({ not: 'ADMIN' });
+  });
+
+  it('parcourt les utilisateurs par pages de 500 avec un curseur (SCA-B5-07)', async () => {
+    const page = Array.from({ length: 500 }, (_, i) => ({
+      id: `u${String(i).padStart(3, '0')}`, email: 'x@test.com', name: null, marketingConsent: true, unsubToken: 't',
+    }));
+    mockPrisma.user.findMany.mockReset().mockResolvedValueOnce(page).mockResolvedValueOnce([]).mockResolvedValue([]);
+
+    await cron.run();
+
+    const calls = mockPrisma.user.findMany.mock.calls.map((c) => c[0]);
+    expect(calls[0]).toMatchObject({ take: 500, orderBy: { id: 'asc' } });
+    expect(calls[1]).toMatchObject({ cursor: { id: 'u499' }, skip: 1 });
+  });
+
+  it('seuls les utilisateurs autorisés par allowedUsers reçoivent l’e-mail', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([
+      { id: 'ok', email: 'a@test.com', name: null, marketingConsent: true, unsubToken: 't' },
+      { id: 'refuse', email: 'b@test.com', name: null, marketingConsent: true, unsubToken: 't' },
+    ]);
+    mockDispatch.allowedUsers.mockResolvedValue(new Set(['ok']));
+
+    await cron.run();
+
+    expect(mockDispatch.dispatch.mock.calls.map((c) => c[1].id)).toEqual(['ok']);
   });
 });

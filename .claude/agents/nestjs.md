@@ -77,6 +77,21 @@ GET    /api/session/active             JWT → session active en cours (null si 
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
+POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
+                                       `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
+GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
+PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
+POST   /api/billing/checkout          plan premium_monthly|premium_yearly|founder_monthly|founder_yearly, cta?
+POST   /api/billing/interval          { interval: month|year } → changement par NOTRE flux, tarif gardé
+GET    /api/billing/offers            → { founderOffer, founder (place, éligibilité, refundUntil), partner, subscription } (app)
+GET    /api/billing/partner/:code     (20/min) → validation du code POUR l'utilisateur (déjà utilisé, déjà abonné…)
+GET    /api/pricing/partner/:code     PUBLIC (20/min, max-age=60) → conditions du code (valid, prix, durée) ou raison du refus ; ni partenaire ni utilisations
+GET    /api/admin/partner-codes       ADMIN → codes + used/max, actifs, perdus, rendus, checkouts en cours
+POST   /api/admin/partner-codes       ADMIN → création (2 coupons Stripe créés par l'API)
+PATCH  /api/admin/partner-codes/:id   ADMIN → modification / activation (sans effet sur les abonnés)
+GET    /api/admin/partner-codes/:id/users  ADMIN → abonnés du code
 GET    /api/session/today/trades       JWT → trades du jour (du compte de la session active s'il y en a une)
 GET    /api/session/today/stats        JWT → stats live (totalPnl, winRate, tradesCount, trades), même périmètre
 # 1 session = 1 compte (#457) : un trade n'est rattaché à la session active (création, synchro
@@ -321,7 +336,7 @@ async analyze(summary: string): Promise<Pattern[]> {
     system: [{ type: 'text', text: PATTERN_SYSTEM, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: summary }]
   });
-  return JSON.parse(this.clean(res.content[0].text)).patterns;
+  return JSON.parse(this.clean(responseText(res))).patterns; // jamais content[0] (bloc thinking, refus)
 }
 ```
 
@@ -488,6 +503,19 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 }
 ```
 
+**Quota mensuel réservé, pas compté après (SCA-B5-06, 2026-10-07)** : `AiService.metered(userId, call)`
+fait `INCR ai:calls:<user>:<mois>` **avant** l'appel ; > `AI_MONTHLY_QUOTA` → `DECR` + 429 ; appel en
+échec → `DECR` (place rendue). Insights et chat passent par là (admin exempté). Avant : vérifier puis
+incrémenter après coup laissait 20 appels simultanés dépasser le quota. Redis down → 503 (inchangé).
+
+**Sémaphore global des appels modèle (SCA-B5-06)** : `AnthropicClientService.create` (point d'entrée
+unique) prend une place dans l'ensemble trié Redis `ai:anthropic:inflight` (script Lua atomique,
+place = jeton + échéance, expire seule si le process meurt) ; **`AI_MAX_CONCURRENCY`** places (défaut
+**4**) tous process confondus ; attente ≤ 60 s puis 503 « L'IA est très sollicitée ». Redis down → on
+laisse passer. Les gros débriefs (jusqu'à ~4 min) tiennent une place : si le chat sature le
+dimanche soir, monter `AI_MAX_CONCURRENCY`. Les 429 Anthropic : le SDK (`maxRetries: 1`) respecte
+déjà `retry-after` ; prompt caching déjà posé (`cache_control`) sur les system prompts.
+
 ---
 
 ## Gestion erreurs Anthropic
@@ -507,40 +535,52 @@ async checkDailyLimit(userId: string, action: string, max: number) {
 
 ---
 
-## Cache Redis analytics
+## Cache Redis analytics — versionné (SCA-B1-03, 2026-10-07)
 
-```typescript
-async getSummary(userId: string) {
-  const key = `analytics:summary:${userId}`;
-  const cached = await this.redis.get(key);
-  if (cached) return JSON.parse(cached);
-  const data = await this.computeSummary(userId);
-  await this.redis.setex(key, 300, JSON.stringify(data));
-  return data;
-}
-// Invalider à chaque nouveau trade
-async onTradeCreated(userId: string) {
-  await this.redis.del(`analytics:summary:${userId}`);
-}
-```
+`AnalyticsService.withCache(userId, part, ttl, compute)` lit/écrit
+`analytics:<userId>:v<n>:<part>`, où `n` = compteur `analytics:v:<userId>` (absent → 0).
+- **Invalider = `invalidateUserCache(userId)` = `INCR` + `EXPIRE 7 j` du compteur** (O(1)). Plus de
+  SCAN/DEL : les clés de l'ancienne version ne sont plus lues et expirent par leur TTL (300 s).
+  Le compteur vit plus longtemps que tout cache : repartir de 0 ne retombe jamais sur une clé vivante.
+- Nouvelle clé analytics → passer par `withCache(userId, '<part>', …)`, jamais une clé construite à
+  la main (elle échapperait à l'invalidation).
+- Redis en panne → calcul direct, rien écrit.
+
+## Notes comportementales (barème B) — recalcul (SCA-B5-04, 2026-10-07)
+
+`trades/behavioral-grades.ts` : `behavioralGradeUpdates(trades)` (pur : médianes du compte, une
+passe, seulement les trades sans stop dont la note change) puis `writeGradeUpdates` : **un
+`UPDATE "Trade" … FROM (VALUES …)` par paquet de 1 000**, tous dans une transaction, filtré sur
+`accountId` (plus un UPDATE Prisma par trade). Volontairement **synchrone et sur tout le compte** :
+la réponse de création d'un trade porte sa note, et un nouveau trade décale les médianes de tous.
+(Le plan B5-04 proposait job asynchrone + fenêtre ±1 j : non retenu, cela change ce que voit
+l'utilisateur.) Validé sur vraie base : `behavioral-grades.int-spec.ts`.
+
+## Import de trades en lot (SCA-B1-01/02/04, 2026-10-07)
+
+`TradesService.importTrades` (CSV, synchro et historique Tradovate) :
+- lot vide → retour immédiat, **0 requête** (cas courant de la synchro broker) ;
+- trades existants lus sur `[min − 1 j, max + 1 j]` du lot (`importDedupeWindow`, `import-dedupe.util.ts`) :
+  la clé exacte porte la date à la ms et le rapprochement entre fuseaux est borné à ±14 h. Une ligne
+  sans date valide → tout l'historique ;
+- session active, setups, comptes et compte par défaut résolus **une fois par lot**
+  (`createImportBatch`, `import-batch.ts`, mémoïsé par promesse : un setup invalide fait échouer
+  chacune de ses lignes sans refaire la requête) ;
+- cache analytics invalidé **une fois** en fin de lot (et pas si rien n'est créé) ;
+- insertion toujours ligne par ligne (`create` + `opts.batch`) : un conflit d'unicité (import
+  concurrent) reste compté comme doublon. `createMany` du plan B1-02 non fait (changerait ce comptage).
+- `POST /trades/import` : `@Throttle` **5 / min par utilisateur** (`IMPORT_THROTTLE_LIMIT`).
 
 ---
 
 ## Cron BullMQ — Weekly Debrief
 
-```typescript
-@Cron('0 23 * * 0')  // Dimanche 23h00
-async scheduledDebriefs() {
-  const users = await this.usersService.findActivePremium();
-  await Promise.all(users.map(u =>
-    this.debriefQueue.add('generate', { userId: u.id }, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: true,
-    })
-  ));
-}
-```
+`DebriefCron` (dimanche 23 h Paris, rattrapage lundi 8 h) enfile un job `generate` par utilisateur
+de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai, débrief automatique
+activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
+journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
+
+---
 
 ## Clustering — règles
 
@@ -605,6 +645,12 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
+> `TradovateBackgroundRefreshCron` (SCA-B5-03, 2026-10-09) : verrou Redis `tradovate:background-refresh`
+> (SET NX, 30 min, rendu par son seul propriétaire) → un passage qui démarre pendant le précédent est
+> **sauté** ; utilisateurs traités **5 en parallèle**, les connexions d'un même utilisateur l'une
+> après l'autre (login Tradovate partagé). Budget de passés complets décidé avant le parallélisme.
+> Non fait : file BullMQ par connexion et étalement du mois sur l'heure (hash % 4).
+
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
 `seedDemo()` génère des dates **relatives au moment du run**. Appelé une seule fois
@@ -618,6 +664,21 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 - `onModuleInit` gardé par `IS_CRON_WORKER === 'true'` (**obligatoire** : sinon les 8
   workers du cluster purgent/recréent le même user en concurrence) → rattrape une API
   restée éteinte plus d'une journée.
+- **Connexion démo** (`AuthService.demoLogin`, 2026-10-06) → `DemoSeedService.ensureFresh` :
+  re-seed si la démo est périmée (`isStale` : absente, sans trade, ou rien depuis le dernier jour
+  ouvré), sous verrou Redis `demo:reseed-lock` (120 s, un seul re-seed dans le cluster ; verrou
+  pris → démo actuelle servie). Un échec ne bloque jamais la connexion. Raison : le worker de
+  **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
+  `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
+  depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
+- **Séance du jour aux heures de marché** (`demoTodaySlot`, `demo-data/generate.ts`) : avant 09:45
+  aucune séance du jour (veille complète, Pré-session) ; 09:45–16:15 Londres (trades 09:22 / 09:38) ;
+  après, New York (15:38 / 15:57). `isStale` re-seede quand un créneau s'est ouvert depuis le dernier
+  seed (seed de 03:20 puis visite à 11:00). Avant : trades « du jour » à 01:40 / 02:45, timer > 22 h.
+- **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
+  et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
+  live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
+  bouton « Connecter » orange sur Tradeify.
 
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
@@ -777,8 +838,32 @@ export class CreateTradeDto {
   chiffre officiel, et le récap parle EN PRIORITÉ d'une limite approchée, d'une alerte ou d'un tilt.
   Heures affichées à Paris. Injecté en `@Optional()` dans les deux services ; contexte indisponible
   → l'IA part sans le bloc.
+- **Récap du jour : ce que voit l'IA (2026-10-09, récap faux de Val)** :
+  - `forDay(userId, date, tradedAccountIds)` : SEULS les comptes tradés ce jour-là, avec ou sans
+    règle prop firm dès qu'ils ont une alerte / un tilt du jour. Sinon un compte cassé deux jours
+    plus tôt et pas tradé passait pour la casse du jour, et le tilt d'un compte sans règle disparaissait.
+  - Casse du drawdown d'un jour précédent → datée (« dépassé depuis le mercredi 7 octobre (pas
+    aujourd'hui) »), via le dernier `PropRiskEvent` drawdown/breached avant la période.
+  - Chaque ligne de trade porte son compte (`« label »`), et la consigne interdit d'attribuer un fait
+    d'un compte aux trades d'un autre.
+  - Setup `IMPORT_SETUP_TITLE` (« Sans setup », défaut des imports) → « setup non renseigné », et
+    l'IA n'en tire aucune conclusion (elle reprochait « sans setup » à chaque journée synchronisée).
+  - Comptes d'entraînement exclus du récap (P&L, stats, patterns 7 j, IA) : `demoAccountIds`
+    (`accounts/demo-accounts.ts`) = type `DEMO` OU relié à un compte de démo Tradovate
+    (`externalAccountName` = `DEMO` + chiffres), quel que soit le type saisi.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
+  **Choix produit du 2026-10-06 (Greg)** : on garde « jamais en boucle » (la doc Tradovate dit
+  « many times in succession is an anti-pattern »), le latent est **daté** à l'écran.
+- **Positions ouvertes décrites** (retour Val, `docs/audit-live-tradovate.md`) : un `Trade` ne naît
+  qu'à la sortie (paire de fills). Chaque synchro (donc chaque événement `position` du WebSocket)
+  écrit le détail des positions non nulles du compte (actif normalisé, sens, quantité, `netPrice`,
+  `timestamp`) dans Redis `tradovate:positions:<connexion>` (TTL 12 h, `tradovate-open-positions.ts`,
+  `TradovateBalanceService.recordOpenPositionDetails`). `GET /session/today/stats` renvoie `broker`
+  (`LiveBrokerState`, `@mtc/shared`) pour le compte de la session active : positions, latent broker
+  et leurs dates ; `null` si compte non synchronisé. Latent inconnu avec position → `openPnl: null`
+  (jamais un chiffre inventé) ; à plat → 0. Le total de session reste le RÉALISÉ : le latent est à
+  part.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
@@ -1053,6 +1138,9 @@ sont en direct.
 - `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
   existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
   Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+- Rattrapages **bornés à `LIVE_CATCH_UP_CONCURRENCY` (5) par process** (`createLimiter`,
+  `common/utils/concurrency.util.ts`, SCA-B6-02) : après un redémarrage, tous les clients reviennent
+  en même temps ; les suivants attendent leur tour (le WebSocket, lui, s'ouvre sans attendre).
 - **Un seul WebSocket par user, tous workers et onglets confondus** : bail Redis
   `tradovate:live:<userId>` (SET NX PX 30 s, renouvelé / rendu par script Lua « si c'est le
   mien »). Worker titulaire sans clients → il rend le bail, un autre reprend ≤ 10 s. Redis down →
@@ -1121,6 +1209,15 @@ sont en direct.
 
 ## Import CSV : parseurs purs (étape 4 de l'audit, 2026-09-13)
 
+> **Excel hors boucle d'événements (SCA-B5-05, 2026-10-07)** : `toCsvText` passe les `.xlsx/.xls` à
+> `xlsxToCsv` (`trades/xlsx-worker.ts`) : `worker_thread` à la demande (source en ligne, `eval: true`,
+> l'API étant un bundle unique ; `xlsx` résolu par `NODE_PATH`), tas plafonné à 256 Mo, tué après
+> 20 s, **un à la fois par process**, `sheetRows = MAX_KNOWN_ROWS + 2` (un fichier trop gros reste
+> refusé, avec un compte affiché de 10 001). Fichier piégé → 400 « Impossible de lire ce fichier
+> Excel » au lieu de bloquer tout le worker HTTP. Ne jamais rappeler `XLSX.read` dans le thread
+> principal. Le CSV texte reste lu sur place (simple `toString`).
+
+
 - `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
@@ -1143,7 +1240,9 @@ Ordre de résolution d'un import, à ne pas réarranger :
 3. Le fichier ressemble-t-il à un export de trades ? Sinon message neutre, sans upsell.
 4. Chemin IA (`PremiumGuard` + `AI_ENABLED`) : d'abord un **mapping** (un appel, ~0,003 $,
    coût indépendant de la taille), et seulement s'il échoue le repli ligne par ligne
-   (`AI_BATCH` = 120, ~1,43 $ pour 2000 lignes).
+   (`AI_BATCH` = 25 depuis le 2026-10-08 : à 120, la sortie dépassait `max_tokens` 8192 ; un test
+   impose `AI_BATCH × WORST_TOKENS_PER_TRADE ≤ 50 %` du plafond. Coût du repli inchangé, ~1,4 $
+   pour 2000 lignes : la sortie suit le nombre de trades, seule l'entête est répétée).
 
 Fichiers : `trades/csv-mapping.ts` (types, validation de forme, application, contrôle du P&L,
 `headerSignature`), `trades/broker-mapping.service.ts` (lecture/écriture des fiches),
@@ -1174,13 +1273,32 @@ part de lignes et non la perfection.
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
-- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ; un
-  test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
+- **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
+  alias local (`AI_MODELS.analysis` = `claude-sonnet-4-6`, `AI_MODELS.fast` = `claude-haiku-5-5`) ;
+  un test vérifie que chaque modèle a son tarif. Délai par appel = `max(60 s, 30 ms × max_tokens)`,
   une seule relance, chaque échec tracé (sans le contenu envoyé).
+  - **Réflexion coupée par défaut** : Haiku 5.5 réfléchit si `thinking` est absent, ce qui mange
+    `max_tokens` et se facture. `AnthropicClientService.create` applique `AI_THINKING_OFF` quand
+    l'appel ne précise pas `thinking` : Haiku 5.5 → `disabled`. Un modèle absent de la table
+    (Sonnet 4.6) part **sans** champ `thinking`, comme avant (testé). Pour activer la réflexion sur
+    un appel, passer `thinking` explicitement.
+  - **Lire la réponse avec `responseText(response)`**, jamais `content[0]` : un bloc `thinking`
+    peut venir en premier, et un refus (`stop_reason: 'refusal'`, nouveau sur les 5.5, tracé en
+    warn) peut revenir sans contenu. Haiku 5.5 n'a pas de repli serveur (`fallbacks` interdit).
+  - **Paramètres refusés par Haiku 5.5** (400) : `temperature` / `top_p` / `top_k` non par défaut,
+    `budget_tokens`, préremplissage d'un tour assistant final. Aucun n'est utilisé.
+  - **Effort** : non envoyé (défaut `medium` sur Haiku 5.5, sans effet tant que la réflexion est
+    coupée).
+  - **Sonnet 5.5 : à retenter plus tard** (testé le 2026-10-08, pas adopté). Chat coupé à
+    `max_tokens: 512` (~420-500 tokens contre ~160-220 en Sonnet 4.6, l'effort ne raccourcit pas),
+    débrief JSON illisible 1 fois sur 8. Il refuse aussi `thinking: disabled` (400) : y couper la
+    réflexion avec `between_tools`, sans autre champ, effort `high` au plus. Détail dans `plans.md`.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
   optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
+  En local, la valeur va dans le `.env` racine (commun) : `.env.development` / `.env.local` ne
+  portent que DATABASE_*, REDIS_* et NODE_ENV (`envFilePath: [<contexte>, '.env']`, le premier gagne).
 - **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
   chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
 
@@ -1198,6 +1316,21 @@ part de lignes et non la perfection.
   puis la ré-exporter (`export type { X }`) si des importeurs existants passent par l'API front.
 - Aussi partagés : `todayParis` / `parisDayRange` (dates Paris), `normalizeEventKey` / `eventKey`,
   `renderEmailMarkdown` (rendu des campagnes, envoi + aperçu admin).
+- **Envoi test des campagnes** (#525) : `POST /admin/campaigns/:type/test` → UN e-mail vers
+  `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
+  (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
+  prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
+  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
+  passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
+  + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
+  modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
+- **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
+  (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
+  avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
+  réponses sur hello@, version texte. `CampaignContent` porte `text/from/replyTo/attachments`, que
+  `dispatch` et l'envoi test transmettent à `EmailJob`. Pas de ligne « Greg, … » dans le corps : la
+  signature suffit (jamais deux signatures). Aperçu admin : `inlineLogoForPreview` (data URI).
 
 ## PDF du débrief — Chromium réutilisé (SCA-B0-06, 2026-09-30)
 
@@ -1249,6 +1382,14 @@ si aucun client connecté (`gateway.connectedCount()`), donc pas d'appel Yahoo l
 vient de `MarketDataService.getMarketContext()` (cache Redis 15 s). La route HTTP
 `GET /market/context` reste pour le secours du front (5 min) et le premier affichage.
 
+**`/eco` authentifié (SCA-B6-03, 2026-10-07)** : `EcoCalendarGateway.handleConnection` exige le JWT
+de l'app dans `handshake.auth.token` (signature vérifiée par `JwtService`, **sans requête en base**,
+démo acceptée) ; absent / invalide / expiré → `disconnect(true)`. `maxHttpBufferSize: 1e5`, logs de
+connexion en `debug`. Front : `EcoSocketService` envoie le jeton (relu à chaque reconnexion) et
+retente de façon espacée après un refus (`io server disconnect`, 2 s → 60 s). Un onglet resté sur
+l'ancien front après le déploiement est refusé jusqu'au rechargement : il garde le secours HTTP
+(5 min), rien ne casse.
+
 ## Acquisition UTM (oct. 2026)
 
 - `POST /auth/register` accepte `acquisitionSource` / `acquisitionMedium` / `acquisitionCampaign`
@@ -1284,6 +1425,7 @@ redéployer : rien à lancer sur le VPS.
   les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
   Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
 - Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
+- **Veille des règles** (2026-10-07) : `pnpm prop-firms:watch` + workflow hebdomadaire « Veille règles prop firm » (issue `veille-prop-firm`). Toute mise à jour d'une firm se termine par `pnpm prop-firms:watch --update` (relevé `veille/sources.json`), voir le README du catalogue.
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,
@@ -1488,7 +1630,7 @@ peu changeante → même traitement ; jamais sur une route authentifiée ou pers
 valeur inconnue → refus au boot).
 - `web` : HTTP + sockets (dont le temps réel Tradovate, réparti par bail Redis). **Aucun cron,
   aucun processeur BullMQ** : les files sont alimentées, pas consommées.
-- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`).
+- `worker` : crons (sur le worker cron du cluster) + processeurs BullMQ (`debrief`, `stripe`, `email`, `daily-recap`).
 - Prérequis du blue/green (B8) : deux conteneurs web coexistent pendant une bascule, un cron ne
   doit donc jamais tourner dans le web.
 
@@ -1498,6 +1640,41 @@ Règles :
 - Nouveau `@Processor` → provider conditionnel `...(runsQueueProcessors() ? [XxxProcessor] : [])`,
   et l'ajouter à `app-role-wiring.spec.ts`.
 - Le log de démarrage de chaque worker affiche `[APP_ROLE=… · crons oui/non · files oui/non]`.
+
+### File e-mail (SCA-B5-02, 2026-10-07)
+
+`ResendService.send()` **met en file** (`email`, `modules/resend/email-queue.ts`) au lieu d'envoyer :
+`EmailProcessor` (worker seulement) appelle `deliver()` à débit plafonné (`EMAIL_RATE_LIMIT` : 5/s,
+global à la file ; Resend = 10 req/s par équipe, clé partagée entre environnements).
+- 5 essais, backoff exponentiel 2 s → 16 s. Passagères (`rate_limit_exceeded`, `application_error`,
+  `internal_server_error`, exception réseau du SDK) → `RetryableEmailError` → nouvel essai ;
+  définitives (quota, adresse invalide, clé) → Sentry tout de suite, pas de nouvel essai. Sentry
+  n'est prévenu d'un échec passager qu'au **dernier** essai.
+- `idempotencyKey: email/<job.id>/<job.timestamp>` : un essai qui avait abouti malgré une réponse
+  perdue ne crée pas de doublon. Jamais `job.id` seul : c'est un compteur par Redis (prod, beta, dev
+  et local repartent chacun de 1), et Resend refuse une clé revue sous 24 h avec un autre contenu
+  (`invalid_idempotent_request`, non réessayée → e-mail perdu, récap du 2026-10-09).
+- File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
+- **`RESEND_DRY_RUN=true`** (tests de charge sur beta, #487) : l'appel d'envoi du client Resend est
+  remplacé par un journal `[RESEND DRY RUN]` (file ET envois directs), sans compteur ni alerte de quota.
+  **Ignoré si `FRONTEND_URL` = l'app de prod** (garde-fou : jamais d'e-mail de prod qui disparaît).
+- `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
+  `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
+  pièce jointe : pas dans Redis).
+- Le job contient l'adresse et le HTML (quelques Ko) : supprimé dès l'envoi réussi, échecs gardés 7 j.
+
+### File des récaps quotidiens (SCA-B5-01, 2026-10-07)
+
+`DailyRecapCron` (17 h 30 Paris, lun-ven) ne fait plus qu'**enfiler** un job par Premium actif
+(file `daily-recap`, `modules/daily-recap/daily-recap.queue.ts`) ; `DailyRecapProcessor` (worker,
+`concurrency: 3`) génère le récap (appel IA) puis met l'e-mail en file `email`.
+- `jobId = recap-<userId>-<AAAA-MM-JJ>` (jour de Paris) et `removeOnComplete: { age: 2 j }` : relancer
+  le cron le même jour n'enfile pas de doublon. **Jamais de `:` dans un `jobId`** (BullMQ lève
+  « Custom Id cannot contain : »).
+- 3 essais, backoff 30 s ; un nouvel essai refait le même récap (`upsert` sur `userId + date`).
+- Un redémarrage du worker en pleine passe ne perd plus les récaps restants : ils attendent en file.
+- `ResendCron` (rappels de renouvellement) garde sa boucle : depuis B5-02 il ne fait qu'enfiler des
+  e-mails, il n'attend plus les envois.
 
 ## Calendrier éco : données FMP à ne pas croire sur parole (2026-10-05)
 
@@ -1510,6 +1687,14 @@ Règles :
 - Traduction des libellés (`translateEventNames`) **par lots de 15**, `max_tokens: 1024` par lot. Un seul
   appel à 300 tokens tronquait le JSON des journées chargées → rien traduit et nouvel appel à chaque
   polling (toutes les minutes). Un lot illisible n'empêche pas les autres.
+- **Verrou de relance par libellé** (`eco:label-tr:<nom>`, `SET NX EX` 12 h, `claimForTranslation`) : un
+  libellé n'est soumis au modèle qu'une fois par 12 h, réussite ou échec. Sans lui, tout libellé en
+  échec (JSON tronqué, clé renvoyée modifiée, panne) repartait au modèle à chaque polling : ~603
+  appels/jour, 4 834 `eco_translation` sur 30 jours au 2026-10-08. Redis indisponible → traduction
+  reportée (jamais de rafale). Régime attendu : ~30-50 appels/mois.
+- `translateEventNames(dates)` couvre **toutes les dates enregistrées par le fetch** (FMP renvoie la
+  veille et le lendemain), et la propagation se fait par nom sur les lignes `nameFr: null` : un jour
+  jamais demandé (dimanche, « OPEC Meeting ») gardait sinon ses libellés en anglais.
 - **Tri façon ForexFactory** (`eco-calendar.impact.ts`, `classifyEcoEvent`, pur) appliqué à l'ingestion
   ET à la lecture (`getEventsFromDb`, sur le `name` anglais FMP) : seules les 9 devises FF (USD EUR GBP
   JPY CAD AUD NZD CHF CNY) ; EUR limité aux pays EU/DE/FR ; bruit retiré (CFTC, MBA, enchères, prix
@@ -1528,3 +1713,89 @@ Règles :
   fantôme, « Balance courante »…) apparaissaient chaque nuit chez tout le monde ; purgés par la migration
   `20261005160000_purge_demo_fake_eco_events`. Le seed écrit aussi `pinnedEcoDate` (sinon
   `readUserPins` vidait la sélection démo).
+
+## News live : traduction par lots et bandeau BREAKING (2026-10-06)
+- **Sources** (`market-news.sources.ts`, `NEWS_FEEDS`) : 4 flux FMP, chacun sa limite (aucun n'évince
+  les autres) : `general-latest` (macro, rangée sous le symbole `MACRO`), `forex-latest`, ETF indices /
+  taux / pétrole + NVDA·AAPL·MSFT, et `BTCUSD,ETHUSD` limité à 5. Avant : un seul flux, 17 news
+  Bitcoin sur 30.
+- **Dates** : FMP date ses NEWS en heure de **New York** (le calendrier éco, lui, est en UTC) →
+  `parseFmpNewsDate`. Lues comme UTC, elles étaient décalées de 4 h (5 h l'hiver).
+- **Filtre par actif** (`getNews`) : actifs du journal → symboles FMP (`newsSymbolsFor` : MNQ→QQQ,
+  MES→SPY, GC→XAUUSD, 6E→EURUSD, BTC/USDT→BTCUSD…), `MACRO` toujours incluse ; aucun résultat →
+  toutes les news. Avant : comparaison exacte, News live vide dès le premier trade du jour.
+- **Part de la crypto** (`selectNewsForDisplay`) : `getNews` lit 60 news et en garde 20, dont **4 crypto
+  au plus** (`isCryptoNews` : symbole ou titre). Plafond levé si les actifs de l'utilisateur sont
+  crypto. Avant : 13 news crypto sur 20 (la crypto publie en continu et prenait le haut du tri par date).
+
+- `refreshNewsBatch` (cron 20 min, 7h-22h) traduit jusqu'à 60 **titres** par passage, par **lots de 10** (`NEWS_TITLE_BATCH`,
+  `max_tokens` 1200). Avant : 30 titres en un appel à 800 tokens, JSON tronqué (« Unterminated string »)
+  et **aucun** titre traduit pendant 48 h en prod. Un lot illisible, ou dont le nombre de titres ne
+  correspond pas, est ignoré et retenté au passage suivant (jamais de traduction décalée).
+- `getNews` renvoie `breaking` (`market-news.breaking.ts`, pur) calculé sur le titre **anglais** d'origine
+  (`title`, pas `titleFr` : « ECB » devient « BCE ») : thèmes macro en **mots entiers** (Fed, FOMC,
+  Powell, BCE, taux, CPI, NFP, PIB, rendements, droits de douane…), **hors crypto** (symbole ou titre),
+  publiée depuis **≤ 6 h**. Le front prend la première news `breaking` ; aucune → pas de bandeau.
+
+## Entonnoir Premium (2026-10-07)
+
+`modules/product-events/` : `POST /api/events` (JWT, `@DemoAllowed`, 60/min) → `ProductEventsService.record`
+→ `ProductEventDaily` (jour Paris × user × événement × écran, `INSERT … ON CONFLICT` +1, best-effort).
+Événements : `premium_seen`, `plan_modal_open`, `trial_click`, `checkout_return` (place `success` /
+`canceled`), `demo_signup_click` (front) et `demo_open` (enregistré par `AuthService.demoLogin`).
+`AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
+détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
+de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+
+## Offre fondateur (#525, 2026-10-07)
+
+`modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
+`reserve`, `claimSeat`, `markLost`, `refundFirstPayment`, paliers), `FounderAdminService`, routes
+publique + admin. **Anti-survente** : toute prise de place est une transaction qui commence par
+`pg_advisory_xact_lock(525001)` (PgBouncer en mode session : OK). Checkout fondateur → réservation de
+35 min (session Stripe 30 min) ; 1er `invoice.payment_succeeded` (`billing_reason = subscription_create`)
+→ `claimSeat` (numéro = max jamais attribué + 1, idempotent ; `null` = pas de place → abonnement annulé +
+alerte admin). Checkout : **une session par offre** (metadata `offer` + `priceId`, les autres sessions
+ouvertes sont expirées et leur réservation rendue), aucun essai / coupon / `allow_promotion_codes` en
+fondateur. `custom_text.submit` au-dessus du bouton de paiement : fondateur (remboursement 14 j, tarif
+perdu si résiliation) et code partenaire (conditions figées) ; rien au prix normal. Le rendu de la page
+(logo, nom, couleurs) vient du Branding du compte Stripe et du nom / de la description / de l'image du
+produit, pas du code. **Page de paiement de l'app** : `POST /billing/checkout` avec `ui: 'elements'`
+→ session `ui_mode: 'elements'` créée en version d'API `2026-08-26.dahlia` (option PAR APPEL,
+`ELEMENTS_API_VERSION` ; le client reste en 2024-06-20), `payment_method_types` = NOTRE liste (carte, Link, Klarna) croisée avec les moyens activés sur le compte
+(config par défaut, cache Redis 10 min) : un moyen désactivé est retiré, la carte reste toujours,
+`return_url` = `/dashboard?checkout=success&session_id=…`, pas de `custom_text` ni de codes promo
+manuels ; renvoie `{ clientSecret, publishableKey, summary }` (récapitulatif : offre, montants,
+essai, code, places). Sans `STRIPE_PUBLIC_KEY` → repli `{ url }` (page Stripe). Une session ouverte
+n'est reprise que pour la même page (`metadata.ui`) ; la clé d'une session `elements` se relit en
+dahlia. Webhooks ajoutés : `checkout.session.expired` (réservation rendue), `charge.refunded`
+(remboursement INTÉGRAL du 1er paiement réel, quel que soit le délai, rapproché par facture ou
+PaymentIntent → place fondateur ou utilisation du code rendue + abonnement annulé ; partiel ou
+renouvellement : rien). `syncSubscription` n'écrase jamais
+l'abonnement ACTIF d'un user par un autre abonnement INACTIF (bascule essai → fondateur). Concurrence
+testée sur vraie base : `founder-offer.int-spec.ts`. Nouveau module importé par `StripeModule` →
+le stubber dans `app-role-wiring.spec.ts`.
+**E-mails transactionnels (#525, phase F)** : 1er paiement fondateur → `sendFounderWelcome` (« Tu es
+fondateur n° X », prix, fin du remboursement à 14 j) ; 1re facture avec code partenaire →
+`sendPartnerWelcome` (conditions figées, essai) ; `checkout.session.completed` d'une offre `founder` /
+`partner` → PAS de bienvenue Premium générique (pas de doublon) ; `invoice.payment_failed` d'un
+fondateur ou d'un code partenaire actifs → `sendTariffAtRisk` (« ton tarif est en jeu », lien
+`/profil?tab=params`) au lieu de l'e-mail d'échec générique ; `invoice.upcoming` d'un abonnement
+ANNUEL → `sendAnnualRenewalReminder` (montant réel `amount_due`, date, tarif conservé). Le cron du
+rappel à J-7 exclut donc les annuels (`stripeInterval` ≠ `year`). ⚠️ `invoice.upcoming` doit être
+abonné sur les endpoints Stripe (à faire en prod au déploiement) et son délai réglé dans le dashboard.
+
+Codes partenaires : `modules/partner-codes/` (`PartnerCodeService`, verrou `pg_advisory_xact_lock(525002)`
+pour la dernière utilisation, réservation `CheckoutReservation` kind `PARTNER`). Checkout : `promo` dans
+`CreateCheckoutDto` → offre `partner` (metadata `partnerCode`), prix normal + `discounts` du coupon de
+l'intervalle. Le module fournit son propre `stripeClientProvider`. Concurrence testée sur vraie base :
+`partner-code.int-spec.ts`. MRR : `UsersService.realMrr` (base) et `monthlyOf` après remise (admin).
+
+Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l'intercepteur ajoute
+`{ data }` ; l'ancien `{ data: { … } }` donnait `{ data: { data } }` et faisait planter la page admin
+Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. `AdminUserDetail.offer`
+(fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
+quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·
+Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
+digest même sans inscription.
+

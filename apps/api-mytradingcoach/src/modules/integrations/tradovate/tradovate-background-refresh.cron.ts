@@ -6,6 +6,9 @@ import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateLiveService } from './tradovate-live.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
+import { RedisService } from '../../infra/redis.service';
+import { mapWithConcurrency } from '../../../common/utils/concurrency.util';
+import { randomUUID } from 'node:crypto';
 
 /** Connexion « à rafraîchir » : aucune synchro depuis 12 min (cron toutes les 15 min). */
 export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
@@ -20,6 +23,20 @@ export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
  * chevaucher avec le passage suivant, 15 min plus tard.
  */
 export const FULL_BACKFILLS_PER_PASS = 2;
+
+/**
+ * Passage en cours (SCA-B5-03) : un passage qui dure plus de 15 min ne se fait plus doubler par le
+ * suivant (deux synchros de la même connexion, appels Tradovate en double). Le verrou expire seul
+ * si le worker meurt en plein passage ; seul son propriétaire le rend.
+ */
+export const BACKGROUND_LOCK_KEY = 'tradovate:background-refresh';
+const BACKGROUND_LOCK_TTL_MS = 30 * 60 * 1000;
+const RELEASE_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+/**
+ * Utilisateurs traités en parallèle. Les connexions d'un MÊME utilisateur restent séquentielles :
+ * elles partagent souvent un login Tradovate (copy trading), dont le débit est plafonné.
+ */
+export const BACKGROUND_USER_CONCURRENCY = 5;
 
 /**
  * Filet de fond du temps réel — PAS du temps réel lui-même.
@@ -51,11 +68,27 @@ export class TradovateBackgroundRefreshCron {
     private readonly sync: TradovateSyncService,
     private readonly history: TradovateHistoryService,
     private readonly live: TradovateLiveService,
+    private readonly redis: RedisService,
   ) {}
 
   @Cron('*/15 * * * *', { timeZone: 'Europe/Paris' })
   async scheduledRefresh(): Promise<void> {
-    await this.refreshStale();
+    const token = randomUUID();
+    let locked: boolean;
+    try {
+      locked = (await this.redis.client.set(BACKGROUND_LOCK_KEY, token, 'PX', BACKGROUND_LOCK_TTL_MS, 'NX')) === 'OK';
+    } catch {
+      locked = true; // Redis indisponible : un seul worker cron, on passe sans verrou
+    }
+    if (!locked) {
+      this.logger.warn('Rafraîchissement Tradovate : le passage précédent tourne encore, celui-ci est sauté.');
+      return;
+    }
+    try {
+      await this.refreshStale();
+    } finally {
+      await this.redis.client.eval(RELEASE_LUA, 1, BACKGROUND_LOCK_KEY, token).catch(() => undefined);
+    }
   }
 
   async refreshStale(now = new Date()): Promise<{
@@ -92,43 +125,22 @@ export class TradovateBackgroundRefreshCron {
       select: { id: true, userId: true, accountId: true, historyImportedAt: true },
     });
 
+    // Budget de passés complets décidé AVANT le parallélisme, dans l'ordre des connexions : même
+    // choix qu'en séquentiel.
     let budget = FULL_BACKFILLS_PER_PASS;
-
-    for (const c of due) {
-      const enDirect = await this.live.isLive(c.userId);
-      // Passé jamais remonté : on le fait ici plutôt qu'au clic. Au passage horaire seulement,
-      // pour ne pas transformer chaque passage de 15 min en tirage de rapports.
+    const plan = due.map((c) => {
       const passeComplet = avecHistorique && !c.historyImportedAt && budget > 0;
       if (passeComplet) budget--;
-      // App ouverte HORS passage horaire : le WebSocket fait déjà la séance, rien à faire.
-      if (enDirect && !avecHistorique) {
-        result.live++;
-        continue;
+      return { c, passeComplet };
+    });
+    const byUser = new Map<string, typeof plan>();
+    for (const p of plan) byUser.set(p.c.userId, [...(byUser.get(p.c.userId) ?? []), p]);
+
+    await mapWithConcurrency([...byUser.values()], BACKGROUND_USER_CONCURRENCY, async (userPlan) => {
+      for (const { c, passeComplet } of userPlan) {
+        await this.refreshOne(c, passeComplet, avecHistorique, result);
       }
-      try {
-        if (enDirect) {
-          // App ouverte AU passage horaire : on ne refait pas la séance (le WebSocket s'en
-          // charge) mais on tire le rapport du mois. Sans ça, un utilisateur qui laisse l'app
-          // ouverte toute la journée serait le SEUL à ne jamais bénéficier du filet mensuel.
-          result.live++;
-          result.created += await this.importer(c.userId, c.accountId, passeComplet, result);
-        } else {
-          // Le mois est inutile quand tout le passé est remonté juste après : il est dedans.
-          const r = await this.sync.sync(c.userId, c.accountId, {
-            history: avecHistorique && !passeComplet,
-          });
-          result.synced++;
-          result.created += r.created;
-          if (passeComplet) {
-            result.created += await this.importer(c.userId, c.accountId, true, result);
-          }
-        }
-      } catch (err) {
-        // Une connexion en échec ne prive pas les suivantes (état déjà noté par la synchro).
-        result.failed++;
-        this.logger.warn(`Rafraîchissement Tradovate en échec (connexion ${c.id}) : ${(err as Error).message}`);
-      }
-    }
+    });
 
     if (due.length > 0) {
       this.logger.log(
@@ -139,6 +151,44 @@ export class TradovateBackgroundRefreshCron {
       );
     }
     return result;
+  }
+
+  /** Une connexion : séance, mois et/ou passé complet selon le passage (corps de l'ancienne boucle). */
+  private async refreshOne(
+    c: { id: string; userId: string; accountId: string },
+    passeComplet: boolean,
+    avecHistorique: boolean,
+    result: { synced: number; created: number; live: number; failed: number; backfilled: number },
+  ): Promise<void> {
+    const enDirect = await this.live.isLive(c.userId);
+    // App ouverte HORS passage horaire : le WebSocket fait déjà la séance, rien à faire.
+    if (enDirect && !avecHistorique) {
+      result.live++;
+      return;
+    }
+    try {
+      if (enDirect) {
+        // App ouverte AU passage horaire : on ne refait pas la séance (le WebSocket s'en
+        // charge) mais on tire le rapport du mois. Sans ça, un utilisateur qui laisse l'app
+        // ouverte toute la journée serait le SEUL à ne jamais bénéficier du filet mensuel.
+        result.live++;
+        result.created += await this.importer(c.userId, c.accountId, passeComplet, result);
+      } else {
+        // Le mois est inutile quand tout le passé est remonté juste après : il est dedans.
+        const r = await this.sync.sync(c.userId, c.accountId, {
+          history: avecHistorique && !passeComplet,
+        });
+        result.synced++;
+        result.created += r.created;
+        if (passeComplet) {
+          result.created += await this.importer(c.userId, c.accountId, true, result);
+        }
+      }
+    } catch (err) {
+      // Une connexion en échec ne prive pas les suivantes (état déjà noté par la synchro).
+      result.failed++;
+      this.logger.warn(`Rafraîchissement Tradovate en échec (connexion ${c.id}) : ${(err as Error).message}`);
+    }
   }
 
   /**

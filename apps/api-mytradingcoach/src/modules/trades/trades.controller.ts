@@ -12,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Plan, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -30,6 +31,8 @@ import { MarketDataService } from './market-data.service';
 import { DeprecatedRoute } from '../../common/decorators/deprecated-route.decorator';
 import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
+
+export const IMPORT_THROTTLE_LIMIT = 5;
 
 @UseGuards(JwtAuthGuard)
 @Controller('trades')
@@ -71,6 +74,8 @@ export class TradesController {
   getInstruments() { return this.instruments.list(); }
 
   @Post('import')
+  // 5 imports / min par utilisateur (SCA-B1-04) : un import peut porter des milliers de lignes.
+  @Throttle({ default: { ttl: 60_000, limit: IMPORT_THROTTLE_LIMIT } })
   @UseInterceptors(
     FileFieldsInterceptor(
       [

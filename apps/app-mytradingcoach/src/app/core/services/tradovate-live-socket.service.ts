@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_RECONNECT_OPTIONS } from './socket-reconnect';
 import { Subject } from 'rxjs';
 import { environment } from '@app/environments/environment';
 import { ToastService } from './toast.service';
@@ -51,8 +52,7 @@ export class TradovateLiveSocketService {
       transports: ['websocket'],
       // Fonction : relue à CHAQUE (re)connexion, donc toujours le jeton le plus récent.
       auth: (cb) => cb({ token: localStorage.getItem('access_token') ?? '' }),
-      reconnectionDelay: 1_000,
-      reconnectionDelayMax: 30_000,
+      ...SOCKET_RECONNECT_OPTIONS,
     });
     this.socket = socket;
 
@@ -69,7 +69,12 @@ export class TradovateLiveSocketService {
     socket.on('connect_error', () => this.connected.set(false));
     socket.on('tradovate:trades', (e: TradovateLiveTrades) => this.onTrades(e));
     // Solde / equity poussés par le broker : marges et soldes de « Mes comptes » à jour.
-    socket.on('tradovate:balance', () => this.accounts.reloadSoon());
+    // Session en cours : positions ouvertes et latent relus dans la vue live (une synchro
+    // suit chaque entrée / sortie de position, même sans trade créé).
+    socket.on('tradovate:balance', () => {
+      this.accounts.reloadSoon();
+      if (this.session.hasActiveSession()) this.session.refreshLiveSoon();
+    });
     // Alerte prop firm « avant la casse » (Premium) : décidée par le serveur.
     socket.on('prop:alert', (e: PropAlertEvent) => this.alerts.handle(e));
     // Anti-tilt (Premium) : nudge non bloquant sur le dernier trade synchronisé.

@@ -19,26 +19,12 @@ import { computeTradeStats, formatMoney, netPnl, todayParis } from '@mtc/shared'
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 // import type only (aucune dépendance runtime → pas de cycle avec eco-calendar.service)
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
 
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import type { EcoAnalysis } from '@mtc/shared';
 
-const MODEL = AI_MODELS.analysis;
-/**
- * Calendrier eco : seule IA qu'un compte FREE peut declencher, donc la seule dont le cout
- * suit l'audience. `ai-pricing.const.ts` la range depuis le debut dans les « taches courtes
- * et frequentes » du modele rapide, mais les deux appels partaient sur `analysis` — trois
- * fois le prix pour un JSON court (sentiment bull/bear par actif, une recommandation).
- *
- * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
- * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
- * contre ~0,002 $ en fast, soit -67 % sur ce poste.
- *
- * Le chat et le recap quotidien restent sur `MODEL` : ils sont PREMIUM et valent l'analyse.
- */
-const ECO_MODEL = AI_MODELS.fast;
 const AI_MONTHLY_QUOTA = 100;
 
 // Contenu IA figé pour le compte démo : AUCUN appel modèle (coût zéro).
@@ -75,13 +61,9 @@ export class AiService {
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
-    if (role !== Role.ADMIN) {
-      await this.checkQuota(userId);
-      await this.checkInsightsCooldown(userId);
-    }
-    const result = await this.orchestrator.runInsightsFlow(userId);
-    if (role !== Role.ADMIN) await this.incrementQuota(userId);
-    return result;
+    if (role === Role.ADMIN) return this.orchestrator.runInsightsFlow(userId);
+    await this.checkInsightsCooldown(userId);
+    return this.metered(userId, () => this.orchestrator.runInsightsFlow(userId));
   }
 
   // ── Chat : direct Anthropic call with trader context ─────────────────────
@@ -94,10 +76,18 @@ export class AiService {
     isDemo = false,
   ) {
     if (isDemo) return { response: DEMO_CHAT_REPLY }; // réponse figée, zéro appel modèle
-    if (userRole !== Role.ADMIN) {
-      await this.checkQuota(userId);
+    if (userRole === Role.ADMIN) return this.chatCall(userId, message, history);
+    return this.metered(userId, async () => {
       await this.checkDailyLimit(userId, 'chat', 50);
-    }
+      return this.chatCall(userId, message, history);
+    });
+  }
+
+  private async chatCall(
+    userId: string,
+    message: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  ) {
 
     const recentTrades = await this.prisma.trade.findMany({
       where: { userId },
@@ -209,7 +199,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     try {
       response = await this.anthropicClient.create(
         {
-          model: MODEL,
+          model: AI_MODELS.analysis,
           max_tokens: 512,
           system: [
             {
@@ -226,14 +216,13 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       handleAnthropicError(err, this.logger);
     }
 
-    if (userRole !== Role.ADMIN) await this.incrementQuota(userId);
-    const content = response?.content?.[0];
-    if (!content || content.type !== 'text')
+    const text = response ? responseText(response) : '';
+    if (!text)
       throw new HttpException(
         'Réponse IA invalide',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    return { response: content.text };
+    return { response: text };
   }
 
   // ── Daily recap one-liner ─────────────────────────────────────────────────
@@ -247,7 +236,10 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       commission?: number | null;
       emotion?: string | null;
       tradeSession?: { moodStart?: string | null } | null;
+      /** Absent = non renseigné (trade importé sans setup choisi). */
       setup?: string;
+      /** Libellé du compte du trade. */
+      account?: string;
       session?: string;
       timeframe?: string;
       entry?: number;
@@ -303,10 +295,11 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
         return [
           time,
+          t.account ? `« ${t.account} »` : 'compte ?',
           t.session ?? '?',
           t.side,
           t.asset,
-          t.setup ?? '?',
+          t.setup ?? 'setup non renseigné',
           effectiveEmotion(t) ?? '?',
           pnlStr,
           exitLabel,
@@ -348,7 +341,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     const prompt = `${profileCtx}
 Journée du ${dateStr} : ${data.trades.length} trades, P&L ${money(data.pnl)}, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion ?? 'non renseignée'}.
 
-Détail des trades :
+Détail des trades (heure | compte | session | sens | actif | setup | émotion | P&L net) :
 ${tradesDetail}
 ${patternsCtx}
 ${data.propContext ? `
@@ -361,13 +354,15 @@ Règles :
 - Basée sur les vrais patterns de ce trader, pas des conseils génériques
 - Si un pattern négatif récurrent est détecté (ex: shorts MNQ perdants), le mentionner explicitement
 - Si le suivi prop firm montre une limite approchée, une alerte ou un épisode de tilt, ta phrase en parle EN PRIORITÉ (heure, montant), sans jamais présenter un chiffre comme officiel
+- Un fait sur un compte (limite, alerte, tilt) ne vaut que pour CE compte : ne l'attribue jamais aux trades d'un autre compte
+- « setup non renseigné » = trade importé sans setup choisi, pas une faute : n'en tire aucune conclusion
 - Ton coach bienveillant mais franc
 - PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
 - PAS d'astérisques ni de markdown`;
 
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
+        model: AI_MODELS.analysis,
         max_tokens: 200,
         system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
 Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
@@ -378,9 +373,7 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
       { feature: 'daily_recap', userId: data.userId },
     );
 
-    return response.content[0]?.type === 'text'
-      ? response.content[0].text.trim().replace(/^["']|["']$/g, '')
-      : '';
+    return responseText(response).trim().replace(/^["']|["']$/g, '');
   }
 
   // ── Eco calendar : morning analysis + released event ─────────────────────
@@ -424,6 +417,19 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     return out;
   }
 
+  /**
+   * Calendrier eco (cet appel et analyzeEcoResult) sur `AI_MODELS.fast` : seule IA qu'un compte
+   * FREE peut declencher, donc la seule dont le cout suit l'audience. Les deux appels partaient
+   * sur `analysis`, trois fois le prix pour un JSON court (sentiment bull/bear par actif, une
+   * recommandation).
+   *
+   * Le cout ne suit pas le nombre d'users mais le nombre de signatures d'actifs distinctes
+   * (cache partage par (date, actifs)). Mesure 2026-09-28 : ~0,006 $ l'appel en analysis
+   * contre ~0,002 $ en fast, soit -67 % sur ce poste.
+   *
+   * Le chat et le recap quotidien restent sur `AI_MODELS.analysis` : ils sont PREMIUM et
+   * valent l'analyse.
+   */
   async analyzeEcoEvents(data: {
     userId: string;
     events: Array<{ time: string; name: string; impact: string; currency: string }>;
@@ -443,14 +449,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: ECO_MODEL,
+        model: AI_MODELS.fast,
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoAnalysis>(text);
   }
 
@@ -482,14 +488,14 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
     const response = await this.anthropicClient.create(
       {
-        model: ECO_MODEL,
+        model: AI_MODELS.fast,
         max_tokens: 700,
         messages: [{ role: 'user', content: prompt }],
       },
       { feature: 'eco_calendar', userId: data.userId },
     );
 
-    const text = response.content[0]?.type === 'text' ? response.content[0].text : '{}';
+    const text = responseText(response) || '{}';
     return this.parseModelJson<EcoResultAnalysis>(text);
   }
 
@@ -546,9 +552,35 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
 
   // ── Quota management ──────────────────────────────────────────────────────
 
-  private async checkQuota(userId: string) {
-    const count = await this.getQuotaCount(userId);
-    if (count >= AI_MONTHLY_QUOTA) {
+  /**
+   * Appel décompté du quota mensuel (SCA-B5-06) : la place est RÉSERVÉE avant l'appel (INCR), pas
+   * comptée après. Avant, vérifier puis incrémenter laissait 20 appels simultanés passer tous la
+   * vérification. Appel en échec → place rendue.
+   */
+  private async metered<T>(userId: string, call: () => Promise<T>): Promise<T> {
+    await this.reserveQuota(userId);
+    try {
+      return await call();
+    } catch (err) {
+      await this.refundQuota(userId);
+      throw err;
+    }
+  }
+
+  private async reserveQuota(userId: string): Promise<void> {
+    const key = this.quotaKey(userId);
+    let count: number;
+    try {
+      count = await this.redisService.client.incr(key);
+      if (count === 1) await this.redisService.client.expire(key, 60 * 60 * 24 * 31);
+    } catch {
+      this.logger.error('Redis unavailable : quota check failed, blocking AI call');
+      throw new ServiceUnavailableException(
+        'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
+      );
+    }
+    if (count > AI_MONTHLY_QUOTA) {
+      await this.refundQuota(userId);
       throw new HttpException(
         `Quota IA mensuel atteint (${AI_MONTHLY_QUOTA} appels/mois)`,
         HttpStatus.TOO_MANY_REQUESTS,
@@ -556,30 +588,11 @@ Génère un JSON strict (pas de markdown, pas de texte autour) :
     }
   }
 
-  private async getQuotaCount(userId: string): Promise<number> {
-    const key = this.quotaKey(userId);
+  private async refundQuota(userId: string): Promise<void> {
     try {
-      const val = await this.redisService.client.get(key);
-      return val ? parseInt(val) : 0;
+      await this.redisService.client.decr(this.quotaKey(userId));
     } catch {
-      this.logger.error(
-        'Redis unavailable : quota check failed, blocking AI call',
-      );
-      throw new ServiceUnavailableException(
-        'Service IA temporairement indisponible, veuillez réessayer dans quelques instants',
-      );
-    }
-  }
-
-  private async incrementQuota(userId: string): Promise<void> {
-    const key = this.quotaKey(userId);
-    try {
-      const count = await this.redisService.client.incr(key);
-      if (count === 1) {
-        await this.redisService.client.expire(key, 60 * 60 * 24 * 31);
-      }
-    } catch {
-      this.logger.warn('Redis unavailable, quota not incremented');
+      this.logger.warn('Redis unavailable, quota non rendu');
     }
   }
 

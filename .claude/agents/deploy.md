@@ -156,9 +156,23 @@ exec node main.js
 
 ## CI/CD GitHub Actions
 
+> **Budget Actions (2026-10-07)** : tout job porte un `timeout-minutes` (≈ 3–4× sa durée normale :
+> 5 à 25 min) ; sans lui, GitHub laisse tourner un job bloqué **6 h**. Vu le 07/10 : l'installation
+> de Playwright du smoke E2E bloquée 15 min et plus (étape plafonnée à 5 min depuis). Nouveau job →
+> `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
+> sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
+> elles) : un push = un seul run.
+
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
 - `main` → deploy production (après CI verte + PR)
+
+### Workflows planifiés
+- **Veille règles prop firm** (`prop-firm-watch.yml`, lundi 06:00 UTC + manuel) : `pnpm prop-firms:watch` relit les
+  sources du catalogue prop firm et ouvre ou commente une issue `veille-prop-firm` s'il y a un article modifié ou une
+  firm à revérifier (> 30 jours). Lecture seule, aucun secret (`GITHUB_TOKEN`, `issues: write`). Un `schedule` ne
+  tourne que depuis la branche par défaut (`main`) : il n'est actif qu'une fois promu en prod. Marche à suivre :
+  README de `libs/shared/src/prop-firm-rules/`, section « Veille automatique ».
 
 ### Secrets GitHub requis
 
@@ -245,10 +259,17 @@ le dépôt (`infra/static/nginx/`) : modifier le dépôt **et** le VPS. Les asse
 côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font
 `try_files /current$uri /previous$uri =404`.
 
-Après modification d'une conf sur le VPS : `nginx -t` dans un conteneur jetable
-(`docker run --rm -v <conf>:/etc/nginx/conf.d/default.conf:ro nginx:alpine nginx -t`), puis
-**`docker restart`** des conteneurs qui la montent (bind-mount d'un fichier : une copie crée un
-nouvel inode, `nginx -s reload` relirait l'ancien).
+Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :
+`cat nouvelle.conf > /opt/infra/static/nginx/<conf>`, jamais `cp`, `rsync` ni `sed -i` qui en créent
+un nouveau), vérifier que chaque conteneur la voit (`docker exec <c> grep … /etc/nginx/conf.d/default.conf`),
+`docker exec <c> nginx -t`, puis `docker exec <c> nginx -s reload`. Si l'inode a changé (copie,
+`sed -i`), le conteneur garde l'ancienne : `docker restart` obligatoire (~1 s de coupure).
+
+**Précompression (SCA-B7-03, 2026-10-09)** : `deploy-static.sh` produit un `.gz` à côté de chaque
+fichier texte de plus de 1 Ko (`gzip -9 -k -n` : sans date, donc même contenu → même `.gz` → lien
+physique conservé entre releases) ; les deux confs ont `gzip_static on` (nginx sert le `.gz`, sinon
+compresse à la volée). `open_file_cache` volontairement absent : il garderait l'ancien
+`index.html` quelques secondes après une bascule de `current`.
 
 **Retour arrière (sur le VPS)** — immédiat, sans rebuild :
 
@@ -386,10 +407,28 @@ REDIS_PASSWORD=...
 JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
 ANTHROPIC_API_KEY=sk-ant-...
+AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
+# RESEND_DRY_RUN=true    # beta/dev, le temps d'un test de charge : aucun e-mail envoyé (ignoré en prod)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_MONTHLY=price_...
-STRIPE_PRICE_YEARLY=price_...
+STRIPE_PREMIUM_PRICE_MONTHLY_V2=price_...      # Premium 49 €/mois
+STRIPE_PREMIUM_PRICE_YEARLY_V2=price_...       # Premium 490 €/an
+STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER=price_... # offre fondateur 29 €/mois (#525), REQUISE au boot
+STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER=price_...  # offre fondateur 290 €/an (#525), REQUISE au boot
+# ⚠️ Les deux prix fondateur sont `required` (config/env.ts) : à poser dans .env.dev / .env.prod
+# AVANT de déployer le code qui les lit, sinon l'API refuse de démarrer.
+STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_test_ en dev/beta)
+# Absente → l'API retombe sur la page Stripe hébergée (avertissement au boot en prod).
+# Apple Pay sur la page de l'app : vérifier le domaine app.mytradingcoach.app dans Stripe
+# (Paramètres → Moyens de paiement → Domaines). Link et Klarna doivent être activés dans Stripe.
+# Webhooks Stripe (10 événements, version 2026-03-25.dahlia, état au 2026-10-08) :
+#   prod  → compte live, destination api_prod (https://api.mytradingcoach.app/api/billing/webhook)
+#   dev   → compte de test, we_1UOOBL3gvVCzVhyJP7gXcDZ4 (https://dev.api…) → STRIPE_WEBHOOK_SECRET de .env.dev
+#   beta  → compte de test, we_1UOOBM3gvVCzVhyJNT0ODsMl (https://beta.api…) → STRIPE_WEBHOOK_SECRET de .env.beta
+#   Événements : charge.refunded, checkout.session.completed, checkout.session.expired, customer.deleted,
+#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded.
+#   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
+# Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
 MAIL_FROM=noreply@mytradingcoach.app
 FRONTEND_URL=https://app.mytradingcoach.app

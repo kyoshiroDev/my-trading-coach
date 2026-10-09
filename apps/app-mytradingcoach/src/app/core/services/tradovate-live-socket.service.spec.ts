@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { SOCKET_RECONNECT_OPTIONS } from './socket-reconnect';
 import { TradovateLiveSocketService, type TradovateLiveTrades } from './tradovate-live-socket.service';
 import { ToastService } from './toast.service';
 import { SelectedAccountStore } from '../stores/selected-account.store';
@@ -33,9 +34,9 @@ vi.mock('socket.io-client', () => ({
 
 function setup(activeSession = false) {
   const toast = { success: vi.fn() };
-  const accounts = { load: vi.fn() };
+  const accounts = { load: vi.fn(), reloadSoon: vi.fn() };
   const tradovate = { load: vi.fn() };
-  const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn() };
+  const session = { hasActiveSession: signal(activeSession), refreshLive: vi.fn(), refreshLiveSoon: vi.fn() };
   const alerts = { handle: vi.fn(), handleTilt: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
@@ -60,6 +61,12 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     localStorage.setItem('access_token', 'jwt-app');
   });
   afterEach(() => vi.useRealTimers());
+
+  it('reconnexion étalée après un redémarrage de l’API (SCA-B4-07)', () => {
+    const { service } = setup();
+    service.connect();
+    expect(fake.sockets[0].opts).toMatchObject(SOCKET_RECONNECT_OPTIONS);
+  });
 
   it('une seule connexion, sur /tradovate-live, authentifiée avec le jeton courant (relu à chaque reconnexion)', () => {
     const { service } = setup();
@@ -93,6 +100,21 @@ describe('TradovateLiveSocketService — temps réel Tradovate côté app', () =
     fake.sockets[0].emit('tradovate:trades', trades(1));
     expect(session.refreshLive).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith('1 trade Tradovate synchronisé');
+  });
+
+  it('solde / position poussés → comptes rechargés, et la vue live si une session est en cours', () => {
+    const off = setup(false);
+    off.service.connect();
+    fake.sockets[0].emit('tradovate:balance', { accountId: 'acc-1' });
+    expect(off.accounts.reloadSoon).toHaveBeenCalled();
+    expect(off.session.refreshLiveSoon).not.toHaveBeenCalled();
+
+    TestBed.resetTestingModule();
+    fake.sockets.length = 0;
+    const on = setup(true);
+    on.service.connect();
+    fake.sockets[0].emit('tradovate:balance', { accountId: 'acc-1' });
+    expect(on.session.refreshLiveSoon).toHaveBeenCalled();
   });
 
   it('alerte prop firm poussée → relayée au service d’alertes', () => {

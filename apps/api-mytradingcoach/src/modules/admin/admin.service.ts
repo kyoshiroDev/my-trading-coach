@@ -3,7 +3,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
-import { todayParis, type AdminAcquisitionData } from '@mtc/shared';
+import { todayParis, type AdminAcquisitionData, type AdminFunnelData, type AdminFunnelPlace } from '@mtc/shared';
 
 @Injectable()
 export class AdminService {
@@ -180,6 +180,62 @@ export class AdminService {
    * Les deux niveaux sortent des mêmes requêtes groupées par (source, medium, campagne).
    * Tri : visites 30j, puis inscrits 30j, puis total.
    */
+  /**
+   * Entonnoir Premium sur `days` jours (Paris) : visites landing → inscrits → Premium vu →
+   * offres ouvertes → clic essai → retour Stripe, plus la démo. Étapes en users DISTINCTS,
+   * hors démo et hors ADMIN (`ProductEventDaily`) ; la démo, elle, est comptée en occurrences
+   * (un seul user partagé).
+   */
+  async getFunnel(days = 30): Promise<AdminFunnelData> {
+    const from = new Date(`${todayParis()}T00:00:00Z`);
+    from.setUTCDate(from.getUTCDate() - (days - 1));
+
+    const [[visits], [signups], demoRows, stepRows, placeRows, [current]] = await Promise.all([
+      this.prisma.$queryRaw<{ n: bigint | null }[]>`
+        SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date`,
+      this.prisma.$queryRaw<{ n: bigint }[]>`
+        SELECT COUNT(*) AS n FROM "User"
+        WHERE "isDemo" = false AND "role" <> 'ADMIN' AND "createdAt" >= ${from}`,
+      this.prisma.$queryRaw<{ event: string; n: bigint }[]>`
+        SELECT e."event", SUM(e."count") AS n
+        FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
+        WHERE u."isDemo" = true AND e."date" >= ${from}::date
+          AND e."event" IN ('demo_open', 'demo_signup_click')
+        GROUP BY e."event"`,
+      this.prisma.$queryRaw<{ key: string; n: bigint }[]>`
+        SELECT CASE WHEN e."event" = 'checkout_return' THEN 'checkout_' || e."place" ELSE e."event" END AS key,
+          COUNT(DISTINCT e."userId") AS n
+        FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+          AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click', 'checkout_return')
+        GROUP BY 1`,
+      this.prisma.$queryRaw<{ event: AdminFunnelPlace['event']; place: string; n: bigint }[]>`
+        SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
+        FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+          AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click')
+        GROUP BY e."event", e."place"
+        ORDER BY n DESC`,
+      this.prisma.$queryRaw<{ trialing: bigint; paying: bigint }[]>`
+        SELECT COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" = 'trialing') AS trialing,
+          COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" IN ('active', 'past_due')) AS paying
+        FROM "User" WHERE "isDemo" = false AND "role" <> 'ADMIN'`,
+    ]);
+
+    const step = new Map(stepRows.map((r) => [r.key, Number(r.n)]));
+    const demo = new Map(demoRows.map((r) => [r.event, Number(r.n)]));
+    const keys = ['premium_seen', 'plan_modal_open', 'trial_click', 'checkout_success', 'checkout_canceled'] as const;
+    return {
+      days,
+      landingVisits: Number(visits?.n ?? 0),
+      signups: Number(signups?.n ?? 0),
+      demo: { opens: demo.get('demo_open') ?? 0, signupClicks: demo.get('demo_signup_click') ?? 0 },
+      steps: keys.map((key) => ({ key, users: step.get(key) ?? 0 })),
+      byPlace: placeRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
+      current: { trialing: Number(current?.trialing ?? 0), paying: Number(current?.paying ?? 0) },
+    };
+  }
+
   async getAcquisition(): Promise<AdminAcquisitionData> {
     // Fenêtres de visites en jours calendaires Paris (le compteur est journalier).
     const today = todayParis();
@@ -341,16 +397,33 @@ export class AdminService {
       }),
     ]);
 
-    // MRR réel Stripe : somme des montants normalisés au mois (année / 12).
-    const monthlyOf = (s: { items: { data: { quantity?: number | null; price: { unit_amount: number | null; recurring: { interval: string } | null } }[] } }) => {
+    // MRR réel Stripe : somme des montants normalisés au mois (année / 12), APRÈS remise (#525 :
+    // fondateur, code partenaire, parrainage). Une remise `amount_off` s'applique par facture.
+    type Coupon = { amount_off?: number | null; percent_off?: number | null } | null | undefined;
+    type SubLike = {
+      items: { data: { quantity?: number | null; price: { unit_amount: number | null; recurring: { interval: string } | null } }[] };
+      discounts?: unknown[];
+    };
+    const couponOf = (d: unknown): Coupon => {
+      const x = d as { coupon?: Coupon; source?: { coupon?: Coupon | string } } | string;
+      if (typeof x === 'string') return null; // non développé : ignoré
+      return x.coupon ?? (typeof x.source?.coupon === 'object' ? x.source.coupon : null);
+    };
+    const monthlyOf = (s: SubLike) => {
       let total = 0;
+      let yearly = false;
       for (const item of s.items.data) {
         const qty = item.quantity ?? 1;
         const amount = (item.price.unit_amount ?? 0) / 100;
-        const perMonth = item.price.recurring?.interval === 'year' ? amount / 12 : amount;
-        total += perMonth * qty;
+        yearly = item.price.recurring?.interval === 'year';
+        total += (yearly ? amount / 12 : amount) * qty;
       }
-      return total;
+      for (const d of s.discounts ?? []) {
+        const c = couponOf(d);
+        if (c?.percent_off) total *= 1 - c.percent_off / 100;
+        else if (c?.amount_off) total -= c.amount_off / 100 / (yearly ? 12 : 1);
+      }
+      return Math.max(0, total);
     };
     const mrrStripe = Math.round(stripeSubs.reduce((sum, s) => sum + monthlyOf(s), 0));
 

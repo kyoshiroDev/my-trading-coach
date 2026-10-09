@@ -1,0 +1,58 @@
+name: Veille règles prop firm
+
+# Chaque lundi, relit les sources du catalogue prop firm (libs/shared/src/prop-firm-rules) et les compare
+# au relevé de référence (veille/sources.json). S'il y a un article modifié ou une firm non revérifiée depuis
+# plus de 30 jours, ouvre une issue « veille-prop-firm » (ou la complète si elle est déjà ouverte).
+# Marche à suivre une fois l'issue traitée : README du catalogue, section « Re-vérifier une firm ».
+on:
+  schedule:
+    - cron: '0 6 * * 1' # lundi 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: prop-firm-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Relire les sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NX_NO_CLOUD: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version lue dans package.json (packageManager)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Relire les sources
+        id: watch
+        run: pnpm -s prop-firms:watch --report veille.md --github-output
+
+      - name: Résumé du run
+        if: always()
+        run: '[ -f veille.md ] && cat veille.md >> "$GITHUB_STEP_SUMMARY" || true'
+
+      - name: Ouvrir ou compléter l'issue de veille
+        if: steps.watch.outputs.needs_attention == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create veille-prop-firm --color FBCA04 --description "Règles prop firm à revérifier" --force
+          n=$(gh issue list --label veille-prop-firm --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then
+            gh issue comment "$n" --body-file veille.md
+          else
+            gh issue create --title "Veille règles prop firm : sources à revérifier" --label veille-prop-firm --body-file veille.md
+          fi

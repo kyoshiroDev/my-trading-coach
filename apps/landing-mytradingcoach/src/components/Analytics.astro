@@ -41,6 +41,15 @@ import { GA_ID } from '../config';
     });
   }
 
+  // Clics sur les CTA (`data-ga-event`, `data-ga-place`) → événement GA4. Seulement si GA est
+  // chargé, donc après consentement : sans « Accepter », rien n'est envoyé.
+  document.addEventListener('click', (e) => {
+    const el = (e.target as Element | null)?.closest<HTMLElement>('[data-ga-event]');
+    const w = window as unknown as Partial<GtagWindow>;
+    if (!el || !w.gtag || !document.getElementById('ga4-src')) return;
+    w.gtag('event', el.dataset.gaEvent, { cta_place: el.dataset.gaPlace ?? '' });
+  });
+
   if (gaId) {
     if (readConsent() === 'accepted') loadGa(gaId);
 

@@ -392,11 +392,33 @@
           <div class="settings-card">
             <div class="plan-inner">
               @if (userStore.isPremium()) {
-                <div class="plan-badge premium">
-                  <div class="plan-badge-dot"></div>
-                  PREMIUM
+                <div class="plan-badges">
+                  <div class="plan-badge premium">
+                    <div class="plan-badge-dot"></div>
+                    PREMIUM
+                  </div>
+                  @if (offersStore.offers()?.founder; as f) {
+                    @if (f.isFounder) {
+                      <div class="plan-badge founder" data-testid="founder-badge">Fondateur n° {{ f.number }}</div>
+                    }
+                  }
                 </div>
                 <p class="plan-desc">Accès à tout : Insights IA, Chat coach IA, Débrief hebdo, analytics avancés, comptes illimités.</p>
+                @if (offersStore.isFounder()) {
+                  <p class="plan-tariff" data-testid="founder-tariff">
+                    {{ founderPrice() }} bloqué tant que ton abonnement reste actif. Si tu résilies, tu perds ce tarif.
+                  </p>
+                  @if (refundMailto(); as mailto) {
+                    <p class="plan-refund">
+                      <a [href]="mailto">Satisfait ou remboursé : demander le remboursement</a>
+                      <span>(jusqu'au {{ offersStore.offers()?.founder?.refundUntil | date:'dd/MM/yyyy' }})</span>
+                    </p>
+                  }
+                } @else if (partnerTariff(); as tariff) {
+                  <p class="plan-tariff" data-testid="partner-tariff">
+                    Tarif partenaire {{ offersStore.partner()?.code }} : {{ tariff }}
+                  </p>
+                }
                 @if (userStore.isOfferedPremium()) {
                   <div class="trial-status" data-testid="offered-premium">
                     <p class="trial-status-title">🎁 Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
@@ -418,14 +440,32 @@
                 }
                 @if (userStore.isOfferedPremium()) {
                   <div class="plan-actions">
-                    <button class="btn btn-primary" (click)="showPlanModal.set(true)">Continuer en Premium →</button>
+                    <button class="btn btn-primary" (click)="showPlanModal.set(true)">
+                      @if (offersStore.founderAvailable()) {
+                        Continuer en Premium · dès {{ PRICING.founder.monthly }} €/mois →
+                      } @else {
+                        Continuer en Premium →
+                      }
+                    </button>
                   </div>
                 } @else if (!userStore.isDemo()) {
                   <div class="plan-actions">
+                    @if (intervalSwitch(); as sw) {
+                      <button class="btn btn-secondary" [disabled]="changingInterval()" (click)="changeInterval()" data-testid="interval-switch">
+                        {{ sw.label }} ({{ sw.price }}) →
+                      </button>
+                    }
                     <button class="btn btn-secondary" (click)="openPortal()">
                       {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
                     </button>
                   </div>
+                  @if (offersStore.isFounder() || offersStore.partner()) {
+                    <!-- Rappel neutre, sans freiner : le portail garde son bouton de résiliation. -->
+                    <p class="plan-cancel-note" data-testid="tariff-loss-note">
+                      Résilier dans l'espace de facturation met fin à ton tarif
+                      {{ offersStore.isFounder() ? 'fondateur' : 'partenaire' }} : il ne pourra pas être récupéré.
+                    </p>
+                  }
                 }
               } @else {
                 <div class="plan-badge free">GRATUIT</div>
@@ -435,7 +475,11 @@
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
-                    ⚡ Essayer Premium · 1 mois offert →
+                    @if (offersStore.founderAvailable()) {
+                      ⚡ Passer Premium · dès {{ PRICING.founder.monthly }} €/mois (offre fondateur) →
+                    } @else {
+                      ⚡ Essayer Premium · 1 mois offert →
+                    }
                   </button>
                 </div>
               }
@@ -596,7 +640,7 @@
 }
 
 @if (showPlanModal()) {
-  <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+  <mtc-plan-modal cta="profil" (closed)="showPlanModal.set(false)" />
 }
 
 @if (showSetupModal()) {

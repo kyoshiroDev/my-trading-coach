@@ -13,15 +13,21 @@
 //  - Comptes            -> AccountsService : FREE 1 compte ACTIVE, Premium illimite
 //
 // Concurrents : uniquement leurs pages officielles, verifiees le 2026-10-04.
-//  - FocusPips  https://focuspips.com/ (grille Basic / Premium sur la page d'accueil)
-//  - TradesViz  https://www.tradesviz.com/pricing/ (tableau Basic / Pro / Platinum),
+//  - FocusPips  https://focuspips.com/pricing (grille « Compare en detail ») et
+//               https://focuspips.com/plateformes — reverifies le 2026-10-06
+//               (docs/veille-focuspips.md)
+//  - TradesViz  https://www.tradesviz.com/pricing/ (tableau Basic / Pro / Platinum, reverifie
+//               le 2026-10-06 : prix mensuels 17,99 / 25,99 €, Basic = actions seulement),
 //               /trading-psychology/ (emotions), /blog/auto-import-trades/ (Tradovate)
-//  - Edgely     https://edgely.trade/ (FAQ) et https://edgely.trade/tarifs
+//  - Edgely     https://edgely.trade/ (FAQ) et https://edgely.trade/tarifs (reverifie le
+//               2026-10-06 : 15 / 29 €/mois, Tradovate en Max bêta)
 // Regle : on affiche le palier MINIMUM ou la fonction apparait ; « ✓ » seul quand le site
 // ne precise pas le palier ; « - » quand le site n'en parle pas. Dans le doute, on
 // tranche en faveur du concurrent (publicite comparative : objective et verifiable).
 // A re-verifier a chaque modification de ce tableau, et mettre a jour UPDATED.
-import { PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+
+const firmCount = PROP_FIRM_CATALOG_FILES.length;
 
 const UPDATED = 'octobre 2026';
 
@@ -52,11 +58,11 @@ const rows: Row[] = [
   { label: 'Tracking émotionnel', free: true, premium: true,
     rivals: [false, yes(), false] },
   { label: 'Analytics avancés', free: false, premium: true,
-    rivals: [yes(), yes('Pro'), yes('Pro')] },
+    rivals: [yes('Premium'), yes('Pro'), yes('Pro')] },
   { label: 'Coach IA conversationnel', free: false, premium: true,
-    rivals: [yes('Premium'), yes('Pro'), false] },
+    rivals: [txt('5 questions · illimité Premium'), yes('Pro'), false] },
   { label: 'Weekly Debrief IA automatique', hl: true, free: false, premium: true,
-    rivals: [false, false, false] },
+    rivals: [yes('Premium'), false, false] },
   { label: 'Préparation de séance', free: true, premium: true,
     rivals: [yes(), yes('Pro'), yes()] },
   { label: 'Session live + trade rapide', free: true, premium: true,
@@ -65,16 +71,18 @@ const rows: Row[] = [
     rivals: [txt('sans IA'), false, false] },
   { label: 'Récap journalier par email', free: false, premium: true,
     rivals: [false, false, false] },
-  { label: 'Règles de drawdown par prop firm (16 firmes)', free: '1 compte', premium: 'illimité',
+  { label: `Règles de drawdown par prop firm (${firmCount} firmes)`, free: '1 compte', premium: 'illimité',
     rivals: [yes('Premium'), yes('Pro'), yes()] },
   { label: 'Synchro Tradovate', free: true, premium: true,
-    rivals: [false, yes('Gratuit'), yes('Max · bêta')] },
+    // TradesViz : synchro dès Basic, mais Basic n'importe que des actions (« Assets
+    // Supported: Stock ») ; Tradovate = futures → Pro au minimum.
+    rivals: [yes('Gratuit'), yes('Pro'), yes('Max · bêta')] },
   { label: 'Import CSV tout broker', free: true, premium: true,
-    rivals: [false, yes('Gratuit'), txt('Tradovate, TopStepX')] },
+    rivals: [yes('Gratuit'), yes('Gratuit'), txt('Tradovate, TopStepX')] },
   { label: 'Hébergé en France 🇫🇷', free: true, premium: true,
     rivals: [false, false, false] },
   { label: 'Prix mensuel', price: true, free: '0 €', premium: `${PREMIUM_PRICE_EUR.monthly} €`,
-    rivals: [txt('0 € · 19 €'), txt('0 € · 17,99 € · 25,99 €'), txt('0 € · 15 € · 29 €')],
+    rivals: [txt('Basic 0 € · Premium 19 €'), txt('Basic 0 € · Pro 17,99 € · Platinum 25,99 €'), txt('Free 0 € · Pro 15 € · Max 29 €')],
     othersLabel: '0 € · 15 à 29 €' },
 ];
 
@@ -152,7 +160,13 @@ const merge = (row: Row): Cell => {
                       </td>
                     );
                   })}
-                  <td class="c-others"><span class={others.cls}>{others.text}</span></td>
+                  <td class="c-others">
+                    <span class={others.cls}>
+                      {others.text.split(' · ').map((part, i) => (
+                        <>{i > 0 && <span class="comp-price-sep"> · </span>}<span class="comp-price-part">{part}</span></>
+                      ))}
+                    </span>
+                  </td>
                 </tr>
               );
             })}
@@ -238,6 +252,10 @@ const merge = (row: Row): Cell => {
   .comp-price { font-family: var(--mono); font-size: 12px; }
   /* Chaque palier reste sur une ligne ; la coupure ne peut tomber qu'après le « · ». */
   .comp-price-part { white-space: nowrap; }
+  /* Prix des concurrents : un palier par ligne, nom du plan compris. Sur une ligne,
+     « 0 € · 17,99 € · 25,99 € » se coupait au milieu, « · » orphelin en bout de ligne. */
+  .comp-price .comp-price-sep { display: none; }
+  .comp-price .comp-price-part { display: block; line-height: 1.6; }
   .comp-price-hl { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--pulse); }
 
   /* Palier requis chez un concurrent : neutre (gris), sous la coche. */
@@ -267,7 +285,7 @@ const merge = (row: Row): Cell => {
   @media (max-width: 767px) {
     /* Colonne étroite : un palier par ligne, sans « · » orphelin entre les deux. */
     .comp-price-sep { display: none; }
-    .comp-price-part { display: block; white-space: normal; font-size: 12px; }
+    .comp-price-part { display: block; white-space: nowrap; font-size: 11px; }
   }
 
   @media (max-width: 768px) {

@@ -1,0 +1,430 @@
+---
+// Section « Ta prop firm, en direct » (home, juste après le Hero) — audit landing 2026-10-06 :
+// la cible qui convertit (prop traders futures sur Tradovate / NinjaTrader) ne voyait ses règles,
+// sa marge et ses payouts qu'à mi-page, ou pas du tout. Le visiteur choisit SA firm et SON plan :
+// les règles affichées sont celles du catalogue de l'app (@mtc/shared), pas un texte marketing.
+import { APP_URL } from '../config';
+import { buildPropFirmCatalog } from '../data/prop-firm-catalog';
+import { PHASE_LABEL, ruleRows } from '../data/prop-firm-rules-view';
+import PropFirmMarquee from './PropFirmMarquee.astro';
+
+const catalog = buildPropFirmCatalog();
+const planCount = catalog.reduce((n, f) => n + f.plans.length, 0);
+
+// Sélection par défaut : le plan de la capture (Apex 50K EOD), sinon le premier du catalogue.
+const firm = catalog.find((f) => f.id === 'apex') ?? catalog[0];
+const plan = firm.plans.find((p) => p.size === 50000 && /EOD/.test(p.label)) ?? firm.plans[0];
+const phase = plan.phases[0];
+const rows = ruleRows(phase, plan.currency);
+const verified = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+// JSON embarqué : « < » échappé pour ne jamais fermer la balise <script>.
+const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
+---
+
+<section class="pfl" id="prop-firm">
+  <div class="pfl-wrap">
+    <div class="reveal pfl-head">
+      <span class="sec-label">Prop firms</span>
+      <h2>Ta firm, ton plan. <em>Tes vraies règles.</em></h2>
+      <p class="sec-sub">
+        {catalog.length} prop firms futures, {planCount} plans. Choisis le tien : MyTradingCoach
+        applique ses règles officielles à ton compte et te dit ce qu'il te reste avant le drawdown,
+        l'objectif ou le prochain payout.
+      </p>
+    </div>
+
+    <PropFirmMarquee />
+
+    <div class="pfl-grid reveal">
+      <div class="pfl-card" data-pf-root data-firm={firm.id} data-plan={plan.id}>
+        <div class="pfl-pickers">
+          <label class="pfl-field">
+            <span>Prop firm</span>
+            <select data-pf-firm>
+              {catalog.map((f) => <option value={f.id} selected={f.id === firm.id}>{f.name}</option>)}
+            </select>
+          </label>
+          <label class="pfl-field">
+            <span>Plan</span>
+            <select data-pf-plan>
+              {firm.plans.map((p) => <option value={p.id} selected={p.id === plan.id}>{p.label}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div class="pfl-phases" role="group" aria-label="Phase du compte" data-pf-phases>
+          {plan.phases.map((p, i) => (
+            <button type="button" class={i === 0 ? 'on' : undefined} aria-pressed={i === 0 ? 'true' : 'false'} data-phase={i}>
+              {PHASE_LABEL[p.phase]}
+            </button>
+          ))}
+        </div>
+
+        <p class="pfl-src" data-pf-src>Règles officielles {firm.name}, relevées le {verified(firm.verifiedAt)}.</p>
+      </div>
+
+      {/* Règles du plan choisi, en grand : elles suivent le sélecteur (avant : une capture figée sur Apex 50K, illisible). */}
+      <div class="pfl-board">
+        <p class="pfl-board-head" data-pf-head>{firm.name} · {plan.label} · {PHASE_LABEL[phase.phase]}</p>
+        <dl class="pfl-tiles" aria-live="polite" data-pf-rules>
+          {rows.map((r) => (
+            <div class="pfl-tile">
+              <dt>{r.label}</dt>
+              <dd>
+                <span class="pfl-v">{r.value}</span>
+                {r.detail && <span class="pfl-d">{r.detail}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+
+    <div class="pfl-cta reveal">
+      <a href={`${APP_URL}/register`} class="btn-p" data-ga-event="cta_signup" data-ga-place="prop-firm">Suivre mon compte prop firm gratuitement</a>
+      <p>Règles et suivi en direct : gratuit · Alertes avant la casse : Premium</p>
+      {/* Garde-fou : la marge affichée est une estimation, la plateforme de la firm fait foi (même mention dans l'app). */}
+      <p class="pfl-note">Calcul indicatif : la plateforme de ta firm fait foi.</p>
+    </div>
+
+    {/* La preuve que l'app existe : capture réelle, en vignette agrandissable. */}
+    <figure class="pfl-proof reveal">
+      {/* Deux captures du compte démo : en évaluation (Apex 50K) et funded (Tradeify 50K). Sans JS : l'évaluation seule. */}
+      <div class="pfl-shots-tabs" role="group" aria-label="Capture affichée" data-pf-shots>
+        <button type="button" class="on" aria-pressed="true" data-shot="eval">Évaluation</button>
+        <button type="button" aria-pressed="false" data-shot="funded">Funded</button>
+      </div>
+      <a href="/showcase/app-prop-firm-rules.webp" target="_blank" rel="noopener" class="pfl-thumb" data-shot-panel="eval" aria-label="Agrandir la capture d'un compte en évaluation">
+        <img
+          src="/showcase/app-prop-firm-rules.webp"
+          width="1568"
+          height="536"
+          loading="lazy"
+          decoding="async"
+          alt="Compte Apex 50K EOD Trail en évaluation dans MyTradingCoach : solde et equity lus chez le broker, marge calculée avec les règles officielles, plus haut de clôture officiel, objectif restant, puis les règles du plan."
+        />
+        <figcaption>Capture réelle · compte en évaluation de la démo, relié à Tradovate · cliquer pour agrandir</figcaption>
+      </a>
+      <a href="/showcase/app-prop-firm-funded.webp" target="_blank" rel="noopener" class="pfl-thumb" data-shot-panel="funded" hidden aria-label="Agrandir la capture d'un compte funded">
+        <img
+          src="/showcase/app-prop-firm-funded.webp"
+          width="1568"
+          height="507"
+          loading="lazy"
+          decoding="async"
+          alt="Compte Tradeify 50K funded dans MyTradingCoach : solde chez le broker, seuil qui se fige à 50 100 $, conditions restantes avant le prochain payout, puis les règles funded du plan (taille par palier, payout)."
+        />
+        <figcaption>Capture réelle · compte funded de la démo, relié à Tradovate · cliquer pour agrandir</figcaption>
+      </a>
+      <ul class="pfl-points">
+        <li><strong>Solde et equity lus chez Tradovate</strong>, positions ouvertes comprises, au lieu d'une estimation</li>
+        <li><strong>Plus haut de clôture officiel</strong> de chaque séance, pour les règles EOD</li>
+        <li><strong>Marge, objectif et prochain payout</strong> en direct pendant ta séance, payouts détectés chez le broker</li>
+        <li><strong>Alertes avant la casse</strong> : drawdown, perte du jour, consistency <span class="pfl-prem">Premium</span></li>
+      </ul>
+    </figure>
+  </div>
+  <script type="application/json" id="pf-data" set:html={data} />
+</section>
+
+<script>
+  import { PHASE_LABEL, ruleRows, type CompactFirm, type CompactPlan } from '../data/prop-firm-rules-view';
+
+  const root = document.querySelector<HTMLElement>('[data-pf-root]');
+  const raw = document.getElementById('pf-data')?.textContent;
+  if (root && raw) {
+    const catalog = JSON.parse(raw) as CompactFirm[];
+    const firmSel = root.querySelector<HTMLSelectElement>('[data-pf-firm]')!;
+    const planSel = root.querySelector<HTMLSelectElement>('[data-pf-plan]')!;
+    const phasesEl = root.querySelector<HTMLElement>('[data-pf-phases]')!;
+    // Le panneau de règles est à côté de la carte (pas dedans) : on le cherche dans la section.
+    const section = root.closest('section')!;
+    const rulesEl = section.querySelector<HTMLElement>('[data-pf-rules]')!;
+    const headEl = section.querySelector<HTMLElement>('[data-pf-head]')!;
+    const srcEl = root.querySelector<HTMLElement>('[data-pf-src]')!;
+
+    const el = (tag: string, cls?: string, text?: string) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    };
+    const verified = (iso: string) =>
+      new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    let firm = catalog.find((f) => f.id === root.dataset.firm) ?? catalog[0];
+    let plan: CompactPlan = firm.plans.find((p) => p.id === root.dataset.plan) ?? firm.plans[0];
+    let phase = 0;
+
+    const renderRules = () => {
+      const rows = ruleRows(plan.phases[phase], plan.currency);
+      headEl.textContent = `${firm.name} · ${plan.label} · ${PHASE_LABEL[plan.phases[phase].phase]}`;
+      rulesEl.replaceChildren(
+        ...rows.map((r) => {
+          const row = el('div', 'pfl-tile');
+          const dd = el('dd');
+          dd.append(el('span', 'pfl-v', r.value));
+          if (r.detail) dd.append(el('span', 'pfl-d', r.detail));
+          row.append(el('dt', undefined, r.label), dd);
+          return row;
+        }),
+      );
+      phasesEl.querySelectorAll('button').forEach((b, i) => {
+        b.classList.toggle('on', i === phase);
+        b.setAttribute('aria-pressed', String(i === phase));
+      });
+    };
+
+    const renderPhases = () => {
+      phase = 0;
+      phasesEl.replaceChildren(
+        ...plan.phases.map((p, i) => {
+          const b = el('button', undefined, PHASE_LABEL[p.phase]) as HTMLButtonElement;
+          b.type = 'button';
+          b.addEventListener('click', () => {
+            phase = i;
+            renderRules();
+          });
+          return b;
+        }),
+      );
+      renderRules();
+    };
+
+    const renderPlans = () => {
+      planSel.replaceChildren(...firm.plans.map((p) => {
+        const o = el('option', undefined, p.label) as HTMLOptionElement;
+        o.value = p.id;
+        return o;
+      }));
+      plan = firm.plans.find((p) => p.size === 50000) ?? firm.plans[0];
+      planSel.value = plan.id;
+      srcEl.textContent = `Règles officielles ${firm.name}, relevées le ${verified(firm.verifiedAt)}.`;
+      renderPhases();
+    };
+
+    firmSel.addEventListener('change', () => {
+      firm = catalog.find((f) => f.id === firmSel.value) ?? firm;
+      renderPlans();
+    });
+    // Switch des captures de l'app : évaluation / funded.
+    const shotBtns = section.querySelectorAll<HTMLButtonElement>('[data-shot]');
+    shotBtns.forEach((b) =>
+      b.addEventListener('click', () => {
+        shotBtns.forEach((x) => {
+          const on = x === b;
+          x.classList.toggle('on', on);
+          x.setAttribute('aria-pressed', String(on));
+        });
+        section.querySelectorAll<HTMLElement>('[data-shot-panel]').forEach((p) => {
+          p.hidden = p.dataset.shotPanel !== b.dataset.shot;
+        });
+      }),
+    );
+    // Noms du carrousel : un clic choisit la firm et ramène le sélecteur à l'écran.
+    section.querySelectorAll<HTMLButtonElement>('[data-pf-pick]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const picked = catalog.find((f) => f.id === b.dataset.pfPick);
+        if (!picked) return;
+        firm = picked;
+        firmSel.value = picked.id;
+        renderPlans();
+        root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }),
+    );
+    planSel.addEventListener('change', () => {
+      plan = firm.plans.find((p) => p.id === planSel.value) ?? plan;
+      renderPhases();
+    });
+    // Boutons de phase rendus au build : on leur branche le même comportement.
+    renderPhases();
+  }
+</script>
+
+<style>
+  .pfl { padding: 96px 5% 104px; }
+  .pfl-wrap { max-width: 1200px; margin: 0 auto; }
+  .pfl-head { text-align: center; max-width: 720px; margin: 0 auto; }
+  /* .sec-sub (global) n'est pas centré par défaut : dans cet en-tête centré, il doit l'être. */
+  .pfl-head .sec-sub { margin: 18px auto 0; max-width: 600px; }
+
+  .pfl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 32px;
+    margin-top: 56px;
+    align-items: start;
+  }
+
+  .pfl-card {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 16px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .pfl-pickers { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .pfl-field { display: flex; flex-direction: column; gap: 6px; }
+  .pfl-field span {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt3);
+  }
+  .pfl-field select {
+    width: 100%;
+    background: var(--bg3);
+    color: var(--txt);
+    border: 1px solid var(--b2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: var(--body);
+    font-size: 14px;
+  }
+  .pfl-field select:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .pfl-phases { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* Boutons, lignes de règles : recréés par le script, donc sans l'attribut de portée
+     d'Astro → sélecteurs :global(), bornés à la section. */
+  .pfl-phases :global(button) {
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--txt2);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--body);
+  }
+  .pfl-phases :global(button:hover) { border-color: var(--blue); color: var(--txt); }
+  .pfl-phases :global(button.on) { background: rgba(59,130,246,.16); border-color: var(--blue); color: var(--txt); }
+
+  .pfl-src { margin: 0; font-size: 11.5px; color: var(--txt3); font-family: var(--mono); }
+
+  /* Panneau de règles du plan choisi : grand et net, il remplace la capture figée. */
+  .pfl-board {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 16px;
+    padding: 26px;
+    box-shadow: 0 24px 60px -30px rgba(59,130,246,.45);
+  }
+  .pfl-board-head {
+    margin: 0 0 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--txt2);
+  }
+  .pfl-tiles {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  /* Tuiles recréées par le script → :global(), bornées au panneau. */
+  .pfl-tiles :global(.pfl-tile) {
+    background: var(--bg3);
+    border: 1px solid var(--b);
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .pfl-tiles :global(dt) {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt3);
+  }
+  .pfl-tiles :global(dd) { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+  .pfl-tiles :global(.pfl-v) {
+    font-family: var(--mono); font-size: 19px; font-weight: 600; color: var(--txt);
+    font-variant-numeric: tabular-nums; line-height: 1.3;
+  }
+  .pfl-tiles :global(.pfl-d) { font-size: 13px; color: var(--txt2); line-height: 1.45; }
+
+  /* Preuve : capture réelle en vignette agrandissable + ce que l'app fait en plus. */
+  /* Capture en pleine largeur : c'est la preuve visuelle de la feature, elle doit se lire. */
+  .pfl-proof {
+    margin: 72px auto 0;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .pfl-shots-tabs { display: flex; justify-content: center; gap: 6px; margin-bottom: -12px; }
+  .pfl-shots-tabs button {
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--txt2);
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--body);
+  }
+  .pfl-shots-tabs button:hover { border-color: var(--blue); color: var(--txt); }
+  .pfl-shots-tabs button.on { background: rgba(59,130,246,.16); border-color: var(--blue); color: var(--txt); }
+  .pfl-shots-tabs button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .pfl-thumb { display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
+  .pfl-thumb[hidden] { display: none; }
+  .pfl-thumb img {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    border: 1px solid var(--b2);
+    box-shadow: 0 30px 80px -40px rgba(59,130,246,.55);
+    transition: border-color .2s, transform .2s;
+  }
+  .pfl-thumb:hover img { border-color: var(--blue); transform: translateY(-2px); }
+  .pfl-thumb figcaption { font-family: var(--mono); font-size: 11.5px; color: var(--txt3); text-align: center; }
+  .pfl-points {
+    list-style: none; margin: 0 auto; padding: 0; max-width: 1000px;
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 40px;
+  }
+  /* Texte en flux normal (pas de flex) : le gras et la suite restent sur la même ligne. */
+  .pfl-points li {
+    position: relative; padding-left: 24px;
+    font-size: 15.5px; color: var(--txt2); line-height: 1.55;
+  }
+  .pfl-points li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  .pfl-points strong { color: var(--txt); font-weight: 600; }
+  .pfl-prem {
+    font-family: var(--mono); font-size: 11px; color: var(--blue2);
+    border: 1px solid var(--b2); border-radius: 4px; padding: 0 5px; margin-left: 4px; white-space: nowrap;
+  }
+
+  .pfl-cta { margin-top: 48px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .pfl-cta p { margin: 0; font-size: 12px; color: var(--txt3); font-family: var(--mono); max-width: 640px; }
+  .pfl-cta .pfl-note { font-size: 11px; opacity: .85; }
+  /* Copie locale : Astro isole les styles par composant (cf. Features.astro). */
+  .btn-p {
+    background: var(--blue); color: #fff; padding: 14px 28px;
+    border-radius: 10px; font-size: 15px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 0 32px rgba(59,130,246,.4);
+    transition: background .2s, transform .2s, box-shadow .2s; font-family: var(--disp);
+  }
+  .btn-p:hover { background: var(--blue2); transform: translateY(-2px); }
+
+  @media (max-width: 900px) {
+    .pfl-grid { grid-template-columns: minmax(0, 1fr); }
+    .pfl-points { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* Mobile : la capture garde une largeur lisible et défile horizontalement (toucher = agrandir). */
+  @media (max-width: 640px) {
+    .pfl-thumb { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pfl-thumb img { width: 820px; max-width: none; }
+    .pfl-thumb figcaption { position: sticky; left: 0; text-align: left; }
+  }
+  @media (max-width: 480px) {
+    .pfl { padding: 64px 16px; }
+    .pfl-card { padding: 16px; }
+    .pfl-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .pfl-tiles :global(.pfl-tile) { padding: 12px 12px 10px; }
+    .pfl-tiles :global(.pfl-v) { font-size: 16px; }
+    .pfl-tiles :global(.pfl-d) { font-size: 12px; }
+    .pfl-board { padding: 14px; }
+  }
+</style>

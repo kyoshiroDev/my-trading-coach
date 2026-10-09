@@ -32,6 +32,7 @@ describe('DebriefCron — rattrapage lundi', () => {
     mockPrisma.weeklyDebrief.findMany.mockResolvedValue([{ userId: 'u1' }]); // u1 déjà servi
 
     await cron.catchUpMissedDebriefs();
+    expect(mockService.getEligibleUsers).toHaveBeenLastCalledWith(ref); // semaine passée
 
     expect(mockQueue.add).toHaveBeenCalledTimes(1);
     expect(mockQueue.add).toHaveBeenCalledWith(
@@ -70,6 +71,7 @@ describe('DebriefCron — dimanche', () => {
     ]);
 
     await cron.scheduledDebriefs();
+    expect(mockService.getEligibleUsers.mock.calls.at(-1)![0]).toBeInstanceOf(Date); // semaine en cours
 
     expect(mockQueue.add).toHaveBeenCalledTimes(2);
     const [, payload] = mockQueue.add.mock.calls[0];

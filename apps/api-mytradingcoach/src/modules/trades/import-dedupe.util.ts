@@ -77,3 +77,24 @@ export class CrossSourcePool {
     return true;
   }
 }
+
+// Marge de la fenêtre de déduplication : au-delà du ±14 h du rapprochement entre fuseaux
+// (isCrossSourceDuplicate) ; la clé exacte, elle, porte la date au milliseconde près.
+const DEDUPE_WINDOW_MARGIN_MS = 24 * 3600 * 1000;
+
+/**
+ * Trades existants à comparer à un lot importé (SCA-B1-01) : ceux de [min − 1 j, max + 1 j] du
+ * lot, plus tout l'historique. Une ligne sans date valide → pas de fenêtre (elle prendrait
+ * « maintenant », comparée à tout), par prudence.
+ */
+export function importDedupeWindow(dtos: { tradedAt?: string | Date | null }[]): { tradedAt?: { gte: Date; lte: Date } } {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const d of dtos) {
+    const t = d.tradedAt ? new Date(d.tradedAt).getTime() : NaN;
+    if (Number.isNaN(t)) return {};
+    if (t < min) min = t;
+    if (t > max) max = t;
+  }
+  return { tradedAt: { gte: new Date(min - DEDUPE_WINDOW_MARGIN_MS), lte: new Date(max + DEDUPE_WINDOW_MARGIN_MS) } };
+}

@@ -35,6 +35,7 @@ function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
     },
     usage: { totalTrades: 1, tradesThisMonth: 1, totalPnl: 0, winRate: 0 },
     topAssets: [{ asset: 'ZEC/USDT', count: 1 }],
+    offer: { founder: null, partner: null },
     sessions: [],
     ...over,
   };
@@ -101,4 +102,37 @@ describe('UserDetailComponent — rendu densifié', () => {
     expect((el.textContent ?? '')).toContain('Crypto');
     expect((el.textContent ?? '')).toContain('Price Action, ICT');
   });
+
+  it('fondateur (#525) : badge « Fondateur n° X », date, intervalle et date de perte du tarif', async () => {
+    const { el, text } = await render(makeData({
+      offer: {
+        founder: {
+          number: 12, status: 'LOST', interval: 'year', cta: 'bandeau',
+          takenAt: '2026-10-10T10:00:00.000Z', endedAt: '2027-10-10T10:00:00.000Z',
+        },
+        partner: null,
+      },
+    }));
+    expect(el.querySelector('[data-testid="founder-badge"]')?.textContent).toContain('Fondateur n° 12');
+    const row = el.querySelector('[data-testid="founder-row"]')?.textContent ?? '';
+    expect(row).toContain('depuis le 10/10/2026');
+    expect(row).toContain('annuel');
+    expect(row).toContain('Tarif perdu le 10/10/2027');
+    expect(text).not.toContain('Code partenaire');
+  });
+
+  it('code partenaire (#525) : code et conditions figées', async () => {
+    const { el } = await render(makeData({
+      offer: {
+        founder: null,
+        partner: {
+          code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
+          status: 'ACTIVE', since: '2026-10-12T10:00:00.000Z', endedAt: null,
+        },
+      },
+    }));
+    expect(el.querySelector('[data-testid="partner-badge"]')?.textContent).toContain('Code LOUIS29');
+    expect(el.querySelector('[data-testid="partner-row"]')?.textContent).toContain('29 €/mois ou 290 €/an, à vie');
+  });
 });
+

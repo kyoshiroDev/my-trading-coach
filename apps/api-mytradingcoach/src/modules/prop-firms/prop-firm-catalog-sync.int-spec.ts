@@ -36,7 +36,11 @@ describe('PropFirmCatalogSyncService (base réelle)', () => {
     expect(await service.sync()).toEqual({ status: 'unchanged' });
     const firmIds = ['lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday'];
     expect(await prisma.propFirm.count({ where: { id: { in: firmIds } } })).toBe(6);
-    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: firmIds }, active: true } })).toBe(116);
+    // Nombre attendu lu dans le catalogue : un plan ajouté ou retiré ne casse plus le test.
+    const expectedPlans = (PROP_FIRM_CATALOG_FILES as { firm: { id: string }; plans: unknown[] }[])
+      .filter((f) => firmIds.includes(f.firm.id))
+      .reduce((n, f) => n + f.plans.length, 0);
+    expect(await prisma.propFirmPlan.count({ where: { firmId: { in: firmIds }, active: true } })).toBe(expectedPlans);
   });
 
   it('les règles relues depuis le Json repassent le schéma Zod', async () => {
@@ -45,7 +49,11 @@ describe('PropFirmCatalogSyncService (base réelle)', () => {
     expect(phases.find((p) => p.phase === 'evaluation')?.max_drawdown).toMatchObject({ amount: 2000, type: 'trailing_eod' });
     expect(plan.sourceUrls.length).toBeGreaterThan(0);
     const firm = await prisma.propFirm.findUniqueOrThrow({ where: { id: 'apex' } });
-    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe('2026-10-05');
+    // Date lue dans le catalogue, pas figée : chaque revérification d'Apex (2026-10-05, puis
+    // 2026-10-07 avec #526) cassait ce test sans que la synchro soit en cause.
+    const apexFile = (PROP_FIRM_CATALOG_FILES as { firm: { id: string }; verified_at: string }[])
+      .find((f) => f.firm.id === 'apex');
+    expect(firm.verifiedAt.toISOString().slice(0, 10)).toBe(apexFile?.verified_at);
     expect(firm.platforms).toContain('tradovate');
   });
 

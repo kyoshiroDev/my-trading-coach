@@ -1,3 +1,4 @@
+import { ProductEventsService } from '@app/core/services/product-events.service';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -43,9 +44,12 @@ import { OnboardingComponent } from '@app/features/onboarding/onboarding.compone
 import { environment } from '@app/environments/environment';
 import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 
+import { OfferIntentHostComponent } from '../offer-intent-host/offer-intent-host.component';
+
 @Component({
   selector: 'mtc-sidebar',
   imports: [
+    OfferIntentHostComponent,
     ScrollMemoryDirective,
     DialogDirective,
     RouterModule,
@@ -61,6 +65,7 @@ import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 })
 export class SidebarComponent {
   protected readonly userStore = inject(UserStore);
+  protected readonly events = inject(ProductEventsService);
   private readonly auth = inject(AuthService);
   private readonly usersApi = inject(UsersApi);
   private readonly destroyRef = inject(DestroyRef);

@@ -10,7 +10,7 @@
       "wealthcharts"
     ]
   },
-  "verified_at": "2026-10-05",
+  "verified_at": "2026-10-07",
   "plans": [
     {
       "id": "apex-intraday-25k",
@@ -1637,9 +1637,14 @@
                 "locks_at": 28000,
                 "locked_floor": 26500,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (26500) quand le plus haut solde, latent inclus, atteint 28000."
+              },
+              "wealthcharts": {
+                "locks_at": 28000,
+                "locked_floor": 26500,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (26500) quand le plus haut solde, latent inclus, atteint 28000 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -1747,8 +1752,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     },
     {
       "id": "apex-legacy-50k",
@@ -1785,9 +1790,14 @@
                 "locks_at": 55500,
                 "locked_floor": 53000,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (53000) quand le plus haut solde, latent inclus, atteint 55500."
+              },
+              "wealthcharts": {
+                "locks_at": 55500,
+                "locked_floor": 53000,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (53000) quand le plus haut solde, latent inclus, atteint 55500 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -1895,8 +1905,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     },
     {
       "id": "apex-legacy-100k",
@@ -1933,9 +1943,14 @@
                 "locks_at": 109000,
                 "locked_floor": 106000,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (106000) quand le plus haut solde, latent inclus, atteint 109000."
+              },
+              "wealthcharts": {
+                "locks_at": 109000,
+                "locked_floor": 106000,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (106000) quand le plus haut solde, latent inclus, atteint 109000 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -2043,8 +2058,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     },
     {
       "id": "apex-legacy-150k",
@@ -2081,9 +2096,14 @@
                 "locks_at": 164000,
                 "locked_floor": 159000,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (159000) quand le plus haut solde, latent inclus, atteint 164000."
+              },
+              "wealthcharts": {
+                "locks_at": 164000,
+                "locked_floor": 159000,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (159000) quand le plus haut solde, latent inclus, atteint 164000 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -2191,8 +2211,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     },
     {
       "id": "apex-legacy-250k",
@@ -2229,9 +2249,14 @@
                 "locks_at": 271500,
                 "locked_floor": 265000,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (265000) quand le plus haut solde, latent inclus, atteint 271500."
+              },
+              "wealthcharts": {
+                "locks_at": 271500,
+                "locked_floor": 265000,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (265000) quand le plus haut solde, latent inclus, atteint 271500 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -2339,8 +2364,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     },
     {
       "id": "apex-legacy-300k",
@@ -2377,9 +2402,14 @@
                 "locks_at": 327500,
                 "locked_floor": 320000,
                 "notes": "Sur Rithmic, le seuil se fige au solde objectif (320000) quand le plus haut solde, latent inclus, atteint 327500."
+              },
+              "wealthcharts": {
+                "locks_at": 327500,
+                "locked_floor": 320000,
+                "notes": "Comme sur Rithmic : le seuil se fige au solde objectif (320000) quand le plus haut solde, latent inclus, atteint 327500 (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy)."
               }
             },
-            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic au solde objectif, Tradovate jamais ; WealthCharts non documenté pour le Legacy : le support (2026-10-05) décrit un gel au solde objectif sur Rithmic et WealthCharts, mais avec l'exemple d'une évaluation Intraday actuelle, pas Legacy (locks_at = null par prudence)."
+            "basis_notes": "Source (Legacy Evaluation Rules) : le seuil suit le plus haut solde atteint en séance, P&L latent inclus (« highest live value »), sans jamais redescendre ; passer sous le seuil fait échouer l'évaluation. Blocage : Rithmic et WealthCharts au solde objectif, Tradovate jamais (support Apex, Julian le 2026-10-05 puis Blaz le 2026-10-07 en réponse à la question Legacy). L'évaluation est réussie dès l'objectif atteint : le blocage ne joue qu'en séance, sur une position ouverte."
           },
           "consistency": null,
           "min_trading_days": 7,
@@ -2487,8 +2517,8 @@
         "https://apextraderfunding.com/help-center/getting-started/futures-trading-times/",
         "https://apextraderfunding.com/help-center/getting-started/prohibited-activities/"
       ],
-      "needs_review": true,
-      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours. À revoir : blocage du trailing d'évaluation Legacy sur WealthCharts (réponse du support illustrée par un plan Intraday actuel)."
+      "needs_review": false,
+      "notes": "Produit Legacy (gamme d'avant le 2026-03-01), revenu en vente en promotion limitée. Règles propres au Legacy, différentes des plans Intraday et EOD. Règles hors schéma, en PA : MAE (la perte latente ouverte ne doit pas dépasser 30 % du profit de début de journée, ou 30 % du drawdown tant que le profit est faible ; 50 % quand le profit de clôture atteint deux fois le safety net), ratio risque/rendement 5:1 maximum, une seule direction à la fois, pas de hedging. Inactivité : les produits Legacy vendus après le 2026-03-01 suivent la nouvelle politique (2 jours à 50 $ de profit par période glissante de 30 jours, confirmé par le support le 2026-10-05). Évaluation : 7 jours de trading minimum, sauf promotion « 1-day pass » en cours."
     }
   ]
 }

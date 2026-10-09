@@ -34,6 +34,9 @@ const mockPrisma = {
     update: vi.fn(),
     updateMany: vi.fn(),
   },
+  brokerConnection: {
+    findFirst: vi.fn(),
+  },
   trade: {
     findMany: vi.fn(),
     findFirst: vi.fn(),
@@ -177,6 +180,73 @@ describe('SessionService', () => {
       // 2 wins / 3 closed = 66.67%
       expect(stats.winRate).toBeCloseTo(66.67, 1);
       expect(stats.totalPnl).toBe(250);
+    });
+  });
+
+  describe('getLiveStats · état broker (positions ouvertes, latent)', () => {
+    beforeEach(() => {
+      mockPrisma.trade.findMany.mockResolvedValue([makeTrade({ pnl: 100 })]);
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({ accountId: 'acc-tv' });
+    });
+
+    it('position ouverte → décrite, avec le latent du broker et sa date', async () => {
+      const at = new Date('2026-10-06T14:05:00Z');
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: -42.5, brokerEquityAt: at, brokerOpenPositions: 1,
+      });
+      const position = { asset: 'MNQ', side: 'LONG', quantity: 2, entryPrice: 21_500, since: null };
+      mockRedisService.client.get.mockResolvedValueOnce(
+        JSON.stringify({ at: '2026-10-06T14:05:00Z', positions: [position] }),
+      );
+
+      const stats = await service.getLiveStats('user-1');
+
+      expect(mockRedisService.client.get).toHaveBeenCalledWith('tradovate:positions:conn-1');
+      expect(stats.totalPnl).toBe(100); // réalisé seul : le latent reste à part
+      expect(stats.broker).toEqual({
+        openPositions: [position],
+        positionsAt: '2026-10-06T14:05:00Z',
+        openPnl: -42.5,
+        openPnlAt: at.toISOString(),
+      });
+    });
+
+    it('position ouverte mais latent jamais lu → null, pas de chiffre inventé', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: null, brokerEquityAt: null, brokerOpenPositions: 1,
+      });
+      mockRedisService.client.get.mockResolvedValueOnce(null);
+
+      const { broker } = await service.getLiveStats('user-1');
+
+      expect(broker).toMatchObject({ openPositions: [], openPnl: null, openPnlAt: null });
+    });
+
+    it('à plat → latent 0', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: 12, brokerEquityAt: null, brokerOpenPositions: 0,
+      });
+      mockRedisService.client.get.mockResolvedValueOnce(JSON.stringify({ at: 'x', positions: [] }));
+
+      expect((await service.getLiveStats('user-1')).broker?.openPnl).toBe(0);
+    });
+
+    it('compteur en base à 0 mais détail Redis périmé → à plat, comme le suivi du compte', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: -30, brokerEquityAt: null, brokerOpenPositions: 0,
+      });
+      const position = { asset: 'MNQ', side: 'LONG', quantity: 1, entryPrice: 21_500, since: null };
+      mockRedisService.client.get.mockResolvedValueOnce(JSON.stringify({ at: 'x', positions: [position] }));
+
+      expect((await service.getLiveStats('user-1')).broker).toMatchObject({ openPositions: [], openPnl: 0 });
+    });
+
+    it('compte non synchronisé ou sans session active → broker null', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue(null);
+      expect((await service.getLiveStats('user-1')).broker).toBeNull();
+
+      mockPrisma.tradeSession.findFirst.mockResolvedValue(null);
+      expect((await service.getLiveStats('user-1')).broker).toBeNull();
     });
   });
 

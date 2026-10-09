@@ -95,6 +95,12 @@ export class AdminController {
     return this.adminService.getRetention();
   }
 
+  /** Entonnoir Premium sur 30 jours : visites → inscrits → Premium vu → offres → essai → Stripe. */
+  @Get('funnel')
+  getFunnel() {
+    return this.adminService.getFunnel(30);
+  }
+
   /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */
   @Get('acquisition')
   getAcquisition() {
@@ -117,6 +123,15 @@ export class AdminController {
     @Body() body: CampaignContentDto,
   ) {
     return this.emailCampaign.preview(type, body.subject, body.content);
+  }
+
+  /** Envoi test : un seul e-mail vers CAMPAIGN_TEST_EMAIL (hello@), sans EmailSend. */
+  @Post('campaigns/:type/test')
+  testCampaign(
+    @Param('type') type: CampaignType,
+    @Body() body: CampaignContentDto,
+  ) {
+    return this.emailCampaign.sendTest(type, body.subject, body.content);
   }
 
   @Post('campaigns/:type/send')

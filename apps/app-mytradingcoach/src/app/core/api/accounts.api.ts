@@ -113,6 +113,8 @@ export interface AccountRuleMetrics {
     cashBalance: number;
     equity: number;
     openPnl: number;
+    /** Faux = position ouverte au latent jamais lu → afficher « - », pas 0. */
+    openPnlKnown: boolean;
     openPositions: number;
     balanceAt: string | null;
     equityAt: string | null;

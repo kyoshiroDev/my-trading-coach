@@ -29,6 +29,16 @@
         <div class="kpi-top slate"></div><div class="kpi-label">Comptes supprimés</div>
         <div class="kpi-value">{{ s.comptesSupprimesMois }}</div>
         <div class="kpi-sub">{{ s.comptesSupprimesTotal }} au total · ce mois</div></div>
+      @if (founders(); as f) {
+        <!-- Offre fondateur (#525) → onglet Fondateurs des abonnements. -->
+        <a class="kpi kpi-link" routerLink="/subscriptions" [queryParams]="{ filtre: 'fondateurs' }" data-testid="kpi-founders">
+          <div class="kpi-top teal"></div>
+          <div class="kpi-label">Fondateurs @if (!f.offer.open) { <span class="badge b-free kpi-flag">fermée</span> }</div>
+          <div class="kpi-value teal">{{ f.totals.taken }}<span class="kpi-of"> / {{ f.offer.seatsTotal }}</span></div>
+          <div class="kpi-sub">{{ f.totals.active }} actifs · {{ f.totals.seatsLeft }} restantes</div>
+          <span class="kpi-bar" aria-hidden="true"><span class="kpi-bar-fill" [style.transform]="founderFill()"></span></span>
+        </a>
+      }
     </div>
     }
 

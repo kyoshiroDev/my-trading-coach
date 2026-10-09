@@ -20,6 +20,7 @@ jobs:
   deploy-api-beta:
     name: Deploy API beta to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: checks
     environment: production
     env:
@@ -46,6 +47,7 @@ jobs:
   deploy-app-beta:
     name: Deploy Angular beta to VPS
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: checks
     environment: production
     env:

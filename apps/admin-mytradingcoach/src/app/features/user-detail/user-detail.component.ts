@@ -106,6 +106,8 @@ export function buildSignals(
   return list;
 }
 
+import { partnerConditions } from '../../core/utils/offers.util';
+
 @Component({
   selector: 'mtc-admin-user-detail',
   imports: [DatePipe, RouterLink, ActivityCalendarComponent],
@@ -114,6 +116,9 @@ export function buildSignals(
   templateUrl: './user-detail.component.html',
 })
 export class UserDetailComponent {
+  /** Conditions figées d'un code partenaire (#525). */
+  protected readonly partnerConditions = partnerConditions;
+
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(AdminApi);
   private readonly confirm = inject(ConfirmService);

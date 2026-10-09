@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -18,6 +17,7 @@ const mockMessagesCreate = vi.hoisted(() =>
 const mockRedisGet = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const mockRedisIncr = vi.hoisted(() => vi.fn().mockResolvedValue(1));
 const mockRedisExpire = vi.hoisted(() => vi.fn().mockResolvedValue(1));
+const mockRedisDecr = vi.hoisted(() => vi.fn().mockResolvedValue(0));
 const mockRedisQuit = vi.hoisted(() => vi.fn().mockResolvedValue('OK'));
 
 // Mock Anthropic SDK — function() obligatoire (arrow function incompatible avec new)
@@ -101,6 +101,7 @@ const mockRedisService = {
     setex: vi.fn().mockResolvedValue('OK'),
     del: vi.fn().mockResolvedValue(1),
     incr: mockRedisIncr,
+    decr: mockRedisDecr,
     expire: mockRedisExpire,
     ttl: mockRedisTtl,
     keys: vi.fn().mockResolvedValue([]),
@@ -151,20 +152,39 @@ describe('AiService', () => {
       expect(result).toHaveProperty('topPattern');
     });
 
-    it('vérifie le quota avant d appeler l orchestrateur', async () => {
-      mockRedisGet.mockResolvedValueOnce('100');
+    it('quota mensuel épuisé → 429, place rendue, orchestrateur jamais appelé (SCA-B5-06)', async () => {
+      mockRedisIncr.mockResolvedValueOnce(101); // 101e réservation du mois
 
-      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow(
-        HttpException,
-      );
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toMatchObject({ status: 429 });
+      expect(mockRedisDecr).toHaveBeenCalledOnce();
       expect(mockOrchestrator.runInsightsFlow).not.toHaveBeenCalled();
     });
 
+    it('place réservée AVANT l’appel, rendue s’il échoue', async () => {
+      mockOrchestrator.runInsightsFlow.mockRejectedValueOnce(new Error('IA en panne'));
+
+      await expect(service.getInsights('user-123', Role.USER)).rejects.toThrow('IA en panne');
+      expect(mockRedisIncr.mock.invocationCallOrder[0]).toBeLessThan(mockOrchestrator.runInsightsFlow.mock.invocationCallOrder[0]);
+      expect(mockRedisDecr).toHaveBeenCalledOnce();
+    });
+
+    it('20 appels simultanés à 95 appels du mois → 5 passent, 15 refusés (quota atomique)', async () => {
+      let n = 95;
+      mockRedisIncr.mockImplementation(async () => ++n);
+      mockRedisDecr.mockImplementation(async () => --n);
+
+      const results = await Promise.allSettled(
+        Array.from({ length: 20 }, () => service.getInsights('user-123', Role.USER)),
+      );
+
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(5);
+      expect(n).toBe(100);
+      mockRedisIncr.mockReset().mockResolvedValue(1);
+      mockRedisDecr.mockReset().mockResolvedValue(0);
+    });
+
     it('cooldown 4h actif → HttpException 429', async () => {
-      // get appelé 2× : quota (null = ok), puis cooldown ('1' = fenêtre active)
-      mockRedisGet
-        .mockResolvedValueOnce(null) // quota → 0 appels ce mois
-        .mockResolvedValueOnce('1'); // cooldown → fenêtre 4h en cours
+      mockRedisGet.mockResolvedValueOnce('1'); // cooldown → fenêtre 4h en cours
       mockRedisTtl.mockResolvedValueOnce(14000);
 
       await expect(
@@ -325,6 +345,24 @@ describe('AiService', () => {
 
       const callStr = JSON.stringify(mockMessagesCreate.mock.calls[0][0]);
       expect(callStr).toContain('TP');
+    });
+
+    it('chaque trade porte son compte ; setup absent = « setup non renseigné », sans reproche', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 400, output_tokens: 5 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        trades: [{ ...baseTrade, account: 'DEMO', setup: undefined }],
+      });
+
+      const prompt: string = mockMessagesCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('« DEMO »');
+      expect(prompt).toContain('setup non renseigné');
+      expect(prompt).toContain('pas une faute');
+      expect(prompt).toContain('ne l\'attribue jamais aux trades d\'un autre compte');
     });
 
     it('identifie SL touché quand exit proche du stopLoss', async () => {

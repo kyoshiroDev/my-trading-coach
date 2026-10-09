@@ -10,7 +10,7 @@
       "ninjatrader"
     ]
   },
-  "verified_at": "2026-10-04",
+  "verified_at": "2026-10-09",
   "plans": [
     {
       "id": "bulenox-qualification-trailing-25k",
@@ -102,7 +102,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -223,7 +223,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -344,7 +344,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -465,7 +465,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -628,7 +628,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -803,7 +803,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -990,7 +990,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1177,7 +1177,7 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1274,7 +1274,7 @@
               1500,
               1000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1371,7 +1371,7 @@
               3000,
               2000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1468,7 +1468,7 @@
               6000,
               3000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1565,7 +1565,7 @@
               9000,
               4500
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1662,7 +1662,7 @@
               1500,
               1000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1767,7 +1767,7 @@
               3000,
               2000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1872,7 +1872,7 @@
               6000,
               3000
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -1977,7 +1977,7 @@
               9000,
               4500
             ],
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2071,7 +2071,7 @@
             "locked_floor": 25100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1000 $ en dessous ; ne redescend jamais. Se fige définitivement à 25100 $ quand le compte atteint 26100 $."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 1000 $ en dessous ; ne redescend jamais. Se fige définitivement à 25100 $ quand le compte atteint 26100 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2098,7 +2098,7 @@
             "min_daily_profit": 100,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2126,8 +2126,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-trailing-50k",
@@ -2192,7 +2192,7 @@
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2219,7 +2219,7 @@
             "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2247,8 +2247,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52350 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-trailing-100k",
@@ -2313,7 +2313,7 @@
             "locked_floor": 100100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 104100 $."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 104100 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2340,7 +2340,7 @@
             "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2368,8 +2368,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 104100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-trailing-150k",
@@ -2434,7 +2434,7 @@
             "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 155600 $."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 155600 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2461,7 +2461,7 @@
             "min_daily_profit": 250,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2489,8 +2489,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 155600 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-eod-25k",
@@ -2571,7 +2571,7 @@
             "locked_floor": 25100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 25100 $ quand la clôture atteint 26100 $."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 1000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 25100 $ quand la clôture atteint 26100 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2598,7 +2598,7 @@
             "min_daily_profit": 100,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2626,8 +2626,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-eod-50k",
@@ -2708,7 +2708,7 @@
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2735,7 +2735,7 @@
             "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2763,8 +2763,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52350 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-eod-100k",
@@ -2845,7 +2845,7 @@
             "locked_floor": 100100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 104100 $."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 104100 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2872,7 +2872,7 @@
             "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -2900,8 +2900,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 104100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     },
     {
       "id": "bulenox-momentum-eod-150k",
@@ -2982,7 +2982,7 @@
             "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 155600 $."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 155600 $. Blocage confirmé par le support (2026-10-09)."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -3009,7 +3009,7 @@
             "min_daily_profit": 250,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1.0,
+            "split_pct": 1,
             "split_after": {
               "paid_out_over": 10000,
               "split_pct": 0.9
@@ -3037,8 +3037,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": true,
-      "notes": "Qualification incluant le Momentum Master sans activation. Drawdown et taille du Momentum Master non chiffrés à part : repris de l'évaluation, avec le blocage à départ + 100 $ commun aux comptes Master-level."
+      "needs_review": false,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 155600 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
     }
   ]
 }

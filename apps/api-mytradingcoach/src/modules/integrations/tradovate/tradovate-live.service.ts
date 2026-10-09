@@ -15,6 +15,7 @@ import {
   TradovateLiveConnection,
   type LiveSocketFactory,
 } from './tradovate-live.connection';
+import { createLimiter } from '../../../common/utils/concurrency.util';
 
 /** Bail « un seul WebSocket Tradovate par user », tous workers du cluster confondus. */
 export const LIVE_LEASE_TTL_MS = 30_000;
@@ -37,6 +38,9 @@ export const CATCH_UP_FRESH_MS = 60_000;
  * court pour couvrir toute vraie absence.
  */
 export const CATCH_UP_HISTORY_AFTER_MS = 30 * 60_000;
+// Rattrapages simultanés par process (SCA-B6-02) : après un redémarrage, 200 clients qui reviennent
+// ne lancent pas 200 synchros Tradovate d'un coup.
+export const LIVE_CATCH_UP_CONCURRENCY = 5;
 const BUSY_RETRY_MS = 3_000;
 const BUSY_RETRIES = 3;
 
@@ -95,6 +99,7 @@ export class TradovateLiveService implements OnModuleDestroy {
   /** Derniers `apiHosts` lus par connexion (mis à jour à chaque demande de jeton). */
   private readonly hosts = new Map<string, unknown>();
   private readonly pending = new Set<ReturnType<typeof setTimeout>>();
+  private readonly catchUpLimit = createLimiter(LIVE_CATCH_UP_CONCURRENCY);
   private emitter: LiveEmitter = () => undefined;
 
   constructor(
@@ -122,8 +127,9 @@ export class TradovateLiveService implements OnModuleDestroy {
     const conns = await this.eligible(userId);
     if (!this.clients.get(userId)?.size || conns.length === 0) return; // reparti, ou rien à suivre
 
-    // Rattrapage d'abord (trades faits app fermée), sans attendre le WebSocket.
-    void this.catchUp(userId, conns);
+    // Rattrapage d'abord (trades faits app fermée), sans attendre le WebSocket. Borné par process
+    // (SCA-B6-02) : après un redémarrage, tous les clients reviennent en même temps.
+    void this.catchUpLimit(() => this.catchUp(userId, conns));
     this.ensureLive(userId, conns);
   }
 

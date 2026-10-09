@@ -5,6 +5,14 @@ import { NotFoundComponent } from './shared/components/not-found/not-found.compo
 
 export const appRoutes: Routes = [
   {
+    // Page de paiement (toutes les offres), hors coque : pas de barre latérale.
+    path: 'paiement',
+    canActivate: [authGuard],
+    data: { seo: { title: 'Paiement', noindex: true } },
+    loadComponent: () =>
+      import('./features/checkout/checkout-page.component').then((m) => m.CheckoutPageComponent),
+  },
+  {
     path: 'demo',
     data: { seo: { title: 'Démo', noindex: true } },
     loadComponent: () =>

@@ -1,0 +1,96 @@
+@if (data(); as d) {
+  <div class="card">
+    <div class="card-head">
+      <span class="card-label">Offre fondateur</span>
+      <span class="badge" [class.b-ok]="d.offer.open" [class.b-free]="!d.offer.open" data-testid="offer-state">
+        {{ d.offer.open ? 'ouverte' : 'fermée' }}
+      </span>
+    </div>
+    <div class="card-body offer-head">
+      <div class="offer-row">
+        @if (!confirming()) {
+          <button class="btn" [class.btn-primary]="!d.offer.open" [disabled]="saving()" (click)="confirming.set(true)" data-testid="offer-toggle">
+            {{ d.offer.open ? "Fermer l'offre" : "Ouvrir l'offre" }}
+          </button>
+        } @else {
+          <div class="confirm-box" role="alert" data-testid="offer-confirm">
+            <p class="confirm-text">
+              @if (d.offer.open) {
+                Fermer l'offre fondateur ? Le bandeau, la carte et le bloc de la modale disparaissent dans la minute.
+                Les fondateurs existants gardent leur tarif.
+              } @else {
+                Ouvrir l'offre fondateur ? Le bandeau, la carte et le bloc de la modale apparaissent dans la minute
+                pour tous les visiteurs ({{ d.totals.seatsLeft }} places restantes).
+              }
+            </p>
+            <div class="confirm-actions">
+              <button class="btn" (click)="confirming.set(false)">Annuler</button>
+              <button class="btn btn-primary" [disabled]="saving()" (click)="applyToggle()" data-testid="offer-confirm-yes">
+                {{ saving() ? 'En cours…' : d.offer.open ? 'Confirmer la fermeture' : "Confirmer l'ouverture" }}
+              </button>
+            </div>
+          </div>
+        }
+        <label class="field inline">
+          <span class="field-lbl">Date de fin <span class="opt">(optionnelle)</span></span>
+          <input class="field-input" type="date" [value]="endsAtInput()" (input)="endsAtInput.set($any($event.target).value)" data-testid="offer-ends-at" />
+        </label>
+        <button class="btn" [disabled]="saving()" (click)="saveEndsAt()">Enregistrer la date</button>
+        @if (d.offer.endsAt) {
+          <button class="btn" [disabled]="saving()" (click)="clearEndsAt()">Sans fin</button>
+        }
+      </div>
+      @if (actionError(); as e) { <p class="err-text">{{ e }}</p> }
+      <div class="offer-stats">
+        <span><strong>{{ d.totals.taken }}</strong> / {{ d.offer.seatsTotal }} prises</span>
+        <span>{{ d.totals.active }} actifs</span>
+        <span>{{ d.totals.lost }} perdus</span>
+        <span>{{ d.totals.refunded }} remboursés</span>
+        <span>{{ d.totals.seatsLeft }} restantes</span>
+      </div>
+      <p class="recap" data-testid="cta-recap">Par clic : {{ recap() }}</p>
+    </div>
+  </div>
+
+  <div class="card fill">
+    <div class="card-head">
+      <span class="card-label">Fondateurs</span>
+      <select class="field-select" aria-label="Filtrer par statut" (change)="filter($any($event.target).value)" data-testid="status-filter">
+        <option value="">Tous les statuts</option>
+        @for (s of STATUSES; track s) { <option [value]="s" [selected]="status() === s">{{ STATUS_LABEL[s] }}</option> }
+      </select>
+    </div>
+    <table class="tbl">
+      <caption class="sr-only">Fondateurs</caption>
+      <thead><tr><th scope="col">E-mail</th><th scope="col" class="num">N°</th><th scope="col">Date</th><th scope="col">Intervalle</th><th scope="col">Statut</th><th scope="col">Source</th><th scope="col">Clic</th></tr></thead>
+      <tbody>
+        @for (r of d.rows; track r.number) {
+          <tr>
+            <td data-label="E-mail">
+              @if (r.userId) { <a class="u-link" [routerLink]="['/users', r.userId]">{{ r.email }}</a> } @else { <span class="muted">compte supprimé</span> }
+            </td>
+            <td data-label="N°" class="td-mono num">{{ r.number }}</td>
+            <td data-label="Date" class="td-mono muted">{{ r.takenAt | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Intervalle" class="td-mono">{{ r.interval === 'year' ? 'Annuel' : 'Mensuel' }}</td>
+            <td data-label="Statut"><span [class]="'badge ' + STATUS_BADGE[r.status]">{{ STATUS_LABEL[r.status] }}</span></td>
+            <td data-label="Source" class="td-mono muted">{{ r.source ? r.source + (r.medium ? ' / ' + r.medium : '') : 'direct' }}</td>
+            <td data-label="Clic" class="td-mono">{{ r.cta ?? '-' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty">Aucun fondateur{{ status() ? ' avec ce statut' : '' }}</td></tr>
+        }
+      </tbody>
+    </table>
+    @if (pages() > 1) {
+      <div class="pager">
+        <button class="btn" [disabled]="page() <= 1" (click)="goTo(page() - 1)">← Précédent</button>
+        <span class="td-mono muted">{{ page() }} / {{ pages() }}</span>
+        <button class="btn" [disabled]="page() >= pages()" (click)="goTo(page() + 1)">Suivant →</button>
+      </div>
+    }
+  </div>
+} @else if (loadError()) {
+  <div class="card"><div class="empty">Fondateurs indisponibles</div></div>
+} @else {
+  <div class="card"><div class="empty">Chargement…</div></div>
+}

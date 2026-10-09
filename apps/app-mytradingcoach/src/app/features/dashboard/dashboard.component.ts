@@ -356,19 +356,26 @@ export class DashboardComponent {
       // L'activité (P&L par jour) est un httpResource keyé sur rangeQuery() → refetch auto.
     });
 
-    // Recharge les analytics si un trade est ajouté depuis l'extérieur (wizard)
+    // Recharge les analytics si un trade est ajouté depuis l'extérieur (wizard, import).
+    // Rien tant que le store n'est pas chargé : sinon le premier chargement (0 → N) passait pour
+    // N nouveaux trades et rechargeait les 4 resources à peine demandées (SCA-B4-04). Pendant un
+    // reset + rechargement (import), la référence reste celle d'avant : l'arrivée des trades
+    // importés déclenche bien le rechargement.
     effect(() => {
+      if (!this.tradesStore.loaded()) return;
       const count = this.tradesStore.totalTrades();
-      const known = this.knownTradesCount();
+      const known = untracked(() => this.knownTradesCount());
       if (known !== -1 && count > known) this.reloadAnalytics();
       this.knownTradesCount.set(count);
     });
 
     // Recharge les analytics quand la LISTE de comptes change (import onboarding qui crée le
-    // compte par défaut, sans forcément passer par le compteur de trades ci-dessus).
+    // compte par défaut, sans forcément passer par le compteur de trades ci-dessus). Même garde :
+    // la liste qui arrive au premier chargement n'est pas un changement.
     effect(() => {
+      if (!this.selectedAccount.loaded()) return;
       const n = this.selectedAccount.accounts().length;
-      const known = this.knownAccountsCount();
+      const known = untracked(() => this.knownAccountsCount());
       if (known !== -1 && n !== known) this.reloadAnalytics();
       this.knownAccountsCount.set(n);
     });

@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { xlsxToCsv } from './xlsx-worker';
 import { Plan, Role, EmotionState } from '@prisma/client';
-import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SetupsService } from '../setups/setups.service';
 import {
@@ -26,7 +26,6 @@ import {
 import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 
-const MODEL = AI_MODELS.analysis;
 
 
 // Limites différenciées : un broker connu est parsé localement (sans IA),
@@ -37,18 +36,27 @@ const MAX_KNOWN_ROWS = 10_000;
 // on désactive la saisie d'un total des frais (front) et on l'ignore (back).
 const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
+/** Plafond de sortie d'un lot du repli ligne a ligne. */
+export const AI_CHUNK_MAX_TOKENS = 8192;
+/**
+ * Pire cout de sortie mesure par trade rendu, sur le modele d'analyse (Sonnet 4.6,
+ * 2026-10-08, colonne de notes remplie) : jusqu'a 5 528 jetons pour un lot de 40 lignes,
+ * soit ~138 par trade, et ~70 a 95 le plus souvent. La sortie varie d'un lot a l'autre ;
+ * les nombres se decoupent mal : on est loin des ~40 jetons supposes a l'origine.
+ */
+export const WORST_TOKENS_PER_TRADE = 140;
 /**
  * Lignes par appel Claude. Ce n'est PAS un reglage de cout mais une contrainte de
- * sortie : chaque trade rendu pese ~40 jetons de JSON, et `max_tokens` vaut 8192,
- * donc au-dela de ~205 trades la reponse est tronquee, `JSON.parse` echoue et
- * l'utilisateur recoit « verifie que c'est un export de trades fermes » alors que
- * son fichier etait bon — apres avoir paye l'appel. A 120 la marge tient meme
- * quand le champ `notes` est rempli sur chaque ligne.
+ * sortie : au-dela du plafond, la reponse est tronquee, `JSON.parse` echoue et
+ * l'import echoue apres avoir paye l'appel. A 120 lignes, Sonnet 4.6 atteignait les
+ * 8192 jetons ; a 40, deux lots sur sept montaient a 64-67 % (mesures 2026-10-08). A 25,
+ * le pire cas tient en ~3 500 jetons : moins de la moitie du plafond, marge de 50 % au
+ * moins (verifie par le test du lot).
  *
  * Baisser ce lot ne coute quasiment rien : la sortie est proportionnelle au nombre
- * de trades, et seule l'entete de prompt (~246 jetons) est repetee par appel.
+ * de trades, et seule l'entete de prompt (~250 jetons) est repetee par appel.
  */
-const AI_BATCH = 120;
+export const AI_BATCH = 25;
 
 /** Accès requis pour le chemin IA d'import (broker inconnu) : Premium strict. */
 interface AiImportAccess {
@@ -120,7 +128,7 @@ export class CsvImportService {
     report?: { fees?: FeesReport },
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
-    const content = this.toCsvText(buffer, filename);
+    const content = await this.toCsvText(buffer, filename);
     if (!content) throw new BadRequestException('Fichier vide');
     if (content.split('\n').length < 2)
       throw new BadRequestException('Fichier sans données');
@@ -196,7 +204,7 @@ export class CsvImportService {
     // Performance ET qu'un fichier de frais valide (Cash history) est fourni.
     let feesMerged = false;
     if (broker === 'tradovate' && feesFile) {
-      const feesText = this.toCsvText(feesFile.buffer, feesFile.filename);
+      const feesText = await this.toCsvText(feesFile.buffer, feesFile.filename);
       const merge = feesText ? this.mergeTradovateFees(dtos, feesText) : null;
       if (merge) {
         feesMerged = true;
@@ -414,14 +422,17 @@ export class CsvImportService {
     );
   }
 
-  /** Convertit le buffer en texte CSV : Excel → CSV local, sinon UTF-8. */
-  private toCsvText(buffer: Buffer, filename: string): string {
+  /**
+   * Convertit le buffer en texte CSV : Excel → CSV dans un worker_thread (SCA-B5-05), sinon UTF-8.
+   * Excel lu sur MAX_KNOWN_ROWS + 2 lignes au plus (en-tête + une de trop) : un fichier trop gros
+   * reste refusé avec le message habituel au lieu d'être tronqué en silence.
+   */
+  private async toCsvText(buffer: Buffer, filename: string): Promise<string> {
     if (/\.(xlsx|xls)$/i.test(filename)) {
       try {
-        const wb = XLSX.read(buffer, { type: 'buffer' });
-        const firstSheet = wb.Sheets[wb.SheetNames[0]];
-        return XLSX.utils.sheet_to_csv(firstSheet).trim();
-      } catch {
+        return await xlsxToCsv(buffer, MAX_KNOWN_ROWS + 2);
+      } catch (err) {
+        this.logger.warn(`Excel illisible (${filename}) : ${(err as Error).message}`);
         throw new BadRequestException(
           "Impossible de lire ce fichier Excel. Réexporte-le en CSV depuis ton broker, " +
           "ou ouvre-le dans Excel/Google Sheets et enregistre-le en .csv.",
@@ -731,7 +742,7 @@ ${echantillon}`;
 
     if (response.stop_reason === 'max_tokens') return null;
 
-    const brut = response.content[0]?.type === 'text' ? response.content[0].text : '';
+    const brut = responseText(response);
     // Le modele peut preceder le JSON d'une explication : on prend le bloc, sinon les accolades.
     const bloc = brut.match(/```(?:json)?\s*([\s\S]*?)```/);
     const candidat = bloc
@@ -763,8 +774,8 @@ ${echantillon}`;
     const prompt = this.buildPrompt(filename, chunk, styleNote);
     const response = await this.anthropicClient.create(
       {
-        model: MODEL,
-        max_tokens: 8192,
+        model: AI_MODELS.analysis,
+        max_tokens: AI_CHUNK_MAX_TOKENS,
         system: [
           {
             type: 'text',
@@ -790,8 +801,7 @@ ${echantillon}`;
       );
     }
 
-    const text =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = responseText(response);
     const clean = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')

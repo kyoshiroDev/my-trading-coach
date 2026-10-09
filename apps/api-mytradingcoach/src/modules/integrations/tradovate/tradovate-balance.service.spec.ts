@@ -28,12 +28,33 @@ function setup(stored = conn()) {
     getConnection: vi.fn(async () => row),
     getSession: vi.fn(async () => ({ token: 'AT', apiHosts: { demo: 'demo.example' } })),
   };
-  const service = new TradovateBalanceService(prisma as never, api as never, connections as never);
-  return { service, prisma, api, connections };
+  const redis = { client: { set: vi.fn(async () => 'OK') } };
+  const service = new TradovateBalanceService(prisma as never, api as never, connections as never, redis as never);
+  return { service, prisma, api, connections, redis };
 }
 
 describe('TradovateBalanceService', () => {
   afterEach(() => vi.useRealTimers());
+
+  it('positions ouvertes : détail daté dans Redis, expiré au bout de la séance', async () => {
+    const { service, redis } = setup();
+    const positions = [{ asset: 'MNQ', side: 'LONG' as const, quantity: 2, entryPrice: 21_500.25, since: null }];
+
+    await service.recordOpenPositionDetails('conn-1', positions);
+
+    const [key, value, mode, ttl] = redis.client.set.mock.calls[0] as unknown as [string, string, string, number];
+    expect(key).toBe('tradovate:positions:conn-1');
+    expect(JSON.parse(value)).toMatchObject({ positions, at: expect.any(String) });
+    expect(mode).toBe('EX');
+    expect(ttl).toBe(12 * 3600);
+  });
+
+  it('positions ouvertes : un échec Redis ne casse pas la synchro', async () => {
+    const { service, redis } = setup();
+    redis.client.set.mockRejectedValueOnce(new Error('redis down'));
+
+    await expect(service.recordOpenPositionDetails('conn-1', [])).resolves.toBeUndefined();
+  });
 
   it('instantané : compte broker en entier, route de lecture ; equity, latent et solde persistés', async () => {
     const { service, api, prisma } = setup();

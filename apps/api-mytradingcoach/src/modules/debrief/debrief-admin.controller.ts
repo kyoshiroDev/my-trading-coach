@@ -23,7 +23,7 @@ export class DebriefAdminController {
     const refDate = this.debriefService.weekRefDate(year, week);
     const targets = userId
       ? [{ id: userId }]
-      : await this.debriefService.getEligibleUsers();
+      : await this.debriefService.getEligibleUsers(refDate); // tous : ceux qui ont tradé cette semaine-là
 
     await Promise.all(
       targets.map((u) =>

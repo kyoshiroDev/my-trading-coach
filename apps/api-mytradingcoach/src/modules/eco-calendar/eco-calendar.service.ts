@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { AnthropicClientService } from '../infra/anthropic-client.service';
+import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { AiService } from '../ai/ai.service';
 
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
@@ -19,6 +19,14 @@ export type { EcoCalendarData, EcoResultAnalysis } from './eco-calendar.types';
 
 /** Libellés par appel de traduction : la réponse JSON tient largement dans max_tokens. */
 const TRANSLATION_BATCH = 15;
+/**
+ * Un libellé n'est soumis au modèle qu'une fois par fenêtre, réussite ou échec. Le polling
+ * relance `fetchAndStoreEvents` chaque minute de 8 h à 18 h : sans ce verrou, un libellé dont
+ * la traduction échouait (JSON tronqué, clé renvoyée modifiée, panne) repartait au modèle
+ * 600 fois par jour. Mesuré en prod : ~603 appels les jours concernés, 4 834 sur 30 jours.
+ */
+const TRANSLATION_RETRY_TTL_S = 12 * 60 * 60;
+const translationLockKey = (name: string) => `eco:label-tr:${name}`;
 
 
 @Injectable()
@@ -88,6 +96,7 @@ export class EcoCalendarService {
         .filter((x): x is { e: FmpEcoEvent; impact: EcoImpact } => x.impact !== null);
 
       const upserted: EcoEvent[] = [];
+      const stored: { date: string }[] = [];
 
       for (const { e, impact } of filtered) {
         const eventTimeUTC = e.date
@@ -133,6 +142,7 @@ export class EcoCalendarService {
           },
           create: mapped,
         });
+        stored.push({ date: row.date });
 
         upserted.push({
           time: row.time,
@@ -150,8 +160,10 @@ export class EcoCalendarService {
 
       this.logger.log(`✅ FMP: ${upserted.length} events stockés pour ${date}`);
 
-      // Traduction des libellés une seule fois (gardée en prod uniquement)
-      await this.translateEventNames(date);
+      // Traduction des libellés une seule fois (gardée en prod uniquement). FMP renvoie aussi
+      // la veille et le lendemain : toutes les dates enregistrées ici sont couvertes, sinon un
+      // jour jamais demandé (un dimanche) gardait ses libellés en anglais.
+      await this.translateEventNames([...new Set([date, ...stored.map((r) => r.date).filter(Boolean)])]);
 
       return upserted;
     } catch (err) {
@@ -166,16 +178,16 @@ export class EcoCalendarService {
       && process.env['NEWS_TRANSLATION'] !== 'off';
   }
 
-  // Traduit les `name` (anglais FMP) du jour qui n'ont pas encore de `nameFr`.
+  // Traduit les `name` (anglais FMP) des dates données qui n'ont pas encore de `nameFr`.
   // Dédup à vie via le glossaire EcoLabelTranslation : chaque libellé n'est traduit
   // qu'une seule fois (les mêmes libellés reviennent chaque semaine). Coût ≈ 0 en régime de croisière.
-  private async translateEventNames(date: string): Promise<void> {
+  private async translateEventNames(dates: string[]): Promise<void> {
     if (!this.translationEnabled) return;
 
     // Enrichissement best-effort : ne doit jamais faire échouer le fetch.
     try {
       const pending = await this.prisma.ecoEvent.findMany({
-        where: { date, nameFr: null },
+        where: { date: { in: dates }, nameFr: null },
         select: { name: true },
         distinct: ['name'],
       });
@@ -183,18 +195,21 @@ export class EcoCalendarService {
       const names = pending.map((p) => p.name);
 
       // 1) Hit glossaire d'abord : libellés déjà connus → propagation, zéro appel modèle.
+      //    Par nom, toutes dates, sur les seules lignes encore sans traduction.
       const known = await this.prisma.ecoLabelTranslation.findMany({
         where: { nameEn: { in: names } },
       });
       const knownMap = new Map(known.map((k) => [k.nameEn, k.nameFr]));
       await Promise.all(
         [...knownMap.entries()].map(([name, fr]) =>
-          this.prisma.ecoEvent.updateMany({ where: { date, name }, data: { nameFr: fr } }),
+          this.prisma.ecoEvent.updateMany({ where: { name, nameFr: null }, data: { nameFr: fr } }),
         ),
       );
 
-      // 2) Ne traduire que les libellés réellement nouveaux (absents du glossaire).
-      const missing = names.filter((n) => !knownMap.has(n));
+      // 2) Ne traduire que les libellés réellement nouveaux (absents du glossaire), et pas
+      //    déjà soumis au modèle dans la fenêtre (cf. TRANSLATION_RETRY_TTL_S). Le verrou est
+      //    atomique : les deux fetch parallèles de 6 h ne traduisent pas deux fois le même.
+      const missing = await this.claimForTranslation(names.filter((n) => !knownMap.has(n)));
       if (!missing.length) return;
 
       // Par lots : en un seul appel à 300 tokens, une journée chargée (20+ libellés)
@@ -204,7 +219,7 @@ export class EcoCalendarService {
         Object.assign(mapping, await this.translateBatch(missing.slice(i, i + TRANSLATION_BATCH)));
       }
 
-      // 3) Upsert glossaire (1 fois à vie) puis propagation aux events du jour.
+      // 3) Upsert glossaire (1 fois à vie) puis propagation aux events sans traduction.
       await Promise.all(
         missing.map(async (name) => {
           const fr = mapping[name];
@@ -214,11 +229,35 @@ export class EcoCalendarService {
             update: { nameFr: fr },
             create: { nameEn: name, nameFr: fr },
           });
-          await this.prisma.ecoEvent.updateMany({ where: { date, name }, data: { nameFr: fr } });
+          await this.prisma.ecoEvent.updateMany({ where: { name, nameFr: null }, data: { nameFr: fr } });
         }),
       );
+      const failed = missing.filter((n) => !mapping[n]);
+      if (failed.length) {
+        this.logger.warn(
+          `Eco : ${failed.length} libellé(s) non traduit(s), nouvel essai dans ` +
+            `${TRANSLATION_RETRY_TTL_S / 3600} h : ${failed.slice(0, 5).join(' | ')}`,
+        );
+      }
     } catch (err) {
       this.logger.warn(`Eco name translation failed: ${(err as Error).message}`);
+    }
+  }
+
+  /**
+   * Libellés que ce process peut soumettre au modèle : ceux dont il pose le verrou (SET NX).
+   * Redis indisponible → aucun : la traduction est cosmétique, on ne risque pas une rafale.
+   */
+  private async claimForTranslation(names: string[]): Promise<string[]> {
+    if (!names.length) return [];
+    try {
+      const claims = await Promise.all(
+        names.map((n) => this.redis.set(translationLockKey(n), '1', 'EX', TRANSLATION_RETRY_TTL_S, 'NX')),
+      );
+      return names.filter((_, i) => claims[i] === 'OK');
+    } catch (err) {
+      this.logger.warn(`Eco : verrou de traduction indisponible (${(err as Error).message}), traduction reportée`);
+      return [];
     }
   }
 
@@ -234,7 +273,7 @@ export class EcoCalendarService {
         },
         { feature: 'eco_translation', userId: null },
       );
-      const txt = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
+      const txt = responseText(msg);
       const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
       if (s === -1 || e === -1) return {};
       return JSON.parse(txt.slice(s, e + 1)) as Record<string, string>;

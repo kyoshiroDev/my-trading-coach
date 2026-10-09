@@ -1,9 +1,11 @@
 ---
 import { APP_URL } from '../config';
+import FounderBanner from './FounderBanner.astro';
 
 // false sur les pages où un CTA de conversion n'a pas sa place (ex. /disclaimer).
 const { stickyCta = true } = Astro.props;
 ---
+<FounderBanner />
 <div class="nav-bar">
   <a href="/" class="nav-logo">
     <img src="/icon/logo-navbar.svg" alt="MyTradingCoach : Journal de trading IA" height="32" style="display:block" />
@@ -15,7 +17,7 @@ const { stickyCta = true } = Astro.props;
     <a href="/#pricing">Tarifs</a>
     <a href="/#faq">FAQ</a>
     <a href={`${APP_URL}/login`} class="nav-login-link">Connexion</a>
-    <a href={`${APP_URL}/register`} class="nav-cta">Commencer gratuitement →</a>
+    <a href={`${APP_URL}/register`} class="nav-cta" data-ga-event="cta_signup" data-ga-place="nav">Commencer gratuitement →</a>
   </nav>
 
   <button
@@ -31,7 +33,7 @@ const { stickyCta = true } = Astro.props;
 </div>
 
 {stickyCta && (
-  <a href={`${APP_URL}/register`} class="nav-sticky-cta">
+  <a href={`${APP_URL}/register`} class="nav-sticky-cta" data-ga-event="cta_signup" data-ga-place="nav">
     Commencer gratuitement →
   </a>
 )}
@@ -114,8 +116,8 @@ const { stickyCta = true } = Astro.props;
     z-index: 201;
   }
 
-  /* ── Desktop nav ── */
-  @media (min-width: 768px) {
+  /* ── Desktop nav ── (à partir de 1024 px : en tablette, les 5 liens + le CTA ne tiennent pas) */
+  @media (min-width: 1024px) {
     .nav-links {
       display: flex;
       align-items: center;
@@ -153,8 +155,8 @@ const { stickyCta = true } = Astro.props;
     }
   }
 
-  /* ── Mobile ── */
-  @media (max-width: 767px) {
+  /* ── Mobile et tablette : menu hamburger ── */
+  @media (max-width: 1023px) {
     /* État fermé : caché */
     .nav-links {
       display: none !important;

@@ -1,3 +1,5 @@
+import { DemoSeedModule } from '../admin/demo-seed.module';
+import { ProductEventsModule } from '../product-events/product-events.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -9,6 +11,8 @@ import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
+    DemoSeedModule,
+    ProductEventsModule,
     PassportModule,
     JwtModule.register({
       secret: process.env['JWT_SECRET'],

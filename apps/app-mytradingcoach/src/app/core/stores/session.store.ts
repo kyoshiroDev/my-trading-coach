@@ -276,6 +276,16 @@ export class SessionStore {
     this.refreshLiveStats();
   }
 
+  private liveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Rafale d'événements broker (solde, position) → UNE relecture des stats. */
+  refreshLiveSoon(delayMs = 800): void {
+    if (this.liveRefreshTimer) clearTimeout(this.liveRefreshTimer);
+    this.liveRefreshTimer = setTimeout(() => {
+      this.liveRefreshTimer = null;
+      this.refreshLiveStats();
+    }, delayMs);
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private refreshLiveStats(): void {
@@ -305,12 +315,9 @@ export class SessionStore {
       .subscribe({
         next: (res) => {
           this.newsItems.set(res.data ?? []);
-          const breaking = (res.data ?? []).find(i =>
-            i.title.toLowerCase().includes('fed')   ||
-            i.title.toLowerCase().includes('powell') ||
-            i.title.toLowerCase().includes('ecb')   ||
-            i.title.toLowerCase().includes('fomc'),
-          );
+          // Choisi par l'API sur le titre ANGLAIS (mots entiers, macro, hors crypto, récent) :
+          // un « includes('fed') » sur le titre traduit retenait surtout du Bitcoin.
+          const breaking = (res.data ?? []).find(i => i.breaking);
           this.breakingNews.set(breaking?.title ?? null);
         },
       });

@@ -1,3 +1,5 @@
+import { PartnerCodeModule } from '../partner-codes/partner-code.module';
+import { FounderOfferModule } from '../founder-offer/founder-offer.module';
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from '../../prisma/prisma.module';
@@ -19,6 +21,8 @@ import { runsQueueProcessors } from '../../config/app-role';
   imports: [
     BullModule.registerQueue({ name: STRIPE_QUEUE }),
     PrismaModule,
+    FounderOfferModule,
+    PartnerCodeModule,
     ResendModule,
     DiscordModule,
   ],

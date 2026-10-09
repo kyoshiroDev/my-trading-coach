@@ -72,9 +72,9 @@ stripe listen --forward-to http://localhost:3001/api/billing/webhook
 > `stripe login` interactif, lui passer directement la clé de test :
 > `stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to …`
 
-La CLI affiche un `whsec_…`. Il doit être **celui que lit l'API**, c'est-à-dire celui
-de **`.env.local`** (chargé par `ConfigModule`), pas seulement celui du `.env` racine.
-S'ils diffèrent, mettre à jour `.env.local` et relancer l'API.
+La CLI affiche un `whsec_…`. Il doit être **celui que lit l'API** : `STRIPE_WEBHOOK_SECRET`
+du `.env` racine (`.env.development` / `.env.local` ne portent que les adresses DB/Redis).
+S'il diffère, le mettre à jour dans `.env` et relancer l'API.
 
 ```bash
 E2E_STRIPE_MODE=ui pnpm exec playwright test 11-referral-ambassador

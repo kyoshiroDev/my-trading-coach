@@ -2,9 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  afterNextRender,
   inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideDynamicIcon, LucideNewspaper as Newspaper } from '@lucide/angular';
@@ -25,7 +28,7 @@ import { DialogDirective } from '@mtc/front-ui';
     <div class="news-ticker">
       <span class="news-ticker-lbl"><svg [lucideIcon]="NewsIcon" [size]="13" class="news-live-ic"></svg> News live</span>
       <div class="news-ticker-viewport">
-        <div class="news-ticker-track">
+        <div class="news-ticker-track" #track [style.animation-duration.s]="durationS()">
           @for (item of items(); track item.publishedDate) {
             <button type="button" class="news-tick" (click)="openNews(item)">
               <span class="news-tick-tag">{{ item.symbol }}</span>
@@ -107,10 +110,39 @@ export class LiveNewsComponent {
 
   protected readonly NewsIcon = Newspaper;
 
+  /**
+   * Vitesse de lecture constante. La durée était fixe (90 s) : plus il y avait de news, plus le
+   * ticker filait (~90 px/s avec 20 titres), trop vite pour lire (retour de Val, 2026-10-09).
+   * La durée suit donc la longueur réelle d'un tour (la moitié de la piste, l'autre est la copie).
+   */
+  private static readonly SPEED_PX_S = 40;
+  private static readonly MIN_DURATION_S = 30;
+  private readonly track = viewChild.required<ElementRef<HTMLElement>>('track');
+  /** `null` tant que la piste n'est pas mesurée : la durée du CSS s'applique. */
+  protected readonly durationS = signal<number | null>(null);
+
   // Modal news
   protected readonly selectedNews = signal<NewsItem | null>(null);
   // Traduction paresseuse du corps : true pendant l'appel à /news/:id/text.
   protected readonly translatingNewsText = signal(false);
+
+  constructor() {
+    // Mesurée au rendu puis à chaque changement de taille (news rechargées, polices chargées).
+    afterNextRender(() => {
+      const el = this.track().nativeElement;
+      const measure = () => {
+        const lap = el.scrollWidth / 2;
+        if (lap > 0) {
+          this.durationS.set(Math.max(LiveNewsComponent.MIN_DURATION_S, Math.round(lap / LiveNewsComponent.SPEED_PX_S)));
+        }
+      };
+      measure();
+      if (typeof ResizeObserver === 'undefined') return;
+      const observer = new ResizeObserver(measure);
+      observer.observe(el);
+      this.destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
 
   protected openNews(item: NewsItem): void {
     this.selectedNews.set(item);

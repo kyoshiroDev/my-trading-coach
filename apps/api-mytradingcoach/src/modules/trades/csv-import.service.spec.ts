@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Plan, Role } from '@prisma/client';
 import * as XLSX from 'xlsx';
-import { CsvImportService, type FeesReport } from './csv-import.service';
+import { AI_BATCH, AI_CHUNK_MAX_TOKENS, CsvImportService, WORST_TOKENS_PER_TRADE, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
 // Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
@@ -273,7 +273,55 @@ describe('CsvImportService — chemin IA par lots', () => {
     svc = makeService();
   });
 
-  it('repli : 1 tentative de mapping refusee, puis 600 lignes en 5 lots de 120', async () => {
+  it('taille de lot : le pire cas mesure tient dans la moitie du plafond de sortie', () => {
+    expect(AI_BATCH * WORST_TOKENS_PER_TRADE).toBeLessThanOrEqual(AI_CHUNK_MAX_TOKENS / 2);
+  });
+
+  it('gros CSV inconnu (1 000 lignes) : lots de AI_BATCH lignes, tous les trades importes', async () => {
+    // Le faux modele rend un trade par ligne du lot recu, comme le vrai.
+    const lotsRecus: number[] = [];
+    const create = vi.fn().mockImplementation(async (params: { messages: { content: string }[] }) => {
+      const prompt = params.messages[0].content;
+      if (!prompt.includes('CSV :')) {
+        // Appel de deduction du mapping : reponse illisible -> repli ligne a ligne.
+        return { content: [{ type: 'text', text: 'pas de mapping' }], usage: { input_tokens: 1, output_tokens: 1 } };
+      }
+      const lignes = prompt.split('CSV :\n')[1].split('\n').slice(1).filter(Boolean);
+      lotsRecus.push(lignes.length);
+      const trades = lignes.map((l) => {
+        const [id, , , , price] = l.split(',');
+        return {
+          asset: 'AAPL', side: 'LONG', entry: Number(price), exit: Number(price) + 1, quantity: 1,
+          pnl: 1, tradedAt: `2026-01-05T10:00:00Z`, notes: `ticket ${id}`,
+        };
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ broker: 'x', trades, skipped: 0, errors: [] }) }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 1, output_tokens: 1 },
+      };
+    });
+    (svc as any).anthropicClient.create = create;
+
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      const rows = Array.from({ length: 1000 }, (_, i) => `${i},AAPL,BUY,1,${100 + i},2026-01-05`);
+      const csv = ['id,symbol,side,quantity,price,date', ...rows].join('\n');
+      const dtos = await svc.parseCSV(Buffer.from(csv), 'unknown.csv', undefined, PREMIUM_ACCESS);
+
+      expect(lotsRecus).toHaveLength(Math.ceil(1000 / AI_BATCH));
+      expect(Math.max(...lotsRecus)).toBe(AI_BATCH);
+      expect(lotsRecus.reduce((a, b) => a + b, 0)).toBe(1000);
+      expect(dtos).toHaveLength(1000);
+      expect(new Set(dtos.map((d) => d.entry)).size).toBe(1000); // aucune ligne perdue ni doublee
+      expect(create.mock.calls.every(([p]) => p.max_tokens <= AI_CHUNK_MAX_TOKENS)).toBe(true);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+  });
+
+  it('repli : 1 tentative de mapping refusee, puis 600 lignes en lots de AI_BATCH', async () => {
     const trade = {
       asset: 'BTC/USDT',
       side: 'LONG',
@@ -307,18 +355,19 @@ describe('CsvImportService — chemin IA par lots', () => {
         PREMIUM_ACCESS,
       );
 
-      // 1 appel de deduction du mapping + 5 lots de 120. Le mock rend une reponse de
+      // 1 appel de deduction du mapping + 600 / AI_BATCH lots. Le mock rend une reponse de
       // trades, pas un mapping : la validation de forme la refuse, donc on retombe sur le
       // chemin ligne par ligne. C'est le comportement voulu — un mapping douteux ne passe pas.
-      expect(create).toHaveBeenCalledTimes(6);
-      expect(dtos).toHaveLength(5); // un trade agrégé par lot
+      const lots = Math.ceil(600 / AI_BATCH);
+      expect(create).toHaveBeenCalledTimes(1 + lots);
+      expect(dtos).toHaveLength(lots); // un trade agrégé par lot
     } finally {
       process.env['NODE_ENV'] = oldEnv;
     }
   });
 
   /**
-   * Chaque trade rendu pese ~40 jetons de JSON contre 8192 de `max_tokens` : un lot trop
+   * Chaque trade rendu pese jusqu'a ~85 jetons de JSON contre 8192 de `max_tokens` : un lot trop
    * gros faisait tronquer la reponse, et l'utilisateur lisait « verifie que c'est un export
    * de trades fermes » pour un fichier parfaitement valide — apres avoir paye l'appel. Le
    * message doit parler de la TAILLE, jamais mettre en cause le fichier.
