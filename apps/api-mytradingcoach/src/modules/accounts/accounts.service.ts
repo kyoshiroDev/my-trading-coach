@@ -204,6 +204,11 @@ export interface AccountRuleMetrics {
     cashBalance: number;
     equity: number;
     openPnl: number;
+    /**
+     * Faux = position ouverte dont le latent n'a jamais été lu : `openPnl` vaut alors 0 pour le
+     * calcul de l'equity, mais l'écran affiche « - », jamais un 0 inventé (comme « Trade en cours »).
+     */
+    openPnlKnown: boolean;
     openPositions: number;
     balanceAt: Date | null;
     equityAt: Date | null;
@@ -365,6 +370,7 @@ export class AccountsService {
         cashBalance: brokerData.cashBalance,
         equity,
         openPnl,
+        openPnlKnown: !open || brokerData.openPnl != null,
         openPositions: brokerData.openPositions,
         balanceAt: brokerData.cashBalanceAt,
         equityAt: brokerData.equityAt,

@@ -832,6 +832,19 @@ export class CreateTradeDto {
   chiffre officiel, et le récap parle EN PRIORITÉ d'une limite approchée, d'une alerte ou d'un tilt.
   Heures affichées à Paris. Injecté en `@Optional()` dans les deux services ; contexte indisponible
   → l'IA part sans le bloc.
+- **Récap du jour : ce que voit l'IA (2026-10-09, récap faux de Val)** :
+  - `forDay(userId, date, tradedAccountIds)` : SEULS les comptes tradés ce jour-là, avec ou sans
+    règle prop firm dès qu'ils ont une alerte / un tilt du jour. Sinon un compte cassé deux jours
+    plus tôt et pas tradé passait pour la casse du jour, et le tilt d'un compte sans règle disparaissait.
+  - Casse du drawdown d'un jour précédent → datée (« dépassé depuis le mercredi 7 octobre (pas
+    aujourd'hui) »), via le dernier `PropRiskEvent` drawdown/breached avant la période.
+  - Chaque ligne de trade porte son compte (`« label »`), et la consigne interdit d'attribuer un fait
+    d'un compte aux trades d'un autre.
+  - Setup `IMPORT_SETUP_TITLE` (« Sans setup », défaut des imports) → « setup non renseigné », et
+    l'IA n'en tire aucune conclusion (elle reprochait « sans setup » à chaque journée synchronisée).
+  - Comptes d'entraînement exclus du récap (P&L, stats, patterns 7 j, IA) : `demoAccountIds`
+    (`accounts/demo-accounts.ts`) = type `DEMO` OU relié à un compte de démo Tradovate
+    (`externalAccountName` = `DEMO` + chiffres), quel que soit le type saisi.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
   **Choix produit du 2026-10-06 (Greg)** : on garde « jamais en boucle » (la doc Tradovate dit
@@ -1620,8 +1633,10 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   `internal_server_error`, exception réseau du SDK) → `RetryableEmailError` → nouvel essai ;
   définitives (quota, adresse invalide, clé) → Sentry tout de suite, pas de nouvel essai. Sentry
   n'est prévenu d'un échec passager qu'au **dernier** essai.
-- `idempotencyKey: email/<job.id>` : un essai qui avait abouti malgré une réponse perdue ne crée pas
-  de doublon.
+- `idempotencyKey: email/<job.id>/<job.timestamp>` : un essai qui avait abouti malgré une réponse
+  perdue ne crée pas de doublon. Jamais `job.id` seul : c'est un compteur par Redis (prod, beta, dev
+  et local repartent chacun de 1), et Resend refuse une clé revue sous 24 h avec un autre contenu
+  (`invalid_idempotent_request`, non réessayée → e-mail perdu, récap du 2026-10-09).
 - File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
 - `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
   `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en

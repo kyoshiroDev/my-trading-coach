@@ -236,7 +236,10 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       commission?: number | null;
       emotion?: string | null;
       tradeSession?: { moodStart?: string | null } | null;
+      /** Absent = non renseigné (trade importé sans setup choisi). */
       setup?: string;
+      /** Libellé du compte du trade. */
+      account?: string;
       session?: string;
       timeframe?: string;
       entry?: number;
@@ -292,10 +295,11 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
 
         return [
           time,
+          t.account ? `« ${t.account} »` : 'compte ?',
           t.session ?? '?',
           t.side,
           t.asset,
-          t.setup ?? '?',
+          t.setup ?? 'setup non renseigné',
           effectiveEmotion(t) ?? '?',
           pnlStr,
           exitLabel,
@@ -337,7 +341,7 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
     const prompt = `${profileCtx}
 Journée du ${dateStr} : ${data.trades.length} trades, P&L ${money(data.pnl)}, win rate ${data.winRate.toFixed(0)}%, émotion dominante : ${data.dominantEmotion ?? 'non renseignée'}.
 
-Détail des trades :
+Détail des trades (heure | compte | session | sens | actif | setup | émotion | P&L net) :
 ${tradesDetail}
 ${patternsCtx}
 ${data.propContext ? `
@@ -350,6 +354,8 @@ Règles :
 - Basée sur les vrais patterns de ce trader, pas des conseils génériques
 - Si un pattern négatif récurrent est détecté (ex: shorts MNQ perdants), le mentionner explicitement
 - Si le suivi prop firm montre une limite approchée, une alerte ou un épisode de tilt, ta phrase en parle EN PRIORITÉ (heure, montant), sans jamais présenter un chiffre comme officiel
+- Un fait sur un compte (limite, alerte, tilt) ne vaut que pour CE compte : ne l'attribue jamais aux trades d'un autre compte
+- « setup non renseigné » = trade importé sans setup choisi, pas une faute : n'en tire aucune conclusion
 - Ton coach bienveillant mais franc
 - PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
 - PAS d'astérisques ni de markdown`;

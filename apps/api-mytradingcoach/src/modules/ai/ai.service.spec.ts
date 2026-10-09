@@ -347,6 +347,24 @@ describe('AiService', () => {
       expect(callStr).toContain('TP');
     });
 
+    it('chaque trade porte son compte ; setup absent = « setup non renseigné », sans reproche', async () => {
+      mockMessagesCreate.mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Test.' }],
+        usage: { input_tokens: 400, output_tokens: 5 },
+      });
+
+      await service.generateDailyOneLiner({
+        ...baseData,
+        trades: [{ ...baseTrade, account: 'DEMO', setup: undefined }],
+      });
+
+      const prompt: string = mockMessagesCreate.mock.calls[0][0].messages[0].content;
+      expect(prompt).toContain('« DEMO »');
+      expect(prompt).toContain('setup non renseigné');
+      expect(prompt).toContain('pas une faute');
+      expect(prompt).toContain('ne l\'attribue jamais aux trades d\'un autre compte');
+    });
+
     it('identifie SL touché quand exit proche du stopLoss', async () => {
       mockMessagesCreate.mockResolvedValueOnce({
         content: [{ type: 'text', text: 'Test.' }],

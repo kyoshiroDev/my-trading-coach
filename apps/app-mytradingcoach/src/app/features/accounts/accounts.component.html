@@ -353,7 +353,8 @@
                 <b>Chez le broker</b> : solde <b>{{ money(b.cashBalance, a.currency) }}</b>
                 · equity <b>{{ money(b.equity, a.currency) }}</b>
                 @if (b.openPositions > 0) {
-                  (latent <b [class.text-green]="b.openPnl > 0" [class.text-red]="b.openPnl < 0">{{ money(b.openPnl, a.currency, true) }}</b>,
+                  <!-- Latent jamais lu : « - », pas un 0 inventé (même règle que la session live). -->
+                  (latent @if (b.openPnlKnown) {<b [class.text-green]="b.openPnl > 0" [class.text-red]="b.openPnl < 0">{{ money(b.openPnl, a.currency, true) }}</b>} @else {<b>-</b>},
                   {{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }})
                 } @else {
                   · aucune position ouverte

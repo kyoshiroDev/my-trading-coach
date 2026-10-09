@@ -345,9 +345,10 @@ export class SessionService {
 
     const raw = await this.redisService.client.get(openPositionsKey(conn.id)).catch(() => null);
     const state = parseOpenPositions(raw);
-    const openPositions = state?.positions ?? [];
-    // À plat (positions décrites vides, ou compteur à 0 sans détail) : le latent vaut 0.
-    const flat = state ? openPositions.length === 0 : conn.brokerOpenPositions === 0;
+    // « À plat » = compteur en base, la même règle que le suivi du compte (`accounts.service`) :
+    // les deux panneaux de la session live doivent dire la même chose. Redis ne donne que le détail.
+    const flat = conn.brokerOpenPositions === 0;
+    const openPositions = flat ? [] : (state?.positions ?? []);
     return {
       openPositions,
       positionsAt: state?.at ?? null,

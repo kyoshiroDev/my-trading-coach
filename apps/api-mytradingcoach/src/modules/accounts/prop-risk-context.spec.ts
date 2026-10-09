@@ -56,6 +56,20 @@ describe('buildPropRiskContext', () => {
     expect(txt).not.toContain("gain max aujourd'hui");
   });
 
+  it('casse d\'un jour précédent : datée, pour ne pas passer pour celle du jour', () => {
+    const blown: RiskContextAccount = { ...apex, metrics: { ...apex.metrics, drawdown: { ...apex.metrics.drawdown!, breached: true } } };
+    const txt = buildPropRiskContext([blown], [], [], 'day', { a: '2026-10-07' })!;
+    expect(txt).toContain("plancher $48,820 dépassé depuis le mercredi 7 octobre (pas aujourd'hui)");
+    expect(buildPropRiskContext([blown], [], [], 'day')!).not.toContain('depuis');
+  });
+
+  it('compte sans règle prop firm mais avec un tilt du jour : le tilt est transmis', () => {
+    const demo: RiskContextAccount = { id: 'd', label: 'DEMO', currency: 'USD', metrics: { drawdown: null, dailyLoss: null, progress: null } };
+    const txt = buildPropRiskContext([demo], [], [{ accountId: 'd', day: '2026-06-02', kind: 'tilt', level: 'revenge', at: at(14, 12) }], 'day')!;
+    expect(txt).toContain('« DEMO »');
+    expect(txt).toContain('tilt : reprise rapide après une perte (16:12)');
+  });
+
   it('compte sans règle ni séance suivie : rien', () => {
     const perso: RiskContextAccount = { id: 'p', label: 'Perso', currency: 'EUR', metrics: { drawdown: null, dailyLoss: null, progress: null } };
     expect(buildPropRiskContext([perso], [], [], 'day')).toBeNull();

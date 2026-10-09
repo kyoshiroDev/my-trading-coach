@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { LiveBrokerState } from '@mtc/shared';
-import { ageLabel, liveTotals } from './live-position.util';
+import { ageLabel, laggingBrokerPanel, liveTotals } from './live-position.util';
 
 const broker = (o: Partial<LiveBrokerState> = {}): LiveBrokerState => ({
   openPositions: [], positionsAt: null, openPnl: 0, openPnlAt: null, ...o,
@@ -37,5 +37,19 @@ describe('ageLabel', () => {
     expect(ageLabel('2026-10-06T14:09:20Z', now)).toBe('il y a 40 s');
     expect(ageLabel('2026-10-06T14:07:00Z', now)).toBe('il y a 3 min');
     expect(ageLabel('2026-10-06T12:00:00Z', now)).toBe('il y a 2 h');
+  });
+});
+
+describe('laggingBrokerPanel', () => {
+  it('relit le panneau dont le relevé broker est le plus ancien', () => {
+    expect(laggingBrokerPanel('2026-10-09T14:12:50.000Z', '2026-10-09T14:12:20.000Z')).toBe('account');
+    expect(laggingBrokerPanel('2026-10-09T14:12:20.000Z', '2026-10-09T14:12:50.000Z')).toBe('live');
+  });
+
+  it('même relevé, ou date manquante / illisible → rien à relire', () => {
+    expect(laggingBrokerPanel('2026-10-09T14:12:50.000Z', '2026-10-09T14:12:50.000Z')).toBeNull();
+    expect(laggingBrokerPanel(null, '2026-10-09T14:12:50.000Z')).toBeNull();
+    expect(laggingBrokerPanel('2026-10-09T14:12:50.000Z', undefined)).toBeNull();
+    expect(laggingBrokerPanel('x', '2026-10-09T14:12:50.000Z')).toBeNull();
   });
 });
