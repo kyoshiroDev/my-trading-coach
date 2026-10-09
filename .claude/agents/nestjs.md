@@ -1203,6 +1203,15 @@ sont en direct.
 
 ## Import CSV : parseurs purs (étape 4 de l'audit, 2026-09-13)
 
+> **Excel hors boucle d'événements (SCA-B5-05, 2026-10-07)** : `toCsvText` passe les `.xlsx/.xls` à
+> `xlsxToCsv` (`trades/xlsx-worker.ts`) : `worker_thread` à la demande (source en ligne, `eval: true`,
+> l'API étant un bundle unique ; `xlsx` résolu par `NODE_PATH`), tas plafonné à 256 Mo, tué après
+> 20 s, **un à la fois par process**, `sheetRows = MAX_KNOWN_ROWS + 2` (un fichier trop gros reste
+> refusé, avec un compte affiché de 10 001). Fichier piégé → 400 « Impossible de lire ce fichier
+> Excel » au lieu de bloquer tout le worker HTTP. Ne jamais rappeler `XLSX.read` dans le thread
+> principal. Le CSV texte reste lu sur place (simple `toString`).
+
+
 - `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
