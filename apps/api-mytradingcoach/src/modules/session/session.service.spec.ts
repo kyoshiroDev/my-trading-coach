@@ -231,6 +231,16 @@ describe('SessionService', () => {
       expect((await service.getLiveStats('user-1')).broker?.openPnl).toBe(0);
     });
 
+    it('compteur en base à 0 mais détail Redis périmé → à plat, comme le suivi du compte', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: -30, brokerEquityAt: null, brokerOpenPositions: 0,
+      });
+      const position = { asset: 'MNQ', side: 'LONG', quantity: 1, entryPrice: 21_500, since: null };
+      mockRedisService.client.get.mockResolvedValueOnce(JSON.stringify({ at: 'x', positions: [position] }));
+
+      expect((await service.getLiveStats('user-1')).broker).toMatchObject({ openPositions: [], openPnl: 0 });
+    });
+
     it('compte non synchronisé ou sans session active → broker null', async () => {
       mockPrisma.brokerConnection.findFirst.mockResolvedValue(null);
       expect((await service.getLiveStats('user-1')).broker).toBeNull();

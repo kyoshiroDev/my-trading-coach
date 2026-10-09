@@ -39,3 +39,17 @@ export function ageLabel(iso: string | null, now = Date.now()): string {
   if (min < 60) return `il y a ${min} min`;
   return `il y a ${Math.floor(min / 60)} h`;
 }
+
+/**
+ * « Trade en cours » (stats live) et « Suivi du compte » (comptes) lisent le même relevé broker par
+ * deux requêtes qui ne partent pas ensemble (stats sondées toutes les 30 s, « Actualiser »…) : l'un
+ * pouvait afficher un latent plus récent que l'autre (retour de Val, 2026-10-09). Renvoie le panneau
+ * en retard à relire, `null` s'ils montrent le même relevé ou qu'on ne peut pas comparer.
+ */
+export function laggingBrokerPanel(liveAt: string | null | undefined, accountAt: string | null | undefined): 'live' | 'account' | null {
+  if (!liveAt || !accountAt) return null;
+  const live = new Date(liveAt).getTime();
+  const account = new Date(accountAt).getTime();
+  if (Number.isNaN(live) || Number.isNaN(account) || live === account) return null;
+  return live > account ? 'account' : 'live';
+}
