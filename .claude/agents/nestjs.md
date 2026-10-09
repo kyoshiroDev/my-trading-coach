@@ -832,6 +832,19 @@ export class CreateTradeDto {
   chiffre officiel, et le récap parle EN PRIORITÉ d'une limite approchée, d'une alerte ou d'un tilt.
   Heures affichées à Paris. Injecté en `@Optional()` dans les deux services ; contexte indisponible
   → l'IA part sans le bloc.
+- **Récap du jour : ce que voit l'IA (2026-10-09, récap faux de Val)** :
+  - `forDay(userId, date, tradedAccountIds)` : SEULS les comptes tradés ce jour-là, avec ou sans
+    règle prop firm dès qu'ils ont une alerte / un tilt du jour. Sinon un compte cassé deux jours
+    plus tôt et pas tradé passait pour la casse du jour, et le tilt d'un compte sans règle disparaissait.
+  - Casse du drawdown d'un jour précédent → datée (« dépassé depuis le mercredi 7 octobre (pas
+    aujourd'hui) »), via le dernier `PropRiskEvent` drawdown/breached avant la période.
+  - Chaque ligne de trade porte son compte (`« label »`), et la consigne interdit d'attribuer un fait
+    d'un compte aux trades d'un autre.
+  - Setup `IMPORT_SETUP_TITLE` (« Sans setup », défaut des imports) → « setup non renseigné », et
+    l'IA n'en tire aucune conclusion (elle reprochait « sans setup » à chaque journée synchronisée).
+  - Comptes d'entraînement exclus du récap (P&L, stats, patterns 7 j, IA) : `demoAccountIds`
+    (`accounts/demo-accounts.ts`) = type `DEMO` OU relié à un compte de démo Tradovate
+    (`externalAccountName` = `DEMO` + chiffres), quel que soit le type saisi.
 - ⚠️ Limite connue : le latent n'est relu qu'aux événements de trade (pas de cotations, pas de
   boucle sur l'instantané) : une position ouverte qui glisse n'alerte qu'au trade suivant.
   **Choix produit du 2026-10-06 (Greg)** : on garde « jamais en boucle » (la doc Tradovate dit

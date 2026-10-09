@@ -6,6 +6,8 @@ import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
 import { computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
+import { demoAccountIds, excludeAccountsWhere } from '../accounts/demo-accounts';
+import { IMPORT_SETUP_TITLE } from '../setups/setups.service';
 
 @Injectable()
 export class DailyRecapService {
@@ -24,11 +26,14 @@ export class DailyRecapService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
+    // Comptes d'entraînement exclus du récap : P&L, stats et coaching (cf. demo-accounts).
+    const demoIds = await demoAccountIds(this.prisma, userId);
     const trades = await this.prisma.trade.findMany({
       where: {
         userId,
         tradedAt: { gte: startOfDay, lte: endOfDay },
         pnl: { not: null },
+        ...excludeAccountsWhere(demoIds),
       },
       select: {
         asset: true,
@@ -39,6 +44,9 @@ export class DailyRecapService {
         // Humeur de la journée → émotion effective quand le trade n'a pas d'override.
         tradeSession: { select: { moodStart: true } },
         setup: { select: { title: true } },
+        // Compte de chaque trade : sans lui, l'IA attribuait un trade au mauvais compte.
+        accountId: true,
+        account: { select: { label: true } },
         session: true,
         timeframe: true,
         entry: true,
@@ -92,6 +100,7 @@ export class DailyRecapService {
           userId,
           tradedAt: { gte: sevenDaysAgo, lt: startOfDay },
           pnl: { not: null },
+          ...excludeAccountsWhere(demoIds),
         },
         select: { asset: true, side: true, pnl: true, commission: true, session: true },
       });
@@ -119,7 +128,10 @@ export class DailyRecapService {
       }
 
       // Séance prop firm vue en direct (marges, alertes, tilt) : faits déjà calculés (#374).
-      const propContext = (await this.propRisk?.forDay(userId, date).catch((err: unknown) => {
+      // Limité aux comptes tradés ce jour : un compte cassé il y a deux jours et pas tradé
+      // aujourd'hui passait pour la casse du jour (récap de Val, 2026-10-09).
+      const tradedAccountIds = [...new Set(trades.map((t) => t.accountId).filter((id): id is string => !!id))];
+      const propContext = (await this.propRisk?.forDay(userId, date, tradedAccountIds).catch((err: unknown) => {
         this.logger.warn(`Contexte prop firm ignoré : ${(err as Error).message}`);
         return null;
       })) ?? null;
@@ -129,7 +141,13 @@ export class DailyRecapService {
           propContext,
           userId,
           // setup (relation) → titre string attendu par generateDailyOneLiner.
-          trades: trades.map((t) => ({ ...t, setup: t.setup?.title })),
+          // Setup par défaut des trades importés (« Sans setup ») = non renseigné, pas un choix :
+          // l'IA en concluait « ouvert sans setup » sur chaque journée synchronisée.
+          trades: trades.map(({ account, ...t }) => ({
+            ...t,
+            account: account?.label,
+            setup: t.setup?.title && t.setup.title !== IMPORT_SETUP_TITLE ? t.setup.title : undefined,
+          })),
           pnl,
           winRate,
           // Émotion effective dominante (null = non renseignée) : plus de NEUTRAL forcé.

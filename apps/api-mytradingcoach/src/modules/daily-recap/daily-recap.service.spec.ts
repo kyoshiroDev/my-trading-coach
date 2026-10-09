@@ -286,6 +286,42 @@ describe('DailyRecapService', () => {
       expect(callArgs.trades[0]).toHaveProperty('timeframe');
       expect(callArgs.trades[0].setup).toBe('BREAKOUT');
     });
+
+    it('trade importé « Sans setup » → setup non renseigné ; compte du trade transmis', async () => {
+      mockPrisma.trade.findMany
+        .mockResolvedValueOnce([
+          makeTrade({ id: 't1', setup: { title: 'Sans setup' }, accountId: 'acc-1', account: { label: 'PA APEX 10' } }),
+          makeTrade({ id: 't2' }),
+          makeTrade({ id: 't3' }),
+        ])
+        .mockResolvedValueOnce([]);
+      mockPrisma.user.findUnique.mockResolvedValue({ plan: Plan.PREMIUM });
+      mockAi.generateDailyOneLiner.mockResolvedValue('Test.');
+      mockPrisma.dailyRecap.upsert.mockResolvedValue({});
+
+      await service.generateRecap('user-1', TODAY);
+
+      const [first] = mockAi.generateDailyOneLiner.mock.calls[0][0].trades;
+      expect(first.setup).toBeUndefined();
+      expect(first.account).toBe('PA APEX 10');
+    });
+  });
+
+  describe('comptes de démo', () => {
+    it('type DEMO ou compte de démo Tradovate (DEMO + chiffres) : trades exclus du récap', async () => {
+      mockPrisma.tradingAccount.findMany.mockResolvedValueOnce([
+        { id: 'acc-demo', type: 'EVALUATION', brokerConnections: [{ externalAccountName: 'DEMO9513282' }] },
+        { id: 'acc-sim', type: 'DEMO', brokerConnections: [] },
+        { id: 'acc-like', type: 'FUNDED', brokerConnections: [{ externalAccountName: 'DEMOLITION' }] },
+      ]);
+      mockPrisma.trade.findMany.mockResolvedValueOnce([]);
+
+      await service.generateRecap('user-1', TODAY);
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toMatchObject({
+        OR: [{ accountId: null }, { accountId: { notIn: ['acc-demo', 'acc-sim'] } }],
+      });
+    });
   });
 });
 
@@ -310,7 +346,7 @@ describe('DailyRecapService — suivi prop firm (#374)', () => {
     mockPrisma.dailyRecap.upsert.mockResolvedValue({});
 
     await service.generateRecap('user-1', TODAY);
-    expect(propRisk.forDay).toHaveBeenCalledWith('user-1', TODAY);
+    expect(propRisk.forDay).toHaveBeenCalledWith('user-1', TODAY, []);
     expect(mockAi.generateDailyOneLiner).toHaveBeenCalledWith(expect.objectContaining({
       propContext: expect.stringContaining('marge drawdown la plus basse'),
     }));

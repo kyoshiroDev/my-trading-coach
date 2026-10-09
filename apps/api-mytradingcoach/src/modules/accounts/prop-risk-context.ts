@@ -55,6 +55,8 @@ const TILT_LABEL: Record<string, string> = {
 };
 
 const time = (d: Date) => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+const longDay = (day: string) =>
+  new Date(`${day}T12:00:00.000Z`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 const dayLabel = (day: string) =>
   new Date(`${day}T12:00:00.000Z`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', timeZone: 'UTC' });
 
@@ -86,13 +88,14 @@ function sessionLines(money: (v: number) => string, d: RiskContextDay | undefine
 }
 
 /** État actuel du compte, d'après ses métriques (estimations du back). */
-function stateLines(a: RiskContextAccount, money: (v: number) => string, withToday: boolean): string[] {
+function stateLines(a: RiskContextAccount, money: (v: number) => string, withToday: boolean, breachedSince?: string): string[] {
   const m = a.metrics;
   const lines: string[] = [];
   const rule = m.drawdown?.rule;
   if (m.drawdown) {
+    // Casse d'un jour précédent : datée, sinon l'IA la lisait comme celle du jour.
     lines.push(m.drawdown.breached
-      ? `drawdown : plancher ${money(m.drawdown.floor)} dépassé`
+      ? `drawdown : plancher ${money(m.drawdown.floor)} dépassé${breachedSince ? ` depuis le ${longDay(breachedSince)} (pas aujourd'hui)` : ''}`
       : `marge drawdown actuelle ${money(m.drawdown.margin)} sur ${money(m.drawdown.maxDrawdown)} (plancher ${money(m.drawdown.floor)}${rule ? `, ${RULE_LABEL[rule.kind] ?? rule.kind}${rule.locked ? ', figé' : ''}` : ''})`);
   }
   if (withToday && m.dailyLoss) {
@@ -121,13 +124,15 @@ export function buildPropRiskContext(
   days: RiskContextDay[],
   events: RiskContextEvent[],
   scope: 'day' | 'week',
+  /** Compte → jour (`AAAA-MM-JJ`) de la casse du drawdown, quand elle précède la période. */
+  breachedSince: Record<string, string> = {},
 ): string | null {
   const blocks: string[] = [];
   for (const a of accounts) {
     const money = (v: number) => formatMoney(v, a.currency, { decimals: 0, sign: false });
     const accDays = days.filter((d) => d.accountId === a.id).sort((x, y) => x.day.localeCompare(y.day));
     const accEvents = events.filter((e) => e.accountId === a.id).sort((x, y) => x.at.getTime() - y.at.getTime());
-    const state = stateLines(a, money, scope === 'day');
+    const state = stateLines(a, money, scope === 'day', breachedSince[a.id]);
     let session: string[] = [];
     if (scope === 'day') {
       session = sessionLines(money, accDays[accDays.length - 1], accEvents);
@@ -159,10 +164,15 @@ export class PropRiskContextService {
     private readonly accounts: AccountsService,
   ) {}
 
-  /** Journée de trading de `date` (récap du jour). */
-  forDay(userId: string, date: Date): Promise<string | null> {
+  /**
+   * Journée de trading de `date` (récap du jour). `tradedAccountIds` : seuls ces comptes, avec ou
+   * sans règle prop firm dès qu'ils ont une alerte ou un tilt ce jour-là (sinon, un compte cassé
+   * deux jours plus tôt, non tradé, passait pour la casse du jour et le tilt du compte tradé
+   * disparaissait : récap de Val, 2026-10-09).
+   */
+  forDay(userId: string, date: Date, tradedAccountIds?: string[]): Promise<string | null> {
     const day = tradingDay(date);
-    return this.load(userId, day, day, 'day');
+    return this.load(userId, day, day, 'day', tradedAccountIds);
   }
 
   /** Semaine du débrief, bornes incluses. */
@@ -170,21 +180,39 @@ export class PropRiskContextService {
     return this.load(userId, start.toISOString().slice(0, 10), end.toISOString().slice(0, 10), 'week');
   }
 
-  private async load(userId: string, from: string, to: string, scope: 'day' | 'week'): Promise<string | null> {
-    const accounts = (await this.accounts.list(userId, { premium: true }))
-      .filter((a) => a.status === AccountStatus.ACTIVE && (a.metrics.drawdown || a.metrics.progress || a.metrics.dailyLoss));
-    if (!accounts.length) return null;
-    const ids = accounts.map((a) => a.id);
-    const range = { gte: new Date(`${from}T00:00:00.000Z`), lte: new Date(`${to}T00:00:00.000Z`) };
-    const [days, events] = await Promise.all([
+  private async load(
+    userId: string, from: string, to: string, scope: 'day' | 'week', onlyAccountIds?: string[],
+  ): Promise<string | null> {
+    const hasRules = (a: RiskContextAccount) => !!(a.metrics.drawdown || a.metrics.progress || a.metrics.dailyLoss);
+    const all = await this.accounts.list(userId, { premium: true });
+    const candidates = onlyAccountIds
+      ? all.filter((a) => onlyAccountIds.includes(a.id))
+      : all.filter((a) => a.status === AccountStatus.ACTIVE && hasRules(a));
+    if (!candidates.length) return null;
+    const ids = candidates.map((a) => a.id);
+    const start = new Date(`${from}T00:00:00.000Z`);
+    const range = { gte: start, lte: new Date(`${to}T00:00:00.000Z`) };
+    const [rawDays, rawEvents, breaches] = await Promise.all([
       this.prisma.accountRiskDay.findMany({ where: { accountId: { in: ids }, tradeDate: range } }),
       this.prisma.propRiskEvent.findMany({ where: { userId, accountId: { in: ids }, tradeDate: range }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.propRiskEvent.findMany({
+        where: { userId, accountId: { in: ids }, kind: 'drawdown', level: 'breached', tradeDate: { lt: start } },
+        orderBy: { createdAt: 'desc' },
+      }),
     ]);
-    return buildPropRiskContext(
-      accounts,
-      days.map((d) => ({ ...d, day: d.tradeDate.toISOString().slice(0, 10) })),
-      events.map((e) => ({ accountId: e.accountId, day: e.tradeDate.toISOString().slice(0, 10), kind: e.kind, level: e.level, at: e.createdAt })),
-      scope,
-    );
+    const days = rawDays.map((d) => ({ ...d, day: d.tradeDate.toISOString().slice(0, 10) }));
+    const events = rawEvents.map((e) => ({
+      accountId: e.accountId, day: e.tradeDate.toISOString().slice(0, 10), kind: e.kind, level: e.level, at: e.createdAt,
+    }));
+    const breachedSince: Record<string, string> = {};
+    const breachedInRange = (id: string) => events.some((e) => e.accountId === id && e.kind === 'drawdown' && e.level === 'breached');
+    for (const b of breaches) {
+      if (!breachedInRange(b.accountId)) breachedSince[b.accountId] ??= b.tradeDate.toISOString().slice(0, 10);
+    }
+    // Compte tradé sans règle prop firm : gardé seulement s'il s'est passé quelque chose (alerte, tilt).
+    const accounts = onlyAccountIds
+      ? candidates.filter((a) => hasRules(a) || events.some((e) => e.accountId === a.id))
+      : candidates;
+    return buildPropRiskContext(accounts, days, events, scope, breachedSince);
   }
 }
