@@ -240,3 +240,70 @@ maintien de 15 min, en poussant à 2 000-2 500.
 Nettoyage : 2 000 comptes purgés (base dev revenue à 11 Mo, `VACUUM FULL`), clés de charge supprimées
 du Redis partagé (db 1 uniquement), `LOAD_TEST_KEY` et collecteur retirés, `DB_POOL_MAX=2` et pool 6
 rétablis sur dev, API beta relancée — dev, beta et prod `healthy`.
+
+## Test n°6 (2026-10-09, 22 h 15) — après B5, B6 et B7, sur beta en format prod (#550)
+
+Plan scalabilité livré sur dev puis promu sur beta (PR #549) : file e-mail, imports par lots,
+cache versionné des statistiques, notes comportementales en SQL, XLSX isolé, verrous de crons,
+sémaphore IA, rôles web/worker, précompression. Beta en **format prod** : `NODE_ENV=production`,
+3 workers, `DB_POOL_MAX=5` (15 connexions), pool PgBouncer 20 (changé à chaud, `SIGHUP`, sans
+coupure de la prod), `RESEND_DRY_RUN=true` (aucun e-mail réel), API dev arrêtée. Mêmes données
+(2 000 comptes Premium, 4,12 M trades), même scénario `peak.js`, avec en plus `PEAK=2500` : palier
+de 3 min jusqu'à 2 500 utilisateurs après les 15 min à 1 500.
+
+| Utilisateurs | Req/min | p50 | p95 | p99 | Test n°4 (p50 / p95) |
+|---|---|---|---|---|---|
+| 200 | 2 000 | 8-9 ms | 16-20 ms | 25-35 ms | 10 / 21 ms |
+| 500 | 5 000 | 8-9 ms | 17-20 ms | 24-30 ms | 11 / 23-32 ms |
+| **1 000** | **10 200** | **10-11 ms** | **26-31 ms** | 40-58 ms | 15 / 44-64 ms |
+| 1 000 → 1 500 (montée) | 12 400-15 700 | 37 ms-1 s | 0,7-5,9 s | 1,2-8 s | 28 / 250 ms |
+| **1 500 (stabilisé, 9 min)** | **14 000-15 900** | **19-39 ms** | **100-390 ms** | 210-620 ms | 22-34 / 108-188 ms |
+| 1 500 → ~1 800 (début de montée) | 9 200-10 500 | 1,9-7,2 s | 11,8-19,7 s | 15-25 s | — |
+
+Machine (moyennes par palier) : charge 0,8 / 1,7 / 4,1 / **7,1** à 200 / 500 / 1 000 / 1 500 ;
+CPU de l'API 35 / 60 / 97 / **131 %** (test n°4 à 1 500 : ~180 %), Postgres 9 / 16 / 33 / 48 %,
+Traefik jusqu'à 89 %. **0 attente PgBouncer** du début à la fin.
+
+- **Jusqu'à 1 000 utilisateurs, c'est le meilleur résultat de la série** (p95 26-31 ms contre
+  44-64 ms au test n°4). À 1 500, latence comparable au test n°4, avec environ 30 % de CPU de
+  l'API en moins.
+- **Effondrement à 20 h 47 UTC**, dès le début de la montée vers 2 500 (environ 1 550 utilisateurs) :
+  8 963 × 500 en 2 min, toutes en `timeout exceeded when trying to connect` (pool `pg` de
+  l'API, attente de connexion au-delà de 5 s), alors que PgBouncer n'avait **aucun client en
+  attente** et que Postgres retombait à 24 % de CPU. Charge 16-21 sur 4 cœurs, API 260-336 %,
+  mémoire de l'API jusqu'à 1,2 Go. Retour à la normale en 1 min après l'arrêt de k6.
+- **Déclencheur : une vague de logins argon2.** La cohorte arrivée à 1 500 (20 h 30-32) voit ses
+  jetons de 15 min expirer à 20 h 45-47, et elle se reconnecte au moment où arrivent les nouveaux
+  utilisateurs. On passe d'environ 5 à 15-19 logins par seconde, chacun avec un argon2 à 64 Mo.
+  Hypothèse à vérifier : argon2 occupe le pool de threads libuv (4 par worker), là où passe aussi
+  la résolution DNS des nouvelles connexions `pg` (`idleTimeoutMillis` 10 s). Les connexions
+  ne s'ouvrent plus assez vite et le pool expire. Le scénario aggrave le phénomène : il se
+  reconnecte **par mot de passe** à chaque 401, alors que l'app rafraîchit le jeton sans argon2.
+- **Prod** : 0,15-0,5 s pendant tout le palier à 1 500. Elle n'a été touchée qu'au moment de
+  l'effondrement : 4,7 à 8,1 s vus de l'extérieur pendant 2 min, alors que Traefik ne mesurait
+  que 0,16-3,4 s côté API. Le CPU de la machine saturait aussi TLS et Traefik. Le test a été
+  arrêté sur ce critère (20 h 51 UTC). Le palier 2 500 n'a donc pas été mesuré.
+- Erreurs hors effondrement : **0 × 502** (le correctif keep-alive #301 tient), aucun
+  redémarrage, OOM ni crash de worker. 3 337 × 401 = jetons expirés (artefact du scénario).
+  5 × 503 sur `/health/ready` pendant les deux montées.
+
+### Conclusion
+
+Le coût par requête continue de baisser. Le VPS partagé tient **1 500 utilisateurs simultanés du
+scénario pire cas**, sans dégrader la prod. Le plafond, vers **1 550-1 800**, ne vient plus des
+statistiques ni de la base : il vient du **CPU de la machine** lors d'une rafale de logins argon2.
+Leviers, par effet attendu :
+1. **Lisser le coût des logins** : limiter le nombre de vérifications argon2 simultanées par worker
+   (file d'attente plutôt que saturation), et/ou monter `UV_THREADPOOL_SIZE` pour que la
+   résolution DNS et les connexions `pg` ne restent pas bloquées derrière argon2.
+2. **Garder les connexions `pg` ouvertes** sous charge (`idleTimeoutMillis` plus long ou minimum
+   de connexions inactives) pour ne pas rouvrir des connexions au pire moment.
+3. Côté scénario : rafraîchir le jeton comme l'app (`/auth/refresh`) au lieu de se reconnecter
+   par mot de passe, pour mesurer le vrai plafond et non un pic de logins synchronisés.
+4. Jour J : dev et beta arrêtés, ce qui libère environ un cœur pour la prod.
+
+Nettoyage (22 h 55) : 2 000 comptes purgés (`DELETE` + `VACUUM FULL`, base beta revenue à 36 Mo),
+`.env.beta` identique à la sauvegarde `.env.beta.bak-20261009-2200-avant-b9-6` (`LOAD_TEST_KEY` et
+`RESEND_DRY_RUN` retirés, `DB_POOL_MAX=2`), pool PgBouncer beta remis à 6 (`SIGHUP`), API beta
+recréée, API dev relancée, collecteur arrêté (`/opt/backups/charge-20261009.csv` conservé) :
+dev, beta et prod `healthy`.
