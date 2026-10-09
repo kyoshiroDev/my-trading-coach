@@ -332,7 +332,7 @@ describe('Mes comptes — solde lu chez le broker', () => {
       metrics: { ...acct(id, '').metrics, currentBalance: broker.cashBalance, broker },
     });
   const live = {
-    cashBalance: 50_500, equity: 48_700, openPnl: -1_800, openPositions: 1,
+    cashBalance: 50_500, equity: 48_700, openPnl: -1_800, openPnlKnown: true, openPositions: 1,
     balanceAt: new Date().toISOString(), equityAt: new Date().toISOString(), referenceMismatch: false,
   };
 

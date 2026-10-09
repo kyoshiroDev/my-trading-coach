@@ -666,6 +666,13 @@ describe('AccountsService', () => {
       expect(m.drawdown).toMatchObject({ floor: 48_000, margin: 700 }); // et non 2 500 sur le seul solde
     });
 
+    it('position ouverte au latent jamais lu : 0 pour l\'equity, mais signalé inconnu à l\'écran', () => {
+      const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker({ cashBalance: 50_500, openPnl: null, openPositions: 1 }));
+      expect(m.broker).toMatchObject({ openPnl: 0, openPnlKnown: false, equity: 50_500 });
+      const flat = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker({ openPnl: null, openPositions: 0 }));
+      expect(flat.broker).toMatchObject({ openPnl: 0, openPnlKnown: true });
+    });
+
     it('trailing intraday : un nouveau plus haut en direct fait monter le seuil', () => {
       const intraday: RulePlan = { firmName: 'F', planName: 'P', accountSize: 50_000, phases: [
         { phase: 'evaluation', max_drawdown: { amount: 2_000, type: 'trailing_intraday', trails_on: 'equity', locks_at: null, locked_floor: null, enforced_on: 'equity_realtime', basis_notes: null } } as PropFirmPhaseRules,

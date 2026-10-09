@@ -158,6 +158,8 @@ la maquette design (« The Terminal »).
   compare `liveStats.broker.openPnlAt` et `metrics.broker.equityAt` (`laggingBrokerPanel`) et relit
   le panneau en retard, une fois par écart (pas de boucle). Côté API, « à plat » = compteur
   `brokerOpenPositions` en base pour les deux (Redis = détail des lignes seulement).
+  Position ouverte au latent jamais lu → « - » dans les deux (`broker.openPnlKnown` côté comptes,
+  `openPnl: null` côté session), jamais 0.
 - **News live (ticker)** : vitesse constante (`SPEED_PX_S` = 40 px/s) — durée d'animation calculée
   sur la longueur mesurée d'un tour (`ResizeObserver`), jamais une durée fixe (trop rapide à 20 titres).
 - **Alertes prop firm (#370, PREMIUM)** : `prop:alert` (canal `/tradovate-live`) →
