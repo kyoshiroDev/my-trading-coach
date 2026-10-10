@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { xlsxToCsv } from './xlsx-worker';
 import { Plan, Role, EmotionState } from '@prisma/client';
-import * as XLSX from 'xlsx';
 import type { CreateTradeDto } from './dto/create-trade.dto';
 import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -128,7 +128,7 @@ export class CsvImportService {
     report?: { fees?: FeesReport },
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
-    const content = this.toCsvText(buffer, filename);
+    const content = await this.toCsvText(buffer, filename);
     if (!content) throw new BadRequestException('Fichier vide');
     if (content.split('\n').length < 2)
       throw new BadRequestException('Fichier sans données');
@@ -204,7 +204,7 @@ export class CsvImportService {
     // Performance ET qu'un fichier de frais valide (Cash history) est fourni.
     let feesMerged = false;
     if (broker === 'tradovate' && feesFile) {
-      const feesText = this.toCsvText(feesFile.buffer, feesFile.filename);
+      const feesText = await this.toCsvText(feesFile.buffer, feesFile.filename);
       const merge = feesText ? this.mergeTradovateFees(dtos, feesText) : null;
       if (merge) {
         feesMerged = true;
@@ -422,14 +422,17 @@ export class CsvImportService {
     );
   }
 
-  /** Convertit le buffer en texte CSV : Excel → CSV local, sinon UTF-8. */
-  private toCsvText(buffer: Buffer, filename: string): string {
+  /**
+   * Convertit le buffer en texte CSV : Excel → CSV dans un worker_thread (SCA-B5-05), sinon UTF-8.
+   * Excel lu sur MAX_KNOWN_ROWS + 2 lignes au plus (en-tête + une de trop) : un fichier trop gros
+   * reste refusé avec le message habituel au lieu d'être tronqué en silence.
+   */
+  private async toCsvText(buffer: Buffer, filename: string): Promise<string> {
     if (/\.(xlsx|xls)$/i.test(filename)) {
       try {
-        const wb = XLSX.read(buffer, { type: 'buffer' });
-        const firstSheet = wb.Sheets[wb.SheetNames[0]];
-        return XLSX.utils.sheet_to_csv(firstSheet).trim();
-      } catch {
+        return await xlsxToCsv(buffer, MAX_KNOWN_ROWS + 2);
+      } catch (err) {
+        this.logger.warn(`Excel illisible (${filename}) : ${(err as Error).message}`);
         throw new BadRequestException(
           "Impossible de lire ce fichier Excel. Réexporte-le en CSV depuis ton broker, " +
           "ou ouvre-le dans Excel/Google Sheets et enregistre-le en .csv.",

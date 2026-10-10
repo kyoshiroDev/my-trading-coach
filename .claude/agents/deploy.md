@@ -259,10 +259,17 @@ le dépôt (`infra/static/nginx/`) : modifier le dépôt **et** le VPS. Les asse
 côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font
 `try_files /current$uri /previous$uri =404`.
 
-Après modification d'une conf sur le VPS : `nginx -t` dans un conteneur jetable
-(`docker run --rm -v <conf>:/etc/nginx/conf.d/default.conf:ro nginx:alpine nginx -t`), puis
-**`docker restart`** des conteneurs qui la montent (bind-mount d'un fichier : une copie crée un
-nouvel inode, `nginx -s reload` relirait l'ancien).
+Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :
+`cat nouvelle.conf > /opt/infra/static/nginx/<conf>`, jamais `cp`, `rsync` ni `sed -i` qui en créent
+un nouveau), vérifier que chaque conteneur la voit (`docker exec <c> grep … /etc/nginx/conf.d/default.conf`),
+`docker exec <c> nginx -t`, puis `docker exec <c> nginx -s reload`. Si l'inode a changé (copie,
+`sed -i`), le conteneur garde l'ancienne : `docker restart` obligatoire (~1 s de coupure).
+
+**Précompression (SCA-B7-03, 2026-10-09)** : `deploy-static.sh` produit un `.gz` à côté de chaque
+fichier texte de plus de 1 Ko (`gzip -9 -k -n` : sans date, donc même contenu → même `.gz` → lien
+physique conservé entre releases) ; les deux confs ont `gzip_static on` (nginx sert le `.gz`, sinon
+compresse à la volée). `open_file_cache` volontairement absent : il garderait l'ancien
+`index.html` quelques secondes après une bascule de `current`.
 
 **Retour arrière (sur le VPS)** — immédiat, sans rebuild :
 
@@ -401,6 +408,7 @@ JWT_SECRET=...           # 64 chars minimum
 JWT_REFRESH_SECRET=...   # 64 chars minimum
 ANTHROPIC_API_KEY=sk-ant-...
 AI_MAX_CONCURRENCY=4     # optionnel : appels modèle simultanés, tous process confondus (SCA-B5-06)
+# RESEND_DRY_RUN=true    # beta/dev, le temps d'un test de charge : aucun e-mail envoyé (ignoré en prod)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PREMIUM_PRICE_MONTHLY_V2=price_...      # Premium 49 €/mois

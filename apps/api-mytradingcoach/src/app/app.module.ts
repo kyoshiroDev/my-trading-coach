@@ -28,6 +28,7 @@ import { ReferralModule } from '../modules/referral/referral.module';
 import { PublicModule } from '../modules/public/public.module';
 import { ProductEventsModule } from '../modules/product-events/product-events.module';
 import { ActivityTrackingModule } from '../modules/activity-tracking/activity-tracking.module';
+import { RetentionModule } from '../modules/retention/retention.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
 import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -48,10 +49,12 @@ import { RedisService } from '../modules/infra/redis.service';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env['NODE_ENV'] === 'development'
-          ? '.env.development'
-          : '.env.local',
+      // Le fichier propre au contexte ne porte que ses adresses DB/Redis et NODE_ENV ; le reste
+      // vient de .env. Le premier fichier gagne, un fichier absent (conteneur) est ignoré.
+      envFilePath: [
+        process.env['NODE_ENV'] === 'development' ? '.env.development' : '.env.local',
+        '.env',
+      ],
     }),
     // Limite par défaut : 300 requêtes / minute par UTILISATEUR connecté, 60 / minute / IP sinon
     // (SCA-B3-03 ; IP réelle : `trust proxy` dans main.ts). Compteurs Redis communs aux workers.
@@ -104,6 +107,7 @@ import { RedisService } from '../modules/infra/redis.service';
     ActivityTrackingModule,
     TradovateModule,
     PropFirmsModule,
+    RetentionModule,
   ],
   providers: [
     // JwtAuthGuard AVANT le throttler (SCA-B3-03) : un utilisateur connecté est compté par son

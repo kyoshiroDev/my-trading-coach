@@ -645,6 +645,12 @@ Toujours passer `{ userId, feature }` dans les options. Features valides :
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
+> `TradovateBackgroundRefreshCron` (SCA-B5-03, 2026-10-09) : verrou Redis `tradovate:background-refresh`
+> (SET NX, 30 min, rendu par son seul propriétaire) → un passage qui démarre pendant le précédent est
+> **sauté** ; utilisateurs traités **5 en parallèle**, les connexions d'un même utilisateur l'une
+> après l'autre (login Tradovate partagé). Budget de passés complets décidé avant le parallélisme.
+> Non fait : file BullMQ par connexion et étalement du mois sur l'heure (hash % 4).
+
 ### Compte démo : le seed doit rester récurrent (PROMPT-192)
 
 `seedDemo()` génère des dates **relatives au moment du run**. Appelé une seule fois
@@ -1203,6 +1209,15 @@ sont en direct.
 
 ## Import CSV : parseurs purs (étape 4 de l'audit, 2026-09-13)
 
+> **Excel hors boucle d'événements (SCA-B5-05, 2026-10-07)** : `toCsvText` passe les `.xlsx/.xls` à
+> `xlsxToCsv` (`trades/xlsx-worker.ts`) : `worker_thread` à la demande (source en ligne, `eval: true`,
+> l'API étant un bundle unique ; `xlsx` résolu par `NODE_PATH`), tas plafonné à 256 Mo, tué après
+> 20 s, **un à la fois par process**, `sheetRows = MAX_KNOWN_ROWS + 2` (un fichier trop gros reste
+> refusé, avec un compte affiché de 10 001). Fichier piégé → 400 « Impossible de lire ce fichier
+> Excel » au lieu de bloquer tout le worker HTTP. Ne jamais rappeler `XLSX.read` dans le thread
+> principal. Le CSV texte reste lu sur place (simple `toString`).
+
+
 - `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
@@ -1282,6 +1297,8 @@ part de lignes et non la perfection.
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
   optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
+  En local, la valeur va dans le `.env` racine (commun) : `.env.development` / `.env.local` ne
+  portent que DATABASE_*, REDIS_* et NODE_ENV (`envFilePath: [<contexte>, '.env']`, le premier gagne).
 - **Redis** : `RedisService` se connecte à l'init (`onModuleInit`) ; sans ça, la 1re commande de
   chaque worker échouait (`lazyConnect` + `enableOfflineQueue: false`).
 
@@ -1638,6 +1655,9 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
   et local repartent chacun de 1), et Resend refuse une clé revue sous 24 h avec un autre contenu
   (`invalid_idempotent_request`, non réessayée → e-mail perdu, récap du 2026-10-09).
 - File indisponible (Redis en panne) → `send()` envoie en direct (3 essais sur place) : jamais perdu.
+- **`RESEND_DRY_RUN=true`** (tests de charge sur beta, #487) : l'appel d'envoi du client Resend est
+  remplacé par un journal `[RESEND DRY RUN]` (file ET envois directs), sans compteur ni alerte de quota.
+  **Ignoré si `FRONTEND_URL` = l'app de prod** (garde-fou : jamais d'e-mail de prod qui disparaît).
 - `send()` ne lève jamais. Envois **hors file** (directs, volontairement) : `sendAdminAlert`,
   `sendAmbassadorApplication` (doit lever pour le formulaire), `sendAmbassadorStatement` (PDF en
   pièce jointe : pas dans Redis).

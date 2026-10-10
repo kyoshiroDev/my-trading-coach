@@ -15,6 +15,11 @@ export const options = {
     { duration: '2m', target: 500 }, { duration: '3m', target: 500 },
     { duration: '2m', target: 1000 }, { duration: '3m', target: 1000 },
     { duration: '2m', target: 1500 }, { duration: Number(__ENV.HOLD_MIN || 15) + 'm', target: 1500 },
+    // PEAK=2500 (facultatif) : palier supplémentaire au-delà de 1 500, maintenu HOLD_MIN minutes.
+    // Absent : scénario identique aux tests précédents (comparaisons valables).
+    ...(Number(__ENV.PEAK) > 1500
+      ? [{ duration: '3m', target: Number(__ENV.PEAK) }, { duration: Number(__ENV.HOLD_MIN || 15) + 'm', target: Number(__ENV.PEAK) }]
+      : []),
     { duration: '2m', target: 0 },
   ],
   thresholds: {

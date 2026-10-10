@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
+  BACKGROUND_LOCK_KEY,
+  BACKGROUND_USER_CONCURRENCY,
   BACKGROUND_STALE_MS,
   FULL_BACKFILLS_PER_PASS,
   TradovateBackgroundRefreshCron,
@@ -20,13 +22,24 @@ function setup(conns: Conn[], liveUsers: string[] = []) {
     },
   };
   const connections = { assertConfigured: vi.fn() };
-  const sync = { sync: vi.fn(async () => ({ created: 2, duplicates: 0, failed: 0, total: 2 })) };
+  const sync = { sync: vi.fn(async (_userId: string, _accountId?: string, _opts?: unknown) => ({ created: 2, duplicates: 0, failed: 0, total: 2 })) };
   const history = { importForAccount: vi.fn(async () => ({ created: 5 })) };
   const live = { isLive: vi.fn(async (userId: string) => liveUsers.includes(userId)) };
+  const store = new Map<string, string>();
+  const redis = {
+    client: {
+      set: vi.fn(async (k: string, v: string, _px: string, _ttl: number, nx?: string) => {
+        if (nx === 'NX' && store.has(k)) return null;
+        store.set(k, v);
+        return 'OK';
+      }),
+      eval: vi.fn(async (_lua: string, _n: number, k: string, v: string) => (store.get(k) === v ? (store.delete(k), 1) : 0)),
+    },
+  };
   const cron = new TradovateBackgroundRefreshCron(
-    prisma as never, connections as never, sync as never, history as never, live as never,
+    prisma as never, connections as never, sync as never, history as never, live as never, redis as never,
   );
-  return { cron, prisma, connections, sync, history, live };
+  return { cron, prisma, connections, sync, history, live, redis, store };
 }
 
 describe('Tradovate — rafraîchissement de fond (15 min)', () => {
@@ -194,5 +207,60 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
       synced: 0, created: 0, live: 0, failed: 0, backfilled: 0,
     });
     expect(prisma.brokerConnection.findMany).not.toHaveBeenCalled();
+  });
+
+  describe('passages et parallélisme (SCA-B5-03)', () => {
+    it('passage précédent encore en cours → celui-ci est sauté', async () => {
+      const { cron, sync, store } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+      store.set(BACKGROUND_LOCK_KEY, 'autre-passage');
+      await cron.scheduledRefresh();
+      expect(sync.sync).not.toHaveBeenCalled();
+    });
+
+    it('verrou pris pendant le passage, rendu à la fin (même en cas d’échec)', async () => {
+      const { cron, store, sync } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+      sync.sync.mockImplementation(async () => {
+        expect(store.has(BACKGROUND_LOCK_KEY)).toBe(true);
+        throw new Error('Tradovate en panne');
+      });
+      await cron.scheduledRefresh();
+      expect(sync.sync).toHaveBeenCalled();
+      expect(store.has(BACKGROUND_LOCK_KEY)).toBe(false);
+    });
+
+    it('Redis indisponible → le passage tourne quand même', async () => {
+      const { cron, sync, redis } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+      redis.client.set.mockRejectedValue(new Error('down'));
+      redis.client.eval.mockRejectedValue(new Error('down'));
+      await cron.scheduledRefresh();
+      expect(sync.sync).toHaveBeenCalled();
+    });
+
+    it(`utilisateurs en parallèle (${BACKGROUND_USER_CONCURRENCY} max), connexions d’un même utilisateur l’une après l’autre`, async () => {
+      const conns = [
+        ...Array.from({ length: 8 }, (_, i) => ({ id: `c${i}`, userId: `u${i}`, accountId: `a${i}` })),
+        { id: 'c-bis', userId: 'u0', accountId: 'a-bis' }, // 2e compte de u0, même login Tradovate
+      ];
+      const { cron, sync } = setup(conns);
+      let running = 0;
+      let peak = 0;
+      const perUser = new Map<string, number>();
+      let sameUserOverlap = false;
+      sync.sync.mockImplementation(async (userId: string) => {
+        peak = Math.max(peak, ++running);
+        perUser.set(userId, (perUser.get(userId) ?? 0) + 1);
+        if (perUser.get(userId)! > 1) sameUserOverlap = true;
+        await new Promise((r) => setTimeout(r, 5));
+        perUser.set(userId, perUser.get(userId)! - 1);
+        running--;
+        return { created: 0, duplicates: 0, failed: 0, total: 0 };
+      });
+
+      const r = await cron.refreshStale(new Date('2026-09-26T10:37:00Z'));
+
+      expect(r.synced).toBe(9);
+      expect(peak).toBe(BACKGROUND_USER_CONCURRENCY);
+      expect(sameUserOverlap).toBe(false);
+    });
   });
 });

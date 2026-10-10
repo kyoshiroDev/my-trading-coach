@@ -23,6 +23,14 @@ remote() { ssh "$VPS_TARGET" bash -s -- "$@" < "$HERE/static-release.sh"; }
 
 [ -f "${SRC%/}/index.html" ] || { echo "❌ ${SRC%/}/index.html absent : build incomplet" >&2; exit 1; }
 
+# Précompression (SCA-B7-03) : nginx sert le .gz voisin (gzip_static) au lieu de compresser à
+# chaque requête. -n : pas de nom ni de date dans l'en-tête → même contenu, même .gz, donc le
+# fichier reste un lien physique vers la release précédente (--link-dest). -k : l'original reste.
+find "${SRC%/}" -type f -size +1k \
+  \( -name '*.js' -o -name '*.mjs' -o -name '*.css' -o -name '*.html' -o -name '*.svg' \
+     -o -name '*.json' -o -name '*.txt' -o -name '*.xml' -o -name '*.webmanifest' \) \
+  -exec gzip -9 -k -n -f {} +
+
 # Nom de la release : le SHA court, suffixé si cette version est déjà en ligne (redéploiement).
 REL=$(remote prepare "$SITE" "$SHA")
 # Comparaison au contenu (--checksum), dates NON conservées (pas de -t) : un build neuf a des dates
