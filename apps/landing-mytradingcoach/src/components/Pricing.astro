@@ -76,7 +76,7 @@ const premiumKeys = [
           <li>🔗 Synchro Tradovate automatique (lecture seule) · Import CSV universel</li>
           <li>💰 Solde broker, objectif &amp; prochain payout</li>
         </ul>
-        <a href={`${APP_URL}/register`} class="price-cta ghost" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
+        <a href={`${APP_URL}/register`} class="price-cta ghost" data-cta="free" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
 
       {/* FONDATEUR (#525) : gabarit inerte, inséré par le script seulement si l'offre vend. Sans JS,
@@ -111,7 +111,7 @@ const premiumKeys = [
         <ul class="price-feats">
           {premiumPlus.map((p) => <li>{p.text}</li>)}
         </ul>
-        <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="price-cta prim" data-founder-cta data-ga-event="cta_founder" data-ga-place="pricing">
+        <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="price-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pricing">
           <span class="cta-main">Devenir fondateur →</span>
           <span class="cta-sub-text">Paiement immédiat · sans essai</span>
         </a>
@@ -139,7 +139,7 @@ const premiumKeys = [
         <ul class="price-feats">
           {premiumPlus.map((p) => <li>{p.text}</li>)}
         </ul>
-        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim" data-ga-event="cta_trial" data-ga-place="pricing">
+        <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim" data-cta="premium" data-ga-event="cta_trial" data-ga-place="pricing">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>
           <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
         </a>

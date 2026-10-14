@@ -187,6 +187,23 @@ Règles :
   (`path`, `source`, `medium`, `campaign`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
   page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin
   `/acquisition`. Si un hébergeur/CDN ajoute une CSP, autoriser `connect-src` vers l'API.
+- **Navigateur intégré** (`inApp`) : motif `IN_APP_UA_PATTERN` de `@mtc/shared` (Instagram, FBAN/FBAV/
+  FB_IAB/FBIOS, TikTok/musical_ly, Line/), passé au script inline par `define:vars` (un script inline
+  n'importe rien). Seul le booléen part avec la visite, jamais le user-agent.
+- **Parcours d'inscription** (`cta_click`) : même script, délégation de clic sur tout
+  `a[href*="/register"]` (couvre la carte Fondateur insérée après coup) → `POST {API_URL}/public/funnel`
+  par **`navigator.sendBeacon` en `text/plain`** (requête simple, sans requête préalable CORS, part
+  même quand la page change ; l'API lit ce corps en JSON sur cette route seulement), repli `fetch`
+  keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
+  `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
+  d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Mode interne** (visites de l'équipe) : ouvrir `https://www.mytradingcoach.app/?internal=1` →
+  localStorage `mtc_internal=1` (`INTERNAL_STORAGE_KEY`) : plus aucune visite ni étape envoyée depuis ce
+  navigateur, badge discret « interne » en bas à gauche (`.internal-badge`, `global.css`).
+  `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
+  GA4 n'est pas concerné (il dépend du consentement).
+- Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
+  aussi les étapes de l'inscription et le booléen navigateur intégré. Toute nouvelle mesure → l'y ajouter.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 
