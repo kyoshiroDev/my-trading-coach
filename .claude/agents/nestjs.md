@@ -1423,6 +1423,9 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   `email_taken|validation|network|server|other` (register_error, inconnu → `other`), sinon `''`.
   Champ inconnu (ex. `email`) → 400 (`forbidNonWhitelisted`). Robots filtrés (`BOT_UA`), toujours 204,
   erreur base avalée. Upsert `INSERT … ON CONFLICT` +1 dans `FunnelEventDaily`.
+  La landing envoie par `sendBeacon` en **`text/plain`** (requête simple, sans requête préalable
+  CORS) : `config/body-parsers.ts` lit ce corps en JSON sur `FUNNEL_BEACON_PATH` SEULEMENT (2 ko max).
+  Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes.
 - `GET /admin/signup-funnel` (`SignupFunnelService`, fusion pure `signup-funnel.util.ts`, contrat
   `AdminSignupFunnelData`) : visites (`LandingVisitDaily`) + étapes par (source, medium, campagne,
   inApp), `''` → `null` ; une source sans visite (arrivée directe sur l'app) a sa ligne. 100 lignes max,
