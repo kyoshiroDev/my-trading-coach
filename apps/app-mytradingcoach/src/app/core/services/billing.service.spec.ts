@@ -4,10 +4,12 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { BillingService } from './billing.service';
 import { BillingApi } from '../api/billing.api';
+import { SignupFunnelService } from './signup-funnel.service';
 
 describe('BillingService', () => {
   const checkout = vi.fn();
   const navigate = vi.fn().mockResolvedValue(true);
+  const trackCheckout = vi.fn();
   let service: BillingService;
 
   beforeEach(() => {
@@ -16,6 +18,7 @@ describe('BillingService', () => {
       providers: [
         { provide: BillingApi, useValue: { checkout } },
         { provide: Router, useValue: { navigate } },
+        { provide: SignupFunnelService, useValue: { trackCheckout } },
       ],
     });
     service = TestBed.inject(BillingService);
@@ -27,6 +30,11 @@ describe('BillingService', () => {
 
     service.startCheckout('premium_monthly', { promo: 'LOUIS29' });
     expect(navigate).toHaveBeenLastCalledWith(['/paiement'], { queryParams: { plan: 'premium_monthly', promo: 'LOUIS29' } });
+  });
+
+  it('startCheckout signale le départ vers le paiement au parcours d’inscription', () => {
+    service.startCheckout('founder_yearly');
+    expect(trackCheckout).toHaveBeenCalledWith('founder_yearly');
   });
 
   it('createSession demande une session pour la page de l’app (ui elements)', () => {

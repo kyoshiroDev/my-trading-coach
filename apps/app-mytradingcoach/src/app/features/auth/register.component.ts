@@ -17,6 +17,7 @@ import {
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { OfferIntentService } from '../../core/services/offer-intent.service';
+import { SignupFunnelService, registerErrorCode } from '../../core/services/signup-funnel.service';
 
 /** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
 const UTM_STORAGE_KEY = 'mtc_utm';
@@ -45,6 +46,7 @@ export class RegisterComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly offerIntent = inject(OfferIntentService);
+  private readonly funnel = inject(SignupFunnelService);
 
   protected readonly EyeIcon = Eye;
   protected readonly EyeOffIcon = EyeOff;
@@ -79,7 +81,16 @@ export class RegisterComponent {
     // Déjà connecté (lien de la landing ou d'un e-mail) : pas de second compte, on ouvre l'app ;
     // l'offre du lien (capturée au démarrage) s'y affiche dans la modale.
     this.offerIntent.capture(window.location.search);
-    if (this.auth.isAuthenticated() && this.offerIntent.pending()) this.router.navigate(['/dashboard']);
+    if (this.auth.isAuthenticated() && this.offerIntent.pending()) {
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+    // Parcours d'inscription : page ouverte, avec la source d'arrivée (comptage anonyme).
+    this.funnel.start({
+      source: this.acquisition.acquisitionSource,
+      medium: this.acquisition.acquisitionMedium,
+      campaign: this.acquisition.acquisitionCampaign,
+    });
   }
 
   /**
@@ -177,6 +188,7 @@ export class RegisterComponent {
 
     this.isLoading.set(true);
     this.apiError.set(null);
+    this.funnel.track('register_submit');
 
     this.auth
       .register(
@@ -190,6 +202,7 @@ export class RegisterComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.funnel.track('register_success');
           try {
             sessionStorage.removeItem(UTM_STORAGE_KEY);
           } catch {
@@ -207,6 +220,7 @@ export class RegisterComponent {
         },
         error: (err) => {
           const status = err.status;
+          this.funnel.track('register_error', registerErrorCode(status));
           if (status === 409)
             this.apiError.set('Un compte existe déjà avec cette adresse email');
           else this.apiError.set('Une erreur est survenue, réessaie dans un instant');

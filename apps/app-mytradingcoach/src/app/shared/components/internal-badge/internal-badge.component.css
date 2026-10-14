@@ -1,0 +1,17 @@
+/* Coin bas-gauche, au-dessus de tout mais sans capter les clics. */
+.internal-badge {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 10001;
+  padding: 2px 8px;
+  border: 1px solid var(--border-hover);
+  border-radius: 999px;
+  background: var(--bg-3);
+  color: var(--text-3);
+  font: 600 10px/1.6 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  pointer-events: none;
+}
