@@ -1,4 +1,5 @@
 import type { Plan, Role } from './enums';
+import type { SignupFunnelStep } from '../signup-funnel';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
 
@@ -174,4 +175,35 @@ export interface AdminFunnelData {
   byPlace: AdminFunnelPlace[];
   /** État Stripe actuel (hors démo et admin) : essais en cours, abonnés payants. */
   current: { trialing: number; paying: number };
+}
+
+/**
+ * Une ligne du parcours d'inscription : source + medium + campagne (null = non renseigné) et
+ * navigateur intégré ou non. Compteurs d'événements anonymes (pas des utilisateurs distincts).
+ */
+export interface AdminSignupFunnelRow {
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
+  inApp: boolean;
+  /** Visites landing (1re page d'une session d'onglet). */
+  visits: number;
+  steps: Record<SignupFunnelStep, number>;
+}
+
+/** Erreurs d'inscription par source et code normalisé. */
+export interface AdminSignupFunnelError {
+  source: string | null;
+  inApp: boolean;
+  code: string;
+  count: number;
+}
+
+/** GET /admin/signup-funnel?days=7|30 — de la visite au paiement, par source (jours Paris). */
+export interface AdminSignupFunnelData {
+  days: 7 | 30;
+  /** Triées par visites puis clics CTA décroissants, 100 lignes max. */
+  rows: AdminSignupFunnelRow[];
+  /** Triées par nombre décroissant, 50 max. */
+  errors: AdminSignupFunnelError[];
 }

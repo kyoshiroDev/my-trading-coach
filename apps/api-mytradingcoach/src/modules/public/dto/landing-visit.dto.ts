@@ -1,9 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
-
-// trim + minuscules, chaîne vide → absent ('' en base).
-const normalizeUtm = ({ value }: { value: unknown }): unknown =>
-  typeof value === 'string' ? value.trim().toLowerCase() || undefined : value;
+import { normalizeUtm } from './utm.transform';
 
 /**
  * Page vue sur la landing (mesure d'audience sans cookie). Aucune donnée personnelle :
@@ -40,4 +37,12 @@ export class LandingVisitDto {
 
   @IsBoolean()
   entry!: boolean;
+
+  /**
+   * Ouvert dans le navigateur intégré d'une app (Instagram, Facebook, TikTok…), détecté par la
+   * landing. Optionnel : une landing plus ancienne ne l'envoie pas → `false`.
+   */
+  @IsOptional()
+  @IsBoolean()
+  inApp?: boolean;
 }

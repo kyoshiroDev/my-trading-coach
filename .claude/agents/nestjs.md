@@ -80,6 +80,8 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription { step, source?, medium?, campaign?, inApp?, detail? }
+GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
@@ -1407,6 +1409,28 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
 - `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, medium?, campaign?, entry }`. Robots
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
+  `inApp?` (booléen, navigateur intégré Instagram/Facebook/TikTok détecté par la landing) : optionnel,
+  absent → `false` (compatibilité avec une landing plus ancienne).
+
+## Parcours d'inscription par source (oct. 2026)
+
+- `POST /public/funnel` (`PublicService.recordFunnelEvent`, `FunnelEventDto`) : `step` ∈
+  `SIGNUP_FUNNEL_STEPS` de `@mtc/shared` (`cta_click`, `register_view`, `register_submit`,
+  `register_success`, `register_error`, `checkout_redirect`) ; **`landing_view` est refusé (400)** :
+  la visite reste comptée par `/public/visit`. `source/medium/campaign` normalisés comme les visites
+  (`dto/utm.transform.ts`, partagé). `detail` ramené par `signupFunnelDetail` (shared) à sa liste
+  blanche : CTA `founder|free|premium` (cta_click), plan `founder|premium` (checkout_redirect), code
+  `email_taken|validation|network|server|other` (register_error, inconnu → `other`), sinon `''`.
+  Champ inconnu (ex. `email`) → 400 (`forbidNonWhitelisted`). Robots filtrés (`BOT_UA`), toujours 204,
+  erreur base avalée. Upsert `INSERT … ON CONFLICT` +1 dans `FunnelEventDaily`.
+- `GET /admin/signup-funnel` (`SignupFunnelService`, fusion pure `signup-funnel.util.ts`, contrat
+  `AdminSignupFunnelData`) : visites (`LandingVisitDaily`) + étapes par (source, medium, campagne,
+  inApp), `''` → `null` ; une source sans visite (arrivée directe sur l'app) a sa ligne. 100 lignes max,
+  erreurs `register_error` par source × inApp × code (50 max). Compteurs d'événements, pas
+  d'utilisateurs distincts ; aucune jointure `User`, donc ni démo ni compte. Les agrégats d'inscrits
+  existants (`/admin/acquisition`, `/admin/funnel`) gardent leur exclusion `isDemo` / ADMIN.
+- Pas de donnée personnelle (exemption CNIL, comme les visites) : ne jamais ajouter UA brut, e-mail,
+  IP ni identifiant de session à ces routes ou à la table.
 
 ## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
 
