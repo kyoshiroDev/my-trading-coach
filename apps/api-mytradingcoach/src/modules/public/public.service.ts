@@ -99,10 +99,10 @@ export class PublicService {
     const visits = dto.entry ? 1 : 0;
     try {
       await this.prisma.$executeRaw`
-        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "medium", "campaign", "pageviews", "visits")
+        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "medium", "campaign", "inApp", "pageviews", "visits")
         VALUES (gen_random_uuid()::text, ${date}::date, ${dto.path}, ${dto.source ?? ''},
-          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, 1, ${visits})
-        ON CONFLICT ("date", "path", "source", "medium", "campaign") DO UPDATE SET
+          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, false, 1, ${visits})
+        ON CONFLICT ("date", "path", "source", "medium", "campaign", "inApp") DO UPDATE SET
           "pageviews" = "LandingVisitDaily"."pageviews" + 1,
           "visits" = "LandingVisitDaily"."visits" + ${visits}
       `;
