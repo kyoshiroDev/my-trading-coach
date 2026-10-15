@@ -88,9 +88,16 @@ jobs:
       JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
       ANTHROPIC_API_KEY: sk-ant-test
+    # Images tirées sur Docker Hub avec un compte (secrets DOCKERHUB_USERNAME / DOCKERHUB_TOKEN,
+    # transmis par `secrets: inherit` dans ci.yml et beta.yml). En anonyme, Docker Hub puis le
+    # miroir ECR Public répondaient toomanyrequests : leur quota est compté par IP, et les IP des
+    # runners GitHub sont partagées. Avec un compte, le quota est celui du compte.
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: postgres:17-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         env:
           POSTGRES_DB: mytradingcoach_test
           POSTGRES_USER: mtc_user
@@ -103,7 +110,10 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: redis:7.4-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -182,7 +192,10 @@ jobs:
       RESEND_API_KEY: re_placeholder
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: postgres:17-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         env:
           POSTGRES_DB: mytradingcoach_e2e
           POSTGRES_USER: mtc_user
@@ -195,7 +208,10 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: redis:7.4-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s

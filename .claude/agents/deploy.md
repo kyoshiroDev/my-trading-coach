@@ -183,6 +183,12 @@ exec node main.js
 
 ### Secrets GitHub requis
 
+**Niveau dépôt (CI) :**
+- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (token Docker Hub en lecture seule) : les services postgres et redis
+  des jobs de test (`checks.yml`, `ci.yml`) sont tirés sur Docker Hub avec ce compte. En anonyme, Docker Hub puis
+  le miroir ECR Public renvoyaient `toomanyrequests` (quota par IP, IP des runners partagées). `checks.yml` est
+  un workflow réutilisable : ses appelants (`ci.yml`, `beta.yml`) lui passent les secrets par `secrets: inherit`.
+
 **Environment `production` :**
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (fronts publiés en releases sur le VPS par `infra/deploy-static.sh`, plus de Vercel)
 
