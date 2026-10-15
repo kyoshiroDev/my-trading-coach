@@ -45,6 +45,8 @@ jobs:
     uses: ./.github/workflows/checks.yml
     with:
       affected: true
+    # DOCKERHUB_USERNAME / DOCKERHUB_TOKEN pour les images postgres et redis des tests.
+    secrets: inherit
 
   # ── Build & Check Astro Landing (toujours, pas affected) ─────────────────
   build-landing:
@@ -128,7 +130,10 @@ jobs:
 
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: postgres:17-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         env:
           POSTGRES_DB: mytradingcoach_int
           POSTGRES_USER: mtc_user
@@ -142,7 +147,10 @@ jobs:
           - 5432:5432
 
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: redis:7.4-alpine
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
