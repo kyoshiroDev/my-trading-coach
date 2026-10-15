@@ -36,6 +36,8 @@ VPS de l'admin : clé dans `VPS_SSH_KEY_B64`, acceptée seulement depuis les ré
   `sudo fail2ban-client set sshd unbanip <ip>`). Ne pas multiplier les tests de connexion ratés.
 - **unattended-upgrades** : correctifs de sécurité seuls, jamais de redémarrage automatique, paquets
   Docker exclus (ils redémarreraient les conteneurs). Docker et noyau : à la main, en maintenance.
+- **DNS de l'hôte** : `/etc/systemd/resolved.conf.d/mtc-dns.conf` → `1.1.1.1 9.9.9.9`, repli OVH
+  `213.186.33.99` (comme l'ancien VPS ; seul OVH par défaut).
 - **Docker** : `/etc/docker/daemon.json` → rotation des logs, `live-restore`, et `"ip": "127.0.0.1"` :
   un port publié sans IP n'écoute qu'en local, donc une base ne peut pas être exposée par erreur
   (Docker contourne UFW). Traefik publie explicitement `0.0.0.0:80` et `0.0.0.0:443`.
@@ -75,6 +77,13 @@ REDIS_PASSWORD=<REDIS_PASSWORD>
   du dépôt de l'ancien VPS ; même clé B2 limitée au bucket, même `RESTIC_PASSWORD`).
 - `restore-test.sh` : restaure le dernier instantané dans un Postgres jetable et compare à la prod.
   À lancer après la bascule, puis au moins une fois par trimestre.
+
+## Supervision
+
+`monitoring/` = versions VPS prod de `infra/monitoring/` (conteneurs critiques sans landing/admin,
+lecture base en `mtc_readonly`, secrets lus dans `/opt/infra/databases/.env`). Installées dans
+`/opt/backups/`. Alertes par e-mail vers `hello@` (Resend) au changement d'état seulement.
+`/opt/backups/etat-prod.sh` : état en un écran. Crons : voir `crontab` (à activer).
 
 ## Sudo
 
