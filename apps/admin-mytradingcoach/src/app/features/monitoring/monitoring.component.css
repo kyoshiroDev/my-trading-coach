@@ -63,3 +63,6 @@
   .ct-acts .pill { padding: 4px 9px; }
   .ub { width: 4px; height: 22px; }
 }
+/* Sélecteur de serveur : onglets globaux sans le style natif des boutons. */
+.server-tabs { padding: 0; margin-bottom: 14px; }
+.server-tabs .tab { background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }

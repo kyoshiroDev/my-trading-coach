@@ -122,6 +122,7 @@ GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
+GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
 POST   /api/vps/apt-update             ADMIN → SSE stream
 POST   /api/vps/reboot                 ADMIN → confirmation requise
@@ -263,7 +264,15 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie
 - SSH credentials uniquement via variables d'env — jamais en dur, jamais en BDD
-  - `VPS_HOST=51.83.197.230`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>`
+  - `VPS_HOST`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>` : serveur `principal` (celui de l'API ;
+    en prod = VPS prod 149.202.40.240 depuis la migration du 2026-10-15)
+  - `VPS_SECONDARY_HOST` (optionnel) : serveur `secondaire` (en prod = ancien VPS 51.83.197.230,
+    dev + beta), même user et même clé → la clé doit être autorisée chez `greg` des deux côtés.
+    `VPS_LABEL` / `VPS_SECONDARY_LABEL` = libellés des onglets (défaut « VPS principal / secondaire »)
+  - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
+    principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
+    Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
+  - Ids de container validés (`[a-zA-Z0-9_.-]`) avant la commande SSH (pas d'injection)
 
 ---
 

@@ -3,7 +3,7 @@ import {
   OnDestroy, computed, inject, signal, viewChild,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, filter, interval, of, startWith, switchMap } from 'rxjs';
 import {
   LucideDynamicIcon,
@@ -12,13 +12,13 @@ import {
   LucideTrash2 as Trash2,
   LucideRefreshCw as RefreshCw,
 } from '@lucide/angular';
-import { VpsApi, VpsStats, DockerContainer, HealthPoint } from '../../core/api/vps.api';
+import { VpsApi, VpsStats, DockerContainer, HealthPoint, VpsServer, VpsServerId } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 import { DialogDirective } from '@mtc/front-ui';
 
 type DockerAction = 'start' | 'stop' | 'restart';
 interface CtAction { icon: string; label: string; action: DockerAction; danger?: boolean; }
-interface ConfirmState { id: string; name: string; action: DockerAction; }
+interface ConfirmState { id: string; name: string; action: DockerAction; server: VpsServerId; serverLabel: string; }
 
 const GB = 1_073_741_824;
 
@@ -40,6 +40,13 @@ export class MonitoringComponent implements OnDestroy {
   protected readonly TrashIcon = Trash2;
   protected readonly RefreshIcon = RefreshCw;
 
+  // Serveur affiché (stats, containers, logs, actions) : principal = VPS prod, secondaire = dev · beta.
+  protected readonly servers = signal<VpsServer[]>([]);
+  protected readonly server = signal<VpsServerId>('principal');
+  protected readonly serverLabel = computed(
+    () => this.servers().find((s) => s.id === this.server())?.label ?? 'VPS',
+  );
+
   protected readonly stats = signal<VpsStats | null>(null);
   protected readonly allContainers = signal<DockerContainer[]>([]);
   protected readonly health = signal<HealthPoint[]>([]);
@@ -49,7 +56,7 @@ export class MonitoringComponent implements OnDestroy {
   // Confirmation + drawer logs
   protected readonly confirmState = signal<ConfirmState | null>(null);
   protected readonly acting = signal(false);
-  protected readonly logsContainer = signal<string | null>(null);
+  protected readonly logsContainer = signal<{ name: string; server: VpsServerId } | null>(null);
   protected readonly lines = signal<string[]>([]);
   protected readonly paused = signal(false);
   private es: EventSource | null = null;
@@ -62,17 +69,26 @@ export class MonitoringComponent implements OnDestroy {
   protected readonly allUnknown = computed(() => this.health().length > 0 && this.health().every((h) => h.status === 'unknown'));
 
   constructor() {
-    interval(15_000).pipe(
-      startWith(0),
-      filter(() => document.visibilityState === 'visible'),
-      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
+    this.vpsApi.servers().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => { if (r) this.servers.set(r.data ?? []); });
+
+    // Le polling repart de zéro à chaque changement de serveur.
+    const server$ = toObservable(this.server);
+    server$.pipe(
+      switchMap((srv) => interval(15_000).pipe(
+        startWith(0),
+        filter(() => document.visibilityState === 'visible'),
+        switchMap(() => this.vpsApi.stats(srv).pipe(catchError(() => of(null)))),
+      )),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { this.loadingStats.set(false); if (r) this.stats.set(r.data); });
 
-    interval(15_000).pipe(
-      startWith(0),
-      filter(() => document.visibilityState === 'visible'),
-      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
+    server$.pipe(
+      switchMap((srv) => interval(15_000).pipe(
+        startWith(0),
+        filter(() => document.visibilityState === 'visible'),
+        switchMap(() => this.vpsApi.containers(srv).pipe(catchError(() => of(null)))),
+      )),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { this.loadingContainers.set(false); if (r) this.allContainers.set(r.data ?? []); });
 
@@ -80,11 +96,21 @@ export class MonitoringComponent implements OnDestroy {
       .subscribe((r) => { if (r) this.health.set(r.data ?? []); });
   }
 
-  protected refresh(): void {
+  protected selectServer(id: VpsServerId): void {
+    if (id === this.server()) return;
+    this.stats.set(null);
+    this.allContainers.set([]);
     this.loadingStats.set(true);
-    this.vpsApi.stats().pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
+    this.loadingContainers.set(true);
+    this.server.set(id);
+  }
+
+  protected refresh(): void {
+    const srv = this.server();
+    this.loadingStats.set(true);
+    this.vpsApi.stats(srv).pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
       .subscribe((r) => { this.loadingStats.set(false); if (r) this.stats.set(r.data); });
-    this.vpsApi.containers().pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
+    this.vpsApi.containers(srv).pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
       .subscribe((r) => { if (r) this.allContainers.set(r.data ?? []); });
   }
 
@@ -102,7 +128,7 @@ export class MonitoringComponent implements OnDestroy {
   }
 
   protected askConfirm(c: DockerContainer, action: DockerAction): void {
-    this.confirmState.set({ id: c.id, name: c.name, action });
+    this.confirmState.set({ id: c.id, name: c.name, action, server: this.server(), serverLabel: this.serverLabel() });
   }
 
   protected actionLabel(a: DockerAction): string {
@@ -113,7 +139,7 @@ export class MonitoringComponent implements OnDestroy {
     const cf = this.confirmState();
     if (!cf) return;
     this.acting.set(true);
-    this.vpsApi.containerAction(cf.id, cf.action)
+    this.vpsApi.containerAction(cf.id, cf.action, cf.server)
       .pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
       .subscribe(() => {
         this.acting.set(false);
@@ -124,20 +150,21 @@ export class MonitoringComponent implements OnDestroy {
 
   // ── Drawer logs (SSE, lecture seule) ───────────────────────────────────────
   protected openLogs(container: string): void {
-    this.logsContainer.set(container);
-    this.startStream(container);
+    const server = this.server();
+    this.logsContainer.set({ name: container, server });
+    this.startStream(container, server);
   }
   protected closeLogs(): void {
     this.stopStream();
     this.logsContainer.set(null);
     this.lines.set([]);
   }
-  private startStream(container: string): void {
+  private startStream(container: string, server: VpsServerId): void {
     this.stopStream();
     this.lines.set([]);
     this.paused.set(false);
     const token = this.auth.getAccessToken() ?? '';
-    this.es = new EventSource(this.vpsApi.logsUrl(container, token));
+    this.es = new EventSource(this.vpsApi.logsUrl(container, token, server));
     this.es.onmessage = (e) => {
       if (this.paused()) return;
       this.lines.update((prev) => {
