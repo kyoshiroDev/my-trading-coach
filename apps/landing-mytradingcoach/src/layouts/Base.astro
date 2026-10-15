@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { DEFAULT_SCHEMA } from '../data/schema';
 import { API_URL } from '../config';
+import { IN_APP_UA_PATTERN, INTERNAL_STORAGE_KEY } from '@mtc/shared';
 import CookieConsent from '../components/CookieConsent.astro';
 import Analytics from '../components/Analytics.astro';
 
@@ -150,11 +151,35 @@ const robots = noindex
        externe, medium « referral »), gardée en sessionStorage pour toute la session.
        1) propagée aux CTA d'inscription (→ User.acquisition* à l'inscription) ;
        2) comptée par l'API (POST /public/visit) : compteur agrégé jour × page × source
-          (+ medium, campagne), sans cookie, sans IP ni identifiant (exemption CNIL) → indépendant du bandeau.
+          (+ medium, campagne, navigateur intégré), sans cookie, sans IP ni identifiant (exemption
+          CNIL) → indépendant du bandeau ;
+       3) clic sur un lien /register → étape `cta_click` du parcours d'inscription
+          (POST /public/funnel par sendBeacon, detail = data-cta, sinon plan du lien, sinon free).
+       `inApp` = navigateur intégré Instagram / Facebook / TikTok (motif partagé @mtc/shared) : seul
+       ce booléen part, jamais le user-agent.
+       Mode interne : ?internal=1 (localStorage mtc_internal) → ni visite ni étape envoyée depuis ce
+       navigateur, badge « interne » affiché ; ?internal=0 annule.
        Données fonctionnelles et anonymes : aucune dépendance au consentement GA4. -->
-  <script is:inline define:vars={{ apiUrl: API_URL }}>
+  <script is:inline define:vars={{ apiUrl: API_URL, inAppPattern: IN_APP_UA_PATTERN, internalKey: INTERNAL_STORAGE_KEY }}>
     (function () {
       try {
+        // Mode interne (visites de l'équipe) : décidé avant tout envoi.
+        var internal = false;
+        try {
+          var flag = new URL(window.location.href).searchParams.get('internal');
+          if (flag === '1') localStorage.setItem(internalKey, '1');
+          else if (flag === '0') localStorage.removeItem(internalKey);
+          internal = localStorage.getItem(internalKey) === '1';
+        } catch (e) {}
+        if (internal) {
+          var badge = document.createElement('div');
+          badge.className = 'internal-badge';
+          badge.textContent = 'interne';
+          badge.title = 'Mode interne : visites et clics non comptés (?internal=0 pour annuler)';
+          document.body.appendChild(badge);
+        }
+        var inApp = new RegExp(inAppPattern, 'i').test(navigator.userAgent || '');
+
         var KEY = 'mtc_utm', NAMES = ['utm_source', 'utm_medium', 'utm_campaign'];
         var params = new URL(window.location.href).searchParams, utm = {}, found = false;
         NAMES.forEach(function (n) {
@@ -186,6 +211,14 @@ const robots = noindex
             } catch (e) {}
           });
         }
+        if (internal) return;
+
+        var origin = {
+          source: utm.utm_source || undefined,
+          medium: utm.utm_medium || undefined,
+          campaign: utm.utm_campaign || undefined,
+          inApp: inApp
+        };
 
         // Compteur de visite : 1re page de la session d'onglet = une visite.
         var entry = false;
@@ -194,14 +227,26 @@ const robots = noindex
           method: 'POST',
           keepalive: true,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            path: location.pathname,
-            source: utm.utm_source || undefined,
-            medium: utm.utm_medium || undefined,
-            campaign: utm.utm_campaign || undefined,
-            entry: entry
-          })
+          body: JSON.stringify(Object.assign({ path: location.pathname, entry: entry }, origin))
         }).catch(function () {});
+
+        // Clic CTA d'inscription (délégation : couvre aussi la carte Fondateur insérée plus tard).
+        // sendBeacon en text/plain : requête simple, part même quand la page change.
+        document.addEventListener('click', function (ev) {
+          var a = ev.target && ev.target.closest ? ev.target.closest('a[href*="/register"]') : null;
+          if (!a) return;
+          var cta = a.getAttribute('data-cta');
+          if (!cta) {
+            try { cta = new URL(a.href).searchParams.get('plan'); } catch (e) { cta = null; }
+            if (cta !== 'founder' && cta !== 'premium') cta = 'free';
+          }
+          var body = JSON.stringify(Object.assign({ step: 'cta_click', detail: cta }, origin));
+          var sent = false;
+          try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(apiUrl + '/public/funnel', new Blob([body], { type: 'text/plain' }))); } catch (e) {}
+          if (!sent) {
+            fetch(apiUrl + '/public/funnel', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: body }).catch(function () {});
+          }
+        }, true);
       } catch (e) {}
     })();
   </script>

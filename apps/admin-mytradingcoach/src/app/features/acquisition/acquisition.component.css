@@ -38,3 +38,16 @@
   .funnel-step { grid-template-columns: minmax(0, 1fr) 48px 56px; }
   .funnel-bar { grid-column: 1 / -1; order: 3; }
 }
+
+/* ── Parcours d'inscription ── */
+.signup-card { margin-bottom: 16px; }
+.signup-filters { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 16px; }
+.signup-filters .section-tabs { border-bottom: none; }
+/* Boutons d'onglet sans le style natif (comme Abonnements). */
+.signup-filters .tab { background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+/* Valeur + taux : un seul bloc, aligné à droite (aussi dans les cartes mobiles). */
+.signup-val { display: inline-flex; flex-direction: column; align-items: flex-end; }
+.signup-total td { font-weight: 600; color: var(--text); background: var(--bg3); }
+.signup-sub { display: block; font-size: 11px; color: var(--text3); }
+.signup-rate { font-size: 11px; color: var(--text3); }
+.signup-errors-head { border-top: 1px solid var(--border); }

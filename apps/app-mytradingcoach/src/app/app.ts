@@ -16,13 +16,15 @@ import { ProductEventsService } from './core/services/product-events.service';
 import { OfferIntentService } from './core/services/offer-intent.service';
 import { ConfirmDialogComponent } from '@mtc/front-ui';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
+import { InternalBadgeComponent } from './shared/components/internal-badge/internal-badge.component';
+import { SignupFunnelService } from './core/services/signup-funnel.service';
 
 @Component({
-  imports: [RouterModule, ToastsComponent, ConfirmDialogComponent],
+  imports: [RouterModule, ToastsComponent, ConfirmDialogComponent, InternalBadgeComponent],
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Toasts et dialogue de confirmation montés UNE fois, hors du routeur : ils survivent aux navigations.
-  template: `<router-outlet /><mtc-toasts /><mtc-confirm-dialog />`,
+  template: `<router-outlet /><mtc-toasts /><mtc-confirm-dialog /><mtc-internal-badge />`,
 })
 export class App implements OnInit {
   private readonly router = inject(Router);
@@ -34,6 +36,8 @@ export class App implements OnInit {
     // Offre visée par le lien d'arrivée (#525 : plan=founder, promo=CODE, cta) : capturée AVANT
     // toute redirection du routeur, puis proposée dans la modale une fois connecté.
     inject(OfferIntentService).capture();
+    // Mode interne (?internal=1|0) : décidé avant toute étape du parcours d'inscription.
+    inject(SignupFunnelService).captureInternal();
   }
 
   ngOnInit(): void {

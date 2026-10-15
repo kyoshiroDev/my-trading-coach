@@ -46,3 +46,28 @@ export function signupFunnelDetail(step: SignupFunnelStep, detail: string | null
   if (allowed.includes(value)) return value;
   return step === 'register_error' ? 'other' : '';
 }
+
+/**
+ * Navigateur intégré d'une app (Instagram, Facebook / Messenger, TikTok, LINE) : source du motif,
+ * partagée telle quelle avec le script inline de la landing (qui ne peut rien importer).
+ */
+export const IN_APP_UA_PATTERN = 'Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|Line/';
+
+const IN_APP_UA = new RegExp(IN_APP_UA_PATTERN, 'i');
+
+/** Vrai dans le navigateur intégré d'Instagram, Facebook, TikTok ou LINE. Seul ce booléen est envoyé. */
+export function isInAppBrowser(userAgent: string | null | undefined): boolean {
+  return IN_APP_UA.test(userAgent ?? '');
+}
+
+/** Clé localStorage du mode interne (`?internal=1`) : plus aucune visite ni étape envoyée. */
+export const INTERNAL_STORAGE_KEY = 'mtc_internal';
+
+/**
+ * Mode interne d'après l'URL : `?internal=1` → `true`, `?internal=0` → `false`, sinon `null`
+ * (garder l'état mémorisé).
+ */
+export function internalFlagFromSearch(search: string): boolean | null {
+  const v = new URLSearchParams(search).get('internal');
+  return v === '1' ? true : v === '0' ? false : null;
+}

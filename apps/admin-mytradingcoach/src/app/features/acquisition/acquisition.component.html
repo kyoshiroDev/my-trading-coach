@@ -4,6 +4,83 @@
     <span class="page-meta">visites landing sans cookie · source = utm_source, sinon site d'origine</span>
   </div>
 
+  <div class="card signup-card" data-testid="signup-funnel">
+    <div class="card-head">
+      <span class="card-label">Parcours d'inscription · {{ signupDays() }} jours</span>
+      <span class="card-label muted">événements anonymes · taux = étape / étape précédente</span>
+    </div>
+    <div class="signup-filters">
+      <div class="section-tabs" role="tablist" aria-label="Période">
+        @for (d of [7, 30]; track d) {
+          <button type="button" role="tab" class="tab" [class.active]="signupDays() === d" [attr.aria-selected]="signupDays() === d" (click)="loadSignup($any(d))">{{ d }} j</button>
+        }
+      </div>
+      <div class="section-tabs" role="tablist" aria-label="Navigateur">
+        @for (b of browserTabs; track b.key) {
+          <button type="button" role="tab" class="tab" [class.active]="browser() === b.key" [attr.aria-selected]="browser() === b.key" (click)="browser.set(b.key)">{{ b.label }}</button>
+        }
+      </div>
+    </div>
+    @if (signupLines().length) {
+      <table class="tbl signup-tbl">
+        <caption class="sr-only">Parcours d'inscription par source, medium et campagne</caption>
+        <thead><tr>
+          <th scope="col">Source · medium · campagne</th>
+          @for (c of signupColumns; track c.key) { <th scope="col" class="num">{{ c.label }}</th> }
+        </tr></thead>
+        <tbody>
+          @if (signupTotal(); as t) {
+            <tr class="signup-total">
+              <td data-label="Source">Total</td>
+              @for (cell of t; track $index) {
+                <td [attr.data-label]="signupColumns[$index].label" class="td-mono num"><span class="signup-val">{{ cell.value }}@if (cell.rate !== null) {<span class="signup-rate">{{ cell.rate }} %</span>}</span></td>
+              }
+            </tr>
+          }
+          @for (l of signupLines(); track l.key) {
+            <tr>
+              <td data-label="Source">
+                @if (l.source) { <span class="td-mono">{{ l.source }}</span> }
+                @else { <span class="muted">direct / non renseigné</span> }
+                @if (l.medium || l.campaign) { <span class="signup-sub td-mono">{{ l.medium || '-' }} · {{ l.campaign || '-' }}</span> }
+              </td>
+              @for (cell of l.cells; track $index) {
+                <td [attr.data-label]="signupColumns[$index].label" class="td-mono num"><span class="signup-val">{{ cell.value }}@if (cell.rate !== null) {<span class="signup-rate">{{ cell.rate }} %</span>}</span></td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty">{{ signupLoading() ? 'Chargement…' : 'Aucun parcours enregistré sur la période' }}</div>
+    }
+
+    <div class="card-head signup-errors-head">
+      <span class="card-label">Erreurs d'inscription</span>
+      <span class="card-label muted">par source et par code</span>
+    </div>
+    @if (signupErrors().length) {
+      <table class="tbl">
+        <caption class="sr-only">Erreurs d'inscription par source et par code</caption>
+        <thead><tr><th scope="col">Source</th><th scope="col">Erreur</th><th scope="col" class="num">Nombre</th></tr></thead>
+        <tbody>
+          @for (e of signupErrors(); track e.source + e.code) {
+            <tr>
+              <td data-label="Source">
+                @if (e.source) { <span class="td-mono">{{ e.source }}</span> }
+                @else { <span class="muted">direct / non renseigné</span> }
+              </td>
+              <td data-label="Erreur"><span>{{ e.label }} <span class="muted td-mono">{{ e.code }}</span></span></td>
+              <td data-label="Nombre" class="td-mono num">{{ e.count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty">Aucune erreur d'inscription sur la période</div>
+    }
+  </div>
+
   @if (funnel(); as f) {
     <div class="card funnel-card">
       <div class="card-head">

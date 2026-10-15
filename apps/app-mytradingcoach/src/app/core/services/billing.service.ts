@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BillingApi, type CheckoutPlan } from '../api/billing.api';
+import { SignupFunnelService } from './signup-funnel.service';
 
 export type { CheckoutPlan } from '../api/billing.api';
 
@@ -21,8 +22,11 @@ export interface CheckoutOptions {
 export class BillingService {
   private readonly api = inject(BillingApi);
   private readonly router = inject(Router);
+  private readonly funnel = inject(SignupFunnelService);
 
   startCheckout(plan: CheckoutPlan, opts: CheckoutOptions = {}): void {
+    // Parcours d'inscription : départ vers le paiement (compté seulement après /register).
+    this.funnel.trackCheckout(plan);
     void this.router.navigate(['/paiement'], {
       queryParams: { plan, ...(opts.cta ? { cta: opts.cta } : {}), ...(opts.promo ? { promo: opts.promo } : {}) },
     });
