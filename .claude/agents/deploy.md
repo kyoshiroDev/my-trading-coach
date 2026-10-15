@@ -7,6 +7,13 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 
 ## Infrastructure
 
+> ⚠️ **Migration en cours (2026-10-15)** : un 2e VPS OVH, `greg@149.202.40.240` (`mtc-prod`), est
+> dédié à la **prod** (API blue/green + worker, Postgres/PgBouncer/Redis prod, app Angular prod, bot
+> Discord, sauvegardes prod). Landing et admin partent sur **Vercel**. L'ancien VPS ci-dessous ne
+> gardera que **dev et beta**. Avancement : système durci, Traefik v3 et bases prod (vides) prêts ;
+> API, app et DNS **pas encore basculés** — la prod tourne toujours sur l'ancien VPS.
+> Référence du nouveau VPS (durcissement, rôles Postgres, sauvegardes, secrets) : `infra/prod/README.md`.
+
 ```
 VPS OVH — 51.83.197.230 (user: greg)
 ├── mtc_traefik     → reverse proxy + SSL Let's Encrypt

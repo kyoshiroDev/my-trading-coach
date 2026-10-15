@@ -1,0 +1,116 @@
+# Bases de la PROD MyTradingCoach — VPS prod 149.202.40.240 (aucun dev/beta ici)
+# Secrets : .env (600) à côté de ce fichier. Copie de référence : infra/prod/databases/ du dépôt.
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    container_name: mtc_postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    command: >
+      postgres
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c work_mem=16MB
+      -c maintenance_work_mem=256MB
+      -c max_connections=50
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=top
+      -c log_min_duration_statement=500
+      -c log_parameter_max_length=0
+      -c log_parameter_max_length_on_error=0
+      -c password_encryption=scram-sha-256
+    environment:
+      POSTGRES_USER: mtc_admin
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: --data-checksums --auth-host=scram-sha-256
+      MTC_USER_PASSWORD: ${MTC_USER_PASSWORD}
+      TZ: Europe/Paris
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    networks:
+      - mtc_network
+    shm_size: 256m
+    mem_limit: 3g
+    memswap_limit: 3g
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mtc_admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:1.25.2-20260920
+    container_name: mtc_pgbouncer
+    restart: unless-stopped
+    environment:
+      # Cette image ne lit QUE les variables PGBOUNCER_* et DATABASES (voir deploy.md).
+      # Toujours contrôler la config effective : SHOW CONFIG via la console admin.
+      DATABASES: "mytradingcoach_prod = host=mtc_postgres port=5432 dbname=mytradingcoach_prod user=mtc_user password=${MTC_USER_PASSWORD} pool_size=25"
+      PGBOUNCER_POOL_MODE: session
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "5"
+      PGBOUNCER_RESERVE_POOL_SIZE: "5"
+      PGBOUNCER_MAX_DB_CONNECTIONS: "40"
+      PGBOUNCER_QUERY_WAIT_TIMEOUT: "30"
+      PGBOUNCER_SERVER_IDLE_TIMEOUT: "600"
+      PGBOUNCER_AUTH_TYPE: scram-sha-256
+      PGBOUNCER_AUTH_FILE: /etc/pgbouncer-auth/userlist.txt
+      PGBOUNCER_ADMIN_USERS: mtc_user
+      PGBOUNCER_STATS_USERS: mtc_user
+    volumes:
+      - ./pgbouncer-auth:/etc/pgbouncer-auth:ro
+    networks:
+      - mtc_network
+    mem_limit: 64m
+    memswap_limit: 64m
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.4.11-alpine
+    container_name: mtc_redis
+    restart: unless-stopped
+    # AOF activé : les jobs BullMQ survivent à un redémarrage. noeviction : BullMQ l exige.
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1 --save 300 10 --save 60 10000
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+      TZ: Europe/Paris
+    volumes:
+      - redis_data:/data
+    networks:
+      - mtc_network
+    mem_limit: 640m
+    memswap_limit: 640m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mtc_network:
+    external: true
