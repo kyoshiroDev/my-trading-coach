@@ -169,6 +169,11 @@ exec node main.js
 > `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
 > sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
 > elles) : un push = un seul run.
+>
+> **Images des services de test (2026-10-15)** : postgres et redis des jobs de test sont tirés sur
+> `mirror.gcr.io/library/…` (cache Docker Hub de Google, anonyme, sans secret). Docker Hub puis le
+> miroir ECR Public (`public.ecr.aws`) renvoyaient `toomanyrequests` : quota anonyme compté par IP,
+> et les IP des runners sont partagées. Ne pas y revenir.
 
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
