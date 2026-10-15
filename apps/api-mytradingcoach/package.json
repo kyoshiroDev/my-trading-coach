@@ -129,6 +129,7 @@
     "socket.io": "^4.8.3",
     "stripe": "^22.6.2",
     "tslib": "^2.3.0",
+    "web-push": "3.6.7",
     "xlsx": "file:../../vendor/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
@@ -138,6 +139,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.20.0",
+    "@types/web-push": "3.6.4",
     "@vitest/coverage-v8": "^4.1.6",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
