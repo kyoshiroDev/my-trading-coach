@@ -930,6 +930,31 @@ onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc
 teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
 (`features/acquisition/funnel.util.ts`, testé).
 
+## Parcours d'inscription par source (oct. 2026)
+
+`core/services/signup-funnel.service.ts` → `POST /public/funnel` (HttpClient, erreurs avalées, anonyme :
+étape, source/medium/campagne, `inApp`, detail d'une liste fermée de `@mtc/shared`).
+- `RegisterComponent` : `start(origine)` à l'ouverture (`register_view`, origine = UTM résolues par
+  `resolveAcquisition`, gardée en sessionStorage `mtc_funnel` car `mtc_utm` est effacé après
+  l'inscription), `register_submit` si le formulaire est valide côté client, `register_success`,
+  `register_error` avec `registerErrorCode(status)` (409 `email_taken`, 400/422 `validation`, 0
+  `network`, ≥ 500 `server`, sinon `other`). Pas de `register_view` si l'utilisateur, déjà connecté,
+  est renvoyé vers `/dashboard`.
+- `BillingService.startCheckout` → `trackCheckout(plan)` = `checkout_redirect` (detail `founder` /
+  `premium`), **seulement si l'onglet est passé par /register** (`mtc_funnel` présent) : un abonné qui
+  paie depuis le Profil n'est pas une étape du parcours.
+- **Mode interne** : `https://app.mytradingcoach.app/?internal=1` (n'importe quelle page) →
+  localStorage `mtc_internal=1`, lu au démarrage par `App` (`captureInternal`) : plus aucune étape
+  envoyée, badge « interne » en bas à gauche (`mtc-internal-badge`, monté dans `App`). `?internal=0`
+  annule. Propre au domaine : la landing a le sien.
+- **Admin `/acquisition`, carte « Parcours d'inscription »** (au-dessus de l'entonnoir Premium) :
+  `GET /admin/signup-funnel?days=7|30` (`AdminApi.signupFunnel`), onglets `section-tabs` période (7 j / 30 j,
+  rechargement) et navigateur (Tous / intégré / normal, filtrage local). Logique pure testée dans
+  `features/acquisition/signup-funnel.util.ts` : « Tous » additionne intégré + normal d'une même
+  source/medium/campagne, ligne Total, taux = étape / étape précédente (`-` si la précédente vaut 0),
+  erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
+  Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
+
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
 - **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +

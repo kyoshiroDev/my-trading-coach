@@ -849,9 +849,33 @@ model LandingVisitDaily {
   pageviews Int      @default(0)
   /// Visites = 1re page vue d'une session d'onglet (sessionStorage).
   visits    Int      @default(0)
+  /// Ouvert dans le navigateur intégré d'une app (Instagram, Facebook, TikTok…), détecté côté
+  /// client. Seul ce booléen est gardé : jamais le user-agent.
+  inApp     Boolean  @default(false)
 
   // L'unique (date en tête) sert aussi d'index pour les lectures par période.
-  @@unique([date, path, source, medium, campaign])
+  @@unique([date, path, source, medium, campaign, inApp])
+}
+
+/// Parcours d'inscription par source, SANS cookie ni donnée personnelle (même principe que
+/// LandingVisitDaily) : compteurs agrégés par jour (Europe/Paris), étape, source, medium, campagne,
+/// navigateur intégré et détail. Jamais d'UA brut, d'e-mail, d'IP ni d'identifiant de session.
+model FunnelEventDaily {
+  id       String   @id @default(cuid())
+  date     DateTime @db.Date
+  /// landing_view | cta_click | register_view | register_submit | register_success | register_error | checkout_redirect
+  step     String
+  source   String   @default("")
+  medium   String   @default("")
+  campaign String   @default("")
+  /// Ouvert dans le navigateur intégré Instagram / Facebook / TikTok.
+  inApp    Boolean  @default(false)
+  /// Valeur d'une liste fermée : CTA (founder | free | premium), code d'erreur normalisé, ou ''.
+  detail   String   @default("")
+  count    Int      @default(0)
+
+  // L'unique (date en tête) sert aussi d'index pour les lectures par période.
+  @@unique([date, step, source, medium, campaign, inApp, detail])
 }
 
 // ── Catalogue des règles prop firm (PROMPT-136) ─────────────────────────────
