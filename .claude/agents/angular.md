@@ -1019,4 +1019,4 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   événements (`ADMIN_PUSH_EVENT_LABELS` de `@mtc/shared`), « Tester la notification ».
 - ⚠️ **Cache** : `ngsw-worker.js`, `safety-worker.js`, `worker-basic.min.js` doivent être servis
   **sans cache** (sinon le SW ne se met plus jamais à jour). Nginx : `location =` dédiées dans
-  `spa-releases.conf` ; Vercel : en-têtes `Cache-Control: no-cache` à poser dans `vercel.json`.
+  `spa-releases.conf` (admin servi par l'ancien VPS, pas de Vercel ; voir `deploy.md`).

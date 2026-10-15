@@ -7,12 +7,19 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 
 ## Infrastructure
 
-> ⚠️ **Migration en cours (2026-10-15)** : un 2e VPS OVH, `greg@149.202.40.240` (`mtc-prod`), est
-> dédié à la **prod** (API blue/green + worker, Postgres/PgBouncer/Redis prod, app Angular prod, bot
-> Discord, sauvegardes prod). Landing et admin partent sur **Vercel**. L'ancien VPS ci-dessous ne
-> gardera que **dev et beta**. Avancement : système durci, Traefik v3 et bases prod (vides) prêts ;
-> API, app et DNS **pas encore basculés** — la prod tourne toujours sur l'ancien VPS.
-> Référence du nouveau VPS (durcissement, rôles Postgres, sauvegardes, secrets) : `infra/prod/README.md`.
+> **Deux VPS depuis la bascule du 2026-10-15 (21 h 14)** :
+> - **VPS prod** `greg@149.202.40.240` (`mtc-prod`) : API prod blue/green + worker, Postgres/PgBouncer/Redis
+>   prod, app Angular prod (`app.`), bot Discord, sauvegardes prod. Référence (durcissement, rôles
+>   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY`.
+> - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
+>   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY`.
+>
+> **Décision (2026-10-16) : landing et admin restent sur l'ancien VPS. Pas de Vercel, pas de changement
+> de DNS pour eux.** Toute mention d'un passage sur Vercel est caduque.
+>
+> **L'admin n'a pas d'environnement dev** (ni beta) : un seul site, `admin.mytradingcoach.app`, publié
+> par `cd.yml` depuis `main`. Une modification de l'admin n'est visible en ligne qu'après promotion
+> sur `main` ; avant, la tester en local (`pnpm nx serve admin-mytradingcoach`) contre l'API dev.
 
 ```
 VPS OVH — 51.83.197.230 (user: greg)
@@ -189,7 +196,8 @@ exec node main.js
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (fronts publiés en releases sur le VPS par `infra/deploy-static.sh`, plus de Vercel)
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
+- `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
 
 ### Deploy prod VPS
 
@@ -212,22 +220,22 @@ docker compose up -d --force-recreate api
 
 ---
 
-## Front statique sur le VPS (plus de Vercel)
+## Fronts statiques sur les VPS (pas de Vercel)
 
-App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés sur le VPS
-**en releases** (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
+App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés **en releases**
+(app prod sur le VPS prod ; admin, landing et tout dev/beta sur l'ancien VPS) (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
 letsencrypt + routing par Host + redirect non-www→www en middleware Traefik).
 
 | Site (`/opt/static/<site>`) | Build | Hôte | Workflow | Conteneur (compose) |
 |---|---|---|---|---|
-| `app-prod` | `dist/apps/app-mytradingcoach/browser/` | `app.mytradingcoach.app` | cd.yml | `mtc_app_prod` (`docker-compose.yml`) |
-| `admin` | `dist/apps/admin-mytradingcoach/browser/` | `admin.mytradingcoach.app` | cd.yml | `mtc_admin` (`docker-compose.yml`) |
+| `app-prod` | `dist/apps/app-mytradingcoach/browser/` | `app.mytradingcoach.app` | cd.yml | `mtc_app_prod` — **VPS prod** (`/opt/infra/static/` du 149.202.40.240) |
+| `admin` | `dist/apps/admin-mytradingcoach/browser/` | `admin.mytradingcoach.app` | cd.yml | `mtc_admin` (`docker-compose.yml`) — pas de version dev/beta |
 | `landing-prod` | `apps/landing-mytradingcoach/dist/` | `www.mytradingcoach.app` | cd.yml | `mtc_landing_prod` (`docker-compose.yml`) |
 | `app-dev` | idem app | `dev.app.mytradingcoach.app` | ci.yml | `mtc_app_dev_static` (`docker-compose.yml`) |
 | `landing-dev` | idem landing | `dev.mytradingcoach.app` | ci.yml | `mtc_landing_dev` (`docker-compose.yml`) |
 | `app-beta` | idem app | `beta.app.mytradingcoach.app` | beta.yml | `mtc_app_beta_static` (**`docker-compose.beta.yml`**) |
 
-Les deux fichiers compose sont dans `/opt/infra/static/`.
+Sauf `app-prod`, tout est sur l'ancien VPS ; les deux fichiers compose sont dans son `/opt/infra/static/`.
 
 > ⚠️ **L'admin se déploie depuis `main`, comme l'app et la landing.** Jusqu'au 31/08/2026
 > deux chaînes coexistaient : `ci.yml` publiait l'admin sur un push `dev` vers
@@ -802,6 +810,6 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   (`node tools/scripts/vapid-generate.mjs`, clé privée jamais commitée). Recréer l'API ensuite.
 - Service worker de l'admin : jamais en cache. `infra/static/nginx/spa-releases.conf` a des
   `location =` en `no-cache` pour `ngsw-worker.js` / `safety-worker.js` / `worker-basic.min.js`
-  (sinon la règle des `.js` les fige 1 an). À recopier sur le VPS qui sert l'admin
-  (`/opt/infra/static/nginx/`), `nginx -t` en conteneur jetable puis `docker restart mtc_admin`.
-  Sur Vercel : mêmes en-têtes dans `vercel.json` + `ngsw.json` et `manifest.webmanifest` en no-cache.
+  (sinon la règle des `.js` les fige 1 an). L'admin est servi par l'**ancien VPS** : sur ce VPS,
+  `spa-releases.conf` est un fichier **partagé** par `mtc_admin`, `mtc_app_dev_static` et
+  `mtc_app_beta_static` (bind-mount d'un fichier unique) ; le modifier change aussi dev et beta.
