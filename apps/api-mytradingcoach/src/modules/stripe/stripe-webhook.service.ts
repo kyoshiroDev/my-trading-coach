@@ -3,7 +3,7 @@ import { BadRequestException, Inject, Injectable, Logger, Optional } from '@nest
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Plan } from '@prisma/client';
+import { AdminPushEvent, Plan } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
@@ -22,6 +22,8 @@ import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import type { SyncedSubscription } from './stripe-subscription.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
 
 /** « 29,00 € par mois » / « 290,00 € par an ». */
@@ -51,6 +53,9 @@ export class StripeWebhookService {
     private readonly webhookQueue: Queue<StripeWebhookJobPayload>,
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
     @Optional() private readonly userCache?: AuthUserCacheService,
+    // Push admin (événements business). Appelé APRÈS l'idempotence StripeEvent (traitement de la
+    // file) et en fin de handler : une redélivrance ou un nouvel essai ne double pas le push.
+    @Optional() private readonly adminNotifier?: AdminNotifier,
   ) {}
 
   // ── Validation + enqueue async ──────────────────────────────────────────────
@@ -163,6 +168,12 @@ export class StripeWebhookService {
     this.logger.log(
       `Checkout complété | sub: ${subscriptionId}, user: ${session.client_reference_id ?? 'unknown'}`,
     );
+    if (user) {
+      this.adminNotifier?.notify(
+        AdminPushEvent.PREMIUM,
+        ADMIN_PUSH_MESSAGES.premiumSubscription(user.stripeSubscriptionStatus === 'trialing'),
+      );
+    }
   }
 
   private async onSubscriptionChanged(subscription: Stripe.Subscription): Promise<void> {
@@ -251,6 +262,7 @@ export class StripeWebhookService {
         .catch(() => undefined);
     }
 
+    if (user) this.adminNotifier?.notify(AdminPushEvent.BILLING_ISSUE, ADMIN_PUSH_MESSAGES.subscriptionCanceled());
     this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
   }
 
@@ -323,6 +335,7 @@ export class StripeWebhookService {
         `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
       )
       .catch(() => undefined);
+    this.adminNotifier?.notify(AdminPushEvent.BILLING_ISSUE, ADMIN_PUSH_MESSAGES.paymentFailed());
   }
 
   private async onPaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
@@ -357,6 +370,11 @@ export class StripeWebhookService {
     // Reçu de renouvellement. La souscription initiale (subscription_create) est déjà
     // couverte par le mail de bienvenue Premium ; une facture à 0 (essai, avoir) n'est pas un paiement.
     if (!synced || invoice.billing_reason === 'subscription_create' || invoice.amount_paid <= 0) return;
+
+    // Push admin : renouvellement ou fin d'essai payée (la 1re souscription a déjà son push au checkout).
+    if (invoice.billing_reason === 'subscription_cycle') {
+      this.adminNotifier?.notify(AdminPushEvent.PREMIUM, ADMIN_PUSH_MESSAGES.premiumPayment());
+    }
 
     // Un mail raté ne doit pas rejouer l'event (re-sync, parrainage) : on journalise et on continue.
     await this.resend
