@@ -7,6 +7,13 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 
 ## Infrastructure
 
+> ⚠️ **Migration en cours (2026-10-15)** : un 2e VPS OVH, `greg@149.202.40.240` (`mtc-prod`), est
+> dédié à la **prod** (API blue/green + worker, Postgres/PgBouncer/Redis prod, app Angular prod, bot
+> Discord, sauvegardes prod). Landing et admin partent sur **Vercel**. L'ancien VPS ci-dessous ne
+> gardera que **dev et beta**. Avancement : système durci, Traefik v3 et bases prod (vides) prêts ;
+> API, app et DNS **pas encore basculés** — la prod tourne toujours sur l'ancien VPS.
+> Référence du nouveau VPS (durcissement, rôles Postgres, sauvegardes, secrets) : `infra/prod/README.md`.
+
 ```
 VPS OVH — 51.83.197.230 (user: greg)
 ├── mtc_traefik     → reverse proxy + SSL Let's Encrypt
@@ -162,6 +169,11 @@ exec node main.js
 > `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
 > sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
 > elles) : un push = un seul run.
+>
+> **Images des services de test (2026-10-15)** : postgres et redis des jobs de test sont tirés sur
+> `mirror.gcr.io/library/…` (cache Docker Hub de Google, anonyme, sans secret). Docker Hub puis le
+> miroir ECR Public (`public.ecr.aws`) renvoyaient `toomanyrequests` : quota anonyme compté par IP,
+> et les IP des runners sont partagées. Ne pas y revenir.
 
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)

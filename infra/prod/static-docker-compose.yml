@@ -1,0 +1,31 @@
+# Front statique PROD — VPS prod 149.202.40.240. Seule l app Angular est ici :
+# landing et admin sont sur Vercel ; app dev/beta et landing dev restent sur l ancien VPS.
+# Publication : infra/deploy-static.sh app-prod … (releases + lien current, voir deploy.md).
+services:
+  app-prod:
+    image: nginx:1.31.7-alpine
+    container_name: mtc_app_prod
+    restart: unless-stopped
+    volumes:
+      - /opt/static/app-prod:/usr/share/nginx/html:ro
+      - /opt/infra/static/nginx/spa-releases.conf:/etc/nginx/conf.d/default.conf:ro
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    read_only: true
+    networks: [mtc_network]
+    mem_limit: 64m
+    memswap_limit: 64m
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-prod.rule=Host(`app.mytradingcoach.app`)"
+      - "traefik.http.routers.app-prod.entrypoints=websecure"
+      - "traefik.http.routers.app-prod.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app-prod.loadbalancer.server.port=80"
+
+networks:
+  mtc_network:
+    external: true
