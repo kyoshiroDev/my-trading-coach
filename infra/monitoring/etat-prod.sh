@@ -38,7 +38,8 @@ echo "10 dernières min : $e5 erreur(s) 5xx · $e429 réponse(s) 429  $(flag $([
 grep -oE '"message":"5[0-9]{2} [A-Z]+ [^ ?"]+' <<<"$logs" | cut -d'"' -f4 | sort | uniq -c | sort -rn | head -3 | sed 's/^/   /'
 
 echo "--- PgBouncer (prod)"
-pool=$(docker exec -e PGPASSWORD="$PW" mtc_postgres psql -h mtc_pgbouncer -p 6432 -U mtc_user -d pgbouncer -At -F' ' -c 'SHOW POOLS' 2>/dev/null | awk '$1=="mytradingcoach_prod"{print $3, $4, $5, $6, $10}')
+# Colonnes de SHOW POOLS (PgBouncer ≥ 1.18) : 3 cl_active · 4 cl_waiting · 7 sv_active · 10 sv_idle · 14 maxwait.
+pool=$(docker exec -e PGPASSWORD="$PW" mtc_postgres psql -h mtc_pgbouncer -p 6432 -U mtc_user -d pgbouncer -At -F' ' -c 'SHOW POOLS' 2>/dev/null | awk '$1=="mytradingcoach_prod"{print $3, $4, $7, $10, $14}')
 read -r cl_act cl_wait sv_act sv_idle maxwait <<<"${pool:-? ? ? ? ?}"
 echo "clients actifs $cl_act · en attente $cl_wait (attente max ${maxwait}s) · serveur $sv_act actives / $sv_idle libres (pool 20)  $(flag $([ "$cl_wait" != "?" ] && [ "$cl_wait" -gt 0 ] && echo 1) "des requêtes attendent une connexion")"
 

@@ -8,3 +8,6 @@
 # GC du cache buildx — dimanche 4 h 00
 0 4 * * 0 docker buildx prune --reserved-space=8GB -f >> /opt/backups/docker-gc.log 2>&1
 # Pas de mise à jour APT ici : unattended-upgrades gère la sécurité ; Docker et noyau à la main en maintenance.
+# ── Supervision (PRÉPARÉE, À ACTIVER : décommenter dans `crontab -e`) ──
+# */5 * * * * /opt/backups/watch-containers.sh >> /opt/backups/watch-containers.log 2>&1
+# 7,22,37,52 * * * * /opt/backups/watch-apihosts.sh >> /opt/backups/watch-apihosts.log 2>&1
