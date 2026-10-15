@@ -107,6 +107,8 @@ model User {
   /// Code partenaire utilisé (une seule fois par personne, conditions figées).
   partnerRedemption PartnerRedemption?
   checkoutReservations CheckoutReservation[]
+  /// Appareils de l'admin abonnés aux notifications push (rôle ADMIN uniquement).
+  adminPushSubscriptions AdminPushSubscription[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -625,6 +627,34 @@ enum AccountStatus {
 enum DrawdownType {
   STATIC
   TRAILING
+}
+
+// ── Notifications push de l'admin (PWA, événements business) ────────────────
+/// Événements business qui déclenchent un push vers les appareils ADMIN.
+enum AdminPushEvent {
+  PREMIUM              // nouvel abonnement ou paiement Premium
+  BILLING_ISSUE        // paiement échoué, annulation
+  AMBASSADOR_REQUEST   // candidature ambassadeur
+  SIGNUP               // nouvelle inscription (hors démo et ADMIN)
+  TRADOVATE_RECONNECT  // connexion Tradovate passée « à reconnecter »
+}
+
+/// Un appareil (navigateur / PWA installée) d'un ADMIN abonné au Web Push.
+/// Supprimé automatiquement quand le service push répond 404/410 (abonnement mort).
+model AdminPushSubscription {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint      String           @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  /// Événements coupés sur CET appareil (vide = tous reçus).
+  mutedEvents   AdminPushEvent[] @default([])
+  createdAt     DateTime         @default(now())
+  lastSuccessAt DateTime?
+
+  @@index([userId])
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
