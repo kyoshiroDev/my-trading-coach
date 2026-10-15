@@ -17,6 +17,7 @@ import {
   LucideMenu as Menu,
   LucideUserX as UserX,
   LucideGift as Gift,
+  LucideBell as Bell,
 } from '@lucide/angular';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 import { ScrollMemoryDirective } from '@mtc/front-ui';
@@ -47,4 +48,5 @@ export class ShellComponent {
   protected readonly LogOutIcon    = LogOut;
   protected readonly HandshakeIcon = Handshake;
   protected readonly GiftIcon      = Gift;
+  protected readonly BellIcon      = Bell;
 }
