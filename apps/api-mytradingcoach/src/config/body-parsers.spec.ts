@@ -3,7 +3,7 @@ import express from 'express';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { configureBodyParsers, STRIPE_WEBHOOK_PATH } from './body-parsers';
+import { configureBodyParsers, FUNNEL_BEACON_PATH, STRIPE_WEBHOOK_PATH } from './body-parsers';
 
 /** Vrai serveur Express, configuré comme l'API (seule différence : pas de Nest autour). */
 const ex = express();
@@ -18,6 +18,7 @@ const echo = (req: express.Request, res: express.Response) =>
 ex.post(STRIPE_WEBHOOK_PATH, echo);
 ex.post('/api/trades', echo);
 ex.post('/api/form', echo);
+ex.post(FUNNEL_BEACON_PATH, echo);
 
 let server: Server;
 const url = async (path: string) => {
@@ -43,5 +44,12 @@ describe('configureBodyParsers (SCA-B3-06)', () => {
   it('formulaires (urlencoded) toujours lus', async () => {
     const r = await (await fetch(await url('/api/form'), { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'a=1&b[c]=2' })).json() as Echo;
     expect(r.body).toEqual({ a: '1', b: { c: '2' } });
+  });
+
+  it('beacon du parcours : JSON en text/plain lu sur sa route seulement', async () => {
+    const beacon = await (await fetch(await url(FUNNEL_BEACON_PATH), { method: 'POST', headers: { 'content-type': 'text/plain;charset=UTF-8' }, body: '{"step":"cta_click"}' })).json() as Echo;
+    expect(beacon.body).toEqual({ step: 'cta_click' });
+    const other = await (await fetch(await url('/api/trades'), { method: 'POST', headers: { 'content-type': 'text/plain' }, body: '{"asset":"NQ"}' })).json() as Echo;
+    expect(other.body).toBeUndefined(); // text/plain ignoré ailleurs (Express 5 : corps non lu)
   });
 });

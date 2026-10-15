@@ -11,6 +11,8 @@ import { DemoSeedService } from './demo-seed.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { DiscordService } from '../discord/discord.service';
 import { CampaignContentDto, SendCampaignDto } from './dto/campaign.dto';
+import { SignupFunnelQueryDto } from './dto/signup-funnel-query.dto';
+import { SignupFunnelService } from './signup-funnel.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin')
@@ -23,6 +25,7 @@ export class AdminController {
     private readonly metrics: MetricsSnapshotCron,
     private readonly deletedAccounts: DeletedAccountService,
     private readonly demoSeed: DemoSeedService,
+    private readonly signupFunnel: SignupFunnelService,
   ) {}
 
   /** Comptes supprimés (trace analytique RGPD) : liste récente + agrégats. */
@@ -99,6 +102,12 @@ export class AdminController {
   @Get('funnel')
   getFunnel() {
     return this.adminService.getFunnel(30);
+  }
+
+  /** Parcours d'inscription par source et navigateur intégré, sur 7 ou 30 jours. */
+  @Get('signup-funnel')
+  getSignupFunnel(@Query() query: SignupFunnelQueryDto) {
+    return this.signupFunnel.get(query.days ?? 30);
   }
 
   /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */

@@ -4,6 +4,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { PublicService } from './public.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 import { LandingVisitDto } from './dto/landing-visit.dto';
+import { FunnelEventDto } from './dto/funnel-event.dto';
 
 export const PUBLIC_STATS_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=600';
 
@@ -43,5 +44,21 @@ export class PublicController {
     @Headers('user-agent') userAgent?: string,
   ): Promise<void> {
     await this.publicService.recordLandingVisit(dto, userAgent);
+  }
+
+  /**
+   * Étape du parcours d'inscription (clic CTA, page d'inscription, envoi, succès, erreur,
+   * paiement) : compteur agrégé sans cookie ni donnée personnelle. 204 dans tous les cas.
+   * Même plafond que les visites : un parcours complet envoie au plus 6 événements.
+   */
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 60 } })
+  @Post('funnel')
+  @HttpCode(204)
+  async recordFunnel(
+    @Body() dto: FunnelEventDto,
+    @Headers('user-agent') userAgent?: string,
+  ): Promise<void> {
+    await this.publicService.recordFunnelEvent(dto, userAgent);
   }
 }

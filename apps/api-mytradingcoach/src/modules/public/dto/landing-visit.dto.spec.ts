@@ -29,4 +29,10 @@ describe('LandingVisitDto', () => {
     expect(await validate(plainToInstance(LandingVisitDto, { path: 'https://evil.tld', entry: true }))).not.toHaveLength(0);
     expect(await validate(plainToInstance(LandingVisitDto, { path: '/' + 'a'.repeat(200), entry: true }))).not.toHaveLength(0);
   });
+
+  it('inApp optionnel (anciennes landings) mais booléen strict', async () => {
+    expect(await validate(plainToInstance(LandingVisitDto, { path: '/', entry: true }))).toHaveLength(0);
+    expect(await validate(plainToInstance(LandingVisitDto, { path: '/', entry: true, inApp: true }))).toHaveLength(0);
+    expect(await validate(plainToInstance(LandingVisitDto, { path: '/', entry: true, inApp: 'true' }))).not.toHaveLength(0);
+  });
 });

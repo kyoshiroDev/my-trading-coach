@@ -16,3 +16,4 @@ export * from './paris-date';
 export * from './email-markdown';
 export * from './prop-firm-rules/catalog';
 export * from './prop-firm-rules/plan-match';
+export * from './signup-funnel';
