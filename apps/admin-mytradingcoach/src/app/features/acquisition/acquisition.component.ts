@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import type { ChartConfiguration } from 'chart.js';
-import { AdminApi, AcquisitionData, FunnelData } from '../../core/api/admin.api';
+import { AdminApi, AcquisitionData, FunnelData, SignupFunnelData } from '../../core/api/admin.api';
 import { funnelRows, placeLabel, placeRows } from './funnel.util';
+import { SIGNUP_COLUMNS, signupErrors, signupLines, signupTotal, type BrowserFilter } from './signup-funnel.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
 
@@ -31,6 +32,21 @@ export class AcquisitionComponent {
   protected readonly funnelPlaces = computed(() => placeRows(this.funnel()));
   protected readonly placeLabel = placeLabel;
 
+  /** Parcours d'inscription par source (GET /admin/signup-funnel) : chargé à part, comme l'entonnoir. */
+  protected readonly signupDays = signal<7 | 30>(30);
+  protected readonly browser = signal<BrowserFilter>('all');
+  protected readonly signup = signal<SignupFunnelData | null>(null);
+  protected readonly signupLoading = signal(false);
+  protected readonly signupColumns = SIGNUP_COLUMNS;
+  protected readonly signupLines = computed(() => signupLines(this.signup(), this.browser()));
+  protected readonly signupTotal = computed(() => signupTotal(this.signupLines()));
+  protected readonly signupErrors = computed(() => signupErrors(this.signup()?.errors, this.browser()));
+  protected readonly browserTabs: readonly { key: BrowserFilter; label: string }[] = [
+    { key: 'all', label: 'Tous' },
+    { key: 'inApp', label: 'Navigateur intégré' },
+    { key: 'normal', label: 'Navigateur normal' },
+  ];
+
   /** Visites et pages vues par jour sur 30 jours. */
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
     const d = this.data()?.daily ?? [];
@@ -53,6 +69,7 @@ export class AcquisitionComponent {
   });
 
   constructor() {
+    this.loadSignup(30);
     this.api.funnel().pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
@@ -61,5 +78,20 @@ export class AcquisitionComponent {
       catchError((e: unknown) => { this.error.set(e instanceof Error ? e.message : 'Erreur de chargement'); return of(null); }),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe((r) => { if (r) this.data.set(r.data); });
+  }
+
+  protected loadSignup(days: 7 | 30): void {
+    this.signupDays.set(days);
+    this.signupLoading.set(true);
+    this.api.signupFunnel(days).pipe(
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((r) => {
+      // Une réponse arrivée après un changement de période est ignorée.
+      if (days === this.signupDays()) {
+        this.signup.set(r?.data ?? null);
+        this.signupLoading.set(false);
+      }
+    });
   }
 }

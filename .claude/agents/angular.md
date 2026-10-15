@@ -947,6 +947,13 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   localStorage `mtc_internal=1`, lu au démarrage par `App` (`captureInternal`) : plus aucune étape
   envoyée, badge « interne » en bas à gauche (`mtc-internal-badge`, monté dans `App`). `?internal=0`
   annule. Propre au domaine : la landing a le sien.
+- **Admin `/acquisition`, carte « Parcours d'inscription »** (au-dessus de l'entonnoir Premium) :
+  `GET /admin/signup-funnel?days=7|30` (`AdminApi.signupFunnel`), onglets `section-tabs` période (7 j / 30 j,
+  rechargement) et navigateur (Tous / intégré / normal, filtrage local). Logique pure testée dans
+  `features/acquisition/signup-funnel.util.ts` : « Tous » additionne intégré + normal d'une même
+  source/medium/campagne, ligne Total, taux = étape / étape précédente (`-` si la précédente vaut 0),
+  erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
+  Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
 
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
