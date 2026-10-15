@@ -13,6 +13,14 @@ déployés automatiquement : modifier le dépôt **et** le serveur.
 | `backups/backup.sh` | `/opt/backups/mtc/backup.sh` |
 | `backups/offsite.sh`, `backups/restore-test.sh` | `/opt/backups/` (+ `offsite.env`, 600) |
 | `crontab` | `crontab -l` de greg |
+| `static-docker-compose.yml` | `/opt/infra/static/docker-compose.yml` (app Angular prod seule) |
+| `bascule/` | `/opt/infra/bascule/` — scripts de la bascule (procédure : `docs/ops/bascule-vps-prod.md`) |
+
+Le dépôt est cloné dans `/opt/apps/mytradingcoach/prod` (clé de lecture GitHub
+`~/.ssh/github_deploy_mtc`, clé de déploiement « mtc-prod-vps-clone »). `authorized_keys` de greg :
+ta clé, `github-actions-mtc-prod` (CD, secret `PROD_VPS_SSH_KEY`) et `mtc-api-prod-admin` (pages
+VPS de l'admin : clé dans `VPS_SSH_KEY_B64`, acceptée seulement depuis les réseaux Docker
+`172.16.0.0/12`, sans pty ni redirection ; privée dans `/opt/apps/mytradingcoach/prod-secrets/`).
 
 ## Système
 

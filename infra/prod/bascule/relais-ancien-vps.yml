@@ -1,0 +1,27 @@
+# Relais de bascule — À COPIER SUR L'ANCIEN VPS dans /opt/infra/traefik/conf.d/ (Traefik v2.11,
+# provider file surveillé : pris en compte sans redémarrage), UNIQUEMENT après l'arrêt de l'API et
+# de l'app prod de l'ancien VPS.
+#
+# Les visiteurs dont le DNS pointe encore sur l'ancienne IP sont relayés vers le VPS prod :
+# TCP sans déchiffrement (TLS passthrough, certificats du VPS prod) + PROXY protocol v2, que le
+# Traefik du VPS prod n'accepte que de 51.83.197.230 → il voit la vraie IP du client (limite de
+# débit de l'API par visiteur intacte). Un routeur TCP HostSNI passe avant les routeurs HTTP.
+#
+# À supprimer quand plus aucune requête n'arrive par l'ancien VPS (DNS propagé, 48 h minimum),
+# puis retirer proxyProtocol.trustedIPs du traefik.yml du VPS prod.
+tcp:
+  routers:
+    relais-vps-prod:
+      entryPoints:
+        - websecure
+      rule: "HostSNI(`api.mytradingcoach.app`, `app.mytradingcoach.app`)"
+      service: vps-prod
+      tls:
+        passthrough: true
+  services:
+    vps-prod:
+      loadBalancer:
+        proxyProtocol:
+          version: 2
+        servers:
+          - address: "149.202.40.240:443"

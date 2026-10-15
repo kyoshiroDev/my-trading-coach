@@ -23,6 +23,12 @@ entryPoints:
           permanent: true
   websecure:
     address: ":443"
+    # TEMPORAIRE (bascule) : l ancien VPS relaie api./app. ici en TCP (TLS passthrough) avec le
+    # PROXY protocol, le temps que le DNS se propage → Traefik voit la vraie IP du client et l API
+    # (trust proxy 1) garde une limite de débit par visiteur. À retirer avec le relais.
+    proxyProtocol:
+      trustedIPs:
+        - "51.83.197.230/32"
     http:
       tls:
         certResolver: letsencrypt
