@@ -794,3 +794,14 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   la transition : **les copier dans `/opt/backups/` avant la transition**.
 - Conteneurs prod (depuis la transition) : `mtc_api_prod_blue` **ou** `_green` (web) + `mtc_api_prod_worker`.
   `docker logs` / `docker stats` : viser la couleur en marche (`docker ps | grep mtc_api_prod`).
+
+## Notifications push de l'admin (2026-10-15)
+
+- Variables de l'API (prod : `.env.production` du VPS prod) : `PUSH_ENABLED=true`,
+  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:hello@mytradingcoach.app`
+  (`node tools/scripts/vapid-generate.mjs`, clé privée jamais commitée). Recréer l'API ensuite.
+- Service worker de l'admin : jamais en cache. `infra/static/nginx/spa-releases.conf` a des
+  `location =` en `no-cache` pour `ngsw-worker.js` / `safety-worker.js` / `worker-basic.min.js`
+  (sinon la règle des `.js` les fige 1 an). À recopier sur le VPS qui sert l'admin
+  (`/opt/infra/static/nginx/`), `nginx -t` en conteneur jetable puis `docker restart mtc_admin`.
+  Sur Vercel : mêmes en-têtes dans `vercel.json` + `ngsw.json` et `manifest.webmanifest` en no-cache.

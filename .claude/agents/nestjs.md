@@ -1826,3 +1826,28 @@ quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : 
 Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
 digest même sans inscription.
 
+
+## Notifications push de l'admin (2026-10-15)
+
+Module `modules/admin-push/` : Web Push (PWA) vers les appareils **ADMIN** pour les événements
+business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
+- Services métier → **`AdminNotifier.notify(event, message)`** uniquement (jamais `AdminPushService`).
+  Ne lève jamais, n'attend pas l'envoi (tâche de fond, erreurs en `warn`). Injecté en
+  `@Optional()` en dernier paramètre : les specs historiques construisent le service sans lui.
+- Messages : catalogue `ADMIN_PUSH_MESSAGES` (`push-messages.ts`). **Aucune donnée sensible** (pas
+  d'e-mail, de montant, de token) : titre neutre + `url` de l'admin ouverte au clic.
+- Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
+  moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
+  404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
+  `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
+  handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
+  inscription (`AuthService.register`, jamais ADMIN) ; Tradovate `markNeedsReconnect` **au passage**
+  vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
+- Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
+- Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
+  `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
+- **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
+  `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.

@@ -508,3 +508,11 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 - Nouvelle table qui grossit sans fin → décider sa conservation et l'ajouter à `RETENTION_RULES`
   (liste figée : ses noms entrent tels quels dans le SQL). Validé sur vraie base :
   `retention.int-spec.ts`.
+
+## Notifications push de l'admin (2026-10-15)
+
+`AdminPushSubscription` : un appareil (navigateur / PWA) d'un ADMIN. `endpoint` unique, clés
+`p256dh` / `auth`, `mutedEvents AdminPushEvent[]` (événements coupés sur cet appareil, vide = tout),
+`lastSuccessAt`. Cascade à la suppression du User. Supprimé par l'API sur réponse 404/410 du service
+push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
+`20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).
