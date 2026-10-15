@@ -53,7 +53,9 @@ jobs:
             echo "api=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # ── Deploy API → OVH VPS (Docker) ────────────────────────────────────────
+  # ── Deploy API → VPS PROD 149.202.40.240 (Docker) ───────────────────────
+  # Secrets PROD_VPS_* : VPS dédié à la prod (migration 2026-10-15). VPS_HOST / VPS_SSH_KEY
+  # restent ceux de l'ancien VPS (dev, beta, et landing/admin tant qu'ils ne sont pas sur Vercel).
   # Gel des déploiements API (jour J du référencement…) : variable de dépôt FREEZE_API_DEPLOY=true
   # (Settings → Secrets and variables → Actions → Variables). Les fronts continuent de partir.
   deploy-api:
@@ -71,9 +73,9 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         with:
           command_timeout: 30m # build + bascule blue/green (~5-10 min)
-          host: ${{ secrets.VPS_HOST }}
+          host: ${{ secrets.PROD_VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key: ${{ secrets.PROD_VPS_SSH_KEY }}
           script: |
             set -e
             cd /opt/apps/mytradingcoach/prod
@@ -128,14 +130,14 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.PROD_VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H ${{ secrets.PROD_VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
       # Release /opt/static/app-prod/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
       - name: Publier Angular prod → VPS
         env:
-          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+          VPS_TARGET: ${{ secrets.VPS_USER }}@${{ secrets.PROD_VPS_HOST }}
         run: bash infra/deploy-static.sh app-prod dist/apps/app-mytradingcoach/browser/ ${{ github.event.workflow_run.head_sha }}
 
   # ── Deploy Admin → VPS static ────────────────────────────────────────────
