@@ -169,6 +169,11 @@ exec node main.js
 > `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
 > sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
 > elles) : un push = un seul run.
+>
+> **Images des services de test (2026-10-15)** : postgres et redis des jobs de test sont tirés sur
+> `mirror.gcr.io/library/…` (cache Docker Hub de Google, anonyme, sans secret). Docker Hub puis le
+> miroir ECR Public (`public.ecr.aws`) renvoyaient `toomanyrequests` : quota anonyme compté par IP,
+> et les IP des runners sont partagées. Ne pas y revenir.
 
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
@@ -182,12 +187,6 @@ exec node main.js
   README de `libs/shared/src/prop-firm-rules/`, section « Veille automatique ».
 
 ### Secrets GitHub requis
-
-**Niveau dépôt (CI) :**
-- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (token Docker Hub en lecture seule) : les services postgres et redis
-  des jobs de test (`checks.yml`, `ci.yml`) sont tirés sur Docker Hub avec ce compte. En anonyme, Docker Hub puis
-  le miroir ECR Public renvoyaient `toomanyrequests` (quota par IP, IP des runners partagées). `checks.yml` est
-  un workflow réutilisable : ses appelants (`ci.yml`, `beta.yml`) lui passent les secrets par `secrets: inherit`.
 
 **Environment `production` :**
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (fronts publiés en releases sur le VPS par `infra/deploy-static.sh`, plus de Vercel)

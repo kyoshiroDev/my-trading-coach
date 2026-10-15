@@ -15,8 +15,6 @@ jobs:
     uses: ./.github/workflows/checks.yml
     with:
       affected: false
-    # DOCKERHUB_USERNAME / DOCKERHUB_TOKEN pour les images postgres et redis des tests.
-    secrets: inherit
 
   # ── Deploy API beta → VPS (beta.api.mytradingcoach.app) ────────────────────
   deploy-api-beta:
