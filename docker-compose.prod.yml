@@ -34,6 +34,8 @@ x-api-env: &api-env
   RUN_MIGRATIONS: "false"
   # Version déployée, remontée à Sentry (GIT_SHA exporté par deploy-api.sh ; vide en lancement manuel).
   SENTRY_RELEASE: ${GIT_SHA:-}
+  # Environnement Sentry posé en clair : ne dépend plus de NODE_ENV (repli d'instrument.ts).
+  SENTRY_ENVIRONMENT: production
 
 x-web-labels: &web-labels
   - "traefik.enable=true"

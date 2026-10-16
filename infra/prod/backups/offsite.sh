@@ -6,7 +6,7 @@
 #
 # Usage : offsite.sh            → sauvegarde + rétention (+ vérification le dimanche)
 #         offsite.sh snapshots  → liste les instantanés
-#         offsite.sh restore <instantané|latest> <dossier cible>
+#         offsite.sh restore <instantané|latest> <dossier cible> [options restic, ex. --include /data/mtc]
 set -euo pipefail
 
 ENV_FILE=/opt/backups/offsite.env
@@ -27,9 +27,10 @@ case "${1:-backup}" in
   snapshots) run snapshots ;;
   restore)
     snap="${2:?instantané (ou latest)}"; target="${3:?dossier cible}"
+    shift 3
     mkdir -p "$target"
     docker run --rm --env-file "$ENV_FILE" -v "$CACHE":/cache -e RESTIC_CACHE_DIR=/cache \
-      -v "$(realpath "$target")":/restore "$IMAGE" restore "$snap" --target /restore
+      -v "$(realpath "$target")":/restore "$IMAGE" restore "$snap" --target /restore "$@"
     ;;
   backup)
     echo "[offsite] début $(date -u +%FT%TZ)"

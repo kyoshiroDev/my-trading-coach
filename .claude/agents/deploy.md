@@ -575,8 +575,12 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
   (aucun surcoût), `sendDefaultPii false`, `environment` = `SENTRY_ENVIRONMENT` ou `NODE_ENV`,
   `release` = SHA court du commit (le CD exporte `GIT_SHA`, le compose le passe en `SENTRY_RELEASE`).
 - **Où mettre le DSN** : créer un projet Node.js sur sentry.io (offre gratuite), copier le DSN dans
-  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`, et `SENTRY_ENVIRONMENT=production`),
-  puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
+  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`), puis recréer le conteneur.
+  `SENTRY_ENVIRONMENT=production` est posé en clair dans `docker-compose.prod.yml` (le bloc
+  `environment` du compose l'emporte sur l'`env_file`) : l'étiquette ne dépend plus de `NODE_ENV`.
+- **Dev et beta ne sont pas branchés sur Sentry (décision du 2026-10-16).** Si un jour on les branche,
+  poser `SENTRY_ENVIRONMENT=dev` / `beta` en même temps que le DSN (sinon repli sur `NODE_ENV`, donc
+  risque d'étiquette `production`) et ajouter `SENTRY_RELEASE: ${GIT_SHA:-}` à leur compose.
 - Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
   au démarrage.
 
@@ -717,6 +721,9 @@ gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
 les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), les `.env` dans
 `/tmp/restauration/apps/<env>/`, la crontab dans `/tmp/restauration/data/crontab.current`.
+Options restic en plus après le dossier (VPS prod) : `offsite.sh restore latest /tmp/r --include /data/mtc`
+ne restaure que les dumps. `restore-test.sh` fait ainsi depuis le 2026-10-16 : restaurer tout l'instantané
+recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait plus supprimer.
 
 ## Tests de charge (SCA-B9, 2026-10-01)
 
