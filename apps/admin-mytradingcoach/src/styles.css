@@ -110,13 +110,19 @@ a { color: inherit; text-decoration: none; }
 
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar { height: calc(54px + var(--safe-top)); flex-shrink: 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: var(--safe-top) calc(14px + var(--safe-right)) 0 calc(14px + var(--safe-left)); background: rgba(7,8,9,.7); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 10; }
-.topbar-title { font-weight: 600; font-size: 14px; }
+.topbar-title { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--text3); min-width: 0; }
 .status-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--teal); white-space: nowrap; }
 .status-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px var(--teal); animation: pulse 2.4s ease infinite; flex-shrink: 0; }
 .tb-meta { white-space: nowrap; }
 .hamburger { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; flex-shrink: 0; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+/* Écran étroit : les repères secondaires se replient (aucun chevauchement avec le titre et
+   le menu). Le statut garde son point, son texte reste lu par les lecteurs d'écran. */
+@media (max-width: 479.98px) {
+  .tb-meta { display: none; }
+  .status-dot { font-size: 0; gap: 0; }
+}
 
 .content { padding: 14px calc(14px + var(--safe-right)) calc(14px + var(--safe-bottom)) calc(14px + var(--safe-left)); display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
 /* l'hôte du composant routé devient une colonne flex qui remplit le contenu
