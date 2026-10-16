@@ -13,7 +13,9 @@ PG=mtc_restore_test_$$
 cleanup() { docker rm -f "$PG" >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
 
-/opt/backups/offsite.sh restore latest "$WORK" >/dev/null
+# Seulement les dumps : le reste de l'instantané (configs, pgbouncer-auth en uid 70 / 700) serait
+# restauré avec ses propriétaires d'origine, que greg ne peut plus supprimer au nettoyage.
+/opt/backups/offsite.sh restore latest "$WORK" --include /data/mtc >/dev/null
 DUMP=$(ls -1t "$WORK"/data/mtc/mtc_prod_*_auto.sql.gz 2>/dev/null | head -1)
 [ -n "$DUMP" ] || { echo "❌ aucun dump prod dans l'instantané"; exit 1; }
 echo "Dump restauré depuis B2 : $(basename "$DUMP") ($(du -h "$DUMP" | cut -f1))"

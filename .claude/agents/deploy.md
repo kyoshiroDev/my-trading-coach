@@ -717,6 +717,9 @@ gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
 les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), les `.env` dans
 `/tmp/restauration/apps/<env>/`, la crontab dans `/tmp/restauration/data/crontab.current`.
+Options restic en plus après le dossier (VPS prod) : `offsite.sh restore latest /tmp/r --include /data/mtc`
+ne restaure que les dumps. `restore-test.sh` fait ainsi depuis le 2026-10-16 : restaurer tout l'instantané
+recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait plus supprimer.
 
 ## Tests de charge (SCA-B9, 2026-10-01)
 
