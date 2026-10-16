@@ -3,6 +3,7 @@ import { ArgumentsHost, BadRequestException, HttpException, HttpStatus, Logger }
 import { Prisma } from '@prisma/client';
 import * as Sentry from '@sentry/nestjs';
 import { HttpExceptionFilter } from './http-exception.filter';
+import { ExpectedOutageException } from '../exceptions/expected-outage.exception';
 
 vi.mock('@sentry/nestjs', () => ({ captureException: vi.fn() }));
 
@@ -83,6 +84,16 @@ describe('HttpExceptionFilter', () => {
     const boom = new Error('boom');
     filter.catch(boom, httpHost().host);
     expect(Sentry.captureException).toHaveBeenCalledWith(boom, expect.anything());
+  });
+
+  it('panne attendue (ExpectedOutageException) : 503 avec code, en warn, sans Sentry', () => {
+    vi.mocked(Sentry.captureException).mockClear();
+    const { host, status, json } = httpHost();
+    filter.catch(new ExpectedOutageException('VPS_UNREACHABLE', 'VPS dev · beta injoignable en SSH'), host);
+    expect(status).toHaveBeenCalledWith(503);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({ code: 'VPS_UNREACHABLE', message: 'VPS dev · beta injoignable en SSH' }));
+    expect(Logger.prototype.warn).toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });
 
