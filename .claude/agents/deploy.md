@@ -764,8 +764,10 @@ les fichiers dans `~` d'abord) ; une longue chaîne collée a été tronquée et
 
 Ancienne prod retirée de l'ancien VPS le 2026-10-16 (images, `/opt/apps/mytradingcoach/prod`,
 `/opt/static/app-prod`, service `app-prod` du compose static, prod de `backup.sh`/`backup-apps.sh`).
-Base `mytradingcoach_prod` encore présente dans son Postgres (dump final
-`/opt/backups/mtc/mtc_prod_20261016_final.sql.gz`, `.env` dans `/opt/backups/ancienne-prod/`).
+Base `mytradingcoach_prod` supprimée de son Postgres le même jour (dump final
+`/opt/backups/mtc/mtc_prod_20261016_final.sql.gz`, `.env` dans `/opt/backups/ancienne-prod/`) ;
+son `restore-test.sh` vérifie désormais la beta. Reste l'entrée `mytradingcoach_prod` dans `DATABASES`
+de PgBouncer (sans effet, à retirer à la prochaine recréation de PgBouncer).
 
 ## Tests de charge (SCA-B9, 2026-10-01)
 
