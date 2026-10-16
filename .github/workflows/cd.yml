@@ -184,12 +184,18 @@ jobs:
           fi
           echo "✅ build ok — $(du -sh dist/apps/admin-mytradingcoach/browser/)"
 
+      # Clé d'hôte épinglée (DEV_VPS_KNOWN_HOSTS, ancien VPS) au lieu de ssh-keyscan : même
+      # raison que pour le VPS prod (connexions sans authentification → runner banni par fail2ban).
       - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.DEV_VPS_KNOWN_HOSTS }}
         run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret DEV_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       # Release /opt/static/admin/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
       - name: Publier Admin → VPS
@@ -231,12 +237,18 @@ jobs:
           # Propriété GA4 de prod (variable de dépôt, pas un secret). Vide → ni bandeau ni GA4.
           PUBLIC_GA_ID: ${{ vars.PUBLIC_GA_ID }}
 
+      # Clé d'hôte épinglée (DEV_VPS_KNOWN_HOSTS, ancien VPS) au lieu de ssh-keyscan : même
+      # raison que pour le VPS prod (connexions sans authentification → runner banni par fail2ban).
       - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.DEV_VPS_KNOWN_HOSTS }}
         run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret DEV_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       # Release /opt/static/landing-prod/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
       - name: Publier Landing prod → VPS

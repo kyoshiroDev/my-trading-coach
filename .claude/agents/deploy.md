@@ -12,7 +12,7 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 >   prod, app Angular prod (`app.`), bot Discord, sauvegardes prod. Référence (durcissement, rôles
 >   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY` / `PROD_VPS_KNOWN_HOSTS`.
 > - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
->   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY`.
+>   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY` / `DEV_VPS_KNOWN_HOSTS`.
 >
 > **Décision (2026-10-16) : landing et admin restent sur l'ancien VPS. Pas de Vercel, pas de changement
 > de DNS pour eux.** Toute mention d'un passage sur Vercel est caduque.
@@ -199,6 +199,7 @@ exec node main.js
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
 - `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
 - `PROD_VPS_KNOWN_HOSTS` : clé d'hôte du VPS prod, une ligne known_hosts (`149.202.40.240 ssh-ed25519 AAAA…`), lue par le job app prod de `cd.yml` à la place de `ssh-keyscan`. Le scan ouvre des connexions sans authentification que fail2ban compte comme des échecs : runner banni, rsync en « Connection timed out » (2026-10-16). À refaire si la clé d'hôte du VPS change (réinstallation).
+- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secrets créés dans l'environnement `production` (ou au niveau du dépôt) : tous ces jobs y tournent.
 
 ### Deploy prod VPS
 
