@@ -9,13 +9,14 @@
 # WATCH_TEST=1 ./watch-containers.sh  → envoie un e-mail de test (vérifie la chaîne d'alerte).
 set -uo pipefail
 
-ENV_PROD=/opt/apps/mytradingcoach/prod/.env.production
+ENV_PROD=/opt/apps/mytradingcoach/beta/.env.beta  # clé Resend (prod migrée le 2026-10-15)
 STATE=/opt/backups/.watch-state
 RESTARTS=/opt/backups/.watch-restarts   # « conteneur compteur » du passage précédent
 DISK_MAX=85
 # Doivent TOUJOURS tourner. dev/beta : arrêtables volontairement (jour J), surveillés seulement s'ils tournent.
 # L'API prod est vérifiée à part (blue/green, SCA-B8) : au moins une couleur web + le worker.
-CRITICAL="mtc_postgres mtc_pgbouncer mtc_redis mtc_traefik mtc_app_prod mtc_landing_prod mtc_admin mtc_discord_bot"
+# Prod migrée le 2026-10-15 sur le VPS 149.202.40.240 (supervisée là-bas). Ici : landing/admin (jusqu à Vercel), dev, beta.
+CRITICAL="mtc_postgres mtc_pgbouncer mtc_redis mtc_traefik mtc_landing_prod mtc_admin"
 
 problems=()
 declare -A before=()
@@ -41,8 +42,6 @@ mv "$RESTARTS.new" "$RESTARTS"
 # API prod (SCA-B8) : mtc_api_prod_blue ou _green pour le web, mtc_api_prod_worker pour les crons et
 # les files. Le conteneur unique d'avant B8 (mtc_api_prod, rôle all) compte pour les deux.
 up=$(docker ps --format '{{.Names}}')
-grep -qE '^mtc_api_prod(_blue|_green)?$' <<<"$up" || problems+=("API prod : aucun conteneur web en marche (mtc_api_prod_blue / _green)")
-grep -qE '^mtc_api_prod(_worker)?$' <<<"$up" || problems+=("API prod : worker arrêté (mtc_api_prod_worker : crons, files)")
 disk=$(df --output=pcent / | tail -1 | tr -dc '0-9')
 [ "$disk" -ge "$DISK_MAX" ] && problems+=("disque / : ${disk} % utilisé (seuil ${DISK_MAX} %)")
 
@@ -84,7 +83,7 @@ previous=$(cat "$STATE" 2>/dev/null || true)
 [ "$current" = "$previous" ] && exit 0   # rien de nouveau : pas d'e-mail
 
 if [ -n "$current" ]; then
-  subject="🔴 VPS MyTradingCoach : $(echo "$current" | wc -l) problème(s)"
+  subject="🔴 Ancien VPS (dev/beta) MyTradingCoach : $(echo "$current" | wc -l) problème(s)"
   body="$now
 
 $current
@@ -92,7 +91,7 @@ $current
 Diagnostic : docker ps -a · docker logs --tail 100 <conteneur> · df -h
 Runbook : docs/ops/reprise-vps.md"
 else
-  subject="🟢 VPS MyTradingCoach : rétabli"
+  subject="🟢 Ancien VPS (dev/beta) MyTradingCoach : rétabli"
   body="$now — plus aucun problème détecté.
 
 Précédemment :

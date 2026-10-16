@@ -669,9 +669,15 @@ Postgres. Ajouts :
   automatique depuis le passage précédent (`RestartCount` est cumulé : on compare au passage d'avant,
   mémorisé dans `/opt/backups/.watch-restarts`) ;
 - dev et beta **arrêtés volontairement** (jour J) : pas d'alerte ;
-- disque `/` ≥ 85 %.
+- disque `/` ≥ 85 % ;
+- **VPS prod seulement** (`infra/prod/monitoring/`) : reboot nécessaire (`/var/run/reboot-required`),
+  puisque la prod ne redémarre jamais seule (voir « Maintenance des VPS »).
 
-E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingcoach.app`,
+Deux copies depuis la migration du 2026-10-15 : `infra/prod/monitoring/watch-containers.sh` (VPS prod,
+API blue/green, app, bot) et `infra/monitoring/watch-containers.sh` (ancien VPS : landing, admin,
+dev, beta ; clé Resend lue dans `.env.beta`, l'ancien `.env.production` ayant été supprimé).
+
+E-mail via l'API Resend (clé lue dans `.env.production` sur la prod) vers `hello@mytradingcoach.app`,
 **seulement au changement d'état** (panne → 🔴, rétablissement → 🟢). L'état
 (`/opt/backups/.watch-state`) n'est mémorisé qu'après un envoi réussi.
 ⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
@@ -717,7 +723,8 @@ sont illisibles. Les clés B2 aussi (l'`applicationKey` n'est affichée qu'une f
 
 **Test de restauration** : `/opt/backups/restore-test.sh`. Il restaure le dernier instantané, charge
 le dernier dump prod dans un **Postgres jetable** (jamais `mtc_postgres`), compare users et trades
-avec la prod, puis nettoie. Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
+avec la prod, puis nettoie (`docker rm -f -v` : sans `-v`, chaque test laissait un volume
+Postgres anonyme de ~110 Mo, corrigé le 2026-10-16). Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
 0 erreur de chargement (prod : 911 trades, écart = activité de la journée). À relancer après tout
 changement de la sauvegarde et au moins une fois par trimestre.
 
@@ -739,6 +746,26 @@ les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), le
 Options restic en plus après le dossier (VPS prod) : `offsite.sh restore latest /tmp/r --include /data/mtc`
 ne restaure que les dumps. `restore-test.sh` fait ainsi depuis le 2026-10-16 : restaurer tout l'instantané
 recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait plus supprimer.
+
+## Maintenance des VPS (2026-10-16)
+
+| | Ancien VPS `51.83.197.230` (dev, beta, landing, admin) | VPS prod `149.202.40.240` |
+|---|---|---|
+| MAJ sécurité | unattended-upgrades | unattended-upgrades (Docker en liste noire) |
+| Reboot | **auto à 05:00** si requis (`52unattended-upgrades-local`) | **jamais auto** (`52mtc-unattended`) → alerte e-mail `watch-containers.sh`, reboot planifié à la main |
+| sudo | mot de passe → Greg lance les commandes dans SON terminal | NOPASSWD temporaire (migration) |
+
+Procédure : audit en lecture seule (`uptime`, `/var/run/reboot-required.pkgs`, `apt list --upgradable`,
+`docker system df`, volumes sans conteneur, mtime des logs cron) → nettoyage → `apt-get full-upgrade`
+(la MAJ de `docker-ce`/`containerd` redémarre tous les conteneurs ≈ 1 min, ils remontent grâce à
+`unless-stopped`) → reboot → vérifier `uptime`, noyau, `docker ps`, `WATCH_DRY=1 watch-containers.sh`,
+les URL publiques. Commandes sudo données à Greg : **courtes et sans guillemets imbriqués** (déposer
+les fichiers dans `~` d'abord) ; une longue chaîne collée a été tronquée et le reboot n'est jamais parti.
+
+Ancienne prod retirée de l'ancien VPS le 2026-10-16 (images, `/opt/apps/mytradingcoach/prod`,
+`/opt/static/app-prod`, service `app-prod` du compose static, prod de `backup.sh`/`backup-apps.sh`).
+Base `mytradingcoach_prod` encore présente dans son Postgres (dump final
+`/opt/backups/mtc/mtc_prod_20261016_final.sql.gz`, `.env` dans `/opt/backups/ancienne-prod/`).
 
 ## Tests de charge (SCA-B9, 2026-10-01)
 

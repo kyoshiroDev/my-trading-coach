@@ -52,7 +52,7 @@ case "${1:-backup}" in
       /data/restore-test.sh /data/backup-apps.sh \
       /infra/databases /infra/static /infra/traefik/traefik.yml /infra/traefik/docker-compose.yml \
       /infra/traefik/.env.traefik \
-      /apps/prod/.env.production /apps/dev/.env.dev /apps/beta/.env.beta
+      /apps/dev/.env.dev /apps/beta/.env.beta /data/ancienne-prod
     run forget --tag nightly --keep-daily 14 --keep-weekly 8 --keep-monthly 6 --prune
     # Vérification d'intégrité hebdomadaire (lit 5 % des données pour détecter une corruption).
     if [ "$(date +%u)" = 7 ]; then run check --read-data-subset=5%; fi
