@@ -910,6 +910,10 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   date de plus d'une minute.
 - Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
   (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.
+- **Admin** : `visiblePoll(request, { periodMs })` (`apps/admin-mytradingcoach/src/app/core/utils/visible-poll.ts`) :
+  aucune requête onglet caché (une tout de suite au retour), espacement ×2, ×4, ×8 après échec, jamais
+  deux requêtes en parallèle ; émet `{ ok, value | error }` sans terminer le flux. Utilisé par
+  Surveillance (15 s, bandeau `VPS_UNREACHABLE`, boutons masqués si `readOnly`) et le dashboard (10 s).
 - **Tout nouveau socket** (`io(...)`) étale ses reconnexions avec `...SOCKET_RECONNECT_OPTIONS`
   (`core/services/socket-reconnect.ts`, SCA-B4-07) : 1er essai entre 1 et 9 s, plafond 60 s. Sans ça,
   tous les onglets reviennent ensemble après un redémarrage de l'API.

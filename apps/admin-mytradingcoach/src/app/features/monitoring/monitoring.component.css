@@ -66,3 +66,14 @@
 /* Sélecteur de serveur : onglets globaux sans le style natif des boutons. */
 .server-tabs { padding: 0; margin-bottom: 14px; }
 .server-tabs .tab { background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+
+/* Serveur injoignable (503 VPS_UNREACHABLE) et serveur en lecture seule (secondaire) */
+.srv-alert {
+  margin-bottom: 14px; padding: 10px 14px; border: 1px solid var(--red); border-radius: var(--r-md);
+  background: var(--red-dim); color: var(--red); font-size: 13px; line-height: 1.5;
+}
+.srv-note {
+  margin-bottom: 14px; padding: 8px 14px; border: 1px solid var(--border2); border-radius: var(--r-md);
+  background: var(--bg3); color: var(--text2); font-family: var(--mono); font-size: 12px;
+}
+.confirm-error { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--red); }
