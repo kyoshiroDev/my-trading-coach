@@ -45,6 +45,8 @@ grep -qE '^mtc_api_prod(_blue|_green)?$' <<<"$up" || problems+=("API prod : aucu
 grep -qE '^mtc_api_prod(_worker)?$' <<<"$up" || problems+=("API prod : worker arrêté (mtc_api_prod_worker : crons, files)")
 disk=$(df --output=pcent / | tail -1 | tr -dc '0-9')
 [ "$disk" -ge "$DISK_MAX" ] && problems+=("disque / : ${disk} % utilisé (seuil ${DISK_MAX} %)")
+# Pas de reboot auto en prod (52mtc-unattended) : prévenir quand une MAJ (noyau, libc…) en demande un.
+[ -f /var/run/reboot-required ] && problems+=("reboot nécessaire : MAJ en attente (voir /var/run/reboot-required.pkgs), à planifier")
 
 send() { # $1 sujet, $2 corps
   local key; key=$(grep -m1 '^RESEND_API_KEY=' "$ENV_PROD" | cut -d= -f2- | tr -d '"')

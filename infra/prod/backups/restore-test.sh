@@ -10,7 +10,7 @@ set -euo pipefail
 
 WORK=$(mktemp -d /tmp/mtc-restore-XXXXXX)
 PG=mtc_restore_test_$$
-cleanup() { docker rm -f "$PG" >/dev/null 2>&1 || true; rm -rf "$WORK"; }
+cleanup() { docker rm -f -v "$PG" >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
 
 # Seulement les dumps : le reste de l'instantané (configs, pgbouncer-auth en uid 70 / 700) serait
