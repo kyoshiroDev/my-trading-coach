@@ -179,6 +179,9 @@ Règles :
   balise GA statique dans le `<head>`.
 - Refuser = même taille et même poids que Accepter (CNIL). Retrait après acceptation : cookies
   `_ga*` effacés + rechargement.
+- Mobile (< 768 px) : bandeau compact (~ 89 px au lieu de 138) — texte à gauche, Refuser et Accepter
+  empilés à droite, mêmes dimensions. Il ne doit jamais couvrir le bouton de la carte Fondateur à
+  l'arrivée depuis la pub.
 - **Source d'acquisition** (script UTM de `Base.astro`) : `utm_*` du lien, sinon **site d'origine**
   (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
   sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
