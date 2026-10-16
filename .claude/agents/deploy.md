@@ -649,15 +649,21 @@ Le dossier est inclus dans la sauvegarde B2 (`/infra/databases`).
 **Postgres** : `max_connections` **reste à 50** (pas 100) : `shared_buffers` = 1 920 Mo sur une
 limite conteneur de 2,5 Go, il ne reste ~640 Mo pour les connexions ; au-delà, risque d'OOM de
 Postgres. Ajouts :
-- `pg_stat_statements` (extension créée dans la base **`postgres`**, pas en prod : elle voit toutes
-  les bases). Top requêtes :
-  `docker exec mtc_postgres psql -U mtc_user -d postgres -c "select d.datname, calls, round(mean_exec_time) ms, left(query,80) from pg_stat_statements s join pg_database d on d.oid=s.dbid order by total_exec_time desc limit 15"`
+- `pg_stat_statements` : sur le **VPS prod** (149.202.40.240), l'extension est dans la base
+  **`mytradingcoach_prod`** (créée par `infra/prod/databases/init-db.sh`), **pas** dans `postgres` :
+  y lancer une requête depuis `postgres` répond « relation pg_stat_statements does not exist ». La vue
+  couvre quand même toutes les bases. Top requêtes (lecture seule) :
+  `docker exec mtc_postgres psql -U mtc_readonly -d mytradingcoach_prod -c "select d.datname, calls, round(mean_exec_time) ms, left(query,80) from pg_stat_statements s join pg_database d on d.oid=s.dbid order by total_exec_time desc limit 15"`
+  ⚠️ `pg_stat_statements.track_utility = on` : une commande utilitaire y est gardée en texte. Tout
+  `ALTER ROLE … PASSWORD` se fait dans une session avec `SET pg_stat_statements.track_utility = off`
+  (et `log_min_error_statement = panic`, `log_min_duration_statement = -1`), comme dans
+  `infra/ops/rotation-mot-de-passe/`.
 - `log_min_duration_statement=500` : requêtes > 500 ms dans `docker logs mtc_postgres`, **sans les
   valeurs des paramètres** (`log_parameter_max_length=0`, pas d'e-mail dans les logs).
 - Changer `command:` = redémarrage de Postgres ≈ **10 s de 503** sur l'API prod (mesuré) : hors
   heures du marché US. L'API se reconnecte seule, pas besoin de la redémarrer.
 - VPS remonté de zéro (`docs/ops/reprise-vps.md`) : refaire `CREATE EXTENSION pg_stat_statements`
-  dans la base `postgres`.
+  dans la base `mytradingcoach_prod` (fait par `init-db.sh` au premier démarrage).
 ## Supervision (SCA-B7-08, 2026-10-01)
 
 **Interne — `infra/monitoring/watch-containers.sh`** (installé dans `/opt/backups/`, cron
