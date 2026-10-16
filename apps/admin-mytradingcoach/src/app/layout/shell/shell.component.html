@@ -83,9 +83,9 @@
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title">MTC Admin</div>
+      <a class="topbar-title" routerLink="/dashboard" (click)="navOpen.set(false)">MTC Admin</a>
       <div class="topbar-right">
-        <span class="status-dot">api.mytradingcoach.app</span>
+        <span class="status-dot" title="api.mytradingcoach.app">api.mytradingcoach.app</span>
         <span class="tb-meta">VPS OVH · Paris</span>
       </div>
       <button class="hamburger" (click)="navOpen.update(v => !v)" aria-label="Ouvrir le menu">

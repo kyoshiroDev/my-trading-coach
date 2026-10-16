@@ -1020,3 +1020,10 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 - ⚠️ **Cache** : `ngsw-worker.js`, `safety-worker.js`, `worker-basic.min.js` doivent être servis
   **sans cache** (sinon le SW ne se met plus jamais à jour). Nginx : `location =` dédiées dans
   `spa-releases.conf` (admin servi par l'ancien VPS, pas de Vercel ; voir `deploy.md`).
+- **Installée sur l'écran d'accueil (iOS)** : `viewport-fit=cover` + status bar `black-translucent`
+  + `theme-color` = `--bg` (#070809) → la page passe **sous** la barre d'état. Marges de sécurité :
+  variables `--safe-top/right/bottom/left` (`:root` de `styles.css`, `env(safe-area-inset-*)`), lues
+  par `.topbar`, `.sidebar`, `.content`, `.log-terminal`, toasts, `.modal-overlay`, tiroir de la
+  surveillance. Nouvel élément fixe ou collé à un bord → ces variables, jamais `env()` en dur.
+  Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
+  Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.
