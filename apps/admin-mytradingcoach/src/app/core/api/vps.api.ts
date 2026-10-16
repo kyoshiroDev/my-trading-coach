@@ -10,6 +10,10 @@ export interface DockerContainer {
   cpu: number; ram: number; ramLimit: number; ports: string[];
 }
 
+/** Serveur joignable en SSH par l'API (`principal` = VPS_HOST, `secondaire` = VPS_SECONDARY_HOST). */
+export type VpsServerId = 'principal' | 'secondaire';
+export interface VpsServer { id: VpsServerId; label: string; }
+
 export interface Backup {
   filename: string;
   sizeMb: number;
@@ -28,11 +32,16 @@ export class VpsApi {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
 
-  stats()       { return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`); }
+  servers()     { return this.http.get<{ data: VpsServer[] }>(`${this.base}/vps/servers`); }
+  stats(server: VpsServerId = 'principal') {
+    return this.http.get<{ data: VpsStats }>(`${this.base}/vps/stats`, { params: { server } });
+  }
   healthHistory(days = 90) { return this.http.get<{ data: HealthPoint[] }>(`${this.base}/admin/health-history?days=${days}`); }
-  containers()  { return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`); }
-  containerAction(id: string, action: 'start' | 'stop' | 'restart') {
-    return this.http.post(`${this.base}/docker/containers/${id}/${action}`, {});
+  containers(server: VpsServerId = 'principal') {
+    return this.http.get<{ data: DockerContainer[] }>(`${this.base}/docker/containers`, { params: { server } });
+  }
+  containerAction(id: string, action: 'start' | 'stop' | 'restart', server: VpsServerId = 'principal') {
+    return this.http.post(`${this.base}/docker/containers/${id}/${action}`, {}, { params: { server } });
   }
   startContainer(id: string)   { return this.http.post(`${this.base}/docker/containers/${id}/start`, {}); }
   stopContainer(id: string)    { return this.http.post(`${this.base}/docker/containers/${id}/stop`, {}); }
@@ -50,7 +59,7 @@ export class VpsApi {
   }
   deleteBackup(f: string) { return this.http.delete(`${this.base}/vps/backups/${f}`); }
 
-  logsUrl(container: string, token: string): string {
-    return `${this.base}/vps/logs/${container}?token=${token}`;
+  logsUrl(container: string, token: string, server: VpsServerId = 'principal'): string {
+    return `${this.base}/vps/logs/${container}?token=${token}&server=${server}`;
   }
 }

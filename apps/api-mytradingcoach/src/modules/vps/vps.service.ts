@@ -1,35 +1,40 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { NodeSSH } from 'node-ssh';
 import type { VpsStats } from '@mtc/shared';
+import { resolveVpsServer, type VpsServerId } from './vps-servers';
 export type { VpsStats };
 
 @Injectable()
 export class VpsService implements OnModuleDestroy {
-  private ssh: NodeSSH | null = null;
+  // Une connexion SSH par serveur (principal / secondaire), ouverte à la demande.
+  private readonly connections = new Map<VpsServerId, NodeSSH>();
 
-  async getConnection(): Promise<NodeSSH> {
-    if (this.ssh?.isConnected()) return this.ssh;
+  async getConnection(serverId?: VpsServerId): Promise<NodeSSH> {
+    const server = resolveVpsServer(serverId);
+    const current = this.connections.get(server.id);
+    if (current?.isConnected()) return current;
     const ssh = new NodeSSH();
     const keyB64 = process.env['VPS_SSH_KEY_B64'];
     if (!keyB64) throw new Error('VPS_SSH_KEY_B64 non configurée');
     const privateKey = Buffer.from(keyB64, 'base64').toString('utf-8');
     await ssh.connect({
-      host: process.env['VPS_HOST'] ?? '51.83.197.230',
+      host: server.host,
       username: process.env['VPS_USER'] ?? 'greg',
       privateKey,
     });
-    this.ssh = ssh;
+    this.connections.set(server.id, ssh);
     return ssh;
   }
 
-  async exec(cmd: string): Promise<string> {
-    const ssh = await this.getConnection();
+  async exec(cmd: string, serverId?: VpsServerId): Promise<string> {
+    const ssh = await this.getConnection(serverId);
     const result = await ssh.execCommand(cmd);
     return result.stdout || result.stderr;
   }
 
-  async getStats(): Promise<VpsStats> {
-    const ssh = await this.getConnection();
+  async getStats(serverId?: VpsServerId): Promise<VpsStats> {
+    const server = resolveVpsServer(serverId);
+    const ssh = await this.getConnection(server.id);
 
     const [loadAvg, memInfo, dfInfo, uptime, uname, nodever, dockerver, netdev] =
       await Promise.all([
@@ -72,11 +77,11 @@ export class VpsService implements OnModuleDestroy {
       kernel: uname.stdout.trim(),
       node: nodever.stdout.trim(),
       docker: dockerver.stdout.trim(),
-      ip: process.env['VPS_HOST'] ?? '51.83.197.230',
+      ip: server.host,
     };
   }
 
   onModuleDestroy() {
-    this.ssh?.dispose();
+    for (const ssh of this.connections.values()) ssh.dispose();
   }
 }

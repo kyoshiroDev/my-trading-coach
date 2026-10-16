@@ -4,10 +4,11 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { AdminPushEvent, Prisma, Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
@@ -16,6 +17,8 @@ import { ResendService } from '../resend/resend.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { SetupsService } from '../setups/setups.service';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -80,6 +83,7 @@ export class AuthService {
     private setups: SetupsService,
     private demoSeed: DemoSeedService,
     private productEvents: ProductEventsService,
+    @Optional() private adminNotifier?: AdminNotifier,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -157,6 +161,8 @@ export class AuthService {
       );
 
     // Plus d'e-mail admin par inscription : récapitulatif quotidien (admin/signup-digest.cron.ts).
+    // Push admin : jamais pour un compte démo ni ADMIN (l'inscription crée un USER, garde-fou explicite).
+    if (user.role !== Role.ADMIN) this.adminNotifier?.notify(AdminPushEvent.SIGNUP, ADMIN_PUSH_MESSAGES.signup());
 
     return { ...tokens, user: me };
   }

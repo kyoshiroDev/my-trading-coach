@@ -1006,3 +1006,17 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 - Maquette `admin-mytradingcoach.html` absente en local au moment du #525 : design repris des
   composants existants (KPI, `.tbl`, `.badge`, `.section-tabs`, champs Ambassadeurs).
 
+
+## Admin : PWA et notifications push (2026-10-15)
+
+- `@angular/service-worker` (épinglé à la version de `@angular/core`) : `provideServiceWorker`
+  **désactivé en dev** (`isDevMode()`), `ngsw-config.json` déclaré dans `project.json`
+  (`serviceWorker`). Manifest « MTC Admin » + icônes dans `public/icons/` ; les PNG se régénèrent
+  depuis `icon.svg` : `node tools/scripts/generate-admin-icons.mjs`. Balises iOS dans `index.html`.
+- `core/push/push.service.ts` (repris de xmr-trader) : `browserSupport()` → `ios-not-installed`
+  (iPhone hors écran d'accueil), `unsupported`, `denied`, `server-disabled`, `supported` ;
+  `BROWSER_ENV` remplaçable dans les tests. Page `/notifications` : interrupteur de l'appareil,
+  événements (`ADMIN_PUSH_EVENT_LABELS` de `@mtc/shared`), « Tester la notification ».
+- ⚠️ **Cache** : `ngsw-worker.js`, `safety-worker.js`, `worker-basic.min.js` doivent être servis
+  **sans cache** (sinon le SW ne se met plus jamais à jour). Nginx : `location =` dédiées dans
+  `spa-releases.conf` (admin servi par l'ancien VPS, pas de Vercel ; voir `deploy.md`).

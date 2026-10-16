@@ -12,6 +12,7 @@ import { ResendService } from '../resend/resend.service';
 import { SetupsService } from '../setups/setups.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -65,6 +66,8 @@ const mockJwt = {
 const mockDemoSeed = { ensureFresh: vi.fn().mockResolvedValue(false) };
 const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
+const mockNotifier = { notify: vi.fn() };
+
 const mockResend = {
   sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
   sendResetPassword: vi.fn().mockResolvedValue(undefined),
@@ -89,6 +92,7 @@ describe('AuthService', () => {
         { provide: SetupsService, useValue: { seedDefaults: vi.fn().mockResolvedValue(true) } },
         { provide: DemoSeedService, useValue: mockDemoSeed },
         { provide: ProductEventsService, useValue: mockProductEvents },
+        { provide: AdminNotifier, useValue: mockNotifier },
       ],
     }).compile();
 
@@ -147,6 +151,28 @@ describe('AuthService', () => {
 
       expect(mockResend.sendWelcomeFree).toHaveBeenCalledTimes(1);
       expect(mockResend.sendAdminAlert).not.toHaveBeenCalled();
+    });
+
+    it('inscription → un push admin SIGNUP, sans e-mail dans le message', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'Thomas', plan: 'FREE', role: 'USER', createdAt: mockUser.createdAt });
+
+      await service.register({ email: 'test@test.com', password: 'password123', name: 'Thomas' });
+
+      expect(mockNotifier.notify).toHaveBeenCalledOnce();
+      const [event, message] = mockNotifier.notify.mock.calls[0];
+      expect(event).toBe('SIGNUP');
+      expect(message).toMatchObject({ title: 'Nouvelle inscription', url: '/users' });
+      expect(JSON.stringify(message)).not.toContain('test@test.com');
+    });
+
+    it('compte ADMIN créé → pas de push', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ id: mockUser.id, email: mockUser.email, name: 'A', plan: 'FREE', role: 'ADMIN', createdAt: mockUser.createdAt });
+
+      await service.register({ email: 'test@test.com', password: 'password123', name: 'A' });
+
+      expect(mockNotifier.notify).not.toHaveBeenCalled();
     });
 
     it('persiste les UTM d’acquisition, et null quand ils sont absents', async () => {

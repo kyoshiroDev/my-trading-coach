@@ -3,7 +3,8 @@
 > Rédigée le 2026-10-15. Objectif : faire passer API, worker, bot Discord, app Angular, Postgres
 > et Redis de la prod de l'ancien VPS (`51.83.197.230`, qui garde dev et beta) vers le VPS dédié
 > `mtc-prod`, avec **une dizaine de minutes d'indisponibilité de l'API**, la nuit.
-> Landing et admin ne sont pas concernés (ils restent sur l'ancien VPS jusqu'à Vercel).
+> Landing et admin ne sont pas concernés : ils restent sur l'ancien VPS (décision du 2026-10-16,
+> pas de Vercel, pas de changement de DNS pour `www.` et `admin.`). L'admin n'a pas d'environnement dev.
 >
 > Référence du VPS prod : `infra/prod/README.md`. Scripts : `infra/prod/bascule/` (copiés sur le
 > VPS prod dans `/opt/infra/bascule/`).

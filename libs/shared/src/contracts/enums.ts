@@ -81,6 +81,16 @@ export type PartnerRedemptionStatus = (typeof PartnerRedemptionStatus)[keyof typ
 export const CheckoutReservationKind = { FOUNDER: 'FOUNDER', PARTNER: 'PARTNER' } as const;
 export type CheckoutReservationKind = (typeof CheckoutReservationKind)[keyof typeof CheckoutReservationKind];
 
+// Notifications push de l'admin (événements business).
+export const AdminPushEvent = {
+  PREMIUM: 'PREMIUM',
+  BILLING_ISSUE: 'BILLING_ISSUE',
+  AMBASSADOR_REQUEST: 'AMBASSADOR_REQUEST',
+  SIGNUP: 'SIGNUP',
+  TRADOVATE_RECONNECT: 'TRADOVATE_RECONNECT',
+} as const;
+export type AdminPushEvent = (typeof AdminPushEvent)[keyof typeof AdminPushEvent];
+
 /** Tous les enums ci-dessus, par nom Prisma : utilisé par le test de synchronisation. */
 export const CONTRACT_ENUMS = {
   TradeSide,
@@ -101,4 +111,5 @@ export const CONTRACT_ENUMS = {
   FounderSeatStatus,
   PartnerRedemptionStatus,
   CheckoutReservationKind,
+  AdminPushEvent,
 } as const;

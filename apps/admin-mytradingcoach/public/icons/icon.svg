@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Marque de l'admin (sidebar .logo-mark) : « M » sur dégradé teal. Source des PNG de la PWA
+       (tools/generate-admin-icons.mjs). -->
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4aa"/>
+      <stop offset="100%" stop-color="#00a88a"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="url(#g)"/>
+  <path d="M24 74V26h12l14 20 14-20h12v48H64V46L50 65 36 46v28z" fill="#06241f"/>
+</svg>

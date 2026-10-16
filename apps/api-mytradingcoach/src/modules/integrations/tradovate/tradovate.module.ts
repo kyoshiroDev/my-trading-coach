@@ -4,6 +4,7 @@ import { TradesModule } from '../../trades/trades.module';
 import { SetupsModule } from '../../setups/setups.module';
 import { AuthModule } from '../../auth/auth.module';
 import { AccountsModule } from '../../accounts/accounts.module';
+import { AdminPushModule } from '../../admin-push/admin-push.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
@@ -31,7 +32,7 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
 @Module({
   // AuthModule : JwtService pour authentifier le handshake du canal temps réel.
   // AccountsModule : métriques des règles prop firm, base des alertes (#370).
-  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule],
+  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule, AdminPushModule],
   controllers: [TradovateController, TradovateCallbackController],
   providers: [
     TradovateApiClient,

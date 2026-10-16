@@ -1,4 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { AdminPushEvent } from '@prisma/client';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -31,6 +34,7 @@ export class PublicService {
     private readonly redisService: RedisService,
     private readonly resend: ResendService,
     private readonly config: ConfigService,
+    @Optional() private readonly adminNotifier?: AdminNotifier,
   ) {}
 
   /** Clé de cache propre à l'environnement, dérivée de l'hôte du front servi. */
@@ -62,6 +66,7 @@ export class PublicService {
       socials,
       message,
     });
+    this.adminNotifier?.notify(AdminPushEvent.AMBASSADOR_REQUEST, ADMIN_PUSH_MESSAGES.ambassadorRequest());
     return { success: true };
   }
 

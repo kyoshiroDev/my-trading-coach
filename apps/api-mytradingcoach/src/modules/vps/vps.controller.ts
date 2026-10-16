@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Delete, Get, Param, Post, Req, Res, UseGuards,
+  Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -8,6 +8,7 @@ import { VpsService } from './vps.service';
 import { DockerService } from './docker.service';
 import { BackupService } from './backup.service';
 import { CreateBackupDto } from './dto/create-backup.dto';
+import { listVpsServers, resolveVpsServer } from './vps-servers';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller()
@@ -18,34 +19,41 @@ export class VpsController {
     private readonly backup: BackupService,
   ) {}
 
+  // Serveurs proposés par le sélecteur de la page Surveillance (sans l'IP : inutile au front).
+  @Get('vps/servers')
+  listServers() {
+    return listVpsServers().map(({ id, label }) => ({ id, label }));
+  }
+
+  // `?server=principal|secondaire` sur les routes stats / docker / logs (absent = principal).
   @Get('vps/stats')
-  async getStats() {
-    return await this.vps.getStats();
+  async getStats(@Query('server') server?: string) {
+    return await this.vps.getStats(resolveVpsServer(server).id);
   }
 
   @Get('docker/containers')
-  async listContainers() {
-    return await this.docker.listContainers();
+  async listContainers(@Query('server') server?: string) {
+    return await this.docker.listContainers(resolveVpsServer(server).id);
   }
 
   @Post('docker/containers/:id/start')
-  async startContainer(@Param('id') id: string) {
-    return this.docker.containerAction(id, 'start');
+  async startContainer(@Param('id') id: string, @Query('server') server?: string) {
+    return this.docker.containerAction(id, 'start', resolveVpsServer(server).id);
   }
 
   @Post('docker/containers/:id/stop')
-  async stopContainer(@Param('id') id: string) {
-    return this.docker.containerAction(id, 'stop');
+  async stopContainer(@Param('id') id: string, @Query('server') server?: string) {
+    return this.docker.containerAction(id, 'stop', resolveVpsServer(server).id);
   }
 
   @Post('docker/containers/:id/restart')
-  async restartContainer(@Param('id') id: string) {
-    return this.docker.containerAction(id, 'restart');
+  async restartContainer(@Param('id') id: string, @Query('server') server?: string) {
+    return this.docker.containerAction(id, 'restart', resolveVpsServer(server).id);
   }
 
   @Delete('docker/containers/:id')
-  async deleteContainer(@Param('id') id: string) {
-    return this.docker.deleteContainer(id);
+  async deleteContainer(@Param('id') id: string, @Query('server') server?: string) {
+    return this.docker.deleteContainer(id, resolveVpsServer(server).id);
   }
 
   @Get('vps/backups')
@@ -69,13 +77,17 @@ export class VpsController {
     @Param('container') container: string,
     @Req() req: Request,
     @Res() res: Response,
+    @Query('server') server?: string,
   ) {
+    // Validé avant les en-têtes SSE pour renvoyer un vrai 400.
+    const serverId = resolveVpsServer(server).id;
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const ssh = await this.vps.getConnection();
+    const ssh = await this.vps.getConnection(serverId);
 
     const containerName = container.replace(/[^a-zA-Z0-9_-]/g, '');
 

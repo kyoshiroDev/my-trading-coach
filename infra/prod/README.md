@@ -1,7 +1,7 @@
 # VPS prod — `greg@149.202.40.240` (`mtc-prod`)
 
-Machine dédiée à la **production** (migration du 2026-10-15). L'ancien VPS `51.83.197.230` ne porte
-plus que dev et beta. Landing et admin sont sur Vercel.
+Machine dédiée à la **production** (migration du 2026-10-15). L'ancien VPS `51.83.197.230` porte
+dev et beta, ainsi que la landing (`www.`) et l'admin de prod : ils y restent (pas de Vercel).
 
 Ce dossier est la **copie de référence** des fichiers installés sur le serveur. Ils ne sont pas
 déployés automatiquement : modifier le dépôt **et** le serveur.

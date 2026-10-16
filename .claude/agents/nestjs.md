@@ -122,6 +122,7 @@ GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
+GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
 POST   /api/vps/apt-update             ADMIN → SSE stream
 POST   /api/vps/reboot                 ADMIN → confirmation requise
@@ -263,7 +264,15 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie
 - SSH credentials uniquement via variables d'env — jamais en dur, jamais en BDD
-  - `VPS_HOST=51.83.197.230`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>`
+  - `VPS_HOST`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>` : serveur `principal` (celui de l'API ;
+    en prod = VPS prod 149.202.40.240 depuis la migration du 2026-10-15)
+  - `VPS_SECONDARY_HOST` (optionnel) : serveur `secondaire` (en prod = ancien VPS 51.83.197.230,
+    dev + beta), même user et même clé → la clé doit être autorisée chez `greg` des deux côtés.
+    `VPS_LABEL` / `VPS_SECONDARY_LABEL` = libellés des onglets (défaut « VPS principal / secondaire »)
+  - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
+    principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
+    Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
+  - Ids de container validés (`[a-zA-Z0-9_.-]`) avant la commande SSH (pas d'injection)
 
 ---
 
@@ -1826,3 +1835,28 @@ quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : 
 Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
 digest même sans inscription.
 
+
+## Notifications push de l'admin (2026-10-15)
+
+Module `modules/admin-push/` : Web Push (PWA) vers les appareils **ADMIN** pour les événements
+business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
+- Services métier → **`AdminNotifier.notify(event, message)`** uniquement (jamais `AdminPushService`).
+  Ne lève jamais, n'attend pas l'envoi (tâche de fond, erreurs en `warn`). Injecté en
+  `@Optional()` en dernier paramètre : les specs historiques construisent le service sans lui.
+- Messages : catalogue `ADMIN_PUSH_MESSAGES` (`push-messages.ts`). **Aucune donnée sensible** (pas
+  d'e-mail, de montant, de token) : titre neutre + `url` de l'admin ouverte au clic.
+- Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
+  moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
+  404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
+  `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
+  handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
+  inscription (`AuthService.register`, jamais ADMIN) ; Tradovate `markNeedsReconnect` **au passage**
+  vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
+- Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
+- Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
+  `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
+- **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
+  `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.

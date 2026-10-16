@@ -1,0 +1,83 @@
+<div class="screen">
+  <div class="page-head">
+    <div>
+      <div class="page-title">Notifications</div>
+      <div class="page-note">Push sur cet appareil pour les événements business. Les pannes restent signalées par <b>UptimeRobot</b> et la surveillance des conteneurs.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-label">Cet appareil</div>
+      @if (push.support() === 'supported') {
+        <span class="badge" [class.b-ok]="push.subscribed()" data-testid="push-state">{{ push.subscribed() ? 'abonné' : 'non abonné' }}</span>
+      }
+    </div>
+    <div class="card-body">
+      @if (push.support() === null) {
+        <div class="empty">Vérification des notifications…</div>
+      } @else if (supportMessage(); as message) {
+        <p class="push-note" data-testid="push-support-message">{{ message }}</p>
+      } @else {
+        <div class="push-row">
+          <div>
+            <div class="push-row-title">Recevoir les notifications</div>
+            <div class="card-hint">Le navigateur demande l'autorisation à la première activation.</div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            class="push-switch"
+            [attr.aria-checked]="push.subscribed()"
+            [disabled]="push.busy()"
+            aria-label="Recevoir les notifications sur cet appareil"
+            data-testid="push-toggle"
+            (click)="toggleSubscription()"
+          >
+            <span class="push-switch-knob"></span>
+          </button>
+        </div>
+
+        @if (push.subscribed()) {
+          <fieldset class="push-events">
+            <legend class="card-label">Événements reçus</legend>
+            @for (e of events; track e.key) {
+              <label class="push-event">
+                <input
+                  type="checkbox"
+                  [checked]="isEnabled(e.key)"
+                  [attr.data-testid]="'push-event-' + e.key"
+                  (change)="toggleEvent(e.key, $any($event.target).checked)"
+                />
+                {{ e.label }}
+              </label>
+            }
+          </fieldset>
+
+          <div class="push-test">
+            <button type="button" class="btn btn-primary" [disabled]="testing()" data-testid="push-test" (click)="test()">Tester la notification</button>
+            @if (testMessage(); as msg) {
+              <span class="card-hint" role="status">{{ msg }}</span>
+            }
+          </div>
+        }
+      }
+
+      @if (push.error(); as err) {
+        <p class="push-error" role="alert">{{ err }}</p>
+      }
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-label">Sur iPhone</div></div>
+    <div class="card-body">
+      <ol class="push-steps">
+        <li>Ouvre l'admin dans Safari, puis <b>Partager → Sur l'écran d'accueil</b>.</li>
+        <li>Lance <b>MTC Admin</b> depuis l'icône de l'écran d'accueil (pas depuis Safari).</li>
+        <li>Reviens sur cette page, active l'interrupteur et autorise les notifications.</li>
+        <li>Appuie sur « Tester la notification ».</li>
+      </ol>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { AdminPushEvent } from '@prisma/client';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
@@ -37,6 +40,7 @@ export class ReferralService {
     private readonly prisma: PrismaService,
     private readonly resend: ResendService,
     private readonly stripeCustomers: StripeCustomerService,
+    @Optional() private readonly adminNotifier?: AdminNotifier,
   ) {}
 
   // ── ÉTAPE 1 : tout le monde peut être parrain ──────────────────────────────
@@ -226,6 +230,7 @@ export class ReferralService {
       socials: dto.socials,
       message: dto.message,
     });
+    this.adminNotifier?.notify(AdminPushEvent.AMBASSADOR_REQUEST, ADMIN_PUSH_MESSAGES.ambassadorRequest());
     return { success: true };
   }
 
