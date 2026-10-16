@@ -10,7 +10,7 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 > **Deux VPS depuis la bascule du 2026-10-15 (21 h 14)** :
 > - **VPS prod** `greg@149.202.40.240` (`mtc-prod`) : API prod blue/green + worker, Postgres/PgBouncer/Redis
 >   prod, app Angular prod (`app.`), bot Discord, sauvegardes prod. Référence (durcissement, rôles
->   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY`.
+>   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY` / `PROD_VPS_KNOWN_HOSTS`.
 > - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
 >   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY`.
 >
@@ -198,6 +198,7 @@ exec node main.js
 **Environment `production` :**
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
 - `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
+- `PROD_VPS_KNOWN_HOSTS` : clé d'hôte du VPS prod, une ligne known_hosts (`149.202.40.240 ssh-ed25519 AAAA…`), lue par le job app prod de `cd.yml` à la place de `ssh-keyscan`. Le scan ouvre des connexions sans authentification que fail2ban compte comme des échecs : runner banni, rsync en « Connection timed out » (2026-10-16). À refaire si la clé d'hôte du VPS change (réinstallation).
 
 ### Deploy prod VPS
 
