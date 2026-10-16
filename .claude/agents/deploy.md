@@ -22,19 +22,30 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 > sur `main` ; avant, la tester en local (`pnpm nx serve admin-mytradingcoach`) contre l'API dev.
 >
 > **Accès SSH de l'admin (page Surveillance, sauvegardes, logs)** : c'est l'API prod qui se connecte, avec
-> la clé dédiée **`mtc-api-prod-admin`** (`VPS_SSH_KEY_B64` du `.env.production` prod, `VPS_USER=greg`).
-> - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`). Clé autorisée chez `greg`
->   avec `from="172.16.0.0/12"` (réseau Docker local).
+> **une clé par serveur** (état du 2026-10-17).
+> - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`) : clé **`mtc-api-prod-admin`**
+>   (`VPS_SSH_KEY_B64`, `VPS_USER=greg`), autorisée chez `greg` **sur le VPS prod seulement**, avec
+>   `from="172.16.0.0/12"` (réseau Docker local), `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
+>   Toutes les actions (stats, containers, logs, sauvegardes). ⚠️ greg est dans le groupe `docker` : un
+>   shell obtenu par cette clé vaut root → **restriction à venir** (`command=` + liste blanche, comme
+>   `mtc-monitor`).
 > - Serveur `secondaire` = `VPS_SECONDARY_HOST=51.83.197.230` (`VPS_SECONDARY_LABEL=VPS dev · beta`),
->   onglet de la page Surveillance (#569). Clé autorisée chez `greg` avec `from="149.202.40.240"`
->   (ajoutée le 2026-10-16). Sans elle : « Aucun container (VPS injoignable) ».
-> - Options identiques des deux côtés : `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
-> - ⚠️ fail2ban de l'ancien VPS (5 échecs / 10 min → ban 1 h) : si la clé est refusée, chaque passage
->   sur l'onglet compte un échec et le VPS prod finit banni, même une fois la clé corrigée. Débannir :
->   `sudo fail2ban-client set sshd unbanip 149.202.40.240` (terminal de Greg : `sudo` ne passe pas par
->   le `!` de Claude Code). Ajouter `149.202.40.240` à l'`ignoreip` de `/etc/fail2ban/jail.local`.
-> - Rotation de la clé : mettre à jour `VPS_SSH_KEY_B64`, les **deux** `authorized_keys`, puis redéployer
->   l'API prod (`deploy-api.sh` recrée les conteneurs ; `docker restart` ne relit pas l'env).
+>   onglet de la page Surveillance (#569) : **lecture seule**, clé dédiée `mtc-api-prod-secondaire-ro`
+>   (`VPS_SECONDARY_SSH_KEY_B64`, empreinte d'hôte épinglée par `VPS_SECONDARY_HOST_KEY_SHA256`),
+>   utilisateur **`mtc-monitor`** sur l'ancien VPS : `from="149.202.40.240"`, `restrict`, commande forcée
+>   `/usr/local/bin/mtc-monitor-ro` qui n'exécute que `/etc/mtc-monitor/allowed-commands` (copie de
+>   `infra/vps/mtc-monitor-allowed-commands`, générée depuis `vps-commands.ts`). Actions et logs refusés
+>   en 403 par l'API. Sans `VPS_SECONDARY_SSH_KEY_B64`, l'onglet n'est pas proposé.
+> - **`mtc-api-prod-admin` n'est plus autorisée sur l'ancien VPS** (retirée de `~greg/.ssh/authorized_keys`
+>   le 2026-10-17) : l'API n'y a plus de shell. Le code ne se rabat jamais sur la clé du principal.
+> - ⚠️ fail2ban de l'ancien VPS (5 échecs / 10 min → ban 1 h) : une clé refusée depuis 149.202.40.240
+>   finit par bannir le VPS prod (l'API ne retente plus qu'une fois par minute). Débannir :
+>   `sudo fail2ban-client set sshd unbanip 149.202.40.240` (terminal de Greg : Claude ne fait plus de
+>   `sudo`). Le VPS prod n'est pas en `ignoreip`.
+> - Rotation des clés : principal → `VPS_SSH_KEY_B64` + `authorized_keys` de greg **sur le VPS prod** ;
+>   secondaire → `VPS_SECONDARY_SSH_KEY_B64` + `authorized_keys` de `mtc-monitor` sur l'ancien VPS (avec
+>   les options `from=…,command=…,restrict`). Puis redéployer l'API prod (`deploy-api.sh` recrée les
+>   conteneurs ; `docker restart` ne relit pas l'env). Procédure détaillée : `docs/ops/maintenance-2026-10-17.md`.
 
 ```
 VPS OVH — 51.83.197.230 (user: greg)
