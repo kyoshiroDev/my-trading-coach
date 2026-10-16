@@ -114,15 +114,18 @@ import { GA_ID } from '../config';
   .cc-refuse:hover { border-color: var(--blue); background: rgba(59,130,246,.05); }
   .cc-btn:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
 
+  /* Mobile compact (≈ 90 px au lieu de 138) : texte à gauche, les deux boutons empilés à droite,
+     toujours même taille et même graisse. Arrivé de la pub sur la carte Fondateur, le bandeau ne
+     doit pas couvrir son bouton. */
   @media (max-width: 767px) {
     .cc {
-      flex-direction: column;
-      align-items: stretch;
       gap: 12px;
-      padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
       /* Opaque : la barre sticky bleue (Nav) ne doit pas transparaître dessous. */
       background: var(--bg2);
     }
-    .cc-actions > .cc-btn { flex: 1; }
+    .cc-txt { font-size: 12px; line-height: 1.4; }
+    .cc-actions { flex-direction: column; gap: 6px; }
+    .cc-btn { min-width: 96px; padding: 7px 12px; font-size: 12.5px; }
   }
 </style>

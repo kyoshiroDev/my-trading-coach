@@ -1,6 +1,10 @@
 ---
 // Texte : src/data/faq.ts (même source que le JSON-LD FAQPage de la home).
 import { FAQ, FOUNDER_FAQ } from '../data/faq';
+
+// Offre ouverte au build (src/lib/founder-build.ts) : la question est dans le HTML, sinon gabarit.
+const { founderOpen = false } = Astro.props;
+const FounderWrap = founderOpen ? 'div' : 'template';
 ---
 
 <section class="faq-section" id="faq">
@@ -10,9 +14,10 @@ import { FAQ, FOUNDER_FAQ } from '../data/faq';
       <h2>Tout ce que tu veux <em>savoir</em></h2>
     </div>
     <div class="faq-list reveal">
-      {/* Gabarit inerte : inséré seulement si l'offre vend ou s'est clôturée (aucun texte de
-           l'offre dans le HTML rendu ni indexé avant). */}
-      <template data-founder-faq-tpl>
+      {/* Offre fermée au build : gabarit inerte, inséré seulement si l'offre vend ou s'est
+           clôturée (aucun texte de l'offre dans le HTML avant). Ouverte au build : rendue, place
+           réservée ; retirée ou passée en « clôturée » par le script selon l'API. */}
+      <FounderWrap data-founder-faq-tpl={founderOpen ? undefined : ''} class={founderOpen ? 'founder-slot' : undefined}>
       <div class="faq-item" data-founder-faq>
         <button class="faq-q" aria-expanded="false" aria-controls="faq-a-founder">
           {FOUNDER_FAQ.question}
@@ -26,7 +31,7 @@ import { FAQ, FOUNDER_FAQ } from '../data/faq';
           <span data-founder-faq-ended hidden>{FOUNDER_FAQ.ended}</span>
         </div>
       </div>
-      </template>
+      </FounderWrap>
       {FAQ.map((item, i) => (
         <div class={i === 0 ? 'faq-item open' : 'faq-item'}>
           {/* `aria-controls` lie la question a sa reponse : sans lui, un lecteur d'ecran
@@ -58,6 +63,7 @@ import { FAQ, FOUNDER_FAQ } from '../data/faq';
   }
 
   .faq-item { border-bottom: 1px solid var(--b); }
+  .founder-slot { display: contents; }
 
   .faq-q {
     width: 100%;
@@ -129,19 +135,26 @@ import { FAQ, FOUNDER_FAQ } from '../data/faq';
 
   // Question « offre fondateur » : insérée depuis son <template> si l'offre vend ou s'est
   // clôturée, jamais avant ; retirée sinon.
+  // Rendue au build (offre ouverte) : seul le lien est à brancher, la question l'est plus bas
+  // avec les autres.
   const faqTpl = document.querySelector<HTMLTemplateElement>('template[data-founder-faq-tpl]');
-  if (faqTpl) {
+  const staticItem = document.querySelector<HTMLElement>('[data-founder-faq]');
+  staticItem?.querySelector('.faq-founder-link')?.addEventListener('click', () => rememberCta('faq'));
+  if (faqTpl || staticItem) {
     onFounderState((s) => {
+      // Rendue au build : API injoignable (`null`) → la question reste (même règle que la carte).
+      if (s === null && staticItem) return;
       const selling = isSelling(s);
       let item = document.querySelector<HTMLElement>('[data-founder-faq]');
       if (!(selling || !!s?.ended)) return item?.remove();
-      if (!item) {
+      if (!item && faqTpl) {
         item = (faqTpl.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
         faqTpl.after(item);
         const q = item.querySelector('.faq-q');
         q?.addEventListener('click', () => toggle(q));
         item.querySelector('.faq-founder-link')?.addEventListener('click', () => rememberCta('faq'));
       }
+      if (!item) return;
       item.querySelector<HTMLElement>('[data-founder-faq-open]')!.hidden = !selling;
       item.querySelector<HTMLElement>('[data-founder-faq-ended]')!.hidden = selling;
     });
