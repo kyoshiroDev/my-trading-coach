@@ -142,6 +142,8 @@ const FounderWrap = founderOpen ? 'div' : 'template';
   staticItem?.querySelector('.faq-founder-link')?.addEventListener('click', () => rememberCta('faq'));
   if (faqTpl || staticItem) {
     onFounderState((s) => {
+      // Rendue au build : API injoignable (`null`) → la question reste (même règle que la carte).
+      if (s === null && staticItem) return;
       const selling = isSelling(s);
       let item = document.querySelector<HTMLElement>('[data-founder-faq]');
       if (!(selling || !!s?.ended)) return item?.remove();

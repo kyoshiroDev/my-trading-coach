@@ -288,8 +288,14 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     document.querySelectorAll('[data-founder-only]').forEach((el) => el.remove());
   };
 
-  if (section && (cardTpl || section.querySelector('[data-founder-card]'))) {
+  // Carte rendue au build (offre ouverte à ce moment-là) : seule une réponse EXPLICITE « ne vend
+  // plus » la retire. API injoignable ou réponse invalide (`null`) → la carte reste, compteur masqué :
+  // pas de saut de mise en page, et le serveur refuse de toute façon un checkout fondateur si l'offre
+  // est fermée ou complète (`FounderOfferService.eligibility` + réservation sous verrou).
+  const builtOpen = !!section?.querySelector('[data-founder-card]');
+  if (section && (cardTpl || builtOpen)) {
     onFounderState((s) => {
+      if (s === null && builtOpen) return;
       if (!isSelling(s)) return unmount();
       const card = mount();
       if (!card) return;

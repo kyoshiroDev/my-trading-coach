@@ -98,13 +98,17 @@ src/
     `.has-founder` posé d'emblée, compteur de places à place réservée (`.founder-seats.is-pending`,
     `visibility: hidden` jusqu'au vrai chiffre) → l'arrivée de la réponse de l'API ne déplace rien.
     L'API ne fait plus que remplir le compteur, ou **retirer** carte, note, FAQ et tout
-    `[data-founder-only]` (raccourci du Hero) si l'offre ne vend plus ou si elle ne répond pas
-    (comportement « API injoignable = pas d'offre » conservé) ;
+    `[data-founder-only]` (raccourci du Hero) si elle répond **explicitement** que l'offre ne vend
+    plus. API injoignable ou réponse invalide (`null`) → tout reste affiché, compteur masqué : pas
+    de saut de mise en page. Sûr parce que le serveur refuse le checkout fondateur si l'offre est
+    fermée, échue ou complète (`FounderOfferService.eligibility` → 400 `closed` / `sold_out`, puis
+    réservation sous verrou Postgres → 409 ; vérifié le 2026-10-16) ;
   - **fermée au build, ou API injoignable au build** → HTML « offre fermée » comme avant : bandeau,
     carte, note et FAQ dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script
     seulement si l'offre vend → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur »
     visible (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML).
-  - **Ouverture ou fermeture dans l'admin → relancer le déploiement de la landing** : sinon le HTML
+  - **⚠️ Ouverture ou fermeture de l'offre dans l'admin → relancer le déploiement de la landing**
+    (Actions → CD, ou un push sur la landing) : sinon le HTML
     reste celui du build (offre ouverte au build puis fermée : la carte s'affiche puis est retirée à
     la réponse de l'API, et le « 29 € » reste dans le HTML indexé jusqu'au prochain build).
   Un lien inséré après coup reprend les paramètres (ref, promo, utm_*) du lien Premium. Le bandeau
@@ -131,7 +135,9 @@ src/
     445 px sous le haut de l'écran, au lieu de 1 900 px plus bas.
   - Hero, mobile seulement : raccourci « 🔥 Offre fondateur : 29 €/mois à vie » (`#fondateur`)
     juste après « Commencer gratuitement » (qui reste le premier), rendu si l'offre est ouverte au
-    build (`data-founder-only`). Pas de point de clic `hero` (absent de `OFFER_CTAS`) : la carte
+    build (`data-founder-only`). Compact en ≤ 768 px (46 px de haut) et `.hero-founder` réduit la
+    marge sous les puces (24 px au lieu de 40) : entièrement visible au-dessus du bandeau cookies en
+    390×844 et 393×852 (pas en 375×812 ni 375×667, où il passe sous le bandeau). Pas de point de clic `hero` (absent de `OFFER_CTAS`) : la carte
     envoie `carte`.
   - Sous-titre des tarifs : le mois offert est rattaché au **Premium mensuel à 49 €** (l'offre
     fondateur n'a pas d'essai, cf. la note sous les cartes).
