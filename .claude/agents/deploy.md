@@ -20,6 +20,21 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 > **L'admin n'a pas d'environnement dev** (ni beta) : un seul site, `admin.mytradingcoach.app`, publié
 > par `cd.yml` depuis `main`. Une modification de l'admin n'est visible en ligne qu'après promotion
 > sur `main` ; avant, la tester en local (`pnpm nx serve admin-mytradingcoach`) contre l'API dev.
+>
+> **Accès SSH de l'admin (page Surveillance, sauvegardes, logs)** : c'est l'API prod qui se connecte, avec
+> la clé dédiée **`mtc-api-prod-admin`** (`VPS_SSH_KEY_B64` du `.env.production` prod, `VPS_USER=greg`).
+> - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`). Clé autorisée chez `greg`
+>   avec `from="172.16.0.0/12"` (réseau Docker local).
+> - Serveur `secondaire` = `VPS_SECONDARY_HOST=51.83.197.230` (`VPS_SECONDARY_LABEL=VPS dev · beta`),
+>   onglet de la page Surveillance (#569). Clé autorisée chez `greg` avec `from="149.202.40.240"`
+>   (ajoutée le 2026-10-16). Sans elle : « Aucun container (VPS injoignable) ».
+> - Options identiques des deux côtés : `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
+> - ⚠️ fail2ban de l'ancien VPS (5 échecs / 10 min → ban 1 h) : si la clé est refusée, chaque passage
+>   sur l'onglet compte un échec et le VPS prod finit banni, même une fois la clé corrigée. Débannir :
+>   `sudo fail2ban-client set sshd unbanip 149.202.40.240` (terminal de Greg : `sudo` ne passe pas par
+>   le `!` de Claude Code). Ajouter `149.202.40.240` à l'`ignoreip` de `/etc/fail2ban/jail.local`.
+> - Rotation de la clé : mettre à jour `VPS_SSH_KEY_B64`, les **deux** `authorized_keys`, puis redéployer
+>   l'API prod (`deploy-api.sh` recrée les conteneurs ; `docker restart` ne relit pas l'env).
 
 ```
 VPS OVH — 51.83.197.230 (user: greg)
