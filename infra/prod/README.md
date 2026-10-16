@@ -22,6 +22,14 @@ ta clé, `github-actions-mtc-prod` (CD, secret `PROD_VPS_SSH_KEY`) et `mtc-api-p
 VPS de l'admin : clé dans `VPS_SSH_KEY_B64`, acceptée seulement depuis les réseaux Docker
 `172.16.0.0/12`, sans pty ni redirection ; privée dans `/opt/apps/mytradingcoach/prod-secrets/`).
 
+**Accès de l'API à l'ancien VPS** (onglet « VPS dev · beta » de l'admin) : uniquement par la clé
+dédiée `mtc-api-prod-secondaire-ro` (`VPS_SECONDARY_SSH_KEY_B64`), utilisateur `mtc-monitor`,
+`from="149.202.40.240"`, commande forcée en lecture seule (`infra/vps/`). **`mtc-api-prod-admin`
+n'est plus autorisée chez greg sur l'ancien VPS** (retirée le 2026-10-17) : l'API ne peut plus y
+ouvrir de shell. Elle reste autorisée ici, chez greg, depuis les réseaux Docker ; comme greg est dans
+le groupe `docker`, un shell obtenu par cette clé vaut root : la restreindre par `command=` (liste
+blanche) est le prochain chantier de sécurité.
+
 ## Système
 
 - Ubuntu 26.04 LTS, fuseau Europe/Paris, swap 4 Gio (`vm.swappiness=10`), durcissement réseau et
@@ -87,5 +95,11 @@ lecture base en `mtc_readonly`, secrets lus dans `/opt/infra/databases/.env`). I
 
 ## Sudo
 
-Pendant la migration, `/etc/sudoers.d/90-greg-setup` donne sudo sans mot de passe. À supprimer une
-fois la prod basculée : sudo demande alors le mot de passe de greg.
+**Plus de sudo sans mot de passe** depuis le 2026-10-17 : `/etc/sudoers.d/90-greg-setup` (exception
+de la migration) a été retiré ; greg garde sudo **avec son mot de passe** (groupe `sudo`). root est
+verrouillé et interdit en SSH.
+- Aucun automatisme n'utilise sudo (crons, CD, scripts de `/opt/backups`, `deploy-api.sh`, admin) :
+  tout passe par le groupe `docker`. Un script qui appelle `sudo` doit être lancé à la main, dans un
+  terminal, par Greg.
+- Voies de secours si le mot de passe est perdu : shell greg → `docker run --rm -it -v /:/host alpine
+  chroot /host` (root sur l'hôte), sinon console KVM ou mode rescue OVH.
