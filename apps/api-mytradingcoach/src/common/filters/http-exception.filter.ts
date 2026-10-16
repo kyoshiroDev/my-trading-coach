@@ -9,6 +9,7 @@ import {
 import { Prisma } from '@prisma/client';
 import * as Sentry from '@sentry/nestjs';
 import type { Request, Response } from 'express';
+import { ExpectedOutageException } from '../exceptions/expected-outage.exception';
 
 /** Réponse d'erreur unique de l'API : le front lit `code` pour choisir l'écran, `message` pour l'afficher. */
 interface ErrorBody {
@@ -129,6 +130,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       `${status} ${request.method} ${request.path}` +
       `${userId ? ` user=${userId}` : ''} — ${detail}`;
 
+    // Panne attendue (VPS injoignable…) : déjà signalée une fois à Sentry par le service.
+    if (exception instanceof ExpectedOutageException) {
+      this.logger.warn(line);
+      return;
+    }
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const stack = exception instanceof Error ? exception.stack : String(exception);
       this.logger.error(line, stack);

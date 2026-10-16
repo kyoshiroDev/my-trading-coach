@@ -14,6 +14,13 @@
     </div>
   }
 
+  @if (unreachable(); as msg) {
+    <div class="srv-alert" role="alert">⚠ {{ msg }}</div>
+  }
+  @if (readOnly()) {
+    <div class="srv-note">{{ serverLabel() }} : lecture seule. Actions et logs désactivés depuis l'admin.</div>
+  }
+
   <!-- ── 4 KPI (tous issus de /vps/stats, aucune valeur inventée) ── -->
   <div class="kpi-strip cols-4">
     @if (stats(); as s) {
@@ -53,12 +60,14 @@
                   <span class="meta-down">{{ c.status === 'error' ? '⚠ erreur' : '⏸ arrêté' }}</span>
                 }
               </span>
-              <span class="ct-acts">
-                <button aria-label="Voir les logs" class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
-                @for (a of actionsFor(c); track a.action) {
-                  <button class="pill" [class.danger]="a.danger" [title]="a.label" (click)="askConfirm(c, a.action)">{{ a.icon }}</button>
-                }
-              </span>
+              @if (!readOnly()) {
+                <span class="ct-acts">
+                  <button aria-label="Voir les logs" class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
+                  @for (a of actionsFor(c); track a.action) {
+                    <button class="pill" [class.danger]="a.danger" [title]="a.label" (click)="askConfirm(c, a.action)">{{ a.icon }}</button>
+                  }
+                </span>
+              }
             </div>
           }
         }
@@ -110,6 +119,7 @@
       <div class="modal-head"><h3 class="modal-title">⚠️ Action sur {{ cf.serverLabel }}</h3><button aria-label="Fermer" class="modal-x" (click)="confirmState.set(null)">✕</button></div>
       <div class="modal-body">
         <p class="confirm-text">Tu vas <strong>{{ actionLabel(cf.action) }}</strong> le container <strong>{{ cf.name }}</strong> sur <strong class="text-red">{{ cf.serverLabel }}</strong>. Confirmer ?</p>
+        @if (actionError(); as err) { <p class="confirm-error" role="alert">{{ err }}</p> }
       </div>
       <div class="modal-foot">
         <button class="btn-ghost" (click)="confirmState.set(null)">Annuler</button>

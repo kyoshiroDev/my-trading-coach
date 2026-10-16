@@ -12,7 +12,8 @@ export interface DockerContainer {
 
 /** Serveur joignable en SSH par l'API (`principal` = VPS_HOST, `secondaire` = VPS_SECONDARY_HOST). */
 export type VpsServerId = 'principal' | 'secondaire';
-export interface VpsServer { id: VpsServerId; label: string; }
+/** `readOnly` : stats et containers seulement (secondaire) ; actions et logs refusés par l'API. */
+export interface VpsServer { id: VpsServerId; label: string; readOnly: boolean; }
 
 export interface Backup {
   filename: string;

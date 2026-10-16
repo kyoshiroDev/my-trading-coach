@@ -22,7 +22,7 @@ export class VpsController {
   // Serveurs proposés par le sélecteur de la page Surveillance (sans l'IP : inutile au front).
   @Get('vps/servers')
   listServers() {
-    return listVpsServers().map(({ id, label }) => ({ id, label }));
+    return listVpsServers().map(({ id, label, readOnly }) => ({ id, label, readOnly }));
   }
 
   // `?server=principal|secondaire` sur les routes stats / docker / logs (absent = principal).
@@ -79,15 +79,17 @@ export class VpsController {
     @Res() res: Response,
     @Query('server') server?: string,
   ) {
-    // Validé avant les en-têtes SSE pour renvoyer un vrai 400.
+    // Validé avant les en-têtes SSE pour renvoyer un vrai 400 / 403 / 503 : `docker logs` n'est
+    // pas dans les commandes autorisées du secondaire (lecture seule), et une connexion
+    // impossible doit sortir en erreur HTTP, pas en flux vide.
     const serverId = resolveVpsServer(server).id;
+    this.docker.assertFullAccess(serverId);
+    const ssh = await this.vps.getConnection(serverId);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-
-    const ssh = await this.vps.getConnection(serverId);
 
     const containerName = container.replace(/[^a-zA-Z0-9_-]/g, '');
 

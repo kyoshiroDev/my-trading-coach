@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, interval, of, startWith, switchMap } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import type { ChartConfiguration } from 'chart.js';
 import {
   AdminApi,
@@ -13,6 +13,7 @@ import {
   AdminFoundersData,
 } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
+import { visiblePoll } from '../../core/utils/visible-poll';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { RadialGaugeComponent } from '../../shared/components/radial-gauge/radial-gauge.component';
 import { CHART_COLORS, gridAxis, noLegend, type ChartTone } from '../../shared/charts/chart-theme';
@@ -191,17 +192,14 @@ export class DashboardComponent {
     this.adminApi.metricsHistory(30).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.history.set(r?.data ?? []));
 
-    interval(10_000).pipe(
-      startWith(0),
-      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => this.vpsStats.set(r?.data ?? null));
+    // Rien onglet caché, et de plus en plus espacé si le VPS ne répond pas (visiblePoll).
+    visiblePoll(() => this.vpsApi.stats(), { periodMs: 10_000 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => this.vpsStats.set(r.ok ? r.value.data : null));
 
-    interval(10_000).pipe(
-      startWith(0),
-      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => this.containers.set(r?.data ?? []));
+    visiblePoll(() => this.vpsApi.containers(), { periodMs: 10_000 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => this.containers.set(r.ok ? r.value.data ?? [] : []));
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────

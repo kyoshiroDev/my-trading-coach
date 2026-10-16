@@ -122,7 +122,7 @@ GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
-GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label}]
+GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
 POST   /api/vps/apt-update             ADMIN → SSE stream
 POST   /api/vps/reboot                 ADMIN → confirmation requise
@@ -266,9 +266,25 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - SSH credentials uniquement via variables d'env — jamais en dur, jamais en BDD
   - `VPS_HOST`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>` : serveur `principal` (celui de l'API ;
     en prod = VPS prod 149.202.40.240 depuis la migration du 2026-10-15)
-  - `VPS_SECONDARY_HOST` (optionnel) : serveur `secondaire` (en prod = ancien VPS 51.83.197.230,
-    dev + beta), même user et même clé → la clé doit être autorisée chez `greg` des deux côtés.
-    `VPS_LABEL` / `VPS_SECONDARY_LABEL` = libellés des onglets (défaut « VPS principal / secondaire »)
+  - Serveur `secondaire` (en prod = ancien VPS 51.83.197.230, dev + beta) : **lecture seule, clé
+    dédiée** (2026-10-16, NODE-NESTJS-6). Proposé seulement si `VPS_SECONDARY_HOST` **et**
+    `VPS_SECONDARY_SSH_KEY_B64` sont définis ; utilisateur `VPS_SECONDARY_USER` (défaut `mtc-monitor`),
+    empreinte d'hôte optionnelle `VPS_SECONDARY_HOST_KEY_SHA256` (format `ssh-keygen -lf`). **Jamais de
+    repli sur `VPS_SSH_KEY_B64`.** `VPS_LABEL` / `VPS_SECONDARY_LABEL` = libellés des onglets.
+  - Côté ancien VPS, la clé a une commande forcée (`infra/vps/mtc-monitor-ro.sh`) qui n'exécute que les
+    commandes de `infra/vps/mtc-monitor-allowed-commands`, à l'identique. Ce fichier est généré depuis
+    `vps-commands.ts` (`VPS_READ_COMMANDS`) et `vps-commands.spec.ts` vérifie l'alignement : **toute
+    commande de lecture nouvelle ou modifiée → régénérer le fichier ET le recopier sur l'ancien VPS**
+    (`/etc/mtc-monitor/allowed-commands`), sinon le secondaire la refuse.
+  - Secondaire : start / stop / restart / suppression / logs → **403 `VPS_READ_ONLY` avant tout appel
+    SSH** (`DockerService.assertFullAccess`). `/vps/servers` renvoie `[{ id, label, readOnly }]`.
+  - Serveur injoignable → **503 `VPS_UNREACHABLE`** (`ExpectedOutageException`), message avec la raison
+    (« authentification refusée », « délai dépassé »…). Plus de tentative SSH vers ce serveur pendant
+    60 s (`VPS_RETRY_DELAY_MS`), une seule tentative pour les requêtes simultanées. **Une seule alerte
+    Sentry par panne** (`warning`, au passage joignable → injoignable, dédupliquée entre process par
+    la clé Redis `vps:down:<id>`) ; le filtre global n'envoie pas `ExpectedOutageException` à Sentry.
+  - `VpsService.exec()` lève **502 `VPS_COMMAND_FAILED`** si le code de sortie n'est pas 0 (avant, une
+    commande refusée passait pour un succès). `getStats` reste tolérant (sortie vide → 0).
   - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
     principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
     Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
