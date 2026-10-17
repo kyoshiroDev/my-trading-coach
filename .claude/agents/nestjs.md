@@ -1450,7 +1450,12 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   erreur base avalée. Upsert `INSERT … ON CONFLICT` +1 dans `FunnelEventDaily`.
   La landing envoie par `sendBeacon` en **`text/plain`** (requête simple, sans requête préalable
   CORS) : `config/body-parsers.ts` lit ce corps en JSON sur `FUNNEL_BEACON_PATH` SEULEMENT (2 ko max).
-  Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes.
+  Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes. Depuis oct. 2026,
+  l'app envoie aussi TOUTES ses étapes ainsi (`register_view` dès l'arrivée par un script inline
+  d'`index.html`, puis `SignupFunnelService`) : plus aucun appel JSON sur cette route.
+- CORS (`main.ts`) : `maxAge: 600` (`Access-Control-Max-Age`) : le navigateur garde 10 min la réponse
+  à la requête préalable au lieu d'en refaire une avant chaque appel JSON de l'app (un aller-retour en
+  4G lente). Les origines autorisées restent `CORS_ORIGINS`.
 - `GET /admin/signup-funnel` (`SignupFunnelService`, fusion pure `signup-funnel.util.ts`, contrat
   `AdminSignupFunnelData`) : visites (`LandingVisitDaily`) + étapes par (source, medium, campagne,
   inApp), `''` → `null` ; une source sans visite (arrivée directe sur l'app) a sa ligne. 100 lignes max,
