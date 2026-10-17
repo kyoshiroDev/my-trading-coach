@@ -40,6 +40,29 @@ export const FOUNDER_ANNUAL_SAVINGS_EUR = FOUNDER_OFFER.priceMonthlyEur * 12 - F
 /** Fenêtre du satisfait ou remboursé fondateur, sur le PREMIER paiement. */
 export const FOUNDER_REFUND_DAYS = 14;
 
+/** Raison pour laquelle l'offre fondateur n'est pas accessible à un compte. */
+export type FounderIneligibility =
+  | 'closed'
+  | 'sold_out'
+  | 'excluded'
+  | 'already_founder'
+  | 'tariff_lost'
+  | 'subscribed';
+
+/**
+ * Message de chaque refus : renvoyé par le checkout (400) ET affiché par la modale de plans quand
+ * un lien `plan=founder` arrive sur une offre inaccessible. Une seule source pour ne jamais dire
+ * deux choses différentes.
+ */
+export const FOUNDER_INELIGIBLE_MESSAGES: Record<FounderIneligibility, string> = {
+  closed: "L'offre fondateur n'est pas ouverte. Tu peux passer Premium au prix normal.",
+  sold_out: "Il n'y a plus de place fondateur. Tu peux passer Premium au prix normal.",
+  excluded: "Ce compte n'est pas éligible à l'offre fondateur.",
+  already_founder: 'Tu es déjà fondateur.',
+  tariff_lost: "Le tarif fondateur a été perdu pour ce compte (résiliation ou remboursement). Tu peux passer Premium au prix normal.",
+  subscribed: "Tu as déjà un abonnement en cours. Le tarif fondateur s'adresse aux nouveaux abonnés.",
+};
+
 /** Paliers notifiés à hello@ (places prises), une fois chacun. */
 export const FOUNDER_MILESTONES = [50, 100, 150, 190, 200] as const;
 

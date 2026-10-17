@@ -14,8 +14,10 @@
       <p>
         @if (choice() === 'founder') {
           Paiement immédiat · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
-        } @else {
+        } @else if (choice()) {
           {{ trialFor(choice()) ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}
+        } @else {
+          &nbsp;
         }
       </p>
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
@@ -40,6 +42,23 @@
       </button>
     </div>
 
+    <!-- Offres pas encore reçues (#578) : aucun choix possible, rien ne ressemble à une offre. -->
+    @if (offersError()) {
+      <mtc-error-state
+        class="offers-error"
+        message="Les offres n'ont pas pu être chargées. Vérifie ta connexion puis réessaie."
+        (retry)="retryOffers()"
+      />
+    } @else if (!offersReady()) {
+      <div class="offer-list" aria-busy="true" data-testid="offers-loading">
+        <span class="sr-only">Chargement des offres…</span>
+        <div class="offer-skel" aria-hidden="true"></div>
+        <div class="offer-skel" aria-hidden="true"></div>
+      </div>
+    } @else {
+    @if (founderRefusal(); as why) {
+      <p class="offer-refusal" role="status" data-testid="founder-refusal">{{ why }}</p>
+    }
     <div class="offer-list" role="radiogroup" aria-label="Offre">
       <!-- FONDATEUR (#525) : seulement si l'utilisateur peut prendre une place. -->
       @if (founderAvailable()) {
@@ -127,6 +146,7 @@
     @if (showsBoth()) {
       <p class="offer-no-mix">Une seule offre à la fois : fondateur ou code partenaire, jamais les deux.</p>
     }
+    }
 
     <ul class="plan-col-feats">
       <li><svg [lucideIcon]="CheckIcon" [size]="14"></svg> Tout le plan Gratuit inclus</li>
@@ -166,15 +186,21 @@
       }
     </div>
 
-    <!-- CTA -->
+    <!-- CTA : désactivé tant qu'aucune offre n'est choisie sur des offres reçues (#578). En échec de
+         chargement, seul « Réessayer » est proposé. -->
+    @if (!offersError()) {
     <button
       class="plan-modal-cta"
       (click)="confirmPlan()"
-      [disabled]="isLoading()"
+      [disabled]="!canConfirm()"
       data-testid="plan-cta"
     >
       @if (isLoading()) {
         <span class="btn-spinner"></span> Redirection...
+      } @else if (!offersReady()) {
+        Chargement des offres…
+      } @else if (!choice()) {
+        Choisis ton offre
       } @else {
         @switch (choice()) {
           @case ('founder') { Devenir fondateur → }
@@ -185,6 +211,8 @@
         }
       }
     </button>
+    }
+    @if (choice()) {
     <p class="plan-modal-hint">
       @if (choice() === 'founder') {
         {{ ctaPriceLabel() }} · facturé aujourd'hui · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
@@ -194,5 +222,6 @@
         {{ ctaPriceLabel() }} · facturé aujourd'hui · annulable en un clic
       }
     </p>
+    }
   </div>
 </div>

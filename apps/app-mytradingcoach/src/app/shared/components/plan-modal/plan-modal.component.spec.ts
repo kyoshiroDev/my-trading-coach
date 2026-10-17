@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, computed, signal } from '@angular/core';
 import * as angularCore from '@angular/core';
 import { EMPTY, of } from 'rxjs';
 import { PlanModalComponent } from './plan-modal.component';
 import { BillingApi } from '@app/core/api/billing.api';
 import { BillingService } from '@app/core/services/billing.service';
+import { OffersStore, type OffersStatus } from '@app/core/stores/offers.store';
 
 const billingService = { startCheckout: vi.fn() };
 
@@ -31,8 +32,21 @@ const mockBillingApi = {
   validatePartnerCode: vi.fn(),
 };
 
+// Offres reçues, fondateur fermé : seul le Premium au prix normal est proposé.
+const offersStatus = signal<OffersStatus>('loaded');
+const offersStore = {
+  offers: signal(null),
+  status: offersStatus,
+  founderAvailable: computed(() => false),
+  isFounder: computed(() => false),
+  partner: computed(() => null),
+  load: vi.fn(),
+  refresh: vi.fn(),
+};
+
 describe('PlanModalComponent', () => {
   beforeEach(async () => {
+    offersStatus.set('loaded');
     vi.clearAllMocks();
     mockBillingApi.checkout.mockReturnValue(
       of({ data: { url: 'https://checkout.stripe.com/test' } }),
@@ -43,6 +57,7 @@ describe('PlanModalComponent', () => {
       providers: [
         { provide: BillingApi, useValue: mockBillingApi },
         { provide: BillingService, useValue: billingService },
+        { provide: OffersStore, useValue: offersStore },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });
@@ -108,5 +123,15 @@ describe('PlanModalComponent', () => {
     const c = instance();
     c.confirmPlan();
     expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'modale', promo: null });
+  });
+
+  it('offres pas encore reçues (#578) : aucun checkout, même par confirmPlan()', () => {
+    offersStatus.set('loading');
+    const c = instance();
+    c.confirmPlan();
+    offersStatus.set('error');
+    c.confirmPlan();
+    expect(billingService.startCheckout).not.toHaveBeenCalled();
+    expect(offersStore.load).toHaveBeenCalled();
   });
 });
