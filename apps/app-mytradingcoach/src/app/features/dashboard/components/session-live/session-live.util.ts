@@ -142,6 +142,20 @@ export function countdownLabel(minutes: number): string {
   return `dans ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
 }
 
+/** Une annonce publiée reste affichée 15 min au plus, puis la ligne revient à la suivante. */
+export const RELEASE_DISPLAY_MS = 15 * 60 * 1000;
+
+export function releaseExpired(shownAt: number, now: number): boolean {
+  return now - shownAt >= RELEASE_DISPLAY_MS;
+}
+
+/** Première phrase d'une analyse (le reste se déplie) ; texte entier s'il n'a qu'une phrase. */
+export function splitFirstSentence(text: string): { first: string; rest: string } {
+  const t = text.trim();
+  const m = /^(.+?[.!?])\s+(.+)$/s.exec(t);
+  return m ? { first: m[1], rest: m[2] } : { first: t, rest: '' };
+}
+
 /** Sortie d'un trade clôturé : TP / SL atteint, sinon manuelle (même règle que le live feed). */
 export function closeKind(t: { side: string; exit: number | null; stopLoss: number | null; takeProfit: number | null }): 'TP' | 'SL' | 'Manuel' {
   if (t.exit === null) return 'Manuel';

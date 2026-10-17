@@ -1,0 +1,52 @@
+@if (release(); as r) {
+  <!-- Annonce qui vient de tomber : chiffre publié vs prévision + analyse IA existante -->
+  <section class="ne-line ne-released" data-testid="live-release" aria-label="Annonce publiée" aria-live="polite">
+    <div class="ne-body">
+      <div class="ne-lbl">PUBLIÉE · {{ time(r.event.time) }}</div>
+      <div class="ne-name">{{ name(r.event.name) }}</div>
+      <div class="ne-values" data-testid="live-release-values">
+        Publié <b>{{ value(r.event.actual, r.event.unit) }}</b>
+        @if (r.event.estimate !== null) { · prévu {{ value(r.event.estimate, r.event.unit) }} }
+        @if (r.event.previous !== null) { · précédent {{ value(r.event.previous, r.event.unit) }} }
+      </div>
+      @switch (r.state) {
+        @case ('analyzing') {
+          <div class="ne-ai" data-testid="live-release-analyzing">Ton coach analyse l'impact…</div>
+        }
+        @case ('ready') {
+          @if (summary(); as s) {
+            <div class="ne-ai" data-testid="live-release-analysis">{{ s.first }}</div>
+            @if (s.rest || r.analysis!.assetSentiments.length) {
+              @if (expanded()) {
+                <div class="ne-more" data-testid="live-release-more">
+                  @if (s.rest) { <p>{{ s.rest }}</p> }
+                  @for (a of r.analysis!.assetSentiments; track a.asset) {
+                    <div class="ne-asset"><b>{{ a.asset }}</b> {{ a.sentiment === 'bull' ? 'haussier' : a.sentiment === 'bear' ? 'baissier' : 'neutre' }} · {{ a.shortReason }}</div>
+                  }
+                </div>
+              }
+              <button type="button" class="ne-btn ne-toggle" [attr.aria-expanded]="expanded()" (click)="expanded.set(!expanded())">
+                {{ expanded() ? 'Replier' : 'Lire l’analyse' }}
+              </button>
+            }
+          }
+        }
+        @case ('error') {
+          <div class="ne-ai ne-ai-off">Analyse indisponible pour le moment.</div>
+        }
+      }
+    </div>
+    <button type="button" class="ne-btn ne-dismiss" data-testid="live-release-dismiss" (click)="dismiss()">J'ai lu</button>
+  </section>
+} @else if (next(); as n) {
+  <section class="ne-line" data-testid="live-next-event" aria-label="Prochaine annonce">
+    <div class="ne-body">
+      <div class="ne-lbl">PROCHAINE ANNONCE</div>
+      <div class="ne-name">
+        {{ name(n.event.name) }} · {{ time(n.event.time) }}
+        <span class="ne-impact">{{ n.event.impact === 'high' ? 'impact fort' : 'impact moyen' }}</span>
+      </div>
+    </div>
+    <span class="ne-count" data-testid="live-next-event-countdown">{{ countdown(n.minutes) }}</span>
+  </section>
+}

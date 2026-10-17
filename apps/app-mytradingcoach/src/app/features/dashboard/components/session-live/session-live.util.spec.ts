@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EcoEvent } from '@mtc/shared';
 import type { InstrumentDto } from '@app/core/api/trades.api';
 import {
-  closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
+  RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
 } from './session-live.util';
 
 // Extrait de instruments.const.ts (API) : valeur du point = tickValue / tickSize.
@@ -106,5 +106,18 @@ describe('closeKind', () => {
     expect(closeKind({ side: 'LONG', exit: 110, stopLoss: 90, takeProfit: 110 })).toBe('TP');
     expect(closeKind({ side: 'SHORT', exit: 5908, stopLoss: 5908, takeProfit: 5890 })).toBe('SL');
     expect(closeKind({ side: 'LONG', exit: 100, stopLoss: null, takeProfit: null })).toBe('Manuel');
+  });
+});
+
+describe('annonce publiée (#593)', () => {
+  it('reste affichée 15 min au plus', () => {
+    expect(releaseExpired(0, RELEASE_DISPLAY_MS - 1)).toBe(false);
+    expect(releaseExpired(0, RELEASE_DISPLAY_MS)).toBe(true);
+  });
+
+  it('première phrase de l’analyse, le reste dépliable', () => {
+    expect(splitFirstSentence('Inflation au-dessus du consensus. Pression sur le Nasdaq. Dollar soutenu.'))
+      .toEqual({ first: 'Inflation au-dessus du consensus.', rest: 'Pression sur le Nasdaq. Dollar soutenu.' });
+    expect(splitFirstSentence('Une seule phrase')).toEqual({ first: 'Une seule phrase', rest: '' });
   });
 });

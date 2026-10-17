@@ -29,8 +29,8 @@
   />
 
   <div class="lv-body">
-    <!-- 2. Prochaine annonce (absente s'il n'en reste aucune aujourd'hui) -->
-    <mtc-live-next-event [events]="ecoCalendar()?.events ?? []" />
+    <!-- 2. Prochaine annonce (absente s'il n'en reste aucune) ; à la publication : chiffre + analyse IA -->
+    <mtc-live-next-event [events]="ecoCalendar()?.events ?? []" (ecoCalendarRefreshed)="ecoCalendarRefreshed.emit($event)" />
 
     <!-- 3 à 5 : grille plate, l'ordre mobile suit la maquette ; tablette et PC la réorganisent -->
     <div class="lv-grid">
