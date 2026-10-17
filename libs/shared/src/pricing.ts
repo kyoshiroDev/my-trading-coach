@@ -34,6 +34,20 @@ export const ACCOUNT_LIMITS = { free: 1, premium: null } as const;
  */
 export const FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats: 200 } as const;
 
+/**
+ * Libellé du compteur de places fondateur, UNIQUE pour l'app (modale, page de paiement), la landing
+ * (carte, bandeau) et les e-mails. Aucune place prise → « 200 places disponibles » (pas de « Plus
+ * que », qui sous-entendrait des places déjà parties) ; ensuite « Plus que 154 places sur 200 »,
+ * « Plus qu'une place sur 200 ». Plus aucune place → `null` : l'offre complète n'affiche pas de
+ * compteur (chaque écran garde son comportement). Total = `seatsTotal` de l'API, sinon la config.
+ */
+export function founderSeatsLabel(seatsLeft: number, seatsTotal: number = FOUNDER_OFFER.seats): string | null {
+  if (seatsLeft <= 0) return null;
+  if (seatsLeft >= seatsTotal) return seatsTotal === 1 ? '1 place disponible' : `${seatsTotal} places disponibles`;
+  if (seatsLeft === 1) return `Plus qu'une place sur ${seatsTotal}`;
+  return `Plus que ${seatsLeft} places sur ${seatsTotal}`;
+}
+
 /** Économie annuelle fondateur, DÉRIVÉE (29 × 12 − 290 = 58 €) : jamais écrite en dur. */
 export const FOUNDER_ANNUAL_SAVINGS_EUR = FOUNDER_OFFER.priceMonthlyEur * 12 - FOUNDER_OFFER.priceAnnualEur;
 

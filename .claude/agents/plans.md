@@ -265,6 +265,13 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
   reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
 - **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
+- **Compteur de places** : TOUJOURS `founderSeatsLabel(seatsLeft, seatsTotal)` de `@mtc/shared`
+  (modale de plans, page de paiement, carte et bandeau long de la landing, e-mail de lancement).
+  Aucune place prise → « 200 places disponibles » (jamais « Plus que 200 places sur 200 » : fausse
+  urgence, remontée par Greg le 17/10) ; ensuite « Plus que 154 places sur 200 », « Plus qu'une place
+  sur 200 » ; 0 → `null`, l'offre complète n'affiche pas de compteur. Total = `seatsTotal` de l'API,
+  sinon `FOUNDER_OFFER.seats`. Seul le bandeau COURT mobile affiche le nombre nu (« 154 places »).
+  Garde : `libs/shared/src/founder-seats-usage.spec.ts`.
 - **Messages de refus** (`closed`, `sold_out`, `excluded`, `already_founder`, `tariff_lost`,
   `subscribed`) : `FOUNDER_INELIGIBLE_MESSAGES` de `@mtc/shared`, source UNIQUE du 400 du checkout
   ET de la modale de plans quand un lien `plan=founder` tombe sur une offre inaccessible (#578).
@@ -274,9 +281,12 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 
 `modules/partner-codes/` (`PartnerCodeService`, fonctions pures dans `partner-code.util.ts`).
 
-- Un formateur donne un code (ex. `LOUIS29`) : Premium à un prix réduit **réglable code par code**
+- Un formateur donne un code (ex. fictif `TRADER10`) : Premium à un prix réduit **réglable code par code**
   (mensuel et annuel entre 1 € et le prix normal − 1, entiers). Ces abonnés ne sont **pas** fondateurs
   et ne prennent **aucune** place.
+- **Exemples toujours fictifs** (placeholders, aide, e-mails, tests) : jamais le code ou le nom d'un
+  vrai partenaire, qui n'apparaît que là où il sert réellement (base, admin). Exemple maison :
+  `TRADER10` (vérifié absent des codes partenaires et de parrainage le 17/10).
 - Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
   **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
   remise des abonnés) ; `active`.

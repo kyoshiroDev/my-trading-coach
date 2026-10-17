@@ -13,7 +13,7 @@ const PAYING = [
   { stripeInterval: 'year', founderSeat: null, partnerRedemption: null }, // 490/12
   { stripeInterval: 'month', founderSeat: { status: 'ACTIVE' }, partnerRedemption: null }, // 29
   { stripeInterval: 'year', founderSeat: { status: 'ACTIVE' }, partnerRedemption: null }, // 290/12
-  { // LOUIS29 à vie : 29
+  { // TRADER10 à vie : 29
     stripeInterval: 'month', founderSeat: null,
     partnerRedemption: { status: 'ACTIVE', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, createdAt: monthsAgo(2) },
   },
@@ -49,7 +49,7 @@ describe('MRR Stripe : après remise, sans écart avec la base', () => {
     items: { data: [{ quantity: 1, price: { unit_amount: amount, recurring: { interval } } }] },
   });
 
-  it('fondateur 29 €, LOUIS29 (−20 €), annuel partenaire (−200 €) → même MRR que la base', async () => {
+  it('fondateur 29 €, TRADER10 (−20 €), annuel partenaire (−200 €) → même MRR que la base', async () => {
     const subs = [
       sub('s1', 2900, 'month'),
       sub('s2', 4900, 'month', [{ coupon: { amount_off: 2000 } }]), // API 2024-06-20

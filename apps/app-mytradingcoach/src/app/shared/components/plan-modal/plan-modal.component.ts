@@ -25,7 +25,7 @@ import { BillingApi, type CheckoutPlan, type PartnerValidation } from '@app/core
 import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
-import { FOUNDER_INELIGIBLE_MESSAGES, type FounderIneligibility } from '@mtc/shared';
+import { FOUNDER_INELIGIBLE_MESSAGES, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -115,6 +115,11 @@ export class PlanModalComponent implements OnInit {
   });
   protected readonly founderAvailable = this.offersStore.founderAvailable;
   protected readonly founderOffer = computed(() => this.offersStore.offers()?.founderOffer ?? null);
+  /** Compteur de places (libellé partagé : « 200 places disponibles » tant qu'aucune n'est prise). */
+  protected readonly seatsLabel = computed(() => {
+    const f = this.founderOffer();
+    return f ? founderSeatsLabel(f.seatsLeft, f.seatsTotal) : null;
+  });
   /** Choix explicite de l'utilisateur (prime sur la présélection). */
   private readonly picked = signal<OfferChoice | null>(null);
   /**

@@ -25,10 +25,10 @@ describe('offerDigestLines — ligne « offres » du digest (#525)', () => {
   it('fondateurs et codes partenaires sur une ligne', async () => {
     const lines = await offerDigestLines(prisma({
       open: true, taken: 37, active: 35, before: 37,
-      codes: [{ id: 'a', code: 'LOUIS29', maxRedemptions: 10, active: true }, { id: 'b', code: 'TRIO', maxRedemptions: null, active: false }],
+      codes: [{ id: 'a', code: 'TRADER10', maxRedemptions: 10, active: true }, { id: 'b', code: 'TRIO', maxRedemptions: null, active: false }],
       used: [{ partnerCodeId: 'a', _count: { _all: 4 } }],
     }), since);
-    expect(lines).toEqual(['Fondateurs : 37 / 200 (35 actifs) · Codes partenaires : LOUIS29 4/10, TRIO 0/illimité (inactif)']);
+    expect(lines).toEqual(['Fondateurs : 37 / 200 (35 actifs) · Codes partenaires : TRADER10 4/10, TRIO 0/illimité (inactif)']);
   });
 
   it('palier franchi sur la période → ligne dédiée', async () => {
