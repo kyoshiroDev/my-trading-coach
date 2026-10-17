@@ -2,7 +2,7 @@
 // Chaque template marketing DOIT inclure marketingFooter(unsubUrl) en pied.
 // Réutilise les helpers de style partagés (emailWrapper/card/cta/divider/FONT).
 
-import { FOUNDER_OFFER, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, founderSeatsLabel } from '@mtc/shared';
 import {
   ACCENT,
   FONT,
@@ -218,6 +218,9 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
   const { monthly: normalM, annual: normalY } = PREMIUM_PRICE_EUR;
   const saved = (normalM - m) * 12;
   const url = founderLaunchUrl(appUrl);
+  // Compteur : libellé partagé (« 200 places disponibles » tant qu'aucune n'est prise). Jamais à zéro :
+  // la campagne est refusée quand l'offre ne vend plus.
+  const seatsText = founderSeatsLabel(seats, total) ?? founderSeatsLabel(total, total);
 
   const hook = "Le plus dur en trading, ce n'est pas de trouver un setup : c'est de ne pas tout perdre sur une mauvaise séance. C'est pour ça que j'ai construit MyTradingCoach.";
   const intro = `Aujourd'hui, j'ouvre l'offre fondateur, réservée aux ${total} premiers : ceux qui construisent l'outil avec moi.`;
@@ -237,7 +240,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
   <li style="margin-bottom:6px"><b>Satisfait ou remboursé 14 jours</b> : tu ne prends aucun risque</li>
 </ul>
 <p ${p}>${concrete}</p>
-<p ${p}>Il reste <b>${seats} places sur ${total}</b>. Quand elles sont parties, c'est ${normalM} €.</p>
+<p ${p}><b>${seatsText}</b>. Quand elles sont parties, c'est ${normalM} €.</p>
 <table cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#3b82f6">
   <a href="${url}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">Je prends ma place fondateur</a>
 </td></tr></table>
@@ -253,7 +256,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
       '- Satisfait ou remboursé 14 jours : tu ne prends aucun risque',
     ].join('\n'),
     concrete,
-    `Il reste ${seats} places sur ${total}. Quand elles sont parties, c'est ${normalM} €.`,
+    `${seatsText}. Quand elles sont parties, c'est ${normalM} €.`,
     `Je prends ma place fondateur : ${url}`,
     free,
   ].join('\n\n');
