@@ -222,10 +222,12 @@ exec node main.js
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (landing et admin de prod ; dev et beta passent par `staging`), fronts publiés en releases par `infra/deploy-static.sh`
 - `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
 - `PROD_VPS_KNOWN_HOSTS` : clé d'hôte du VPS prod, une ligne known_hosts (`149.202.40.240 ssh-ed25519 AAAA…`), lue par le job app prod de `cd.yml` à la place de `ssh-keyscan`. Le scan ouvre des connexions sans authentification que fail2ban compte comme des échecs : runner banni, rsync en « Connection timed out » (2026-10-16). À refaire si la clé d'hôte du VPS change (réinstallation).
-- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secrets créés dans l'environnement `production` (ou au niveau du dépôt) : tous ces jobs y tournent.
+- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secret présent dans `production` (admin et landing de prod) **et** dans `staging` (dev et beta).
+
+**Environment `staging` :** jobs de déploiement dev et beta (`ci.yml` `deploy-*-dev`, `beta.yml` `deploy-*-beta`). Secrets : `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `DEV_VPS_KNOWN_HOSTS`. Aucun secret du VPS prod. `production` ne sert qu'aux jobs de `main` (`cd.yml`, `deploy-api-manual.yml`).
 
 ### Deploy prod VPS
 
