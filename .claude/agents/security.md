@@ -102,6 +102,10 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGINS?.split(',') ?? ['http://localhost:4200'],
     credentials: true,
+    // Réponse à la requête préalable gardée 10 min par le navigateur (perf, oct. 2026). Pas
+    // d'effet sur l'autorisation : une origine hors CORS_ORIGINS reste refusée sur la réponse
+    // réelle ; seul délai : un retrait d'origine met jusqu'à 10 min à couper ses requêtes préalables.
+    maxAge: 600,
   });
 
   app.setGlobalPrefix('api');

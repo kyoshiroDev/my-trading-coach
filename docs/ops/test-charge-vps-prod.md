@@ -24,8 +24,10 @@
 ```sh
 # [L] fichiers
 ssh greg@149.202.40.240 'install -d -m 700 /opt/infra/load'
-scp infra/prod/load/{docker-compose.load.yml,make-env.sh,mesures.sh} tools/load/seed-beta.sql greg@149.202.40.240:/opt/infra/load/
-ssh greg@51.83.197.230 'install -d -m 700 ~/charge' && scp tools/load/*.js infra/prod/load/garde-fou.sh greg@51.83.197.230:charge/
+scp infra/prod/load/{docker-compose.load.yml,make-env.sh,mesures.sh,file-email.sh} tools/load/seed-beta.sql greg@149.202.40.240:/opt/infra/load/
+ssh greg@51.83.197.230 'install -d -m 755 ~/charge' && scp tools/load/*.js infra/prod/load/garde-fou.sh greg@51.83.197.230:charge/
+# k6 tourne en utilisateur non root : scripts lisibles, sortie inscriptible
+ssh greg@51.83.197.230 'chmod 644 ~/charge/*.js && install -d -m 777 ~/charge/out'
 
 # [P] environnement (image = celle de la couleur prod en service)
 cd /opt/infra/load && bash make-env.sh mtc_api_prod:<sha12>
@@ -37,22 +39,23 @@ dc up -d api      # certificat load.api.mytradingcoach.app par challenge DNS, sa
 # [P] jeu de données : 3 000 comptes Premium, ≈ 6 M trades (~15 min, en arrière-plan)
 HASH=$(docker exec load_api node -e "require('argon2').hash('LoadTest-2026!',{type:2,memoryCost:19456,timeCost:2,parallelism:1}).then(console.log)")
 { printf '\\set pwhash %s\n' "$HASH"; cat seed-beta.sql; } > /tmp/seed-load.sql
-nohup sh -c 'docker exec -i load_postgres psql -U mtc_user -d mytradingcoach_load -v users=3000 < /tmp/seed-load.sql > seed.log 2>&1' &
+nohup sh -c 'docker exec -i load_postgres psql -U mtc_user -d mytradingcoach_load -v users=3000 < /tmp/seed-load.sql > seed.log 2>&1' </dev/null >/dev/null 2>&1 &
 ```
 
 ## 3. Test
 
 ```sh
 # [P] mesures (CSV toutes les 15 s)
-nohup bash /opt/infra/load/mesures.sh /opt/infra/load/mesures-$(date +%Y%m%d-%H%M).csv >/dev/null 2>&1 &
+# </dev/null : sinon la session ssh qui le lance reste bloquée
+nohup bash /opt/infra/load/mesures.sh /opt/infra/load/mesures-$(date +%Y%m%d-%H%M).csv </dev/null >/dev/null 2>&1 &
 
 # [A] k6 + chien de garde (clé : grep LOAD_TEST_KEY /opt/infra/load/.env.api sur [P])
 cd ~/charge
 docker run -d --name k6-charge --cpus 3 --memory 4500m --add-host load.api.mytradingcoach.app:149.202.40.240 \
-  -v "$PWD:/scripts" grafana/k6:2.2.0 run --summary-export=/scripts/resultat.json \
+  -v "$PWD:/scripts" grafana/k6:2.2.0 run --summary-export=/scripts/out/resultat.json \
   -e BASE_URL=https://load.api.mytradingcoach.app/api -e LOAD_TEST_KEY=<clé> -e LOAD_USER_COUNT=3000 \
-  -e HOLD_MIN=5 -e PEAKS=2000,2500,3000,3500,4000 -e PEAK_HOLD_MIN=5 /scripts/peak.js
-nohup bash garde-fou.sh k6-charge 0.5 >> garde-fou.log 2>&1 &
+  -e HOLD_MIN=5 -e PEAKS=2000,2500,3000,3500,4000 -e PEAK_HOLD_MIN=5 /scripts/peak.js </dev/null
+setsid nohup bash garde-fou.sh k6-charge 0.5 >> garde-fou.log 2>&1 </dev/null &
 ```
 
 Montée : 200 → 500 → 1 000 → 1 500 (5 min), puis +500 toutes les 8 min jusqu'à 4 000 (~64 min au
@@ -60,7 +63,27 @@ maximum). **Point de rupture** = premier palier où, sur l'API de test, le p95 d
 erreurs dépassent 1 %, ou bien où le débit baisse quand les utilisateurs augmentent. Mesure minute
 par minute dans le journal d'accès Traefik (`docker logs mtc_traefik | grep load-api@docker`).
 
-Puis vague d'inscriptions (#487) : `signup-wave.js` (30/min, 10 min), même `docker run`.
+### Vague d'inscriptions (#487)
+
+Après le retour au calme de la prod. Chaque inscription est un client distinct pour le limiteur
+(`x-load-client: signup-<vu>-<itération>`), comme de vrais inscrits arrivant chacun de leur IP.
+
+```sh
+# [A]
+docker run -d --name k6-signup --cpus 3 --memory 4500m --add-host load.api.mytradingcoach.app:149.202.40.240 \
+  -v "$PWD:/scripts" grafana/k6:2.2.0 run --summary-export=/scripts/out/signup.json \
+  -e BASE_URL=https://load.api.mytradingcoach.app/api -e LOAD_TEST_KEY=<clé> \
+  -e SIGNUPS_PER_MIN=30 -e DURATION=10m /scripts/signup-wave.js </dev/null
+setsid nohup bash garde-fou.sh k6-signup 0.5 >> garde-fou-signup.log 2>&1 </dev/null &
+# fin : nombre d'inscriptions réussies (compteur k6)
+python3 -c "import json;print(int(json.load(open('out/signup.json'))['metrics']['signups_ok']['count']))"
+
+# [P] critère « 0 e-mail perdu » : jobs de la file `email` (pas de worker de test → ils y restent)
+bash /opt/infra/load/file-email.sh <signups_ok>
+```
+
+Critères de fin (#487) : 0 OOM, 0 erreur 5xx, p95 de `POST /auth/register` < 1,5 s, **0 e-mail
+perdu** = jobs en file (+ envois directs si la file était indisponible) = inscriptions réussies.
 
 ## 4. Nettoyage (obligatoire, ≈ 5 min)
 
@@ -125,8 +148,8 @@ Résumé k6 : 804 307 requêtes en 47 min, p50 43 ms, p95 239 ms (rupture compri
 **Vague d'inscriptions (#487)**, juste après, 30/min pendant 10 min : 199 inscriptions en 201
 (p50 67 ms, p95 91 ms, max 134 ms, hachage argon2 compris), prod inchangée (~110 ms). Les 102 × 429
 sont un **artefact** : `signup-wave.js` envoie `x-load-client: vu-<n>` (20 VU) et la limite
-d'inscription est de 10/h par client → 200 au plus. À corriger avant le prochain passage : un
-identifiant de client par inscription, pas par VU.
+d'inscription est de 10/h par client → 200 au plus. **Corrigé le 17/10** : un identifiant de client
+par inscription (`signup-<vu>-<itération>`), et contrôle e-mail par `file-email.sh`.
 
 **Incidents du passage** : (1) PR #575 (`dev` → `main`) mergée à 12 h 51, la CD a redéployé l'API
 prod (blue → green) vers 13 h 02, pendant la vague d'inscriptions : sans effet sur le test (API de

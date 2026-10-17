@@ -24,7 +24,8 @@ import { OfferIntentService, type OfferIntent } from '@app/core/services/offer-i
 import { BillingApi, type CheckoutPlan, type PartnerValidation } from '@app/core/api/billing.api';
 import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
-import { DialogDirective } from '@mtc/front-ui';
+import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
+import { FOUNDER_INELIGIBLE_MESSAGES, type FounderIneligibility } from '@mtc/shared';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -41,7 +42,7 @@ export function partnerDurationLabel(durationMonths: number | null, interval: In
 
 @Component({
   selector: 'mtc-plan-modal',
-  imports: [DialogDirective, LucideDynamicIcon],
+  imports: [DialogDirective, LucideDynamicIcon, ErrorStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './plan-modal.component.html',
   styleUrl: './plan-modal.component.css',
@@ -87,27 +88,58 @@ export class PlanModalComponent implements OnInit {
   });
 
   // ── Choix de l'offre ──
+  /**
+   * Offres reçues (#578) : avant, AUCUN choix n'est possible. Sinon, pendant le chargement (≥ 1 s
+   * en 4G lente), le prix normal paraissait seul proposé et un clic partait en Premium au lieu du
+   * fondateur demandé par le lien.
+   */
+  protected readonly offersReady = computed(() => this.offersStore.status() === 'loaded');
+  protected readonly offersError = computed(() => this.offersStore.status() === 'error');
+  /** Le lien d'arrivée demande l'offre fondateur : le prix normal n'est jamais choisi à sa place. */
+  private readonly wantsFounder = computed(() => this.preset()?.plan === 'founder');
+  /**
+   * Lien fondateur, offre inaccessible à ce compte (fermée, complète, déjà abonné…) : la raison,
+   * avec le message du checkout, puis l'utilisateur choisit lui-même.
+   */
+  protected readonly founderRefusal = computed(() => {
+    if (!this.wantsFounder() || !this.offersReady() || this.founderAvailable()) return null;
+    const o = this.offersStore.offers();
+    const reason = o?.founder.ineligibleReason;
+    const key: FounderIneligibility =
+      reason && reason in FOUNDER_INELIGIBLE_MESSAGES
+        ? (reason as FounderIneligibility)
+        : o && o.founderOffer.open && o.founderOffer.seatsLeft <= 0
+          ? 'sold_out'
+          : 'closed';
+    return FOUNDER_INELIGIBLE_MESSAGES[key];
+  });
   protected readonly founderAvailable = this.offersStore.founderAvailable;
   protected readonly founderOffer = computed(() => this.offersStore.offers()?.founderOffer ?? null);
   /** Choix explicite de l'utilisateur (prime sur la présélection). */
   private readonly picked = signal<OfferChoice | null>(null);
   /**
    * Présélection : le code du lien s'il est valide, sinon le fondateur (mis en avant) s'il est
-   * accessible, sinon le prix normal.
+   * accessible, sinon le prix normal — SAUF lien fondateur : pas de présélection, l'utilisateur
+   * choisit après avoir lu pourquoi le fondateur n'est pas accessible. `null` = aucun choix.
    */
-  private readonly defaultChoice = computed<OfferChoice>(() => {
+  private readonly defaultChoice = computed<OfferChoice | null>(() => {
+    if (!this.offersReady()) return null;
     const partner = this.validPartner();
     if (partner && this.preset()?.promo) return 'partner';
     if (this.founderAvailable()) return 'founder';
     if (partner) return 'partner';
-    return 'premium';
+    return this.wantsFounder() ? null : 'premium';
   });
-  protected readonly choice = computed<OfferChoice>(() => {
+  protected readonly choice = computed<OfferChoice | null>(() => {
+    if (!this.offersReady()) return null;
     const c = this.picked() ?? this.defaultChoice();
-    if (c === 'founder' && !this.founderAvailable()) return this.validPartner() ? 'partner' : 'premium';
-    if (c === 'partner' && !this.validPartner()) return this.founderAvailable() ? 'founder' : 'premium';
+    const fallback = (): OfferChoice | null => (this.wantsFounder() ? null : 'premium');
+    if (c === 'founder' && !this.founderAvailable()) return this.validPartner() ? 'partner' : fallback();
+    if (c === 'partner' && !this.validPartner()) return this.founderAvailable() ? 'founder' : fallback();
     return c;
   });
+  /** Le bouton d'action ne part que sur un choix fait, offres reçues. */
+  protected readonly canConfirm = computed(() => this.choice() !== null && !this.isLoading());
   /** Deux offres remisées proposées ensemble : on rappelle qu'elles ne se cumulent pas. */
   protected readonly showsBoth = computed(() => this.founderAvailable() && !!this.validPartner());
 
@@ -149,7 +181,8 @@ export class PlanModalComponent implements OnInit {
   private typedByUser = false;
 
   ngOnInit(): void {
-    this.offersStore.load();
+    // L'échec est affiché ici (mtc-error-state) : pas de toast en double.
+    this.offersStore.load({ silent: true });
     const promo = this.preset()?.promo;
     if (promo) {
       this.code.set(promo);
@@ -159,6 +192,10 @@ export class PlanModalComponent implements OnInit {
 
   protected setInterval(value: Interval) {
     this.interval.set(value);
+  }
+
+  protected retryOffers() {
+    this.offersStore.refresh({ silent: true });
   }
 
   protected pick(choice: OfferChoice) {
@@ -190,7 +227,7 @@ export class PlanModalComponent implements OnInit {
   }
 
   /** Essai accordé pour le choix courant (jamais en fondateur ni en annuel). */
-  protected trialFor(choice: OfferChoice): boolean {
+  protected trialFor(choice: OfferChoice | null): boolean {
     return choice !== 'founder' && this.interval() === 'monthly' && this.trialAvailable();
   }
 
@@ -219,6 +256,8 @@ export class PlanModalComponent implements OnInit {
   }
 
   protected confirmPlan() {
+    // Garde aussi côté code (clavier, double appui) : jamais de checkout sans choix sur offres reçues.
+    if (!this.canConfirm()) return;
     this.events.track('trial_click');
     const choice = this.choice();
     this.intent.clear();

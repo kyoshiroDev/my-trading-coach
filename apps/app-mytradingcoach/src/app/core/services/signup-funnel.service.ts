@@ -1,5 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal } from '@angular/core';
 import {
   INTERNAL_STORAGE_KEY,
   internalFlagFromSearch,
@@ -18,6 +17,13 @@ export interface FunnelOrigin {
 
 const ORIGIN_KEY = 'mtc_funnel';
 
+/** Posé par le script inline d'`index.html` quand il a traité `register_view` pour ce chargement. */
+declare global {
+  interface Window {
+    mtcRegisterView?: boolean;
+  }
+}
+
 /** Code d'erreur normalisé d'une inscription refusée (jamais le message brut). */
 export function registerErrorCode(status: number | undefined): SignupFunnelError {
   if (status === 409) return 'email_taken';
@@ -31,11 +37,12 @@ export function registerErrorCode(status: number | undefined): SignupFunnelError
  * Parcours d'inscription par source (`POST /public/funnel`) : page d'inscription, envoi, succès,
  * erreur, départ vers le paiement. Anonyme et sans cookie (étape, source, medium, campagne,
  * navigateur intégré, detail d'une liste fermée), envoi best-effort jamais bloquant.
+ * Envoi par `sendBeacon` en `text/plain` (repli `fetch` keepalive) : pas de requête préalable CORS,
+ * et l'étape part même si la page change juste après (`register_submit`, départ vers Stripe).
  * Mode interne (`?internal=1`, localStorage `mtc_internal`) : rien n'est envoyé depuis ce navigateur.
  */
 @Injectable({ providedIn: 'root' })
 export class SignupFunnelService {
-  private readonly http = inject(HttpClient);
   readonly internal = signal(this.readInternal());
   /** Origine en mémoire (repli si sessionStorage est indisponible). */
   private memory: FunnelOrigin | null = null;
@@ -54,7 +61,12 @@ export class SignupFunnelService {
     this.internal.set(flag);
   }
 
-  /** Ouverture de /register : retient l'origine du parcours pour l'onglet, puis `register_view`. */
+  /**
+   * Ouverture de /register : retient l'origine du parcours pour l'onglet, puis `register_view`,
+   * SAUF si le script d'`index.html` l'a déjà traité pour ce chargement de page (envoyé dès
+   * l'arrivée, avant le JS). Une arrivée par navigation interne (connexion → inscription) ou sur
+   * un hôte sans ce script (local) reste envoyée ici.
+   */
   start(origin: FunnelOrigin): void {
     try {
       sessionStorage.setItem(ORIGIN_KEY, JSON.stringify(origin));
@@ -62,15 +74,29 @@ export class SignupFunnelService {
       /* sans stockage, les étapes suivantes de cette page gardent l'origine en mémoire */
     }
     this.memory = origin;
+    if (window.mtcRegisterView) {
+      delete window.mtcRegisterView;
+      return;
+    }
     this.track('register_view');
   }
 
   track(step: SignupFunnelStep, detail?: string): void {
     if (this.internal()) return;
     const origin = this.origin() ?? {};
-    this.http
-      .post(`${environment.apiUrl}/public/funnel`, { step, ...origin, inApp: this.inApp, ...(detail ? { detail } : {}) })
-      .subscribe({ error: () => undefined });
+    const url = `${environment.apiUrl}/public/funnel`;
+    const body = JSON.stringify({ step, ...origin, inApp: this.inApp, ...(detail ? { detail } : {}) });
+    let sent = false;
+    try {
+      sent = navigator.sendBeacon?.(url, new Blob([body], { type: 'text/plain' })) ?? false;
+    } catch {
+      /* sendBeacon refusé (taille, contexte) : repli fetch */
+    }
+    if (!sent) {
+      fetch(url, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body }).catch(
+        () => undefined,
+      );
+    }
   }
 
   /**

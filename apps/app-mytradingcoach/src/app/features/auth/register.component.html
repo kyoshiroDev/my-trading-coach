@@ -97,10 +97,7 @@
             [attr.aria-pressed]="showPassword()"
             (click)="showPassword.set(!showPassword())"
           >
-            <svg
-              [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
-              [size]="15"
-              color="var(--text-2)"></svg>
+            <mtc-eye-icon [off]="showPassword()" />
           </button>
         </div>
         @if (passwordError()) {
@@ -131,10 +128,7 @@
             [attr.aria-pressed]="showConfirm()"
             (click)="showConfirm.set(!showConfirm())"
           >
-            <svg
-              [lucideIcon]="showConfirm() ? EyeOffIcon : EyeIcon"
-              [size]="15"
-              color="var(--text-2)"></svg>
+            <mtc-eye-icon [off]="showConfirm()" />
           </button>
         </div>
         @if (confirmError()) {

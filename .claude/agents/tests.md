@@ -299,11 +299,17 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 ```
 ├── user.store.spec.ts    → isPremium(), isFreePlan(), isInTrial()
 ├── auth.guard.spec.ts    → redirect si non connecté
+├── index-register-view.spec.ts (src/, à côté d'index.html)
+│   → exécute le script inline register_view d'index.html avec un faux navigateur ;
+│     motif inApp = IN_APP_UA_PATTERN, URL de l'API = environment.*.ts (un script inline
+│     ne peut rien importer : ce test est la seule garde contre la dérive)
 └── pnl-color.pipe.spec.ts
     → positif → var(--green)
     → négatif → var(--red)
     → null → var(--text-2)
 ```
+- jsdom n'implémente pas `Blob.text()` : lire un corps de `sendBeacon` avec `FileReader`
+  (cf. `signup-funnel.service.spec.ts`).
 
 ---
 

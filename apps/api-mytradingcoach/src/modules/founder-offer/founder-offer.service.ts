@@ -6,7 +6,7 @@ import {
   Role,
   type FounderSeat,
 } from '@prisma/client';
-import { FOUNDER_MILESTONES, FOUNDER_OFFER } from '@mtc/shared';
+import { FOUNDER_MILESTONES, FOUNDER_OFFER, type FounderIneligibility } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
@@ -27,13 +27,8 @@ const TAKEN_STATUSES: FounderSeatStatus[] = [FounderSeatStatus.ACTIVE, FounderSe
 
 export type FounderInterval = 'month' | 'year';
 
-export type FounderIneligibility =
-  | 'closed'
-  | 'sold_out'
-  | 'excluded'
-  | 'already_founder'
-  | 'tariff_lost'
-  | 'subscribed';
+/** Défini dans @mtc/shared (partagé avec la modale de plans de l'app). */
+export type { FounderIneligibility };
 
 export interface FounderEligibility {
   eligible: boolean;

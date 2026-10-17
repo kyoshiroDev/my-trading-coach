@@ -9,16 +9,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import {
-  LucideDynamicIcon,
-  LucideEye as Eye,
-  LucideEyeOff as EyeOff,
-} from '@lucide/angular';
+import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { OfferIntentService } from '../../core/services/offer-intent.service';
+import { OffersStore } from '../../core/stores/offers.store';
 
 @Component({
   selector: 'mtc-login',
-  imports: [FormsModule, RouterLink, LucideDynamicIcon],
+  imports: [FormsModule, RouterLink, EyeIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
   templateUrl: './login.component.html',
@@ -27,9 +25,9 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly offerIntent = inject(OfferIntentService);
+  private readonly offersStore = inject(OffersStore);
 
-  protected readonly EyeIcon = Eye;
-  protected readonly EyeOffIcon = EyeOff;
 
   protected readonly email = signal('');
   protected readonly password = signal('');
@@ -65,7 +63,11 @@ export class LoginComponent {
       .login(this.email(), this.password())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => {
+          // Lien d'offre en attente (#578) : offres demandées dès la connexion, pour la modale.
+          if (this.offerIntent.needsChoice()) this.offersStore.load({ silent: true });
+          this.router.navigate(['/dashboard']);
+        },
         error: (err) => {
           const status = err.status;
           if (status === 401)

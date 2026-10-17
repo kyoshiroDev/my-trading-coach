@@ -866,12 +866,30 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - **Toute modale** porte `role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="fermer()"` sur
   la boîte (pas sur le fond) : focus envoyé dedans, Tab piégé, Échap ferme, focus rendu à la
   fermeture. Titre relié par `aria-labelledby`. Ne pas recoder ce comportement à la main.
-- **Routeur** : `withPreloading(PreloadAllModules)` + `withInMemoryScrolling` (app et admin). Le shell
-  connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre : `mtcScrollMemory` sur ce
-  conteneur remet en haut à chaque page et restaure la position au bouton « Précédent ».
+- **Routeur** : `withInMemoryScrolling` (app et admin) + préchargement : admin `PreloadAllModules` ;
+  **app `AuthenticatedPreloading`** (`core/auth/authenticated-preloading.ts`, oct. 2026) : rien pour un
+  visiteur anonyme, et pour un connecté seulement une fois le navigateur inactif (`whenIdle`,
+  `requestIdleCallback`, repli 1,5 s sur Safari). Avant, `PreloadAllModules` faisait télécharger 35
+  chunks (270 Kio) du tableau de bord à un visiteur de /register, en concurrence avec le formulaire.
+  Le shell connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre :
+  `mtcScrollMemory` sur ce conteneur remet en haut à chaque page et restaure la position au bouton
+  « Précédent ».
+- **`/register` sans import paresseux** (`component: RegisterComponent` dans `app.routes.ts`) : page
+  d'arrivée des pubs. L'import paresseux ajoutait 2 allers-retours en cascade (chunk de la page, puis
+  ses dépendances), ≈ 1,3 s en 4G lente. Coût : +12,8 Ko gz au bundle initial (≈ 474 kB bruts, au-dessus
+  de l'avertissement 450 kB, sous le budget bloquant 500 kB). `/login` reste paresseux : le passer en
+  direct ne coûterait que +0,6 Ko gz mais 9 kB bruts de marge sur le budget. Ce qui est importé par
+  l'inscription arrive au démarrage : **pas de `@lucide/angular`** dedans (œil du mot de passe :
+  `mtc-eye-icon`, SVG en ligne, partagé avec la connexion).
+- **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
+  intégré (tokens de `theme.css` avec valeurs de repli), visibles dès le HTML. Texte en police
+  monospace **système** : JetBrains Mono y ferait télécharger une police en concurrence avec le JS. Retiré par `App`
+  (`removeBootScreen`) après le rendu de la PREMIÈRE page (fin de navigation + `afterNextRender`), pas
+  au démarrage d'Angular, sinon une page paresseuse laisserait un écran vide. Jamais d'écran vide.
 - **Bundle initial < 500 kB (budget bloquant)** : `@lucide/angular` est un seul module ; si un
-  composant chargé au démarrage (racine, toasts, dialogues globaux) l'importe, TOUTES les icônes de
-  l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`).
+  composant chargé au démarrage (racine, toasts, dialogues globaux, **inscription**) l'importe, TOUTES
+  les icônes de l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`,
+  `mtc-eye-icon`).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
@@ -936,14 +954,32 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 
 ## Parcours d'inscription par source (oct. 2026)
 
-`core/services/signup-funnel.service.ts` → `POST /public/funnel` (HttpClient, erreurs avalées, anonyme :
-étape, source/medium/campagne, `inApp`, detail d'une liste fermée de `@mtc/shared`).
-- `RegisterComponent` : `start(origine)` à l'ouverture (`register_view`, origine = UTM résolues par
+`core/services/signup-funnel.service.ts` → `POST /public/funnel` par **`navigator.sendBeacon` en
+`text/plain`** (repli `fetch` keepalive `text/plain`) : pas de requête préalable CORS, et l'étape part
+même si la page change juste après (`register_submit` avant la redirection, `checkout_redirect` avant
+Stripe). Anonyme : étape, source/medium/campagne, `inApp`, detail d'une liste fermée de `@mtc/shared`.
+L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas revenir à HttpClient.
+- **`register_view` dès l'arrivée** (oct. 2026) : script inline `#mtc-register-view` d'`index.html`,
+  exécuté au chargement de `/register` sur `app.`, `dev.app.` et `beta.app.mytradingcoach.app` (URL de
+  l'API déduite de l'hôte), AVANT le téléchargement de l'app : un visiteur qui part pendant le
+  chargement est compté. Origine = UTM du lien, sinon `mtc_utm` de l'onglet, sinon site d'origine
+  (mêmes règles que `resolveAcquisition` / `referrerHost`). Rien n'est envoyé si connecté
+  (`access_token` + `user` en localStorage) ni en mode interne (`?internal=1` ou `mtc_internal`).
+  Il pose `window.mtcRegisterView` : `SignupFunnelService.start()` ne renvoie alors pas `register_view`
+  pour ce chargement (pas de double comptage), mais l'envoie encore après une navigation interne
+  (connexion → inscription) ou sur un hôte sans script (local). Motif `inApp` = `IN_APP_UA_PATTERN`
+  recopié : `src/index-register-view.spec.ts` vérifie qu'il est identique, et l'URL de l'API de
+  chaque `environment.*.ts`. Nouvel environnement déployé → l'ajouter au script ET au test.
+- ⚠️ **Chiffres « Page inscription » avant / après** : depuis la mise en prod de ce correctif (branche
+  `fix/fuite-clic-inscription`, commits du 2026-10-17), `register_view` est compté dès l'arrivée et
+  non plus après le chargement de l'app (≈ 3,9 s plus tard en 4G lente) ; un utilisateur connecté qui
+  ouvre /register n'est plus compté. Les taux clic → page d'avant et d'après ne sont pas comparables.
+- `RegisterComponent` : `start(origine)` à l'ouverture (origine = UTM résolues par
   `resolveAcquisition`, gardée en sessionStorage `mtc_funnel` car `mtc_utm` est effacé après
-  l'inscription), `register_submit` si le formulaire est valide côté client, `register_success`,
-  `register_error` avec `registerErrorCode(status)` (409 `email_taken`, 400/422 `validation`, 0
-  `network`, ≥ 500 `server`, sinon `other`). Pas de `register_view` si l'utilisateur, déjà connecté,
-  est renvoyé vers `/dashboard`.
+  l'inscription ; `register_view` sauf si déjà envoyé par `index.html`), `register_submit` si le
+  formulaire est valide côté client, `register_success`, `register_error` avec
+  `registerErrorCode(status)` (409 `email_taken`, 400/422 `validation`, 0 `network`, ≥ 500 `server`,
+  sinon `other`). Pas de `register_view` si l'utilisateur, déjà connecté, est renvoyé vers `/dashboard`.
 - `BillingService.startCheckout` → `trackCheckout(plan)` = `checkout_redirect` (detail `founder` /
   `premium`), **seulement si l'onglet est passé par /register** (`mtc_funnel` présent) : un abonné qui
   paie depuis le Profil n'est pas une étape du parcours.
@@ -965,7 +1001,16 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   places, place fondateur, éligibilité, `refundUntil`, code partenaire actif, intervalle). Chargé À LA
   DEMANDE (`load()` : modale, cadenas, Profil), une fois par utilisateur, `refresh()` après paiement /
   changement d'intervalle, délai max 10 s (une session périmée ne le fige pas). Pas dans `/auth/me`
-  (interrogé toutes les 5 min). Démo : jamais chargé.
+  (interrogé toutes les 5 min). Démo : jamais chargé. **`status`** (#578) : `idle` (rien demandé :
+  déconnecté, démo) · `loading` · `loaded` · `error` ; un rafraîchissement d'offres déjà là reste
+  `loaded`. `load({ silent: true })` / `refresh({ silent: true })` : requête en `SILENT_ERRORS` (pas de
+  toast), réservé à la modale et au chargement anticipé qui l'alimente ; Profil et cadenas gardent le toast.
+- **Chargement anticipé** (#578) : dès la réponse de l'inscription (`RegisterComponent`, si `offerFlow()`)
+  ou de la connexion (`LoginComponent`, si `needsChoice()`), `offersStore.load({ silent: true })` en
+  parallèle de la navigation ; sur `/register` avec un lien d'offre, le code de la modale est importé
+  quand le navigateur est inactif (`whenIdle`, même chunk que le `@defer` de l'hôte). `/billing/offers`
+  exige un compte : impossible de charger avant l'inscription. Un échec du chargement anticipé est
+  rattrapé sans bruit par le `load()` de la modale à son ouverture.
 - **Intention du lien** : `OfferIntentService` capture `plan=founder|premium`, `promo`, `cta` au
   démarrage (`App`, avant toute redirection) en sessionStorage `mtc_offer_intent`. `plan=founder` ou
   `promo` → pas de checkout direct à l'inscription : `/dashboard`, puis `OfferIntentHostComponent`
@@ -981,6 +1026,16 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
   Champ « Code partenaire » validé en direct (`GET /billing/partner/:code`, debounce 400 ms, raison
   précise du refus). Checkout : fondateur → `founder_*` sans `promo` ; code → `premium_*` + `promo`
   (jamais de cumul). Sous-titre, CTA et ligne de prix suivent l'offre choisie.
+- **Aucun choix avant les offres (#578)** : `choice()` vaut `null` tant que `status` ≠ `loaded` →
+  emplacements neutres (`.offer-skel`, aucun prix), CTA désactivé « Chargement des offres… », et
+  `confirmPlan()` refuse aussi côté code (`canConfirm`). Avant le correctif, la modale s'ouvrait avant
+  `/billing/offers` : seul « Premium 49 € » était proposé quelques centaines de ms et un appui partait en
+  `premium_monthly` au lieu du fondateur demandé par le lien. Échec : `mtc-error-state` + « Réessayer »
+  (`refresh({ silent: true })`), CTA masqué, jamais de repli silencieux sur le Premium.
+- **Lien `plan=founder` sur une offre inaccessible** : la raison (`founderRefusal`, message
+  `FOUNDER_INELIGIBLE_MESSAGES[ineligibleReason]` de `@mtc/shared`, le même que le refus du checkout),
+  bloc `.offer-refusal`, et AUCUNE présélection (CTA « Choisis ton offre ») : le Premium n'est jamais
+  choisi à la place du fondateur. Sans lien fondateur (cadenas, Profil) : présélection inchangée.
 - **`mtc-premium-lock`** : bouton (plus un lien vers `/parametres`, route inexistante) →
   `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
   dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.

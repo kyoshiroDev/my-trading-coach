@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SILENT_ERRORS } from '@mtc/front-ui';
 import { environment } from '@app/environments/environment';
 
 export type CheckoutPlan = 'premium_monthly' | 'premium_yearly' | 'founder_monthly' | 'founder_yearly';
@@ -74,8 +75,11 @@ export class BillingApi {
     });
   }
 
-  offers() {
-    return this.http.get<{ data: BillingOffers }>(`${this.base}/offers`);
+  /** `silent` : l'écran affiche lui-même l'échec (modale de plans, #578), pas de toast en plus. */
+  offers(opts: { silent?: boolean } = {}) {
+    return this.http.get<{ data: BillingOffers }>(`${this.base}/offers`, {
+      context: new HttpContext().set(SILENT_ERRORS, !!opts.silent),
+    });
   }
 
   validatePartnerCode(code: string) {

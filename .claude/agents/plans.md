@@ -265,6 +265,10 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   reçoit jamais le −10 % filleul (toujours moins cher sur la 1re année). Le mois offert au PARRAIN
   reste accordé (pas une remise pour l'acheteur). Commission ambassadeur : 20 % du montant payé.
 - **Gating** : un fondateur est PREMIUM comme tout abonné Stripe actif (aucun guard à part).
+- **Messages de refus** (`closed`, `sold_out`, `excluded`, `already_founder`, `tariff_lost`,
+  `subscribed`) : `FOUNDER_INELIGIBLE_MESSAGES` de `@mtc/shared`, source UNIQUE du 400 du checkout
+  ET de la modale de plans quand un lien `plan=founder` tombe sur une offre inaccessible (#578).
+  Modifier un texte → ici seulement.
 
 ## Codes partenaires (#525, 2026-10-07)
 
