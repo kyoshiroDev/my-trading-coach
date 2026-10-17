@@ -3,6 +3,8 @@
 # Écrit dans /opt/backups/mtc : l app admin (BackupService, BACKUP_DIR) lit ce dossier.
 # Un dump vide ou tronqué est supprimé (pas de fausse impression de sécurité).
 set -eo pipefail
+# Dumps créés en 600 : lisibles par leur seul propriétaire.
+umask 077
 BACKUP_DIR="/opt/backups/mtc"
 TIMESTAMP=$(date +%Y%m%dT%H%M)
 path="$BACKUP_DIR/mtc_prod_${TIMESTAMP}_auto.sql.gz"

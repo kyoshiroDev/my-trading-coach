@@ -1026,7 +1026,7 @@ model FounderSeat {
   @@index([status])
 }
 
-/// Code partenaire (ex. LOUIS29). `code` stocké en MAJUSCULES : unicité insensible à la casse.
+/// Code partenaire (ex. TRADER10). `code` stocké en MAJUSCULES : unicité insensible à la casse.
 model PartnerCode {
   id                    String                @id @default(cuid())
   code                  String                @unique

@@ -3,13 +3,13 @@ import { OfferIntentService, intentFromSearch } from './offer-intent.service';
 
 describe('intentFromSearch — lien d’arrivée (#525)', () => {
   it('plan=founder, promo et cta : lus et normalisés', () => {
-    expect(intentFromSearch('?plan=founder&promo=louis29&cta=bandeau&utm_source=x')).toEqual({
-      plan: 'founder', promo: 'LOUIS29', cta: 'bandeau',
+    expect(intentFromSearch('?plan=founder&promo=trader10&cta=bandeau&utm_source=x')).toEqual({
+      plan: 'founder', promo: 'TRADER10', cta: 'bandeau',
     });
   });
 
   it('promo seul ou plan=premium : intention ; rien d’utile → null', () => {
-    expect(intentFromSearch('?promo=LOUIS29')).toEqual({ plan: null, promo: 'LOUIS29', cta: null });
+    expect(intentFromSearch('?promo=TRADER10')).toEqual({ plan: null, promo: 'TRADER10', cta: null });
     expect(intentFromSearch('?plan=premium')).toEqual({ plan: 'premium', promo: null, cta: null });
     expect(intentFromSearch('?utm_source=x')).toBeNull();
     expect(intentFromSearch('?plan=gold')).toBeNull();

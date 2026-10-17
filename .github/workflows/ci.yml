@@ -195,7 +195,7 @@ jobs:
     timeout-minutes: 20
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: production
+    environment: staging
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -225,7 +225,7 @@ jobs:
     timeout-minutes: 15
     needs: checks
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: production
+    environment: staging
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true
@@ -271,7 +271,7 @@ jobs:
     timeout-minutes: 10
     needs: [build-landing]
     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
-    environment: production
+    environment: staging
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       NX_NO_CLOUD: true

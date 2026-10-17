@@ -58,7 +58,7 @@ describe('campagne founder_launch : ciblage et texte', () => {
     const named = founderLaunchTemplate({ userName: 'Ana', appUrl: 'https://app.test/', unsubUrl: 'U', seatsLeft: 187 });
     expect(named.subject).toBe('200 places à 29 €/mois, à vie');
     expect(named.html).toContain('Salut Ana,');
-    expect(named.html).toContain('187 places sur 200');
+    expect(named.html).toContain('<b>Plus que 187 places sur 200</b>');
     expect(named.html).toContain('Premier arrivé, premier servi.');
     expect(named.html).toContain('Le trading comporte un risque de perte en capital.');
     expect(named.html).toContain('href="U"'); // désinscription
@@ -72,7 +72,7 @@ describe('campagne founder_launch : ciblage et texte', () => {
       attachments: [expect.objectContaining({ contentId: 'logo-mtc', filename: 'logo.png' })],
     });
     expect(named.text).toContain('Salut Ana,');
-    expect(named.text).toContain('Il reste 187 places sur 200.');
+    expect(named.text).toContain('Plus que 187 places sur 200.');
     expect(named.text).toContain('Grégory');
     expect(named.text!.indexOf('P.S.')).toBeGreaterThan(named.text!.indexOf('Grégory'));
     expect(named.text).toContain('Me désinscrire des e-mails : U');
@@ -101,7 +101,7 @@ describe('campagne founder_launch : envoi test et envoi réel', () => {
     const mail = resend.send.mock.calls[0][0];
     expect(mail.to).toBe('hello@mytradingcoach.app');
     expect(mail.html).toContain('Salut Alex,');
-    expect(mail.html).toContain('187 places sur 200');
+    expect(mail.html).toContain('Plus que 187 places sur 200');
     expect(mail).toMatchObject({ from: 'Grégory · MyTradingCoach <support@mytradingcoach.app>', replyTo: 'hello@mytradingcoach.app' });
     expect(mail.attachments).toHaveLength(1);
     expect(mail.text).toContain('Salut Alex,');

@@ -83,8 +83,8 @@
           </span>
           <span class="offer-sum">Sans essai · statut fondateur numéroté (n° attribué au paiement)</span>
           <span class="offer-detail">🔒 Prix bloqué tant que ton abonnement reste actif · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours</span>
-          @if (founderOffer(); as f) {
-            <span class="offer-seats">Plus que {{ f.seatsLeft }} place{{ f.seatsLeft > 1 ? 's' : '' }} sur {{ f.seatsTotal }}</span>
+          @if (seatsLabel(); as seats) {
+            <span class="offer-seats">{{ seats }}</span>
           }
         </button>
       }
@@ -168,7 +168,7 @@
         autocomplete="off"
         autocapitalize="characters"
         maxlength="20"
-        placeholder="Ex. LOUIS29"
+        placeholder="Ex. TRADER10"
         [value]="code()"
         (input)="onCodeInput($any($event.target).value)"
         data-testid="partner-code"

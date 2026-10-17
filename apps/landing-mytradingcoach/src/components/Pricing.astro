@@ -105,9 +105,10 @@ const FounderWrap = founderOpen ? 'div' : 'template';
           <li>🔒 Prix bloqué à vie tant que ton abonnement reste actif</li>
           <li>Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</li>
         </ul>
-        {/* Compteur : place réservée (masqué, pas retiré) jusqu'au vrai chiffre de l'API. */}
+        {/* Compteur : place réservée (masqué, pas retiré) jusqu'au vrai chiffre de l'API. Libellé
+            partagé founderSeatsLabel (« 200 places disponibles », « Plus que 154 places sur 200 »). */}
         <div class="founder-seats is-pending">
-          <div class="founder-seats-text"><strong data-founder-left></strong> sur {FOUNDER_OFFER.seats}</div>
+          <div class="founder-seats-text"><strong data-founder-left>&nbsp;</strong></div>
           <span class="founder-seats-bar" aria-hidden="true"><span class="founder-seats-fill"></span></span>
         </div>
         {FEATURES.multiAccounts && (
@@ -224,7 +225,8 @@ const FounderWrap = founderOpen ? 'div' : 'template';
 </section>
 
 <script>
-  import { captureCtaFromUrl, isSelling, onFounderState, placesLabel, rememberedCta } from '../lib/founder-offer';
+  import { founderSeatsLabel } from '@mtc/shared';
+  import { captureCtaFromUrl, isSelling, onFounderState, rememberedCta } from '../lib/founder-offer';
 
   captureCtaFromUrl();
 
@@ -301,7 +303,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
       if (!card) return;
       section.classList.add('has-founder');
       const left = card.querySelector('[data-founder-left]');
-      if (left) left.textContent = `${placesLabel(s.seatsLeft)} restante${s.seatsLeft > 1 ? 's' : ''}`;
+      if (left) left.textContent = founderSeatsLabel(s.seatsLeft, s.seatsTotal) ?? '';
       const fill = card.querySelector<HTMLElement>('.founder-seats-fill');
       if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - s.seatsLeft) / s.seatsTotal})`;
       card.querySelector('.founder-seats')?.classList.remove('is-pending');

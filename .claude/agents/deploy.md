@@ -26,9 +26,7 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 > - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`) : clé **`mtc-api-prod-admin`**
 >   (`VPS_SSH_KEY_B64`, `VPS_USER=greg`), autorisée chez `greg` **sur le VPS prod seulement**, avec
 >   `from="172.16.0.0/12"` (réseau Docker local), `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
->   Toutes les actions (stats, containers, logs, sauvegardes). ⚠️ greg est dans le groupe `docker` : un
->   shell obtenu par cette clé vaut root → **restriction à venir** (`command=` + liste blanche, comme
->   `mtc-monitor`).
+>   Toutes les actions (stats, containers, logs, sauvegardes).
 > - Serveur `secondaire` = `VPS_SECONDARY_HOST=51.83.197.230` (`VPS_SECONDARY_LABEL=VPS dev · beta`),
 >   onglet de la page Surveillance (#569) : **lecture seule**, clé dédiée `mtc-api-prod-secondaire-ro`
 >   (`VPS_SECONDARY_SSH_KEY_B64`, empreinte d'hôte épinglée par `VPS_SECONDARY_HOST_KEY_SHA256`),
@@ -222,10 +220,12 @@ exec node main.js
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (landing et admin de prod ; dev et beta passent par `staging`), fronts publiés en releases par `infra/deploy-static.sh`
 - `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
 - `PROD_VPS_KNOWN_HOSTS` : clé d'hôte du VPS prod, une ligne known_hosts (`149.202.40.240 ssh-ed25519 AAAA…`), lue par le job app prod de `cd.yml` à la place de `ssh-keyscan`. Le scan ouvre des connexions sans authentification que fail2ban compte comme des échecs : runner banni, rsync en « Connection timed out » (2026-10-16). À refaire si la clé d'hôte du VPS change (réinstallation).
-- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secrets créés dans l'environnement `production` (ou au niveau du dépôt) : tous ces jobs y tournent.
+- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secret présent dans `production` (admin et landing de prod) **et** dans `staging` (dev et beta).
+
+**Environment `staging` :** jobs de déploiement dev et beta (`ci.yml` `deploy-*-dev`, `beta.yml` `deploy-*-beta`). Secrets : `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `DEV_VPS_KNOWN_HOSTS`. Aucun secret du VPS prod. `production` ne sert qu'aux jobs de `main` (`cd.yml`, `deploy-api-manual.yml`).
 
 ### Deploy prod VPS
 
@@ -729,7 +729,7 @@ Avant : dumps quotidiens **uniquement sur le VPS** (`/opt/backups/mtc`), perdus 
 | Destination | Backblaze B2, bucket `mtc-backups-7k3q9x`, région **EU Central** (Amsterdam), privé, SSE-B2, « keep only the last version » |
 | Compte B2 | `hello@mytradingcoach.app` (2FA). Clé d'application **`mtc-vps-restic`**, limitée au bucket, Read and Write. **Jamais la clé maîtresse sur le VPS.** |
 | Outil | restic 0.18.1 **dans un conteneur** (`restic/restic`), dépôt `b2:mtc-backups-7k3q9x:mtc`, chiffré avant envoi |
-| Scripts | `infra/backups/offsite.sh` et `restore-test.sh`, copiés dans `/opt/backups/` |
+| Scripts | `infra/backups/backup.sh` (dumps dev et beta, en 600) dans `/opt/backups/mtc/` ; `offsite.sh` et `restore-test.sh` dans `/opt/backups/` |
 | Identifiants | `/opt/backups/offsite.env` (chmod 600, jamais versionné, modèle `offsite.env.example`) |
 | Contenu | dumps des 3 bases (`/opt/backups/mtc`) **et tout ce qui n'existe que sur le VPS**, chaque nuit : `/opt/infra/databases` (compose, `.env.databases`, `pgbouncer.ini`, `init-db.sh`), `/opt/infra/static` (compose, confs nginx), Traefik (`traefik.yml`, compose, `.env.traefik` avec le jeton API OVH des certificats), les `.env` de prod/dev/beta, la crontab, les scripts de sauvegarde. **Pas** : le code (GitHub), les builds et images (refaits par le CI), les certificats (Let's Encrypt les régénère), `offsite.env` (gestionnaire de mots de passe). Aucun fichier utilisateur sur disque : toutes les données sont dans Postgres. |
 | Planning | cron `45 3 * * *` (après `backup.sh` à 3 h et le nettoyage Docker à 3 h 30), log `/opt/backups/offsite.log` |
@@ -770,7 +770,7 @@ recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait 
 |---|---|---|
 | MAJ sécurité | unattended-upgrades | unattended-upgrades (Docker en liste noire) |
 | Reboot | **auto à 05:00** si requis (`52unattended-upgrades-local`) | **jamais auto** (`52mtc-unattended`) → alerte e-mail `watch-containers.sh`, reboot planifié à la main |
-| sudo | mot de passe → Greg lance les commandes dans SON terminal | NOPASSWD temporaire (migration) |
+| sudo | mot de passe → Greg lance les commandes dans SON terminal | mot de passe (NOPASSWD de la migration retiré le 2026-10-17) |
 
 Procédure : audit en lecture seule (`uptime`, `/var/run/reboot-required.pkgs`, `apt list --upgradable`,
 `docker system df`, volumes sans conteneur, mtime des logs cron) → nettoyage → `apt-get full-upgrade`

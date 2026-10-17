@@ -2,6 +2,7 @@ import {
   Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import type { SSHExecCommandOptions } from 'node-ssh';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { VpsService } from './vps.service';
@@ -9,6 +10,9 @@ import { DockerService } from './docker.service';
 import { BackupService } from './backup.service';
 import { CreateBackupDto } from './dto/create-backup.dto';
 import { listVpsServers, resolveVpsServer } from './vps-servers';
+
+/** Canal SSH d'une commande en cours (type de `ssh2`, exposé par node-ssh). */
+type ClientChannel = Parameters<NonNullable<SSHExecCommandOptions['onChannel']>>[0];
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller()
@@ -84,6 +88,7 @@ export class VpsController {
     // impossible doit sortir en erreur HTTP, pas en flux vide.
     const serverId = resolveVpsServer(server).id;
     this.docker.assertFullAccess(serverId);
+    const containerName = this.docker.logsContainerName(container);
     const ssh = await this.vps.getConnection(serverId);
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -91,9 +96,20 @@ export class VpsController {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const containerName = container.replace(/[^a-zA-Z0-9_-]/g, '');
+    // Onglet fermé : on arrête `docker logs -f` et on ferme le canal SSH, sinon la commande et le
+    // canal restent ouverts sur le serveur jusqu'à la prochaine ligne de log.
+    let channel: ClientChannel | undefined;
+    let closed = false;
+    const stop = (ch: ClientChannel) => {
+      ch.signal('TERM');
+      ch.close();
+    };
 
     ssh.exec(`docker logs -f --tail 100 ${containerName}`, [], {
+      onChannel: (ch: ClientChannel) => {
+        channel = ch;
+        if (closed) stop(ch);
+      },
       onStdout: (chunk: Buffer) => {
         const lines = chunk.toString().split('\n');
         lines.forEach(line => {
@@ -108,6 +124,10 @@ export class VpsController {
       },
     }).catch(() => res.end());
 
-    req.on('close', () => res.end());
+    req.on('close', () => {
+      closed = true;
+      if (channel) stop(channel);
+      res.end();
+    });
   }
 }
