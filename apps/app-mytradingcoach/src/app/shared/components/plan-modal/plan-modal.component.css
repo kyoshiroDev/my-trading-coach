@@ -227,6 +227,29 @@
 .offer-seats { font-size: 11px; font-family: var(--font-mono); color: var(--blue-bright); }
 .offer-no-mix { font-size: 11px; color: var(--text-3); text-align: center; margin: 0 0 10px; }
 
+/* Offres pas encore reçues (#578) : emplacements neutres, aucun prix ni libellé d'offre. */
+.offer-skel {
+  height: 66px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-2);
+  animation: offer-skel-pulse 1.2s ease-in-out infinite;
+}
+@keyframes offer-skel-pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .offer-skel { animation: none; } }
+.offers-error { display: block; margin-bottom: 14px; }
+/* Lien fondateur, offre inaccessible : la raison, avant le choix (avertissement, pas une erreur). */
+.offer-refusal {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--yellow-dim);
+  border: 1px solid rgba(245, 158, 11, .35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 10px;
+}
+
 .plan-col-feats {
   list-style: none;
   padding: 0;
