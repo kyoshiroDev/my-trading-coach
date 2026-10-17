@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Type, signal } from '@angular/core';
 import type { EcoEvent } from '@mtc/shared';
 import type { SessionTrade } from '@app/core/api/session.api';
 import { MoneyService } from '@app/core/services/money.service';
@@ -16,7 +16,7 @@ import { MoneyPipe } from '@app/shared/pipes/money.pipe';
 const fmt = (v: number, o?: { sign?: boolean }) => `${o?.sign && v > 0 ? '+' : ''}${v} $`;
 const money = { formatFor: (_: unknown, v: number, o?: { sign?: boolean }) => fmt(v, o), format: fmt };
 
-function render<T>(cmp: new (...a: never[]) => T, inputs: Record<string, unknown>, template?: string, imports: unknown[] = []) {
+function render<T>(cmp: Type<T>, inputs: Record<string, unknown>, template?: string, imports: unknown[] = []) {
   TestBed.configureTestingModule({ providers: [{ provide: MoneyService, useValue: money }] });
   TestBed.overrideComponent(cmp, {
     set: {
