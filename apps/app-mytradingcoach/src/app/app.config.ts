@@ -4,7 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { PreloadAllModules, provideRouter, withInMemoryScrolling, withPreloading } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withPreloading } from '@angular/router';
 import {
   provideHttpClient,
   withFetch,
@@ -16,6 +16,7 @@ import { appRoutes } from './app.routes';
 import { AUTH_TOKEN_SOURCE, jwtRefreshInterceptor } from '@mtc/front-auth';
 import { ERROR_NOTIFIER, errorInterceptor } from '@mtc/front-ui';
 import { AuthService } from './core/auth/auth.service';
+import { AuthenticatedPreloading } from './core/auth/authenticated-preloading';
 import { demoInterceptor } from './core/auth/demo.interceptor';
 import { ToastService } from './core/services/toast.service';
 
@@ -26,12 +27,14 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    // Préchargement des pages en tâche de fond après le 1er affichage : navigation instantanée.
+    // Préchargement des pages en tâche de fond, pour un utilisateur connecté et une fois le
+    // navigateur inactif (AuthenticatedPreloading) : navigation instantanée sans ralentir
+    // l'arrivée d'un visiteur sur /register.
     // Défilement : effectif pour la fenêtre (pages publiques) ; le shell connecté défile dans
     // <main>, géré par ScrollMemoryDirective.
     provideRouter(
       appRoutes,
-      withPreloading(PreloadAllModules),
+      withPreloading(AuthenticatedPreloading),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
     ),
     // `errorInterceptor` en DERNIER : il ne doit voir que les erreurs que les intercepteurs
