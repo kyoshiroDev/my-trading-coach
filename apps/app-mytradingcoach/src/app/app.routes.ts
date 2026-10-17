@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { parrainageGuard, ambassadorPageGuard } from './core/auth/referral-gating.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
+// Inscription et connexion dans le bundle initial (pas d'import paresseux) : ce sont les pages
+// d'arrivée des visiteurs (pub, landing). Un import paresseux ajoutait 2 allers-retours réseau
+// en cascade (chunk de la page, puis ses dépendances) avant le formulaire, ≈ 1,3 s en 4G lente.
+import { RegisterComponent } from './features/auth/register.component';
 
 export const appRoutes: Routes = [
   {
@@ -41,10 +45,7 @@ export const appRoutes: Routes = [
         noindex: false,
       },
     },
-    loadComponent: () =>
-      import('./features/auth/register.component').then(
-        (m) => m.RegisterComponent,
-      ),
+    component: RegisterComponent,
   },
   {
     path: 'forgot-password',

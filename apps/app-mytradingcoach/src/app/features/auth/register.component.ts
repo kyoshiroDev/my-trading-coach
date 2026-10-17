@@ -9,11 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  LucideDynamicIcon,
-  LucideEye as Eye,
-  LucideEyeOff as EyeOff,
-} from '@lucide/angular';
+import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.component';
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { OfferIntentService } from '../../core/services/offer-intent.service';
@@ -34,7 +30,7 @@ export function referrerHost(referrer: string): string {
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, LucideDynamicIcon],
+  imports: [FormsModule, RouterLink, EyeIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register.component.css',
   templateUrl: './register.component.html',
@@ -48,8 +44,6 @@ export class RegisterComponent {
   private readonly offerIntent = inject(OfferIntentService);
   private readonly funnel = inject(SignupFunnelService);
 
-  protected readonly EyeIcon = Eye;
-  protected readonly EyeOffIcon = EyeOff;
 
   protected readonly name = signal('');
   protected readonly email = signal('');
