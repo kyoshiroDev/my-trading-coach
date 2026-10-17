@@ -5,6 +5,8 @@
  * forcée (`infra/vps/mtc-monitor-ro.sh`) qui les compare à `infra/vps/mtc-monitor-allowed-commands`.
  * Modifier une chaîne ici = régénérer ce fichier (`vps-commands.spec.ts` échoue sinon) puis le
  * recopier sur l'ancien VPS (`/etc/mtc-monitor/allowed-commands`), sinon le secondaire la refuse.
+ * Le principal les filtre aussi (`infra/prod/ssh/mtc-api-admin-allowed-commands`, vérifié par
+ * `mtc-api-admin.spec.ts`) : même règle, recopier ce fichier sur le VPS prod.
  */
 export const VPS_READ_COMMANDS = {
   loadAvg: 'cat /proc/loadavg',

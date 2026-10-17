@@ -11,8 +11,22 @@ set -eu
 ALLOWED=/etc/mtc-monitor/allowed-commands
 cmd="${SSH_ORIGINAL_COMMAND:-}"
 
-if [ -n "$cmd" ] && grep -Fxq -- "$cmd" "$ALLOWED"; then
-  exec /bin/sh -c "$cmd"
+# Une seule ligne, comparée à l'identique à une ligne du fichier : ni retour à la ligne ni retour
+# chariot (la tabulation de docker stats reste admise).
+nl='
+'
+cr=$(printf '\r')
+case "$cmd" in
+  *"$nl"*|*"$cr"*) cmd_ok=0 ;;
+  *) cmd_ok=1 ;;
+esac
+
+if [ -n "$cmd" ] && [ "$cmd_ok" = 1 ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [ "$line" = "$cmd" ]; then
+      exec /bin/sh -c "$cmd"
+    fi
+  done < "$ALLOWED"
 fi
 
 logger -t mtc-monitor-ro -- "commande refusée : $cmd"

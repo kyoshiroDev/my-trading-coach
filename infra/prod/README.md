@@ -13,6 +13,8 @@ déployés automatiquement : modifier le dépôt **et** le serveur.
 | `backups/backup.sh` | `/opt/backups/mtc/backup.sh` |
 | `backups/offsite.sh`, `backups/restore-test.sh` | `/opt/backups/` (+ `offsite.env`, 600) |
 | `crontab` | `crontab -l` de greg |
+| `ssh/mtc-api-admin.sh` | `/usr/local/bin/mtc-api-admin` (root, 755) |
+| `ssh/mtc-api-admin-allowed-commands` | `/etc/mtc-api-admin/allowed-commands` (root, 644) |
 | `static-docker-compose.yml` | `/opt/infra/static/docker-compose.yml` (app Angular prod seule) |
 | `bascule/` | `/opt/infra/bascule/` — scripts de la bascule (procédure : `docs/ops/bascule-vps-prod.md`) |
 
@@ -20,7 +22,9 @@ Le dépôt est cloné dans `/opt/apps/mytradingcoach/prod` (clé de lecture GitH
 `~/.ssh/github_deploy_mtc`, clé de déploiement « mtc-prod-vps-clone »). `authorized_keys` de greg :
 ta clé, `github-actions-mtc-prod` (CD, secret `PROD_VPS_SSH_KEY`) et `mtc-api-prod-admin` (pages
 VPS de l'admin : clé dans `VPS_SSH_KEY_B64`, acceptée seulement depuis les réseaux Docker
-`172.16.0.0/12`, sans pty ni redirection).
+`172.16.0.0/12`, sans pty ni redirection, avec la commande forcée `mtc-api-admin` : lectures de la
+liste blanche, actions docker et sauvegardes de l'admin, rien d'autre ; une nouvelle commande SSH de
+l'API doit y être ajoutée, `mtc-api-admin.spec.ts` le vérifie).
 
 **Accès de l'API à l'ancien VPS** (onglet « VPS dev · beta » de l'admin) : uniquement par la clé
 dédiée `mtc-api-prod-secondaire-ro` (`VPS_SECONDARY_SSH_KEY_B64`), utilisateur `mtc-monitor`,
