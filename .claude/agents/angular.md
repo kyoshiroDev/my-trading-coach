@@ -1001,7 +1001,16 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   places, place fondateur, éligibilité, `refundUntil`, code partenaire actif, intervalle). Chargé À LA
   DEMANDE (`load()` : modale, cadenas, Profil), une fois par utilisateur, `refresh()` après paiement /
   changement d'intervalle, délai max 10 s (une session périmée ne le fige pas). Pas dans `/auth/me`
-  (interrogé toutes les 5 min). Démo : jamais chargé.
+  (interrogé toutes les 5 min). Démo : jamais chargé. **`status`** (#578) : `idle` (rien demandé :
+  déconnecté, démo) · `loading` · `loaded` · `error` ; un rafraîchissement d'offres déjà là reste
+  `loaded`. `load({ silent: true })` / `refresh({ silent: true })` : requête en `SILENT_ERRORS` (pas de
+  toast), réservé à la modale et au chargement anticipé qui l'alimente ; Profil et cadenas gardent le toast.
+- **Chargement anticipé** (#578) : dès la réponse de l'inscription (`RegisterComponent`, si `offerFlow()`)
+  ou de la connexion (`LoginComponent`, si `needsChoice()`), `offersStore.load({ silent: true })` en
+  parallèle de la navigation ; sur `/register` avec un lien d'offre, le code de la modale est importé
+  quand le navigateur est inactif (`whenIdle`, même chunk que le `@defer` de l'hôte). `/billing/offers`
+  exige un compte : impossible de charger avant l'inscription. Un échec du chargement anticipé est
+  rattrapé sans bruit par le `load()` de la modale à son ouverture.
 - **Intention du lien** : `OfferIntentService` capture `plan=founder|premium`, `promo`, `cta` au
   démarrage (`App`, avant toute redirection) en sessionStorage `mtc_offer_intent`. `plan=founder` ou
   `promo` → pas de checkout direct à l'inscription : `/dashboard`, puis `OfferIntentHostComponent`
@@ -1017,6 +1026,16 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   Champ « Code partenaire » validé en direct (`GET /billing/partner/:code`, debounce 400 ms, raison
   précise du refus). Checkout : fondateur → `founder_*` sans `promo` ; code → `premium_*` + `promo`
   (jamais de cumul). Sous-titre, CTA et ligne de prix suivent l'offre choisie.
+- **Aucun choix avant les offres (#578)** : `choice()` vaut `null` tant que `status` ≠ `loaded` →
+  emplacements neutres (`.offer-skel`, aucun prix), CTA désactivé « Chargement des offres… », et
+  `confirmPlan()` refuse aussi côté code (`canConfirm`). Avant le correctif, la modale s'ouvrait avant
+  `/billing/offers` : seul « Premium 49 € » était proposé quelques centaines de ms et un appui partait en
+  `premium_monthly` au lieu du fondateur demandé par le lien. Échec : `mtc-error-state` + « Réessayer »
+  (`refresh({ silent: true })`), CTA masqué, jamais de repli silencieux sur le Premium.
+- **Lien `plan=founder` sur une offre inaccessible** : la raison (`founderRefusal`, message
+  `FOUNDER_INELIGIBLE_MESSAGES[ineligibleReason]` de `@mtc/shared`, le même que le refus du checkout),
+  bloc `.offer-refusal`, et AUCUNE présélection (CTA « Choisis ton offre ») : le Premium n'est jamais
+  choisi à la place du fondateur. Sans lien fondateur (cadenas, Profil) : présélection inchangée.
 - **`mtc-premium-lock`** : bouton (plus un lien vers `/parametres`, route inexistante) →
   `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
   dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
