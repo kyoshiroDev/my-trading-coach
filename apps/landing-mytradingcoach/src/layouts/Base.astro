@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { DEFAULT_SCHEMA } from '../data/schema';
-import { API_URL } from '../config';
+import { API_URL, APP_URL } from '../config';
 import { IN_APP_UA_PATTERN, INTERNAL_STORAGE_KEY } from '@mtc/shared';
 import CookieConsent from '../components/CookieConsent.astro';
 import Analytics from '../components/Analytics.astro';
@@ -28,6 +28,11 @@ const {
   noindex = false,
 } = Astro.props;
 
+// Connexions ouvertes d'avance (DNS + TLS) : l'app, ouverte par les boutons d'inscription (≈ 1 s
+// gagnée en 4G lente), et l'API (visite et clics, requêtes sans cookie → `crossorigin`).
+const appOrigin = new URL(APP_URL).origin;
+const apiOrigin = new URL(API_URL).origin;
+
 const robots = noindex
   ? 'noindex, follow'
   : 'index, follow, max-image-preview:large, max-snippet:-1';
@@ -38,6 +43,8 @@ const robots = noindex
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href={appOrigin} />
+  <link rel="preconnect" href={apiOrigin} crossorigin />
 
   <!-- ═══ SEO PRIMARY ═══ -->
   <title>{title}</title>
