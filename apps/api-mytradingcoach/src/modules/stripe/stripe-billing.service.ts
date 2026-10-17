@@ -13,14 +13,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { TRIAL_PERIOD_DAYS } from '../../common/constants/pricing.const';
 import { STRIPE_CLIENT } from './stripe.client';
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_INELIGIBLE_MESSAGES, FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
 import {
   ACTIVE_STATUSES,
   BILLING_CACHE_TTL_SECONDS,
   billingCacheKey,
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
-import { CHECKOUT_TTL_MS, FounderOfferService, type FounderIneligibility } from '../founder-offer/founder-offer.service';
+import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
 import { StripeCouponService } from './stripe-coupon.service';
 import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
@@ -73,14 +73,7 @@ export type CheckoutStart =
   | { clientSecret: string; publishableKey: string; summary: CheckoutSummary };
 
 /** Refus du checkout fondateur : message clair, le Premium au prix normal reste possible. */
-const FOUNDER_REFUSALS: Record<FounderIneligibility, string> = {
-  closed: "L'offre fondateur n'est pas ouverte. Tu peux passer Premium au prix normal.",
-  sold_out: "Il n'y a plus de place fondateur. Tu peux passer Premium au prix normal.",
-  excluded: "Ce compte n'est pas éligible à l'offre fondateur.",
-  already_founder: 'Tu es déjà fondateur.',
-  tariff_lost: "Le tarif fondateur a été perdu pour ce compte (résiliation ou remboursement). Tu peux passer Premium au prix normal.",
-  subscribed: "Tu as déjà un abonnement en cours. Le tarif fondateur s'adresse aux nouveaux abonnés.",
-};
+const FOUNDER_REFUSALS = FOUNDER_INELIGIBLE_MESSAGES;
 
 /** Routes /billing de l'utilisateur : statut, checkout, portail client. */
 @Injectable()
