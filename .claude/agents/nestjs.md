@@ -662,12 +662,21 @@ await this.prisma.aiUsageLog.create({
 Toujours passer `{ userId, feature }` dans les options. Features valides :
 `'insights'` | `'chat'` | `'debrief'` | `'csv_import'` | `'daily_recap'` | `'eco_calendar'`
 
+### Session active = journée de trading en cours (#595)
+
+Ne jamais écrire `where: { userId, status: ACTIVE }` sur `TradeSession` : passer par
+`activeSessionWhere(userId)` (`modules/session/active-session.ts`), qui ajoute
+`startedAt >= tradingDayStart(now)` (17:00 Chicago, cf. `tradingDay`). Une session d'une
+journée précédente n'est jamais renvoyée comme active (chrono à 265 h, P&L du jour rapporté à
+une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` sans borne.
+
 ### Crons V2
 
 | Cron | Planning | Rôle |
 |---|---|---|
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
+| `SessionCloseCron` | `0 23 * * *` Paris | Fin de journée CME : clôture les sessions restées ouvertes (totaux sur leurs propres trades, `moodEnd` vide), fenêtre = depuis la journée de trading précédente, hors démo (#595) |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
