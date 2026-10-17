@@ -17,7 +17,9 @@ const base: CheckoutSummary = {
 describe('checkoutCopy : une page, des textes par offre', () => {
   it('fondateur mensuel : places restantes, prix bloqué, remboursement 14 jours, sans essai', () => {
     const c = checkoutCopy({ ...base, offer: 'founder', recurringEur: 29, seatsLeft: 199 }, NOW);
-    expect(c.eyebrow).toBe('Offre fondateur · 199 places restantes');
+    expect(c.eyebrow).toBe('Offre fondateur · Plus que 199 places sur 200');
+    // Aucune place prise : pas de « Plus que » (libellé partagé founderSeatsLabel).
+    expect(checkoutCopy({ ...base, offer: 'founder', recurringEur: 29, seatsLeft: 200 }, NOW).eyebrow).toBe('Offre fondateur · 200 places disponibles');
     expect(c.price).toBe('29');
     expect(c.was).toBe('49 €');
     expect(c.note).toBe('Prix bloqué tant que ton abonnement reste actif.');
@@ -30,7 +32,7 @@ describe('checkoutCopy : une page, des textes par offre', () => {
 
   it('fondateur annuel : équivalent mensuel, une seule place au singulier', () => {
     const c = checkoutCopy({ ...base, offer: 'founder', interval: 'year', recurringEur: 290, normalEur: 490, seatsLeft: 1 }, NOW);
-    expect(c.eyebrow).toBe('Offre fondateur · 1 place restante');
+    expect(c.eyebrow).toBe("Offre fondateur · Plus qu'une place sur 200");
     expect(c.per).toBe('/ an');
     expect(c.note).toContain('Soit 24,17 € par mois.');
     expect(c.thenLabel).toBe('Puis chaque année');
