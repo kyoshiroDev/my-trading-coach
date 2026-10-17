@@ -16,7 +16,8 @@
     <link rel="apple-touch-icon" href="logo.svg" />
     <!-- Écran de chargement : visible dès le HTML, avant le JS. Retiré par `App` après le
          rendu de la première page (removeBootScreen). Valeurs de theme.css en repli : la
-         feuille de style n'est peut-être pas encore là. -->
+         feuille de style n'est peut-être pas encore là. Police monospace SYSTÈME : JetBrains Mono
+         ferait télécharger une police en concurrence avec le JS (≈ 0,2 s de plus en 4G lente). -->
     <style>
       #mtc-boot {
         position: fixed;
@@ -29,7 +30,7 @@
         gap: 16px;
         background: var(--bg, #080c14);
         color: var(--text-3, #8398b5);
-        font: 500 12px/1 var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+        font: 500 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         letter-spacing: 0.08em;
       }
       #mtc-boot svg {
