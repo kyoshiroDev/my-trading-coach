@@ -79,7 +79,10 @@ async function bootstrap() {
   const corsOrigins = process.env['CORS_ORIGINS']?.split(',') ?? [
     'http://localhost:4200',
   ];
-  app.enableCors({ origin: corsOrigins, credentials: true });
+  // `maxAge` : le navigateur garde 10 min la réponse à la requête préalable (OPTIONS), au lieu
+  // d'en refaire une avant chaque appel JSON de l'app (un aller-retour de plus en 4G lente).
+  // Sans effet sur la liste des origines : la réponse réelle reste refusée hors CORS_ORIGINS.
+  app.enableCors({ origin: corsOrigins, credentials: true, maxAge: 600 });
 
   app.useGlobalPipes(
     new ValidationPipe({
