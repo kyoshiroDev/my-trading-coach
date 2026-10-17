@@ -729,7 +729,7 @@ Avant : dumps quotidiens **uniquement sur le VPS** (`/opt/backups/mtc`), perdus 
 | Destination | Backblaze B2, bucket `mtc-backups-7k3q9x`, région **EU Central** (Amsterdam), privé, SSE-B2, « keep only the last version » |
 | Compte B2 | `hello@mytradingcoach.app` (2FA). Clé d'application **`mtc-vps-restic`**, limitée au bucket, Read and Write. **Jamais la clé maîtresse sur le VPS.** |
 | Outil | restic 0.18.1 **dans un conteneur** (`restic/restic`), dépôt `b2:mtc-backups-7k3q9x:mtc`, chiffré avant envoi |
-| Scripts | `infra/backups/offsite.sh` et `restore-test.sh`, copiés dans `/opt/backups/` |
+| Scripts | `infra/backups/backup.sh` (dumps dev et beta, en 600) dans `/opt/backups/mtc/` ; `offsite.sh` et `restore-test.sh` dans `/opt/backups/` |
 | Identifiants | `/opt/backups/offsite.env` (chmod 600, jamais versionné, modèle `offsite.env.example`) |
 | Contenu | dumps des 3 bases (`/opt/backups/mtc`) **et tout ce qui n'existe que sur le VPS**, chaque nuit : `/opt/infra/databases` (compose, `.env.databases`, `pgbouncer.ini`, `init-db.sh`), `/opt/infra/static` (compose, confs nginx), Traefik (`traefik.yml`, compose, `.env.traefik` avec le jeton API OVH des certificats), les `.env` de prod/dev/beta, la crontab, les scripts de sauvegarde. **Pas** : le code (GitHub), les builds et images (refaits par le CI), les certificats (Let's Encrypt les régénère), `offsite.env` (gestionnaire de mots de passe). Aucun fichier utilisateur sur disque : toutes les données sont dans Postgres. |
 | Planning | cron `45 3 * * *` (après `backup.sh` à 3 h et le nettoyage Docker à 3 h 30), log `/opt/backups/offsite.log` |
