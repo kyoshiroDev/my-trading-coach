@@ -14,8 +14,63 @@
     />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="logo.svg" />
+    <!-- Écran de chargement : visible dès le HTML, avant le JS. Retiré par `App` après le
+         rendu de la première page (removeBootScreen). Valeurs de theme.css en repli : la
+         feuille de style n'est peut-être pas encore là. -->
+    <style>
+      #mtc-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: var(--bg, #080c14);
+        color: var(--text-3, #8398b5);
+        font: 500 12px/1 var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+        letter-spacing: 0.08em;
+      }
+      #mtc-boot svg {
+        width: 48px;
+        height: 48px;
+        animation: mtc-boot-pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes mtc-boot-pulse {
+        50% {
+          opacity: 0.45;
+          transform: scale(0.92);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #mtc-boot svg {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="mtc-boot" role="status">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="mtc-boot-g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+        </defs>
+        <circle cx="16" cy="16" r="15" fill="url(#mtc-boot-g)" />
+        <polyline
+          points="3,16 6,16 8,10 10,22 12,6 14,20 16,12 18,16 29,16"
+          fill="none"
+          stroke="#e2eaf5"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span>Chargement…</span>
+    </div>
     <mtc-root></mtc-root>
   </body>
 </html>
