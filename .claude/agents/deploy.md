@@ -26,9 +26,7 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 > - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`) : clé **`mtc-api-prod-admin`**
 >   (`VPS_SSH_KEY_B64`, `VPS_USER=greg`), autorisée chez `greg` **sur le VPS prod seulement**, avec
 >   `from="172.16.0.0/12"` (réseau Docker local), `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
->   Toutes les actions (stats, containers, logs, sauvegardes). ⚠️ greg est dans le groupe `docker` : un
->   shell obtenu par cette clé vaut root → **restriction à venir** (`command=` + liste blanche, comme
->   `mtc-monitor`).
+>   Toutes les actions (stats, containers, logs, sauvegardes).
 > - Serveur `secondaire` = `VPS_SECONDARY_HOST=51.83.197.230` (`VPS_SECONDARY_LABEL=VPS dev · beta`),
 >   onglet de la page Surveillance (#569) : **lecture seule**, clé dédiée `mtc-api-prod-secondaire-ro`
 >   (`VPS_SECONDARY_SSH_KEY_B64`, empreinte d'hôte épinglée par `VPS_SECONDARY_HOST_KEY_SHA256`),
@@ -770,7 +768,7 @@ recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait 
 |---|---|---|
 | MAJ sécurité | unattended-upgrades | unattended-upgrades (Docker en liste noire) |
 | Reboot | **auto à 05:00** si requis (`52unattended-upgrades-local`) | **jamais auto** (`52mtc-unattended`) → alerte e-mail `watch-containers.sh`, reboot planifié à la main |
-| sudo | mot de passe → Greg lance les commandes dans SON terminal | NOPASSWD temporaire (migration) |
+| sudo | mot de passe → Greg lance les commandes dans SON terminal | mot de passe (NOPASSWD de la migration retiré le 2026-10-17) |
 
 Procédure : audit en lecture seule (`uptime`, `/var/run/reboot-required.pkgs`, `apt list --upgradable`,
 `docker system df`, volumes sans conteneur, mtime des logs cron) → nettoyage → `apt-get full-upgrade`

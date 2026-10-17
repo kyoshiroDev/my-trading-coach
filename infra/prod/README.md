@@ -20,15 +20,13 @@ Le dépôt est cloné dans `/opt/apps/mytradingcoach/prod` (clé de lecture GitH
 `~/.ssh/github_deploy_mtc`, clé de déploiement « mtc-prod-vps-clone »). `authorized_keys` de greg :
 ta clé, `github-actions-mtc-prod` (CD, secret `PROD_VPS_SSH_KEY`) et `mtc-api-prod-admin` (pages
 VPS de l'admin : clé dans `VPS_SSH_KEY_B64`, acceptée seulement depuis les réseaux Docker
-`172.16.0.0/12`, sans pty ni redirection ; privée dans `/opt/apps/mytradingcoach/prod-secrets/`).
+`172.16.0.0/12`, sans pty ni redirection).
 
 **Accès de l'API à l'ancien VPS** (onglet « VPS dev · beta » de l'admin) : uniquement par la clé
 dédiée `mtc-api-prod-secondaire-ro` (`VPS_SECONDARY_SSH_KEY_B64`), utilisateur `mtc-monitor`,
 `from="149.202.40.240"`, commande forcée en lecture seule (`infra/vps/`). **`mtc-api-prod-admin`
 n'est plus autorisée chez greg sur l'ancien VPS** (retirée le 2026-10-17) : l'API ne peut plus y
-ouvrir de shell. Elle reste autorisée ici, chez greg, depuis les réseaux Docker ; comme greg est dans
-le groupe `docker`, un shell obtenu par cette clé vaut root : la restreindre par `command=` (liste
-blanche) est le prochain chantier de sécurité.
+ouvrir de shell.
 
 ## Système
 
@@ -103,7 +101,6 @@ lecture base en `mtc_readonly`, secrets lus dans `/opt/infra/databases/.env`). I
 de la migration) a été retiré ; greg garde sudo **avec son mot de passe** (groupe `sudo`). root est
 verrouillé et interdit en SSH.
 - Aucun automatisme n'utilise sudo (crons, CD, scripts de `/opt/backups`, `deploy-api.sh`, admin) :
-  tout passe par le groupe `docker`. Un script qui appelle `sudo` doit être lancé à la main, dans un
+  aucun n'en a besoin. Un script qui appelle `sudo` doit être lancé à la main, dans un
   terminal, par Greg.
-- Voies de secours si le mot de passe est perdu : shell greg → `docker run --rm -it -v /:/host alpine
-  chroot /host` (root sur l'hôte), sinon console KVM ou mode rescue OVH.
+- Voies de secours si le mot de passe est perdu : console KVM ou mode rescue OVH.
