@@ -9,8 +9,14 @@
       <div class="lb-clock" data-testid="live-bar-clock"><span class="lb-dot" aria-hidden="true"></span>{{ c.label }}</div>
     }
   }
+  @if (accountLabel(); as a) {
+    <span class="lb-wide lb-account" data-testid="live-bar-account">{{ a }}</span>
+  }
+  @if (mood(); as m) {
+    <span class="lb-wide lb-mood" data-testid="live-bar-mood">{{ m }}</span>
+  }
   <span class="lb-trades" data-testid="live-bar-trades">
-    Trades {{ tradesCount() }}@if (tradesMax() !== null) { / {{ tradesMax() }} }
+    Trades <strong>{{ tradesCount() }}@if (tradesMax() !== null) { / {{ tradesMax() }} }</strong>
   </span>
   @let total = totalPnl();
   @let shown = total ?? realizedPnl();
@@ -18,4 +24,13 @@
         [attr.title]="total === null ? 'Réalisé seul : latent de la position ouverte inconnu' : 'Réalisé + latent du jour'">
     {{ fmt(shown) }}
   </span>
+  <div class="lb-wide lb-market" data-testid="live-bar-market">
+    @for (t of tickers(); track t.label) {
+      <span class="lb-tick">{{ t.label }} {{ t.value }}
+        @if (t.change) { <span [class.up]="t.dir === 'up'" [class.down]="t.dir === 'down'">{{ t.change }}</span> }
+      </span>
+    }
+    <button type="button" class="lb-context" data-testid="live-bar-context" (click)="openContext.emit()">Contexte</button>
+  </div>
+  <button type="button" class="lb-wide lb-end" data-testid="live-bar-close" (click)="closeSession.emit()">Clôturer la session</button>
 </header>

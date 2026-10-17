@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EcoEvent } from '@mtc/shared';
 import type { InstrumentDto } from '@app/core/api/trades.api';
 import {
-  RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
+  bannerTickers, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
 } from './session-live.util';
 
 // Extrait de instruments.const.ts (API) : valeur du point = tickValue / tickSize.
@@ -119,5 +119,29 @@ describe('annonce publiée (#593)', () => {
     expect(splitFirstSentence('Inflation au-dessus du consensus. Pression sur le Nasdaq. Dollar soutenu.'))
       .toEqual({ first: 'Inflation au-dessus du consensus.', rest: 'Pression sur le Nasdaq. Dollar soutenu.' });
     expect(splitFirstSentence('Une seule phrase')).toEqual({ first: 'Une seule phrase', rest: '' });
+  });
+});
+
+describe('bandeau PC (#597)', () => {
+  it('NQ, SPX, DXY, 10Y avec variation ; valeurs absentes → « - »', () => {
+    const t = bannerTickers({
+      nq: { value: 18584.3, changePct: 0.62, source: 'x' }, spx: { value: 5912, changePct: -0.41, source: 'x' },
+      dxy: { value: 104.2, changePct: null, source: 'x' },
+      treasury: { t2y: null, t2yChg: null, t5y: null, t5yChg: null, t10y: 4.31, t10yChg: null, t30y: null, t30yChg: null },
+      updatedAt: '',
+    });
+    expect(t.map((x) => x.label)).toEqual(['NQ', 'SPX', 'DXY', '10Y']);
+    expect(t[0]).toMatchObject({ change: '+0,62 %', dir: 'up' });
+    expect(t[1]).toMatchObject({ change: '-0,41 %', dir: 'down' });
+    expect(t[2]).toMatchObject({ value: '104,20', change: null, dir: 'flat' });
+    expect(t[3].value).toBe('4,31 %');
+    expect(bannerTickers(null)).toEqual([]);
+  });
+
+  it('humeur en texte seul, type de plan court', () => {
+    expect(moodLabel('FOCUSED')).toBe('Concentré');
+    expect(moodLabel(null)).toBeNull();
+    expect(planKindShort('trailing_eod')).toBe('EOD');
+    expect(planKindShort(null)).toBeNull();
   });
 });

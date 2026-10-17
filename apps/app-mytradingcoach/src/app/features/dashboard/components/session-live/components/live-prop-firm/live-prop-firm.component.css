@@ -30,6 +30,8 @@
 
 .pf-equity { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
 .pf-equity-val { color: var(--text); font-weight: 600; }
+.pf-wide { display: none; }
+.pf-latent { margin-left: 4px; }
 
 .pf-gauge { display: flex; flex-direction: column; min-width: 0; }
 .pf-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--text); }
@@ -74,6 +76,20 @@
 
 @media (min-width: 768px) {
   .pf-sound { width: 32px; height: 32px; }
+}
+
+/* PC : colonne de droite pleine hauteur, equity en grand, disclaimer en pied */
+@media (min-width: 1100px) {
+  :host { flex: 1; }
+  .pf-panel { flex: 1; padding: 22px; gap: 22px; }
+  .pf-equity { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 4px; }
+  .pf-equity-lbl { flex-basis: 100%; font-family: var(--font-body); font-size: 12px; }
+  .pf-wide { display: inline; }
+  .pf-equity-val { font-size: 30px; }
+  .pf-realized { font-size: 13px; }
+  .pf-latent { flex-basis: 100%; font-size: 12px; margin-left: 0; }
+  .pf-sep { display: none; }
+  .pf-disclaimer { margin-top: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

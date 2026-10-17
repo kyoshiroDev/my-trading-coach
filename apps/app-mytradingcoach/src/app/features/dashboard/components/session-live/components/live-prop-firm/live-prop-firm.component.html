@@ -23,16 +23,24 @@
   </header>
 
   @if (account(); as a) {
-    <!-- Equity en direct sur une ligne (lue chez le broker), latent à côté -->
+    <!-- Equity en direct : une ligne en mobile, en grand à partir de 1100 px -->
     <div class="pf-equity">
-      Equity <span class="pf-equity-val" data-testid="live-prop-firm-balance">{{ money(equity()) }}</span>
+      <span class="pf-equity-lbl">Equity <span class="pf-wide">en direct</span></span>
+      <span class="pf-equity-val" data-testid="live-prop-firm-balance">{{ money(equity()) }}</span>
+      @if (realized() !== null) {
+        <span class="pf-wide pf-realized" data-testid="live-prop-firm-realized" [class.green]="realized()! > 0" [class.red]="realized()! < 0">
+          {{ money(realized(), true) }} réalisé
+        </span>
+      }
       @if (broker(); as b) {
-        · latent
-        @if (b.openPnlKnown) {
-          <span [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0" data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</span>
-        } @else {
-          <span data-testid="live-prop-firm-open-pnl-na">-</span>
-        }
+        <span class="pf-latent">
+          <span class="pf-sep">·</span> latent
+          @if (b.openPnlKnown) {
+            <span [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0" data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</span>
+          } @else {
+            <span data-testid="live-prop-firm-open-pnl-na">-</span>
+          }
+        </span>
       }
     </div>
 

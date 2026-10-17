@@ -55,7 +55,7 @@
 .lp-dot.loss { background: var(--red); }
 .lp-dot.gain { background: var(--green); }
 
-/* Libellés : montants sous les prix sur mobile, sur la même ligne à partir de 768 px */
+/* Libellés : montants sous les prix (mobile, tablette), sur la même ligne à partir de 1100 px */
 .lp-scale {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px;
   font-family: var(--font-mono); font-size: 12px; line-height: 1.5;
@@ -75,6 +75,7 @@
   background: var(--bg-3); color: var(--text); font: 600 14px var(--font-body); cursor: pointer;
 }
 .lp-close:hover { border-color: rgba(255, 255, 255, .24); }
+.lp-close-head { display: none; }
 .lp-close-panel { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .lp-close-lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); text-transform: uppercase; }
 .lp-close-row { display: flex; gap: 8px; }
@@ -93,8 +94,28 @@
   background: var(--bg-2); border: 1px solid rgba(255, 255, 255, .06); font-size: 13px; color: var(--text-2);
 }
 
-@media (min-width: 768px) {
-  .lp-amt { display: inline; margin-left: 4px; }
+
+
+/* PC : en-tête avec « Clôturer ce trade » à droite, actif 28 px, latent 40 px */
+@media (min-width: 1100px) {
+  .lp-card { padding: 22px 24px; }
+  .lp-since { margin-left: 0; }
+  .lp-since::before { content: '· '; }
+  .lp-refresh, .lp-close-head { margin-left: auto; }
+  .lp-close-head { display: inline-flex; align-items: center; width: auto; min-height: 40px; margin-top: 0; padding: 0 16px; border-radius: 8px; font-size: 13px; }
+  .lp-close-foot { display: none; }
+  .lp-main { margin-top: 18px; gap: 16px; }
+  .lp-id { display: flex; align-items: flex-end; gap: 16px; }
+  .lp-id-top { gap: 16px; }
+  .lp-side { padding: 4px 10px; }
+  .lp-asset { font-size: 28px; line-height: 1; }
+  .lp-qty { font-size: 14px; margin-top: 0; }
+  .lp-latent { font-size: 40px; }
+  .lp-bar { margin-top: 22px; }
+  .lp-scale { margin-top: 12px; }
+  .lp-note { margin-top: 10px; }
+  /* Montants sur la même ligne que les prix */
+  .lp-amt { display: inline; }
   .lp-amt::before { content: '· '; }
-  .lp-mid .lp-amt::before { content: ''; }
+  .lp-mid .lp-amt::before { content: none; }
 }

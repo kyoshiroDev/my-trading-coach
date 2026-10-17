@@ -25,7 +25,11 @@
     [tradesCount]="liveStats()?.tradesCount ?? 0"
     [tradesMax]="tradesMax()"
     [accountId]="session()?.accountId ?? null"
+    [accountLabel]="accountLabel()"
+    [mood]="mood()"
+    [tickers]="tickers()"
     (closeSession)="closeSession.emit()"
+    (openContext)="contextOpen.set(true)"
   />
 
   <div class="lv-body">
@@ -44,7 +48,7 @@
 
       <div class="lv-account">
         @if (propFirmAccountId(); as accountId) {
-          <mtc-live-prop-firm [accountId]="accountId" />
+          <mtc-live-prop-firm [accountId]="accountId" [realized]="totals().realized" />
         } @else {
           <!-- Pas de compte prop firm synchronisé : le P&L du jour et un lien pour en lier un -->
           <section class="lv-summary" data-testid="live-account-summary" aria-label="Suivi du compte">
@@ -71,7 +75,8 @@
       </div>
     </div>
 
-    <!-- 6. En bas en mobile : contexte marché (feuille) et clôture, loin de « Clôturer ce trade » -->
+    <!-- 6. En bas en mobile : contexte marché (feuille) et clôture, loin de « Clôturer ce trade ».
+         À partir de 768 px, les deux sont dans le bandeau. -->
     <div class="lv-actions">
       <button type="button" class="lv-context-btn" data-testid="open-context" (click)="contextOpen.set(true)">Contexte marché</button>
       <button type="button" class="lv-end-btn" data-testid="close-session-live" (click)="closeSession.emit()">Clôturer la session</button>

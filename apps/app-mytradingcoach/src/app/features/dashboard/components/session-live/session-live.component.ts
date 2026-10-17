@@ -31,6 +31,7 @@ import { LiveBarComponent } from './components/live-bar/live-bar.component';
 import { LiveNextEventComponent } from './components/live-next-event/live-next-event.component';
 import { LiveClosedTradesComponent } from './components/live-closed-trades/live-closed-trades.component';
 import { SessionStore } from '@app/core/stores/session.store';
+import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
 
 /**
  * Onglet « Session live » v3 (#593, retours de Val : « trop chargée, on se perd ») : l'essentiel
@@ -146,6 +147,16 @@ export class SessionLiveComponent {
   protected readonly totals = computed(() => liveTotals(this.liveStats()?.totalPnl ?? 0, this.broker()));
   protected readonly dayPnl = computed(() => this.totals().total ?? this.totals().realized);
   protected readonly tradesMax = computed(() => this.userStore.user()?.tradesPerDayMax ?? null);
+
+  /** Bandeau PC : « Apex 50k · EOD », humeur déclarée, contexte marché réduit. */
+  protected readonly accountLabel = computed(() => {
+    const a = this.accounts.accounts().find((x) => x.id === this.session()?.accountId);
+    if (!a) return null;
+    const kind = planKindShort(a.metrics?.drawdown?.rule?.kind);
+    return kind ? `${a.label} · ${kind}` : a.label;
+  });
+  protected readonly mood = computed(() => moodLabel(this.session()?.moodStart));
+  protected readonly tickers = computed(() => bannerTickers(this.marketCtx()));
 
   protected readonly pnlDisplay = computed(() =>
     this.money.formatFor(this.session()?.accountId, this.dayPnl(), { decimals: 0, sign: true }),

@@ -166,7 +166,7 @@ describe('Session live v3 — trades clôturés', () => {
     const { el, text } = render(LiveClosedTradesComponent, {
       trades: [t({}), t({ side: 'SHORT', asset: 'ES', entry: 5905, exit: 5908, stopLoss: 5908, takeProfit: 5890, pnl: -150 }), t({ pnl: null, exit: null })],
     }, CLOSED_TEMPLATE, [MoneyPipe]);
-    expect(text('live-closed-title')).toBe('CLÔTURÉS · 2 · 1 GAGNANT');
+    expect(text('live-closed-title')).toBe('TRADES CLÔTURÉS · 2 · 1 GAGNANT'); // « TRADES » masqué en mobile (CSS)
     const rows = el.querySelectorAll('[data-testid="live-closed-row"]');
     expect(rows.length).toBe(2);
     expect(rows[0].textContent).toContain('TP');

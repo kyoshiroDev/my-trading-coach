@@ -48,6 +48,8 @@ import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 })
 export class LivePropFirmComponent {
   readonly accountId = input.required<string>();
+  /** P&L réalisé de la session (trades clôturés, frais déduits), affiché sous l'equity en PC. */
+  readonly realized = input<number | null>(null);
 
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tv = inject(TradovateStore);

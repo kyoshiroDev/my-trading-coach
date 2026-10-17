@@ -1,7 +1,7 @@
 <section class="ct-card" data-testid="live-closed-trades" aria-label="Trades clôturés">
   <header class="ct-head">
     <span class="ct-title" data-testid="live-closed-title">
-      CLÔTURÉS · {{ closed().length }} · {{ winners() }} GAGNANT{{ winners() > 1 ? 'S' : '' }}
+      <span class="ct-wide">TRADES </span>CLÔTURÉS · {{ closed().length }} · {{ winners() }} GAGNANT{{ winners() > 1 ? 'S' : '' }}
     </span>
     <button type="button" class="ct-manual ct-manual-top" data-testid="live-manual-entry" (click)="manualEntry.emit()">
       Saisir un trade à la main

@@ -9,6 +9,9 @@
         <button class="lp-refresh" type="button" [disabled]="refreshing()" (click)="refresh()">
           {{ refreshing() ? 'Lecture…' : 'Actualiser' }}
         </button>
+      } @else {
+        <!-- PC : à droite de l'en-tête ; mobile : pleine largeur sous la barre -->
+        <button type="button" class="lp-close lp-close-head" (click)="toggleClose()">Clôturer ce trade</button>
       }
     </header>
 
@@ -98,7 +101,7 @@
     }
 
     @if (c.kind === 'manual') {
-      <button type="button" class="lp-close" data-testid="close-trade" (click)="toggleClose()">Clôturer ce trade</button>
+      <button type="button" class="lp-close lp-close-foot" data-testid="close-trade" (click)="toggleClose()">Clôturer ce trade</button>
       @if (closing()) {
         <div class="lp-close-panel" data-testid="trade-close-panel">
           <label class="lp-close-lbl" for="lp-exit">Prix de sortie</label>

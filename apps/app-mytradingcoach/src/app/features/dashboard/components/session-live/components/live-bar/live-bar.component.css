@@ -1,4 +1,4 @@
-/* Bandeau collant de la session live v3 — mobile d'abord. */
+/* Bandeau collant de la session live v3 — mobile d'abord : chrono, trades, P&L. */
 :host { display: block; position: sticky; top: 0; z-index: 5; min-width: 0; }
 .lb-bar {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 48px; padding: 8px 16px;
@@ -10,6 +10,7 @@
 }
 .lb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); animation: lb-blink 1.6s ease infinite; }
 .lb-trades { font-family: var(--font-mono); font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.lb-trades strong { font-weight: 400; }
 .lb-pnl {
   margin-left: auto; font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--text);
   font-variant-numeric: tabular-nums; white-space: nowrap;
@@ -21,5 +22,45 @@
   min-height: 40px; padding: 0 12px; border-radius: 9px; cursor: pointer; font: 600 12px var(--font-body);
   border: 1px solid color-mix(in srgb, var(--red) 45%, transparent); background: var(--red-dim); color: color-mix(in srgb, var(--red), var(--text) 45%);
 }
+
+/* Éléments du bandeau complet (tablette et PC) : absents en mobile, ils sont ailleurs (feuille Contexte, bas de page) */
+.lb-wide { display: none; }
+
 @keyframes lb-blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .lb-dot { animation: none; } }
+
+@media (min-width: 768px) {
+  .lb-bar { gap: 10px 16px; padding: 14px 20px; flex-wrap: nowrap; }
+  .lb-wide { display: initial; }
+  /* Tablette : une seule ligne, le compte et les tickers attendent le PC (détail via « Contexte ») */
+  .lb-account, .lb-tick { display: none; }
+  .lb-account { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+  /* Humeur : chip neutre, texte seul */
+  .lb-mood { font-size: 13px; color: var(--text); background: var(--bg-3); padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .lb-trades { font-family: var(--font-body); }
+  .lb-trades strong { font-family: var(--font-mono); color: var(--text); }
+  .lb-pnl { margin-left: 0; font-size: 15px; }
+  .lb-market {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-left: auto;
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
+  }
+  .lb-tick { white-space: nowrap; }
+  .lb-tick .up { color: var(--green); }
+  .lb-tick .down { color: var(--red); }
+  .lb-context {
+    min-height: 40px; background: none; border: none; padding: 0; cursor: pointer;
+    font: 13px var(--font-body); color: var(--blue-bright);
+  }
+  .lb-context:hover { text-decoration: underline; }
+  /* Rouge discret, bien séparé de « Clôturer ce trade » */
+  .lb-end {
+    min-height: 40px; padding: 0 16px; border-radius: 8px; cursor: pointer; font: 600 13px var(--font-body); white-space: nowrap;
+    border: 1px solid color-mix(in srgb, var(--red) 45%, transparent); background: color-mix(in srgb, var(--red) 8%, transparent);
+    color: color-mix(in srgb, var(--red), var(--text) 45%);
+  }
+}
+
+@media (min-width: 1100px) {
+  .lb-bar { gap: 10px 22px; flex-wrap: wrap; }
+  .lb-account, .lb-tick { display: initial; }
+}

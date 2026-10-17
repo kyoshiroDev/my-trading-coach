@@ -1,5 +1,6 @@
 import type { EcoEvent } from '@mtc/shared';
-import type { InstrumentDto } from '@app/core/api/trades.api';
+import type { InstrumentDto, MarketContext } from '@app/core/api/trades.api';
+import type { MoodState } from '@app/core/api/session.api';
 
 /**
  * Session live v3 (#593) — fonctions PURES de la vue : barre SL / entrée / TP, prix au relevé,
@@ -163,6 +164,45 @@ export function closeKind(t: { side: string; exit: number | null; stopLoss: numb
   if (t.stopLoss !== null && (long ? t.exit <= t.stopLoss : t.exit >= t.stopLoss)) return 'SL';
   if (t.takeProfit !== null && (long ? t.exit >= t.takeProfit : t.exit <= t.takeProfit)) return 'TP';
   return 'Manuel';
+}
+
+export interface BannerTicker { label: string; value: string; change: string | null; dir: 'up' | 'down' | 'flat' }
+
+/**
+ * Contexte marché réduit du bandeau PC : NQ, SPX, DXY, 10Y. Le flux n'a pas l'ES (future) mais le
+ * S&P 500 comptant : affiché « SPX », jamais renommé. Valeur inconnue → « - ».
+ */
+export function bannerTickers(ctx: MarketContext | null | undefined): BannerTicker[] {
+  if (!ctx) return [];
+  const pct = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v)
+    ? null : `${v > 0 ? '+' : ''}${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`);
+  const dir = (v: number | null | undefined): BannerTicker['dir'] => (!v ? 'flat' : v > 0 ? 'up' : 'down');
+  const num = (v: number | null | undefined, d: number) => (v === null || v === undefined || !Number.isFinite(v)
+    ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  return [
+    { label: 'NQ', value: num(ctx.nq?.value, 0), change: pct(ctx.nq?.changePct), dir: dir(ctx.nq?.changePct) },
+    { label: 'SPX', value: num(ctx.spx?.value, 0), change: pct(ctx.spx?.changePct), dir: dir(ctx.spx?.changePct) },
+    { label: 'DXY', value: num(ctx.dxy?.value, 2), change: pct(ctx.dxy?.changePct), dir: dir(ctx.dxy?.changePct) },
+    { label: '10Y', value: ctx.treasury?.t10y == null ? '-' : `${num(ctx.treasury.t10y, 2)} %`, change: null, dir: 'flat' },
+  ];
+}
+
+/** État émotionnel déclaré en pré-session, en texte seul (pas d'emoji dans la vue live). */
+export function moodLabel(mood: MoodState | null | undefined): string | null {
+  const map: Record<string, string> = {
+    CONFIDENT: 'Confiant', FOCUSED: 'Concentré', NEUTRAL: 'Neutre', TIRED: 'Fatigué', STRESSED: 'Stressé',
+  };
+  return mood ? map[mood] ?? null : null;
+}
+
+/** Type de drawdown du plan relié, en court pour le bandeau (« Apex 50k · EOD »). */
+export function planKindShort(kind: 'static' | 'trailing_eod' | 'trailing_intraday' | null | undefined): string | null {
+  switch (kind) {
+    case 'trailing_eod': return 'EOD';
+    case 'trailing_intraday': return 'Intraday';
+    case 'static': return 'Statique';
+    default: return null;
+  }
 }
 
 /** Prix en notation française compacte : 18 540, 5 905,25. */

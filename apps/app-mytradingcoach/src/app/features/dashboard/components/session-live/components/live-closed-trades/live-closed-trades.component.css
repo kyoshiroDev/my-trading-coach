@@ -6,6 +6,7 @@
 }
 .ct-head { display: flex; align-items: center; gap: 10px; }
 .ct-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); }
+.ct-wide { display: none; }
 .ct-empty { margin: 10px 0 0; font-size: 13px; color: var(--text-3); }
 
 .ct-list { list-style: none; margin: 6px 0 0; padding: 0; }
@@ -32,6 +33,7 @@
 .ct-manual-bottom { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: 6px; }
 
 @media (min-width: 768px) {
+  .ct-wide { display: inline; }
   .ct-manual-top { display: inline-flex; margin-left: auto; min-height: 40px; align-items: center; }
   .ct-manual-bottom { display: none; }
   /* Une ligne en grille alignée : heure, sens, actif, entrée → sortie, TP/SL, résultat */
