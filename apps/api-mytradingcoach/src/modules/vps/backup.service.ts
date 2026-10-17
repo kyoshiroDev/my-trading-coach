@@ -40,6 +40,28 @@ const targetFromFilename = (filename: string): DbTarget => {
 const toMb = (bytes: number): number =>
   Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
+/**
+ * Une ligne de `ls -l --time-style=+%s` : droits, liens, user, groupe, taille, mtime (secondes
+ * epoch), chemin. La date vient de l'epoch, indépendante du fuseau. Avant, le format court de
+ * `ls -la` (« Oct 17 03:00 », sans année) passait par `new Date()`, qui complétait l'année en 2001 :
+ * le bandeau « dernière sauvegarde » de l'admin alertait en permanence.
+ */
+export function parseBackupLine(line: string): Backup | null {
+  const parts = line.trim().split(/\s+/);
+  if (parts.length < 7) return null;
+  const size = parseInt(parts[4], 10);
+  const epoch = Number(parts[5]);
+  const filename = parts[parts.length - 1].split('/').pop() ?? '';
+  if (!filename.endsWith('.sql.gz') || !Number.isInteger(epoch) || epoch <= 0) return null;
+  return {
+    filename,
+    sizeMb: toMb(Number.isNaN(size) ? 0 : size),
+    createdAt: new Date(epoch * 1000).toISOString(),
+    type: filename.includes('_manual') ? 'manual' : 'auto',
+    target: targetFromFilename(filename),
+  };
+}
+
 @Injectable()
 export class BackupService {
   private readonly backupDir = process.env['BACKUP_DIR'] ?? '/opt/backups/mtc';
@@ -48,25 +70,12 @@ export class BackupService {
 
   async listBackups(): Promise<Backup[]> {
     const output = await this.vps.exec(
-      `ls -la ${this.backupDir}/*.sql.gz 2>/dev/null || echo ""`,
+      `ls -l --time-style=+%s ${this.backupDir}/*.sql.gz 2>/dev/null || echo ""`,
     );
     if (!output.trim()) return [];
     return output.split('\n')
-      .filter(l => l.trim() && l.includes('.sql.gz'))
-      .map(line => {
-        const parts = line.trim().split(/\s+/);
-        const size = parseInt(parts[4] || '0', 10);
-        const filename = parts[parts.length - 1].split('/').pop() ?? '';
-        const dateStr = `${parts[5]} ${parts[6]} ${parts[7]}`;
-        return {
-          filename,
-          sizeMb: toMb(size),
-          createdAt: new Date(dateStr).toISOString(),
-          type: filename.includes('_manual') ? 'manual' : 'auto',
-          target: targetFromFilename(filename),
-        } as Backup;
-      })
-      .filter(b => b.filename);
+      .map(parseBackupLine)
+      .filter((b): b is Backup => b !== null);
   }
 
   async createBackup(target: BackupTarget = 'bdd_prod'): Promise<Backup> {
