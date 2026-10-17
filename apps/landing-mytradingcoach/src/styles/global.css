@@ -241,3 +241,12 @@ h2 em {
   opacity: .85;
   pointer-events: none;
 }
+
+/* Lien d'inscription en cours d'ouverture (script d'acquisition de Base.astro) : retour visuel
+   immédiat le temps que l'app s'affiche, appuis suivants ignorés. */
+a.is-opening {
+  opacity: .7;
+  cursor: progress;
+  justify-content: center;
+  text-align: center;
+}

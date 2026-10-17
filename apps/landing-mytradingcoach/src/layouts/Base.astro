@@ -154,7 +154,8 @@ const robots = noindex
           (+ medium, campagne, navigateur intégré), sans cookie, sans IP ni identifiant (exemption
           CNIL) → indépendant du bandeau ;
        3) clic sur un lien /register → étape `cta_click` du parcours d'inscription
-          (POST /public/funnel par sendBeacon, detail = data-cta, sinon plan du lien, sinon free).
+          (POST /public/funnel par sendBeacon, detail = data-cta, sinon plan du lien, sinon free) ;
+          le bouton passe à « Ouverture… » et un 2e appui dans les 2 s est ignoré (1 appui = 1 clic).
        `inApp` = navigateur intégré Instagram / Facebook / TikTok (motif partagé @mtc/shared) : seul
        ce booléen part, jamais le user-agent.
        Mode interne : ?internal=1 (localStorage mtc_internal) → ni visite ni étape envoyée depuis ce
@@ -179,6 +180,46 @@ const robots = noindex
           document.body.appendChild(badge);
         }
         var inApp = new RegExp(inAppPattern, 'i').test(navigator.userAgent || '');
+
+        // Appui sur un lien /register : retour visuel immédiat (« Ouverture… », la page de l'app met
+        // ~1 s à s'afficher) et appuis suivants sur CE lien ignorés 2 s (ni 2e navigation ni 2e
+        // cta_click : écouteur enregistré avant celui du comptage, qu'il coupe). Le 1er appui part
+        // toujours normalement ; ouverture dans un nouvel onglet (Ctrl/Cmd/Maj/clic milieu) non
+        // concernée. Retour arrière (cache de navigation) → bouton rétabli (pageshow).
+        var opening = new Map();
+        var restore = function (a) {
+          var saved = opening.get(a);
+          if (!saved) return;
+          clearTimeout(saved.timer);
+          a.innerHTML = saved.html;
+          a.style.minWidth = saved.minWidth;
+          a.classList.remove('is-opening');
+          a.removeAttribute('aria-busy');
+          opening.delete(a);
+        };
+        document.addEventListener('click', function (ev) {
+          var a = ev.target && ev.target.closest ? ev.target.closest('a[href*="/register"]') : null;
+          if (!a || ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+          if (opening.has(a)) {
+            ev.preventDefault();
+            ev.stopImmediatePropagation();
+            return;
+          }
+          // Verrou posé tout de suite ; le libellé change APRÈS l'événement : le remplacer pendant
+          // détacherait ev.target (span du lien) et l'écouteur de comptage ne trouverait plus le lien.
+          var saved = { html: a.innerHTML, minWidth: a.style.minWidth, timer: setTimeout(function () { restore(a); }, 2000) };
+          opening.set(a, saved);
+          setTimeout(function () {
+            if (opening.get(a) !== saved) return;
+            a.style.minWidth = a.offsetWidth + 'px';
+            a.textContent = 'Ouverture…';
+            a.classList.add('is-opening');
+            a.setAttribute('aria-busy', 'true');
+          }, 0);
+        }, true);
+        window.addEventListener('pageshow', function (ev) {
+          if (ev.persisted) opening.forEach(function (_, a) { restore(a); });
+        });
 
         var KEY = 'mtc_utm', NAMES = ['utm_source', 'utm_medium', 'utm_campaign'];
         var params = new URL(window.location.href).searchParams, utm = {}, found = false;
