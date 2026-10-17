@@ -57,7 +57,14 @@
             <span class="mtc-ap-dot"></span>
             <span class="mtc-ap-lbl">SESSION ACTIVE</span>
           </div>
-          <span class="mtc-ap-timer">{{ store.sessionTimer() }}</span>
+          @if (store.sessionClock(); as clock) {
+            @if (clock.kind === 'stale') {
+              <!-- Plus de 24 h : session jamais clôturée, pas de compteur absurde (#595) -->
+              <span class="mtc-ap-stale" data-testid="session-stale">Session ouverte depuis le {{ clock.since }}, clôture-la</span>
+            } @else {
+              <span class="mtc-ap-timer" data-testid="session-timer">{{ clock.label }}</span>
+            }
+          }
           @if (activeAccountLabel(); as label) {
             <span class="mtc-pill-acct">{{ label }}</span>
           }
