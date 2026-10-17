@@ -1,0 +1,146 @@
+# Environnement de test de charge JETABLE sur le VPS prod (2026-10-17) — procédure :
+# docs/ops/test-charge-vps-prod.md. Mesure la capacité de la MACHINE sans toucher aux données,
+# connexions ni à la mémoire Redis de la prod : Postgres, PgBouncer et Redis dédiés, mêmes images et
+# mêmes réglages que la prod, sur un réseau interne que la prod ne voit pas.
+#
+# Conteneurs préfixés `load_` (pas `mtc_`) : la supervision de la prod (watch-containers.sh) les
+# ignore, une API de test saturée n'envoie donc pas d'alerte.
+# Secrets : .env (interpolation) et .env.api (API) générés par make-env.sh, jamais versionnés.
+#
+#   docker compose -f docker-compose.load.yml --env-file .env up -d …
+#   docker compose -f docker-compose.load.yml --env-file .env down -v   ← nettoyage complet
+
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    container_name: load_postgres
+    # Mêmes réglages que /opt/infra/databases/docker-compose.yml (prod).
+    command: >
+      postgres
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c work_mem=16MB
+      -c maintenance_work_mem=256MB
+      -c max_connections=50
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=top
+      -c log_min_duration_statement=500
+      -c log_parameter_max_length=0
+      -c log_parameter_max_length_on_error=0
+      -c password_encryption=scram-sha-256
+      -c timezone=UTC
+    environment:
+      POSTGRES_USER: mtc_user
+      POSTGRES_PASSWORD: ${LOAD_PG_PASSWORD}
+      POSTGRES_DB: mytradingcoach_load
+    volumes:
+      - load_postgres_data:/var/lib/postgresql/data
+    networks: [load_internal]
+    shm_size: 256m
+    mem_limit: 3g
+    memswap_limit: 3g
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mtc_user -d mytradingcoach_load"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: pgbouncer/pgbouncer:1.25.2-20260920
+    container_name: load_pgbouncer
+    environment:
+      DATABASES: "mytradingcoach_load = host=load_postgres port=5432 dbname=mytradingcoach_load user=mtc_user password=${LOAD_PG_PASSWORD} pool_size=25"
+      PGBOUNCER_POOL_MODE: session
+      PGBOUNCER_MAX_CLIENT_CONN: "200"
+      PGBOUNCER_DEFAULT_POOL_SIZE: "5"
+      PGBOUNCER_RESERVE_POOL_SIZE: "5"
+      PGBOUNCER_MAX_DB_CONNECTIONS: "40"
+      PGBOUNCER_QUERY_WAIT_TIMEOUT: "30"
+      PGBOUNCER_SERVER_IDLE_TIMEOUT: "600"
+      PGBOUNCER_AUTH_TYPE: scram-sha-256
+      PGBOUNCER_AUTH_FILE: /etc/pgbouncer-auth/userlist.txt
+      PGBOUNCER_ADMIN_USERS: mtc_user
+      PGBOUNCER_STATS_USERS: mtc_user
+    volumes:
+      - ./pgbouncer-auth:/etc/pgbouncer-auth:ro
+    networks: [load_internal]
+    mem_limit: 64m
+    memswap_limit: 64m
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.4.11-alpine
+    container_name: load_redis
+    command: >
+      redis-server
+      --requirepass ${LOAD_REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+    environment:
+      REDISCLI_AUTH: ${LOAD_REDIS_PASSWORD}
+    volumes:
+      - load_redis_data:/data
+    networks: [load_internal]
+    mem_limit: 640m
+    memswap_limit: 640m
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API : même image et mêmes limites que la couleur web de la prod (docker-compose.prod.yml),
+  # rôle web seul (pas de crons ni de files : aucun appel externe programmé).
+  api:
+    image: ${LOAD_IMAGE}
+    container_name: load_api
+    env_file: .env.api
+    environment:
+      TZ: Europe/Paris
+      NODE_OPTIONS: --max-old-space-size=384
+      RUN_MIGRATIONS: "false"
+      APP_ROLE: web
+    stop_grace_period: 30s
+    networks: [mtc_network, load_internal]
+    mem_limit: 2g
+    memswap_limit: 2g
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=mtc_network"
+      - "traefik.http.routers.load-api.rule=Host(`load.api.mytradingcoach.app`)"
+      - "traefik.http.routers.load-api.entrypoints=websecure"
+      - "traefik.http.routers.load-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.load-api.loadbalancer.server.port=3000"
+
+volumes:
+  load_postgres_data:
+  load_redis_data:
+
+networks:
+  mtc_network:
+    external: true
+  # Interne : ni Internet ni la prod ne joignent la base et le Redis de test.
+  load_internal:
+    internal: true

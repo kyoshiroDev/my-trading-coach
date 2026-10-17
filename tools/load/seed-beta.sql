@@ -1,4 +1,4 @@
--- Jeu de données de charge (SCA-B9-01) : BASES BETA OU DEV UNIQUEMENT (jamais la prod).
+-- Jeu de données de charge (SCA-B9-01) : BASES BETA, DEV OU LOAD UNIQUEMENT (jamais la prod).
 --   2 000 comptes PREMIUM `load-<n>@test.local` (isDemo = false), 1 compte de trading, 3 setups
 --   chacun ; trades : compte 1 → 50 000, comptes 2-10 → 10 000, les autres → 2 000
 --   (médiane et maximum retenus en A-03), étalés sur 2 ans. Total ≈ 4,1 M trades.
@@ -12,9 +12,10 @@
 \timing on
 
 DO $$ BEGIN
-  -- Beta ou dev (2026-10-03 : les PR partent vers dev, B9 se joue aussi sur dev). JAMAIS la prod.
-  IF current_database() NOT IN ('mytradingcoach_beta', 'mytradingcoach_dev') THEN
-    RAISE EXCEPTION 'seed de charge refusé sur %, beta ou dev uniquement', current_database();
+  -- Beta ou dev (2026-10-03 : les PR partent vers dev, B9 se joue aussi sur dev), ou la base
+  -- jetable du Postgres de test du VPS prod (infra/prod/load/, 2026-10-17). JAMAIS la prod.
+  IF current_database() NOT IN ('mytradingcoach_beta', 'mytradingcoach_dev', 'mytradingcoach_load') THEN
+    RAISE EXCEPTION 'seed de charge refusé sur %, beta, dev ou load uniquement', current_database();
   END IF;
   IF EXISTS (SELECT 1 FROM "User" WHERE email LIKE 'load-%@test.local') THEN
     RAISE EXCEPTION 'comptes de charge déjà présents : lancer purge-beta.sql d''abord';
