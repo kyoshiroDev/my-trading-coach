@@ -65,7 +65,7 @@ export class LoginComponent {
       .subscribe({
         next: () => {
           // Lien d'offre en attente (#578) : offres demandées dès la connexion, pour la modale.
-          if (this.offerIntent.needsChoice()) this.offersStore.load();
+          if (this.offerIntent.needsChoice()) this.offersStore.load({ silent: true });
           this.router.navigate(['/dashboard']);
         },
         error: (err) => {

@@ -181,7 +181,8 @@ export class PlanModalComponent implements OnInit {
   private typedByUser = false;
 
   ngOnInit(): void {
-    this.offersStore.load();
+    // L'échec est affiché ici (mtc-error-state) : pas de toast en double.
+    this.offersStore.load({ silent: true });
     const promo = this.preset()?.promo;
     if (promo) {
       this.code.set(promo);
@@ -194,7 +195,7 @@ export class PlanModalComponent implements OnInit {
   }
 
   protected retryOffers() {
-    this.offersStore.refresh();
+    this.offersStore.refresh({ silent: true });
   }
 
   protected pick(choice: OfferChoice) {

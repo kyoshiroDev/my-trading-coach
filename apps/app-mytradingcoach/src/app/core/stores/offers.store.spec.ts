@@ -15,11 +15,13 @@ const OFFERS: BillingOffers = {
 
 describe('OffersStore — état du chargement (#578)', () => {
   let responses: Subject<{ data: BillingOffers }>[];
+  let calls: { silent?: boolean }[];
   const user = signal<{ id: string; isDemo?: boolean } | null>(null);
   const make = () => TestBed.inject(OffersStore);
 
   beforeEach(() => {
     responses = [];
+    calls = [];
     user.set({ id: 'u1' });
     TestBed.configureTestingModule({
       providers: [
@@ -27,7 +29,8 @@ describe('OffersStore — état du chargement (#578)', () => {
         {
           provide: BillingApi,
           useValue: {
-            offers: () => {
+            offers: (opts: { silent?: boolean } = {}) => {
+              calls.push(opts);
               const r = new Subject<{ data: BillingOffers }>();
               responses.push(r);
               return r;
@@ -89,5 +92,12 @@ describe('OffersStore — état du chargement (#578)', () => {
     store.load();
     expect(store.offers()).toBeNull();
     expect(store.status()).toBe('loading');
+  });
+
+  it('silent : demandé par la modale (elle affiche l’échec), pas par défaut (Profil, cadenas → toast)', () => {
+    const store = make();
+    store.load({ silent: true });
+    store.refresh();
+    expect(calls).toEqual([{ silent: true }, { silent: false }]);
   });
 });

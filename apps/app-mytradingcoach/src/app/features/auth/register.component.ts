@@ -209,7 +209,7 @@ export class RegisterComponent {
           this.funnel.track('register_success');
           // Lien d'offre (#578) : offres demandées tout de suite (le compte existe enfin), en
           // parallèle de la navigation, pour être là quand la modale de plans s'ouvre.
-          if (this.offerFlow()) this.offersStore.load();
+          if (this.offerFlow()) this.offersStore.load({ silent: true });
           try {
             sessionStorage.removeItem(UTM_STORAGE_KEY);
           } catch {
