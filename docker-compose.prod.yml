@@ -15,6 +15,12 @@ x-api: &api
     - mtc_network
   # Laisse aux workers le temps de finir leurs requêtes et de fermer Redis/Prisma/BullMQ.
   stop_grace_period: 30s
+  # Descripteurs de fichiers (sockets compris) : Docker donne 1 024 par défaut, que Node ne relève
+  # pas tout seul (SCA-B7-01, #481). Traefik, en Go, monte déjà de lui-même au plafond (524 288).
+  ulimits:
+    nofile:
+      soft: 65536
+      hard: 65536
   # Drain (deploy-api.sh) : /tmp/drain rend le conteneur « unhealthy » → Traefik ne lui envoie plus
   # rien, puis il est arrêté. start_interval : sain en quelques secondes au démarrage.
   healthcheck:
