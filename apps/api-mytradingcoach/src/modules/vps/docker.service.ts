@@ -5,6 +5,8 @@ import { resolveVpsServer, type VpsServerId } from './vps-servers';
 
 // Id ou nom de container docker : rien d'autre ne doit arriver dans la commande SSH.
 const CONTAINER_REF = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/;
+// Nom de container pour `docker logs` : commence par un caractère alphanumérique, jamais un tiret.
+const CONTAINER_NAME = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
 
 export interface DockerContainer {
   id: string;
@@ -103,6 +105,12 @@ export class DockerService {
         message: `${server.label} est en lecture seule : action impossible depuis l'admin.`,
       });
     }
+  }
+
+  /** Nom accepté par le flux de logs, sinon 400 (avant toute connexion SSH). */
+  logsContainerName(name: string): string {
+    if (!CONTAINER_NAME.test(name)) throw new BadRequestException('Container invalide');
+    return name;
   }
 
   private containerRef(id: string): string {

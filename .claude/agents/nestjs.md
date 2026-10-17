@@ -131,7 +131,7 @@ POST   /api/docker/containers/:id/start|stop|restart   ADMIN
 DELETE /api/docker/containers/:id      ADMIN
 GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
-GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs
+GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs (nom [a-zA-Z0-9][a-zA-Z0-9_-]*, sinon 400 ; canal SSH fermé à la fermeture de l'onglet)
 GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
 GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
 GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
