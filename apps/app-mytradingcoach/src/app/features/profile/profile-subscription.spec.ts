@@ -45,7 +45,7 @@ function offers(over: Partial<BillingOffers> = {}): BillingOffers {
 
 function render(opts: { offered: boolean; paying?: boolean; offers?: BillingOffers }) {
   const user = {
-    email: 'louis@test.com', plan: 'FREE', trialEndsAt: opts.paying ? null : IN_20_DAYS, trialUsed: true,
+    email: 'alex@test.com', plan: 'FREE', trialEndsAt: opts.paying ? null : IN_20_DAYS, trialUsed: true,
     stripeSubscriptionStatus: opts.paying ? 'active' : opts.offered ? null : 'trialing',
     notificationsEmail: true, debriefAutomatic: true, marketingConsent: false,
   };
@@ -61,7 +61,7 @@ function render(opts: { offered: boolean; paying?: boolean; offers?: BillingOffe
           user: () => user,
           isPremium: () => true, isDemo: () => false, isOfferedPremium: () => opts.offered,
           trialAvailable: () => false,
-          displayName: () => 'Louis', startingCapital: () => 0, refreshUser: vi.fn(),
+          displayName: () => 'Alex', startingCapital: () => 0, refreshUser: vi.fn(),
         },
       },
       { provide: AuthService, useValue: { currentUser: signal(user), setCurrentUser: vi.fn() } },
@@ -130,13 +130,13 @@ describe('Profil > Abonnement', () => {
       offered: false, paying: true,
       offers: offers({
         partner: {
-          code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '',
+          code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '',
           since: new Date().toISOString(), endsAt: null,
         },
         subscription: { interval: 'month', status: 'active' },
       }),
     }).textContent ?? '';
-    expect(text).toContain('Tarif partenaire LOUIS29 : 29 €/mois à vie');
+    expect(text).toContain('Tarif partenaire TRADER10 : 29 €/mois à vie');
     expect(text).toContain("Passer à l'annuel (290 €/an à vie)");
     expect(text).toContain('met fin à ton tarif partenaire');
   });

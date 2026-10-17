@@ -3,7 +3,7 @@ import type { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Ligne « offres » du digest quotidien (#525) :
- * « Fondateurs : 37 / 200 (35 actifs) · Codes partenaires : LOUIS29 4/10, TRIO 2/illimité »,
+ * « Fondateurs : 37 / 200 (35 actifs) · Codes partenaires : TRADER10 4/10, TRIO 2/illimité »,
  * plus « Palier atteint : 50 places » si un palier a été franchi sur la période.
  * Rien tant que l'offre n'a jamais ouvert et qu'aucun code n'existe. Le compte démo n'est jamais
  * fondateur ni partenaire (exclu à l'éligibilité) : aucun filtre `isDemo` à ajouter ici.

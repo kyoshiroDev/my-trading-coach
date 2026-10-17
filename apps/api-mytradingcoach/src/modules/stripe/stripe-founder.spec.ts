@@ -326,17 +326,17 @@ describe('synchro : bascule sans écraser l’abonnement fondateur', () => {
 
 // ── Codes partenaires ──────────────────────────────────────────────────────────
 
-const LOUIS = { valid: true, code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '' };
+const TRADER10 = { valid: true, code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '' };
 
 function partnerBilling(over: Parameters<typeof makeBilling>[0] & { validation?: object; parrainRole?: string } = {}) {
   const b = makeBilling(over);
-  b.partners.validate.mockResolvedValue(over.validation ?? LOUIS);
+  b.partners.validate.mockResolvedValue(over.validation ?? TRADER10);
   b.partners.reserve.mockResolvedValue({ reservation: { id: 'res_p' }, partnerCode: { id: 'pc1' } });
   b.partners.couponFor.mockImplementation((_c: unknown, i: string) => (i === 'year' ? 'cp_200' : 'cp_20'));
   return b;
 }
 const withPromo = (svc: StripeBillingService, price = 'price_49', interval: 'month' | 'year' = 'month') =>
-  svc.createCheckoutSession('u1', 'u1@test.com', price, 'https://app', { offer: 'premium', interval, promo: 'louis29', cta: 'promo' });
+  svc.createCheckoutSession('u1', 'u1@test.com', price, 'https://app', { offer: 'premium', interval, promo: 'trader10', cta: 'promo' });
 
 describe('checkout avec code partenaire', () => {
   it('mensuel : prix NORMAL + coupon −20 €, essai 30 j conservé, parrainage non cumulé', async () => {
@@ -347,9 +347,9 @@ describe('checkout avec code partenaire', () => {
     expect(params.discounts).toEqual([{ coupon: 'cp_20' }]);
     expect(params.subscription_data.trial_period_days).toBe(30);
     expect(params).not.toHaveProperty('allow_promotion_codes');
-    expect(params.metadata).toMatchObject({ offer: 'partner', partnerCode: 'LOUIS29', cta: 'promo' });
-    expect(params.custom_text.submit.message).toContain('Code LOUIS29 : tes conditions sont figées');
-    expect(partners.reserve).toHaveBeenCalledWith('u1', 'LOUIS29', 'month', 'promo');
+    expect(params.metadata).toMatchObject({ offer: 'partner', partnerCode: 'TRADER10', cta: 'promo' });
+    expect(params.custom_text.submit.message).toContain('Code TRADER10 : tes conditions sont figées');
+    expect(partners.reserve).toHaveBeenCalledWith('u1', 'TRADER10', 'month', 'promo');
   });
 
   it('annuel : coupon −200 € (290,00 € pile), pas d’essai', async () => {
@@ -361,7 +361,7 @@ describe('checkout avec code partenaire', () => {
 
   it('code refusé → raison précise + prix normal toujours possible, rien de réservé', async () => {
     const { svc, create, partners } = partnerBilling({
-      validation: { valid: false, code: 'LOUIS29', reason: 'exhausted', message: 'Ce code partenaire a atteint son nombre maximum de personnes.' },
+      validation: { valid: false, code: 'TRADER10', reason: 'exhausted', message: 'Ce code partenaire a atteint son nombre maximum de personnes.' },
     });
     await expect(withPromo(svc)).rejects.toThrow(/nombre maximum.*prix normal/);
     expect(partners.reserve).not.toHaveBeenCalled();
@@ -371,13 +371,13 @@ describe('checkout avec code partenaire', () => {
   it('jamais sur le tarif fondateur (choix explicite)', async () => {
     const { svc } = partnerBilling();
     await expect(
-      svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', promo: 'LOUIS29' }),
+      svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', promo: 'TRADER10' }),
     ).rejects.toThrow(/choisis/);
   });
 
   it('remise moins bonne que le parrainage → −10 % filleul appliqué, code non consommé', async () => {
     const { svc, create, partners } = partnerBilling({
-      validation: { ...LOUIS, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 },
+      validation: { ...TRADER10, priceMonthlyEur: 48, priceAnnualEur: 480, durationMonths: 1 },
     });
     await withPromo(svc);
     expect(partners.reserve).not.toHaveBeenCalled();
@@ -388,11 +388,11 @@ describe('checkout avec code partenaire', () => {
 
 describe('webhooks code partenaire', () => {
   it('1re facture (0 € d’essai comprise) → utilisation comptée, coupon de l’intervalle', async () => {
-    const { svc, founders } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'LOUIS29', cta: 'promo' } });
+    const { svc, founders } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'TRADER10', cta: 'promo' } });
     const partners = (svc as unknown as { partners: { claim: ReturnType<typeof vi.fn> } }).partners;
     await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_p', 'subscription_create'), amount_paid: 0 }));
     expect(partners.claim).toHaveBeenCalledWith({
-      userId: 'u1', code: 'LOUIS29', stripeSubscriptionId: 'sub_p', interval: 'month', cta: 'promo',
+      userId: 'u1', code: 'TRADER10', stripeSubscriptionId: 'sub_p', interval: 'month', cta: 'promo',
     });
     expect(founders.claimSeat).not.toHaveBeenCalled();
   });
@@ -511,10 +511,10 @@ describe('checkout sur la page de l’app (ui elements)', () => {
   it('code partenaire : coupon de l’intervalle et conditions dans le récapitulatif', async () => {
     const { svc, create } = partnerBilling(elements);
     const res = await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', {
-      offer: 'premium', interval: 'month', promo: 'louis29', ui: 'elements',
+      offer: 'premium', interval: 'month', promo: 'trader10', ui: 'elements',
     });
     expect(create.mock.calls[0][0].discounts).toEqual([{ coupon: 'cp_20' }]);
-    expect('summary' in res && res.summary).toMatchObject({ offer: 'partner', recurringEur: 29, normalEur: 49, partnerCode: 'LOUIS29', partnerDurationMonths: null });
+    expect('summary' in res && res.summary).toMatchObject({ offer: 'partner', recurringEur: 29, normalEur: 49, partnerCode: 'TRADER10', partnerDurationMonths: null });
   });
 
   it('moyen désactivé sur le compte Stripe (Klarna) : retiré de la page, la session est créée', async () => {
@@ -578,11 +578,11 @@ describe('e-mails fondateur et code partenaire', () => {
   });
 
   it('1re facture avec code partenaire → conditions figées rappelées', async () => {
-    const { svc, resend, partners } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'louis29' } });
+    const { svc, resend, partners } = makeWebhook({ id: 'sub_p', price: 'price_49', metadata: { partnerCode: 'trader10' } });
     partners.claim.mockResolvedValue({ priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null });
     await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_p', 'subscription_create'), amount_paid: 0 }));
     expect(plain(resend.sendPartnerWelcome.mock.calls[0][0])).toMatchObject({
-      code: 'LOUIS29', priceLabel: '29,00 € par mois', normalPriceLabel: '49,00 € par mois', durationMonths: null,
+      code: 'TRADER10', priceLabel: '29,00 € par mois', normalPriceLabel: '49,00 € par mois', durationMonths: null,
     });
   });
 

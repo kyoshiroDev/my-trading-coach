@@ -59,8 +59,8 @@ describe('checkoutCopy : une page, des textes par offre', () => {
   });
 
   it('code partenaire à vie avec essai', () => {
-    const c = checkoutCopy({ ...base, offer: 'partner', recurringEur: 29, trialDays: 30, partnerCode: 'LOUIS29' }, NOW);
-    expect(c.eyebrow).toBe('Code partenaire LOUIS29');
+    const c = checkoutCopy({ ...base, offer: 'partner', recurringEur: 29, trialDays: 30, partnerCode: 'TRADER10' }, NOW);
+    expect(c.eyebrow).toBe('Code partenaire TRADER10');
     expect(c.note).toBe('30 jours offerts, puis tarif partenaire conservé tant que ton abonnement reste actif.');
     expect(c.assurances[1].text).toContain('le tarif partenaire est perdu');
   });

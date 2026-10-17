@@ -15,7 +15,7 @@ const URL = `${environment.apiUrl}/admin/users/u1`;
 function makeData(identity: Partial<Identity> = {}): UserDetailData {
   return {
     identity: {
-      id: 'u1', name: 'Louis', email: 'louis@test.com', plan: 'FREE', role: 'USER',
+      id: 'u1', name: 'Alex', email: 'alex@test.com', plan: 'FREE', role: 'USER',
       subscriptionStatus: null, ambassadorRefCode: null,
       trialEndsAt: null, offeredPremium: false, isDemo: false,
       createdAt: '2026-09-01T00:00:00.000Z', lastActivityAt: null,
@@ -91,7 +91,7 @@ describe('Fiche admin — Premium offert', () => {
     button().click();
     await fixture.whenStable();
     expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringMatching(/Offrir 30 jours de Premium à louis@test\.com \? Fin le \d{2}\/\d{2}\/\d{4}\. Aucun prélèvement\./),
+      message: expect.stringMatching(/Offrir 30 jours de Premium à alex@test\.com \? Fin le \d{2}\/\d{2}\/\d{4}\. Aucun prélèvement\./),
     }));
     const req = httpMock.expectOne(`${URL}/offer-premium`);
     expect(req.request.method).toBe('POST');

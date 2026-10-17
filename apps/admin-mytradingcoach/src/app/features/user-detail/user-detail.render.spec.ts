@@ -126,12 +126,12 @@ describe('UserDetailComponent — rendu densifié', () => {
       offer: {
         founder: null,
         partner: {
-          code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
+          code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
           status: 'ACTIVE', since: '2026-10-12T10:00:00.000Z', endedAt: null,
         },
       },
     }));
-    expect(el.querySelector('[data-testid="partner-badge"]')?.textContent).toContain('Code LOUIS29');
+    expect(el.querySelector('[data-testid="partner-badge"]')?.textContent).toContain('Code TRADER10');
     expect(el.querySelector('[data-testid="partner-row"]')?.textContent).toContain('29 €/mois ou 290 €/an, à vie');
   });
 });
