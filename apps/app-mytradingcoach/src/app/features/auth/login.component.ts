@@ -9,16 +9,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import {
-  LucideDynamicIcon,
-  LucideEye as Eye,
-  LucideEyeOff as EyeOff,
-} from '@lucide/angular';
+import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.component';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'mtc-login',
-  imports: [FormsModule, RouterLink, LucideDynamicIcon],
+  imports: [FormsModule, RouterLink, EyeIconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './login.component.css',
   templateUrl: './login.component.html',
@@ -28,8 +24,6 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly EyeIcon = Eye;
-  protected readonly EyeOffIcon = EyeOff;
 
   protected readonly email = signal('');
   protected readonly password = signal('');

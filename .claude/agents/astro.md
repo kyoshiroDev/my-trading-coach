@@ -236,6 +236,17 @@ Règles :
   keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
   `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
   d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
+  réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
+  AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
+  `a.is-opening` de `global.css` : estompé, largeur gardée, `aria-busy`) et ignore 2 s les appuis
+  suivants sur CE lien (`preventDefault` + `stopImmediatePropagation` : ni navigation ni clic compté).
+  Le 1er appui part toujours ; Ctrl/Cmd/Maj/clic milieu (nouvel onglet) non concernés ; `pageshow`
+  (retour arrière, cache de navigation) rétablit le bouton. Le libellé change APRÈS l'événement
+  (`setTimeout 0`) : le remplacer pendant détacherait `ev.target` et l'écouteur de comptage ne
+  retrouverait plus le lien.
+- **`preconnect`** dans le `<head>` de `Base.astro` vers l'origine de `APP_URL` (connexion TLS prête
+  avant l'appui) et de `API_URL` (`crossorigin` : visite et clics partent sans cookie).
 - **Mode interne** (visites de l'équipe) : ouvrir `https://www.mytradingcoach.app/?internal=1` →
   localStorage `mtc_internal=1` (`INTERNAL_STORAGE_KEY`) : plus aucune visite ni étape envoyée depuis ce
   navigateur, badge discret « interne » en bas à gauche (`.internal-badge`, `global.css`).

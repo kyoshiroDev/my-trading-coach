@@ -55,10 +55,7 @@
             [attr.aria-pressed]="showPassword()"
             (click)="showPassword.set(!showPassword())"
           >
-            <svg
-              [lucideIcon]="showPassword() ? EyeOffIcon : EyeIcon"
-              [size]="15"
-              color="var(--text-2)"></svg>
+            <mtc-eye-icon [off]="showPassword()" />
           </button>
         </div>
         @if (passwordError()) {
