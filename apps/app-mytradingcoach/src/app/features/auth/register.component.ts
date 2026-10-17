@@ -13,6 +13,8 @@ import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.comp
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { OfferIntentService } from '../../core/services/offer-intent.service';
+import { OffersStore } from '../../core/stores/offers.store';
+import { whenIdle } from '../../core/auth/authenticated-preloading';
 import { SignupFunnelService, registerErrorCode } from '../../core/services/signup-funnel.service';
 
 /** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
@@ -43,6 +45,7 @@ export class RegisterComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly offerIntent = inject(OfferIntentService);
   private readonly funnel = inject(SignupFunnelService);
+  private readonly offersStore = inject(OffersStore);
 
 
   protected readonly name = signal('');
@@ -78,6 +81,13 @@ export class RegisterComponent {
     if (this.auth.isAuthenticated() && this.offerIntent.pending()) {
       this.router.navigate(['/dashboard']);
       return;
+    }
+    // Lien d'offre (#578) : le code de la modale de plans est téléchargé pendant que le visiteur
+    // remplit le formulaire, pour qu'elle s'ouvre sans attendre juste après l'inscription.
+    if (this.offerFlow()) {
+      whenIdle()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => void import('../../shared/components/plan-modal/plan-modal.component'));
     }
     // Parcours d'inscription : page ouverte, avec la source d'arrivée (comptage anonyme).
     this.funnel.start({
@@ -197,6 +207,9 @@ export class RegisterComponent {
       .subscribe({
         next: () => {
           this.funnel.track('register_success');
+          // Lien d'offre (#578) : offres demandées tout de suite (le compte existe enfin), en
+          // parallèle de la navigation, pour être là quand la modale de plans s'ouvre.
+          if (this.offerFlow()) this.offersStore.load({ silent: true });
           try {
             sessionStorage.removeItem(UTM_STORAGE_KEY);
           } catch {

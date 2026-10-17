@@ -27,6 +27,7 @@ import { FOUNDER_OFFER } from '@mtc/shared';
 </template>
 
 <script>
+  import { founderSeatsLabel } from '@mtc/shared';
   import { isSelling, onFounderState, placesLabel, rememberCta } from '../lib/founder-offer';
 
   const CLOSED_KEY = 'mtc_offer_bar_closed';
@@ -70,7 +71,8 @@ import { FOUNDER_OFFER } from '@mtc/shared';
       const left = s.seatsLeft;
       const long = bar.querySelector('[data-offer-left-long]');
       const short = bar.querySelector('[data-offer-left-short]');
-      if (long) long.textContent = left === 1 ? "Plus qu'une place" : `Plus que ${placesLabel(left)}`;
+      // Libellé partagé (« 200 places disponibles » tant qu'aucune n'est prise) ; version courte : le nombre.
+      if (long) long.textContent = founderSeatsLabel(left, s.seatsTotal) ?? '';
       if (short) short.textContent = placesLabel(left);
       const fill = bar.querySelector<HTMLElement>('.offer-progress-fill');
       if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - left) / s.seatsTotal})`;

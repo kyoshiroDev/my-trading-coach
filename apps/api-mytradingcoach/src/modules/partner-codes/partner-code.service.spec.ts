@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { PartnerCodeService } from './partner-code.service';
 
-const LOUIS29 = {
-  id: 'pc1', code: 'LOUIS29', label: 'Louis (formation)', priceMonthlyEur: 29, priceAnnualEur: 290,
+const TRADER10 = {
+  id: 'pc1', code: 'TRADER10', label: 'Formateur (formation)', priceMonthlyEur: 29, priceAnnualEur: 290,
   durationMonths: null, maxRedemptions: 10, expiresAt: new Date('2026-12-31T23:59:59Z'), active: true,
   stripeCouponMonthlyId: 'mtc-partner-2000-forever', stripeCouponAnnualId: 'mtc-partner-20000-forever',
 };
@@ -11,7 +11,7 @@ const LOUIS29 = {
 function setup(over: {
   code?: object | null; used?: number; reserved?: number; user?: object | null; redemption?: object | null; seat?: object | null;
 } = {}) {
-  const code = over.code === null ? null : { ...LOUIS29, ...over.code };
+  const code = over.code === null ? null : { ...TRADER10, ...over.code };
   const prisma = {
     partnerCode: {
       findUnique: vi.fn().mockResolvedValue(code),
@@ -44,13 +44,13 @@ function setup(over: {
 const now = new Date('2026-10-08T12:00:00Z');
 
 describe('validate : chaque refus a sa raison', () => {
-  it('LOUIS29 valide : conditions, sans nom du partenaire ni nombre d’utilisations', async () => {
-    const res = await setup().service.validate('louis29', null, now);
+  it('TRADER10 valide : conditions, sans nom du partenaire ni nombre d’utilisations', async () => {
+    const res = await setup().service.validate('trader10', null, now);
     expect(res).toEqual({
-      valid: true, code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
+      valid: true, code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
       label: '29 €/mois ou 290 €/an, à vie',
     });
-    expect(JSON.stringify(res)).not.toContain('Louis (formation)');
+    expect(JSON.stringify(res)).not.toContain('Formateur (formation)');
   });
 
   it.each([
@@ -59,21 +59,21 @@ describe('validate : chaque refus a sa raison', () => {
     ['expired', { code: { expiresAt: new Date('2026-10-01T00:00:00Z') } }],
     ['exhausted', { used: 9, reserved: 1 }],
   ] as const)('%s', async (reason, over) => {
-    const res = await setup(over as never).service.validate('LOUIS29', null, now);
+    const res = await setup(over as never).service.validate('TRADER10', null, now);
     expect(res).toMatchObject({ valid: false, reason });
   });
 
   it('quota illimité : jamais épuisé', async () => {
-    expect((await setup({ code: { maxRedemptions: null }, used: 5000 }).service.validate('LOUIS29', null, now)).valid).toBe(true);
+    expect((await setup({ code: { maxRedemptions: null }, used: 5000 }).service.validate('TRADER10', null, now)).valid).toBe(true);
   });
 
   it('une utilisation par personne, jamais abonnée, jamais fondateur, pas démo', async () => {
-    expect(await setup({ redemption: { id: 'r' } }).service.validate('LOUIS29', 'u1', now)).toMatchObject({ reason: 'already_used' });
-    expect(await setup({ user: { stripeSubscriptionId: 'sub' } }).service.validate('LOUIS29', 'u1', now)).toMatchObject({ reason: 'subscribed' });
-    expect(await setup({ user: { subscriptionCanceledAt: new Date() } }).service.validate('LOUIS29', 'u1', now)).toMatchObject({ reason: 'subscribed' });
-    expect(await setup({ seat: { status: 'LOST' } }).service.validate('LOUIS29', 'u1', now)).toMatchObject({ reason: 'subscribed' });
-    expect(await setup({ user: { isDemo: true } }).service.validate('LOUIS29', 'u1', now)).toMatchObject({ reason: 'excluded' });
-    expect((await setup().service.validate('LOUIS29', 'u1', now)).valid).toBe(true);
+    expect(await setup({ redemption: { id: 'r' } }).service.validate('TRADER10', 'u1', now)).toMatchObject({ reason: 'already_used' });
+    expect(await setup({ user: { stripeSubscriptionId: 'sub' } }).service.validate('TRADER10', 'u1', now)).toMatchObject({ reason: 'subscribed' });
+    expect(await setup({ user: { subscriptionCanceledAt: new Date() } }).service.validate('TRADER10', 'u1', now)).toMatchObject({ reason: 'subscribed' });
+    expect(await setup({ seat: { status: 'LOST' } }).service.validate('TRADER10', 'u1', now)).toMatchObject({ reason: 'subscribed' });
+    expect(await setup({ user: { isDemo: true } }).service.validate('TRADER10', 'u1', now)).toMatchObject({ reason: 'excluded' });
+    expect((await setup().service.validate('TRADER10', 'u1', now)).valid).toBe(true);
   });
 });
 
@@ -81,7 +81,7 @@ describe('admin : coupons Stripe créés par l’API', () => {
   it('création : 2 coupons amount_off EUR (−20 € et −200 €), à vie = forever', async () => {
     const { service, stripe, prisma } = setup({ code: null });
     await service.create({
-      code: 'louis29', label: 'Louis', priceMonthlyEur: 29, priceAnnualEur: 290,
+      code: 'trader10', label: 'Formateur', priceMonthlyEur: 29, priceAnnualEur: 290,
       durationMonths: null, maxRedemptions: 10, expiresAt: null,
     });
     expect(stripe.coupons.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -91,7 +91,7 @@ describe('admin : coupons Stripe créés par l’API', () => {
       id: 'mtc-partner-20000-forever', amount_off: 20000, currency: 'eur', duration: 'forever',
     }));
     expect(prisma.partnerCode.create.mock.calls[0][0].data).toMatchObject({
-      code: 'LOUIS29', stripeCouponMonthlyId: 'mtc-partner-2000-forever', stripeCouponAnnualId: 'mtc-partner-20000-forever',
+      code: 'TRADER10', stripeCouponMonthlyId: 'mtc-partner-2000-forever', stripeCouponAnnualId: 'mtc-partner-20000-forever',
     });
   });
 
@@ -126,7 +126,7 @@ describe('admin : coupons Stripe créés par l’API', () => {
 
   it('code existant → conflit', async () => {
     await expect(setup().service.create({
-      code: 'LOUIS29', label: 'x', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, maxRedemptions: null, expiresAt: null,
+      code: 'TRADER10', label: 'x', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, maxRedemptions: null, expiresAt: null,
     })).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -137,10 +137,10 @@ describe('admin : coupons Stripe créés par l’API', () => {
       stripeCouponMonthlyId: 'mtc-partner-2400-forever', stripeCouponAnnualId: 'mtc-partner-24000-forever',
     });
     const label = setup();
-    await label.service.update('pc1', { label: 'Louis V2', active: false });
+    await label.service.update('pc1', { label: 'Formateur V2', active: false });
     expect(label.stripe.coupons.create).not.toHaveBeenCalled();
     expect(label.prisma.partnerCode.update.mock.calls[0][0].data).toMatchObject({
-      stripeCouponMonthlyId: LOUIS29.stripeCouponMonthlyId, active: false,
+      stripeCouponMonthlyId: TRADER10.stripeCouponMonthlyId, active: false,
     });
   });
 });

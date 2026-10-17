@@ -131,7 +131,7 @@ POST   /api/docker/containers/:id/start|stop|restart   ADMIN
 DELETE /api/docker/containers/:id      ADMIN
 GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
-GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs
+GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs (nom [a-zA-Z0-9][a-zA-Z0-9_-]*, sinon 400 ; canal SSH fermé à la fermeture de l'onglet)
 GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
 GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
 GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
@@ -1853,7 +1853,7 @@ Admin (#525, phase E) : `GET /admin/users/subscriptions` renvoie l'objet BRUT (l
 Abonnements) et inclut `founderSeat` / `partnerRedemption` pour le montant réel. `AdminUserDetail.offer`
 (fondateur : numéro, statut, intervalle, dates, cta ; code : conditions figées, statut). Digest
 quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : X / 200 (N actifs) ·
-Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
+Codes partenaires : TRADER10 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
 digest même sans inscription.
 
 

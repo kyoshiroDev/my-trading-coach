@@ -13,7 +13,7 @@ describe('commandes autorisées du serveur secondaire', () => {
     expect(readFileSync(ALLOWED_FILE, 'utf8')).toBe(allowedCommandsFile());
   });
 
-  it('une commande par ligne, sans doublon (comparaison grep -Fx du wrapper)', () => {
+  it('une commande par ligne, sans doublon (comparaison ligne à ligne du wrapper)', () => {
     const cmds = Object.values(VPS_READ_COMMANDS);
     for (const cmd of cmds) expect(cmd).not.toMatch(/[\r\n]/);
     expect(new Set(cmds).size).toBe(cmds.length);

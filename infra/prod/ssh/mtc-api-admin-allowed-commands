@@ -1,0 +1,12 @@
+cat /proc/loadavg
+cat /proc/meminfo
+df -B1 / | tail -1
+cat /proc/uptime
+uname -r
+node -v 2>/dev/null || echo n/a
+docker -v 2>/dev/null | awk '{print $3}' | tr -d ',' || echo n/a
+cat /proc/net/dev | grep -E 'eth0|ens' | head -1
+docker ps -a --format '{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}'
+docker stats --no-stream --format "{{.Name}}	{{.CPUPerc}}	{{.MemUsage}}"
+ls -l --time-style=+%s /opt/backups/mtc/*.sql.gz 2>/dev/null || echo ""
+ls -la /opt/backups/mtc/*.sql.gz 2>/dev/null || echo ""

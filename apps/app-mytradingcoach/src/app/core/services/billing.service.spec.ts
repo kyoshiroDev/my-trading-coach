@@ -28,8 +28,8 @@ describe('BillingService', () => {
     service.startCheckout('founder_monthly', { cta: 'carte', promo: null });
     expect(navigate).toHaveBeenCalledWith(['/paiement'], { queryParams: { plan: 'founder_monthly', cta: 'carte' } });
 
-    service.startCheckout('premium_monthly', { promo: 'LOUIS29' });
-    expect(navigate).toHaveBeenLastCalledWith(['/paiement'], { queryParams: { plan: 'premium_monthly', promo: 'LOUIS29' } });
+    service.startCheckout('premium_monthly', { promo: 'TRADER10' });
+    expect(navigate).toHaveBeenLastCalledWith(['/paiement'], { queryParams: { plan: 'premium_monthly', promo: 'TRADER10' } });
   });
 
   it('startCheckout signale le départ vers le paiement au parcours d’inscription', () => {

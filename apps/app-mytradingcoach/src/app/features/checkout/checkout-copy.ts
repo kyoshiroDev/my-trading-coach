@@ -1,4 +1,4 @@
-import { FOUNDER_REFUND_DAYS } from '@mtc/shared';
+import { FOUNDER_REFUND_DAYS, founderSeatsLabel } from '@mtc/shared';
 import type { CheckoutSummary } from '@app/core/api/billing.api';
 
 /** Icône d'une garantie (rendue par la page avec @lucide/angular). */
@@ -59,7 +59,11 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
 
   if (s.offer === 'founder') {
     return {
-      eyebrow: s.seatsLeft !== null ? `Offre fondateur · ${s.seatsLeft} place${s.seatsLeft > 1 ? 's' : ''} restante${s.seatsLeft > 1 ? 's' : ''}` : 'Offre fondateur',
+      // Compteur : libellé partagé (« 200 places disponibles », « Plus que 154 places sur 200 »…).
+      eyebrow: (() => {
+        const seats = s.seatsLeft !== null ? founderSeatsLabel(s.seatsLeft) : null;
+        return seats ? `Offre fondateur · ${seats}` : 'Offre fondateur';
+      })(),
       title: 'Premium, au prix fondateur',
       lead: FOUNDER_LEAD,
       price: short(s.recurringEur), per, was: `${short(s.normalEur)} €`,

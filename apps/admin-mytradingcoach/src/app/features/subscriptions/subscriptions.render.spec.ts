@@ -69,7 +69,7 @@ describe('SubscriptionsComponent', () => {
         { ...user('f', 'month'), founderSeat: { number: 12, status: 'ACTIVE' }, partnerRedemption: null },
         { ...user('p', 'year'), founderSeat: null, partnerRedemption: {
           status: 'ACTIVE', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
-          createdAt: '2026-10-01T00:00:00.000Z', partnerCode: { code: 'LOUIS29' },
+          createdAt: '2026-10-01T00:00:00.000Z', partnerCode: { code: 'TRADER10' },
         } },
       ],
       betaTesters: [], total: 2, page: 1, limit: 20,
@@ -77,7 +77,7 @@ describe('SubscriptionsComponent', () => {
     const amounts = [...el.querySelectorAll('td[data-label="Montant"]')].map((td) => td.textContent?.trim());
     expect(amounts).toEqual(['29 €/mois', '290 €/an']);
     expect(el.textContent).toContain('Fondateur n° 12');
-    expect(el.textContent).toContain('Code LOUIS29');
+    expect(el.textContent).toContain('Code TRADER10');
   });
 
   it('KPI Fondateurs : places prises / 200, actifs, offre ouverte', async () => {

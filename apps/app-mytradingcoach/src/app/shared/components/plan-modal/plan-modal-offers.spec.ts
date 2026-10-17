@@ -6,7 +6,8 @@ import { of } from 'rxjs';
 import { PlanModalComponent, partnerDurationLabel } from './plan-modal.component';
 import { BillingApi, type BillingOffers } from '@app/core/api/billing.api';
 import { BillingService } from '@app/core/services/billing.service';
-import { OffersStore } from '@app/core/stores/offers.store';
+import { OffersStore, type OffersStatus } from '@app/core/stores/offers.store';
+import { FOUNDER_INELIGIBLE_MESSAGES } from '@mtc/shared';
 import type { OfferIntent } from '@app/core/services/offer-intent.service';
 
 // Offre fondateur et code partenaire dans la modale (#525) : présélection selon le lien, choix
@@ -24,16 +25,17 @@ beforeAll(async () => {
   );
 });
 
-const LOUIS29 = {
-  valid: true as const, code: 'LOUIS29', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '',
+const TRADER10 = {
+  valid: true as const, code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '',
 };
 
-function offers(founderOpen: boolean): BillingOffers {
+function offers(founderOpen: boolean, seatsLeft = 163): BillingOffers {
+  const eligible = founderOpen && seatsLeft > 0;
   return {
-    founderOffer: { open: founderOpen, seatsLeft: 163, seatsTotal: 200 },
+    founderOffer: { open: founderOpen, seatsLeft, seatsTotal: 200 },
     founder: {
       isFounder: false, number: null, interval: null, since: null,
-      eligible: founderOpen, ineligibleReason: founderOpen ? null : 'closed', refundUntil: null,
+      eligible, ineligibleReason: eligible ? null : founderOpen ? 'sold_out' : 'closed', refundUntil: null,
     },
     partner: null,
     subscription: { interval: null, status: null },
@@ -50,7 +52,11 @@ const billingApi = {
 };
 
 type ModalApi = {
-  choice: () => string;
+  choice: () => string | null;
+  canConfirm: () => boolean;
+  offersError: () => boolean;
+  founderRefusal: () => string | null;
+  retryOffers: () => void;
   pick: (c: string) => void;
   setInterval: (i: string) => void;
   onCodeInput: (v: string) => void;
@@ -59,10 +65,22 @@ type ModalApi = {
   showsBoth: () => boolean;
 };
 
-async function setup(opts: { founderOpen: boolean; preset?: OfferIntent | null; cta?: string }) {
-  const store = signal<BillingOffers | null>(offers(opts.founderOpen));
-  const fakeStore = {
+let status: ReturnType<typeof signal<OffersStatus>>;
+let store: ReturnType<typeof signal<BillingOffers | null>>;
+let fakeStore: { load: ReturnType<typeof vi.fn>; refresh: ReturnType<typeof vi.fn> } & Record<string, unknown>;
+
+async function setup(opts: {
+  founderOpen: boolean;
+  seatsLeft?: number;
+  status?: OffersStatus;
+  preset?: OfferIntent | null;
+  cta?: string;
+}) {
+  status = signal<OffersStatus>(opts.status ?? 'loaded');
+  store = signal<BillingOffers | null>((opts.status ?? 'loaded') === 'loaded' ? offers(opts.founderOpen, opts.seatsLeft) : null);
+  fakeStore = {
     offers: store,
+    status,
     founderAvailable: computed(() => {
       const o = store();
       return !!o && o.founderOffer.open && o.founderOffer.seatsLeft > 0 && o.founder.eligible;
@@ -100,7 +118,7 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     billingApi.checkout.mockReturnValue(of({ data: { url: 'https://checkout.stripe.test/s' } }));
-    billingApi.validatePartnerCode.mockReturnValue(of({ data: LOUIS29 }));
+    billingApi.validatePartnerCode.mockReturnValue(of({ data: TRADER10 }));
     sessionStorage.clear();
   });
   afterEach(() => vi.useRealTimers());
@@ -120,17 +138,17 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
   });
 
   it('lien plan=founder ET promo valide : le code est présélectionné, le fondateur reste à côté', async () => {
-    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'LOUIS29', cta: 'bandeau' } });
+    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'TRADER10', cta: 'bandeau' } });
     await vi.advanceTimersByTimeAsync(500);
     expect(c.choice()).toBe('partner');
     expect(c.showsBoth()).toBe(true);
     c.confirmPlan();
     // Prix NORMAL + code : la remise est appliquée par l'API (coupon), jamais sur un prix fondateur.
-    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'bandeau', promo: 'LOUIS29' });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'bandeau', promo: 'TRADER10' });
   });
 
   it('jamais de cumul : choisir le fondateur n’envoie pas le code', async () => {
-    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'LOUIS29', cta: 'bandeau' } });
+    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'TRADER10', cta: 'bandeau' } });
     await vi.advanceTimersByTimeAsync(500);
     c.pick('founder');
     c.confirmPlan();
@@ -139,9 +157,9 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
 
   it('code du lien refusé : raison affichée, présélection fondateur', async () => {
     billingApi.validatePartnerCode.mockReturnValue(
-      of({ data: { valid: false, code: 'LOUIS29', reason: 'exhausted', message: 'Ce code partenaire a atteint son nombre maximum de personnes.' } }),
+      of({ data: { valid: false, code: 'TRADER10', reason: 'exhausted', message: 'Ce code partenaire a atteint son nombre maximum de personnes.' } }),
     );
-    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'LOUIS29', cta: 'carte' } });
+    const c = await setup({ founderOpen: true, preset: { plan: 'founder', promo: 'TRADER10', cta: 'carte' } });
     await vi.advanceTimersByTimeAsync(500);
     expect(c.validation()?.message).toContain('nombre maximum');
     expect(c.choice()).toBe('founder');
@@ -150,19 +168,87 @@ describe('PlanModal — offre fondateur et code partenaire', () => {
   it('offre fermée : code saisi à la main et valide → choisi automatiquement', async () => {
     const c = await setup({ founderOpen: false });
     expect(c.choice()).toBe('premium');
-    c.onCodeInput('louis29');
+    c.onCodeInput('trader10');
     await vi.advanceTimersByTimeAsync(500);
-    expect(billingApi.validatePartnerCode).toHaveBeenCalledWith('LOUIS29');
+    expect(billingApi.validatePartnerCode).toHaveBeenCalledWith('TRADER10');
     expect(c.choice()).toBe('partner');
     c.setInterval('yearly');
     c.confirmPlan();
-    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: 'LOUIS29' });
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_yearly', { cta: 'modale', promo: 'TRADER10' });
   });
 
   it('point de clic de l’écran (cadenas, profil) transmis au checkout', async () => {
     const c = await setup({ founderOpen: true, cta: 'cadenas' });
     c.confirmPlan();
     expect(billingService.startCheckout).toHaveBeenCalledWith('founder_monthly', { cta: 'cadenas', promo: null });
+  });
+});
+
+describe('PlanModal — offres pas encore reçues (#578)', () => {
+  const FOUNDER_LINK: OfferIntent = { plan: 'founder', promo: null, cta: 'carte' };
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    billingApi.validatePartnerCode.mockReturnValue(of({ data: TRADER10 }));
+    sessionStorage.clear();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('chargement en cours : aucun choix, bouton inactif, aucun checkout', async () => {
+    const c = await setup({ founderOpen: true, status: 'loading', preset: FOUNDER_LINK });
+    expect(fakeStore.load).toHaveBeenCalled();
+    expect(c.choice()).toBeNull();
+    expect(c.canConfirm()).toBe(false);
+    c.pick('premium');
+    expect(c.choice()).toBeNull();
+    c.confirmPlan();
+    expect(billingService.startCheckout).not.toHaveBeenCalled();
+  });
+
+  it('offres reçues : le fondateur du lien est présélectionné et part au prix fondateur', async () => {
+    const c = await setup({ founderOpen: true, status: 'loading', preset: FOUNDER_LINK });
+    store.set(offers(true));
+    status.set('loaded');
+    expect(c.choice()).toBe('founder');
+    c.confirmPlan();
+    expect(billingService.startCheckout).toHaveBeenCalledWith('founder_monthly', { cta: 'carte', promo: null });
+  });
+
+  it('échec : erreur affichée, aucun checkout, « Réessayer » relance puis le fondateur est choisi', async () => {
+    const c = await setup({ founderOpen: true, status: 'error', preset: FOUNDER_LINK });
+    expect(c.offersError()).toBe(true);
+    expect(c.canConfirm()).toBe(false);
+    c.confirmPlan();
+    expect(billingService.startCheckout).not.toHaveBeenCalled();
+    c.retryOffers();
+    expect(fakeStore.refresh).toHaveBeenCalledOnce();
+    store.set(offers(true));
+    status.set('loaded');
+    expect(c.offersError()).toBe(false);
+    expect(c.choice()).toBe('founder');
+  });
+
+  it('lien fondateur, offre fermée : raison affichée, PAS de Premium présélectionné, choix explicite', async () => {
+    const c = await setup({ founderOpen: false, preset: FOUNDER_LINK });
+    expect(c.founderRefusal()).toBe(FOUNDER_INELIGIBLE_MESSAGES.closed);
+    expect(c.choice()).toBeNull();
+    c.confirmPlan();
+    expect(billingService.startCheckout).not.toHaveBeenCalled();
+    c.pick('premium');
+    c.confirmPlan();
+    expect(billingService.startCheckout).toHaveBeenCalledWith('premium_monthly', { cta: 'carte', promo: null });
+  });
+
+  it('lien fondateur, plus de place : message « plus de place »', async () => {
+    const c = await setup({ founderOpen: true, seatsLeft: 0, preset: FOUNDER_LINK });
+    expect(c.founderRefusal()).toBe(FOUNDER_INELIGIBLE_MESSAGES.sold_out);
+    expect(c.choice()).toBeNull();
+  });
+
+  it('lien sans plan (cadenas, Profil), fondateur fermé : Premium présélectionné, aucun message', async () => {
+    const c = await setup({ founderOpen: false });
+    expect(c.founderRefusal()).toBeNull();
+    expect(c.choice()).toBe('premium');
   });
 });
 

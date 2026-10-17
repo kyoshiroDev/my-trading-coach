@@ -159,3 +159,23 @@ perdue, les chiffres ci-dessus viennent des points d'étape et du journal Traefi
 passage, rapatrier fichier par fichier **avant** `rm -rf`. (3) `pkill -f garde-fou.sh` lancé par
 ssh tue sa propre session (le motif est dans sa ligne de commande) : utiliser
 `pkill -f '[g]arde-fou.sh k6'`.
+
+### Passage n° 2 — vague d'inscriptions seule (#487), samedi 17/10/2026, 15 h 01 – 15 h 11
+
+Conditions : image prod `c2b07ae51fa4`, même environnement de test (sans seed : la vague crée ses
+comptes), script corrigé (`x-load-client: signup-<vu>-<itération>`, 2b3621f2), 30 inscriptions/min
+pendant 10 min, chien de garde actif. Montage + vague + nettoyage : ~25 min.
+
+| Critère (#487) | Résultat |
+|---|---|
+| 0 OOM | ✅ 0 OOM, 0 redémarrage (API de test 487 Mo / 2 Go) |
+| 0 erreur 5xx | ✅ 0 sur 2 409 requêtes ; 0 erreur dans les journaux de l'API |
+| p95 `POST /auth/register` < 1,5 s | ✅ p50 95 ms · **p95 110 ms** · max 260 ms (argon2 compris) |
+| **0 e-mail perdu** | ✅ **301 jobs dans la file `email` pour 301 inscriptions** (`file-email.sh`), 0 échec, 0 envoi direct de repli |
+
+- 301 inscriptions sur 301 en 201, **plus aucun 429** : l'artefact du passage n° 1 est corrigé.
+- 301 × 403 sur `/api/analytics/by-setup` : statistique Premium appelée par le dashboard d'un compte
+  FREE tout neuf, refus attendu (compté en « échec » par k6, pas une erreur).
+- Prod pendant la vague : 99-180 ms vue de l'extérieur, 26-35 ms mesurée sur le serveur ; charge
+  ≤ 0,3.
+- Résultats rapatriés avant le nettoyage (leçon du passage n° 1), environnement entièrement supprimé.
