@@ -420,10 +420,12 @@ describe('SessionService', () => {
   });
 
   describe('closeStaleSessions (#595)', () => {
-    const now = new Date('2026-10-17T21:00:00Z'); // 23:00 Paris
+    const now = new Date('2026-10-17T22:05:00Z'); // 17:05 Chicago, juste après la bascule
 
-    it('clôture les sessions ouvertes avec les totaux de LEURS trades', async () => {
-      mockPrisma.tradeSession.findMany.mockResolvedValue([{ id: 's1', userId: 'user-1', accountId: 'acc-1' }]);
+    it('clôture les sessions ouvertes avec les totaux de LEURS trades, à la fin de leur journée', async () => {
+      mockPrisma.tradeSession.findMany.mockResolvedValue([
+        { id: 's1', userId: 'user-1', accountId: 'acc-1', startedAt: new Date('2026-10-17T13:00:00Z') },
+      ]);
       mockPrisma.trade.findMany.mockResolvedValue([
         { pnl: 100, commission: 5, asset: 'MNQ' },
         { pnl: -40, commission: 5, asset: 'MNQ' },
@@ -436,26 +438,43 @@ describe('SessionService', () => {
       expect(mockPrisma.trade.updateMany).not.toHaveBeenCalled(); // aucun trade rattaché après coup
       expect(mockPrisma.tradeSession.updateMany).toHaveBeenCalledWith({
         where: { id: 's1', status: 'ACTIVE' },
-        data: expect.objectContaining({ status: 'CLOSED', endedAt: now, totalPnl: 50, totalTrades: 2, bestTradeAsset: 'MNQ' }),
+        data: {
+          status: 'CLOSED',
+          endedAt: new Date('2026-10-17T22:00:00.000Z'),
+          totalPnl: 50,
+          totalTrades: 2,
+          winRate: 50,
+          maxDrawdown: -45,
+          bestTradePnl: 95,
+          bestTradeAsset: 'MNQ',
+        },
       });
       expect(mockRedisService.client.del).toHaveBeenCalledWith('session:active:user-1');
     });
 
-    it('fenêtre : depuis la journée de trading précédente, hors comptes démo (anciennes sessions intactes)', async () => {
+    it('cible exactement les sessions que la règle « active » ne renvoie plus, hors démo', async () => {
       mockPrisma.tradeSession.findMany.mockResolvedValue([]);
       await service.closeStaleSessions(now);
       expect(mockPrisma.tradeSession.findMany.mock.calls[0][0].where).toEqual({
         status: 'ACTIVE',
-        startedAt: { gte: new Date('2026-10-15T22:00:00.000Z'), lt: now },
+        startedAt: { lt: new Date('2026-10-17T22:00:00.000Z') },
         user: { isDemo: false },
       });
     });
 
+    it('semaine de décalage (Paris en heure d’hiver, Chicago encore en été) : bascule à 17:00 Chicago = 23:00 Paris', async () => {
+      mockPrisma.tradeSession.findMany.mockResolvedValue([]);
+      await service.closeStaleSessions(new Date('2026-10-28T22:05:00Z'));
+      expect(mockPrisma.tradeSession.findMany.mock.calls[0][0].where.startedAt).toEqual({ lt: new Date('2026-10-28T22:00:00.000Z') });
+    });
+
     it('session déjà clôturée à la main entre-temps : rien d’écrasé', async () => {
-      mockPrisma.tradeSession.findMany.mockResolvedValue([{ id: 's1', userId: 'user-1', accountId: null }]);
+      mockPrisma.tradeSession.findMany.mockResolvedValue([
+        { id: 's1', userId: 'user-1', accountId: null, startedAt: new Date('2026-10-17T13:00:00Z') },
+      ]);
       mockPrisma.trade.findMany.mockResolvedValue([]);
       mockPrisma.tradeSession.updateMany.mockResolvedValue({ count: 0 });
-      await service.closeStaleSessions(now);
+      await expect(service.closeStaleSessions(now)).resolves.toBe(0);
       expect(mockRedisService.client.del).not.toHaveBeenCalled();
     });
   });

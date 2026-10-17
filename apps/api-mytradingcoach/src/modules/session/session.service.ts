@@ -7,10 +7,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { AccountsService } from '../accounts/accounts.service';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { computeTradeStats, netPnl, toParisDateStr } from '@mtc/shared';
+import { computeTradeStats, toParisDateStr } from '@mtc/shared';
 import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
-import { activeSessionWhere, previousTradingDayStart } from './active-session';
+import { activeSessionWhere, tradingDayStart } from './active-session';
+import { autoCloseData, sessionTotalsFrom } from './session-totals';
 
 // Forme de GET /session/history : contrat partagé avec le front (@mtc/shared).
 export type { SessionHistoryItem };
@@ -133,70 +134,44 @@ export class SessionService {
     return session;
   }
 
-  /** Totaux d'une session calculés sur SES trades (net des frais, BE exclus du win rate). */
+  /** Totaux d'une session calculés sur SES trades (cf. `sessionTotalsFrom`). */
   private async sessionTotals(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
-    const trades = await this.prisma.trade.findMany({
+    return sessionTotalsFrom(await this.sessionTrades(userId, sessionId, sameAccount));
+  }
+
+  private sessionTrades(userId: string, sessionId: string, sameAccount: { accountId?: string }) {
+    return this.prisma.trade.findMany({
       where: { userId, sessionId, ...sameAccount },
       select: { pnl: true, commission: true, asset: true },
       orderBy: { tradedAt: 'asc' },
     });
-
-    const closed = trades.filter((t) => t.pnl !== null);
-    // Stats via le helper unique (BE exclus du win rate).
-    const { totalPnl, winRate } = computeTradeStats(trades);
-
-    // Drawdown max
-    let peak = 0, maxDrawdown = 0, cumPnl = 0;
-    for (const t of closed) {
-      cumPnl += netPnl(t) ?? 0; // net des frais, comme le total
-      if (cumPnl > peak) peak = cumPnl;
-      const dd = cumPnl - peak;
-      if (dd < maxDrawdown) maxDrawdown = dd;
-    }
-
-    // Meilleur trade, en net comme le total
-    const best = closed.reduce<{ pnl: number | null; asset: string } | null>((max, t) => {
-      const n = netPnl(t);
-      return n != null && n > (max?.pnl ?? -Infinity) ? { pnl: n, asset: t.asset } : max;
-    }, null);
-
-    return {
-      totalPnl,
-      totalTrades: trades.length,
-      winRate,
-      maxDrawdown,
-      bestTradePnl: best?.pnl ?? null,
-      bestTradeAsset: best?.asset ?? null,
-    };
   }
 
   /**
-   * Fin de journée de trading CME (SessionCloseCron, 23 h Paris) : clôture les sessions restées
-   * ouvertes, totaux calculés sur leurs propres trades, sans humeur de fin (non déclarée).
-   *
-   * Fenêtre : sessions ouvertes depuis le début de la journée de trading PRÉCÉDENTE. Elle couvre
-   * celles ouvertes après le passage d'hier (23 h → minuit) et un passage manqué, sans toucher aux
-   * sessions plus anciennes laissées ouvertes avant ce job (fermées à la main). Comptes démo exclus.
+   * Bascule de la journée de trading CME (SessionCloseCron, 17:05 Chicago) : clôture les sessions
+   * restées ouvertes d'une journée précédente — exactement celles que `activeSessionWhere` ne
+   * renvoie plus. Fermées à la fin de leur journée, totaux sur leurs propres trades, sans humeur
+   * de fin (non déclarée). Comptes démo exclus.
    */
   async closeStaleSessions(now = new Date()): Promise<number> {
     const stale = await this.prisma.tradeSession.findMany({
-      where: {
-        status: SessionStatus.ACTIVE,
-        startedAt: { gte: previousTradingDayStart(now), lt: now },
-        user: { isDemo: false },
-      },
-      select: { id: true, userId: true, accountId: true },
+      where: { status: SessionStatus.ACTIVE, startedAt: { lt: tradingDayStart(now) }, user: { isDemo: false } },
+      select: { id: true, userId: true, accountId: true, startedAt: true },
     });
+    let closed = 0;
     for (const s of stale) {
-      const totals = await this.sessionTotals(s.userId, s.id, s.accountId ? { accountId: s.accountId } : {});
+      const trades = await this.sessionTrades(s.userId, s.id, s.accountId ? { accountId: s.accountId } : {});
       // `status: ACTIVE` dans le where : une clôture manuelle entre-temps n'est pas écrasée.
       const { count } = await this.prisma.tradeSession.updateMany({
         where: { id: s.id, status: SessionStatus.ACTIVE },
-        data: { status: SessionStatus.CLOSED, endedAt: now, ...totals },
+        data: autoCloseData(s.startedAt, trades),
       });
-      if (count > 0) await this.redisService.client.del(`session:active:${s.userId}`).catch(() => null);
+      if (count > 0) {
+        closed++;
+        await this.redisService.client.del(`session:active:${s.userId}`).catch(() => null);
+      }
     }
-    return stale.length;
+    return closed;
   }
 
   async updateSession(

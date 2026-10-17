@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { activeSessionWhere, previousTradingDayStart, tradingDayStart } from './active-session';
+import { activeSessionWhere, tradingDayEnd, tradingDayStart } from './active-session';
 
 describe('tradingDayStart (#595)', () => {
   it('heure d’été US : la journée commence à 17:00 Chicago la veille (22:00 UTC)', () => {
@@ -21,8 +21,13 @@ describe('tradingDayStart (#595)', () => {
     expect(tradingDayStart(new Date('2026-10-28T12:00:00Z')).toISOString()).toBe('2026-10-27T22:00:00.000Z');
   });
 
-  it('journée précédente : 24 h avant hors changement d’heure', () => {
-    expect(previousTradingDayStart(new Date('2026-10-17T16:39:00Z')).toISOString()).toBe('2026-10-15T22:00:00.000Z');
+  it('fin de journée = début de la suivante (17:00 Chicago)', () => {
+    expect(tradingDayEnd(new Date('2026-10-06T18:40:26Z')).toISOString()).toBe('2026-10-06T22:00:00.000Z');
+  });
+
+  it('fin de journée le jour du passage à l’heure d’hiver US (journée de 25 h)', () => {
+    // Journée du 1er novembre 2026 : ouverte le 31/10 à 17:00 CDT, finie le 1er à 17:00 CST (25 h)
+    expect(tradingDayEnd(new Date('2026-10-31T23:00:00Z')).toISOString()).toBe('2026-11-01T23:00:00.000Z');
   });
 });
 

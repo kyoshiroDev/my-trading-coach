@@ -23,9 +23,9 @@ export function tradingDayStart(at: Date): Date {
   throw new Error(`Début de la journée de trading introuvable pour ${day}`);
 }
 
-/** Début de la journée de trading qui précède celle de `at`. */
-export function previousTradingDayStart(at: Date): Date {
-  return tradingDayStart(new Date(tradingDayStart(at).getTime() - 1));
+/** Fin de la journée de trading de `at` = début de la suivante (une journée dure 23 à 25 h). */
+export function tradingDayEnd(at: Date): Date {
+  return tradingDayStart(new Date(tradingDayStart(at).getTime() + 26 * 3600 * 1000));
 }
 
 /** Filtre Prisma de LA session active d'un utilisateur, à utiliser partout à la place de `status: ACTIVE`. */
