@@ -34,6 +34,10 @@ blanche) est le prochain chantier de sécurité.
 
 - Ubuntu 26.04 LTS, fuseau Europe/Paris, swap 4 Gio (`vm.swappiness=10`), durcissement réseau et
   noyau dans `/etc/sysctl.d/99-mtc-hardening.conf`.
+- Capacité (SCA-B7-01, #481) : `somaxconn` et `tcp_max_syn_backlog` 4096,
+  `ip_local_port_range = 10240 65535` (ports sortants : Traefik → API, API → Postgres/Redis/externes),
+  `fs.file-max` déjà au maximum par défaut. API (blue, green, worker) : `ulimits nofile 65536` dans
+  `docker-compose.prod.yml` ; Traefik (Go) relève seul sa limite au plafond (524 288).
 - **SSH** : `/etc/ssh/sshd_config.d/00-mtc-hardening.conf` (lu en premier, la première valeur gagne) :
   clé seule, root interdit, `AllowUsers greg`, `MaxAuthTries 3`. Le compte `ubuntu` est verrouillé.
 - **UFW** : entrée refusée sauf 22, 80, 443. Le 22 est en `allow` et non en `limit` : un déploiement
