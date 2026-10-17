@@ -13,9 +13,10 @@ if (/\/\/api\.mytradingcoach\.app/.test(BASE_URL) && __ENV.ALLOW_PROD !== 'oui-j
 
 // SCA-B9 : avec LOAD_TEST_KEY (= celle de .env.beta), l'API compte chaque VU comme un client
 // distinct au lieu de tout compter sur l'IP de l'injecteur. Sans elle : comptage par IP (README).
-const loadHeaders = () =>
-  __ENV.LOAD_TEST_KEY ? { 'x-load-test-key': __ENV.LOAD_TEST_KEY, 'x-load-client': `vu-${__VU}` } : {};
-const jsonHeaders = () => ({ 'Content-Type': 'application/json', ...loadHeaders() });
+// `client` remplace l'identifiant par VU (ex. un par inscription : voir signup-wave.js).
+const loadHeaders = (client = `vu-${__VU}`) =>
+  __ENV.LOAD_TEST_KEY ? { 'x-load-test-key': __ENV.LOAD_TEST_KEY, 'x-load-client': client } : {};
+const jsonHeaders = (client) => ({ 'Content-Type': 'application/json', ...loadHeaders(client) });
 export const auth = (token) => ({ headers: { ...jsonHeaders(), Authorization: `Bearer ${token}` } });
 
 /** Email unique par itération (préfixe reconnaissable, à purger après le test). */
@@ -27,9 +28,9 @@ export function uniqueEmail(tag) {
 // a compté 1 253 « erreurs » 401 qui n'étaient que des jetons périmés (le vrai front rafraîchit).
 export let tokenExpired = false;
 
-export function register(email, password = 'LoadTest-2026!') {
+export function register(email, password = 'LoadTest-2026!', client = undefined) {
   const res = http.post(`${BASE_URL}/auth/register`, JSON.stringify({ email, password, name: 'Load Test' }), {
-    headers: jsonHeaders(),
+    headers: jsonHeaders(client),
     tags: { name: 'POST /auth/register' },
   });
   check(res, { 'register 201': (r) => r.status === 201 });

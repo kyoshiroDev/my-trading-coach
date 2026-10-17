@@ -17,6 +17,7 @@ import FAQ from '../components/FAQ.astro';
 import CtaFinal from '../components/CtaFinal.astro';
 import Footer from '../components/Footer.astro';
 import { HOME_SCHEMA } from '../data/schema';
+import { founderOpenAtBuild } from '../lib/founder-build';
 
 const ARTICLES = [
   {
@@ -54,6 +55,9 @@ try {
 } catch {
   // API injoignable au build → on garde le fallback
 }
+
+// Offre fondateur ouverte au build → carte, note, FAQ et bouton du Hero dans le HTML statique.
+const founderOpen = await founderOpenAtBuild();
 ---
 
 <Base
@@ -64,7 +68,7 @@ try {
   schema={HOME_SCHEMA}
 >
   <Nav />
-  <Hero traders={traders} />
+  <Hero traders={traders} founderOpen={founderOpen} />
   <!-- Prop firms en direct juste après le Hero : la promesse du titre, prouvée (audit 2026-10-06). -->
   <PropFirmLive />
   <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
@@ -87,10 +91,10 @@ try {
   <Debrief />
   {FEATURES.multiAccounts && <MultiComptes />}
   <Compare />
-  <Pricing />
+  <Pricing founderOpen={founderOpen} />
   {FEATURES.referral && <Referral />}
   <Testimonials traders={traders} />
-  <FAQ />
+  <FAQ founderOpen={founderOpen} />
   <CtaFinal />
 
   <!-- Section blog : liens internes pour le SEO -->

@@ -5,6 +5,13 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 export const STRIPE_WEBHOOK_PATH = '/api/billing/webhook';
 
 /**
+ * Étapes du parcours d'inscription envoyées par `navigator.sendBeacon` en `text/plain` : requête
+ * « simple » (pas de requête préalable CORS), donc envoyée par tous les navigateurs, y compris
+ * pendant un changement de page. Le corps est du JSON, lu comme tel sur cette route SEULEMENT.
+ */
+export const FUNNEL_BEACON_PATH = '/api/public/funnel';
+
+/**
  * Parseurs de corps de requête (SCA-B3-06). Avant : `rawBody: true` pour TOUTES les routes, donc
  * chaque corps reçu gardé deux fois en mémoire (objet + Buffer brut), alors qu'un seul endpoint en
  * a besoin. À appeler sur une app créée avec `bodyParser: false`, AVANT `init` / `listen`.
@@ -20,6 +27,8 @@ export function configureBodyParsers(app: NestExpressApplication): void {
       },
     }),
   );
+  // Beacon du parcours d'inscription : JSON envoyé en text/plain, petit corps borné.
+  app.use(FUNNEL_BEACON_PATH, json({ type: 'text/plain', limit: '2kb' }));
   // Partout ailleurs : parseurs standard (ceux qu'installait Nest), sans copie brute. Un corps déjà
   // lu par le parseur du webhook n'est pas relu (body-parser ignore une requête déjà parsée).
   app.useBodyParser('json');

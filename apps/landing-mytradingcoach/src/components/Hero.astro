@@ -1,9 +1,10 @@
 ---
 import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
-import { PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 // Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
 // dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
-const { traders = 0 } = Astro.props;
+// `founderOpen` : offre fondateur ouverte au build (src/lib/founder-build.ts).
+const { traders = 0, founderOpen = false } = Astro.props;
 const showTraders = traders >= TRADERS_PUBLIC_THRESHOLD;
 // Nombre de firms du catalogue de l'app : jamais un chiffre en dur.
 const firmCount = PROP_FIRM_CATALOG_FILES.length;
@@ -13,7 +14,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
 <div class="banner" data-offer-shift>🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues</div>
 
 <!-- HERO -->
-<section class="hero">
+<section class:list={['hero', { 'hero-founder': founderOpen }]}>
   <div class="hero-glow"></div>
   <div class="pulse-ring"></div>
   <div class="pulse-ring"></div>
@@ -95,6 +96,14 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     <a href={`${APP_URL}/register`} class="btn-p hero-cta-main" data-ga-event="cta_signup" data-ga-place="hero">
       Commencer gratuitement
     </a>
+    {founderOpen && (
+      /* Mobile : raccourci vers la carte Fondateur, juste après le bouton gratuit qui reste le
+         premier. Rendu seulement si l'offre vend au build ; retiré par le script de Pricing si
+         elle ne vend plus. */
+      <a href="#fondateur" class="btn-demo hero-cta-founder" data-founder-only data-ga-event="cta_founder" data-ga-place="hero">
+        🔥 Offre fondateur : {FOUNDER_OFFER.priceMonthlyEur} €/mois à vie
+      </a>
+    )}
     <a href={`${APP_URL}/demo`} class="btn-demo hero-cta-demo" data-ga-event="cta_demo" data-ga-place="hero">
       🔍 Tester la démo
     </a>
@@ -384,6 +393,15 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     font-family: var(--disp);
   }
   .btn-demo:hover { border-color: var(--blue); background: rgba(59,130,246,.08); transform: translateY(-2px); }
+  /* Raccourci Fondateur : mobile seulement (au-delà, la carte est sur le même écran que les prix). */
+  .hero-cta-founder { display: none; border-color: rgba(59,130,246,.5); }
+  @media (max-width: 979px) { .hero-cta-founder { display: inline-flex; } }
+  /* Raccourci entièrement visible au-dessus du bandeau cookies (89 px) en 390×844 : bouton
+     compact (46 px au lieu de 58) et 16 px de moins sous les puces, seulement quand il est là. */
+  @media (max-width: 768px) {
+    .hero-cta-founder { padding: 11px 20px; font-size: 14px; }
+    .hero-founder .hero-moments { margin-bottom: 24px; }
+  }
 
   .hero-cta-sub {
     font-size: 12px;

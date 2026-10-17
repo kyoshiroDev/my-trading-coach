@@ -1,0 +1,68 @@
+# Traefik — VPS prod MyTradingCoach (149.202.40.240)
+# Pas de dashboard exposé : en cas de besoin, tunnel SSH vers le port 8080 du conteneur.
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: false
+
+ping:
+  entryPoint: ping
+
+entryPoints:
+  ping:
+    address: ":8082"
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+    # TEMPORAIRE (bascule) : l ancien VPS relaie api./app. ici en TCP (TLS passthrough) avec le
+    # PROXY protocol, le temps que le DNS se propage → Traefik voit la vraie IP du client et l API
+    # (trust proxy 1) garde une limite de débit par visiteur. À retirer avec le relais.
+    proxyProtocol:
+      trustedIPs:
+        - "51.83.197.230/32"
+    http:
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers@file
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+        writeTimeout: 120s
+        idleTimeout: 180s
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: hello@mytradingcoach.app
+      storage: /letsencrypt/acme.json
+      dnsChallenge:
+        provider: ovh
+        resolvers:
+          - "213.186.33.99:53"
+        propagation:
+          delayBeforeChecks: 10s
+
+providers:
+  docker:
+    endpoint: "tcp://socket-proxy:2375"
+    exposedByDefault: false
+    network: mtc_network
+  file:
+    directory: /conf.d
+    watch: true
+
+log:
+  level: INFO
+
+accessLog:
+  bufferingSize: 100

@@ -866,12 +866,30 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 - **Toute modale** porte `role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="fermer()"` sur
   la boîte (pas sur le fond) : focus envoyé dedans, Tab piégé, Échap ferme, focus rendu à la
   fermeture. Titre relié par `aria-labelledby`. Ne pas recoder ce comportement à la main.
-- **Routeur** : `withPreloading(PreloadAllModules)` + `withInMemoryScrolling` (app et admin). Le shell
-  connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre : `mtcScrollMemory` sur ce
-  conteneur remet en haut à chaque page et restaure la position au bouton « Précédent ».
+- **Routeur** : `withInMemoryScrolling` (app et admin) + préchargement : admin `PreloadAllModules` ;
+  **app `AuthenticatedPreloading`** (`core/auth/authenticated-preloading.ts`, oct. 2026) : rien pour un
+  visiteur anonyme, et pour un connecté seulement une fois le navigateur inactif (`whenIdle`,
+  `requestIdleCallback`, repli 1,5 s sur Safari). Avant, `PreloadAllModules` faisait télécharger 35
+  chunks (270 Kio) du tableau de bord à un visiteur de /register, en concurrence avec le formulaire.
+  Le shell connecté défile dans un conteneur (`<main>` / `.content`), pas la fenêtre :
+  `mtcScrollMemory` sur ce conteneur remet en haut à chaque page et restaure la position au bouton
+  « Précédent ».
+- **`/register` sans import paresseux** (`component: RegisterComponent` dans `app.routes.ts`) : page
+  d'arrivée des pubs. L'import paresseux ajoutait 2 allers-retours en cascade (chunk de la page, puis
+  ses dépendances), ≈ 1,3 s en 4G lente. Coût : +12,8 Ko gz au bundle initial (≈ 474 kB bruts, au-dessus
+  de l'avertissement 450 kB, sous le budget bloquant 500 kB). `/login` reste paresseux : le passer en
+  direct ne coûterait que +0,6 Ko gz mais 9 kB bruts de marge sur le budget. Ce qui est importé par
+  l'inscription arrive au démarrage : **pas de `@lucide/angular`** dedans (œil du mot de passe :
+  `mtc-eye-icon`, SVG en ligne, partagé avec la connexion).
+- **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
+  intégré (tokens de `theme.css` avec valeurs de repli), visibles dès le HTML. Texte en police
+  monospace **système** : JetBrains Mono y ferait télécharger une police en concurrence avec le JS. Retiré par `App`
+  (`removeBootScreen`) après le rendu de la PREMIÈRE page (fin de navigation + `afterNextRender`), pas
+  au démarrage d'Angular, sinon une page paresseuse laisserait un écran vide. Jamais d'écran vide.
 - **Bundle initial < 500 kB (budget bloquant)** : `@lucide/angular` est un seul module ; si un
-  composant chargé au démarrage (racine, toasts, dialogues globaux) l'importe, TOUTES les icônes de
-  l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`).
+  composant chargé au démarrage (racine, toasts, dialogues globaux, **inscription**) l'importe, TOUTES
+  les icônes de l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`,
+  `mtc-eye-icon`).
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
@@ -910,6 +928,10 @@ Test de charge B9 : le polling faisait **la moitié** des requêtes de l'API. R�
   date de plus d'une minute.
 - Budget vérifié par `session.store.polling.spec.ts` : **< 3 requêtes/min par onglet en session**
   (hors quick-trade), **0 onglet caché**. Toute nouvelle donnée périodique doit tenir ce budget.
+- **Admin** : `visiblePoll(request, { periodMs })` (`apps/admin-mytradingcoach/src/app/core/utils/visible-poll.ts`) :
+  aucune requête onglet caché (une tout de suite au retour), espacement ×2, ×4, ×8 après échec, jamais
+  deux requêtes en parallèle ; émet `{ ok, value | error }` sans terminer le flux. Utilisé par
+  Surveillance (15 s, bandeau `VPS_UNREACHABLE`, boutons masqués si `readOnly`) et le dashboard (10 s).
 - **Tout nouveau socket** (`io(...)`) étale ses reconnexions avec `...SOCKET_RECONNECT_OPTIONS`
   (`core/services/socket-reconnect.ts`, SCA-B4-07) : 1er essai entre 1 et 9 s, plafond 60 s. Sans ça,
   tous les onglets reviennent ensemble après un redémarrage de l'API.
@@ -929,6 +951,49 @@ onglet), place = 1er segment de la route, envoi best-effort. Branché sur : `mtc
 `?checkout=success|canceled` → `checkout_return`), CTA « Créer mon compte » de la démo (sidebar). Nouveau
 teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » de `/acquisition`
 (`features/acquisition/funnel.util.ts`, testé).
+
+## Parcours d'inscription par source (oct. 2026)
+
+`core/services/signup-funnel.service.ts` → `POST /public/funnel` par **`navigator.sendBeacon` en
+`text/plain`** (repli `fetch` keepalive `text/plain`) : pas de requête préalable CORS, et l'étape part
+même si la page change juste après (`register_submit` avant la redirection, `checkout_redirect` avant
+Stripe). Anonyme : étape, source/medium/campagne, `inApp`, detail d'une liste fermée de `@mtc/shared`.
+L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas revenir à HttpClient.
+- **`register_view` dès l'arrivée** (oct. 2026) : script inline `#mtc-register-view` d'`index.html`,
+  exécuté au chargement de `/register` sur `app.`, `dev.app.` et `beta.app.mytradingcoach.app` (URL de
+  l'API déduite de l'hôte), AVANT le téléchargement de l'app : un visiteur qui part pendant le
+  chargement est compté. Origine = UTM du lien, sinon `mtc_utm` de l'onglet, sinon site d'origine
+  (mêmes règles que `resolveAcquisition` / `referrerHost`). Rien n'est envoyé si connecté
+  (`access_token` + `user` en localStorage) ni en mode interne (`?internal=1` ou `mtc_internal`).
+  Il pose `window.mtcRegisterView` : `SignupFunnelService.start()` ne renvoie alors pas `register_view`
+  pour ce chargement (pas de double comptage), mais l'envoie encore après une navigation interne
+  (connexion → inscription) ou sur un hôte sans script (local). Motif `inApp` = `IN_APP_UA_PATTERN`
+  recopié : `src/index-register-view.spec.ts` vérifie qu'il est identique, et l'URL de l'API de
+  chaque `environment.*.ts`. Nouvel environnement déployé → l'ajouter au script ET au test.
+- ⚠️ **Chiffres « Page inscription » avant / après** : depuis la mise en prod de ce correctif (branche
+  `fix/fuite-clic-inscription`, commits du 2026-10-17), `register_view` est compté dès l'arrivée et
+  non plus après le chargement de l'app (≈ 3,9 s plus tard en 4G lente) ; un utilisateur connecté qui
+  ouvre /register n'est plus compté. Les taux clic → page d'avant et d'après ne sont pas comparables.
+- `RegisterComponent` : `start(origine)` à l'ouverture (origine = UTM résolues par
+  `resolveAcquisition`, gardée en sessionStorage `mtc_funnel` car `mtc_utm` est effacé après
+  l'inscription ; `register_view` sauf si déjà envoyé par `index.html`), `register_submit` si le
+  formulaire est valide côté client, `register_success`, `register_error` avec
+  `registerErrorCode(status)` (409 `email_taken`, 400/422 `validation`, 0 `network`, ≥ 500 `server`,
+  sinon `other`). Pas de `register_view` si l'utilisateur, déjà connecté, est renvoyé vers `/dashboard`.
+- `BillingService.startCheckout` → `trackCheckout(plan)` = `checkout_redirect` (detail `founder` /
+  `premium`), **seulement si l'onglet est passé par /register** (`mtc_funnel` présent) : un abonné qui
+  paie depuis le Profil n'est pas une étape du parcours.
+- **Mode interne** : `https://app.mytradingcoach.app/?internal=1` (n'importe quelle page) →
+  localStorage `mtc_internal=1`, lu au démarrage par `App` (`captureInternal`) : plus aucune étape
+  envoyée, badge « interne » en bas à gauche (`mtc-internal-badge`, monté dans `App`). `?internal=0`
+  annule. Propre au domaine : la landing a le sien.
+- **Admin `/acquisition`, carte « Parcours d'inscription »** (au-dessus de l'entonnoir Premium) :
+  `GET /admin/signup-funnel?days=7|30` (`AdminApi.signupFunnel`), onglets `section-tabs` période (7 j / 30 j,
+  rechargement) et navigateur (Tous / intégré / normal, filtrage local). Logique pure testée dans
+  `features/acquisition/signup-funnel.util.ts` : « Tous » additionne intégré + normal d'une même
+  source/medium/campagne, ligne Total, taux = étape / étape précédente (`-` si la précédente vaut 0),
+  erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
+  Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
 
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
@@ -981,3 +1046,24 @@ teaser Premium → `once('premium_seen')`. Admin : bloc « Entonnoir Premium » 
 - Maquette `admin-mytradingcoach.html` absente en local au moment du #525 : design repris des
   composants existants (KPI, `.tbl`, `.badge`, `.section-tabs`, champs Ambassadeurs).
 
+
+## Admin : PWA et notifications push (2026-10-15)
+
+- `@angular/service-worker` (épinglé à la version de `@angular/core`) : `provideServiceWorker`
+  **désactivé en dev** (`isDevMode()`), `ngsw-config.json` déclaré dans `project.json`
+  (`serviceWorker`). Manifest « MTC Admin » + icônes dans `public/icons/` ; les PNG se régénèrent
+  depuis `icon.svg` : `node tools/scripts/generate-admin-icons.mjs`. Balises iOS dans `index.html`.
+- `core/push/push.service.ts` (repris de xmr-trader) : `browserSupport()` → `ios-not-installed`
+  (iPhone hors écran d'accueil), `unsupported`, `denied`, `server-disabled`, `supported` ;
+  `BROWSER_ENV` remplaçable dans les tests. Page `/notifications` : interrupteur de l'appareil,
+  événements (`ADMIN_PUSH_EVENT_LABELS` de `@mtc/shared`), « Tester la notification ».
+- ⚠️ **Cache** : `ngsw-worker.js`, `safety-worker.js`, `worker-basic.min.js` doivent être servis
+  **sans cache** (sinon le SW ne se met plus jamais à jour). Nginx : `location =` dédiées dans
+  `spa-releases.conf` (admin servi par l'ancien VPS, pas de Vercel ; voir `deploy.md`).
+- **Installée sur l'écran d'accueil (iOS)** : `viewport-fit=cover` + status bar `black-translucent`
+  + `theme-color` = `--bg` (#070809) → la page passe **sous** la barre d'état. Marges de sécurité :
+  variables `--safe-top/right/bottom/left` (`:root` de `styles.css`, `env(safe-area-inset-*)`), lues
+  par `.topbar`, `.sidebar`, `.content`, `.log-terminal`, toasts, `.modal-overlay`, tiroir de la
+  surveillance. Nouvel élément fixe ou collé à un bord → ces variables, jamais `env()` en dur.
+  Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
+  Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.

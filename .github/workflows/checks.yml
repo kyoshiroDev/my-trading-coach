@@ -88,9 +88,12 @@ jobs:
       JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
       ANTHROPIC_API_KEY: sk-ant-test
+    # Images tirées sur mirror.gcr.io (cache Docker Hub de Google, anonyme). Docker Hub puis le
+    # miroir ECR Public répondaient toomanyrequests : leur quota anonyme est compté par IP, et
+    # les IP des runners GitHub sont partagées.
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: mirror.gcr.io/library/postgres:17-alpine
         env:
           POSTGRES_DB: mytradingcoach_test
           POSTGRES_USER: mtc_user
@@ -103,7 +106,7 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: mirror.gcr.io/library/redis:7.4-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -182,7 +185,7 @@ jobs:
       RESEND_API_KEY: re_placeholder
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: mirror.gcr.io/library/postgres:17-alpine
         env:
           POSTGRES_DB: mytradingcoach_e2e
           POSTGRES_USER: mtc_user
@@ -195,7 +198,7 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: mirror.gcr.io/library/redis:7.4-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s

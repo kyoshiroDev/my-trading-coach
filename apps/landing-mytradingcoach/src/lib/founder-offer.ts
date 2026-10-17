@@ -25,7 +25,8 @@ const FETCH_TIMEOUT_MS = 4_000;
 /** Point de clic retenu pour la session (`bandeau`, `faq`) ; sinon la carte dit `carte`. */
 export const CTA_KEY = 'mtc_cta';
 
-function parse(raw: unknown): FounderState | null {
+/** Valide la réponse de `GET /pricing/founder` (navigateur et build). */
+export function parseFounderState(raw: unknown): FounderState | null {
   const s = raw as Partial<FounderState> | null;
   const int = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
   if (
@@ -48,7 +49,7 @@ export function cachedFounderState(): FounderState | null {
   try {
     const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null') as { ts: number; state: unknown } | null;
     if (!c || Date.now() - c.ts > CACHE_TTL_MS) return null;
-    return parse(c.state);
+    return parseFounderState(c.state);
   } catch {
     return null;
   }
@@ -64,7 +65,7 @@ export function founderState(): Promise<FounderState | null> {
       if (!res.ok) return null;
       // Enveloppe `{ data }` de l'API (intercepteur global), comme le compteur de traders.
       const body = (await res.json()) as { data?: unknown } | null;
-      const state = parse(body?.data);
+      const state = parseFounderState(body?.data);
       if (state) {
         try {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), state }));

@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { VpsService } from './vps.service';
+import { VPS_READ_COMMANDS } from './vps-commands';
+import { resolveVpsServer, type VpsServerId } from './vps-servers';
+
+// Id ou nom de container docker : rien d'autre ne doit arriver dans la commande SSH.
+const CONTAINER_REF = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/;
 
 export interface DockerContainer {
   id: string;
@@ -16,16 +21,12 @@ export interface DockerContainer {
 export class DockerService {
   constructor(private readonly vps: VpsService) {}
 
-  async listContainers(): Promise<DockerContainer[]> {
+  async listContainers(serverId?: VpsServerId): Promise<DockerContainer[]> {
     // 2 commandes : la liste complète (docker ps -a, inclut les arrêtés) + les stats
     // live (docker stats, uniquement les running). On fusionne par nom de container.
     const [psOut, statsOut] = await Promise.all([
-      this.vps.exec(
-        'docker ps -a --format \'{"id":"{{.ID}}","name":"{{.Names}}","image":"{{.Image}}","status":"{{.Status}}","ports":"{{.Ports}}"}\'',
-      ),
-      this.vps
-        .exec('docker stats --no-stream --format "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"')
-        .catch(() => ''),
+      this.vps.exec(VPS_READ_COMMANDS.dockerPs, serverId),
+      this.vps.exec(VPS_READ_COMMANDS.dockerStats, serverId).catch(() => ''),
     ]);
 
     // name -> { cpu %, ram Mo, ramLimit Mo }
@@ -81,13 +82,31 @@ export class DockerService {
     return Math.round(val * (factor[unit] ?? 1) * 10) / 10;
   }
 
-  async containerAction(id: string, action: 'start' | 'stop' | 'restart') {
-    await this.vps.exec(`docker ${action} ${id}`);
+  async containerAction(id: string, action: 'start' | 'stop' | 'restart', serverId?: VpsServerId) {
+    this.assertFullAccess(serverId);
+    await this.vps.exec(`docker ${action} ${this.containerRef(id)}`, serverId);
     return { success: true };
   }
 
-  async deleteContainer(id: string) {
-    await this.vps.exec(`docker rm -f ${id}`);
+  async deleteContainer(id: string, serverId?: VpsServerId) {
+    this.assertFullAccess(serverId);
+    await this.vps.exec(`docker rm -f ${this.containerRef(id)}`, serverId);
     return { success: true };
+  }
+
+  /** Serveur en lecture seule (secondaire) : actions et logs refusés AVANT tout appel SSH. */
+  assertFullAccess(serverId?: VpsServerId): void {
+    const server = resolveVpsServer(serverId);
+    if (server.readOnly) {
+      throw new ForbiddenException({
+        code: 'VPS_READ_ONLY',
+        message: `${server.label} est en lecture seule : action impossible depuis l'admin.`,
+      });
+    }
+  }
+
+  private containerRef(id: string): string {
+    if (!CONTAINER_REF.test(id)) throw new BadRequestException('Container invalide');
+    return id;
   }
 }

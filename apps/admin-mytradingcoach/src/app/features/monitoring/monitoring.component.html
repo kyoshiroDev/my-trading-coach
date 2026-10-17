@@ -6,6 +6,21 @@
     </button>
   </div>
 
+  @if (servers().length > 1) {
+    <div class="section-tabs server-tabs" role="tablist" aria-label="Serveur">
+      @for (s of servers(); track s.id) {
+        <button type="button" role="tab" class="tab" [class.active]="server() === s.id" [attr.aria-selected]="server() === s.id" (click)="selectServer(s.id)">{{ s.label }}</button>
+      }
+    </div>
+  }
+
+  @if (unreachable(); as msg) {
+    <div class="srv-alert" role="alert">⚠ {{ msg }}</div>
+  }
+  @if (readOnly()) {
+    <div class="srv-note">{{ serverLabel() }} : lecture seule. Actions et logs désactivés depuis l'admin.</div>
+  }
+
   <!-- ── 4 KPI (tous issus de /vps/stats, aucune valeur inventée) ── -->
   <div class="kpi-strip cols-4">
     @if (stats(); as s) {
@@ -45,12 +60,14 @@
                   <span class="meta-down">{{ c.status === 'error' ? '⚠ erreur' : '⏸ arrêté' }}</span>
                 }
               </span>
-              <span class="ct-acts">
-                <button aria-label="Voir les logs" class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
-                @for (a of actionsFor(c); track a.action) {
-                  <button class="pill" [class.danger]="a.danger" [title]="a.label" (click)="askConfirm(c, a.action)">{{ a.icon }}</button>
-                }
-              </span>
+              @if (!readOnly()) {
+                <span class="ct-acts">
+                  <button aria-label="Voir les logs" class="pill" title="Voir les logs" (click)="openLogs(c.name)">📋</button>
+                  @for (a of actionsFor(c); track a.action) {
+                    <button class="pill" [class.danger]="a.danger" [title]="a.label" (click)="askConfirm(c, a.action)">{{ a.icon }}</button>
+                  }
+                </span>
+              }
             </div>
           }
         }
@@ -95,13 +112,14 @@
   </div>
 </div>
 
-<!-- ── Modale de confirmation (actions PROD) ── -->
+<!-- ── Modale de confirmation (actions sur le serveur affiché) ── -->
 @if (confirmState(); as cf) {
   <div class="modal-overlay" role="button" tabindex="-1" (click)="confirmState.set(null)" (keydown.escape)="confirmState.set(null)">
     <div class="modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="confirmState.set(null)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-      <div class="modal-head"><h3 class="modal-title">⚠️ Action en PRODUCTION</h3><button aria-label="Fermer" class="modal-x" (click)="confirmState.set(null)">✕</button></div>
+      <div class="modal-head"><h3 class="modal-title">⚠️ Action sur {{ cf.serverLabel }}</h3><button aria-label="Fermer" class="modal-x" (click)="confirmState.set(null)">✕</button></div>
       <div class="modal-body">
-        <p class="confirm-text">Tu vas <strong>{{ actionLabel(cf.action) }}</strong> le container <strong>{{ cf.name }}</strong> en <strong class="text-red">PRODUCTION</strong>. Confirmer ?</p>
+        <p class="confirm-text">Tu vas <strong>{{ actionLabel(cf.action) }}</strong> le container <strong>{{ cf.name }}</strong> sur <strong class="text-red">{{ cf.serverLabel }}</strong>. Confirmer ?</p>
+        @if (actionError(); as err) { <p class="confirm-error" role="alert">{{ err }}</p> }
       </div>
       <div class="modal-foot">
         <button class="btn-ghost" (click)="confirmState.set(null)">Annuler</button>
@@ -116,7 +134,7 @@
   <div class="drawer-overlay" role="button" tabindex="-1" (click)="closeLogs()" (keydown.escape)="closeLogs()">
     <div class="drawer" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closeLogs()" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="drawer-head">
-        <span class="card-label">Logs · {{ lc }}</span>
+        <span class="card-label">Logs · {{ lc.name }}</span>
         <div class="drawer-acts">
           <button [attr.aria-label]="paused() ? 'Reprendre' : 'Pause'" class="icon-btn" (click)="togglePause()" [title]="paused() ? 'Reprendre' : 'Pause'"><svg [lucideIcon]="paused() ? PlayIcon : PauseIcon" [size]="12"></svg></button>
           <button aria-label="Vider" class="icon-btn" (click)="clearLines()" title="Vider"><svg [lucideIcon]="TrashIcon" [size]="12"></svg></button>

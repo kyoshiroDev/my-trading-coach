@@ -80,6 +80,8 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription { step, source?, medium?, campaign?, inApp?, detail? }
+GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
@@ -120,6 +122,7 @@ GET    /api/debrief/:year/:week/pdf    PREMIUM → export PDF via puppeteer
 GET    /api/debrief/history            PREMIUM
 POST   /api/debrief/generate           PREMIUM → 1/jour par user
 
+GET    /api/vps/servers                ADMIN → serveurs du sélecteur Surveillance [{id,label,readOnly}]
 GET    /api/vps/stats                  ADMIN → stats système SSH
 POST   /api/vps/apt-update             ADMIN → SSE stream
 POST   /api/vps/reboot                 ADMIN → confirmation requise
@@ -261,7 +264,31 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 - Argon2 pour les mots de passe (jamais Bcrypt)
 - JWT : access_token 15min, refresh_token 7j httpOnly cookie
 - SSH credentials uniquement via variables d'env — jamais en dur, jamais en BDD
-  - `VPS_HOST=51.83.197.230`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>`
+  - `VPS_HOST`, `VPS_USER=greg`, `VPS_SSH_KEY_B64=<base64>` : serveur `principal` (celui de l'API ;
+    en prod = VPS prod 149.202.40.240 depuis la migration du 2026-10-15)
+  - Serveur `secondaire` (en prod = ancien VPS 51.83.197.230, dev + beta) : **lecture seule, clé
+    dédiée** (2026-10-16, NODE-NESTJS-6). Proposé seulement si `VPS_SECONDARY_HOST` **et**
+    `VPS_SECONDARY_SSH_KEY_B64` sont définis ; utilisateur `VPS_SECONDARY_USER` (défaut `mtc-monitor`),
+    empreinte d'hôte optionnelle `VPS_SECONDARY_HOST_KEY_SHA256` (format `ssh-keygen -lf`). **Jamais de
+    repli sur `VPS_SSH_KEY_B64`.** `VPS_LABEL` / `VPS_SECONDARY_LABEL` = libellés des onglets.
+  - Côté ancien VPS, la clé a une commande forcée (`infra/vps/mtc-monitor-ro.sh`) qui n'exécute que les
+    commandes de `infra/vps/mtc-monitor-allowed-commands`, à l'identique. Ce fichier est généré depuis
+    `vps-commands.ts` (`VPS_READ_COMMANDS`) et `vps-commands.spec.ts` vérifie l'alignement : **toute
+    commande de lecture nouvelle ou modifiée → régénérer le fichier ET le recopier sur l'ancien VPS**
+    (`/etc/mtc-monitor/allowed-commands`), sinon le secondaire la refuse.
+  - Secondaire : start / stop / restart / suppression / logs → **403 `VPS_READ_ONLY` avant tout appel
+    SSH** (`DockerService.assertFullAccess`). `/vps/servers` renvoie `[{ id, label, readOnly }]`.
+  - Serveur injoignable → **503 `VPS_UNREACHABLE`** (`ExpectedOutageException`), message avec la raison
+    (« authentification refusée », « délai dépassé »…). Plus de tentative SSH vers ce serveur pendant
+    60 s (`VPS_RETRY_DELAY_MS`), une seule tentative pour les requêtes simultanées. **Une seule alerte
+    Sentry par panne** (`warning`, au passage joignable → injoignable, dédupliquée entre process par
+    la clé Redis `vps:down:<id>`) ; le filtre global n'envoie pas `ExpectedOutageException` à Sentry.
+  - `VpsService.exec()` lève **502 `VPS_COMMAND_FAILED`** si le code de sortie n'est pas 0 (avant, une
+    commande refusée passait pour un succès). `getStats` reste tolérant (sortie vide → 0).
+  - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
+    principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
+    Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
+  - Ids de container validés (`[a-zA-Z0-9_.-]`) avant la commande SSH (pas d'injection)
 
 ---
 
@@ -1407,6 +1434,36 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
 - `POST /public/visit` (public, 60/min/IP, toujours 204) : `{ path, source?, medium?, campaign?, entry }`. Robots
   filtrés par User-Agent (`BOT_UA` dans `PublicService`), erreur base avalée et loggée.
   **Pas de cookie, pas d'IP stockée** (exemption CNIL) : ne pas y ajouter de donnée personnelle.
+  `inApp?` (booléen, navigateur intégré Instagram/Facebook/TikTok détecté par la landing) : optionnel,
+  absent → `false` (compatibilité avec une landing plus ancienne).
+
+## Parcours d'inscription par source (oct. 2026)
+
+- `POST /public/funnel` (`PublicService.recordFunnelEvent`, `FunnelEventDto`) : `step` ∈
+  `SIGNUP_FUNNEL_STEPS` de `@mtc/shared` (`cta_click`, `register_view`, `register_submit`,
+  `register_success`, `register_error`, `checkout_redirect`) ; **`landing_view` est refusé (400)** :
+  la visite reste comptée par `/public/visit`. `source/medium/campaign` normalisés comme les visites
+  (`dto/utm.transform.ts`, partagé). `detail` ramené par `signupFunnelDetail` (shared) à sa liste
+  blanche : CTA `founder|free|premium` (cta_click), plan `founder|premium` (checkout_redirect), code
+  `email_taken|validation|network|server|other` (register_error, inconnu → `other`), sinon `''`.
+  Champ inconnu (ex. `email`) → 400 (`forbidNonWhitelisted`). Robots filtrés (`BOT_UA`), toujours 204,
+  erreur base avalée. Upsert `INSERT … ON CONFLICT` +1 dans `FunnelEventDaily`.
+  La landing envoie par `sendBeacon` en **`text/plain`** (requête simple, sans requête préalable
+  CORS) : `config/body-parsers.ts` lit ce corps en JSON sur `FUNNEL_BEACON_PATH` SEULEMENT (2 ko max).
+  Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes. Depuis oct. 2026,
+  l'app envoie aussi TOUTES ses étapes ainsi (`register_view` dès l'arrivée par un script inline
+  d'`index.html`, puis `SignupFunnelService`) : plus aucun appel JSON sur cette route.
+- CORS (`main.ts`) : `maxAge: 600` (`Access-Control-Max-Age`) : le navigateur garde 10 min la réponse
+  à la requête préalable au lieu d'en refaire une avant chaque appel JSON de l'app (un aller-retour en
+  4G lente). Les origines autorisées restent `CORS_ORIGINS`.
+- `GET /admin/signup-funnel` (`SignupFunnelService`, fusion pure `signup-funnel.util.ts`, contrat
+  `AdminSignupFunnelData`) : visites (`LandingVisitDaily`) + étapes par (source, medium, campagne,
+  inApp), `''` → `null` ; une source sans visite (arrivée directe sur l'app) a sa ligne. 100 lignes max,
+  erreurs `register_error` par source × inApp × code (50 max). Compteurs d'événements, pas
+  d'utilisateurs distincts ; aucune jointure `User`, donc ni démo ni compte. Les agrégats d'inscrits
+  existants (`/admin/acquisition`, `/admin/funnel`) gardent leur exclusion `isDemo` / ADMIN.
+- Pas de donnée personnelle (exemption CNIL, comme les visites) : ne jamais ajouter UA brut, e-mail,
+  IP ni identifiant de session à ces routes ou à la table.
 
 ## Catalogue prop firm : synchro au démarrage (PROMPT-136, 2026-10-02)
 
@@ -1799,3 +1856,28 @@ quotidien (`signup-digest.cron.ts`) : ligne `offerDigestLines` (« Fondateurs : 
 Codes partenaires : LOUIS29 4/10… ») + « Palier atteint : 50 places » ; un palier franchi envoie le
 digest même sans inscription.
 
+
+## Notifications push de l'admin (2026-10-15)
+
+Module `modules/admin-push/` : Web Push (PWA) vers les appareils **ADMIN** pour les événements
+business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
+- Services métier → **`AdminNotifier.notify(event, message)`** uniquement (jamais `AdminPushService`).
+  Ne lève jamais, n'attend pas l'envoi (tâche de fond, erreurs en `warn`). Injecté en
+  `@Optional()` en dernier paramètre : les specs historiques construisent le service sans lui.
+- Messages : catalogue `ADMIN_PUSH_MESSAGES` (`push-messages.ts`). **Aucune donnée sensible** (pas
+  d'e-mail, de montant, de token) : titre neutre + `url` de l'admin ouverte au clic.
+- Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
+  moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
+  404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
+  `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
+  handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
+  inscription (`AuthService.register`, jamais ADMIN) ; Tradovate `markNeedsReconnect` **au passage**
+  vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
+- Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
+- Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
+  `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
+- **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
+  `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.

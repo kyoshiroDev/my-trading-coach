@@ -1,0 +1,4 @@
+/* Le bouton parent centre l'icône : l'hôte ne crée pas de boîte. */
+:host {
+  display: contents;
+}

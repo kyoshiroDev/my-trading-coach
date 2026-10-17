@@ -19,6 +19,9 @@ const isBase64Key32 = (v: string) =>
   Buffer.from(v, 'base64').length === 32 ? undefined : 'doit faire 32 octets encodés en base64 (openssl rand -base64 32)';
 const isBoolean = (v: string) => (v === 'true' || v === 'false' ? undefined : 'doit valoir "true" ou "false"');
 const isPort = (v: string) => (/^\d+$/.test(v) ? undefined : 'doit être un numéro de port');
+/** Clé VAPID en base64url sans remplissage, de `bytes` octets une fois décodée. */
+export const isVapidKey = (v: string, bytes: number): boolean =>
+  /^[A-Za-z0-9_-]+$/.test(v) && Buffer.from(v, 'base64url').length === bytes;
 
 export const ENV_VARS: EnvVar[] = [
   { name: 'DATABASE_URL', level: 'required' },
@@ -56,6 +59,12 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },
   { name: 'AI_ENABLED', level: 'optional', check: isBoolean },
   { name: 'BROKER_TOKEN_ENCRYPTION_KEY', level: 'optional', check: isBase64Key32 },
+  // Notifications push de l'admin (config/push-config.ts). Absentes ou incomplètes → push désactivé,
+  // l'API démarre quand même. Clés : node tools/scripts/vapid-generate.mjs (jamais commitées).
+  { name: 'PUSH_ENABLED', level: 'optional', check: isBoolean },
+  { name: 'VAPID_PUBLIC_KEY', level: 'optional', check: (v) => (isVapidKey(v, 65) ? undefined : 'doit être une clé publique VAPID (base64url, 65 octets)') },
+  { name: 'VAPID_PRIVATE_KEY', level: 'optional', check: (v) => (isVapidKey(v, 32) ? undefined : 'doit être une clé privée VAPID (base64url, 32 octets)') },
+  { name: 'VAPID_SUBJECT', level: 'optional', check: (v) => (/^(mailto:[^@\s]+@[^@\s]+|https:\/\/\S+)$/.test(v) ? undefined : 'doit être mailto:… ou https://…') },
   // SCA-B9 : test de charge depuis un seul injecteur (beta uniquement ; ignorée si base de prod).
   { name: 'LOAD_TEST_KEY', level: 'optional', check: (v) => (v.length >= 32 ? undefined : 'au moins 32 caractères (openssl rand -hex 24)') },
 ];

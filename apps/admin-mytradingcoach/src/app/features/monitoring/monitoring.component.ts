@@ -3,8 +3,9 @@ import {
   OnDestroy, computed, inject, signal, viewChild,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, filter, interval, of, startWith, switchMap } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { catchError, of, switchMap } from 'rxjs';
+import { apiErrorMessage } from '@mtc/shared';
 import {
   LucideDynamicIcon,
   LucidePlay as Play,
@@ -12,15 +13,23 @@ import {
   LucideTrash2 as Trash2,
   LucideRefreshCw as RefreshCw,
 } from '@lucide/angular';
-import { VpsApi, VpsStats, DockerContainer, HealthPoint } from '../../core/api/vps.api';
+import { VpsApi, VpsStats, DockerContainer, HealthPoint, VpsServer, VpsServerId } from '../../core/api/vps.api';
 import { AdminAuthService } from '../../core/auth/admin-auth.service';
 import { DialogDirective } from '@mtc/front-ui';
+import { visiblePoll, type PollResult } from '../../core/utils/visible-poll';
 
 type DockerAction = 'start' | 'stop' | 'restart';
 interface CtAction { icon: string; label: string; action: DockerAction; danger?: boolean; }
-interface ConfirmState { id: string; name: string; action: DockerAction; }
+interface ConfirmState { id: string; name: string; action: DockerAction; server: VpsServerId; serverLabel: string; }
 
 const GB = 1_073_741_824;
+const POLL_MS = 15_000;
+
+/** Code machine d'une erreur API (`{ code }` du filtre global), s'il y en a un. */
+function apiErrorCode(err: unknown): string | undefined {
+  const code = (err as { error?: { code?: unknown } } | null)?.error?.code;
+  return typeof code === 'string' ? code : undefined;
+}
 
 @Component({
   selector: 'mtc-admin-monitoring',
@@ -40,6 +49,20 @@ export class MonitoringComponent implements OnDestroy {
   protected readonly TrashIcon = Trash2;
   protected readonly RefreshIcon = RefreshCw;
 
+  // Serveur affiché (stats, containers, logs, actions) : principal = VPS prod, secondaire = dev · beta.
+  protected readonly servers = signal<VpsServer[]>([]);
+  protected readonly server = signal<VpsServerId>('principal');
+  protected readonly serverLabel = computed(
+    () => this.servers().find((s) => s.id === this.server())?.label ?? 'VPS',
+  );
+  // Secondaire (dev · beta) : lecture seule, l'API refuse actions et logs → boutons masqués.
+  protected readonly readOnly = computed(
+    () => this.servers().find((s) => s.id === this.server())?.readOnly ?? false,
+  );
+  // Raison de l'indisponibilité du serveur affiché (503 VPS_UNREACHABLE), affichée en bandeau.
+  protected readonly unreachable = signal<string | null>(null);
+  protected readonly actionError = signal<string | null>(null);
+
   protected readonly stats = signal<VpsStats | null>(null);
   protected readonly allContainers = signal<DockerContainer[]>([]);
   protected readonly health = signal<HealthPoint[]>([]);
@@ -49,7 +72,7 @@ export class MonitoringComponent implements OnDestroy {
   // Confirmation + drawer logs
   protected readonly confirmState = signal<ConfirmState | null>(null);
   protected readonly acting = signal(false);
-  protected readonly logsContainer = signal<string | null>(null);
+  protected readonly logsContainer = signal<{ name: string; server: VpsServerId } | null>(null);
   protected readonly lines = signal<string[]>([]);
   protected readonly paused = signal(false);
   private es: EventSource | null = null;
@@ -62,30 +85,74 @@ export class MonitoringComponent implements OnDestroy {
   protected readonly allUnknown = computed(() => this.health().length > 0 && this.health().every((h) => h.status === 'unknown'));
 
   constructor() {
-    interval(15_000).pipe(
-      startWith(0),
-      filter(() => document.visibilityState === 'visible'),
-      switchMap(() => this.vpsApi.stats().pipe(catchError(() => of(null)))),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { this.loadingStats.set(false); if (r) this.stats.set(r.data); });
+    this.vpsApi.servers().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => { if (r) this.servers.set(r.data ?? []); });
 
-    interval(15_000).pipe(
-      startWith(0),
-      filter(() => document.visibilityState === 'visible'),
-      switchMap(() => this.vpsApi.containers().pipe(catchError(() => of(null)))),
+    // Le polling repart de zéro à chaque changement de serveur ; rien onglet caché, et de plus en
+    // plus espacé tant que le serveur ne répond pas (visiblePoll).
+    const server$ = toObservable(this.server);
+    server$.pipe(
+      switchMap((srv) => visiblePoll(() => this.vpsApi.stats(srv), { periodMs: POLL_MS })),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((r) => { this.loadingContainers.set(false); if (r) this.allContainers.set(r.data ?? []); });
+    ).subscribe((r) => { this.loadingStats.set(false); this.onStats(r); });
+
+    server$.pipe(
+      switchMap((srv) => visiblePoll(() => this.vpsApi.containers(srv), { periodMs: POLL_MS })),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((r) => { this.loadingContainers.set(false); this.onContainers(r); });
 
     this.vpsApi.healthHistory(90).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => { if (r) this.health.set(r.data ?? []); });
   }
 
-  protected refresh(): void {
+  protected selectServer(id: VpsServerId): void {
+    if (id === this.server()) return;
+    this.stats.set(null);
+    this.allContainers.set([]);
+    this.unreachable.set(null);
     this.loadingStats.set(true);
-    this.vpsApi.stats().pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
-      .subscribe((r) => { this.loadingStats.set(false); if (r) this.stats.set(r.data); });
-    this.vpsApi.containers().pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
-      .subscribe((r) => { if (r) this.allContainers.set(r.data ?? []); });
+    this.loadingContainers.set(true);
+    this.server.set(id);
+  }
+
+  protected refresh(): void {
+    const srv = this.server();
+    this.loadingStats.set(true);
+    this.vpsApi.stats(srv).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (value) => { this.loadingStats.set(false); this.onStats({ ok: true, value }); },
+        error: (error: unknown) => { this.loadingStats.set(false); this.onStats({ ok: false, error }); },
+      });
+    this.vpsApi.containers(srv).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (value) => this.onContainers({ ok: true, value }),
+        error: (error: unknown) => this.onContainers({ ok: false, error }),
+      });
+  }
+
+  private onStats(r: PollResult<{ data: VpsStats }>): void {
+    if (r.ok) {
+      this.unreachable.set(null);
+      this.stats.set(r.value.data);
+    } else if (this.markUnreachable(r.error)) {
+      this.stats.set(null);
+    }
+  }
+
+  private onContainers(r: PollResult<{ data: DockerContainer[] }>): void {
+    if (r.ok) {
+      this.unreachable.set(null);
+      this.allContainers.set(r.value.data ?? []);
+    } else if (this.markUnreachable(r.error)) {
+      this.allContainers.set([]);
+    }
+  }
+
+  /** 503 VPS_UNREACHABLE → bandeau avec la raison donnée par l'API ; les autres erreurs sont ignorées. */
+  private markUnreachable(err: unknown): boolean {
+    if (apiErrorCode(err) !== 'VPS_UNREACHABLE') return false;
+    this.unreachable.set(apiErrorMessage(err, `${this.serverLabel()} injoignable en SSH.`));
+    return true;
   }
 
   // ── Actions par type de container (logs toujours dispo, rendu à part) ──────
@@ -102,7 +169,8 @@ export class MonitoringComponent implements OnDestroy {
   }
 
   protected askConfirm(c: DockerContainer, action: DockerAction): void {
-    this.confirmState.set({ id: c.id, name: c.name, action });
+    this.actionError.set(null);
+    this.confirmState.set({ id: c.id, name: c.name, action, server: this.server(), serverLabel: this.serverLabel() });
   }
 
   protected actionLabel(a: DockerAction): string {
@@ -113,31 +181,39 @@ export class MonitoringComponent implements OnDestroy {
     const cf = this.confirmState();
     if (!cf) return;
     this.acting.set(true);
-    this.vpsApi.containerAction(cf.id, cf.action)
-      .pipe(takeUntilDestroyed(this.destroyRef), catchError(() => of(null)))
-      .subscribe(() => {
-        this.acting.set(false);
-        this.confirmState.set(null);
-        this.refresh();
+    this.vpsApi.containerAction(cf.id, cf.action, cf.server)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.acting.set(false);
+          this.confirmState.set(null);
+          this.refresh();
+        },
+        // Refus (lecture seule) ou commande en échec : la modale reste ouverte avec la raison.
+        error: (err: unknown) => {
+          this.acting.set(false);
+          this.actionError.set(apiErrorMessage(err, `Impossible de ${this.actionLabel(cf.action)} ${cf.name}.`));
+        },
       });
   }
 
   // ── Drawer logs (SSE, lecture seule) ───────────────────────────────────────
   protected openLogs(container: string): void {
-    this.logsContainer.set(container);
-    this.startStream(container);
+    const server = this.server();
+    this.logsContainer.set({ name: container, server });
+    this.startStream(container, server);
   }
   protected closeLogs(): void {
     this.stopStream();
     this.logsContainer.set(null);
     this.lines.set([]);
   }
-  private startStream(container: string): void {
+  private startStream(container: string, server: VpsServerId): void {
     this.stopStream();
     this.lines.set([]);
     this.paused.set(false);
     const token = this.auth.getAccessToken() ?? '';
-    this.es = new EventSource(this.vpsApi.logsUrl(container, token));
+    this.es = new EventSource(this.vpsApi.logsUrl(container, token, server));
     this.es.onmessage = (e) => {
       if (this.paused()) return;
       this.lines.update((prev) => {

@@ -1,3 +1,4 @@
+import { AdminPushModule } from '../admin-push/admin-push.module';
 import { DemoSeedModule } from '../admin/demo-seed.module';
 import { ProductEventsModule } from '../product-events/product-events.module';
 import { Module } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { JwtStrategy } from './jwt.strategy';
     }),
     ResendModule,
     SetupsModule,
+    AdminPushModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

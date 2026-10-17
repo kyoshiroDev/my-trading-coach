@@ -110,4 +110,63 @@ describe('PublicService', () => {
       await expect(service.recordLandingVisit({ path: '/', entry: false }, UA)).resolves.toBeUndefined();
     });
   });
+
+  describe('recordLandingVisit — navigateur intégré', () => {
+    const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Mobile/15E148 Instagram 330.0.0.0';
+    /** Valeurs liées du gabarit SQL (`$executeRaw` reçoit les morceaux puis les valeurs). */
+    const values = () => mockPrisma.$executeRaw.mock.calls[0].slice(1);
+
+    it('écrit inApp tel quel', async () => {
+      mockPrisma.$executeRaw.mockResolvedValueOnce(1);
+      await service.recordLandingVisit({ path: '/', source: 'instagram', entry: true, inApp: true }, UA);
+      expect(values()).toContain(true);
+    });
+
+    it("vaut false quand une ancienne landing ne l'envoie pas", async () => {
+      mockPrisma.$executeRaw.mockResolvedValueOnce(1);
+      await service.recordLandingVisit({ path: '/', entry: true }, UA);
+      // visites : une fois à l'insertion, une fois dans la mise à jour
+      expect(values()).toEqual([expect.any(Date), '/', '', '', '', false, 1, 1]);
+    });
+  });
+
+  describe('recordFunnelEvent', () => {
+    const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Mobile/15E148 Instagram 330.0.0.0';
+    const values = () => mockPrisma.$executeRaw.mock.calls[0].slice(1);
+    const sql = () => (mockPrisma.$executeRaw.mock.calls[0][0] as string[]).join('?');
+
+    it('upsert +1 sur la clé complète (jour, étape, source, medium, campagne, inApp, detail)', async () => {
+      mockPrisma.$executeRaw.mockResolvedValueOnce(1);
+      await service.recordFunnelEvent(
+        { step: 'cta_click', source: 'instagram', medium: 'paid', campaign: 'fondateur-reel', inApp: true, detail: 'founder' },
+        UA,
+      );
+      expect(sql()).toContain('ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail")');
+      expect(sql()).toContain('"count" = "FunnelEventDaily"."count" + 1');
+      expect(values()).toEqual([expect.any(Date), 'cta_click', 'instagram', 'paid', 'fondateur-reel', true, 'founder']);
+    });
+
+    it('ramène detail à sa liste blanche (jamais de texte libre en base)', async () => {
+      mockPrisma.$executeRaw.mockResolvedValue(1);
+      await service.recordFunnelEvent({ step: 'cta_click', detail: 'jean@example.com' }, UA);
+      await service.recordFunnelEvent({ step: 'register_error', detail: 'Internal Server Error' }, UA);
+      await service.recordFunnelEvent({ step: 'register_view', detail: 'founder' }, UA);
+      const details = mockPrisma.$executeRaw.mock.calls.map((c) => c[7]);
+      expect(details).toEqual(['', 'other', '']);
+    });
+
+    it('absents → chaînes vides et inApp false', async () => {
+      mockPrisma.$executeRaw.mockResolvedValueOnce(1);
+      await service.recordFunnelEvent({ step: 'register_view' }, UA);
+      expect(values()).toEqual([expect.any(Date), 'register_view', '', '', '', false, '']);
+    });
+
+    it('ignore robots et UA absent, avale une erreur de base', async () => {
+      await service.recordFunnelEvent({ step: 'register_view' }, 'facebookexternalhit/1.1');
+      await service.recordFunnelEvent({ step: 'register_view' }, undefined);
+      expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
+      mockPrisma.$executeRaw.mockRejectedValueOnce(new Error('db down'));
+      await expect(service.recordFunnelEvent({ step: 'register_view' }, UA)).resolves.toBeUndefined();
+    });
+  });
 });

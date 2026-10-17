@@ -90,21 +90,57 @@ src/
 
 - **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
   (`src/lib/founder-offer.ts` : une requête par page, réponse `{ data }` déballée, état gardé 60 s en
-  sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien). **Le HTML
-  statique est toujours « offre fermée »** : bandeau, carte Fondateur, sa note et la question FAQ sont
-  dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script seulement si l'offre
-  vend et retirés sinon → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur » visible
-  (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML). Un lien inséré après coup
-  reprend les paramètres (ref, promo, utm_*) du lien Premium. Rien n'apparaît tant que l'API ne dit pas `open` + places > 0 (cache HTTP
-  de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
+  sessionStorage `mtc_founder`, validé ; API injoignable ou réponse invalide → rien).
+  **État lu AU BUILD** (`src/lib/founder-build.ts`, `GET /pricing/founder` une fois par build,
+  comme le compteur de traders) et passé en prop `founderOpen` à Hero, Pricing et FAQ :
+  - **ouverte au build** → carte Fondateur (`#fondateur`), sa note et la question FAQ sont dans le
+    HTML statique (enveloppe `.founder-slot` en `display: contents`, même balisage que le gabarit),
+    `.has-founder` posé d'emblée, compteur de places à place réservée (`.founder-seats.is-pending`,
+    `visibility: hidden` jusqu'au vrai chiffre) → l'arrivée de la réponse de l'API ne déplace rien.
+    L'API ne fait plus que remplir le compteur, ou **retirer** carte, note, FAQ et tout
+    `[data-founder-only]` (raccourci du Hero) si elle répond **explicitement** que l'offre ne vend
+    plus. API injoignable ou réponse invalide (`null`) → tout reste affiché, compteur masqué : pas
+    de saut de mise en page. Sûr parce que le serveur refuse le checkout fondateur si l'offre est
+    fermée, échue ou complète (`FounderOfferService.eligibility` → 400 `closed` / `sold_out`, puis
+    réservation sous verrou Postgres → 409 ; vérifié le 2026-10-16) ;
+  - **fermée au build, ou API injoignable au build** → HTML « offre fermée » comme avant : bandeau,
+    carte, note et FAQ dans des `<template>` (inertes, ni rendus ni indexés), insérés par le script
+    seulement si l'offre vend → 2 cartes, Premium « Recommandé », aucun « 29 € » ni « fondateur »
+    visible (commentaires en `{/* */}`, jamais `<!-- -->` qui part dans le HTML).
+  - **⚠️ Ouverture ou fermeture de l'offre dans l'admin → relancer le déploiement de la landing**
+    (Actions → CD, ou un push sur la landing) : sinon le HTML
+    reste celui du build (offre ouverte au build puis fermée : la carte s'affiche puis est retirée à
+    la réponse de l'API, et le « 29 € » reste dans le HTML indexé jusqu'au prochain build).
+  Un lien inséré après coup reprend les paramètres (ref, promo, utm_*) du lien Premium. Le bandeau
+  (fixe, zéro CLS) reste inséré par le script : rien n'apparaît tant que l'API ne dit pas `open` +
+  places > 0 (cache HTTP de 60 s : jusqu'à 1 min de délai après l'ouverture dans l'admin).
   - Bandeau `FounderBanner.astro`, inclus par `Nav.astro` (toutes les pages) : fixe, 32 px, la Nav
     descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans
     marge → attribut `data-offer-shift` (bandeau « Fait en France » du Hero). Ancres :
     `scroll-padding-top: 92px` quand le bandeau est là. Fermeture mémorisée (sessionStorage
     `mtc_offer_bar_closed`).
   - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
-    → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier. Même liste
-    `premiumPlus` que la carte Premium (« Tout Premium inclus »).
+    → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
+    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `premiumPlus` que la
+    carte Premium (« Tout Premium inclus »). Prix : « ou 290 €/an · au lieu de 49 €/mois ».
+  - **Arrivée depuis la pub** (`/?utm_…#pricing`, campagne Instagram du 2026-10) : en mobile
+    (≤ 1024 px), offre ouverte au build, `#pricing` ou `#fondateur` → la page s'arrête sur la carte
+    Fondateur (prix et bouton dans le 1er écran, sous la Nav et le bandeau), pas sur le titre de la
+    section 2 écrans plus haut. Script inline juste après la carte (avant le 1er affichage) :
+    recalage à chaque étape du chargement (DOMContentLoaded, polices, load, ResizeObserver, classe
+    `has-offer-bar`, défilement non initié par le visiteur, car le navigateur refait son propre saut
+    vers l'ancre en fin de chargement), pendant 10 s, arrêté au premier geste (toucher, molette,
+    clavier). Carte affichée sans fondu (`.reveal.vis-now`). Bureau : inchangé. Mesure du
+    2026-10-16 (Slow 4G, iPhone 390×844) : bouton cliquable à 1,7 s (1,9 à 2,2 s avec CPU ×4),
+    445 px sous le haut de l'écran, au lieu de 1 900 px plus bas.
+  - Hero, mobile seulement : raccourci « 🔥 Offre fondateur : 29 €/mois à vie » (`#fondateur`)
+    juste après « Commencer gratuitement » (qui reste le premier), rendu si l'offre est ouverte au
+    build (`data-founder-only`). Compact en ≤ 768 px (46 px de haut) et `.hero-founder` réduit la
+    marge sous les puces (24 px au lieu de 40) : entièrement visible au-dessus du bandeau cookies en
+    390×844 et 393×852 (pas en 375×812 ni 375×667, où il passe sous le bandeau). Pas de point de clic `hero` (absent de `OFFER_CTAS`) : la carte
+    envoie `carte`.
+  - Sous-titre des tarifs : le mois offert est rattaché au **Premium mensuel à 49 €** (l'offre
+    fondateur n'a pas d'essai, cf. la note sous les cartes).
   - FAQ : `FOUNDER_FAQ` (variantes `open` / `ended`) affichée seulement si l'offre vend ou s'est
     clôturée (`ended`), **hors `FAQ` donc hors JSON-LD**. La question « code partenaire » est dans `FAQ`.
   - Point de clic `cta` : `carte` par défaut ; `bandeau` / `faq` retenus en sessionStorage `mtc_cta`
@@ -179,6 +215,9 @@ Règles :
   balise GA statique dans le `<head>`.
 - Refuser = même taille et même poids que Accepter (CNIL). Retrait après acceptation : cookies
   `_ga*` effacés + rechargement.
+- Mobile (< 768 px) : bandeau compact (~ 89 px au lieu de 138) — texte à gauche, Refuser et Accepter
+  empilés à droite, mêmes dimensions. Il ne doit jamais couvrir le bouton de la carte Fondateur à
+  l'arrivée depuis la pub.
 - **Source d'acquisition** (script UTM de `Base.astro`) : `utm_*` du lien, sinon **site d'origine**
   (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
   sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
@@ -187,6 +226,34 @@ Règles :
   (`path`, `source`, `medium`, `campaign`, `entry` = 1re page de la session, flag sessionStorage `mtc_visit`) sur chaque
   page, quel que soit le choix cookies (exemption CNIL : agrégé, anonyme). Résultat dans l'admin
   `/acquisition`. Si un hébergeur/CDN ajoute une CSP, autoriser `connect-src` vers l'API.
+- **Navigateur intégré** (`inApp`) : motif `IN_APP_UA_PATTERN` de `@mtc/shared` (Instagram, FBAN/FBAV/
+  FB_IAB/FBIOS, TikTok/musical_ly, Line/), passé au script inline par `define:vars` (un script inline
+  n'importe rien). Seul le booléen part avec la visite, jamais le user-agent.
+- **Parcours d'inscription** (`cta_click`) : même script, délégation de clic sur tout
+  `a[href*="/register"]` (couvre la carte Fondateur insérée après coup) → `POST {API_URL}/public/funnel`
+  par **`navigator.sendBeacon` en `text/plain`** (requête simple, sans requête préalable CORS, part
+  même quand la page change ; l'API lit ce corps en JSON sur cette route seulement), repli `fetch`
+  keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
+  `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
+  d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
+  réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
+  AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
+  `a.is-opening` de `global.css` : estompé, largeur gardée, `aria-busy`) et ignore 2 s les appuis
+  suivants sur CE lien (`preventDefault` + `stopImmediatePropagation` : ni navigation ni clic compté).
+  Le 1er appui part toujours ; Ctrl/Cmd/Maj/clic milieu (nouvel onglet) non concernés ; `pageshow`
+  (retour arrière, cache de navigation) rétablit le bouton. Le libellé change APRÈS l'événement
+  (`setTimeout 0`) : le remplacer pendant détacherait `ev.target` et l'écouteur de comptage ne
+  retrouverait plus le lien.
+- **`preconnect`** dans le `<head>` de `Base.astro` vers l'origine de `APP_URL` (connexion TLS prête
+  avant l'appui) et de `API_URL` (`crossorigin` : visite et clics partent sans cookie).
+- **Mode interne** (visites de l'équipe) : ouvrir `https://www.mytradingcoach.app/?internal=1` →
+  localStorage `mtc_internal=1` (`INTERNAL_STORAGE_KEY`) : plus aucune visite ni étape envoyée depuis ce
+  navigateur, badge discret « interne » en bas à gauche (`.internal-badge`, `global.css`).
+  `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
+  GA4 n'est pas concerné (il dépend du consentement).
+- Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
+  aussi les étapes de l'inscription et le booléen navigateur intégré. Toute nouvelle mesure → l'y ajouter.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 

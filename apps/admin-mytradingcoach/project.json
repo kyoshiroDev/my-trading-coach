@@ -27,7 +27,8 @@
         "index": "apps/admin-mytradingcoach/src/index.html",
         "styles": [
           "apps/admin-mytradingcoach/src/styles.css"
-        ]
+        ],
+        "serviceWorker": "apps/admin-mytradingcoach/ngsw-config.json"
       },
       "configurations": {
         "production": {

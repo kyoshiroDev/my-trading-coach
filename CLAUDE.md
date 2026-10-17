@@ -79,13 +79,19 @@ Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise 
 ```
 Production
 ├── www.mytradingcoach.app       ← Landing (VPS/Nginx derrière Traefik ; l'apex redirige en 301 vers www)
-├── app.mytradingcoach.app       ← App Angular (VPS/Nginx derrière Traefik)
-└── api.mytradingcoach.app       ← NestJS (VPS OVH Docker)
+├── admin.mytradingcoach.app     ← Admin Angular (VPS/Nginx derrière Traefik)
+├── app.mytradingcoach.app       ← App Angular (VPS prod/Nginx derrière Traefik)
+└── api.mytradingcoach.app       ← NestJS (VPS prod OVH Docker)
 
 Dev
 ├── dev.app.mytradingcoach.app   ← App Angular dev (VPS/Nginx derrière Traefik)
 └── dev.api.mytradingcoach.app   ← NestJS dev (VPS OVH port 3001)
 ```
+
+Deux VPS OVH : **VPS prod** `149.202.40.240` (api., app., bases et Redis prod) et **ancien VPS**
+`51.83.197.230` (dev, beta, landing www. et admin). Landing et admin restent sur l'ancien VPS :
+**pas de Vercel**. L'admin n'a **pas d'environnement dev** (il part de `main` seulement).
+Détails : `.claude/agents/deploy.md`.
 
 ---
 

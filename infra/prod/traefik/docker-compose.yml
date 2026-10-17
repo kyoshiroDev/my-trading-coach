@@ -1,0 +1,64 @@
+services:
+  # Accès Docker en lecture seule pour Traefik (il ne voit jamais le socket complet)
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    container_name: mtc_socket_proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 0
+      TASKS: 0
+      EVENTS: 1
+      PING: 1
+      VERSION: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - mtc_socket
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    mem_limit: 64m
+    security_opt:
+      - no-new-privileges:true
+
+  traefik:
+    image: traefik:v3.7.14
+    container_name: mtc_traefik
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    env_file: .env.traefik
+    ports:
+      # daemon.json lie par défaut sur 127.0.0.1 : on publie explicitement sur toutes les interfaces
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - ./traefik.yml:/traefik.yml:ro
+      - ./conf.d:/conf.d:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - mtc_network
+      - mtc_socket
+    read_only: true
+    mem_limit: 256m
+    memswap_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  letsencrypt:
+
+networks:
+  mtc_network:
+    external: true
+  mtc_socket:
+    external: true

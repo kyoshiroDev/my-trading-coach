@@ -1,0 +1,13 @@
+# VPS PROD MyTradingCoach — logs TOUJOURS dans /opt/backups/*.log (greg ne peut pas créer dans /var/log)
+# Dump base prod — 3 h 00
+0 3 * * * /opt/backups/mtc/backup.sh >> /opt/backups/mtc-backup.log 2>&1
+# Nettoyage Docker (images/conteneurs arrêtés, cache de build > 7 j) — 3 h 30
+30 3 * * * docker system prune -f >> /opt/backups/docker-cleanup.log 2>&1 && docker builder prune -f --filter until=168h >> /opt/backups/docker-cleanup.log 2>&1 && df -h / >> /opt/backups/docker-cleanup.log 2>&1
+# Hors-site restic → B2 (dépôt prod) — 3 h 45
+45 3 * * * /opt/backups/offsite.sh >> /opt/backups/offsite.log 2>&1
+# GC du cache buildx — dimanche 4 h 00
+0 4 * * 0 docker buildx prune --reserved-space=8GB -f >> /opt/backups/docker-gc.log 2>&1
+# Pas de mise à jour APT ici : unattended-upgrades gère la sécurité ; Docker et noyau à la main en maintenance.
+# ── Supervision (PRÉPARÉE, À ACTIVER : décommenter dans `crontab -e`) ──
+# */5 * * * * /opt/backups/watch-containers.sh >> /opt/backups/watch-containers.log 2>&1
+# 7,22,37,52 * * * * /opt/backups/watch-apihosts.sh >> /opt/backups/watch-apihosts.log 2>&1

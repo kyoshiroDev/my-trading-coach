@@ -440,6 +440,19 @@ du code** :
 > l'exemption CNIL, ne jamais y ajouter de colonne identifiante. `source = ''` = direct (pas NULL,
 > sinon l'unique ne déduplique pas). Écriture uniquement par `INSERT … ON CONFLICT` (PublicService).
 
+> **Parcours d'inscription** (migration `20261014200000_funnel_event_daily`, oct. 2026, additive) :
+> - `LandingVisitDaily.inApp` (BOOLEAN, défaut `false`) entre dans l'unique
+>   `(date, path, source, medium, campaign, inApp)`. Le `ON CONFLICT` de `recordLandingVisit` doit
+>   lister EXACTEMENT ces colonnes (sinon chaque visite échoue en silence, erreur avalée).
+> - `FunnelEventDaily` : compteurs `(date Paris, step, source, medium, campaign, inApp, detail)` → `count`,
+>   même principe que `LandingVisitDaily` (`''` = absent, jamais NULL ; upsert `INSERT … ON CONFLICT` +1).
+>   `step` : `landing_view` (jamais écrit ici : les visites restent dans `LandingVisitDaily`) ·
+>   `cta_click` · `register_view` · `register_submit` · `register_success` · `register_error` ·
+>   `checkout_redirect`. `detail` = valeur d'une **liste fermée** (CTA `founder|free|premium`, code
+>   d'erreur `email_taken|validation|network|server|other`), sinon `''`.
+> - **Aucune donnée personnelle** : ni UA brut (seul le booléen `inApp`), ni e-mail, ni IP, ni
+>   identifiant de session, ni lien `User`. Ne jamais y ajouter de colonne identifiante (exemption CNIL).
+
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 
 Migration `20261003160000_b2_index_cleanup` :
@@ -495,3 +508,11 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 - Nouvelle table qui grossit sans fin → décider sa conservation et l'ajouter à `RETENTION_RULES`
   (liste figée : ses noms entrent tels quels dans le SQL). Validé sur vraie base :
   `retention.int-spec.ts`.
+
+## Notifications push de l'admin (2026-10-15)
+
+`AdminPushSubscription` : un appareil (navigateur / PWA) d'un ADMIN. `endpoint` unique, clés
+`p256dh` / `auth`, `mutedEvents AdminPushEvent[]` (événements coupés sur cet appareil, vide = tout),
+`lastSuccessAt`. Cascade à la suppression du User. Supprimé par l'API sur réponse 404/410 du service
+push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
+`20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).

@@ -1,3 +1,4 @@
+import { AdminPushModule } from '../admin-push/admin-push.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { ResendModule } from '../resend/resend.module';
@@ -6,7 +7,7 @@ import { ReferralController } from './referral.controller';
 import { ReferralService } from './referral.service';
 
 @Module({
-  imports: [PrismaModule, ResendModule, StripeModule],
+  imports: [PrismaModule, ResendModule, StripeModule, AdminPushModule],
   controllers: [ReferralController],
   exports: [ReferralService],
   providers: [ReferralService],

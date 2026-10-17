@@ -8,6 +8,10 @@ import { BASE_URL, auth, login, openDashboard, openJournal, sessionPoll, tokenEx
 const USERS = Number(__ENV.LOAD_USER_COUNT || 20);
 const PATTERN = __ENV.LOAD_EMAIL_PATTERN || 'load-{i}@test.local';
 const PASSWORD = __ENV.LOAD_PASSWORD || 'LoadTest-2026!';
+// Paliers au-delà de 1 500 : PEAKS=2000,2500,3000 (recherche du point de rupture), chacun monté en
+// 3 min puis maintenu PEAK_HOLD_MIN minutes. PEAK=2500 (un seul palier) reste accepté.
+const PEAKS = (__ENV.PEAKS || __ENV.PEAK || '').split(',').map(Number).filter((n) => n > 1500);
+const PEAK_HOLD = Number(__ENV.PEAK_HOLD_MIN || __ENV.HOLD_MIN || 15) + 'm';
 
 export const options = {
   stages: [
@@ -15,11 +19,8 @@ export const options = {
     { duration: '2m', target: 500 }, { duration: '3m', target: 500 },
     { duration: '2m', target: 1000 }, { duration: '3m', target: 1000 },
     { duration: '2m', target: 1500 }, { duration: Number(__ENV.HOLD_MIN || 15) + 'm', target: 1500 },
-    // PEAK=2500 (facultatif) : palier supplémentaire au-delà de 1 500, maintenu HOLD_MIN minutes.
-    // Absent : scénario identique aux tests précédents (comparaisons valables).
-    ...(Number(__ENV.PEAK) > 1500
-      ? [{ duration: '3m', target: Number(__ENV.PEAK) }, { duration: Number(__ENV.HOLD_MIN || 15) + 'm', target: Number(__ENV.PEAK) }]
-      : []),
+    // Sans PEAKS ni PEAK : scénario identique aux tests précédents (comparaisons valables).
+    ...PEAKS.flatMap((target) => [{ duration: '3m', target }, { duration: PEAK_HOLD, target }]),
     { duration: '2m', target: 0 },
   ],
   thresholds: {

@@ -16,6 +16,7 @@ import { StripeReferralService } from './stripe-referral.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeWebhookService } from './stripe-webhook.service';
 import { runsQueueProcessors } from '../../config/app-role';
+import { AdminPushModule } from '../admin-push/admin-push.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { runsQueueProcessors } from '../../config/app-role';
     PartnerCodeModule,
     ResendModule,
     DiscordModule,
+    AdminPushModule,
   ],
   controllers: [StripeController],
   providers: [

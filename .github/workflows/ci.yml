@@ -128,7 +128,7 @@ jobs:
 
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17-alpine
+        image: mirror.gcr.io/library/postgres:17-alpine
         env:
           POSTGRES_DB: mytradingcoach_int
           POSTGRES_USER: mtc_user
@@ -142,7 +142,7 @@ jobs:
           - 5432:5432
 
       redis:
-        image: public.ecr.aws/docker/library/redis:7.4-alpine
+        image: mirror.gcr.io/library/redis:7.4-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -245,12 +245,18 @@ jobs:
       - name: Build Angular (dev)
         run: pnpm nx build app-mytradingcoach --configuration=development --skip-nx-cache
 
+      # Clé d'hôte épinglée (DEV_VPS_KNOWN_HOSTS, ancien VPS) au lieu de ssh-keyscan : même
+      # raison que pour le VPS prod (connexions sans authentification → runner banni par fail2ban).
       - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.DEV_VPS_KNOWN_HOSTS }}
         run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret DEV_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       # Release /opt/static/app-dev/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
       - name: Publier Angular dev → VPS
@@ -292,12 +298,18 @@ jobs:
           # Propriété GA4 de dev (variable de dépôt, pas un secret). Vide → ni bandeau ni GA4.
           PUBLIC_GA_ID: ${{ vars.PUBLIC_GA_ID_DEV }}
 
+      # Clé d'hôte épinglée (DEV_VPS_KNOWN_HOSTS, ancien VPS) au lieu de ssh-keyscan : même
+      # raison que pour le VPS prod (connexions sans authentification → runner banni par fail2ban).
       - name: Setup SSH
+        env:
+          KNOWN_HOSTS: ${{ secrets.DEV_VPS_KNOWN_HOSTS }}
         run: |
+          [ -n "$KNOWN_HOSTS" ] || { echo "❌ secret DEV_VPS_KNOWN_HOSTS absent" >&2; exit 1; }
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          printf '%s\n' "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       # Release /opt/static/landing-dev/releases/<sha> puis bascule atomique du lien current (SCA-B8-05)
       - name: Publier Landing dev → VPS

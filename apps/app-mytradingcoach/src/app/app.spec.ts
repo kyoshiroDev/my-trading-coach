@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import * as angularCore from '@angular/core';
 import { App } from './app';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 
@@ -40,5 +40,18 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('mtc-toasts')).toHaveLength(1);
+  });
+
+  it("retire l'écran de chargement d'index.html une fois la première page affichée", async () => {
+    const boot = document.createElement('div');
+    boot.id = 'mtc-boot';
+    document.body.appendChild(boot);
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    expect(document.getElementById('mtc-boot')).not.toBeNull();
+
+    await TestBed.inject(Router).navigateByUrl('/');
+    await fixture.whenStable();
+    expect(document.getElementById('mtc-boot')).toBeNull();
   });
 });

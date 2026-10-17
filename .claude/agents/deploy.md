@@ -7,6 +7,46 @@ description: "Déploiement et infra : VPS, Docker, Traefik, nginx statique, GitH
 
 ## Infrastructure
 
+> **Deux VPS depuis la bascule du 2026-10-15 (21 h 14)** :
+> - **VPS prod** `greg@149.202.40.240` (`mtc-prod`) : API prod blue/green + worker, Postgres/PgBouncer/Redis
+>   prod, app Angular prod (`app.`), bot Discord, sauvegardes prod. Référence (durcissement, rôles
+>   Postgres, sauvegardes, secrets) : `infra/prod/README.md`. Secrets GitHub `PROD_VPS_HOST` / `PROD_VPS_SSH_KEY` / `PROD_VPS_KNOWN_HOSTS`.
+> - **Ancien VPS** `51.83.197.230` (schéma ci-dessous, dont les lignes prod sont périmées) : API, bases et
+>   apps **dev et beta**, plus **landing (`www.`) et admin (`admin.`) de prod**. Secrets `VPS_HOST` / `VPS_SSH_KEY` / `DEV_VPS_KNOWN_HOSTS`.
+>
+> **Décision (2026-10-16) : landing et admin restent sur l'ancien VPS. Pas de Vercel, pas de changement
+> de DNS pour eux.** Toute mention d'un passage sur Vercel est caduque.
+>
+> **L'admin n'a pas d'environnement dev** (ni beta) : un seul site, `admin.mytradingcoach.app`, publié
+> par `cd.yml` depuis `main`. Une modification de l'admin n'est visible en ligne qu'après promotion
+> sur `main` ; avant, la tester en local (`pnpm nx serve admin-mytradingcoach`) contre l'API dev.
+>
+> **Accès SSH de l'admin (page Surveillance, sauvegardes, logs)** : c'est l'API prod qui se connecte, avec
+> **une clé par serveur** (état du 2026-10-17).
+> - Serveur `principal` = `VPS_HOST=149.202.40.240` (`VPS_LABEL=VPS prod`) : clé **`mtc-api-prod-admin`**
+>   (`VPS_SSH_KEY_B64`, `VPS_USER=greg`), autorisée chez `greg` **sur le VPS prod seulement**, avec
+>   `from="172.16.0.0/12"` (réseau Docker local), `no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty`.
+>   Toutes les actions (stats, containers, logs, sauvegardes). ⚠️ greg est dans le groupe `docker` : un
+>   shell obtenu par cette clé vaut root → **restriction à venir** (`command=` + liste blanche, comme
+>   `mtc-monitor`).
+> - Serveur `secondaire` = `VPS_SECONDARY_HOST=51.83.197.230` (`VPS_SECONDARY_LABEL=VPS dev · beta`),
+>   onglet de la page Surveillance (#569) : **lecture seule**, clé dédiée `mtc-api-prod-secondaire-ro`
+>   (`VPS_SECONDARY_SSH_KEY_B64`, empreinte d'hôte épinglée par `VPS_SECONDARY_HOST_KEY_SHA256`),
+>   utilisateur **`mtc-monitor`** sur l'ancien VPS : `from="149.202.40.240"`, `restrict`, commande forcée
+>   `/usr/local/bin/mtc-monitor-ro` qui n'exécute que `/etc/mtc-monitor/allowed-commands` (copie de
+>   `infra/vps/mtc-monitor-allowed-commands`, générée depuis `vps-commands.ts`). Actions et logs refusés
+>   en 403 par l'API. Sans `VPS_SECONDARY_SSH_KEY_B64`, l'onglet n'est pas proposé.
+> - **`mtc-api-prod-admin` n'est plus autorisée sur l'ancien VPS** (retirée de `~greg/.ssh/authorized_keys`
+>   le 2026-10-17) : l'API n'y a plus de shell. Le code ne se rabat jamais sur la clé du principal.
+> - ⚠️ fail2ban de l'ancien VPS (5 échecs / 10 min → ban 1 h) : une clé refusée depuis 149.202.40.240
+>   finit par bannir le VPS prod (l'API ne retente plus qu'une fois par minute). Débannir :
+>   `sudo fail2ban-client set sshd unbanip 149.202.40.240` (terminal de Greg : Claude ne fait plus de
+>   `sudo`). Le VPS prod n'est pas en `ignoreip`.
+> - Rotation des clés : principal → `VPS_SSH_KEY_B64` + `authorized_keys` de greg **sur le VPS prod** ;
+>   secondaire → `VPS_SECONDARY_SSH_KEY_B64` + `authorized_keys` de `mtc-monitor` sur l'ancien VPS (avec
+>   les options `from=…,command=…,restrict`). Puis redéployer l'API prod (`deploy-api.sh` recrée les
+>   conteneurs ; `docker restart` ne relit pas l'env). Procédure détaillée : `docs/ops/maintenance-2026-10-17.md`.
+
 ```
 VPS OVH — 51.83.197.230 (user: greg)
 ├── mtc_traefik     → reverse proxy + SSL Let's Encrypt
@@ -162,6 +202,11 @@ exec node main.js
 > `timeout-minutes` obligatoire. Les jobs `uses:` (workflow réutilisable) n'en acceptent pas : ce
 > sont les jobs de `checks.yml` qui le portent. Travail direct sur `dev` / `beta` (pas de PR vers
 > elles) : un push = un seul run.
+>
+> **Images des services de test (2026-10-15)** : postgres et redis des jobs de test sont tirés sur
+> `mirror.gcr.io/library/…` (cache Docker Hub de Google, anonyme, sans secret). Docker Hub puis le
+> miroir ECR Public (`public.ecr.aws`) renvoyaient `toomanyrequests` : quota anonyme compté par IP,
+> et les IP des runners sont partagées. Ne pas y revenir.
 
 ### Branches
 - `dev` → deploy automatique en dev (VPS via rsync GitHub Actions)
@@ -177,7 +222,10 @@ exec node main.js
 ### Secrets GitHub requis
 
 **Environment `production` :**
-- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (fronts publiés en releases sur le VPS par `infra/deploy-static.sh`, plus de Vercel)
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` : ancien VPS (dev, beta, landing et admin de prod), fronts publiés en releases par `infra/deploy-static.sh`
+- `PROD_VPS_HOST`, `PROD_VPS_SSH_KEY` : VPS prod (API prod et app prod, `cd.yml` et `deploy-api-manual.yml`) ; même `VPS_USER`
+- `PROD_VPS_KNOWN_HOSTS` : clé d'hôte du VPS prod, une ligne known_hosts (`149.202.40.240 ssh-ed25519 AAAA…`), lue par le job app prod de `cd.yml` à la place de `ssh-keyscan`. Le scan ouvre des connexions sans authentification que fail2ban compte comme des échecs : runner banni, rsync en « Connection timed out » (2026-10-16). À refaire si la clé d'hôte du VPS change (réinstallation).
+- `DEV_VPS_KNOWN_HOSTS` : clé d'hôte de l'ancien VPS (`51.83.197.230 ssh-ed25519 AAAA…`), même rôle pour tous les jobs qui publient dessus (`cd.yml` admin et landing, `ci.yml` app et landing dev, `beta.yml` app beta). **Plus aucun `ssh-keyscan` dans les workflows** : un job sans son secret s'arrête net (« secret … absent »). Secrets créés dans l'environnement `production` (ou au niveau du dépôt) : tous ces jobs y tournent.
 
 ### Deploy prod VPS
 
@@ -200,22 +248,22 @@ docker compose up -d --force-recreate api
 
 ---
 
-## Front statique sur le VPS (plus de Vercel)
+## Fronts statiques sur les VPS (pas de Vercel)
 
-App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés sur le VPS
-**en releases** (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
+App Angular, admin et landing Astro sont **buildés dans GitHub Actions** puis publiés **en releases**
+(app prod sur le VPS prod ; admin, landing et tout dev/beta sur l'ancien VPS) (voir plus bas), servis par des conteneurs **nginx:alpine derrière Traefik** (TLS
 letsencrypt + routing par Host + redirect non-www→www en middleware Traefik).
 
 | Site (`/opt/static/<site>`) | Build | Hôte | Workflow | Conteneur (compose) |
 |---|---|---|---|---|
-| `app-prod` | `dist/apps/app-mytradingcoach/browser/` | `app.mytradingcoach.app` | cd.yml | `mtc_app_prod` (`docker-compose.yml`) |
-| `admin` | `dist/apps/admin-mytradingcoach/browser/` | `admin.mytradingcoach.app` | cd.yml | `mtc_admin` (`docker-compose.yml`) |
+| `app-prod` | `dist/apps/app-mytradingcoach/browser/` | `app.mytradingcoach.app` | cd.yml | `mtc_app_prod` — **VPS prod** (`/opt/infra/static/` du 149.202.40.240) |
+| `admin` | `dist/apps/admin-mytradingcoach/browser/` | `admin.mytradingcoach.app` | cd.yml | `mtc_admin` (`docker-compose.yml`) — pas de version dev/beta |
 | `landing-prod` | `apps/landing-mytradingcoach/dist/` | `www.mytradingcoach.app` | cd.yml | `mtc_landing_prod` (`docker-compose.yml`) |
 | `app-dev` | idem app | `dev.app.mytradingcoach.app` | ci.yml | `mtc_app_dev_static` (`docker-compose.yml`) |
 | `landing-dev` | idem landing | `dev.mytradingcoach.app` | ci.yml | `mtc_landing_dev` (`docker-compose.yml`) |
 | `app-beta` | idem app | `beta.app.mytradingcoach.app` | beta.yml | `mtc_app_beta_static` (**`docker-compose.beta.yml`**) |
 
-Les deux fichiers compose sont dans `/opt/infra/static/`.
+Sauf `app-prod`, tout est sur l'ancien VPS ; les deux fichiers compose sont dans son `/opt/infra/static/`.
 
 > ⚠️ **L'admin se déploie depuis `main`, comme l'app et la landing.** Jusqu'au 31/08/2026
 > deux chaînes coexistaient : `ci.yml` publiait l'admin sur un push `dev` vers
@@ -553,8 +601,12 @@ Retour arrière : restaurer `DEFAULT_POOL_SIZE=25` et retirer ces trois lignes, 
   (aucun surcoût), `sendDefaultPii false`, `environment` = `SENTRY_ENVIRONMENT` ou `NODE_ENV`,
   `release` = SHA court du commit (le CD exporte `GIT_SHA`, le compose le passe en `SENTRY_RELEASE`).
 - **Où mettre le DSN** : créer un projet Node.js sur sentry.io (offre gratuite), copier le DSN dans
-  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`, et `SENTRY_ENVIRONMENT=production`),
-  puis recréer le conteneur. Même chose en beta/dev avec leur environnement si souhaité.
+  `/opt/apps/mytradingcoach/prod/.env.production` (`SENTRY_DSN=…`), puis recréer le conteneur.
+  `SENTRY_ENVIRONMENT=production` est posé en clair dans `docker-compose.prod.yml` (le bloc
+  `environment` du compose l'emporte sur l'`env_file`) : l'étiquette ne dépend plus de `NODE_ENV`.
+- **Dev et beta ne sont pas branchés sur Sentry (décision du 2026-10-16).** Si un jour on les branche,
+  poser `SENTRY_ENVIRONMENT=dev` / `beta` en même temps que le DSN (sinon repli sur `NODE_ENV`, donc
+  risque d'étiquette `production`) et ajouter `SENTRY_RELEASE: ${GIT_SHA:-}` à leur compose.
 - Au 30/09, **aucun** des trois `.env` n'a de DSN : l'API prod l'affiche désormais en avertissement
   au démarrage.
 
@@ -608,15 +660,21 @@ Le dossier est inclus dans la sauvegarde B2 (`/infra/databases`).
 **Postgres** : `max_connections` **reste à 50** (pas 100) : `shared_buffers` = 1 920 Mo sur une
 limite conteneur de 2,5 Go, il ne reste ~640 Mo pour les connexions ; au-delà, risque d'OOM de
 Postgres. Ajouts :
-- `pg_stat_statements` (extension créée dans la base **`postgres`**, pas en prod : elle voit toutes
-  les bases). Top requêtes :
-  `docker exec mtc_postgres psql -U mtc_user -d postgres -c "select d.datname, calls, round(mean_exec_time) ms, left(query,80) from pg_stat_statements s join pg_database d on d.oid=s.dbid order by total_exec_time desc limit 15"`
+- `pg_stat_statements` : sur le **VPS prod** (149.202.40.240), l'extension est dans la base
+  **`mytradingcoach_prod`** (créée par `infra/prod/databases/init-db.sh`), **pas** dans `postgres` :
+  y lancer une requête depuis `postgres` répond « relation pg_stat_statements does not exist ». La vue
+  couvre quand même toutes les bases. Top requêtes (lecture seule) :
+  `docker exec mtc_postgres psql -U mtc_readonly -d mytradingcoach_prod -c "select d.datname, calls, round(mean_exec_time) ms, left(query,80) from pg_stat_statements s join pg_database d on d.oid=s.dbid order by total_exec_time desc limit 15"`
+  ⚠️ `pg_stat_statements.track_utility = on` : une commande utilitaire y est gardée en texte. Tout
+  `ALTER ROLE … PASSWORD` se fait dans une session avec `SET pg_stat_statements.track_utility = off`
+  (et `log_min_error_statement = panic`, `log_min_duration_statement = -1`), comme dans
+  `infra/ops/rotation-mot-de-passe/`.
 - `log_min_duration_statement=500` : requêtes > 500 ms dans `docker logs mtc_postgres`, **sans les
   valeurs des paramètres** (`log_parameter_max_length=0`, pas d'e-mail dans les logs).
 - Changer `command:` = redémarrage de Postgres ≈ **10 s de 503** sur l'API prod (mesuré) : hors
   heures du marché US. L'API se reconnecte seule, pas besoin de la redémarrer.
 - VPS remonté de zéro (`docs/ops/reprise-vps.md`) : refaire `CREATE EXTENSION pg_stat_statements`
-  dans la base `postgres`.
+  dans la base `mytradingcoach_prod` (fait par `init-db.sh` au premier démarrage).
 ## Supervision (SCA-B7-08, 2026-10-01)
 
 **Interne — `infra/monitoring/watch-containers.sh`** (installé dans `/opt/backups/`, cron
@@ -628,9 +686,15 @@ Postgres. Ajouts :
   automatique depuis le passage précédent (`RestartCount` est cumulé : on compare au passage d'avant,
   mémorisé dans `/opt/backups/.watch-restarts`) ;
 - dev et beta **arrêtés volontairement** (jour J) : pas d'alerte ;
-- disque `/` ≥ 85 %.
+- disque `/` ≥ 85 % ;
+- **VPS prod seulement** (`infra/prod/monitoring/`) : reboot nécessaire (`/var/run/reboot-required`),
+  puisque la prod ne redémarre jamais seule (voir « Maintenance des VPS »).
 
-E-mail via l'API Resend (clé lue dans `.env.production`) vers `hello@mytradingcoach.app`,
+Deux copies depuis la migration du 2026-10-15 : `infra/prod/monitoring/watch-containers.sh` (VPS prod,
+API blue/green, app, bot) et `infra/monitoring/watch-containers.sh` (ancien VPS : landing, admin,
+dev, beta ; clé Resend lue dans `.env.beta`, l'ancien `.env.production` ayant été supprimé).
+
+E-mail via l'API Resend (clé lue dans `.env.production` sur la prod) vers `hello@mytradingcoach.app`,
 **seulement au changement d'état** (panne → 🔴, rétablissement → 🟢). L'état
 (`/opt/backups/.watch-state`) n'est mémorisé qu'après un envoi réussi.
 ⚠️ Resend est derrière Cloudflare : sans `User-Agent` explicite, Python-urllib reçoit **403**.
@@ -676,7 +740,8 @@ sont illisibles. Les clés B2 aussi (l'`applicationKey` n'est affichée qu'une f
 
 **Test de restauration** : `/opt/backups/restore-test.sh`. Il restaure le dernier instantané, charge
 le dernier dump prod dans un **Postgres jetable** (jamais `mtc_postgres`), compare users et trades
-avec la prod, puis nettoie. Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
+avec la prod, puis nettoie (`docker rm -f -v` : sans `-v`, chaque test laissait un volume
+Postgres anonyme de ~110 Mo, corrigé le 2026-10-16). Premier test le 2026-09-30 : dump de 3 h → 20 users · 882 trades,
 0 erreur de chargement (prod : 911 trades, écart = activité de la journée). À relancer après tout
 changement de la sauvegarde et au moins une fois par trimestre.
 
@@ -695,6 +760,31 @@ gestionnaire de mots de passe, puis `offsite.sh snapshots` et
 `offsite.sh restore latest /tmp/restauration` : les dumps sont dans `/tmp/restauration/data/mtc/`,
 les configs dans `/tmp/restauration/infra/` (à recopier dans `/opt/infra/`), les `.env` dans
 `/tmp/restauration/apps/<env>/`, la crontab dans `/tmp/restauration/data/crontab.current`.
+Options restic en plus après le dossier (VPS prod) : `offsite.sh restore latest /tmp/r --include /data/mtc`
+ne restaure que les dumps. `restore-test.sh` fait ainsi depuis le 2026-10-16 : restaurer tout l'instantané
+recréait `infra/databases/pgbouncer-auth` en uid 70 / 700, que greg ne pouvait plus supprimer.
+
+## Maintenance des VPS (2026-10-16)
+
+| | Ancien VPS `51.83.197.230` (dev, beta, landing, admin) | VPS prod `149.202.40.240` |
+|---|---|---|
+| MAJ sécurité | unattended-upgrades | unattended-upgrades (Docker en liste noire) |
+| Reboot | **auto à 05:00** si requis (`52unattended-upgrades-local`) | **jamais auto** (`52mtc-unattended`) → alerte e-mail `watch-containers.sh`, reboot planifié à la main |
+| sudo | mot de passe → Greg lance les commandes dans SON terminal | NOPASSWD temporaire (migration) |
+
+Procédure : audit en lecture seule (`uptime`, `/var/run/reboot-required.pkgs`, `apt list --upgradable`,
+`docker system df`, volumes sans conteneur, mtime des logs cron) → nettoyage → `apt-get full-upgrade`
+(la MAJ de `docker-ce`/`containerd` redémarre tous les conteneurs ≈ 1 min, ils remontent grâce à
+`unless-stopped`) → reboot → vérifier `uptime`, noyau, `docker ps`, `WATCH_DRY=1 watch-containers.sh`,
+les URL publiques. Commandes sudo données à Greg : **courtes et sans guillemets imbriqués** (déposer
+les fichiers dans `~` d'abord) ; une longue chaîne collée a été tronquée et le reboot n'est jamais parti.
+
+Ancienne prod retirée de l'ancien VPS le 2026-10-16 (images, `/opt/apps/mytradingcoach/prod`,
+`/opt/static/app-prod`, service `app-prod` du compose static, prod de `backup.sh`/`backup-apps.sh`).
+Base `mytradingcoach_prod` supprimée de son Postgres le même jour (dump final
+`/opt/backups/mtc/mtc_prod_20261016_final.sql.gz`, `.env` dans `/opt/backups/ancienne-prod/`) ;
+son `restore-test.sh` vérifie désormais la beta. Reste l'entrée `mytradingcoach_prod` dans `DATABASES`
+de PgBouncer (sans effet, à retirer à la prochaine recréation de PgBouncer).
 
 ## Tests de charge (SCA-B9, 2026-10-01)
 
@@ -782,3 +872,14 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   la transition : **les copier dans `/opt/backups/` avant la transition**.
 - Conteneurs prod (depuis la transition) : `mtc_api_prod_blue` **ou** `_green` (web) + `mtc_api_prod_worker`.
   `docker logs` / `docker stats` : viser la couleur en marche (`docker ps | grep mtc_api_prod`).
+
+## Notifications push de l'admin (2026-10-15)
+
+- Variables de l'API (prod : `.env.production` du VPS prod) : `PUSH_ENABLED=true`,
+  `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:hello@mytradingcoach.app`
+  (`node tools/scripts/vapid-generate.mjs`, clé privée jamais commitée). Recréer l'API ensuite.
+- Service worker de l'admin : jamais en cache. `infra/static/nginx/spa-releases.conf` a des
+  `location =` en `no-cache` pour `ngsw-worker.js` / `safety-worker.js` / `worker-basic.min.js`
+  (sinon la règle des `.js` les fige 1 an). L'admin est servi par l'**ancien VPS** : sur ce VPS,
+  `spa-releases.conf` est un fichier **partagé** par `mtc_admin`, `mtc_app_dev_static` et
+  `mtc_app_beta_static` (bind-mount d'un fichier unique) ; le modifier change aussi dev et beta.

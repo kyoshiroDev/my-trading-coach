@@ -1,6 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  AdminPushEvent,
   BrokerConnection,
   BrokerConnectionStatus,
   BrokerProvider,
@@ -11,6 +12,8 @@ import { BROKER_TRADE_SOURCES } from '../../trades/trades.service';
 import { RedisService } from '../../infra/redis.service';
 import { loadTokenKey } from '@api/common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
+import { AdminNotifier } from '../../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../../admin-push/push-messages';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { signOAuthState, verifyOAuthState } from './oauth-state.util';
 import type { OAuthOrigin } from './oauth-state.util';
@@ -59,6 +62,7 @@ export class TradovateConnectionService {
     private readonly api: TradovateApiClient,
     private readonly config: ConfigService,
     private readonly redis: RedisService,
+    @Optional() private readonly adminNotifier?: AdminNotifier,
   ) {
     // `this.redis` (et non `redis`) : les tests lisent les appels Redis sur ce même client.
     this.locks = new TradovateLocks(this.redis, this.logger);
@@ -498,6 +502,10 @@ export class TradovateConnectionService {
   /** `cause` est journalisée : chaque condamnation doit pouvoir s'expliquer après coup. */
   async markNeedsReconnect(connectionId: string, cause: string): Promise<void> {
     this.logger.warn(`Connexion Tradovate ${connectionId} → À RECONNECTER (${cause}).`);
+    // État d'avant, pour ne prévenir l'admin qu'au PASSAGE à « à reconnecter » (pas à chaque essai).
+    const before = await this.prisma.brokerConnection
+      .findUnique({ where: { id: connectionId }, select: { status: true, user: { select: { isDemo: true } } } })
+      .catch(() => null);
     await this.prisma.brokerConnection.update({
       where: { id: connectionId },
       data: {
@@ -505,6 +513,9 @@ export class TradovateConnectionService {
         lastSyncError: 'Connexion expirée ou révoquée : reconnecte ton compte Tradovate.',
       },
     });
+    if (before?.user && !before.user.isDemo && before.status !== BrokerConnectionStatus.NEEDS_RECONNECT) {
+      this.adminNotifier?.notify(AdminPushEvent.TRADOVATE_RECONNECT, ADMIN_PUSH_MESSAGES.tradovateReconnect());
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

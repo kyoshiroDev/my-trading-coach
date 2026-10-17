@@ -1,4 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { AdminPushEvent } from '@prisma/client';
+import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -6,7 +9,8 @@ import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 import { LandingVisitDto } from './dto/landing-visit.dto';
-import { todayParis } from '@mtc/shared';
+import { FunnelEventDto } from './dto/funnel-event.dto';
+import { signupFunnelDetail, todayParis } from '@mtc/shared';
 
 // Dev et prod partagent le Redis db0 du VPS sans préfixe : sans suffixe
 // d'environnement, la première API qui remplit la clé impose son chiffre à
@@ -30,6 +34,7 @@ export class PublicService {
     private readonly redisService: RedisService,
     private readonly resend: ResendService,
     private readonly config: ConfigService,
+    @Optional() private readonly adminNotifier?: AdminNotifier,
   ) {}
 
   /** Clé de cache propre à l'environnement, dérivée de l'hôte du front servi. */
@@ -61,6 +66,7 @@ export class PublicService {
       socials,
       message,
     });
+    this.adminNotifier?.notify(AdminPushEvent.AMBASSADOR_REQUEST, ADMIN_PUSH_MESSAGES.ambassadorRequest());
     return { success: true };
   }
 
@@ -89,7 +95,8 @@ export class PublicService {
   }
 
   /**
-   * Incrémente le compteur du jour (Europe/Paris) pour (page, source, medium, campagne). Un seul
+   * Incrémente le compteur du jour (Europe/Paris) pour (page, source, medium, campagne, navigateur
+   * intégré). Un seul
    * `INSERT … ON CONFLICT` : atomique, sans course entre deux visites simultanées.
    * Robots et UA absents ignorés. Une erreur ne remonte jamais au visiteur.
    */
@@ -99,15 +106,37 @@ export class PublicService {
     const visits = dto.entry ? 1 : 0;
     try {
       await this.prisma.$executeRaw`
-        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "medium", "campaign", "pageviews", "visits")
+        INSERT INTO "LandingVisitDaily" ("id", "date", "path", "source", "medium", "campaign", "inApp", "pageviews", "visits")
         VALUES (gen_random_uuid()::text, ${date}::date, ${dto.path}, ${dto.source ?? ''},
-          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, 1, ${visits})
-        ON CONFLICT ("date", "path", "source", "medium", "campaign") DO UPDATE SET
+          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, ${dto.inApp ?? false}, 1, ${visits})
+        ON CONFLICT ("date", "path", "source", "medium", "campaign", "inApp") DO UPDATE SET
           "pageviews" = "LandingVisitDaily"."pageviews" + 1,
           "visits" = "LandingVisitDaily"."visits" + ${visits}
       `;
     } catch (err) {
       this.logger.warn(`Landing visit non comptée : ${String(err)}`);
+    }
+  }
+
+  /**
+   * Étape du parcours d'inscription : +1 sur (jour Paris, étape, source, medium, campagne,
+   * navigateur intégré, detail). `detail` ramené à sa liste blanche. Mêmes garanties que les
+   * visites : robots ignorés, aucune donnée personnelle, erreur avalée (best-effort).
+   */
+  async recordFunnelEvent(dto: FunnelEventDto, userAgent?: string): Promise<void> {
+    if (!userAgent || BOT_UA.test(userAgent)) return;
+    const date = new Date(`${todayParis()}T00:00:00Z`);
+    const detail = signupFunnelDetail(dto.step, dto.detail);
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO "FunnelEventDaily" ("id", "date", "step", "source", "medium", "campaign", "inApp", "detail", "count")
+        VALUES (gen_random_uuid()::text, ${date}::date, ${dto.step}, ${dto.source ?? ''},
+          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, ${dto.inApp ?? false}, ${detail}, 1)
+        ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail") DO UPDATE SET
+          "count" = "FunnelEventDaily"."count" + 1
+      `;
+    } catch (err) {
+      this.logger.warn(`Étape du parcours non comptée : ${String(err)}`);
     }
   }
 }
