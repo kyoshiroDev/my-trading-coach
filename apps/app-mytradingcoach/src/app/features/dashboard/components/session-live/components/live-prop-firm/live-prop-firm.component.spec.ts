@@ -91,7 +91,7 @@ describe('Session live — suivi prop firm', () => {
 
   it('affiche solde et latent du broker, la marge avant le plancher et l’objectif du plan', () => {
     const { text } = setup(metrics());
-    expect(text('live-prop-firm-balance')).toContain('50,820');
+    expect(text('live-prop-firm-balance'), 'equity en direct').toContain('50,170');
     expect(text('live-prop-firm-open-pnl')).toContain('650');
     const dd = text('live-prop-firm-drawdown');
     expect(dd).toContain('1,350');
@@ -99,7 +99,8 @@ describe('Session live — suivi prop firm', () => {
     expect(dd).toContain('48,820');
     expect(dd).toContain('trailing fin de journée');
     const obj = text('live-prop-firm-objective');
-    expect(obj).toContain('27 %');
+    expect(obj).toContain('+$820');
+    expect(obj).toContain('$3,000');
     expect(obj).toContain('il te reste');
     expect(text('live-prop-firm-live')).toBe('LIVE');
   });
@@ -201,11 +202,45 @@ describe('Session live — suivi prop firm', () => {
     });
   });
 
-  it('« Saisir un trade à la main » prévient le parent', () => {
-    const { el, fixture } = setup(metrics());
-    const spy = vi.fn();
-    fixture.componentInstance.manualEntry.subscribe(spy);
-    (el.querySelector('[data-testid="live-prop-firm-manual"]') as HTMLButtonElement).click();
-    expect(spy).toHaveBeenCalled();
+  it('ordre des jauges : le risque avant le gain (perte du jour, plancher, objectif)', () => {
+    const dl = {
+      limit: 1000, used: 100, remaining: 900, pct: 0.9, breached: false, breach: 'trading_paused_for_day' as const,
+      basis: 'equity' as const, startOfDay: 51000, source: 'broker' as const, approximate: false,
+    };
+    const { q } = setup(metrics({ dailyLoss: dl }), { premium: true });
+    const [a, b, c] = ['live-prop-firm-daily-loss', 'live-prop-firm-drawdown', 'live-prop-firm-objective'].map((id) => q(id)!);
+    expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(b.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  describe('jauge perte du jour : couleur selon la part consommée (seuils de l’app)', () => {
+    const dl = (used: number) => ({
+      limit: 1000, used, remaining: 1000 - used, pct: (1000 - used) / 1000, breached: used >= 1000,
+      breach: 'trading_paused_for_day' as const, basis: 'equity' as const, startOfDay: 51000,
+      source: 'broker' as const, approximate: false,
+    });
+    const fill = (used: number) => {
+      const { q } = setup(metrics({ dailyLoss: dl(used) }), { premium: true });
+      return q('live-prop-firm-daily-loss')!.querySelector('.bar-fill') as HTMLElement;
+    };
+
+    it.each([
+      [200, 'dl-green', '20%'],
+      [500, 'dl-yellow', '50%'],
+      [740, 'dl-yellow', '74%'],
+      [750, 'dl-red', '75%'],
+      [900, 'dl-red', '90%'],
+    ])('%d $ perdus sur 1 000 → %s, barre à %s', (used, cls, width) => {
+      const f = fill(used);
+      expect(f.className).toContain(cls);
+      expect(f.style.width).toBe(width);
+      TestBed.resetTestingModule();
+    });
+
+    it('plan sans perte journalière (dailyLoss null, Premium) : jauge masquée, pas de teaser', () => {
+      const { q } = setup(metrics({ dailyLoss: null, }), { premium: true });
+      expect(q('live-prop-firm-daily-loss')).toBeNull();
+      expect(q('live-prop-firm-premium-teaser')).toBeNull();
+    });
   });
 });

@@ -1,8 +1,10 @@
-<div class="pf-panel" data-testid="live-prop-firm">
-  <div class="pf-title">
-    <svg [lucideIcon]="ShieldIcon" [size]="14" class="ct-ic"></svg>
-    Suivi du compte
-    <span class="pf-title-end">
+<section class="pf-panel" data-testid="live-prop-firm" aria-label="Suivi du compte">
+  <header class="pf-head">
+    <span class="pf-title">SUIVI DU COMPTE</span>
+    <span class="pf-head-end">
+      @if (rule(); as r) {
+        <span class="pf-plan">{{ r.firmName }} · {{ r.planName }}</span>
+      }
       @if (live.connected()) {
         <span class="pf-live" data-testid="live-prop-firm-live"><span class="pulse-dot"></span>LIVE</span>
       }
@@ -18,56 +20,67 @@
         </button>
       }
     </span>
-  </div>
+  </header>
 
   @if (account(); as a) {
-    <div class="pf-account">
-      <span class="pf-label">{{ a.label }}</span>
-      @if (rule(); as r) {
-        <span class="pf-plan">{{ r.firmName }} · {{ r.planName }}</span>
-      }
-    </div>
-
-    <!-- Solde et latent lus chez le broker -->
-    <div class="pf-balance">
-      <div>
-        <div class="pf-lbl">Solde</div>
-        <div class="pf-big" data-testid="live-prop-firm-balance">{{ money(broker()?.cashBalance ?? metrics()?.currentBalance) }}</div>
-      </div>
+    <!-- Equity en direct sur une ligne (lue chez le broker), latent à côté -->
+    <div class="pf-equity">
+      Equity <span class="pf-equity-val" data-testid="live-prop-firm-balance">{{ money(equity()) }}</span>
       @if (broker(); as b) {
-        <div class="pf-open">
-          <div class="pf-lbl">Latent</div>
-          @if (b.openPnlKnown) {
-            <div class="pf-mid" [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0"
-                 data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</div>
-          } @else {
-            <div class="pf-mid" data-testid="live-prop-firm-open-pnl-na">-</div>
-          }
-          <div class="pf-sub">{{ b.openPositions }} position{{ b.openPositions > 1 ? 's' : '' }} ouverte{{ b.openPositions > 1 ? 's' : '' }}</div>
-        </div>
+        · latent
+        @if (b.openPnlKnown) {
+          <span [class.green]="b.openPnl > 0" [class.red]="b.openPnl < 0" data-testid="live-prop-firm-open-pnl">{{ money(b.openPnl, true) }}</span>
+        } @else {
+          <span data-testid="live-prop-firm-open-pnl-na">-</span>
+        }
       }
     </div>
 
-    <!-- Marge avant le plancher de drawdown -->
-    <div class="pf-block" data-testid="live-prop-firm-drawdown">
+    <!-- 1. Perte max du jour (PREMIUM) : le risque d'abord. Gratuit : teaser à la même place. -->
+    @if (dailyLoss(); as dl) {
+      <div class="pf-gauge" data-testid="live-prop-firm-daily-loss">
+        <div class="pf-row">
+          <span>Perte max du jour</span>
+          @if (dl.breached) {
+            <span class="pf-val red">limite atteinte</span>
+          } @else {
+            <span class="pf-val">{{ money(dl.remaining) }} dispo</span>
+          }
+        </div>
+        <div class="bar-track"><div [class]="'bar-fill dl-' + dlTone()" [style.width.%]="dlWidth()"></div></div>
+        <div class="pf-sub">
+          {{ money(dl.used) }} perdus sur {{ money(dl.limit) }}
+          · {{ dl.breach === 'account_failed' ? 'au-delà, dépassement = échec du compte' : 'au-delà, trading coupé jusqu’à demain' }}
+          @if (dl.approximate) { · estimation }
+        </div>
+      </div>
+    } @else if (premiumTeaser()) {
+      <button type="button" class="pf-teaser" data-testid="live-prop-firm-premium-teaser" (click)="showPlanModal.set(true)">
+        <span>Perte max du jour et alertes avant la casse</span>
+        <span class="pf-badge">PREMIUM</span>
+      </button>
+    }
+
+    <!-- 2. Marge avant le plancher de drawdown -->
+    <div class="pf-gauge" data-testid="live-prop-firm-drawdown">
       <div class="pf-row">
-        <span class="pf-lbl">Marge drawdown</span>
+        <span>Marge avant le plancher</span>
         @if (drawdown(); as dd) {
           @if (dd.breached) {
             <span class="pf-val red">plancher dépassé</span>
           } @else {
-            <span [class]="'pf-val ' + ddTone()">{{ money(dd.margin) }}</span>
+            <span class="pf-val">{{ money(dd.margin) }}</span>
           }
         }
       </div>
       @if (drawdown(); as dd) {
-        <div class="bar-track">
-          <div [class]="'bar-fill ' + ddTone()" [style.width.%]="ddWidth()"></div>
-        </div>
+        <div class="bar-track"><div class="bar-fill dd" [style.width.%]="ddWidth()"></div></div>
         <div class="pf-sub">
-          plancher {{ money(dd.floor) }}
+          Plancher {{ money(dd.floor) }}
           @if (rule(); as r) {
             · {{ ddKindLabel(r.kind) }}{{ r.locked ? ', figé' : '' }}
+            @if (r.kind === 'trailing_eod') { · mis à jour à la clôture }
+            @else if (r.kind === 'trailing_intraday' && r.peakBalance !== null) { · plus haut {{ money(r.peakBalance) }} }
           }
         </div>
       } @else if (metrics()?.drawdownUnconfirmed) {
@@ -80,31 +93,32 @@
       }
     </div>
 
-    <!-- Perte journalière (PREMIUM) selon la règle du plan relié -->
-    @if (dailyLoss(); as dl) {
-      <div class="pf-block" data-testid="live-prop-firm-daily-loss">
+    <!-- 3. Objectif (évaluation) ou prochain payout (funded) -->
+    @if (objTitle(); as title) {
+      <div class="pf-gauge" data-testid="live-prop-firm-objective">
         <div class="pf-row">
-          <span class="pf-lbl">Perte du jour</span>
-          @if (dl.breached) {
-            <span class="pf-val red">limite atteinte</span>
-          } @else {
-            <span [class]="'pf-val ' + dlTone()">{{ money(dl.remaining) }}</span>
+          <span>{{ metrics()?.progress?.kind === 'payout' ? 'Payout' : 'Objectif' }}</span>
+          @if (objAmounts(); as o) {
+            <span class="pf-val"><span [class.green]="o.current > 0">{{ money(o.current, true) }}</span> / {{ money(o.target) }}</span>
+          } @else if (objRatio() !== null) {
+            <span class="pf-val">{{ objWidth() }} %</span>
           }
         </div>
-        <div class="bar-track">
-          <div [class]="'bar-fill ' + dlTone()" [style.width.%]="dlWidth()"></div>
-        </div>
-        <div class="pf-sub">
-          {{ money(dl.used) }} perdus sur {{ money(dl.limit) }} autorisés
-          · {{ dl.breach === 'account_failed' ? 'dépassement = échec du compte' : 'dépassement = trading coupé jusqu’à demain' }}
-          @if (dl.approximate) { · estimation }
-        </div>
+        <div class="bar-track"><div class="bar-fill obj" [style.width.%]="objWidth()"></div></div>
+        <div class="pf-sub">{{ title }}</div>
+        <!-- Consistency (PREMIUM) : gain max du jour pour que la journée reste sous la limite -->
+        @if (consistency(); as c) {
+          @if (c.today > c.cap) {
+            <div class="pf-sub red" data-testid="live-prop-firm-consistency">
+              Consistency : ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          } @else {
+            <div class="pf-sub" data-testid="live-prop-firm-consistency">
+              Consistency : encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
+            </div>
+          }
+        }
       </div>
-    } @else if (premiumTeaser()) {
-      <button type="button" class="pf-teaser" data-testid="live-prop-firm-premium-teaser" (click)="showPlanModal.set(true)">
-        <span>Perte journalière, alertes avant la casse et anti-tilt</span>
-        <span class="pf-badge">PREMIUM</span>
-      </button>
     }
 
     <!-- Alertes Premium : notification système (l'utilisateur regarde sa plateforme) -->
@@ -123,35 +137,7 @@
       }
     }
 
-    <!-- Objectif (évaluation) ou prochain payout (funded) -->
-    @if (objTitle(); as title) {
-      <div class="pf-block" data-testid="live-prop-firm-objective">
-        <div class="pf-row">
-          <span class="pf-lbl">{{ metrics()?.progress?.kind === 'payout' ? 'Payout' : 'Objectif' }}</span>
-          @if (objRatio() !== null) {
-            <span class="pf-val">{{ objWidth() }} %</span>
-          }
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill blue" [class.green]="objWidth() >= 100" [style.width.%]="objWidth()"></div>
-        </div>
-        <div class="pf-sub">{{ title }}</div>
-        <!-- Consistency (PREMIUM) : gain max du jour pour que la journée reste sous la limite -->
-        @if (consistency(); as c) {
-          @if (c.today > c.cap) {
-            <div class="pf-sub red" data-testid="live-prop-firm-consistency">
-              Consistency : ta journée dépasse la règle (une journée ≤ {{ pct(c.maxShare) }} du profit).
-            </div>
-          } @else {
-            <div class="pf-sub" data-testid="live-prop-firm-consistency">
-              Consistency : encore <b>{{ money(c.cap - c.today) }}</b> de gain max aujourd'hui (une journée ≤ {{ pct(c.maxShare) }} du profit).
-            </div>
-          }
-        }
-      </div>
-    }
-
-    <p class="pf-note">
+    <p class="pf-note pf-disclaimer">
       Estimation MyTradingCoach, pas le calcul officiel de ta firm.
       @if (brokerAge(); as age) { Relevé {{ age }}. }
       <a routerLink="/accounts" class="pf-link">Détail des règles</a>
@@ -159,11 +145,7 @@
   } @else {
     <div class="pf-sub">Chargement du compte…</div>
   }
-
-  <button type="button" class="pf-manual" data-testid="live-prop-firm-manual" (click)="manualEntry.emit()">
-    Saisir un trade à la main
-  </button>
-</div>
+</section>
 
 @if (showPlanModal()) {
   <mtc-plan-modal (closed)="showPlanModal.set(false)" />

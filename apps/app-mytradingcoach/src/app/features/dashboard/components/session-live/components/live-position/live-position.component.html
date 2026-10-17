@@ -1,61 +1,118 @@
-<section class="lp-card" data-testid="live-position">
-  <header class="lp-head">
-    <span class="lp-title">Trade en cours</span>
-    <span class="lp-beta">BÊTA</span>
-    <mtc-info-tooltip label="Comment ces chiffres sont calculés" [text]="tooltip" />
-    <button class="lp-refresh" type="button" [disabled]="refreshing()" (click)="refresh()">
-      {{ refreshing() ? 'Lecture…' : 'Actualiser' }}
-    </button>
-  </header>
-
-  @if (totals().hasPosition) {
-    <ul class="lp-positions">
-      @for (p of broker()!.openPositions; track p.asset + p.side) {
-        <li class="lp-pos" data-testid="live-position-row">
-          <span class="lp-side" [class.long]="p.side === 'LONG'" [class.short]="p.side === 'SHORT'">
-            {{ p.side === 'LONG' ? '▲ LONG' : '▼ SHORT' }}
-          </span>
-          <span class="lp-asset">{{ p.quantity }} × {{ p.asset }}</span>
-          @if (p.entryPrice !== null) {
-            <span class="lp-entry">@ {{ p.entryPrice }}</span>
-          }
-          <span class="lp-since">{{ sinceLabel(p.since) }}</span>
-        </li>
+@if (current(); as c) {
+  <section class="lp-card" data-testid="live-position" aria-label="Trade en cours">
+    <header class="lp-head">
+      <span class="lp-title">TRADE EN COURS</span>
+      <span class="lp-live">LIVE</span>
+      <mtc-info-tooltip label="Comment ces chiffres sont calculés" [text]="tooltip" />
+      <span class="lp-since">{{ openedFor() }}</span>
+      @if (c.kind === 'broker') {
+        <button class="lp-refresh" type="button" [disabled]="refreshing()" (click)="refresh()">
+          {{ refreshing() ? 'Lecture…' : 'Actualiser' }}
+        </button>
       }
-    </ul>
-  } @else {
-    <p class="lp-flat">Aucune position ouverte chez Tradovate.</p>
-  }
+    </header>
 
-  <div class="lp-figures">
-    <div class="lp-fig">
-      <div class="lp-val" [class.green]="totals().realized > 0" [class.red]="totals().realized < 0">
-        {{ fmt(totals().realized) }}
+    <div class="lp-main" data-testid="live-position-row">
+      <div class="lp-id">
+        <div class="lp-id-top">
+          <span class="lp-side" [class.long]="c.side === 'LONG'" [class.short]="c.side === 'SHORT'">{{ c.side }}</span>
+          <span class="lp-asset">{{ c.asset }}</span>
+        </div>
+        <div class="lp-qty">
+          @if (c.quantity !== null) { {{ c.quantity }} contrat{{ c.quantity > 1 ? 's' : '' }} }
+          @if (c.entry !== null) { &#64; {{ price(c.entry) }} }
+        </div>
       </div>
-      <div class="lp-lbl">Réalisé</div>
+      <div class="lp-pnl">
+        @if (c.latent !== null) {
+          <div class="lp-latent" [class.green]="c.latent > 0" [class.red]="c.latent < 0" data-testid="live-latent">
+            {{ fmt(c.latent, true) }}
+          </div>
+          @if (c.price !== null) {
+            <div class="lp-price" data-testid="live-price">prix {{ price(c.price) }} · relevé à {{ timeOf(c.priceAt) }}</div>
+          } @else {
+            <div class="lp-price">relevé à {{ timeOf(c.priceAt) }}</div>
+          }
+        } @else {
+          <div class="lp-latent lp-na" data-testid="live-latent-na">-</div>
+          <div class="lp-price">{{ c.kind === 'broker' ? 'Latent indisponible pour ce compte' : 'latent non suivi (saisie manuelle)' }}</div>
+        }
+      </div>
     </div>
-    <div class="lp-fig">
-      @if (totals().latent !== null) {
-        <div class="lp-val" [class.green]="totals().latent! > 0" [class.red]="totals().latent! < 0"
-             data-testid="live-latent">
-          {{ fmt(totals().latent!) }}
+
+    @if (bar(); as b) {
+      @if (b.mode !== 'fallback' || b.currentPct !== null) {
+        <div class="lp-bar" data-testid="live-bar" [attr.data-mode]="b.mode" aria-hidden="true">
+          @if (b.mode === 'fallback') {
+            <div class="lp-seg" [class.loss]="!b.inGain" [class.gain]="b.inGain"
+                 [style.left.%]="b.inGain ? 50 : b.currentPct" [style.width.%]="b.inGain ? b.currentPct! - 50 : 50 - b.currentPct!"></div>
+          } @else {
+            @if (b.stopPct !== null) {
+              <div class="lp-seg loss" [style.left.%]="0" [style.width.%]="b.entryPct"></div>
+            }
+            @if (b.targetPct !== null) {
+              <div class="lp-seg gain" [style.left.%]="b.entryPct" [style.width.%]="100 - b.entryPct"></div>
+            }
+          }
+          <div class="lp-entry-mark" [style.left.%]="b.entryPct"></div>
+          @if (b.currentPct !== null) {
+            <div class="lp-dot" [class.gain]="b.inGain" [class.loss]="!b.inGain" [style.left.%]="b.currentPct" data-testid="live-bar-dot"></div>
+          }
         </div>
-        <div class="lp-lbl">Latent · {{ latentAge() }}</div>
-      } @else {
-        <div class="lp-val lp-na" data-testid="live-latent-na">-</div>
-        <div class="lp-lbl">Latent indisponible pour ce compte</div>
       }
-    </div>
-    <div class="lp-fig">
-      @if (totals().total !== null) {
-        <div class="lp-val" [class.green]="totals().total! > 0" [class.red]="totals().total! < 0"
-             data-testid="live-total">
-          {{ fmt(totals().total!) }}
+      <div class="lp-scale">
+        <span class="lp-sl" data-testid="live-bar-sl">
+          @if (b.stopPct !== null) {
+            SL {{ price(c.stop) }}
+            @if (b.stopAmount !== null) { <span class="lp-amt">{{ fmt(b.stopAmount, true) }}</span> }
+          }
+        </span>
+        <span class="lp-mid">Entrée <span class="lp-amt">{{ price(c.entry) }}</span></span>
+        <span class="lp-tp" data-testid="live-bar-tp">
+          @if (b.targetPct !== null) {
+            TP {{ price(c.target) }}
+            @if (b.targetAmount !== null) { <span class="lp-amt">{{ fmt(b.targetAmount, true) }}</span> }
+          }
+        </span>
+      </div>
+      @if (b.rr !== null) {
+        <div class="lp-note" data-testid="live-bar-rr">Risque/rendement 1 : {{ b.rr }} · stop à {{ b.stopPts }} pts</div>
+      } @else if (b.stopPct === null) {
+        <div class="lp-note" data-testid="live-no-stop">
+          {{ c.kind === 'broker' ? 'Aucun stop détecté chez Tradovate' : 'Aucun stop saisi pour ce trade' }}
         </div>
-      } @else {
-        <div class="lp-val lp-na">-</div>
       }
-      <div class="lp-lbl">Total</div>
-    </div>
-  </div>
-</section>
+    }
+
+    @if (positions().length > 1) {
+      <ul class="lp-others">
+        @for (p of positions().slice(1); track p.asset + p.side) {
+          <li data-testid="live-position-row">
+            <span class="lp-side" [class.long]="p.side === 'LONG'" [class.short]="p.side === 'SHORT'">{{ p.side }}</span>
+            {{ p.quantity }} × {{ p.asset }}
+            @if (p.entryPrice !== null) { &#64; {{ price(p.entryPrice) }} }
+          </li>
+        }
+        <li class="lp-others-note">Latent du compte entier, toutes positions confondues</li>
+      </ul>
+    }
+
+    @if (c.kind === 'manual') {
+      <button type="button" class="lp-close" data-testid="close-trade" (click)="toggleClose()">Clôturer ce trade</button>
+      @if (closing()) {
+        <div class="lp-close-panel" data-testid="trade-close-panel">
+          <label class="lp-close-lbl" for="lp-exit">Prix de sortie</label>
+          <div class="lp-close-row">
+            <input id="lp-exit" class="lp-close-input" type="text" inputmode="decimal" mtcNumericInput
+                   placeholder="0.00" data-testid="trade-exit-price"
+                   [value]="exitPriceInput()" (input)="exitPriceInput.set($any($event.target).value)" />
+            <button type="button" class="lp-close-ok" (click)="submitClose()">Valider</button>
+          </div>
+          @if (exitKind(); as k) { <div class="lp-note" data-testid="trade-close-type">→ {{ k }}</div> }
+        </div>
+      }
+    }
+  </section>
+} @else {
+  <section class="lp-flat" data-testid="live-position-none">Aucune position ouverte</section>
+}

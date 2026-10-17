@@ -11,8 +11,8 @@ import { MoneyService } from '@app/core/services/money.service';
 import TEMPLATE from './session-live.component.html?raw';
 
 /**
- * Colonne droite de la session live : suivi prop firm à la place de Trade rapide quand le compte
- * de la session est synchronisé, Trade rapide sinon, et retour possible à la saisie manuelle.
+ * Session live v3 : suivi prop firm quand le compte de la session est synchronisé (Trade rapide
+ * sur demande, « Saisir un trade à la main »), sinon P&L du jour + Trade rapide toujours affiché.
  */
 
 const account = (type: TradingAccount['type']): TradingAccount => ({
@@ -49,7 +49,7 @@ function setup(opts: { type?: TradingAccount['type']; connected?: boolean; loade
           load,
         },
       },
-      { provide: MoneyService, useValue: { format: () => '$0' } },
+      { provide: MoneyService, useValue: { format: () => '$0', formatFor: () => '$0' } },
     ],
   });
   TestBed.overrideComponent(SessionLiveComponent, {
@@ -73,23 +73,48 @@ describe('Session live — suivi prop firm à la place de Trade rapide', () => {
     expect(el.querySelector('mtc-quick-trade')).toBeNull();
   });
 
-  it('compte non synchronisé ou compte perso : Trade rapide, comme avant', () => {
-    expect(setup({ connected: false }).el.querySelector('mtc-quick-trade')).not.toBeNull();
+  it('compte non synchronisé ou compte perso : P&L du jour, lien prop firm et Trade rapide', () => {
+    const unsynced = setup({ connected: false }).el;
+    expect(unsynced.querySelector('mtc-quick-trade')).not.toBeNull();
+    expect(unsynced.querySelector('[data-testid="live-account-summary"]')).not.toBeNull();
+    expect(unsynced.querySelector('[data-testid="link-prop-firm"]')?.textContent).toContain('Lier un compte prop firm');
     TestBed.resetTestingModule();
     const perso = setup({ type: 'PERSONAL' }).el;
     expect(perso.querySelector('mtc-quick-trade')).not.toBeNull();
     expect(perso.querySelector('mtc-live-prop-firm')).toBeNull();
   });
 
-  it('« Saisir un trade à la main » puis « Suivi du compte » : aller-retour', () => {
+  it('ordre mobile : bandeau, annonce, trade en cours, suivi du compte, clôturés, puis contexte et clôture', () => {
+    const { el } = setup({});
+    const order = ['mtc-live-bar', 'mtc-live-next-event', 'mtc-live-position', 'mtc-live-prop-firm', 'mtc-live-closed-trades', '[data-testid="open-context"]', '[data-testid="close-session-live"]']
+      .map((sel) => el.querySelector(sel));
+    expect(order.every(Boolean)).toBe(true);
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it('« Clôturer la session » prévient le parent ; « Contexte marché » ouvre la feuille', () => {
+    const { el, fixture } = setup({});
+    const spy = vi.fn();
+    fixture.componentInstance.closeSession.subscribe(spy);
+    (el.querySelector('[data-testid="close-session-live"]') as HTMLButtonElement).click();
+    expect(spy).toHaveBeenCalled();
+    expect(el.querySelector('[data-testid="context-sheet"]')).toBeNull();
+    (el.querySelector('[data-testid="open-context"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="context-sheet"]')).not.toBeNull();
+  });
+
+  it('« Saisir un trade à la main » puis « Fermer la saisie » : aller-retour', () => {
     const { el, fixture } = setup({});
     const cmp = fixture.componentInstance as unknown as { manualEntry: { set: (v: boolean) => void } };
     cmp.manualEntry.set(true);
     fixture.detectChanges();
     expect(el.querySelector('mtc-quick-trade')).not.toBeNull();
+    expect(el.querySelector('mtc-live-prop-firm'), 'le suivi reste affiché').not.toBeNull();
     (el.querySelector('[data-testid="back-to-prop-firm"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(el.querySelector('mtc-live-prop-firm')).not.toBeNull();
     expect(el.querySelector('mtc-quick-trade')).toBeNull();
   });
 

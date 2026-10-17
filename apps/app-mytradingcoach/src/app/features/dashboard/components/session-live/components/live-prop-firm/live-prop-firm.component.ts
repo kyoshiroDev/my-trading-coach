@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   input,
-  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -34,9 +33,10 @@ import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 
 /**
  * Suivi prop firm de la session live (FREE) : à la place de « Trade rapide » quand le compte de
- * la session est synchronisé, ses trades arrivent seuls. Solde et equity lus chez le broker,
- * marge avant le plancher et avancement vers l'objectif, calculés par l'API avec les règles
- * officielles du plan relié. Le temps réel vient du WebSocket Tradovate (`tradovate:balance`
+ * la session est synchronisé, ses trades arrivent seuls. Session live v3 : equity sur une ligne,
+ * puis trois jauges, le risque avant le gain (perte du jour → marge plancher → objectif).
+ * Solde et equity lus chez le broker, marge avant le plancher et avancement vers l'objectif,
+ * calculés par l'API avec les règles officielles du plan relié. Le temps réel vient du WebSocket Tradovate (`tradovate:balance`
  * → rechargement des comptes) : ce panneau ne fait qu'une relecture du solde à l'ouverture.
  */
 @Component({
@@ -48,8 +48,6 @@ import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 })
 export class LivePropFirmComponent {
   readonly accountId = input.required<string>();
-  /** « Saisir un trade à la main » : le parent réaffiche Trade rapide. */
-  readonly manualEntry = output<void>();
 
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tv = inject(TradovateStore);
@@ -78,7 +76,11 @@ export class LivePropFirmComponent {
   /** Perte journalière (PREMIUM) : l'API ne la calcule que pour un compte Premium. */
   protected readonly dailyLoss = computed(() => this.metrics()?.dailyLoss ?? null);
   protected readonly dlTone = computed(() => drawdownTone(this.dailyLoss()));
-  protected readonly dlWidth = computed(() => barWidth(this.dailyLoss()?.pct));
+  /** Barre de la perte du jour = part CONSOMMÉE de la limite (pct = marge restante). */
+  protected readonly dlWidth = computed(() => {
+    const dl = this.dailyLoss();
+    return dl ? barWidth(dl.breached ? 1 : 1 - dl.pct) : 0;
+  });
   /** Consistency du plan, avec le gain max du jour (calculé par l'API pour le Premium seulement). */
   protected readonly consistency = computed(() => {
     const r = this.metrics()?.progress?.requirements.find((x) => x.key === 'consistency');
@@ -93,6 +95,15 @@ export class LivePropFirmComponent {
     return m ? objectiveRatio(m) : null;
   });
   protected readonly objWidth = computed(() => barWidth(this.objRatio()));
+  /** « +$730 / $3,000 » : exigence de profit du plan, sinon objectif saisi ; null si inconnu. */
+  protected readonly objAmounts = computed(() => {
+    const m = this.metrics();
+    const req = m?.progress?.requirements.find((r) => r.key === 'profit' || r.key === 'cycle_profit');
+    if (req && req.required > 0) return { current: req.current, target: req.required };
+    return m?.objective ? { current: m.objective.current, target: m.objective.target } : null;
+  });
+  /** Equity en direct (solde + latent chez le broker), sinon solde estimé. */
+  protected readonly equity = computed(() => this.broker()?.equity ?? this.metrics()?.currentBalance ?? null);
   protected readonly objTitle = computed(() => {
     const a = this.account();
     const m = this.metrics();

@@ -1,44 +1,100 @@
-:host { display: block; flex-shrink: 0; }
+/* Trade en cours (session live v3, #598) — mobile d'abord, aucune media query max-width. */
+:host { display: block; min-width: 0; }
 
 .lp-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  min-width: 0;
 }
-.lp-head { display: flex; align-items: center; gap: 8px; }
-.lp-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text); }
-.lp-beta {
-  font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .5px;
-  color: var(--badge-beta-color); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px;
+.lp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 24px; }
+.lp-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); }
+.lp-live {
+  font-size: 11px; font-weight: 600; color: var(--cyan);
+  background: color-mix(in srgb, var(--cyan) 10%, transparent); padding: 3px 8px; border-radius: 99px;
 }
+.lp-since { margin-left: auto; font-size: 12px; color: var(--text-2); }
 .lp-refresh {
-  margin-left: auto; background: transparent; border: 1px solid var(--border-hover); color: var(--text-2);
+  min-height: 32px; background: transparent; border: 1px solid rgba(255, 255, 255, .12); color: var(--text-2);
   border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer;
 }
 .lp-refresh:hover:not(:disabled) { background: var(--bg-3); }
-.lp-refresh:disabled { color: var(--text-3); cursor: wait; }
+.lp-refresh:disabled { cursor: wait; }
 
-.lp-positions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.lp-pos { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 13px; }
-.lp-side { font-weight: 700; }
-.lp-side.long { color: var(--green); }
-.lp-side.short { color: var(--red); }
-.lp-asset { color: var(--text); font-weight: 600; }
-.lp-entry { color: var(--text-2); font-variant-numeric: tabular-nums; }
-.lp-since { color: var(--text-3); font-size: 12px; }
-.lp-flat { margin: 0; font-size: 12px; color: var(--text-3); }
-
-.lp-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.lp-fig { min-width: 0; }
-.lp-val {
-  font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: var(--text);
-  font-variant-numeric: tabular-nums; line-height: 1.2;
+.lp-main { display: flex; align-items: flex-end; gap: 10px; margin-top: 14px; min-width: 0; }
+.lp-id { min-width: 0; }
+.lp-id-top { display: flex; align-items: center; gap: 8px; }
+.lp-side { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+.lp-side.long { color: var(--green); background: var(--green-dim); }
+.lp-side.short { color: var(--red); background: var(--red-dim); }
+.lp-asset { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--text); }
+.lp-qty { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); margin-top: 6px; white-space: nowrap; }
+.lp-pnl { margin-left: auto; text-align: right; min-width: 0; max-width: 55%; }
+.lp-latent {
+  font-family: var(--font-mono); font-size: 32px; font-weight: 600; line-height: 1; color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
-.lp-val.green { color: var(--green); }
-.lp-val.red { color: var(--red); }
-.lp-val.lp-na { color: var(--text-3); }
-.lp-lbl { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 2px; }
+.lp-latent.green { color: var(--green); }
+.lp-latent.red { color: var(--red); }
+.lp-latent.lp-na { color: var(--text-3); }
+.lp-price { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); margin-top: 6px; }
+
+/* Barre SL / entrée / TP : axe toujours du côté perte (gauche) au côté gain (droite) */
+.lp-bar { position: relative; height: 10px; border-radius: 99px; margin-top: 20px; background: var(--bg-3); }
+.lp-seg { position: absolute; top: 0; height: 100%; }
+.lp-seg.loss { background: color-mix(in srgb, var(--red) 35%, transparent); border-radius: 99px 0 0 99px; }
+.lp-seg.gain { background: color-mix(in srgb, var(--green) 28%, transparent); border-radius: 0 99px 99px 0; }
+.lp-entry-mark { position: absolute; top: -5px; width: 2px; height: 20px; margin-left: -1px; background: var(--text); }
+.lp-dot {
+  position: absolute; top: -4px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
+  border: 3px solid var(--bg-2); box-sizing: border-box;
+}
+.lp-dot.loss { background: var(--red); }
+.lp-dot.gain { background: var(--green); }
+
+/* Libellés : montants sous les prix sur mobile, sur la même ligne à partir de 768 px */
+.lp-scale {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 10px;
+  font-family: var(--font-mono); font-size: 12px; line-height: 1.5;
+}
+.lp-amt { display: block; }
+.lp-sl { color: var(--red); }
+.lp-mid { color: var(--text-2); text-align: center; }
+.lp-tp { color: var(--green); text-align: right; }
+.lp-note { font-size: 12px; color: var(--text-2); margin-top: 8px; }
+
+.lp-others { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px solid rgba(255, 255, 255, .06); display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+.lp-others .lp-side { font-size: 11px; padding: 1px 6px; margin-right: 6px; }
+.lp-others-note { font-family: var(--font-body); color: var(--text-3); }
+
+.lp-close {
+  width: 100%; min-height: 48px; margin-top: 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .14);
+  background: var(--bg-3); color: var(--text); font: 600 14px var(--font-body); cursor: pointer;
+}
+.lp-close:hover { border-color: rgba(255, 255, 255, .24); }
+.lp-close-panel { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.lp-close-lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); text-transform: uppercase; }
+.lp-close-row { display: flex; gap: 8px; }
+.lp-close-input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .12);
+  background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 16px;
+}
+.lp-close-ok {
+  min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: var(--primary); color: #fff;
+  font: 600 14px var(--font-body); cursor: pointer;
+}
+
+/* Aucune position : une ligne, pas un grand bloc vide */
+.lp-flat {
+  display: flex; align-items: center; min-height: 48px; padding: 0 16px; border-radius: 14px;
+  background: var(--bg-2); border: 1px solid rgba(255, 255, 255, .06); font-size: 13px; color: var(--text-2);
+}
+
+@media (min-width: 768px) {
+  .lp-amt { display: inline; margin-left: 4px; }
+  .lp-amt::before { content: '· '; }
+  .lp-mid .lp-amt::before { content: ''; }
+}
