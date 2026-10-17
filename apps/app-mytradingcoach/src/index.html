@@ -49,6 +49,60 @@
         }
       }
     </style>
+    <!-- Parcours d'inscription : `register_view` envoyé DÈS l'arrivée sur /register, avant le
+         téléchargement de l'app (un visiteur qui part pendant le chargement est compté). Même
+         logique que le script de la landing : sendBeacon en text/plain (pas de requête préalable
+         CORS, part même si la page change). `window.mtcRegisterView` dit à SignupFunnelService
+         que ce chargement est traité (envoyé, ou volontairement pas : connecté, mode interne) ;
+         sans lui (hôte local, navigation interne), c'est l'app qui envoie.
+         Motif IN_APP = IN_APP_UA_PATTERN de @mtc/shared (vérifié par index-register-view.spec.ts). -->
+    <script id="mtc-register-view">
+      (function () {
+        try {
+          if (!/^\/register\/?$/.test(location.pathname)) return;
+          var host = location.hostname.match(/^((?:dev|beta)\.)?app\.mytradingcoach\.app$/);
+          if (!host) return;
+          var api = 'https://' + (host[1] || '') + 'api.mytradingcoach.app/api/public/funnel';
+          var IN_APP = 'Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|Line/';
+          window.mtcRegisterView = true;
+          var params = new URLSearchParams(location.search);
+          var flag = params.get('internal');
+          var internal = flag === '1';
+          try {
+            if (flag !== '0' && flag !== '1') internal = localStorage.getItem('mtc_internal') === '1';
+            // Déjà connecté : pas une arrivée sur l'inscription.
+            if (localStorage.getItem('access_token') && localStorage.getItem('user')) return;
+          } catch (e) {}
+          if (internal) return;
+          // Origine : UTM du lien, sinon celle gardée pour l'onglet (mtc_utm, écrite par
+          // RegisterComponent), sinon le site d'origine (referrerHost).
+          var pick = function (k) { return (params.get(k) || '').trim().slice(0, 100) || undefined; };
+          var o = { source: pick('utm_source'), medium: pick('utm_medium'), campaign: pick('utm_campaign') };
+          if (!o.source && !o.medium && !o.campaign) {
+            try {
+              var s = JSON.parse(sessionStorage.getItem('mtc_utm') || '{}') || {};
+              o = { source: s.acquisitionSource, medium: s.acquisitionMedium, campaign: s.acquisitionCampaign };
+            } catch (e) {}
+          }
+          if (!o.source && !o.medium && !o.campaign) {
+            try {
+              var ref = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : '';
+              if (ref && !/(^|\.)mytradingcoach\.app$/.test(ref) && ref !== 'localhost') o = { source: ref.slice(0, 100), medium: 'referral' };
+            } catch (e) {}
+          }
+          var body = JSON.stringify({
+            step: 'register_view',
+            source: o.source,
+            medium: o.medium,
+            campaign: o.campaign,
+            inApp: new RegExp(IN_APP, 'i').test(navigator.userAgent || ''),
+          });
+          var sent = false;
+          try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(api, new Blob([body], { type: 'text/plain' }))); } catch (e) {}
+          if (!sent) fetch(api, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: body }).catch(function () {});
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="mtc-boot" role="status">
