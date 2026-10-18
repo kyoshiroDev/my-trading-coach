@@ -178,7 +178,9 @@ export function detectRevenge(ctx: EntryContext): BehaviorAlertDraft | null {
       delayMs: delay,
       medianGapAfterLossMs: b.medianGapAfterLossMs,
       quantity: ctx.entry.quantity,
+      sizeMedian: size?.median ?? null,
       sizeP75: size?.p75 ?? null,
+      sizeP90: size?.p90 ?? null,
       previousPnl: prev.pnl,
     },
   };
@@ -225,7 +227,12 @@ export function detectMartingale(ctx: EntryContext): BehaviorAlertDraft | null {
     type: 'C3_MARTINGALE',
     severity: 'high',
     message: `${fmtQty(ctx.entry.quantity)} ${ctx.entry.asset} après une perte à ${fmtQty(prev.quantity)} contrats sur le même actif.`,
-    context: { quantity: ctx.entry.quantity, previousQuantity: prev.quantity, previousPnl: prev.pnl },
+    context: {
+      quantity: ctx.entry.quantity,
+      previousQuantity: prev.quantity,
+      previousPnl: prev.pnl,
+      sizeP90: ctx.baseline?.sizeByAsset[ctx.entry.asset]?.p90 ?? null,
+    },
   };
 }
 
