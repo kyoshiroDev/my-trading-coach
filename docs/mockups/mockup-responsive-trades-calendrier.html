@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette responsive · historique et calendrier</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14; --bg-2: #0b1219; --bg-3: #111b2e; --bg-card: #101d2e;
+    --border: rgba(99, 155, 255, 0.1); --blue: #3b82f6; --blue-bright: #60a5fa;
+    --green: #10b981; --green-dim: rgba(16, 185, 129, 0.12); --red: #ef4444; --red-dim: rgba(239, 68, 68, 0.12);
+    --yellow: #f59e0b; --yellow-dim: rgba(245, 158, 11, 0.12);
+    --text: #e2eaf5; --text-2: #8fa3bf; --text-3: #8398b5;
+    --font-display: 'Space Grotesk', sans-serif; --font-mono: 'JetBrains Mono', monospace; --font-body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #05080e; color: var(--text); font-family: var(--font-body); padding: 24px 16px 48px; }
+  h1 { font-family: var(--font-display); font-size: 20px; margin-bottom: 6px; }
+  .lead { color: var(--text-2); font-size: 13px; margin-bottom: 24px; max-width: 760px; }
+  .row { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+  .col h2 { font-family: var(--font-display); font-size: 15px; margin-bottom: 4px; }
+  .col p.note { color: var(--text-3); font-size: 12px; margin-bottom: 12px; max-width: 390px; }
+  .phone { width: 390px; max-width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 22px; padding: 16px; }
+
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .card-h { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .card-t { font-size: 13px; font-weight: 600; }
+  .link { font-family: var(--font-mono); font-size: 11px; color: var(--blue-bright); }
+
+  /* #633 · historique en cartes */
+  .tr { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+  .tr:first-of-type { border-top: 0; }
+  .tr-l { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+  .side { font-size: 10px; font-weight: 600; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; }
+  .side.s { color: var(--red); background: var(--red-dim); }
+  .side.l { color: var(--green); background: var(--green-dim); }
+  .pnl { font-family: var(--font-mono); font-size: 14px; font-weight: 600; text-align: right; }
+  .pos { color: var(--green); } .neg { color: var(--red); }
+  .tr-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+  .tr-sub.r { text-align: right; }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+  /* #634 · calendrier compact */
+  .ev { display: grid; grid-template-columns: 46px 1fr auto; gap: 2px 10px; padding: 11px 14px; border-top: 1px solid var(--border); align-items: start; }
+  .ev.hi { box-shadow: inset 3px 0 0 var(--red); }
+  .ev.mid { box-shadow: inset 3px 0 0 var(--yellow); }
+  .ev-time { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-2); padding-top: 1px; }
+  .ev-name { font-size: 13px; font-weight: 500; line-height: 1.35; }
+  .ev-name .flag { margin-right: 4px; }
+  .ev-pin { color: var(--text-3); font-size: 14px; width: 44px; height: 36px; display: grid; place-items: center; margin: -8px -12px 0 0; }
+  .ev-vals { grid-column: 2 / 4; font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+  .ev-vals b { color: var(--text-2); font-weight: 600; }
+  .grp { font-family: var(--font-mono); font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--text-3); padding: 10px 14px 6px; background: var(--bg-2); }
+
+  /* #634 · PC 1280 */
+  .desk { width: 1064px; max-width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .sel-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid rgba(245, 158, 11, .35); background: var(--yellow-dim); border-radius: 10px; margin-bottom: 12px; font-size: 12px; }
+  .sel-bar b { color: var(--yellow); font-family: var(--font-mono); font-size: 11px; letter-spacing: .6px; }
+  .sel-bar span { color: var(--text-2); }
+  .sel-bar .chev { margin-left: auto; color: var(--text-3); font-family: var(--font-mono); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: .6px; color: var(--text-3); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 10px; border-top: 1px solid var(--border); }
+  td.m { font-family: var(--font-mono); color: var(--text-2); }
+  .tag { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+</style>
+</head>
+<body>
+  <h1>Maquette responsive · historique des trades et calendrier éco</h1>
+  <p class="lead">Propositions pour #633 et #634. Données d'exemple du compte démo. Aucune information retirée : ce qui ne tient pas sur la ligne passe en dessous.</p>
+
+  <div class="row">
+    <div class="col">
+      <h2>#633 · Historique des trades, téléphone</h2>
+      <p class="note">Sous 768 px, chaque trade devient une carte de 2 lignes : actif, sens et P&amp;L en haut ; date, setup, R:R et P&amp;L % en dessous. Plus de défilement de côté. Le tableau actuel reste au-dessus de 768 px (et à 1024, il perd la colonne Sortie pour tenir).</p>
+      <div class="phone">
+        <div class="card">
+          <div class="card-h"><span class="card-t">Historique des trades</span><span class="link">Tout le journal →</span></div>
+          <div class="tr">
+            <div class="tr-l">MNQ <span class="side s">SHORT</span></div><div class="pnl" style="color:var(--text-3)">en cours</div>
+            <div class="tr-sub">16 oct. · <span class="dot" style="background:var(--blue)"></span>Pullback · R:R 2,0</div><div class="tr-sub r">-</div>
+          </div>
+          <div class="tr">
+            <div class="tr-l">MES <span class="side l">LONG</span></div><div class="pnl neg">-$39.98</div>
+            <div class="tr-sub">16 oct. · <span class="dot" style="background:var(--blue)"></span>Pullback · R:R 1,8</div><div class="tr-sub r neg">-0,04 %</div>
+          </div>
+          <div class="tr">
+            <div class="tr-l">MNQ <span class="side s">SHORT</span></div><div class="pnl pos">+$87.78</div>
+            <div class="tr-sub">16 oct. · <span class="dot" style="background:var(--green)"></span>Breakout · R:R 2,0</div><div class="tr-sub r pos">+0,09 %</div>
+          </div>
+          <div class="tr">
+            <div class="tr-l">MNQ <span class="side s">SHORT</span></div><div class="pnl pos">+$16.56</div>
+            <div class="tr-sub">15 oct. · <span class="dot" style="background:#8b5cf6"></span>Scalping · R:R -</div><div class="tr-sub r pos">+0,02 %</div>
+          </div>
+          <div class="tr">
+            <div class="tr-l">MNQ <span class="side l">LONG</span></div><div class="pnl neg">-$110.96</div>
+            <div class="tr-sub">14 oct. · <span class="dot" style="background:var(--yellow)"></span>Range · R:R 1,4</div><div class="tr-sub r neg">-0,11 %</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>#634 · Calendrier éco, téléphone</h2>
+      <p class="note">Une annonce = une ligne de 2 niveaux (au lieu d'une carte de 330 px, soit environ 5 fois moins de hauteur) : heure, drapeau et nom, puis actuel · prévu · précédent. Liseré rouge pour l'impact fort, ambre pour le moyen, comme dans la session live. Étoile d'épingle en 44 px.</p>
+      <div class="phone">
+        <div class="card">
+          <div class="grp">Asie · 7</div>
+          <div class="ev hi">
+            <div class="ev-time">04:00</div><div class="ev-name"><span class="flag">🇨🇳</span>PIB trimestriel</div><div class="ev-pin">☆</div>
+            <div class="ev-vals">Actuel <b>-</b> · Prévu <b>1.1%</b> · Préc. <b>0.9%</b> · IA après chiffres</div>
+          </div>
+          <div class="ev hi">
+            <div class="ev-time">04:00</div><div class="ev-name"><span class="flag">🇨🇳</span>Conférence de presse du NBS</div><div class="ev-pin">☆</div>
+            <div class="ev-vals">Actuel <b>-</b> · Prévu <b>-</b> · Préc. <b>-</b></div>
+          </div>
+          <div class="ev mid">
+            <div class="ev-time">04:00</div><div class="ev-name"><span class="flag">🇨🇳</span>Fixed Asset Investment (YTD) YoY (Sep)</div><div class="ev-pin">☆</div>
+            <div class="ev-vals">Actuel <b>-</b> · Prévu <b>-7.3%</b> · Préc. <b>-7.2%</b></div>
+          </div>
+          <div class="ev mid">
+            <div class="ev-time">04:00</div><div class="ev-name"><span class="flag">🇨🇳</span>Production industrielle annuelle</div><div class="ev-pin">☆</div>
+            <div class="ev-vals">Actuel <b>-</b> · Prévu <b>5.4%</b> · Préc. <b>5.2%</b></div>
+          </div>
+          <div class="grp">US · 10</div>
+          <div class="ev hi">
+            <div class="ev-time">14:30</div><div class="ev-name"><span class="flag">🇨🇦</span>IPC annuel (inflation)</div><div class="ev-pin">☆</div>
+            <div class="ev-vals">Actuel <b>-</b> · Prévu <b>-</b> · Préc. <b>3%</b> · IA après chiffres</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col" style="margin-top:32px">
+    <h2>#634 · Calendrier éco, PC 1280</h2>
+    <p class="note" style="max-width:760px">Sous 1440 px, « Ma sélection » quitte la colonne de droite et devient un bandeau repliable au-dessus du tableau : le tableau reprend toute la largeur, plus de colonne IA coupée ni de noms d'annonce sur 3 lignes. Au-dessus de 1440 px, rien ne change.</p>
+    <div class="desk">
+      <div class="sel-bar"><b>★ MA SÉLECTION · 0</b><span>Épingle les annonces du jour pour les suivre ici</span><span class="chev">▾</span></div>
+      <div class="card">
+        <table>
+          <thead><tr><th></th><th>HEURE</th><th>DEVISE</th><th>ÉVÉNEMENT</th><th>IMPACT</th><th>ACTUEL</th><th>PRÉV.</th><th>PRÉCÉDENT</th><th>IA</th></tr></thead>
+          <tbody>
+            <tr><td class="m">☆</td><td class="m">04:00</td><td class="m">🇨🇳 CNY</td><td>PIB trimestriel</td><td style="color:var(--red)">★★★</td><td class="m">-</td><td class="m">1.1%</td><td class="m">0.9%</td><td class="tag">⏳ après chiffres</td></tr>
+            <tr><td class="m">☆</td><td class="m">04:00</td><td class="m">🇨🇳 CNY</td><td>Conférence de presse du NBS</td><td style="color:var(--red)">★★★</td><td class="m">-</td><td class="m">-</td><td class="m">-</td><td class="tag">⏳ après chiffres</td></tr>
+            <tr><td class="m">☆</td><td class="m">04:00</td><td class="m">🇨🇳 CNY</td><td>Fixed Asset Investment (YTD) YoY (Sep)</td><td style="color:var(--yellow)">★★</td><td class="m">-</td><td class="m">-7.3%</td><td class="m">-7.2%</td><td class="tag">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
