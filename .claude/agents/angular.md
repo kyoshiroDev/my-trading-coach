@@ -1158,3 +1158,28 @@ directement (pas de `?raw` comme dans l'app).
   surveillance. Nouvel élément fixe ou collé à un bord → ces variables, jamais `env()` en dur.
   Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
   Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.
+
+## Connexion Google (#618, 2026-10-18)
+
+- `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans
+  `environment.*.ts`), script GIS `accounts.google.com/gsi/client` injecté **à la demande** et
+  seulement si actif. Aucune dépendance npm Google côté front.
+- `mtc-google-auth-button` (`shared/components`) : bouton **officiel** rendu par Google (jamais
+  redessiné, thème `filled_black`, `continue_with`), séparateur « ou ». Rien si inactif ou script
+  bloqué. Navigateur intégré (`isInAppBrowser` de `@mtc/shared`) : invitation à ouvrir le
+  navigateur + « Copier le lien », pas de bouton. Zone toujours présente (classe `.gone`) : le
+  script y dessine, un `viewChild` dans un `@if` n'était pas résolu à temps. Bouton Google = iframe
+  de 40 px (non modifiable) centrée dans une zone de 44 px.
+- `GoogleSignInService` : parrain (`mtc_ref`) et UTM (`mtc_utm`) lus dans le stockage
+  (`signup-context.ts`) ; compte créé → `/inscription/finaliser` (`GoogleFinalizeComponent`, opt-in
+  non coché, `plan=premium` repassé) ; compte relié → toast au 1er passage (mention du mot de passe
+  retiré) ; sinon `PostSignupService.afterLogin`. Erreurs : `googleAuthErrorMessage` (par `code`).
+- `PostSignupService` : navigation après inscription / connexion **commune** e-mail et Google (offre
+  du lien, paiement Premium, tableau de bord). Toute nouvelle suite d'inscription va là.
+- **Bundle initial** : `/register` importe le bouton (+8,5 kB bruts, +3,1 kB gz : 476,7 → 485,2 kB,
+  budget bloquant 500). `GoogleSignInService` y est importé à la demande (`import()` au clic). Pas
+  de `@defer` : son moteur coûtait plus que le gain.
+- Intercepteur `front-auth` : seul `POST …/auth/google` exact est une route d'auth (sans jeton) ;
+  `/auth/google/finalize` et `DELETE /auth/google` gardent le jeton.
+- Profil : « Définir » (mot de passe absent, même e-mail que « Modifier ») ; ligne « Connexion
+  Google » avec « Délier » désactivé tant qu'aucun mot de passe n'existe.
