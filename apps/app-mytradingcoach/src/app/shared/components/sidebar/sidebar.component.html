@@ -5,6 +5,7 @@
 <button
   #burger
   class="burger"
+  [class.in-demo-banner]="userStore.isDemo()"
   (click)="toggleSidebar()"
   [attr.aria-label]="sidebarOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
   [attr.aria-expanded]="sidebarOpen()"
