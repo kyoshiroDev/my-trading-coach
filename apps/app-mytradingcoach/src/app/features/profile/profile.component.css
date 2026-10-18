@@ -455,6 +455,8 @@
   .settings-content { padding: 16px 12px 60px; }
 }
 @media (max-width: 480px) {
+  /* La catégorie (FUTURES_US) prenait la place du nom de l'actif, tronqué en « Micro E-mini Nasd… ». */
+  .asset-cat { display: none; }
   .settings-input { width: 140px; }
   .inline-edit { flex-direction: column; align-items: flex-start; }
 }
@@ -557,6 +559,9 @@
   font-size: 13px; font-family: var(--font-body);
   color: var(--text); outline: none; transition: border-color .15s;
   box-sizing: border-box;
+  /* La section passe ses titres en capitales : le texte d'aide héritait des capitales et était
+     coupé net sur téléphone (#642). */
+  text-transform: none; text-overflow: ellipsis;
 }
 .asset-search-input:focus { border-color: var(--blue); }
 .asset-search-input::placeholder { color: var(--text-3); }
