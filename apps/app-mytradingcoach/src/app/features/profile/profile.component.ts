@@ -266,8 +266,10 @@ export class ProfileComponent implements OnInit {
     return 'neutral';
   }
 
+  /** Win rate arrondi à l'unité, comme dans Statistiques (l'API renvoie 66.666… brut, #637). */
   protected winRateValue(setupId: string): number | null {
-    return this.winRateBySetup().get(setupId) ?? null;
+    const wr = this.winRateBySetup().get(setupId);
+    return wr == null ? null : Math.round(wr);
   }
 
   protected openCreateSetup(): void {
