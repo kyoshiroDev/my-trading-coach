@@ -67,6 +67,20 @@ const founderOpen = await founderOpenAtBuild();
   ogUrl="https://www.mytradingcoach.app/"
   schema={HOME_SCHEMA}
 >
+  {/*
+    REDIRECTION TEMPORAIRE DE LA PUB (2026-10-18, fin prévue vers le 25/10) : le boost Instagram en
+    cours pointe sur /?utm_source=instagram&utm_medium=paid&utm_campaign=gratuit-reel et Meta ne
+    permet pas d'en changer le lien. Tout visiteur arrivé avec utm_medium=paid (valeur exacte) part
+    vers /prop-firm, paramètres intacts (UTM, fbclid, internal…), par location.replace (pas d'entrée
+    d'historique : le bouton retour ne boucle pas). Tout en haut du <head>, avant tout autre script :
+    le script d'acquisition (Base.astro) et GA4 (Analytics.astro) voient window.__mtcPaidRedirect et
+    n'envoient rien depuis l'accueil ; la visite part de /prop-firm. Les autres visiteurs ne voient
+    aucune différence. Retrait : supprimer ce bloc (les deux gardes __mtcPaidRedirect deviennent
+    inertes, à retirer avec si on veut).
+  */}
+  <Fragment slot="head-start">
+    <script is:inline>(function(){try{var q=location.search;if(new URLSearchParams(q).get('utm_medium')==='paid'){window.__mtcPaidRedirect=true;location.replace('/prop-firm'+q+location.hash);}}catch(e){}})();</script>
+  </Fragment>
   <Nav />
   <Hero traders={traders} founderOpen={founderOpen} />
   <!-- Prop firms en direct juste après le Hero : la promesse du titre, prouvée (audit 2026-10-06). -->

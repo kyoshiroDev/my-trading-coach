@@ -43,6 +43,8 @@ const robots = noindex
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {/* Script à exécuter avant tout le reste de la page (redirection de la pub sur l'accueil). */}
+  <slot name="head-start" />
   <link rel="preconnect" href={appOrigin} />
   <link rel="preconnect" href={apiOrigin} crossorigin />
 
@@ -173,6 +175,7 @@ const robots = noindex
   <script is:inline define:vars={{ apiUrl: API_URL, inAppPattern: IN_APP_UA_PATTERN, internalKey: INTERNAL_STORAGE_KEY }}>
     (function () {
       try {
+        if (window.__mtcPaidRedirect) return; // pub redirigée vers /prop-firm (index.astro)
         // Mode interne (visites de l'équipe) : décidé avant tout envoi.
         var internal = false;
         try {
