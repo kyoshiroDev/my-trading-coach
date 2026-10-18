@@ -118,7 +118,8 @@ src/
     descend par `transform` (`html.has-offer-bar`) → **zéro CLS**. Élément collé sous la Nav sans
     marge → attribut `data-offer-shift` (bandeau « Fait en France » du Hero). Ancres :
     `scroll-padding-top: 92px` quand le bandeau est là. Fermeture mémorisée (sessionStorage
-    `mtc_offer_bar_closed`).
+    `mtc_offer_bar_closed`). Prop `href` (défaut `/#pricing`) : une page qui a ses propres tarifs y
+    passe son ancre (`/prop-firm` → `#tarifs`), sinon le bandeau ferait sortir le visiteur de la page.
   - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
     → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
     la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `premiumPlus` que la
@@ -173,8 +174,14 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   JSON-LD : `ORGANIZATION` seul (le `WEBSITE` par défaut dit « crypto et forex »).
 - Même `Base.astro` (UTM, `/public/visit`, `cta_click`, bandeau cookies, mode interne) et même
   `Footer.astro`. En-tête propre (logo `logo-navbar.svg`, ancres + inscription sur ordinateur,
-  « Se connecter » seul en mobile), **sans** `FounderBanner` ni barre sticky.
-- **Pas d'emoji hors footer**, icônes en SVG ; aucun logo de prop firm (noms en texte) ; logo
+  « Se connecter » seul en mobile), sans barre sticky. **Même `FounderBanner`** que l'accueil
+  (inclus par `PfHeader`, `href="#tarifs"`) : l'en-tête descend de 32 px par transform
+  (`html.has-offer-bar .pfh`), ancres sous l'en-tête par `scroll-padding-top` de `html` (60 px, 92 px
+  avec le bandeau), haut de page mobile à 44 px pour que le bandeau ne touche pas le libellé.
+- **Pas d'emoji hors footer**, icônes en SVG, sauf deux exceptions voulues : le 🔥 du bandeau de
+  l'offre (composant partagé) et la ligne de confiance sous les boutons du haut (`.pf-trustline`,
+  « 🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans
+  l'écosystème NinjaTrader », sans logo) ; aucun logo de prop firm (noms en texte) ; logo
   NinjaTrader au seul footer, « Référencé dans l'écosystème NinjaTrader » en texte (clause 17).
   « Crypto » / « forex » seulement dans « Et aussi » et la FAQ, jamais en haut ni dans la description.
 - Sélecteur firm → plan → phase : même catalogue (`buildPropFirmCatalog`) et même logique que la home
@@ -190,10 +197,10 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
 - Témoignages : section rendue seulement si `TEMOIGNAGES` n'est pas vide (ne rien inventer).
 - Mesure du 2026-10-18 (preview locale, iPhone 390×844, UA Instagram, Slow 4G 150 ms / 1,6 Mbit/s,
   CPU ×4) : LCP ≈ 0,7 s, chargement 1,5 s, 185 Ko, CLS 0,02 ; bouton du haut à 540 px, au-dessus du
-  bandeau cookies même en 390×664.
-- Extraction de `founder-pricing.ts` / `prop-firm-picker.ts` : la feuille de style `Nav` de la home sort
-  dans un fichier CSS à part (Vite découpe, /prop-firm n'ayant pas la Nav) — même contenu, même poids
-  total, une requête de plus.
+  bandeau cookies même en 390×664. Après ajout du bandeau d'offre et de la ligne de confiance : bouton
+  à 552 px (390×844), offre ouverte ou fermée, bandeau cookies à 755 px.
+- Découpage CSS : /prop-firm n'ayant pas la Nav, Vite sépare la feuille `Nav` (assez petite depuis
+  l'ajout du bandeau à /prop-firm pour être mise en ligne dans la page) — même contenu sur la home.
 
 ---
 
