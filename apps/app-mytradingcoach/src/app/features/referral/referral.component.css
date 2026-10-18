@@ -50,6 +50,15 @@
 .v-violet { color: var(--violet); }
 .v-amber { color: var(--yellow); }
 @media (max-width: 1024px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Téléphone : icône au-dessus, libellé sur toute la largeur de la carte. À côté de l'icône de 46 px,
+   « MOIS OFFERTS GAGNÉS » s'étalait sur 3 lignes (#642). */
+@media (max-width: 600px) {
+  .stats { gap: 12px; }
+  .stat-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; }
+  .stat-ic { order: -1; width: 34px; height: 34px; border-radius: 9px; }
+  .stat-ic svg { width: 18px; height: 18px; }
+  .stat-lbl { display: block; line-height: 1.35; }
+}
 
 /* ── COMMENT ÇA MARCHE ── */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
