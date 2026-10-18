@@ -23,7 +23,7 @@
       "overcharts"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-18",
   "plans": [
     {
       "id": "tradeday-qp-intraday-25k",
@@ -961,7 +961,7 @@
         "amount": 130,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 130 $/mois ; promotion en cours à 59 $/mois (code TDNEW). Reset au prix promo."
+        "notes": "Prix catalogue 130 $/mois ; promotion en cours à 65 $/mois (page tarifs, 2026-10-18). Reset au prix promo."
       },
       "phases": [
         {
@@ -1089,7 +1089,7 @@
         "amount": 189,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 85 $/mois (code TDNEW). Reset au prix promo. Le support cite 180 $ le 2026-10-04 (promotion probable)."
+        "notes": "Prix catalogue 189 $/mois ; promotion en cours à 95 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 180 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {
@@ -1201,10 +1201,10 @@
         "addon": null
       },
       "price": {
-        "amount": 330,
+        "amount": 350,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 330 $/mois ; promotion en cours à 149 $/mois (code TDNEW). Reset au prix promo. Le support cite 320 $ le 2026-10-04 (promotion probable)."
+        "notes": "Prix catalogue 350 $/mois (prix catalogue relevé à 330 $ le 2026-10-03) ; promotion en cours à 175 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 320 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {
@@ -1316,10 +1316,10 @@
         "addon": null
       },
       "price": {
-        "amount": 500,
+        "amount": 530,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Prix catalogue 500 $/mois ; promotion en cours à 225 $/mois (code TDNEW). Reset au prix promo. Le support cite 480 $ le 2026-10-04 (promotion probable)."
+        "notes": "Prix catalogue 530 $/mois (prix catalogue relevé à 500 $ le 2026-10-03) ; promotion en cours à 265 $/mois (page tarifs, 2026-10-18). Reset au prix promo. Le support cite 480 $ le 2026-10-04 (promotion probable)."
       },
       "phases": [
         {

@@ -20,7 +20,7 @@ describe('parseCatalog', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(264);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(282);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -57,7 +57,7 @@ describe('toRows', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(plans).toHaveLength(264);
+    expect(plans).toHaveLength(282);
     expect(firms[1].verifiedAt).toEqual(new Date('2026-10-18T00:00:00Z'));
   });
 
@@ -135,10 +135,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 16 firms et les 264 plans', () => {
+  it('base vide : crée les 16 firms et les 282 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
     expect(plan.firmsToCreate).toHaveLength(16);
-    expect(plan.plansToCreate).toHaveLength(264);
+    expect(plan.plansToCreate).toHaveLength(282);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);

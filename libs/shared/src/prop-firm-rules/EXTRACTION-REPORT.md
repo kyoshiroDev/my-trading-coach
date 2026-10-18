@@ -471,3 +471,24 @@ Déclenchée par le chantier « relier chaque compte à son plan » (#612) : vé
 | Lucid | New Live Structure | L'article `13425130` est devenu « Legacy Live Structure », remplacé par `16558826-new-live-structure` (payout 5 = entrée en revue live, live à 0 $, EOD, sans DLL). | Source remplacée sur les 12 plans qui la citaient ; `verified_at` → 2026-10-18 |
 
 Perte max du jour **introuvable** sur Apex et Lucid : aucune. Règles laissées vides : prix et minimum de jours de LucidMaxx (cf. ci-dessus). Phase Pre-Live de LucidMaxx toujours non modélisée.
+
+## Veille du 2026-10-18 (issue #553)
+
+Relecture des sources signalées par `pnpm prop-firms:watch` (relevé du jour : 61 sources modifiées sur 13 firms, plus que les 29 de l'issue du 2026-10-12). Sources officielles uniquement, aucune question envoyée aux firms. Les firms relues passent à `verified_at: 2026-10-18`.
+
+| Firm | Trouvé | Effet |
+|---|---|---|
+| Lucid | LucidMaxx : déjà relu le même jour (#614, ci-dessus). En plus : option de retrait complet au lieu du live (2026-10-09), délai de 2 semaines avant un nouvel achat. | Notes des 4 plans `lucid-maxx-*` |
+| BluSky | Sim Funded (2026-10-08) : retrait minimum 500 $ depuis le 2026-10-01 (l'article Propel du 2026-09-11 indique encore 250 $), 500 $ de nouveau profit entre deux demandes, passage en live à 0 $ avec « Bonus Vault » ou rachat à 50 % du drawdown. Resets Orbit 50K / 100K : 129 / 199 $. | `min_cycle_profit: 500` sur 14 plans, Propel `min_amount: 500`, prix des resets Orbit |
+| Bulenox | Le site affiche « Keep up to 90% of profits » et l'article Fast Track « A Trader keeps 90% » : les 100 % sur les 10 000 premiers dollars ont disparu. | 24 plans : `split_pct: 0.9`, `split_after: null` |
+| Take Profit Trader | Article PRO (2026-10-09) : le buffer ne se retire qu'à 50 % à la clôture ; le palier à 80 % après 60 jours de trading n'y figure plus. | Notes de payout des 5 plans |
+| Top One Futures | Option « No Daily Loss Limit » au checkout depuis le 2026-10-16 (Elite Daily, Elite ACCESS, Elite ACCESS Intraday, Ignite), environ +30 % ; prix exacts dans les attributs de la page d'accueil. Resets d'évaluation Elite Daily : 84 / 104 / 194 / 270 $ (article « Reset Fees » et page d'accueil ; l'article Overview garde un ancien tarif). | 16 plans `toponefutures-*-nodll-*` ajoutés (DLL `null`), `configuration.daily_loss_limit` sur les plans de base, prix des resets Elite Daily |
+| TradeDay | Fast Pass 100K / 150K : 350 / 530 $ par mois (330 / 500 $ au relevé du 2026-10-03) ; promotions Fast Pass 65 / 95 / 175 / 265 $. | Prix de 2 plans, notes des 4 plans Fast Pass |
+| UProfit | Taille 10K ajoutée le 2026-10-08 en Soft (29 $/mois, DLL 220 $) et Flex (39 $/mois) : objectif 800 $, drawdown EOD 400 $, 5 micros, SafetyNet 500 $, plafond 300 $ par retrait. Tailles 50K à 150K inchangées (le changement d'empreinte venait du menu du centre d'aide). | 2 plans `uprofit-*-10k` ajoutés (`minis: null`, micros seulement) |
+| Earn2Trade, Elite Trader Funding, Funded Futures Family, MyFundedFutures, Topstep | Articles et pages relus : conformes au catalogue (FFF Premier+ et MFFU Pro inchangés, payouts Topstep et grilles de prix identiques). | `verified_at` seul |
+
+Points ouverts :
+- Lucid : prix du nouveau LucidMaxx (non publié).
+- BluSky : retrait minimum Propel (500 $ retenu, l'article du plan dit encore 250 $) ; prix des plans sur blusky.pro (sélecteur JavaScript, à relire dans un navigateur).
+- Top One : DLL Elite Daily 150K à 1 850 $ dans les articles, 1 750 $ sur la page d'accueil (1 850 $ conservé) ; reset des comptes « No DLL » non publié.
+- Bulenox : l'article Momentum ne cite pas le partage ; 90/10 retenu d'après le site.
