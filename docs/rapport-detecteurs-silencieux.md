@@ -14,8 +14,11 @@
   C a surtout des trades de test (dont un BTC/USD à +15 000 $). Les chiffres de B et C ne disent
   presque rien ; tout ce qui suit repose sur A, soit **65 séances exploitables : c'est peu**.
 - **A (règles prop firm) n'a rien pu montrer** : aucun compte de A ni de B n'est relié à un plan du
-  catalogue, et le seul compte relié (C, Apex EOD 50k) n'a pas de perte max du jour au catalogue.
-  A1/A2/A3 sont testés unitairement, pas sur données réelles.
+  catalogue, et le seul compte relié (C, Apex EOD 50k, perte max du jour 1 000 $) ne porte qu'une
+  séance de 2 trades gagnants en 1 contrat : la règle était connue (« 1 séance avec règle », § 3),
+  mais aucune perte ni aucune taille ne permettait de la tester. A1/A2/A3 sont testés unitairement,
+  pas sur données réelles. (Corrigé le 2026-10-18, #612 : la première version disait à tort que ce
+  plan n'avait pas de perte max du jour au catalogue.)
 - **Le « scalper qui enchaîne » ne déclenche pas B** : les séances rapides sans autre signal restent
   muettes (B = 0,51 par séance chez A, quasi toujours avec taille + retournement).
 - **Le chiffre qui compte est mitigé, et c'est la vraie information** :
