@@ -165,8 +165,9 @@ la maquette design (« The Terminal »).
     analyse par annonce) : **aucun appel IA de plus**.
   - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
     `liveStats.broker`, sinon 1er trade saisi à la main sans sortie), latent 32 px (40 px PC), barre
-    SL / entrée / TP (axe toujours perte → gain, SHORT compris). Broker : SL/TP **non lus** chez
-    Tradovate (#601) → repli entrée → prix + « Aucun stop détecté chez Tradovate » ; prix déduit du
+    SL / entrée / TP (axe toujours perte → gain, SHORT compris). Broker : SL/TP = `stopPrice` /
+    `targetPrice` de la position (ordres actifs lus en direct, #601) ; `null` → repli entrée → prix +
+    « Aucun stop détecté chez Tradovate ». Événement socket `tradovate:orders` → `refreshLiveSoon` ; prix déduit du
     latent (`priceFromLatent`) avec « relevé à HH:MM:SS », **masqué si plusieurs positions**.
     « Clôturer ce trade » **uniquement pour un trade saisi à la main** (lecture seule Tradovate) :
     prix de sortie → `tradeClosed`. Aucune position → carte d'une ligne `live-position-none`.

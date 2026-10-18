@@ -43,8 +43,9 @@ interface CurrentTrade {
  * « Trade en cours » de la session live v3 (#598) : une position à la fois, latent en grand,
  * barre SL / entrée / TP, et « Clôturer ce trade » pour un trade saisi à la main.
  *
- * Position broker (Tradovate, rôles bêta) : lecture seule, elle devient un trade à la sortie. Les
- * ordres SL/TP ne sont pas lus (#601) → barre de repli entrée → prix au relevé. Le prix vient du
+ * Position broker (Tradovate, rôles bêta) : lecture seule, elle devient un trade à la sortie. SL / TP
+ * = ordres actifs lus en direct chez le broker (#601) ; aucun, ou ambigus → barre de repli entrée →
+ * prix au relevé. Le prix vient du
  * latent broker (cotations refusées à MTC), relu à chaque événement du compte ou sur « Actualiser »
  * (bridé 20 s côté API), jamais en boucle : d'où l'heure du relevé à côté.
  */
@@ -89,7 +90,7 @@ export class LivePositionComponent {
       const pv = pointValue(p.asset, this.instruments());
       return {
         kind: 'broker', tradeId: null, side: p.side, asset: p.asset, quantity: p.quantity,
-        entry: p.entryPrice, since: p.since, stop: null, target: null, latent: b.openPnl,
+        entry: p.entryPrice, since: p.since, stop: p.stopPrice ?? null, target: p.targetPrice ?? null, latent: b.openPnl,
         price: single ? priceFromLatent(p.side, p.entryPrice, p.quantity, b.openPnl, pv) : null,
         priceAt: b.openPnlAt,
       };

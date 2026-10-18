@@ -14,7 +14,7 @@ import TEMPLATE from './live-position.component.html?raw';
 /** « Trade en cours » de la session live v3, sur son VRAI template. */
 
 const broker = (o: Partial<LiveBrokerState> = {}): LiveBrokerState => ({
-  openPositions: [{ asset: 'MNQ', side: 'LONG', quantity: 2, entryPrice: 21500.25, since: null }],
+  openPositions: [{ asset: 'MNQ', side: 'LONG', quantity: 2, entryPrice: 21500.25, since: null, stopPrice: null, targetPrice: null }],
   positionsAt: new Date().toISOString(),
   openPnl: -42.5,
   openPnlAt: new Date(Date.now() - 40_000).toISOString(),
@@ -83,8 +83,18 @@ describe('Session live v3 — trade en cours (#598)', () => {
     expect(el.querySelector('[data-testid="close-trade"]'), 'lecture seule Tradovate').toBeNull();
   });
 
+  it('position broker avec bracket lu chez Tradovate (#601) : barre complète, montants et R/R', () => {
+    const p = { ...broker().openPositions[0], entryPrice: 21500, stopPrice: 21480, targetPrice: 21540 };
+    const { el, text } = setup(broker({ openPositions: [p] }));
+    expect(el.querySelector('[data-testid="live-bar"]')?.getAttribute('data-mode')).toBe('full');
+    expect(text('live-bar-sl')).toContain('-80 $'); // 20 pts × 2 contrats × 2 $ le point (MNQ)
+    expect(text('live-bar-tp')).toContain('+160 $');
+    expect(text('live-bar-rr')).toBe('Risque/rendement 1 : 2 · stop à 20 pts');
+    expect(el.querySelector('[data-testid="live-no-stop"]')).toBeNull();
+  });
+
   it('plusieurs positions : pas de prix déduit (latent du compte entier)', () => {
-    const b = broker({ openPositions: [...broker().openPositions, { asset: 'ES', side: 'SHORT', quantity: 1, entryPrice: 5900, since: null }] });
+    const b = broker({ openPositions: [...broker().openPositions, { asset: 'ES', side: 'SHORT', quantity: 1, entryPrice: 5900, since: null, stopPrice: null, targetPrice: null }] });
     const { el } = setup(b);
     expect(el.querySelector('[data-testid="live-price"]')).toBeNull();
     expect(el.querySelectorAll('[data-testid="live-position-row"]').length).toBe(2);
