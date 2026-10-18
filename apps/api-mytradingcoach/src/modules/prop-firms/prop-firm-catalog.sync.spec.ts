@@ -20,7 +20,7 @@ describe('parseCatalog', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(264);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(282);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -57,8 +57,8 @@ describe('toRows', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(plans).toHaveLength(264);
-    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-07T00:00:00Z'));
+    expect(plans).toHaveLength(282);
+    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-18T00:00:00Z'));
   });
 
   it('mappe les colonnes de requête et garde les règles au format du catalogue', () => {
@@ -106,11 +106,13 @@ describe('toRows', () => {
     expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
   });
 
-  it('LucidMaxx reste invite_only, complet depuis la réponse du support (2026-10-05)', () => {
+  it('LucidMaxx reste invite_only ; à revoir depuis la relecture du 2026-10-18 (jours min et prix non publiés)', () => {
     const maxx = plans.find((p) => p.id === 'lucid-maxx-50k')!;
     expect(maxx.availability).toBe('invite_only');
-    expect(maxx.needsReview).toBe(false);
-    const ev = (maxx.phases as { max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
+    expect(maxx.needsReview).toBe(true);
+    expect(maxx.price).toMatchObject({ amount: null });
+    const ev = (maxx.phases as { min_trading_days: number | null; max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
+    expect(ev.min_trading_days).toBeNull();
     expect(ev.max_contracts.minis).toBe(4);
     expect(ev.max_drawdown).toMatchObject({ locks_at: 52_100, locked_floor: 50_100 });
   });
@@ -133,10 +135,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 16 firms et les 264 plans', () => {
+  it('base vide : crée les 16 firms et les 282 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
     expect(plan.firmsToCreate).toHaveLength(16);
-    expect(plan.plansToCreate).toHaveLength(264);
+    expect(plan.plansToCreate).toHaveLength(282);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);

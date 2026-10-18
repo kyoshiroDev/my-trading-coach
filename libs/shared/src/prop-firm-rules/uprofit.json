@@ -9,8 +9,136 @@
       "tradovate"
     ]
   },
-  "verified_at": "2026-10-04",
+  "verified_at": "2026-10-18",
   "plans": [
+    {
+      "id": "uprofit-soft-10k",
+      "plan_name": "Day Soft",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 29,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "29 $ tous les 30 jours. Reset évaluation 25 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 800,
+          "daily_loss_limit": {
+            "amount": 220,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 400,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 10400,
+            "locked_floor": 10000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le plus haut solde, 400 $ en dessous ; démarre à 9600 $ et monte jusqu'au solde de départ (10000 $). L'atteindre à tout moment, position ouverte comprise, fait échouer (position fermée automatiquement)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour sous 50 % du profit total : donc 2 jours minimum pour réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": null,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros uniquement : 5 E-Micros, pas d'E-Mini (minis à null), pas de scaling en Live Virtual."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 220,
+            "basis": "equity",
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft : pas un échec, le compte est bloqué jusqu'à la session suivante. Pertes latentes des positions ouvertes et commissions comprises : la limite est atteinte même si la position n'est pas clôturée (support UProfit, e-mail du 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 400,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 10400,
+            "locked_floor": 10000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le plus haut solde, 400 $ en dessous ; démarre à 9600 $ et monte jusqu'au solde de départ (10000 $). L'atteindre à tout moment, position ouverte comprise, fait échouer (position fermée automatiquement)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour sous 40 % du profit accumulé ; repart à zéro après chaque retrait."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": null,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros uniquement : 5 E-Micros, pas d'E-Mini (minis à null), pas de scaling en Live Virtual."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 300,
+            "max_amount_schedule": null,
+            "max_payouts": 6,
+            "safety_net_balance": 10500,
+            "notes": "3 jours gagnants par demande. Retrait seulement au-dessus de 10500 $ (SafetyNet 500 $ non retirable). Plafond 300 $ par demande (3 % de la taille), 6 retraits maximum puis le compte est fermé. 90/10, traité sous 24 h."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://uprofit.com/help/uprofit-soft-trading-parameters-52063207935892",
+        "https://uprofit.com/help/uprofit-soft-10k-54393437776020",
+        "https://uprofit.com/help/uprofit-soft-live-virtual-10k-54394490735252",
+        "https://uprofit.com/help/uprofit-soft-payout-policy-52063548100500",
+        "https://uprofit.com/help/-markets-and-trading-hours-38279727543188",
+        "https://uprofit.com/day-programs"
+      ],
+      "needs_review": false,
+      "notes": "Day Soft : DLL qui bloque la journée sans échec. Les gammes historiques Day et One (legacy) ne sont pas modélisées."
+    },
     {
       "id": "uprofit-soft-50k",
       "plan_name": "Day Soft",
@@ -463,6 +591,118 @@
       ],
       "needs_review": false,
       "notes": "Day Soft : DLL qui bloque la journée sans échec. Les gammes historiques Day et One (legacy) ne sont pas modélisées."
+    },
+    {
+      "id": "uprofit-flex-10k",
+      "plan_name": "Day Flex",
+      "account_size": 10000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "monthly",
+        "activation_fee": 0,
+        "notes": "39 $ tous les 30 jours. Reset évaluation 29 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 800,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 400,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 10400,
+            "locked_floor": 10000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le plus haut solde, 400 $ en dessous ; démarre à 9600 $ et monte jusqu'au solde de départ (10000 $). L'atteindre à tout moment, position ouverte comprise, fait échouer (position fermée automatiquement)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Meilleur jour sous 50 % du profit total : donc 2 jours minimum pour réussir."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": null,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros uniquement : 5 E-Micros, pas d'E-Mini (minis à null), pas de scaling en Live Virtual."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 400,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 10400,
+            "locked_floor": 10000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : mis à jour en fin de journée sur le plus haut solde, 400 $ en dessous ; démarre à 9600 $ et monte jusqu'au solde de départ (10000 $). L'atteindre à tout moment, position ouverte comprise, fait échouer (position fermée automatiquement)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "Meilleur jour sous 40 % du profit accumulé ; repart à zéro après chaque retrait."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": null,
+            "micros": 5,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Micros uniquement : 5 E-Micros, pas d'E-Mini (minis à null), pas de scaling en Live Virtual."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Sessions du dimanche 18:00 au vendredi 16:10 heure de New York ; tout fermer à 16:10 chaque jour, réouverture à 18:00. Live Virtual : au moins un trade complet par semaine, sinon échec (pause possible 7, 14 ou 21 jours). News autorisées (déconseillées à cause des gaps et du slippage) (support UProfit, e-mail du 2026-10-04)."
+          },
+          "payout": {
+            "min_days": 3,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 300,
+            "max_amount_schedule": null,
+            "max_payouts": 6,
+            "safety_net_balance": 10500,
+            "notes": "3 jours gagnants par demande. Retrait seulement au-dessus de 10500 $ (SafetyNet 500 $ non retirable). Plafond 300 $ par demande (3 % de la taille), 6 retraits maximum puis le compte est fermé. 90/10, traité sous 24 h."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://uprofit.com/help/uprofit-flex-trading-parameters-52062905513620",
+        "https://uprofit.com/help/uprofit-flex-10k-54395134778260",
+        "https://uprofit.com/help/uprofit-flex-live-virtual-10k-54395343573908",
+        "https://uprofit.com/help/uprofit-flex-payout-policy-52062715698580",
+        "https://uprofit.com/help/-markets-and-trading-hours-38279727543188",
+        "https://uprofit.com/day-programs"
+      ],
+      "needs_review": false,
+      "notes": "Day Flex : pas de DLL. Les gammes historiques Day et One (legacy) ne sont pas modélisées."
     },
     {
       "id": "uprofit-flex-50k",

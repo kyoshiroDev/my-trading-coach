@@ -1,0 +1,47 @@
+/* Base : register.component.css (carte, case, bouton). */
+
+.account-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.account-chip-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.account-chip-email {
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.consent-check {
+  /* Cible tactile confortable : la case est le seul choix de l'écran. */
+  min-height: 44px;
+}
+
+.legal-note {
+  margin: 18px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.legal-note a {
+  color: var(--blue-bright);
+}

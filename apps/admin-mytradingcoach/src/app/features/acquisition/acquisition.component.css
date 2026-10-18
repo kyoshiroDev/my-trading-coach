@@ -51,3 +51,15 @@
 .signup-sub { display: block; font-size: 11px; color: var(--text3); }
 .signup-rate { font-size: 11px; color: var(--text3); }
 .signup-errors-head { border-top: 1px solid var(--border); }
+
+/* Inscriptions par méthode (#618) : ligne de synthèse sous le tableau. */
+.card-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* Inscrits d'une campagne → liste Utilisateurs filtrée (#625). */
+.signup-link { color: var(--teal); text-decoration: none; }
+.signup-link:hover { text-decoration: underline; }

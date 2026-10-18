@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import {
   LucideDynamicIcon,
@@ -22,7 +22,7 @@ import {
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
-import type { Plan } from '@mtc/shared';
+import { acquisitionLabel, type AcquisitionUtm, type Plan } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
@@ -41,6 +41,7 @@ export class UsersComponent implements OnInit {
 
   private readonly api = inject(AdminApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly search$ = new Subject<string>();
 
@@ -53,6 +54,14 @@ export class UsersComponent implements OnInit {
   protected readonly search      = signal('');
   protected readonly editUser    = signal<AdminUser | null>(null);
   protected readonly deleteModal = signal<AdminUser | null>(null);
+  /** Inscrits d'une campagne (#625) : `?source=&medium=&campaign=` (lien depuis Acquisition ou la fiche). */
+  protected readonly utm = signal<Partial<AcquisitionUtm>>({});
+  protected readonly utmLabel = computed(() => {
+    const u = this.utm();
+    return u.source || u.medium || u.campaign
+      ? acquisitionLabel({ source: u.source ?? '*', medium: u.medium ?? '*', campaign: u.campaign ?? '*' })
+      : null;
+  });
 
   protected readonly totalPages = computed(() => Math.ceil(this.total() / 20) || 1);
 
@@ -78,7 +87,13 @@ export class UsersComponent implements OnInit {
   protected editRole: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' = 'USER';
 
   ngOnInit() {
-    this.load();
+    // 1er chargement + chaque changement du filtre de campagne dans l'URL.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
+      const pick = (k: keyof AcquisitionUtm) => q.get(k)?.trim().toLowerCase() || undefined;
+      this.utm.set({ source: pick('source'), medium: pick('medium'), campaign: pick('campaign') });
+      this.page.set(1);
+      this.load();
+    });
     this.loadStats();
     this.search$.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => { this.page.set(1); this.load(); });
@@ -86,6 +101,8 @@ export class UsersComponent implements OnInit {
 
   protected onSearch(value: string) { this.search.set(value); this.search$.next(value); }
   protected changePage(p: number)   { this.page.set(p); this.load(); }
+
+  protected clearUtm() { this.router.navigate(['/users']); }
 
   /** Clic sur une ligne → fiche utilisateur. */
   protected goToDetail(id: string) { this.router.navigate(['/users', id]); }
@@ -128,6 +145,11 @@ export class UsersComponent implements OnInit {
 
   private isFuture(dateStr: string | null): boolean {
     return !!dateStr && new Date(dateStr) > new Date();
+  }
+
+  /** Mois Premium offert par l'admin : plan FREE + `trialEndsAt` futur (sans abonnement Stripe). */
+  protected isOffered(user: AdminUser): boolean {
+    return user.plan === 'FREE' && this.isFuture(user.trialEndsAt);
   }
 
   protected subType(user: AdminUser): string {
@@ -184,7 +206,7 @@ export class UsersComponent implements OnInit {
 
   private load() {
     this.loading.set(true);
-    this.api.list(this.page(), 20, this.search() || undefined).pipe(takeUntilDestroyed(this.destroyRef))
+    this.api.list(this.page(), 20, this.search() || undefined, this.utm()).pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (r) => { this.users.set(r.data.users); this.total.set(r.data.total); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
   private loadStats() {

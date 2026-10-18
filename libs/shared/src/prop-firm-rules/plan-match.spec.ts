@@ -13,8 +13,8 @@ function plan(id: string, accountSize: number, over: Partial<PropFirmPlanSummary
     needsReview: false,
     platformDependent: [],
     phases: [
-      { phase: 'evaluation', startingBalance: accountSize, profitTarget: accountSize * 0.06, maxDrawdown: accountSize * 0.04, drawdownType: 'trailing_eod', dailyLossLimit: null },
-      { phase: 'funded', startingBalance: accountSize, profitTarget: null, maxDrawdown: accountSize * 0.04, drawdownType: 'trailing_eod', dailyLossLimit: null },
+      { phase: 'evaluation', startingBalance: accountSize, profitTarget: accountSize * 0.06, maxDrawdown: accountSize * 0.04, drawdownType: 'trailing_eod', dailyLossLimit: null, dailyLossLimitStatus: 'none' },
+      { phase: 'funded', startingBalance: accountSize, profitTarget: null, maxDrawdown: accountSize * 0.04, drawdownType: 'trailing_eod', dailyLossLimit: null, dailyLossLimitStatus: 'none' },
     ],
     ...over,
   };

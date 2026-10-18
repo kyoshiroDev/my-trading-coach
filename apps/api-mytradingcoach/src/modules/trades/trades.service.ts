@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import {
   Prisma,
-  SessionStatus,
   ExecutionGrade,
   ExecutionMethod,
   TradeSource,
@@ -22,6 +21,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { SetupsService } from '../setups/setups.service';
 import { CrossSourcePool, importDedupeWindow } from './import-dedupe.util';
 import { ACTIVE_SESSION_SELECT, createImportBatch, type ImportBatch } from './import-batch';
+import { activeSessionWhere } from '../session/active-session';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { UpdateTradeDto } from './dto/update-trade.dto';
 import { TradeFiltersDto } from './dto/trade-filters.dto';
@@ -267,7 +267,7 @@ export class TradesService {
 
   private findActiveSession(userId: string) {
     return this.prisma.tradeSession.findFirst({
-      where: { userId, status: SessionStatus.ACTIVE },
+      where: activeSessionWhere(userId),
       select: ACTIVE_SESSION_SELECT,
     });
   }

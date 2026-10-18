@@ -6,7 +6,6 @@ import {
   effect,
   inject,
   input,
-  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -19,7 +18,7 @@ import {
   LucideShieldCheck as ShieldCheck,
 } from '@lucide/angular';
 import { catchError, of } from 'rxjs';
-import { formatMoney } from '@mtc/shared';
+import { formatMoney, needsPlanLink } from '@mtc/shared';
 import { TradovateApi } from '@app/core/api/tradovate.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
@@ -30,26 +29,28 @@ import { AlertSoundService } from '@app/core/services/alert-sound.service';
 import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
+import { AccountPlanWizardComponent } from '@app/features/accounts/account-plan-wizard/account-plan-wizard.component';
 import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 
 /**
  * Suivi prop firm de la session live (FREE) : à la place de « Trade rapide » quand le compte de
- * la session est synchronisé, ses trades arrivent seuls. Solde et equity lus chez le broker,
- * marge avant le plancher et avancement vers l'objectif, calculés par l'API avec les règles
- * officielles du plan relié. Le temps réel vient du WebSocket Tradovate (`tradovate:balance`
+ * la session est synchronisé, ses trades arrivent seuls. Session live v3 : equity sur une ligne,
+ * puis trois jauges, le risque avant le gain (perte du jour → marge plancher → objectif).
+ * Solde et equity lus chez le broker, marge avant le plancher et avancement vers l'objectif,
+ * calculés par l'API avec les règles officielles du plan relié. Le temps réel vient du WebSocket Tradovate (`tradovate:balance`
  * → rechargement des comptes) : ce panneau ne fait qu'une relecture du solde à l'ouverture.
  */
 @Component({
   selector: 'mtc-live-prop-firm',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent],
+  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent, AccountPlanWizardComponent],
   templateUrl: './live-prop-firm.component.html',
   styleUrl: './live-prop-firm.component.css',
 })
 export class LivePropFirmComponent {
   readonly accountId = input.required<string>();
-  /** « Saisir un trade à la main » : le parent réaffiche Trade rapide. */
-  readonly manualEntry = output<void>();
+  /** P&L réalisé de la session (trades clôturés, frais déduits), affiché sous l'equity en PC. */
+  readonly realized = input<number | null>(null);
 
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tv = inject(TradovateStore);
@@ -58,6 +59,8 @@ export class LivePropFirmComponent {
   protected readonly alerts = inject(PropAlertsService);
   protected readonly sound = inject(AlertSoundService);
   protected readonly showPlanModal = signal(false);
+  /** « Quel est ce compte ? » ouvert depuis l'appel à l'action (compte sans plan, #612). */
+  protected readonly planWizardOpen = signal(false);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly live = inject(TradovateLiveSocketService);
 
@@ -69,6 +72,11 @@ export class LivePropFirmComponent {
     () => this.accounts.accounts().find((a) => a.id === this.accountId()) ?? null,
   );
   protected readonly metrics = computed(() => this.account()?.metrics ?? null);
+  /** Compte prop firm sans plan, ou laissé à « Plus tard » : l'appel à l'action remplace les jauges. */
+  protected readonly needsPlan = computed(() => {
+    const a = this.account();
+    return !!a && needsPlanLink(a);
+  });
   protected readonly broker = computed(() => this.metrics()?.broker ?? null);
   protected readonly drawdown = computed(() => this.metrics()?.drawdown ?? null);
   protected readonly rule = computed(() => this.drawdown()?.rule ?? null);
@@ -78,7 +86,11 @@ export class LivePropFirmComponent {
   /** Perte journalière (PREMIUM) : l'API ne la calcule que pour un compte Premium. */
   protected readonly dailyLoss = computed(() => this.metrics()?.dailyLoss ?? null);
   protected readonly dlTone = computed(() => drawdownTone(this.dailyLoss()));
-  protected readonly dlWidth = computed(() => barWidth(this.dailyLoss()?.pct));
+  /** Barre de la perte du jour = part CONSOMMÉE de la limite (pct = marge restante). */
+  protected readonly dlWidth = computed(() => {
+    const dl = this.dailyLoss();
+    return dl ? barWidth(dl.breached ? 1 : 1 - dl.pct) : 0;
+  });
   /** Consistency du plan, avec le gain max du jour (calculé par l'API pour le Premium seulement). */
   protected readonly consistency = computed(() => {
     const r = this.metrics()?.progress?.requirements.find((x) => x.key === 'consistency');
@@ -93,6 +105,15 @@ export class LivePropFirmComponent {
     return m ? objectiveRatio(m) : null;
   });
   protected readonly objWidth = computed(() => barWidth(this.objRatio()));
+  /** « +$730 / $3,000 » : exigence de profit du plan, sinon objectif saisi ; null si inconnu. */
+  protected readonly objAmounts = computed(() => {
+    const m = this.metrics();
+    const req = m?.progress?.requirements.find((r) => r.key === 'profit' || r.key === 'cycle_profit');
+    if (req && req.required > 0) return { current: req.current, target: req.required };
+    return m?.objective ? { current: m.objective.current, target: m.objective.target } : null;
+  });
+  /** Equity en direct (solde + latent chez le broker), sinon solde estimé. */
+  protected readonly equity = computed(() => this.broker()?.equity ?? this.metrics()?.currentBalance ?? null);
   protected readonly objTitle = computed(() => {
     const a = this.account();
     const m = this.metrics();
@@ -130,6 +151,12 @@ export class LivePropFirmComponent {
           .subscribe(() => this.accounts.load()),
       );
     });
+  }
+
+  /** Plan relié (ou réponse enregistrée) : les comptes repartent du serveur, les jauges suivent. */
+  protected onPlanLinked(): void {
+    this.planWizardOpen.set(false);
+    this.accounts.load();
   }
 
   /** Montant dans la devise du compte, sans conversion. */

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import type { BrokerMappingColumns as ChampsColonnes } from '../../core/api/admin.api';
+import { PlanLinksCardComponent } from './plan-links-card/plan-links-card.component';
 import {
   AdminApi,
   type BrokerMapping,
@@ -26,7 +27,7 @@ import {
  */
 @Component({
   selector: 'mtc-admin-broker-mappings',
-  imports: [FormsModule, DatePipe, DecimalPipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, PlanLinksCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './broker-mappings.component.css',
   templateUrl: './broker-mappings.component.html',

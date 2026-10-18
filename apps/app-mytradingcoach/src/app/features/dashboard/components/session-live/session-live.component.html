@@ -3,7 +3,6 @@
   @if (!session() || session()?.status !== 'ACTIVE') {
     <!-- Pas de session active : CTA démarrer -->
     <div class="no-session-cta">
-      <div class="no-session-icon">🎯</div>
       <div class="no-session-title">Pas de session en cours</div>
       <div class="no-session-sub">Démarre une session pour tracker tes trades en live et accéder au calendrier économique.</div>
       <button class="session-start-btn" data-testid="start-session-live"
@@ -18,86 +17,95 @@
     </div>
   } @else {
 
-  <!-- Barre contextuelle marché FMP (IA mutualisée → FREE) -->
-  @if (marketCtx()) {
-    <!-- Carte marché unique : contexte marché + news ticker (source : LiveTab card) -->
-    <div class="mkt-card">
-      <div class="ctx-bar-wrap">
-        <mtc-market-context-bar
-          [ctx]="marketCtx()"
-          [breakingNews]="breakingNews()"
-        />
+  <!-- 1. Bandeau collant : chrono, trades N / max, P&L total du jour -->
+  <mtc-live-bar class="lv-bar"
+    [clock]="sessionStore.sessionClock()"
+    [totalPnl]="totals().total"
+    [realizedPnl]="totals().realized"
+    [tradesCount]="liveStats()?.tradesCount ?? 0"
+    [tradesMax]="tradesMax()"
+    [accountId]="session()?.accountId ?? null"
+    [accountLabel]="accountLabel()"
+    [mood]="mood()"
+    [tickers]="tickers()"
+    [tickerTape]="tickerTape()"
+    (closeSession)="closeSession.emit()"
+    (openContext)="contextOpen.set(true)"
+  />
+
+  <div class="lv-body">
+    <!-- 2. Prochaine annonce (absente s'il n'en reste aucune) ; à la publication : chiffre + analyse IA -->
+    <mtc-live-next-event [events]="ecoCalendar()?.events ?? []" (ecoCalendarRefreshed)="ecoCalendarRefreshed.emit($event)" />
+
+    <!-- 3 à 5 : grille plate, l'ordre mobile suit la maquette ; tablette et PC la réorganisent -->
+    <div class="lv-grid">
+      <mtc-live-position class="lv-position"
+        [broker]="broker()"
+        [openTrades]="openTrades()"
+        [instruments]="instruments()"
+        [accountId]="session()?.accountId ?? null"
+        (tradeClosed)="tradeClosed.emit($event)"
+      />
+
+      <div class="lv-account">
+        @if (propFirmAccountId(); as accountId) {
+          <mtc-live-prop-firm [accountId]="accountId" [realized]="totals().realized" />
+        } @else {
+          <!-- Pas de compte prop firm synchronisé : le P&L du jour et un lien pour en lier un -->
+          <section class="lv-summary" data-testid="live-account-summary" aria-label="Suivi du compte">
+            <span class="lv-summary-title">SUIVI DU COMPTE</span>
+            <div class="lv-summary-pnl" [class.green]="dayPnl() > 0" [class.red]="dayPnl() < 0">{{ pnlDisplay() }}</div>
+            <div class="lv-summary-sub">P&amp;L du jour</div>
+            <a routerLink="/accounts" class="lv-link" data-testid="link-prop-firm">Lier un compte prop firm</a>
+          </section>
+        }
       </div>
-      <!-- News live : ticker horizontal + modale de lecture (IA mutualisée → FREE) -->
-      @if (newsItems().length > 0) {
-        <mtc-live-news [items]="newsItems()" />
+
+      <div class="lv-closed">
+        <mtc-live-closed-trades [trades]="todayTrades()" [canEnterManually]="!!propFirmAccountId() && !manualEntry()" (manualEntry)="manualEntry.set(true)" />
+        @if (!propFirmAccountId() || manualEntry()) {
+          <div class="lv-quick">
+            @if (propFirmAccountId()) {
+              <button type="button" class="lv-back" data-testid="back-to-prop-firm" (click)="manualEntry.set(false)">
+                Fermer la saisie
+              </button>
+            }
+            <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 6. En bas en mobile : clôture de session, loin de « Clôturer ce trade ». Le contexte marché
+         défile sous le chrono (toucher = détail). À partir de 768 px, la clôture est dans le bandeau. -->
+    <div class="lv-actions">
+      @if (!marketCtx()) {
+        <button type="button" class="lv-context-btn" data-testid="open-context" (click)="contextOpen.set(true)">Contexte marché</button>
       }
+      <button type="button" class="lv-end-btn" data-testid="close-session-live" (click)="closeSession.emit()">Clôturer la session</button>
+    </div>
+  </div>
+
+  @if (contextOpen()) {
+    <div class="lv-sheet-overlay" role="button" tabindex="-1" (click)="contextOpen.set(false)" (keyup.escape)="contextOpen.set(false)">
+      <div class="lv-sheet" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="contextOpen.set(false)"
+           aria-labelledby="lv-sheet-title" (click)="$event.stopPropagation()" (keyup)="$event.stopPropagation()"
+           data-testid="context-sheet">
+        <header class="lv-sheet-head">
+          <h2 id="lv-sheet-title" class="lv-sheet-title">Contexte</h2>
+          <button type="button" class="lv-sheet-close" aria-label="Fermer" (click)="contextOpen.set(false)">✕</button>
+        </header>
+        @if (marketCtx()) {
+          <mtc-market-context-bar [ctx]="marketCtx()" [breakingNews]="breakingNews()" />
+        } @else {
+          <p class="lv-sheet-empty">Contexte marché pas encore chargé.</p>
+        }
+        @if (newsItems().length > 0) {
+          <mtc-live-news [items]="newsItems()" />
+        }
+      </div>
     </div>
   }
-
-  <!-- Live layout : zone gauche (stats + calendrier + live feed) / colonne pleine hauteur à droite -->
-  <div class="live-layout">
-    <div class="live-main">
-
-      <!-- Mini stats row (largeur calendrier + live feed uniquement) -->
-      <div class="mini-stats-row">
-        <div class="mini-stat">
-          <div class="mini-stat-val" [class.green]="(liveStats()?.totalPnl ?? 0) >= 0" [class.red]="(liveStats()?.totalPnl ?? 0) < 0">
-            {{ pnlDisplay() }}
-          </div>
-          <div class="mini-stat-lbl">P&amp;L jour</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val">{{ (liveStats()?.winRate ?? 0).toFixed(0) }}%</div>
-          <div class="mini-stat-lbl">Win Rate</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val" style="font-size:22px;">{{ moodEmoji(session()?.moodStart) }}</div>
-          <div class="mini-stat-lbl">État actuel</div>
-        </div>
-        <div class="mini-stat">
-          <div class="mini-stat-val blue">{{ liveStats()?.tradesCount ?? 0 }}</div>
-          <div class="mini-stat-lbl">Trades logués</div>
-        </div>
-      </div>
-
-      @if (showLivePosition()) {
-        <mtc-live-position
-          [broker]="liveStats()?.broker ?? null"
-          [realized]="liveStats()?.totalPnl ?? 0"
-          [accountId]="session()?.accountId ?? null"
-        />
-      }
-
-      <div class="live-cols">
-        <mtc-live-eco-calendar
-          [session]="session()"
-          [ecoCalendar]="ecoCalendar()"
-          (ecoCalendarRefreshed)="ecoCalendarRefreshed.emit($event)"
-        />
-        <mtc-live-feed
-          [trades]="todayTrades()"
-          (tradeClosed)="tradeClosed.emit($event)"
-        />
-      </div>
-    </div>
-
-    <!-- Colonne droite : suivi prop firm si le compte est synchronisé, sinon Trade rapide -->
-    @if (propFirmAccountId(); as accountId) {
-      @if (manualEntry()) {
-        <div class="right-col">
-          <button type="button" class="back-prop" data-testid="back-to-prop-firm" (click)="manualEntry.set(false)">
-            ← Suivi du compte
-          </button>
-          <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
-        </div>
-      } @else {
-        <mtc-live-prop-firm [accountId]="accountId" (manualEntry)="manualEntry.set(true)" />
-      }
-    } @else {
-      <mtc-quick-trade (tradeLogged)="tradeLogged.emit($event)" />
-    }
-  </div>
 
   } <!-- /if session ACTIVE -->
 

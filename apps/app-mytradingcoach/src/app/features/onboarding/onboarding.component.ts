@@ -33,6 +33,7 @@ import {
 } from '../../shared/components/setup-form-modal/setup-form-modal.component';
 import { TradovateConnectModalComponent } from '../../shared/components/tradovate-connect/tradovate-connect-modal.component';
 import { TradovateAccountPickerComponent } from '../../shared/components/tradovate-connect/tradovate-account-picker.component';
+import { AccountPlanWizardComponent } from '../accounts/account-plan-wizard/account-plan-wizard.component';
 import { TradovateStore } from '../../core/stores/tradovate.store';
 import { ToastService } from '../../core/services/toast.service';
 import {
@@ -72,7 +73,7 @@ import { clearProgress, loadProgress, saveProgress } from './onboarding-progress
   selector: 'mtc-onboarding',
   imports: [
     LucideDynamicIcon, TradeFormComponent, CsvImportComponent, SetupFormModalComponent,
-    TradovateConnectModalComponent, TradovateAccountPickerComponent,
+    TradovateConnectModalComponent, TradovateAccountPickerComponent, AccountPlanWizardComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './onboarding.component.html',
@@ -101,6 +102,8 @@ export class OnboardingComponent {
   protected readonly tvError = signal<string | null>(null);
   /** Login Tradovate à plusieurs comptes : choix à faire pour ce compte MTC. */
   protected readonly tvPickAccountId = signal<string | null>(null);
+  /** Sous-compte synchronisé : « Quel est ce compte ? » avant l'écran final (#612). */
+  protected readonly tvPlanAccountId = signal<string | null>(null);
   /** Comptes du login écartés (déjà reliés ailleurs), annoncés au-dessus du sélecteur. */
   protected readonly tvExcludedMsg = signal<string | null>(null);
   protected readonly tvPickAccounts = computed(() => {
@@ -464,8 +467,15 @@ export class OnboardingComponent {
       this.tvPickAccountId.set(null);
       this.tvSummary.set({ created: r.created, fees: feesState(r) });
       if (r.created > 0) this.tradesStore.reset();
-      this.step.set(9);
+      // Historique importé : le solde de départ est connu, la pré-sélection du plan peut s'en servir.
+      this.tvPlanAccountId.set(accountId);
     });
+  }
+
+  /** Plan relié, compte perso, firm absente ou « Plus tard » : écran final. */
+  protected onPlanLinked(): void {
+    this.tvPlanAccountId.set(null);
+    this.step.set(9);
   }
 
   // ── Étape Tes setups (7) : réutilise la modale partagée + SetupsStore ──

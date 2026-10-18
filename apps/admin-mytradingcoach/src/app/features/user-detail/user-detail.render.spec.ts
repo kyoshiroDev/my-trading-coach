@@ -13,7 +13,7 @@ function makeData(over: Partial<UserDetailData> = {}): UserDetailData {
     identity: {
       id: 'u1', name: 'Maxime', email: 'maxime@test.com',
       plan: 'PREMIUM', role: 'USER',
-      subscriptionStatus: null, ambassadorRefCode: null,
+      subscriptionStatus: null, ambassadorRefCode: null, acquisition: { source: null, medium: null, campaign: null },
       trialEndsAt: null, offeredPremium: false, isDemo: false,
       createdAt: '2026-06-18T00:00:00.000Z', lastActivityAt: '2026-06-19T10:00:00.000Z',
     },
@@ -65,6 +65,22 @@ async function render(data: UserDetailData) {
 describe('UserDetailComponent — rendu densifié', () => {
   beforeEach(() => TestBed.resetTestingModule());
   afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('acquisition (#625) : triplet UTM cliquable vers les inscrits de la même campagne', async () => {
+    const base = makeData();
+    const { el } = await render(makeData({
+      identity: { ...base.identity, acquisition: { source: 'instagram', medium: 'dm', campaign: 'louis' } },
+    }));
+    const link = el.querySelector<HTMLAnchorElement>('a.ud-utm');
+    expect(link?.textContent?.trim()).toBe('instagram · dm · louis');
+    expect(link?.getAttribute('href')).toBe('/users?source=instagram&medium=dm&campaign=louis');
+  });
+
+  it('acquisition absente : « direct / non renseigné », sans lien', async () => {
+    const { el, text } = await render(makeData());
+    expect(el.querySelector('a.ud-utm')).toBeNull();
+    expect(text).toContain('direct / non renseigné');
+  });
 
   it('affiche la carte fusionnée « Compte & engagement » et plus de carte « Informations »', async () => {
     const { text } = await render(makeData());

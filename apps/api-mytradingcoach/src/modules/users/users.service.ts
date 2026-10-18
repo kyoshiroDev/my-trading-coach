@@ -7,6 +7,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
+import { UTM_NONE, type AcquisitionUtm } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import { AmbassadorService } from '../ambassador/ambassador.service';
@@ -43,6 +44,16 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
+/** Filtre par UTM d'inscription (#625) : absent = ignoré, `UTM_NONE` = non renseigné. */
+function utmWhere(utm: Partial<AcquisitionUtm>): Prisma.UserWhereInput {
+  const eq = (v: string) => (v === UTM_NONE ? null : v);
+  return {
+    ...(utm.source && { acquisitionSource: eq(utm.source) }),
+    ...(utm.medium && { acquisitionMedium: eq(utm.medium) }),
+    ...(utm.campaign && { acquisitionCampaign: eq(utm.campaign) }),
+  };
+}
+
 const ADMIN_USER_SELECT = {
   id: true,
   email: true,
@@ -55,6 +66,9 @@ const ADMIN_USER_SELECT = {
   lastSeenAt: true,
   lastLoginAt: true,
   createdAt: true,
+  acquisitionSource: true,
+  acquisitionMedium: true,
+  acquisitionCampaign: true,
 } as const;
 
 @Injectable()
@@ -124,17 +138,18 @@ export class UsersService {
 
   // ── Admin : liste paginée ─────────────────────────────────────────────────
 
-  async adminFindAll(page = 1, limit = 20, search?: string) {
+  async adminFindAll(page = 1, limit = 20, search?: string, utm: Partial<AcquisitionUtm> = {}) {
     // Hors démo (cohérence avec le KPI « Utilisateurs » du dashboard).
-    const where: Prisma.UserWhereInput = search
-      ? {
-          isDemo: false,
-          OR: [
-            { email: { contains: search, mode: 'insensitive' } },
-            { name: { contains: search, mode: 'insensitive' } },
-          ],
-        }
-      : { isDemo: false };
+    const where: Prisma.UserWhereInput = {
+      isDemo: false,
+      ...(search && {
+        OR: [
+          { email: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+      ...utmWhere(utm),
+    };
 
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([

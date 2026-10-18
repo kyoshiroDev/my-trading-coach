@@ -347,11 +347,7 @@
 .plan-link { color: var(--text-2); }
 .plan-link > svg { color: var(--blue-bright); flex-shrink: 0; }
 .plan-link .tv-text { flex: 1 1 220px; }
-.plan-link-close {
-  display: inline-flex; padding: 4px; border: none; border-radius: 6px;
-  background: none; color: var(--text-3); cursor: pointer;
-}
-.plan-link-close:hover { color: var(--text); background: var(--bg-3); }
+@media (max-width: 767px) { .plan-link-btn { min-height: 44px; } }
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }
@@ -591,6 +587,16 @@
   /* Ligne étroite : la pastille garde sa place, le bouton de connexion prend le reste. */
   .cell-sync { gap: 5px; }
   .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
+}
+
+/* « Quel est ce compte ? » (#612) : feuille pleine largeur en mobile, modale centrée au-delà. */
+/* Palier 1000 des modales : au-dessus du bouton menu de la barre mobile (z-index de page 100 sinon). */
+.modal-overlay:has(> .apw-modal) { z-index: 1000; }
+.apw-modal { max-height: 92dvh; }
+@media (max-width: 767px) {
+  .modal-overlay:has(> .apw-modal) { align-items: flex-end; padding: 0; }
+  .apw-modal { max-width: none; border-radius: 16px 16px 0 0; }
+  .apw-modal .modal-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); }
 }
 
 /* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */

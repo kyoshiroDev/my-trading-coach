@@ -30,13 +30,19 @@ export interface DemoTrade {
   executionMethod: ExecutionMethod | null;
 }
 
+/** Trade saisi à la main encore ouvert (pas de sortie, pas de P&L) : « Trade en cours » de la démo. */
+export type DemoOpenTrade = Omit<DemoTrade, 'exit' | 'pnl' | 'commission'>;
+
 export interface DemoDay {
   daysAgo: number;
   account: AccountKey;
   moodStart: MoodState;
   moodEnd: MoodState;
   kind: 'normal' | 'revenge' | 'yesterday' | 'today';
+  /** Trades CLÔTURÉS (seuls comptés dans les stats). */
   trades: DemoTrade[];
+  /** Session du jour uniquement : position encore ouverte, hors stats. */
+  openTrade?: DemoOpenTrade;
 }
 
 export interface DemoStats {

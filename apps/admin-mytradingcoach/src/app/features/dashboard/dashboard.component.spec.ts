@@ -30,6 +30,7 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
     founders: vi.fn(() => of({ data: null })),
     online: vi.fn(() => of({ data: [] })),
     retention: vi.fn(() => of({ data: null })),
+    planLinks: vi.fn(() => of({ data: null })),
     metricsHistory: vi.fn(() => of({ data: history })),
   };
   const vpsApi = {

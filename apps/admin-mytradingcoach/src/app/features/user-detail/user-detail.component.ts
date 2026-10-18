@@ -6,7 +6,7 @@ import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import { ConfirmService } from '@mtc/front-ui';
-import { apiErrorMessage } from '@mtc/shared';
+import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
@@ -324,6 +324,13 @@ export class UserDetailComponent {
   protected readonly sourceLabel = computed(() => {
     const ref = this.data()?.identity.ambassadorRefCode;
     return ref ? `?ref=${ref}` : 'directe';
+  });
+
+  /** UTM d'inscription (#625) : libellé + lien vers les autres inscrits du même triplet. */
+  protected readonly acquisition = computed(() => {
+    const a = this.data()?.identity.acquisition;
+    if (!a || (!a.source && !a.medium && !a.campaign)) return null;
+    return { label: acquisitionLabel(a), params: acquisitionQueryParams(a) };
   });
 
   /** Dernière activité en relatif (« il y a 19h ») : même donnée que le KPI d'avant. */

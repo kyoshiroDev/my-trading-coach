@@ -7,8 +7,10 @@ import {
   cashBalanceUpdate,
   initialAccountState,
   isTradeEvent,
+  orderEvent,
   type BalanceUpdate,
   type InitialAccountState,
+  type OrderEvent,
   parseFrame,
   shutdownReason,
   syncRequestMessage,
@@ -48,8 +50,10 @@ export interface LiveConnectionOptions {
   onTradeEvent: () => void;
   /** Solde réalisé du compte, poussé par Tradovate à chaque variation. */
   onBalance?: (update: BalanceUpdate) => void;
-  /** État initial de la souscription (solde, positions ouvertes). */
+  /** État initial de la souscription (solde, positions ouvertes, ordres de la séance). */
   onInitialState?: (state: InitialAccountState) => void;
+  /** Ordre posé / modifié / rempli / annulé (#601, lecture seule). */
+  onOrder?: (event: OrderEvent) => void;
   /** La connexion renonce : l'app retombe sur le bouton « Synchroniser ». */
   onFatal?: (reason: string) => void;
   socketFactory?: LiveSocketFactory;
@@ -169,12 +173,22 @@ export class TradovateLiveConnection {
     }
     const initial = initialAccountState(m, this.opts.externalAccountId);
     if (initial) {
+      if (initial.orders.length) {
+        this.opts.logger?.debug?.(`Tradovate WS ordres initiaux : ${JSON.stringify({ orders: initial.orders, orderVersions: initial.orderVersions })}`);
+      }
       this.opts.onInitialState?.(initial);
       return;
     }
     const balance = cashBalanceUpdate(m, this.opts.externalAccountId);
     if (balance) {
       this.opts.onBalance?.(balance);
+      return;
+    }
+    const order = orderEvent(m);
+    if (order) {
+      // Mapping jamais validé sur un vrai bracket (#601) : trame brute en debug pour le vérifier.
+      this.opts.logger?.debug?.(`Tradovate WS ${order.entityType} ${order.eventType ?? ''} : ${JSON.stringify(order.entity)}`);
+      this.opts.onOrder?.(order);
       return;
     }
     if (isTradeEvent(m, this.opts.externalAccountId)) this.opts.onTradeEvent();

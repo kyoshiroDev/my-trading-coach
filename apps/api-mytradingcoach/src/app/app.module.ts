@@ -32,6 +32,7 @@ import { RetentionModule } from '../modules/retention/retention.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
 import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
 import { AdminPushModule } from '../modules/admin-push/admin-push.module';
+import { BehaviorModule } from '../modules/behavior/behavior.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { DemoReadOnlyGuard } from '../common/guards/demo-read-only.guard';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
@@ -110,6 +111,7 @@ import { RedisService } from '../modules/infra/redis.service';
     PropFirmsModule,
     RetentionModule,
     AdminPushModule,
+    BehaviorModule,
   ],
   providers: [
     // JwtAuthGuard AVANT le throttler (SCA-B3-03) : un utilisateur connecté est compté par son

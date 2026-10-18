@@ -17,6 +17,15 @@
     </div>
   </div>
 
+  @if (utmLabel(); as label) {
+    <div class="utm-filter" data-testid="utm-filter">
+      <span class="utm-filter-l">Inscrits de</span>
+      <span class="td-mono">{{ label }}</span>
+      <span class="muted">· {{ total() }} inscrit{{ total() > 1 ? 's' : '' }}</span>
+      <button type="button" class="utm-filter-clear" (click)="clearUtm()">Retirer le filtre</button>
+    </div>
+  }
+
   @if (stats(); as s) {
     <div class="kpi-strip">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div><div class="kpi-value teal">{{ s.mrr }}€</div><div class="kpi-sub">ARR {{ s.arr }}€</div></div>
@@ -55,6 +64,7 @@
               <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
               <td data-label="Abonnement">
                 @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
+                @else if (isOffered(u)) { <span class="sub-badge sub-badge--trial" title="Premium offert jusqu'au {{ u.trialEndsAt | date:'dd/MM/yyyy' }}">Offert</span> }
                 @else { <span class="muted">-</span> }
               </td>
               <td data-label="Activité" class="td-mono" [class.muted]="!u.lastSeenAt">{{ relativeTime(u.lastSeenAt) }}</td>

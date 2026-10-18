@@ -123,6 +123,11 @@
               </div>
             }
             <div class="srow"><span class="s-l">Rôle / Source</span><span class="s-v">{{ d.identity.role }} · {{ sourceLabel() }}</span></div>
+            <div class="srow"><span class="s-l">Acquisition</span>
+              @if (acquisition(); as a) {
+                <a class="s-v td-mono ud-utm" [routerLink]="['/users']" [queryParams]="a.params" title="Voir les inscrits de cette campagne">{{ a.label }}</a>
+              } @else { <span class="s-v muted">direct / non renseigné</span> }
+            </div>
             <div class="srow"><span class="s-l">Inscrit</span><span class="s-v">{{ d.identity.createdAt | date:'dd/MM/yyyy' }} · J+{{ d.kpis.daysSinceSignup }}</span></div>
             <div class="srow"><span class="s-l">Dernière activité</span><span class="s-v" [class.teal]="status() === 'actif'">{{ d.identity.lastActivityAt ? lastActivity() : 'jamais' }}</span></div>
             <div class="srow"><span class="s-l">Jours actifs</span><span class="s-v green">{{ d.kpis.activeDays }} / {{ d.kpis.totalDays }} · {{ engagementPct() }}%</span></div>

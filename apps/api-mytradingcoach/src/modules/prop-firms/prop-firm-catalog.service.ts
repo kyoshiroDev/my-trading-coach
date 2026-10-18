@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PropFirmCatalogFirm, PropFirmPhaseRules, PropFirmPlanDetail, PropFirmPlanSummary } from '@mtc/shared';
+import { dailyLossLimitStatus } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { propFirmConfigurationSchema, propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
 
@@ -59,7 +60,8 @@ export class PropFirmCatalogService {
                 profitTarget: p.profit_target,
                 maxDrawdown: p.max_drawdown.amount,
                 drawdownType: p.max_drawdown.type,
-                dailyLossLimit: p.daily_loss_limit?.amount ?? null,
+                dailyLossLimit: p.daily_loss_limit?.amount ?? p.daily_loss_limit?.tiers?.[0]?.amount ?? null,
+                dailyLossLimitStatus: dailyLossLimitStatus(p.daily_loss_limit),
               })),
             };
           })

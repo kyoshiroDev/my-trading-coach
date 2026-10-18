@@ -1,0 +1,24 @@
+@if (state() === 'in-app') {
+  <div class="in-app" role="note">
+    <p>
+      Pour te connecter avec Google, <strong>ouvre cette page dans ton navigateur</strong>
+      (menu <span class="dots" aria-hidden="true">···</span> puis « Ouvrir dans le navigateur »).
+    </p>
+    <button type="button" class="copy-btn" (click)="copyLink()">
+      {{ linkCopied() ? 'Lien copié ✓' : 'Copier le lien' }}
+    </button>
+  </div>
+  <div class="separator" aria-hidden="true"><span>ou avec ton email</span></div>
+}
+
+<!-- Toujours présent (Google y dessine son bouton), masqué tant qu'il n'a rien à montrer. -->
+<div
+  class="google-slot"
+  [class.gone]="state() === 'hidden' || state() === 'in-app'"
+  [class.busy]="busy()"
+>
+  <div class="slot"></div>
+</div>
+@if (state() === 'ready') {
+  <div class="separator" aria-hidden="true"><span>ou</span></div>
+}

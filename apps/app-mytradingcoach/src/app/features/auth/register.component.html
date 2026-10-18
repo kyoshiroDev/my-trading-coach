@@ -25,7 +25,7 @@
       } @else if (isPremiumFlow()) {
         Tu seras redirigé vers le paiement après l'inscription
       } @else {
-        Rejoins les traders qui progressent avec l'IA
+        Protège ton compte prop firm de tes propres erreurs
       }
     </p>
 
@@ -33,6 +33,15 @@
       <div class="referral-notice">
         🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai Premium offert
       </div>
+    }
+
+    <mtc-google-auth-button
+      text="continue_with"
+      [busy]="googleLoading()"
+      (credential)="onGoogleCredential($event)"
+    />
+    @if (googleError()) {
+      <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
     }
 
     <form (ngSubmit)="onRegister()">

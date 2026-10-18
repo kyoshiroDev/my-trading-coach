@@ -14,6 +14,7 @@ import type { BrokerBalanceView } from './tradovate-balance.service';
 import { PropAlertsService } from './prop-alerts.service';
 import { TiltAlertsService } from './tilt-alerts.service';
 import type { LiveTradesEvent } from './tradovate-live.service';
+import { BehaviorAlertsService } from '../../behavior/behavior-alerts.service';
 
 export const userRoom = (userId: string) => `user:${userId}`;
 
@@ -42,6 +43,7 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
     private readonly live: TradovateLiveService,
     private readonly alerts: PropAlertsService,
     private readonly tilt: TiltAlertsService,
+    private readonly behavior: BehaviorAlertsService,
   ) {}
 
   afterInit(): void {
@@ -58,6 +60,11 @@ export class TradovateLiveGateway implements OnGatewayInit, OnGatewayConnection,
       }
       if (event === 'tradovate:balance') {
         this.alerts.schedule(userId, (payload as BrokerBalanceView).accountId, (e, p) => {
+          this.server.to(userRoom(userId)).emit(e, p);
+        });
+        // Positions relues par la synchro : nouvelles entrées → détecteurs de comportement (#602).
+        // Phase 1 silencieuse : enregistrées, émises seulement si BEHAVIOR_ALERTS_UI=true.
+        this.behavior.schedule(userId, (payload as BrokerBalanceView).accountId, (e, p) => {
           this.server.to(userRoom(userId)).emit(e, p);
         });
       }

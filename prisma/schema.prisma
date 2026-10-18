@@ -9,12 +9,22 @@ datasource db {
 model User {
   id          String    @id @default(cuid())
   email       String    @unique
-  password    String
+  // null = compte créé avec Google, sans mot de passe défini (#618).
+  password    String?
   name        String?
   role        Role      @default(USER)
   plan        Plan      @default(FREE)
   trialEndsAt DateTime?
   trialUsed   Boolean   @default(false)
+
+  // ── Connexion Google (#618) ─────────────────────────────────────────────
+  // googleId = `sub` du jeton Google, jamais renvoyé au front (seulement `googleLinked`).
+  googleId          String?      @unique
+  authProvider      AuthProvider @default(EMAIL) // méthode de création du compte
+  emailVerifiedAt   DateTime? // adresse prouvée (Google) ; null = jamais vérifiée
+  signupFinalizedAt DateTime? // écran de finalisation validé (inscriptions Google)
+  // Incrémenté pour révoquer tous les refresh tokens (liaison Google sur un compte non vérifié).
+  tokenVersion      Int          @default(0)
 
   // ── Reset mot de passe ──────────────────────────────────────────────────
   resetPasswordToken   String?   @unique
@@ -109,6 +119,9 @@ model User {
   checkoutReservations CheckoutReservation[]
   /// Appareils de l'admin abonnés aux notifications push (rôle ADMIN uniquement).
   adminPushSubscriptions AdminPushSubscription[]
+  /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
+  behaviorBaseline BehaviorBaseline?
+  behaviorAlerts   BehaviorAlert[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -220,6 +233,7 @@ model Trade {
   /// C'est la déduplication d'import portée par la BASE : la version applicative
   /// (lire puis écrire) laissait un double-clic créer deux fois l'historique.
   importHash     String?
+  behaviorAlerts BehaviorAlert[]
 
   @@unique([userId, importHash])
   @@index([userId, tradedAt])
@@ -310,11 +324,19 @@ model TradeSession {
   accountId          String?
   account            TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   trades             Trade[]
+  behaviorAlerts     BehaviorAlert[]
   createdAt          DateTime        @default(now())
 
   @@index([userId, startedAt])
   @@index([userId, status])
   @@index([accountId])
+}
+
+/// Réponse à « Quel est ce compte ? » pour un compte sans plan du catalogue (#612).
+enum PlanLinkChoice {
+  LATER
+  PERSONAL
+  UNLISTED
 }
 
 // ── Multi-comptes (prop firms + perso) ──────────────────────────────────────
@@ -344,6 +366,12 @@ model TradingAccount {
   lastPayoutAt      DateTime?      @db.Date
   propFirmPlanId    String?
   propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
+  /// Réponse à « Quel est ce compte ? » quand il n'est PAS relié à un plan (#612) : `LATER` =
+  /// « Plus tard » (plan à renseigner), `PERSONAL` = compte perso, `UNLISTED` = firm absente du
+  /// catalogue (`unlistedFirm`). Null = jamais demandé. Remis à null quand un plan est relié.
+  planLinkChoice    PlanLinkChoice?
+  /// Firm saisie à « Ma firm n'est pas dans la liste » : ce qu'il faut ajouter au catalogue.
+  unlistedFirm      String?
   trades          Trade[]
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]
@@ -351,6 +379,7 @@ model TradingAccount {
   brokerPayouts     BrokerPayout[]
   riskDays          AccountRiskDay[]
   riskEvents        PropRiskEvent[]
+  behaviorAlerts    BehaviorAlert[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -658,6 +687,58 @@ model AdminPushSubscription {
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
+/// Référence personnelle du trader pour les détecteurs de comportement (#602) : délais entre
+/// positions, taille par actif, positions par séance, sur ses 20 dernières séances clôturées
+/// (séance = compte × journée de trading CME). Recalculée à la bascule CME, jamais à chaque
+/// événement. Table dédiée plutôt qu'un Json sur `User` : `User` est lu à chaque requête
+/// authentifiée, et la référence a son propre cycle (recalcul quotidien, horodatage).
+model BehaviorBaseline {
+  userId       String    @id
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Séances réellement utilisées : sous 10, B / C1 / C3 restent muets (apprentissage).
+  sessionsUsed Int
+  /// Dernière journée de trading incluse.
+  throughDay   DateTime? @db.Date
+  /// `BehaviorBaselineData` (behavior-baseline.ts) : délais, tailles par actif, positions par séance.
+  data         Json
+  computedAt   DateTime  @default(now()) @updatedAt
+}
+
+/// Alerte de comportement (#602) calculée en direct à chaque nouvelle entrée (position ouverte ou
+/// renforcée) d'un compte Tradovate suivi en temps réel. Phase 1 : enregistrée EN SILENCE, rien
+/// n'est affiché (`BEHAVIOR_ALERTS_UI=false`). Séance du moteur = compte × journée CME (`tradeDay`).
+model BehaviorAlert {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String?
+  account     TradingAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Journée de trading CME de l'entrée.
+  tradeDay    DateTime        @db.Date
+  /// Session MTC ouverte au moment de l'alerte, s'il y en a une (souvent aucune sur un compte synchronisé).
+  sessionId   String?
+  session     TradeSession?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  /// Trade lié quand il est connu : vide en direct (le trade n'existe qu'à la sortie).
+  tradeId     String?
+  trade       Trade?          @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  /// `A1_SIZE_OVER_PLAN` · `A2_DAILY_LOSS_DISTANCE` · `A3_ENTRY_DAY_STARTED` · `B_REVENGE` ·
+  /// `C1_LOSS_STREAK` · `C2_OVER_DAILY_LIMIT` · `C3_MARTINGALE` (TEXT : la liste peut grandir).
+  type        String
+  /// `medium` · `high`
+  severity    String
+  message     String
+  /// Chiffres de l'alerte (signaux, tailles, délais, points…), tels que calculés.
+  context     Json?
+  createdAt   DateTime        @default(now())
+  dismissedAt DateTime?
+  mutedByUser Boolean         @default(false)
+
+  @@index([userId, createdAt])
+  @@index([accountId, tradeDay])
+  @@index([sessionId])
+  @@index([tradeId])
+}
+
 model StripeEvent {
   id          String   @id // Stripe event ID (evt_...)
   type        String
@@ -671,6 +752,12 @@ enum Role {
   USER
   BETA_TESTER
   AMBASSADOR
+}
+
+/// Méthode de création du compte (#618) : répartition des inscriptions dans l'admin.
+enum AuthProvider {
+  EMAIL
+  GOOGLE
 }
 
 enum Plan {

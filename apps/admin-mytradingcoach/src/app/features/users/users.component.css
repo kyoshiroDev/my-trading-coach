@@ -7,6 +7,15 @@
 .muted { color: var(--text3); }
 .actions-col { text-align: right; }
 
+/* ── Filtre « inscrits d'une campagne » (#625) ── */
+.utm-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px;
+  background: var(--teal-dim); border: 1px solid var(--teal-glow); border-radius: var(--r-md); font-size: var(--fs-sm); }
+.utm-filter-l { color: var(--text2); }
+.utm-filter .td-mono { color: var(--teal); }
+.utm-filter-clear { margin-left: auto; background: none; border: 1px solid var(--border2); border-radius: var(--r-sm);
+  color: var(--text2); font: inherit; font-size: var(--fs-xs); padding: 4px 10px; cursor: pointer; }
+.utm-filter-clear:hover { color: var(--text); border-color: var(--teal); }
+
 .icon-btn.danger:hover { color: var(--red); border-color: var(--red); background: var(--red-dim); }
 
 /* ── Badges d'abonnement ── */

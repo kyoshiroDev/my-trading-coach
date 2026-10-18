@@ -11,6 +11,15 @@
       Connecte-toi pour accéder à ton journal de trading
     </p>
 
+    <mtc-google-auth-button
+      text="continue_with"
+      [busy]="googleLoading()"
+      (credential)="onGoogleCredential($event)"
+    />
+    @if (googleError()) {
+      <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
+    }
+
     <form (ngSubmit)="onLogin()">
       <div class="form-group" [class.input-error]="emailError()">
         <label for="email">Email</label>

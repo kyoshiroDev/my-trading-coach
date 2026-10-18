@@ -59,12 +59,20 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },
   { name: 'AI_ENABLED', level: 'optional', check: isBoolean },
   { name: 'BROKER_TOKEN_ENCRYPTION_KEY', level: 'optional', check: isBase64Key32 },
+  // Détecteurs de comportement (#602, modules/behavior). Enregistrement actif par défaut (false = coupé) ;
+  // affichage dans l'app seulement si BEHAVIOR_ALERTS_UI=true (phase 1 : jamais).
+  { name: 'BEHAVIOR_ALERTS_RECORD', level: 'optional', check: isBoolean },
+  { name: 'BEHAVIOR_ALERTS_UI', level: 'optional', check: isBoolean },
   // Notifications push de l'admin (config/push-config.ts). Absentes ou incomplètes → push désactivé,
   // l'API démarre quand même. Clés : node tools/scripts/vapid-generate.mjs (jamais commitées).
   { name: 'PUSH_ENABLED', level: 'optional', check: isBoolean },
   { name: 'VAPID_PUBLIC_KEY', level: 'optional', check: (v) => (isVapidKey(v, 65) ? undefined : 'doit être une clé publique VAPID (base64url, 65 octets)') },
   { name: 'VAPID_PRIVATE_KEY', level: 'optional', check: (v) => (isVapidKey(v, 32) ? undefined : 'doit être une clé privée VAPID (base64url, 32 octets)') },
   { name: 'VAPID_SUBJECT', level: 'optional', check: (v) => (/^(mailto:[^@\s]+@[^@\s]+|https:\/\/\S+)$/.test(v) ? undefined : 'doit être mailto:… ou https://…') },
+  // Connexion Google (#618). Bouton visible seulement si FEATURE_GOOGLE_AUTH=true ET GOOGLE_CLIENT_ID
+  // défini (client OAuth « application web » propre à l'environnement) ; off par défaut.
+  { name: 'FEATURE_GOOGLE_AUTH', level: 'optional', check: isBoolean },
+  { name: 'GOOGLE_CLIENT_ID', level: 'optional', check: (v) => (v.endsWith('.apps.googleusercontent.com') ? undefined : 'doit finir par .apps.googleusercontent.com') },
   // SCA-B9 : test de charge depuis un seul injecteur (beta uniquement ; ignorée si base de prod).
   { name: 'LOAD_TEST_KEY', level: 'optional', check: (v) => (v.length >= 32 ? undefined : 'au moins 32 caractères (openssl rand -hex 24)') },
 ];

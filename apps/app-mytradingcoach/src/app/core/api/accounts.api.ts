@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { AccountStatus, AccountType, DrawdownType } from '@mtc/shared';
+import type { AccountPlanHint, AccountStatus, AccountType, DrawdownType, PlanLinkChoice } from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
 
@@ -142,6 +142,10 @@ export interface TradingAccount {
   platform: string | null;
   /** Séance du dernier payout reçu (`AAAA-MM-JJ…`), sinon null. */
   lastPayoutAt: string | null;
+  /** Réponse à « Quel est ce compte ? » sans plan relié (#612) ; null = jamais demandé. */
+  planLinkChoice?: PlanLinkChoice | null;
+  /** Firm saisie à « Ma firm n'est pas dans la liste ». */
+  unlistedFirm?: string | null;
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
@@ -162,8 +166,12 @@ export interface CreateAccountPayload {
   lastPayoutAt?: string | null;
 }
 
+export type { PlanLinkChoice };
+
 export type UpdateAccountPayload = Partial<CreateAccountPayload> & {
   status?: AccountStatus;
+  planLinkChoice?: PlanLinkChoice | null;
+  unlistedFirm?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -181,6 +189,11 @@ export class AccountsApi {
 
   update(id: string, payload: UpdateAccountPayload): Observable<{ data: TradingAccount }> {
     return this.http.patch<{ data: TradingAccount }>(`${this.base}/${id}`, payload);
+  }
+
+  /** Indices stockés pour deviner le plan du compte connecté ; `data: null` sans sous-compte choisi. */
+  planHint(id: string): Observable<{ data: AccountPlanHint | null }> {
+    return this.http.get<{ data: AccountPlanHint | null }>(`${this.base}/${id}/plan-hint`);
   }
 
   /** « Ce n'était pas un payout » : écarte un payout détecté du cycle de payout. */

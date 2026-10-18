@@ -26,7 +26,8 @@ function makePrisma() {
     tradeSession: { count: vi.fn() },
     user: { findUnique: vi.fn() },
     propFirmPlan: { count: vi.fn() },
-    brokerDailyClose: { groupBy: vi.fn(async () => []) },
+    brokerDailyClose: { groupBy: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
+    brokerConnection: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0) },
     brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
   };
 }
@@ -264,6 +265,54 @@ describe('AccountsService', () => {
       await svc.update('u1', 'a1', { propFirmPlanId: null } as never);
       expect(prisma.propFirmPlan.count).not.toHaveBeenCalled();
       expect(prisma.tradingAccount.update).toHaveBeenCalledWith({ where: { id: 'a1' }, data: { propFirmPlanId: null } });
+    });
+  });
+
+  describe('« Quel est ce compte ? » (#612)', () => {
+    beforeEach(() => {
+      prisma.tradingAccount.findUnique.mockResolvedValue({ id: 'a1', userId: 'u1', status: 'ACTIVE', propFirmPlanId: null });
+      prisma.tradingAccount.update.mockResolvedValue({ id: 'a1' });
+      prisma.propFirmPlan.count.mockResolvedValue(1);
+    });
+
+    it('relier un plan efface la réponse « plus tard » et la firm absente', async () => {
+      await svc.update('u1', 'a1', { propFirmPlanId: 'apex-eod-50k' } as never);
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: { propFirmPlanId: 'apex-eod-50k', planLinkChoice: null, unlistedFirm: null },
+      });
+    });
+
+    it('« Plus tard » : compte sans plan, marqué à renseigner', async () => {
+      await svc.update('u1', 'a1', { planLinkChoice: 'LATER' } as never);
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: { planLinkChoice: 'LATER', unlistedFirm: null },
+      });
+    });
+
+    it('« Ma firm n\'est pas dans la liste » garde le nom saisi', async () => {
+      await svc.update('u1', 'a1', { planLinkChoice: 'UNLISTED', unlistedFirm: 'FTMO' } as never);
+      expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
+        where: { id: 'a1' },
+        data: { planLinkChoice: 'UNLISTED', unlistedFirm: 'FTMO' },
+      });
+    });
+
+    it('planHint — indices stockés : nom, hôte, propriétaire, solde de départ de la 1re clôture', async () => {
+      prisma.brokerConnection.findFirst.mockResolvedValue({
+        externalAccountId: '42', externalAccountName: 'PAAPEX123', externalEnv: 'demo', externalUserId: '9001',
+        availableAccounts: [{ id: '42', name: 'PAAPEX123', env: 'demo', userId: '699523' }],
+      } as never);
+      prisma.brokerDailyClose.findFirst.mockResolvedValue({ closingBalance: 300_420.5, realizedPnl: 420.5 } as never);
+      await expect(svc.planHint('u1', 'a1')).resolves.toEqual({
+        externalName: 'PAAPEX123', env: 'demo', ownerIsLogin: false, startingBalance: 300_000,
+      });
+      expect(prisma.brokerDailyClose.findFirst).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { tradeDate: 'asc' } }));
+    });
+
+    it('planHint — pas de sous-compte choisi : null', async () => {
+      await expect(svc.planHint('u1', 'a1')).resolves.toBeNull();
     });
   });
 

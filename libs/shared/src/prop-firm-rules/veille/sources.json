@@ -2,6 +2,7 @@
   "https://blusky.pro/": {
     "kind": "hash",
     "values": [
+      "8ce050a137659c5d",
       "2aca5f5208923792"
     ],
     "firms": [
@@ -11,6 +12,7 @@
   "https://bulenox.com/accounts-pricing": {
     "kind": "hash",
     "values": [
+      "763c01c4dcbb2d3a",
       "cd2fb3e01e3f00c4"
     ],
     "firms": [
@@ -20,6 +22,7 @@
   "https://bulenox.com/help-center/fast-track": {
     "kind": "hash",
     "values": [
+      "e46ca8283a6bfe32",
       "68d345e50a64180c"
     ],
     "firms": [
@@ -38,6 +41,7 @@
   "https://bulenox.com/help-center/master": {
     "kind": "hash",
     "values": [
+      "9521514ea15abb0c",
       "ec15a2946516f8ae"
     ],
     "firms": [
@@ -92,6 +96,7 @@
   "https://elitetraderfunding.app/elite": {
     "kind": "hash",
     "values": [
+      "003fea19d0f84afd",
       "0c29d24325b648e3"
     ],
     "firms": [
@@ -155,7 +160,7 @@
   "https://help.blusky.pro/en/articles/12292284-sim-funded-payouts": {
     "kind": "date",
     "values": [
-      "2026-10-07T17:41:58Z"
+      "2026-10-08T14:57:46Z"
     ],
     "firms": [
       "blusky"
@@ -173,7 +178,7 @@
   "https://help.blusky.pro/en/articles/12434092-resets": {
     "kind": "date",
     "values": [
-      "2026-08-12T18:38:33Z"
+      "2026-10-15T15:02:38Z"
     ],
     "firms": [
       "blusky"
@@ -218,7 +223,7 @@
   "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts": {
     "kind": "date",
     "values": [
-      "2026-08-12T18:48:32Z"
+      "2026-10-15T15:03:24Z"
     ],
     "firms": [
       "blusky"
@@ -236,7 +241,7 @@
   "https://help.blusky.pro/en/articles/17297032-sim-funded-accounts-rules": {
     "kind": "date",
     "values": [
-      "2026-10-05T18:41:50Z"
+      "2026-10-08T14:56:06Z"
     ],
     "firms": [
       "blusky"
@@ -326,7 +331,7 @@
   "https://help.earn2trade.com/en/articles/5452472-what-is-the-withdrawal-policy": {
     "kind": "date",
     "values": [
-      "2026-07-09T10:10:23Z"
+      "2026-10-13T09:27:17Z"
     ],
     "firms": [
       "earn2trade"
@@ -371,7 +376,7 @@
   "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights": {
     "kind": "date",
     "values": [
-      "2026-06-30T16:04:08Z"
+      "2026-10-13T00:19:53Z"
     ],
     "firms": [
       "myfundedfutures"
@@ -452,7 +457,7 @@
   "https://help.toponefutures.com/en/articles/10907081-daily-drawdown-what-you-need-to-know": {
     "kind": "date",
     "values": [
-      "2026-10-01T23:54:21Z"
+      "2026-10-17T13:16:54Z"
     ],
     "firms": [
       "toponefutures"
@@ -524,7 +529,7 @@
   "https://help.toponefutures.com/en/articles/11020805-overview-of-the-instant-sim-funded-program": {
     "kind": "date",
     "values": [
-      "2026-10-01T22:56:21Z"
+      "2026-10-11T00:22:56Z"
     ],
     "firms": [
       "toponefutures"
@@ -542,7 +547,7 @@
   "https://help.toponefutures.com/en/articles/12671168-ignite-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-01T22:28:30Z"
+      "2026-10-17T13:16:11Z"
     ],
     "firms": [
       "toponefutures"
@@ -578,7 +583,7 @@
   "https://help.toponefutures.com/en/articles/13904706-elite-daily-v2-daily-loss-limit-dll-funded-phase": {
     "kind": "date",
     "values": [
-      "2026-10-02T19:15:54Z"
+      "2026-10-17T13:15:39Z"
     ],
     "firms": [
       "toponefutures"
@@ -614,7 +619,7 @@
   "https://help.toponefutures.com/en/articles/14595016-elite-access-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-01T20:24:02Z"
+      "2026-10-13T18:43:03Z"
     ],
     "firms": [
       "toponefutures"
@@ -632,7 +637,7 @@
   "https://help.toponefutures.com/en/articles/14595138-elite-access-daily-loss-limit-dll": {
     "kind": "date",
     "values": [
-      "2026-10-01T20:26:52Z"
+      "2026-10-17T13:18:50Z"
     ],
     "firms": [
       "toponefutures"
@@ -686,7 +691,7 @@
   "https://help.toponefutures.com/en/articles/15056075-elite-daily-v2-overview": {
     "kind": "date",
     "values": [
-      "2026-10-02T19:15:03Z"
+      "2026-10-13T08:42:00Z"
     ],
     "firms": [
       "toponefutures"
@@ -695,7 +700,7 @@
   "https://help.toponefutures.com/en/articles/15056388-elite-daily-v2-daily-loss-limit-dll-evaluation-phase": {
     "kind": "date",
     "values": [
-      "2026-10-02T19:17:27Z"
+      "2026-10-17T13:15:05Z"
     ],
     "firms": [
       "toponefutures"
@@ -713,7 +718,7 @@
   "https://help.toponefutures.com/en/articles/15069348-elite-daily-v2-reset-fees": {
     "kind": "date",
     "values": [
-      "2026-10-06T12:13:03Z"
+      "2026-10-13T23:17:51Z"
     ],
     "firms": [
       "toponefutures"
@@ -731,7 +736,7 @@
   "https://help.toponefutures.com/en/articles/17059267-elite-access-intraday-accounts-overview": {
     "kind": "date",
     "values": [
-      "2026-10-01T21:38:58Z"
+      "2026-10-13T18:44:01Z"
     ],
     "firms": [
       "toponefutures"
@@ -740,7 +745,7 @@
   "https://help.toponefutures.com/en/articles/17059623-elite-access-intraday-daily-loss-limit-dll": {
     "kind": "date",
     "values": [
-      "2026-10-01T21:41:48Z"
+      "2026-10-17T13:14:30Z"
     ],
     "firms": [
       "toponefutures"
@@ -863,6 +868,15 @@
       "toponefutures"
     ]
   },
+  "https://help.toponefutures.com/en/articles/17635087-no-daily-loss-limit-add-on-trade-without-daily-limits": {
+    "kind": "date",
+    "values": [
+      "2026-10-16T09:54:02Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ]
+  },
   "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep": {
     "kind": "date",
     "values": [
@@ -884,7 +898,7 @@
   "https://help.topstep.com/en/articles/14289835-topstep-pricing-and-payment-questions": {
     "kind": "date",
     "values": [
-      "2026-09-25T22:00:42Z"
+      "2026-10-15T22:44:35Z"
     ],
     "firms": [
       "topstep"
@@ -956,7 +970,7 @@
   "https://help.topstep.com/en/articles/8284233-topstep-payout-policy": {
     "kind": "date",
     "values": [
-      "2026-09-30T20:32:23Z"
+      "2026-10-13T14:26:14Z"
     ],
     "firms": [
       "topstep"
@@ -1118,7 +1132,7 @@
   "https://intercom.help/funded-futures-family/en/articles/15809232-premier-evaluation": {
     "kind": "date",
     "values": [
-      "2026-09-10T23:10:04Z"
+      "2026-10-15T21:30:14Z"
     ],
     "firms": [
       "fundedfuturesfamily"
@@ -1374,6 +1388,7 @@
     "kind": "hash",
     "values": [
       "c177c5a6f8305c7f",
+      "e3b0c44298fc1c14",
       "6c08e59a6ed62a64"
     ],
     "firms": [
@@ -1473,7 +1488,7 @@
   "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms": {
     "kind": "date",
     "values": [
-      "2026-07-28T17:06:23Z"
+      "2026-10-12T16:37:27Z"
     ],
     "firms": [
       "lucid"
@@ -1608,7 +1623,7 @@
   "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account": {
     "kind": "date",
     "values": [
-      "2026-08-15T22:59:33Z"
+      "2026-10-13T14:01:19Z"
     ],
     "firms": [
       "lucid"
@@ -1645,42 +1660,6 @@
     "kind": "date",
     "values": [
       "2026-08-26T21:15:27Z"
-    ],
-    "firms": [
-      "lucid"
-    ]
-  },
-  "https://support.lucidtrading.com/en/articles/13425130-new-live-structure": {
-    "kind": "date",
-    "values": [
-      "2026-10-04T19:05:06Z"
-    ],
-    "firms": [
-      "lucid"
-    ]
-  },
-  "https://support.lucidtrading.com/en/articles/13891785-lucidmaxx-overview": {
-    "kind": "date",
-    "values": [
-      "2026-10-04T21:40:15Z"
-    ],
-    "firms": [
-      "lucid"
-    ]
-  },
-  "https://support.lucidtrading.com/en/articles/14315460-lucidmaxx-eval-rules": {
-    "kind": "date",
-    "values": [
-      "2026-10-04T21:40:06Z"
-    ],
-    "firms": [
-      "lucid"
-    ]
-  },
-  "https://support.lucidtrading.com/en/articles/14316866-lucidmaxx-eval-pricing": {
-    "kind": "date",
-    "values": [
-      "2026-10-04T21:39:56Z"
     ],
     "firms": [
       "lucid"
@@ -1767,10 +1746,19 @@
       "lucid"
     ]
   },
+  "https://support.lucidtrading.com/en/articles/16558826-new-live-structure": {
+    "kind": "date",
+    "values": [
+      "2026-10-14T04:58:44Z"
+    ],
+    "firms": [
+      "lucid"
+    ]
+  },
   "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program": {
     "kind": "date",
     "values": [
-      "2026-10-06T15:59:46Z"
+      "2026-10-09T21:23:25Z"
     ],
     "firms": [
       "lucid"
@@ -1860,7 +1848,7 @@
   "https://takeprofittraderhelp.zendesk.com/hc/en-us/articles/15172219527581-PRO-Account-Profit-Split-Withdrawal-Rules": {
     "kind": "date",
     "values": [
-      "2026-10-06T15:31:52Z"
+      "2026-10-09T15:06:03Z"
     ],
     "firms": [
       "takeprofittrader"
@@ -1923,6 +1911,7 @@
   "https://uprofit.com/day-programs": {
     "kind": "hash",
     "values": [
+      "4d43593d062147a6",
       "dee586fbecb6d697"
     ],
     "firms": [
@@ -1932,6 +1921,7 @@
   "https://uprofit.com/help/-markets-and-trading-hours-38279727543188": {
     "kind": "hash",
     "values": [
+      "8fbd426c96b6a672",
       "d3195b4e4c9e0e5e"
     ],
     "firms": [
@@ -1941,7 +1931,17 @@
   "https://uprofit.com/help/uprofit-flex-100k-52062454952980": {
     "kind": "hash",
     "values": [
+      "48246eb72ad56b79",
       "0c1940e5d38cbae5"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-10k-54395134778260": {
+    "kind": "hash",
+    "values": [
+      "d9f21d7002f6f76f"
     ],
     "firms": [
       "uprofit"
@@ -1950,6 +1950,7 @@
   "https://uprofit.com/help/uprofit-flex-150k-52062432918292": {
     "kind": "hash",
     "values": [
+      "17832b88f4b91c27",
       "b7d7cb16ca4d7489"
     ],
     "firms": [
@@ -1959,6 +1960,7 @@
   "https://uprofit.com/help/uprofit-flex-50k-52062400375060": {
     "kind": "hash",
     "values": [
+      "27b29bfe115ecc58",
       "65f9fc202d328e8f"
     ],
     "firms": [
@@ -1968,7 +1970,17 @@
   "https://uprofit.com/help/uprofit-flex-live-virtual-100k-52062625551636": {
     "kind": "hash",
     "values": [
+      "7a41f3c6ea5aa660",
       "4ac228ea44fa5afa"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-flex-live-virtual-10k-54395343573908": {
+    "kind": "hash",
+    "values": [
+      "d3a0a89a542b5f9a"
     ],
     "firms": [
       "uprofit"
@@ -1977,6 +1989,7 @@
   "https://uprofit.com/help/uprofit-flex-live-virtual-150k-52062642415636": {
     "kind": "hash",
     "values": [
+      "700732771eddc230",
       "cb315d9393151d02"
     ],
     "firms": [
@@ -1986,6 +1999,7 @@
   "https://uprofit.com/help/uprofit-flex-live-virtual-50k-52062598543508": {
     "kind": "hash",
     "values": [
+      "7332b5468cf92197",
       "c6dcc2dcc41a3c01"
     ],
     "firms": [
@@ -1995,6 +2009,7 @@
   "https://uprofit.com/help/uprofit-flex-payout-policy-52062715698580": {
     "kind": "hash",
     "values": [
+      "ea9e3dbf614f525a",
       "b4d621fe891b5c42"
     ],
     "firms": [
@@ -2004,6 +2019,7 @@
   "https://uprofit.com/help/uprofit-flex-trading-parameters-52062905513620": {
     "kind": "hash",
     "values": [
+      "b652f567dff1b44a",
       "9eb9f74b2d281649"
     ],
     "firms": [
@@ -2013,7 +2029,17 @@
   "https://uprofit.com/help/uprofit-soft-100k-52063415195668": {
     "kind": "hash",
     "values": [
+      "701e08af343d7349",
       "dd63893e632aab8c"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-10k-54393437776020": {
+    "kind": "hash",
+    "values": [
+      "b2ae79d49c95b960"
     ],
     "firms": [
       "uprofit"
@@ -2022,6 +2048,7 @@
   "https://uprofit.com/help/uprofit-soft-150k-52063440373780": {
     "kind": "hash",
     "values": [
+      "73116af9293c00d9",
       "bceb3e9b949fa450"
     ],
     "firms": [
@@ -2031,6 +2058,7 @@
   "https://uprofit.com/help/uprofit-soft-50k-52063403210132": {
     "kind": "hash",
     "values": [
+      "091b066bdeeea231",
       "81fe95e2c65b105e"
     ],
     "firms": [
@@ -2040,7 +2068,17 @@
   "https://uprofit.com/help/uprofit-soft-live-virtual-100k-52063655534228": {
     "kind": "hash",
     "values": [
+      "8ac138f546c70c83",
       "30b007801692f782"
+    ],
+    "firms": [
+      "uprofit"
+    ]
+  },
+  "https://uprofit.com/help/uprofit-soft-live-virtual-10k-54394490735252": {
+    "kind": "hash",
+    "values": [
+      "f042a6cefbe91b60"
     ],
     "firms": [
       "uprofit"
@@ -2049,6 +2087,7 @@
   "https://uprofit.com/help/uprofit-soft-live-virtual-150k-52063703228692": {
     "kind": "hash",
     "values": [
+      "7413dbe036de31eb",
       "d4bff446528b12a5"
     ],
     "firms": [
@@ -2058,6 +2097,7 @@
   "https://uprofit.com/help/uprofit-soft-live-virtual-50k-52063647938580": {
     "kind": "hash",
     "values": [
+      "0022ce52e78b88d8",
       "047dc4658a0f3ec1"
     ],
     "firms": [
@@ -2067,6 +2107,7 @@
   "https://uprofit.com/help/uprofit-soft-payout-policy-52063548100500": {
     "kind": "hash",
     "values": [
+      "3ed2498183979ca4",
       "51a85e644c54e45a"
     ],
     "firms": [
@@ -2076,6 +2117,7 @@
   "https://uprofit.com/help/uprofit-soft-trading-parameters-52063207935892": {
     "kind": "hash",
     "values": [
+      "3376cd0bf81b74fc",
       "0a8f46aa451ea7cc"
     ],
     "firms": [
@@ -2085,6 +2127,7 @@
   "https://www.earn2trade.com/gauntlet-mini": {
     "kind": "hash",
     "values": [
+      "f592e45eb11cb8a1",
       "0812b6393d5cada0"
     ],
     "firms": [
@@ -2094,6 +2137,7 @@
   "https://www.earn2trade.com/trader-career-path": {
     "kind": "hash",
     "values": [
+      "079b5c0146e4852e",
       "934c3287310b1633"
     ],
     "firms": [
@@ -2121,6 +2165,7 @@
   "https://www.toponefutures.com/": {
     "kind": "hash",
     "values": [
+      "2a0b5caf55111c5f",
       "57b3f38a59d9941f"
     ],
     "firms": [
@@ -2130,6 +2175,7 @@
   "https://www.toponefutures.com/launchpad": {
     "kind": "hash",
     "values": [
+      "74a71cddbe063afb",
       "ca3f06ba738f932f"
     ],
     "firms": [
@@ -2139,6 +2185,7 @@
   "https://www.tradeday.com/#pricing": {
     "kind": "hash",
     "values": [
+      "02013b3518e704c5",
       "dea277ffef61df91"
     ],
     "firms": [
