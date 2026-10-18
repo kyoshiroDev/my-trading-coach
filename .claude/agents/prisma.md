@@ -516,3 +516,13 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 `lastSuccessAt`. Cascade à la suppression du User. Supprimé par l'API sur réponse 404/410 du service
 push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
 `20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).
+
+## Détecteurs de comportement (#602, phase 1, 2026-10-18)
+
+- `BehaviorBaseline` (migration `20261018120000_behavior_baseline`, table nouvelle, additive) : une
+  ligne par utilisateur (`userId` = PK, cascade), `sessionsUsed`, `throughDay` (`DATE`), `data` Json
+  = `BehaviorBaselineData` (`modules/behavior/behavior-baseline.ts` : délais entre positions, taille
+  médiane / p75 / p90 par actif, positions par séance). Table dédiée plutôt qu'un Json sur `User` :
+  `User` est lu à chaque requête authentifiée et la référence a son propre cycle (recalcul à la
+  bascule CME, à la volée si datée d'une journée précédente). Rien à ajouter au seed démo : la démo
+  n'enregistre pas d'alertes (lecture seule, pas de synchro live).

@@ -109,6 +109,8 @@ model User {
   checkoutReservations CheckoutReservation[]
   /// Appareils de l'admin abonnés aux notifications push (rôle ADMIN uniquement).
   adminPushSubscriptions AdminPushSubscription[]
+  /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
+  behaviorBaseline BehaviorBaseline?
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -658,6 +660,23 @@ model AdminPushSubscription {
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────
+/// Référence personnelle du trader pour les détecteurs de comportement (#602) : délais entre
+/// positions, taille par actif, positions par séance, sur ses 20 dernières séances clôturées
+/// (séance = compte × journée de trading CME). Recalculée à la bascule CME, jamais à chaque
+/// événement. Table dédiée plutôt qu'un Json sur `User` : `User` est lu à chaque requête
+/// authentifiée, et la référence a son propre cycle (recalcul quotidien, horodatage).
+model BehaviorBaseline {
+  userId       String    @id
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Séances réellement utilisées : sous 10, B / C1 / C3 restent muets (apprentissage).
+  sessionsUsed Int
+  /// Dernière journée de trading incluse.
+  throughDay   DateTime? @db.Date
+  /// `BehaviorBaselineData` (behavior-baseline.ts) : délais, tailles par actif, positions par séance.
+  data         Json
+  computedAt   DateTime  @default(now()) @updatedAt
+}
+
 model StripeEvent {
   id          String   @id // Stripe event ID (evt_...)
   type        String
