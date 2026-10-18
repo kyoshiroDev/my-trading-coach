@@ -35,6 +35,15 @@
       </div>
     }
 
+    <mtc-google-auth-button
+      text="continue_with"
+      [busy]="googleLoading()"
+      (credential)="onGoogleCredential($event)"
+    />
+    @if (googleError()) {
+      <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
+    }
+
     <form (ngSubmit)="onRegister()">
       <div class="form-group">
         <label for="name"

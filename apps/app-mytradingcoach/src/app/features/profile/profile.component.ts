@@ -109,6 +109,9 @@ export class ProfileComponent implements OnInit {
 
   // Compte : mot de passe
   protected readonly passwordResetSent = signal(false);
+  /** Compte Google sans mot de passe (#618) : `hasPassword` absent d'un ancien cache = vrai. */
+  protected readonly hasPassword = computed(() => this.userStore.user()?.hasPassword !== false);
+  protected readonly unlinkingGoogle = signal(false);
 
   // Préférences (plus de devise : elle est portée par chaque compte)
   protected readonly prefNotifications = signal(true);
@@ -442,6 +445,29 @@ export class ProfileComponent implements OnInit {
         },
         error: () => {
           /* silently ignore : user stays on page */
+        },
+      });
+  }
+
+  protected async unlinkGoogle() {
+    const ok = await this.confirm.ask({
+      title: 'Délier Google',
+      message: 'Tu te connecteras ensuite uniquement avec ton email et ton mot de passe.',
+      confirmLabel: 'Délier',
+    });
+    if (!ok) return;
+    this.unlinkingGoogle.set(true);
+    this.auth
+      .unlinkGoogle()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.unlinkingGoogle.set(false);
+          this.toast.success('Google est délié de ton compte');
+        },
+        error: () => {
+          this.unlinkingGoogle.set(false);
+          this.toast.error("Impossible de délier Google pour l'instant, réessaie");
         },
       });
   }

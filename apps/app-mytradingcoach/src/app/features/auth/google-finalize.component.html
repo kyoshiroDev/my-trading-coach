@@ -1,0 +1,57 @@
+<div class="auth-page">
+  <div class="bg-glow"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
+    </div>
+
+    <h1 class="auth-title">
+      @if (firstName) {
+        Bienvenue {{ firstName }} 👋
+      } @else {
+        Bienvenue 👋
+      }
+    </h1>
+    <p class="auth-subtitle">Ton compte est créé avec Google. Une dernière chose avant de commencer.</p>
+
+    @if (email) {
+      <div class="account-chip">
+        <span class="account-chip-label">Compte</span>
+        <span class="account-chip-email">{{ email }}</span>
+      </div>
+    }
+
+    <form (ngSubmit)="onContinue()">
+      <label class="consent-check">
+        <input
+          type="checkbox"
+          name="marketingConsent"
+          data-testid="finalize-marketing"
+          [ngModel]="marketingConsent()"
+          (ngModelChange)="marketingConsent.set($event)"
+        />
+        <span>J'accepte de recevoir des emails de MyTradingCoach (conseils, nouveautés). Désinscription à tout moment.</span>
+      </label>
+
+      <button type="submit" data-testid="finalize-submit" [disabled]="isLoading()" class="btn-submit">
+        @if (isLoading()) {
+          <span class="spinner"></span> Un instant...
+        } @else {
+          Continuer →
+        }
+      </button>
+
+      @if (apiError()) {
+        <div class="error-msg" role="alert">{{ apiError() }}</div>
+      }
+    </form>
+
+    <p class="legal-note">
+      En créant ton compte, tu acceptes les
+      <a [href]="cguUrl" target="_blank" rel="noopener">CGU</a>.
+      Google nous transmet ton nom et ton email, rien d'autre :
+      <a [href]="privacyUrl" target="_blank" rel="noopener">politique de confidentialité</a>.
+    </p>
+  </div>
+</div>

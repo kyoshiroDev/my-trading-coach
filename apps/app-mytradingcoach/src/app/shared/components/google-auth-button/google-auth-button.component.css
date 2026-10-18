@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+/* Bouton rendu par Google (iframe, 40 px) centré dans une zone tactile de 44 px. */
+.google-slot {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-slot.gone {
+  display: none;
+}
+
+.google-slot.loading {
+  /* Place réservée pendant le chargement du script : le formulaire ne saute pas. */
+  border-radius: 8px;
+  background: var(--bg-3);
+}
+
+.google-slot.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.slot {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.in-app {
+  border: 1px solid var(--border-hover);
+  background: var(--blue-glow);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.in-app p {
+  margin: 0 0 10px;
+}
+
+.in-app strong {
+  color: var(--text);
+}
+
+.dots {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.copy-btn {
+  min-height: 44px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  color: var(--blue-bright);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  border-color: var(--blue);
+}

@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { GoogleIdentityService } from '../../core/auth/google-identity.service';
 
 @Component({
   selector: 'mtc-forgot-password',
@@ -25,6 +26,14 @@ export class ForgotPasswordComponent {
   protected readonly isLoading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly success = signal(false);
+  /** Connexion Google active : rappel pour les comptes créés avec Google (#618). */
+  protected readonly googleEnabled = signal(false);
+
+  constructor() {
+    void inject(GoogleIdentityService)
+      .config()
+      .then((c) => this.googleEnabled.set(c.enabled));
+  }
 
   onSubmit() {
     if (!this.email) return;
