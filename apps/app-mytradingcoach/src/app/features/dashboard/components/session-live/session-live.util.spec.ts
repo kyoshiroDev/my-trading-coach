@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EcoEvent } from '@mtc/shared';
 import type { InstrumentDto } from '@app/core/api/trades.api';
 import {
-  bannerTickers, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
+  bannerTickers, cmeClosed, cmeReopenLabel, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
 } from './session-live.util';
 
 // Extrait de instruments.const.ts (API) : valeur du point = tickValue / tickSize.
@@ -143,5 +143,20 @@ describe('bandeau PC (#597)', () => {
     expect(moodLabel(null)).toBeNull();
     expect(planKindShort('trailing_eod')).toBe('EOD');
     expect(planKindShort(null)).toBeNull();
+  });
+});
+
+describe('marché CME fermé (vitrine démo le week-end)', () => {
+  it('fermé du vendredi 16:00 au dimanche 17:00, heure de Chicago', () => {
+    expect(cmeClosed(new Date('2026-10-16T20:59:00Z'))).toBe(false); // ven. 15:59 CDT
+    expect(cmeClosed(new Date('2026-10-16T21:00:00Z'))).toBe(true);  // ven. 16:00 CDT
+    expect(cmeClosed(new Date('2026-10-18T12:00:00Z'))).toBe(true);  // dimanche
+    expect(cmeClosed(new Date('2026-10-18T22:00:00Z'))).toBe(false); // dim. 17:00 CDT
+    expect(cmeClosed(new Date('2026-10-19T09:00:00Z'))).toBe(false); // lundi
+  });
+
+  it('heure de réouverture en clair, rien si le marché est ouvert', () => {
+    expect(cmeReopenLabel(new Date('2026-10-18T12:00:00Z'))).toMatch(/^(dimanche|lundi) \d{2}:\d{2}$/);
+    expect(cmeReopenLabel(new Date('2026-10-19T09:00:00Z'))).toBeNull();
   });
 });

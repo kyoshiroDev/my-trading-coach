@@ -38,6 +38,13 @@
     </div>
     <button type="button" class="ne-btn ne-dismiss" data-testid="live-release-dismiss" (click)="dismiss()">J'ai lu</button>
   </section>
+} @else if (reopen(); as r) {
+  <section class="ne-line ne-closed" data-testid="live-market-closed" aria-label="Marché fermé">
+    <div class="ne-body">
+      <div class="ne-lbl">MARCHÉ FERMÉ</div>
+      <div class="ne-name">Réouverture des futures {{ r }}</div>
+    </div>
+  </section>
 } @else if (next(); as n) {
   <section class="ne-line" data-testid="live-next-event" aria-label="Prochaine annonce">
     <div class="ne-body">

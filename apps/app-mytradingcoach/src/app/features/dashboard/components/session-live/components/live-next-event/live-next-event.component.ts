@@ -5,7 +5,7 @@ import type { EcoEvent } from '@mtc/shared';
 import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
 import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 import { EcoSocketService } from '@app/core/services/eco-socket.service';
-import { countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence } from '../../session-live.util';
+import { cmeReopenLabel, countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence } from '../../session-live.util';
 
 /** Annonce qui vient de tomber, avec l'analyse IA existante (null tant qu'elle n'est pas arrivée). */
 interface Release {
@@ -19,6 +19,8 @@ interface Release {
  * « Prochaine annonce » de la session live v3 : une ligne, compte à rebours recalculé chaque
  * minute. Plus d'annonce aujourd'hui → rien (pas d'état vide). Le calendrier complet reste dans
  * la Pré-session.
+ *
+ * Marché fermé (week-end CME) : la ligne le dit, avec l'heure de réouverture.
  *
  * Quand une annonce tombe (WebSocket éco `eco:new-releases`), la ligne passe à l'état « publiée » :
  * chiffre publié et prévision, première phrase de l'analyse IA (le reste se déplie). Mêmes appels
@@ -41,6 +43,8 @@ export class LiveNextEventComponent {
 
   private readonly now = signal(new Date());
   protected readonly next = computed(() => nextAnnouncement(this.events(), this.now()));
+  /** Marché CME fermé (week-end) : « réouverture dimanche 23:00 » à la place de l'annonce. */
+  protected readonly reopen = computed(() => cmeReopenLabel(this.now()));
   protected readonly releases = signal<Release[]>([]);
   protected readonly release = computed(() => this.releases()[0] ?? null);
   protected readonly expanded = signal(false);

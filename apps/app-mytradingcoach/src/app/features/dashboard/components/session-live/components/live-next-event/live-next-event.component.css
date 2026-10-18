@@ -27,3 +27,7 @@
 .ne-toggle { margin-top: 8px; border: none; padding: 0; color: var(--blue-bright); }
 .ne-toggle:hover { text-decoration: underline; }
 .ne-dismiss { flex-shrink: 0; }
+
+/* Marché fermé : neutre (ni annonce, ni alerte) */
+.ne-closed { border-color: rgba(255, 255, 255, .08); }
+.ne-closed .ne-lbl { color: var(--text-2); }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, Type, signal } from '@angular/core';
 import { Subject, of, throwError } from 'rxjs';
@@ -87,7 +87,13 @@ describe('Session live v3 — bandeau', () => {
 });
 
 describe('Session live v3 — prochaine annonce', () => {
-  beforeEach(() => TestBed.resetTestingModule());
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    // Mardi 10:00 (marché ouvert) : le rendu ne dépend pas du jour où tournent les tests.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 13, 10, 0));
+  });
+  afterEach(() => vi.useRealTimers());
   const ev = (time: string, isReleased = false): EcoEvent => ({
     time, name: 'ISM Services PMI', impact: 'high', country: 'US', currency: 'USD',
     actual: null, estimate: null, previous: null, isReleased,
@@ -96,6 +102,13 @@ describe('Session live v3 — prochaine annonce', () => {
   it('aucune annonce restante aujourd’hui : la ligne disparaît', () => {
     const { el } = render(LiveNextEventComponent, { events: [ev('00:00', true)] }, NEXT_TEMPLATE);
     expect(el.querySelector('[data-testid="live-next-event"]')).toBeNull();
+  });
+
+  it('week-end : « Marché fermé » et l’heure de réouverture, pas d’annonce', () => {
+    vi.setSystemTime(new Date('2026-10-18T12:00:00Z')); // dimanche
+    const { el, text } = render(LiveNextEventComponent, { events: [ev('23:59')] }, NEXT_TEMPLATE);
+    expect(el.querySelector('[data-testid="live-next-event"]')).toBeNull();
+    expect(text('live-market-closed')).toMatch(/^MARCHÉ FERMÉ ?Réouverture des futures (dimanche|lundi) \d{2}:\d{2}$/);
   });
 
   it('annonce à venir : nom, heure, impact et compte à rebours', () => {

@@ -157,6 +157,30 @@ export function splitFirstSentence(text: string): { first: string; rest: string 
   return m ? { first: m[1], rest: m[2] } : { first: t, rest: '' };
 }
 
+const CHICAGO = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', weekday: 'short', hour: 'numeric', hourCycle: 'h23' });
+
+/** Marché des futures CME fermé : du vendredi 16:00 au dimanche 17:00, heure de Chicago. */
+export function cmeClosed(at: Date): boolean {
+  const p = Object.fromEntries(CHICAGO.formatToParts(at).map((x) => [x.type, x.value]));
+  const h = Number(p['hour']);
+  return (p['weekday'] === 'Fri' && h >= 16) || p['weekday'] === 'Sat' || (p['weekday'] === 'Sun' && h < 17);
+}
+
+/** Réouverture CME (dimanche 17:00 Chicago) en heure locale : « dimanche 23:00 », « lundi 00:00 ». */
+export function cmeReopenLabel(at: Date): string | null {
+  if (!cmeClosed(at)) return null;
+  // Pas de 15 min jusqu'à la réouverture (au plus ~49 h) : simple et juste aux changements d'heure.
+  const t = new Date(at);
+  t.setMinutes(Math.floor(t.getMinutes() / 15) * 15, 0, 0);
+  for (let i = 0; i < 4 * 60; i++) {
+    t.setTime(t.getTime() + 15 * 60_000);
+    if (!cmeClosed(t)) {
+      return t.toLocaleString('fr-FR', { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+    }
+  }
+  return null;
+}
+
 /** Sortie d'un trade clôturé : TP / SL atteint, sinon manuelle (même règle que le live feed). */
 export function closeKind(t: { side: string; exit: number | null; stopLoss: number | null; takeProfit: number | null }): 'TP' | 'SL' | 'Manuel' {
   if (t.exit === null) return 'Manuel';
