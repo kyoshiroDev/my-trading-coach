@@ -5,7 +5,7 @@ import { ageLabel, laggingBrokerPanel, liveTotals } from './live-position.util';
 const broker = (o: Partial<LiveBrokerState> = {}): LiveBrokerState => ({
   openPositions: [], positionsAt: null, openPnl: 0, openPnlAt: null, ...o,
 });
-const position = { asset: 'MNQ', side: 'LONG' as const, quantity: 1, entryPrice: 21_500, since: null };
+const position = { asset: 'MNQ', side: 'LONG' as const, quantity: 1, entryPrice: 21_500, since: null, stopPrice: null, targetPrice: null };
 
 describe('liveTotals', () => {
   it('position ouverte : total = réalisé + latent du broker', () => {

@@ -4,6 +4,7 @@ import {
   CATCH_UP_HISTORY_AFTER_MS,
   LIVE_EVENT_DEBOUNCE_MS,
   LIVE_LEASE_RENEW_MS,
+  LIVE_ORDERS_DEBOUNCE_MS,
   TradovateLiveService,
   liveLeaseKey,
   LIVE_CATCH_UP_CONCURRENCY,
@@ -333,6 +334,61 @@ describe('Tradovate live — solde du compte poussé par le broker', () => {
     s.server('a[{"e":"props","d":{"entityType":"cashBalance","eventType":"Updated","entity":{"accountId":999,"amount":1}}}]');
     await settle();
     expect(balance.recordCashBalance).not.toHaveBeenCalled();
+    await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — ordres actifs SL / TP (#601)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  async function opened() {
+    const ctx = setup({ conns: [conn({ lastSyncAt: new Date() })] });
+    await ctx.service.attach('u1', 'tab-1');
+    await settle();
+    const s = ctx.sockets[0];
+    s.server('o');
+    s.server('a[{"s":200,"i":0}]');
+    return { ...ctx, s };
+  }
+  const stored = (redis: ReturnType<typeof fakeRedis>) => JSON.parse(redis.store.get('tradovate:orders:bc-1') ?? 'null');
+
+  it('instantané initial puis modification : ordres actifs dans Redis, vue live prévenue', async () => {
+    const { s, redis, emitted, sync, service } = await opened();
+    s.server(`a[{"s":200,"i":1,"d":{"orders":[
+      {"id":10,"accountId":777,"contractId":7,"action":"Sell","ordStatus":"Working","ocoId":11},
+      {"id":12,"accountId":777,"contractId":7,"action":"Sell","ordStatus":"Filled"}],
+      "orderVersions":[{"id":100,"orderId":10,"orderType":"Stop","stopPrice":21480}]}}]`);
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(stored(redis).orders).toEqual([
+      { id: 10, contractId: 7, action: 'Sell', orderType: 'Stop', price: null, stopPrice: 21480, parentId: null, ocoId: 11 },
+    ]);
+    expect(emitted).toContainEqual({ userId: 'u1', event: 'tradovate:orders', payload: { accountId: 'acc-1' } });
+
+    // Stop déplacé : nouvelle version poussée.
+    s.server('a[{"e":"props","d":{"entityType":"orderVersion","eventType":"Created","entity":{"id":101,"orderId":10,"orderType":"Stop","stopPrice":21490}}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(stored(redis).orders[0].stopPrice).toBe(21490);
+
+    // Stop annulé : plus d'ordre actif.
+    s.server('a[{"e":"props","d":{"entityType":"order","eventType":"Updated","entity":{"id":10,"accountId":777,"ordStatus":"Canceled"}}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(stored(redis).orders).toEqual([]);
+    expect(sync.sync).not.toHaveBeenCalled(); // un ordre n'est pas un trade
+    await service.onModuleDestroy();
+  });
+
+  it('rien de changé → ni réécriture ni émission', async () => {
+    const { s, redis, emitted, service } = await opened();
+    s.server('a[{"s":200,"i":1,"d":{"orders":[]}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    const writes = redis.client.set.mock.calls.filter((c) => c[0] === 'tradovate:orders:bc-1').length;
+    // Limite posée puis annulée dans la même fenêtre : même état qu'avant.
+    s.server('a[{"e":"props","d":{"entityType":"order","eventType":"Created","entity":{"id":1,"accountId":777,"contractId":7,"action":"Sell","ordStatus":"Working"}}}]');
+    s.server('a[{"e":"props","d":{"entityType":"order","eventType":"Updated","entity":{"id":1,"accountId":777,"ordStatus":"Canceled"}}}]');
+    await vi.advanceTimersByTimeAsync(LIVE_ORDERS_DEBOUNCE_MS);
+    expect(redis.client.set.mock.calls.filter((c) => c[0] === 'tradovate:orders:bc-1')).toHaveLength(writes);
+    expect(emitted.filter((e) => e.event === 'tradovate:orders')).toHaveLength(1);
     await service.onModuleDestroy();
   });
 });

@@ -911,6 +911,17 @@ export class CreateTradeDto {
   et leurs dates ; `null` si compte non synchronisé. Latent inconnu avec position → `openPnl: null`
   (jamais un chiffre inventé) ; à plat → 0. Le total de session reste le RÉALISÉ : le latent est à
   part.
+- **SL / TP des positions (ordres actifs, #601)** : le WebSocket souscrit aussi `order` +
+  `orderVersion` (`ORDER_ENTITY_TYPES`, permission `Orders:Read` déjà accordée, **lecture seule**).
+  `order` porte le lien (`parentId`, `ocoId`, `ordStatus`), `orderVersion` le type et les prix : il
+  faut les deux. Carnet en mémoire par connexion (`tradovate-orders.ts`, remis à zéro à chaque
+  instantané `user/syncrequest`), ne garde que `Working` / `PendingReplace` ; regroupé 500 ms puis
+  écrit dans Redis `tradovate:orders:<connexion>` (TTL 12 h) **seulement s'il change** → événement
+  front `tradovate:orders`. `0` appel REST : la Trade API ne garde les ordres que pendant la séance.
+  `getLiveBrokerState` relie via `protectionFor` (position Redis porte `contractId`) : même contrat,
+  sens opposé, SL = stop sous l'entrée d'un LONG (`stopPrice`), TP = `Limit` au-dessus (`price`) ;
+  **plusieurs candidats sans lien de bracket → `null`** (jamais une association devinée). Mapping
+  jamais validé sur un vrai bracket : trames `order` / `orderVersion` brutes en `logger.debug`.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
@@ -1551,7 +1562,8 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
 
 `TradovateBalanceService` (`integrations/tradovate/tradovate-balance.service.ts`) remplit les colonnes
 `BrokerConnection.broker*` : solde réalisé officiel, equity (`netLiq`), latent, positions ouvertes.
-- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`) ;
+- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`,
+  avec `order` / `orderVersion` pour les SL / TP, cf. « SL / TP des positions ») ;
   chaque variation → `recordCashBalance` → événement front `tradovate:balance`, **sans** synchro
   REST. L'état initial (réponse du `user/syncrequest`, id `SYNC_REQUEST_ID`) donne solde + positions.
 - **Equity + latent** : `POST /cashBalance/getcashbalancesnapshot`, seule lecture en POST, via

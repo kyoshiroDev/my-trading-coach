@@ -10,6 +10,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { computeTradeStats, toParisDateStr } from '@mtc/shared';
 import type { LiveBrokerState, SessionHistoryItem } from '@mtc/shared';
 import { openPositionsKey, parseOpenPositions } from '../integrations/tradovate/tradovate-open-positions';
+import { parseWorkingOrders, protectionFor, workingOrdersKey } from '../integrations/tradovate/tradovate-orders';
 import { activeSessionWhere, tradingDayStart } from './active-session';
 import { autoCloseData, sessionTotalsFrom } from './session-totals';
 
@@ -362,12 +363,22 @@ export class SessionService {
     });
     if (!conn) return null;
 
-    const raw = await this.redisService.client.get(openPositionsKey(conn.id)).catch(() => null);
+    const [raw, rawOrders] = await Promise.all([
+      this.redisService.client.get(openPositionsKey(conn.id)).catch(() => null),
+      this.redisService.client.get(workingOrdersKey(conn.id)).catch(() => null),
+    ]);
     const state = parseOpenPositions(raw);
+    // Ordres actifs tenus par le WebSocket (app ouverte) : SL / TP de chaque position, ou null.
+    const orders = parseWorkingOrders(rawOrders)?.orders ?? [];
     // « À plat » = compteur en base, la même règle que le suivi du compte (`accounts.service`) :
     // les deux panneaux de la session live doivent dire la même chose. Redis ne donne que le détail.
     const flat = conn.brokerOpenPositions === 0;
-    const openPositions = flat ? [] : (state?.positions ?? []);
+    const openPositions = flat
+      ? []
+      : (state?.positions ?? []).map(({ contractId, ...p }) => ({
+          ...p,
+          ...protectionFor({ contractId, side: p.side, entryPrice: p.entryPrice }, orders),
+        }));
     return {
       openPositions,
       positionsAt: state?.at ?? null,

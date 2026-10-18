@@ -217,11 +217,33 @@ describe('SessionService', () => {
       expect(mockRedisService.client.get).toHaveBeenCalledWith('tradovate:positions:conn-1');
       expect(stats.totalPnl).toBe(100); // réalisé seul : le latent reste à part
       expect(stats.broker).toEqual({
-        openPositions: [position],
+        openPositions: [{ ...position, stopPrice: null, targetPrice: null }],
         positionsAt: '2026-10-06T14:05:00Z',
         openPnl: -42.5,
         openPnlAt: at.toISOString(),
       });
+    });
+
+    it('ordres actifs lus en direct → SL / TP de la position (#601), contrat jamais exposé', async () => {
+      mockPrisma.brokerConnection.findFirst.mockResolvedValue({
+        id: 'conn-1', brokerOpenPnl: 10, brokerEquityAt: null, brokerOpenPositions: 1,
+      });
+      const position = { asset: 'MNQ', side: 'LONG', quantity: 1, entryPrice: 21_500, since: null, contractId: 7 };
+      const orders = [
+        { id: 1, contractId: 7, action: 'Sell', orderType: 'Stop', price: null, stopPrice: 21_480, parentId: 9, ocoId: 2 },
+        { id: 2, contractId: 7, action: 'Sell', orderType: 'Limit', price: 21_560, stopPrice: null, parentId: 9, ocoId: 1 },
+      ];
+      mockRedisService.client.get.mockImplementation(async (key: string) =>
+        key === 'tradovate:positions:conn-1' ? JSON.stringify({ at: 'x', positions: [position] })
+          : key === 'tradovate:orders:conn-1' ? JSON.stringify({ at: 'x', orders })
+            : null);
+
+      const { broker } = await service.getLiveStats('user-1');
+      mockRedisService.client.get.mockReset().mockResolvedValue(null);
+
+      expect(broker?.openPositions).toEqual([
+        { asset: 'MNQ', side: 'LONG', quantity: 1, entryPrice: 21_500, since: null, stopPrice: 21_480, targetPrice: 21_560 },
+      ]);
     });
 
     it('position ouverte mais latent jamais lu → null, pas de chiffre inventé', async () => {
