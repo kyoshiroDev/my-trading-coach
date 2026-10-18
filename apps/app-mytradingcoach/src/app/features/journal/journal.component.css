@@ -170,11 +170,13 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
+  /* Actif réduit au profit du P&L (montant + %) et un espace entre colonnes : à 1280 px le P&L passait
+     sur 2 lignes et touchait la quantité (#635). */
+  grid-template-columns: 44px 0.8fr 0.7fr 0.9fr 0.9fr 1.7fr 0.5fr 0.6fr 1fr 1.3fr 1.1fr 64px;
+  column-gap: 8px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
-  gap: 0;
 }
 .table-header > span {
   font-size: var(--fs-2xs);
@@ -362,11 +364,13 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
+  /* Actif réduit au profit du P&L (montant + %) et un espace entre colonnes : à 1280 px le P&L passait
+     sur 2 lignes et touchait la quantité (#635). */
+  grid-template-columns: 44px 0.8fr 0.7fr 0.9fr 0.9fr 1.7fr 0.5fr 0.6fr 1fr 1.3fr 1.1fr 64px;
+  column-gap: 8px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
-  gap: 0;
   transition: background 0.12s;
 }
 .trade-row:hover { background: var(--bg-2); }
