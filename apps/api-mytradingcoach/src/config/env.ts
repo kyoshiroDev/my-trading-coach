@@ -59,6 +59,10 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'REDIS_PREFIX', level: 'optional', check: (v) => (/^[A-Za-z0-9_:-]+$/.test(v) ? undefined : 'lettres, chiffres, « _ », « - », « : » uniquement') },
   { name: 'AI_ENABLED', level: 'optional', check: isBoolean },
   { name: 'BROKER_TOKEN_ENCRYPTION_KEY', level: 'optional', check: isBase64Key32 },
+  // Détecteurs de comportement (#602, modules/behavior). Enregistrement actif par défaut (false = coupé) ;
+  // affichage dans l'app seulement si BEHAVIOR_ALERTS_UI=true (phase 1 : jamais).
+  { name: 'BEHAVIOR_ALERTS_RECORD', level: 'optional', check: isBoolean },
+  { name: 'BEHAVIOR_ALERTS_UI', level: 'optional', check: isBoolean },
   // Notifications push de l'admin (config/push-config.ts). Absentes ou incomplètes → push désactivé,
   // l'API démarre quand même. Clés : node tools/scripts/vapid-generate.mjs (jamais commitées).
   { name: 'PUSH_ENABLED', level: 'optional', check: isBoolean },

@@ -526,3 +526,12 @@ push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). M
   `User` est lu à chaque requête authentifiée et la référence a son propre cycle (recalcul à la
   bascule CME, à la volée si datée d'une journée précédente). Rien à ajouter au seed démo : la démo
   n'enregistre pas d'alertes (lecture seule, pas de synchro live).
+- `BehaviorAlert` (migration `20261018130000_behavior_alert`, table nouvelle, additive) : alerte de
+  comportement enregistrée en direct, **en silence** en phase 1. `userId` (cascade), `accountId`
+  (cascade), `tradeDay` (`DATE`, journée CME = séance du moteur avec le compte), `sessionId`
+  (`TradeSession`, SetNull, souvent vide : les trades synchronisés sont rarement rattachés à une
+  session), `tradeId` (SetNull, vide en direct : le trade n'existe qu'à la sortie), `type` /
+  `severity` en TEXT (liste dans `behavior-detectors.ts`), `message`, `context` Json, `dismissedAt`,
+  `mutedByUser` (prévus pour l'UI de phase 2). Index `(userId, createdAt)`, `(accountId, tradeDay)`.
+  Volume attendu ≈ 1 alerte par séance de trader actif : conservation à décider avant la phase 2
+  (`RETENTION_RULES`).

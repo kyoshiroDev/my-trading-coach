@@ -111,6 +111,7 @@ model User {
   adminPushSubscriptions AdminPushSubscription[]
   /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
   behaviorBaseline BehaviorBaseline?
+  behaviorAlerts   BehaviorAlert[]
   lastSeenAt      DateTime?
   lastLoginAt     DateTime?
   createdAt       DateTime             @default(now())
@@ -222,6 +223,7 @@ model Trade {
   /// C'est la déduplication d'import portée par la BASE : la version applicative
   /// (lire puis écrire) laissait un double-clic créer deux fois l'historique.
   importHash     String?
+  behaviorAlerts BehaviorAlert[]
 
   @@unique([userId, importHash])
   @@index([userId, tradedAt])
@@ -312,6 +314,7 @@ model TradeSession {
   accountId          String?
   account            TradingAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
   trades             Trade[]
+  behaviorAlerts     BehaviorAlert[]
   createdAt          DateTime        @default(now())
 
   @@index([userId, startedAt])
@@ -353,6 +356,7 @@ model TradingAccount {
   brokerPayouts     BrokerPayout[]
   riskDays          AccountRiskDay[]
   riskEvents        PropRiskEvent[]
+  behaviorAlerts    BehaviorAlert[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -675,6 +679,41 @@ model BehaviorBaseline {
   /// `BehaviorBaselineData` (behavior-baseline.ts) : délais, tailles par actif, positions par séance.
   data         Json
   computedAt   DateTime  @default(now()) @updatedAt
+}
+
+/// Alerte de comportement (#602) calculée en direct à chaque nouvelle entrée (position ouverte ou
+/// renforcée) d'un compte Tradovate suivi en temps réel. Phase 1 : enregistrée EN SILENCE, rien
+/// n'est affiché (`BEHAVIOR_ALERTS_UI=false`). Séance du moteur = compte × journée CME (`tradeDay`).
+model BehaviorAlert {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId   String?
+  account     TradingAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// Journée de trading CME de l'entrée.
+  tradeDay    DateTime        @db.Date
+  /// Session MTC ouverte au moment de l'alerte, s'il y en a une (souvent aucune sur un compte synchronisé).
+  sessionId   String?
+  session     TradeSession?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  /// Trade lié quand il est connu : vide en direct (le trade n'existe qu'à la sortie).
+  tradeId     String?
+  trade       Trade?          @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  /// `A1_SIZE_OVER_PLAN` · `A2_DAILY_LOSS_DISTANCE` · `A3_ENTRY_DAY_STARTED` · `B_REVENGE` ·
+  /// `C1_LOSS_STREAK` · `C2_OVER_DAILY_LIMIT` · `C3_MARTINGALE` (TEXT : la liste peut grandir).
+  type        String
+  /// `medium` · `high`
+  severity    String
+  message     String
+  /// Chiffres de l'alerte (signaux, tailles, délais, points…), tels que calculés.
+  context     Json?
+  createdAt   DateTime        @default(now())
+  dismissedAt DateTime?
+  mutedByUser Boolean         @default(false)
+
+  @@index([userId, createdAt])
+  @@index([accountId, tradeDay])
+  @@index([sessionId])
+  @@index([tradeId])
 }
 
 model StripeEvent {
