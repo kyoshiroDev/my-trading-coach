@@ -32,7 +32,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Puis-je importer mon historique de trades ?',
     answer:
-      "Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement : tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). Pour les autres brokers (Binance, Bybit, MetaTrader 4/5, IBKR…), l'import CSV fonctionne avec tout broker qui exporte ses trades : il détecte automatiquement le format et structure ton historique. L'import CSV reste aussi disponible pour Tradovate.",
+      "Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement : tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). L'import CSV reconnaît automatiquement les exports Tradovate, Binance, Bybit, MetaTrader 4/5, IBKR et MEXC, en gratuit. Pour un autre broker, l'import IA lit ton fichier tel quel et structure ton historique : il est réservé au Premium.",
   },
   {
     question: 'Comment fonctionne le trial ?',

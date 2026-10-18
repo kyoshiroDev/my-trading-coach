@@ -50,7 +50,9 @@ import { GA_ID } from '../config';
     w.gtag('event', el.dataset.gaEvent, { cta_place: el.dataset.gaPlace ?? '' });
   });
 
-  if (gaId) {
+  // Visiteur de la pub redirigé vers /prop-firm (index.astro) : pas de page vue GA4 pour l'accueil.
+  const redirecting = !!(window as Window & { __mtcPaidRedirect?: boolean }).__mtcPaidRedirect;
+  if (gaId && !redirecting) {
     if (readConsent() === 'accepted') loadGa(gaId);
 
     window.addEventListener('mtc:consent', (e) => {

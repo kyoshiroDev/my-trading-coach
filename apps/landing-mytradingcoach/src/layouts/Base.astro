@@ -43,13 +43,17 @@ const robots = noindex
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {/* Script à exécuter avant tout le reste de la page (redirection de la pub sur l'accueil). */}
+  <slot name="head-start" />
   <link rel="preconnect" href={appOrigin} />
   <link rel="preconnect" href={apiOrigin} crossorigin />
 
   <!-- ═══ SEO PRIMARY ═══ -->
   <title>{title}</title>
   <meta name="description" content={description} />
-  {!noindex && <link rel="canonical" href={canonical} />}
+  {/* Page noindex : canonical seulement s'il est passé explicitement (page de test publicitaire
+      comme /prop-firm, qui pointe sur elle-même) ; jamais sur une page technique (404). */}
+  {(!noindex || Astro.props.canonical) && <link rel="canonical" href={canonical} />}
   <meta name="robots" content={robots} />
   <meta name="author" content="MyTradingCoach" />
   <meta name="geo.region" content="FR" />
@@ -171,6 +175,7 @@ const robots = noindex
   <script is:inline define:vars={{ apiUrl: API_URL, inAppPattern: IN_APP_UA_PATTERN, internalKey: INTERNAL_STORAGE_KEY }}>
     (function () {
       try {
+        if (window.__mtcPaidRedirect) return; // pub redirigée vers /prop-firm (index.astro)
         // Mode interne (visites de l'équipe) : décidé avant tout envoi.
         var internal = false;
         try {

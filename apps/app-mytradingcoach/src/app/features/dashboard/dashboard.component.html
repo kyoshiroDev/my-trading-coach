@@ -61,9 +61,9 @@
         <div class="premium-banner-price">
           <span class="premium-banner-amount">{{ PRICING.premium.monthly }}€</span>
           <span class="premium-banner-period">/mois</span>
-          <div class="premium-banner-trial">1 mois offert · carte requise</div>
+          <div class="premium-banner-trial">{{ userStore.trialAvailable() ? '1 mois offert · carte requise' : 'Sans engagement · annulable en un clic' }}</div>
         </div>
-        <button class="premium-banner-btn" (click)="showPlanModal.set(true)">Essayer Premium</button>
+        <button class="premium-banner-btn" (click)="showPlanModal.set(true)">{{ userStore.trialAvailable() ? 'Essayer Premium' : 'Passer à Premium' }}</button>
       </div>
     </div>
   }

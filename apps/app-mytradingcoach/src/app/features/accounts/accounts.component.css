@@ -412,11 +412,12 @@
 .quota-banner b { font-weight: 600; }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
+/* Palier 1000 des modales : au-dessus du bouton menu (150) et du « + » flottant (100) en mobile. */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(4,8,14,.7);
   display: flex; align-items: center; justify-content: center;
-  z-index: 100; padding: 20px;
+  z-index: 1000; padding: 20px;
 }
 .modal {
   background: var(--bg-card);

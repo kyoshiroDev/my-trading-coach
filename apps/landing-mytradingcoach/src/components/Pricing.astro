@@ -24,6 +24,7 @@ const premiumPlus: PremiumPlus[] = [
   { text: '💬 Chat coach IA personnalisé' },
   { text: '🏆 Score trader /100 hebdomadaire' },
   { text: '📄 Export PDF rapport mensuel' },
+  { text: '📥 Import IA des autres brokers : ton fichier lu tel quel' },
   { text: '🌙 Recap 17h30 et Weekly Debrief nourris par tes séances suivies en direct' },
 ];
 // Comptes illimités : déjà dans l'encart « comptes » de la carte, donc seulement dans le bloc.
@@ -80,7 +81,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
           <li>📅 Calendrier éco IA : analyse bull/bear</li>
           <li>📰 News live &amp; contexte marché (DXY, taux US, indices)</li>
           <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
-          <li>🔗 Synchro Tradovate automatique (lecture seule) · Import CSV universel</li>
+          <li>🔗 Synchro Tradovate automatique (lecture seule) · Import CSV Tradovate, Binance, Bybit, MT4/5, IBKR, MEXC</li>
           <li>💰 Solde broker, objectif &amp; prochain payout</li>
         </ul>
         <a href={`${APP_URL}/register`} class="price-cta ghost" data-cta="free" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
@@ -225,90 +226,16 @@ const FounderWrap = founderOpen ? 'div' : 'template';
 </section>
 
 <script>
-  import { founderSeatsLabel } from '@mtc/shared';
-  import { captureCtaFromUrl, isSelling, onFounderState, rememberedCta } from '../lib/founder-offer';
+  import { captureCtaFromUrl } from '../lib/founder-offer';
+  import { initFounderPricing } from '../lib/founder-pricing';
 
   captureCtaFromUrl();
 
   // Carte Fondateur : insérée depuis son <template> seulement si l'offre vend, avec le VRAI
-  // compteur ; retirée sinon. Le changement se fait au chargement et la section est très bas dans
-  // la page : aucun décalage visible (CLS).
-  const section = document.getElementById('pricing');
-  const cardTpl = section?.querySelector<HTMLTemplateElement>('template[data-founder-tpl]');
-  const noteTpl = section?.querySelector<HTMLTemplateElement>('template[data-founder-note-tpl]');
-
-  const clone = (t: HTMLTemplateElement) =>
-    (t.content.cloneNode(true) as DocumentFragment).firstElementChild as HTMLElement;
-
-  /** Paramètres posés par Base.astro sur les liens /register (ref, promo, utm_*) : la carte,
-   *  insérée après eux, les reprend du lien Premium (sauf `plan`). */
-  const copyTrackingParams = (to: HTMLAnchorElement) => {
-    const from = section?.querySelector<HTMLAnchorElement>('.is-premium a[href*="/register"]');
-    if (!from) return;
-    const src = new URL(from.href);
-    const dst = new URL(to.href);
-    src.searchParams.forEach((v, k) => {
-      if (k !== 'plan' && !dst.searchParams.has(k)) dst.searchParams.set(k, v);
-    });
-    to.href = dst.toString();
-  };
-
-  /** Lien de la carte : paramètres de suivi et point de clic (une seule fois par carte). */
-  const wire = (card: HTMLElement) => {
-    const cta = card.querySelector<HTMLAnchorElement>('[data-founder-cta]');
-    if (!cta || cta.dataset.wired) return;
-    cta.dataset.wired = '1';
-    copyTrackingParams(cta);
-    // Point de clic : bandeau, FAQ ou campagne e-mail s'ils ont mené ici, sinon la carte elle-même.
-    cta.addEventListener('click', () => {
-      const remembered = rememberedCta();
-      if (remembered === 'bandeau' || remembered === 'faq' || remembered === 'email') {
-        const url = new URL(cta.href);
-        url.searchParams.set('cta', remembered);
-        cta.href = url.toString();
-      }
-    });
-  };
-
-  /** Carte déjà rendue (offre ouverte au build) ou insérée depuis son gabarit. */
-  const mount = (): HTMLElement | null => {
-    let card = section?.querySelector<HTMLElement>('[data-founder-card]') ?? null;
-    if (!card && section && cardTpl) {
-      card = clone(cardTpl);
-      cardTpl.after(card);
-      if (noteTpl) noteTpl.after(clone(noteTpl));
-    }
-    if (card) wire(card);
-    return card;
-  };
-
-  const unmount = () => {
-    section?.querySelector('[data-founder-card]')?.remove();
-    section?.querySelector('[data-founder-note]')?.remove();
-    section?.classList.remove('has-founder');
-    // Éléments rendus au build seulement si l'offre vendait (bouton du Hero…).
-    document.querySelectorAll('[data-founder-only]').forEach((el) => el.remove());
-  };
-
-  // Carte rendue au build (offre ouverte à ce moment-là) : seule une réponse EXPLICITE « ne vend
-  // plus » la retire. API injoignable ou réponse invalide (`null`) → la carte reste, compteur masqué :
-  // pas de saut de mise en page, et le serveur refuse de toute façon un checkout fondateur si l'offre
-  // est fermée ou complète (`FounderOfferService.eligibility` + réservation sous verrou).
-  const builtOpen = !!section?.querySelector('[data-founder-card]');
-  if (section && (cardTpl || builtOpen)) {
-    onFounderState((s) => {
-      if (s === null && builtOpen) return;
-      if (!isSelling(s)) return unmount();
-      const card = mount();
-      if (!card) return;
-      section.classList.add('has-founder');
-      const left = card.querySelector('[data-founder-left]');
-      if (left) left.textContent = founderSeatsLabel(s.seatsLeft, s.seatsTotal) ?? '';
-      const fill = card.querySelector<HTMLElement>('.founder-seats-fill');
-      if (fill) fill.style.transform = `scaleX(${(s.seatsTotal - s.seatsLeft) / s.seatsTotal})`;
-      card.querySelector('.founder-seats')?.classList.remove('is-pending');
-    });
-  }
+  // compteur ; retirée sinon (mécanisme partagé avec /prop-firm, src/lib/founder-pricing.ts). Le
+  // changement se fait au chargement et la section est très bas dans la page : aucun décalage
+  // visible (CLS).
+  initFounderPricing(document.getElementById('pricing'));
 </script>
 
 <style>

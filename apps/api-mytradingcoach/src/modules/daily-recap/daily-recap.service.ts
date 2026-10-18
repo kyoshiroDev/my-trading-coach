@@ -1,5 +1,4 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
-import { Plan } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { effectiveEmotion } from '../../common/utils/effective-emotion.util';
@@ -8,6 +7,7 @@ import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
 import { demoAccountIds, excludeAccountsWhere } from '../accounts/demo-accounts';
 import { IMPORT_SETUP_TITLE } from '../setups/setups.service';
+import { isPremiumAccess } from '../discord/discord-access.util';
 
 @Injectable()
 export class DailyRecapService {
@@ -79,6 +79,8 @@ export class DailyRecapService {
       where: { id: userId },
       select: {
         plan: true,
+        role: true,
+        trialEndsAt: true,
         market: true,
         goal: true,
         tradingStyle: true,
@@ -90,8 +92,8 @@ export class DailyRecapService {
       },
     });
 
-    // Recap IA = PREMIUM only (le cron ne sélectionne que les users PREMIUM).
-    if (user?.plan === Plan.PREMIUM && trades.length >= 3) {
+    // Recap IA = accès Premium réel, mois offert compris (#627) : même règle que le cron.
+    if (user && isPremiumAccess(user) && trades.length >= 3) {
       const sevenDaysAgo = new Date(date);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

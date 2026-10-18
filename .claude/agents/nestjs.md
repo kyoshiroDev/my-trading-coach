@@ -1773,7 +1773,8 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 
 ### File des récaps quotidiens (SCA-B5-01, 2026-10-07)
 
-`DailyRecapCron` (17 h 30 Paris, lun-ven) ne fait plus qu'**enfiler** un job par Premium actif
+`DailyRecapCron` (17 h 30 Paris, lun-ven) ne fait plus qu'**enfiler** un job par accès Premium réel
+(PREMIUM, ADMIN, BETA_TESTER, essai / mois offert actif, #627) ayant tradé ce jour
 (file `daily-recap`, `modules/daily-recap/daily-recap.queue.ts`) ; `DailyRecapProcessor` (worker,
 `concurrency: 3`) génère le récap (appel IA) puis met l'e-mail en file `email`.
 - `jobId = recap-<userId>-<AAAA-MM-JJ>` (jour de Paris) et `removeOnComplete: { age: 2 j }` : relancer

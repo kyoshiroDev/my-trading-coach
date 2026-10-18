@@ -1,0 +1,77 @@
+---
+// En-tête simplifié de /prop-firm (page de test publicitaire, hors navigation du site) : le logo
+// de la Nav, « Se connecter », et sur ordinateur les ancres de la page + l'inscription. Pas de menu
+// hamburger : une page courte, une seule décision à prendre. Bandeau de l'offre fondateur : le même
+// composant que l'accueil (affiché seulement si l'offre vend), lien vers les tarifs de CETTE page.
+import { APP_URL } from '../../config';
+import FounderBanner from '../FounderBanner.astro';
+---
+
+<FounderBanner href="#tarifs" />
+
+<header class="pfh">
+  <div class="pfh-in">
+    <a href="/" class="pfh-logo">
+      <img src="/icon/logo-navbar.svg" alt="MyTradingCoach" width="200" height="32" />
+    </a>
+    <nav class="pfh-nav" aria-label="Sections de la page">
+      <a href="#comment" class="pfh-anchor">Comment ça marche</a>
+      <a href="#prop-firms" class="pfh-anchor">Prop firms</a>
+      <a href="#tarifs" class="pfh-anchor">Tarifs</a>
+      <a href={`${APP_URL}/login`} class="pfh-login">Se connecter</a>
+      <a href={`${APP_URL}/register`} class="pfh-cta" data-ga-event="cta_signup" data-ga-place="pf-nav">Commencer gratuitement</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  /* Fixe, 60 px : la hauteur que réserve `body { padding-top: 60px }` (global.css). */
+  .pfh {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: 60px;
+    background: rgba(6, 9, 15, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--b);
+  }
+  /* Bandeau de l'offre affiché : l'en-tête descend de 32 px par transform, comme la Nav de l'accueil
+     (aucun saut de mise en page). */
+  :global(html.has-offer-bar) .pfh { transform: translateY(32px); }
+  .pfh-in {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .pfh-logo { display: flex; align-items: center; }
+  .pfh-logo img { display: block; height: 32px; width: auto; }
+  .pfh-nav { display: flex; align-items: center; gap: 28px; }
+  /* Jamais sur deux lignes (« Se connecter » passait à la ligne en 360 px). */
+  .pfh-nav a { font-size: 15px; color: var(--txt2); text-decoration: none; white-space: nowrap; }
+  .pfh-nav a:hover { color: var(--txt); }
+  .pfh-nav a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+  /* Zone d'appui de 44 px en mobile (« Se connecter » est seul à droite). */
+  .pfh-login { padding: 12px 4px; }
+  .pfh-nav .pfh-cta {
+    background: var(--blue);
+    color: #fff;
+    font-family: var(--disp);
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 10px;
+  }
+  .pfh-nav .pfh-cta:hover { background: var(--blue2); color: #fff; }
+
+  /* Mobile et tablette : logo + « Se connecter » seulement (le bouton est dans le haut de page). */
+  @media (max-width: 1023px) {
+    .pfh-anchor,
+    .pfh-nav .pfh-cta { display: none; }
+  }
+</style>
