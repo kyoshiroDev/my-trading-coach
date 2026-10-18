@@ -64,13 +64,16 @@ const faq = [
         <ul class="pf-checks">
           <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Tes trades arrivent tout seuls</li>
           <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Ta marge restante, en direct</li>
-          <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Les règles de {firmCount} prop firms déjà intégrées</li>
+          <li><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><polyline points="4 12 10 18 20 6" /></svg>Les règles de {firmCount} prop firms, au plan près</li>
         </ul>
         <div class="pf-hero-ctas">
           <a href={register} class="pf-btn" data-ga-event="cta_signup" data-ga-place="pf-hero">Commencer gratuitement</a>
           <a href={`${APP_URL}/demo`} class="pf-demo" data-ga-event="cta_demo" data-ga-place="pf-hero">Voir la démo</a>
         </div>
         <p class="pf-reassure">Gratuit, sans carte bancaire · Lecture seule, aucun ordre passé</p>
+        {/* Seul emoji de la page hors footer (demande du 18/10). NinjaTrader : formulation factuelle
+            de la clause 17, sans logo (le logo reste au seul footer). */}
+        <p class="pf-trustline">🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans l'écosystème NinjaTrader</p>
       </div>
 
       <figure class="pf-example">
@@ -240,7 +243,8 @@ const faq = [
   .pf-narrow { max-width: 820px; }
   .pf-center { text-align: center; }
   .pf-band { background: var(--bg2); border-top: 1px solid var(--b); border-bottom: 1px solid var(--b); }
-  #comment { scroll-margin-top: 60px; }
+  /* Ancres sous l'en-tête fixe (60 px) ; 92 px quand le bandeau de l'offre est affiché (FounderBanner). */
+  :global(html) { scroll-padding-top: 60px; }
   h3 { margin: 0; font-family: var(--body); font-size: 20px; font-weight: 600; line-height: 1.35; }
   .pfp p { margin: 0; }
 
@@ -296,6 +300,7 @@ const faq = [
   .pf-demo { font-size: 16px; color: var(--blue2); padding: 10px 4px; }
   .pf-demo:hover { color: var(--txt); }
   .pf-reassure { font-size: 14px; color: var(--txt2); }
+  .pf-trustline { font-size: 12.5px; line-height: 1.5; color: var(--txt3); margin-top: -12px; }
 
   /* Carte d'exemple : marge restante en jaune (alerte), perte en rouge (perte), cf. design.md. */
   .pf-example { margin: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -461,7 +466,8 @@ const faq = [
   }
   @media (max-width: 640px) {
     /* Premier écran d'un iPhone (390×844, navigateur Instagram) : le bouton doit y tenir. */
-    .pfp .pf-hero { padding: 32px 20px 40px; gap: 32px; }
+    /* 44 px en haut : le bandeau de l'offre (32 px, fixe) passe dessus sans toucher le libellé. */
+    .pfp .pf-hero { padding: 44px 20px 40px; gap: 32px; }
     .pf-hero-copy { gap: 18px; }
     h1 { font-size: 42px; line-height: 1.04; letter-spacing: -1.2px; }
     .pf-lead { font-size: 17px; }
@@ -470,7 +476,8 @@ const faq = [
     .pf-hero-ctas { display: contents; }
     .pf-btn { display: block; font-size: 17px; padding: 17px 20px; margin-top: 4px; }
     .pf-hero-copy .pf-reassure { order: 1; text-align: center; font-size: 13px; margin-top: -8px; }
-    .pf-demo { order: 2; text-align: center; font-size: 14px; padding: 8px; margin-top: -10px; }
+    .pf-trustline { order: 2; text-align: center; font-size: 12px; margin-top: -10px; }
+    .pf-demo { order: 3; text-align: center; font-size: 14px; padding: 8px; margin-top: -10px; }
     .pf-ex-card { padding: 22px; gap: 16px; border-radius: 18px; }
     .pf-ex-name { font-size: 16px; }
     .pf-ex-label { font-size: 11px; }

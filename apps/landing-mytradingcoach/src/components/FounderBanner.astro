@@ -8,13 +8,17 @@
 // la marge haute des premières sections (≥ 40 px sur toutes les pages ; sur l'accueil, le bandeau
 // « Fait en France » collé sous la Nav descend lui aussi, attribut `data-offer-shift`).
 import { FOUNDER_OFFER } from '@mtc/shared';
+
+// Cible du lien : les tarifs de l'accueil par défaut ; une page qui a ses propres tarifs (/prop-firm)
+// passe son ancre pour que le visiteur reste sur la page.
+const { href = '/#pricing' } = Astro.props;
 ---
 
 {/* Gabarit inerte : aucun texte de l'offre dans le HTML rendu ni indexé. Inséré par le script
      seulement si l'offre vend ; retiré dès qu'elle ne vend plus. */}
 <template id="offer-bar-tpl">
 <div class="offer-bar" id="offer-bar">
-  <a href="/#pricing" class="offer-link" data-offer-cta="bandeau" data-ga-event="cta_founder" data-ga-place="bandeau">
+  <a href={href} class="offer-link" data-offer-cta="bandeau" data-ga-event="cta_founder" data-ga-place="bandeau">
     <span class="offer-long">
       🔥 <strong>Offre fondateur</strong> · Premium à <strong>{FOUNDER_OFFER.priceMonthlyEur} €/mois à vie</strong>
       pour les {FOUNDER_OFFER.seats} premiers · <strong data-offer-left-long></strong> →
