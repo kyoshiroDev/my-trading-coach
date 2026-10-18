@@ -477,8 +477,10 @@
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
                     @if (offersStore.founderAvailable()) {
                       ⚡ Passer Premium · dès {{ PRICING.founder.monthly }} €/mois (offre fondateur) →
-                    } @else {
+                    } @else if (userStore.trialAvailable()) {
                       ⚡ Essayer Premium · 1 mois offert →
+                    } @else {
+                      ⚡ Passer à Premium →
                     }
                   </button>
                 </div>

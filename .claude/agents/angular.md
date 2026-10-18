@@ -415,6 +415,10 @@ prévu et pas de client Stripe → **jamais** de bouton portail ni de texte « p
 (Profil > Abonnement affiche « 🎁 Premium offert » + « Continuer en Premium → » qui ouvre la
 modale de plans). `UserStore.trialAvailable()` (= `!trialUsed`) : la modale de plans ne promet
 « 1 mois offert » que si l'essai est encore disponible, sinon le checkout facture tout de suite.
+**Même règle sur TOUS les paywalls** (statistiques, score, insights, débrief, bannière du dashboard,
+Profil, cadenas) : « Essayer Premium · 1 mois offert » si `trialAvailable()`, sinon « Passer à
+Premium → » (et « Sans engagement · annulable en un clic » au lieu de « 1 mois offert · carte
+requise »). Garde-fou : `plan-modal/trial-cta-copy.spec.ts` échoue sur une mention en dur.
 
 **Pattern dans les composants qui gate une feature PREMIUM :**
 
