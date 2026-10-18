@@ -6,6 +6,13 @@
 
 export type PropFirmPhaseKind = 'evaluation' | 'funded' | 'direct';
 export type PropFirmDrawdownKind = 'static' | 'trailing_eod' | 'trailing_intraday';
+/**
+ * Perte journalière max d'une phase : `none` = la firm n'en a pas (règle officielle) ;
+ * `known` = montant, paliers ou règle d'échelle publiés ; `unknown` = la règle existe mais son
+ * montant n'est pas publié. Ne jamais confondre `none` et `unknown` : l'un se dit au trader,
+ * l'autre s'affiche comme une donnée manquante.
+ */
+export type DailyLossLimitStatus = 'none' | 'known' | 'unknown';
 
 export interface PropFirmPhaseSummary {
   phase: PropFirmPhaseKind;
@@ -15,8 +22,9 @@ export interface PropFirmPhaseSummary {
   profitTarget: number | null;
   maxDrawdown: number;
   drawdownType: PropFirmDrawdownKind;
-  /** Perte journalière max, null si la règle n'existe pas ou n'est pas publiée. */
+  /** Perte journalière max (premier palier s'il y en a), null sans montant : voir `dailyLossLimitStatus`. */
   dailyLossLimit: number | null;
+  dailyLossLimitStatus: DailyLossLimitStatus;
 }
 
 export interface PropFirmPlanSummary {

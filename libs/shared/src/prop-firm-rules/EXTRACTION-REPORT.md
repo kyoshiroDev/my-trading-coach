@@ -453,3 +453,21 @@ Relecture dans Chrome des pages que les requêtes directes ne voyaient pas (sél
 | BluSky | Prix du sélecteur de blusky.pro (Launch 59 / 69 / 79 $ par mois, Propel 150 à 320 $, Orbit 199 à 419 $ en paiement unique, Instant 599 $). Direct to Funded absent du sélecteur. | Prix renseignés sur 14 plans ; `needs_review` maintenu (contrôle en séance du Sim Funded, Buffer Zone) |
 | Phidias | API du centre d'aide relue (30 articles) : la liquidation est décrite sur le « solde » / « capital » sans dire si le latent compte. Deux heures différentes : recalcul du drawdown à 22:00 UTC+2, fermeture obligatoire (Fundamental) à 21:59 UTC. | Inchangé, question au support |
 | Bulenox | CMS public relu : règles du Master classique conformes au catalogue. Le Momentum Master n'a pas de drawdown chiffré à part. | Inchangé, question au support |
+
+## Relecture Apex et Lucid du 2026-10-18 (#614)
+
+Déclenchée par le chantier « relier chaque compte à son plan » (#612) : vérifier que la perte max du jour et le max contrats d'Apex et Lucid sont complets avant de les proposer à la connexion. Sources : centres d'aide officiels uniquement (Lucid en requête directe, Apex dans Chrome, le site bloquant les requêtes hors navigateur). Seuls les articles modifiés depuis le relevé précédent ont été relus (veille `pnpm prop-firms:watch` pour Lucid, `help-center-sitemap.xml` pour Apex).
+
+| Firm | Article (date de modification) | Constat | Effet |
+|---|---|---|---|
+| Apex | Legacy Evaluation Rules (2026-10-15) | Drawdowns 1 500 à 7 500 $, tailles 4 à 35 minis, pas de DLL, 7 jours minimum, gel au solde objectif sur Rithmic / WealthCharts, trailing sans fin sur Tradovate : conforme. | Aucun |
+| Apex | Intraday Trailing Drawdown Explained (2026-10-12) | 1 000 / 2 000 / 3 000 / 4 000 $, latent compris, temps réel ; PA figé à départ + 100 $ ; évaluation Rithmic / WealthCharts figée au solde objectif ; Tradovate sans fin : conforme. | Aucun |
+| Apex | Inactivity Policy on PA (2026-10-08) | 2 jours à 50 $ net par période glissante de 30 jours, fermeture au 30e jour : conforme. | Aucun |
+| Apex | — | Perte max du jour : EOD en évaluation (500 / 1 000 / 1 500 / 2 000 $), paliers en PA Intraday et EOD ; **aucune** sur les évaluations Intraday et sur tout le Legacy (règle officielle). Max contrats renseignés partout. | `verified_at` → 2026-10-18 |
+| Lucid | LucidFlex Funded Account (2026-10-13) | 1 000 / 2 000 / 3 000 / 4 500 $ EOD, DLL optionnelle à l'achat, pas de consistency ni de buffer, 2 / 4 / 6 / 10 minis : conforme. | Aucun |
+| Lucid | Supported Platforms (2026-10-12) | Mêmes 12 plateformes (CQG : NinjaTrader, Tradovate, TradingView ; Rithmic : 9). | Aucun |
+| Lucid | LucidMaxx Overview, Eval Rules, Eval Pricing | Passés en contenu **Legacy** (slugs `legacy-…`). La grille de prix par paliers « n'est plus applicable » depuis le 2026-10-04, sans prix de remplacement publié. L'ancien minimum de 5 jours de trading n'apparaît plus dans le nouveau programme (« potential 3 day pass »). | `lucid-maxx-*` : `price.amount` et `min_trading_days` à `null`, `needs_review: true`, sources Legacy retirées |
+| Lucid | New LucidMaxx Program (2026-10-09) | Évaluation 40 % de consistency, Pre-Live sans consistency, Live : MLL statique 100 $, sans DLL : conforme aux notes. | Aucun |
+| Lucid | New Live Structure | L'article `13425130` est devenu « Legacy Live Structure », remplacé par `16558826-new-live-structure` (payout 5 = entrée en revue live, live à 0 $, EOD, sans DLL). | Source remplacée sur les 12 plans qui la citaient ; `verified_at` → 2026-10-18 |
+
+Perte max du jour **introuvable** sur Apex et Lucid : aucune. Règles laissées vides : prix et minimum de jours de LucidMaxx (cf. ci-dessus). Phase Pre-Live de LucidMaxx toujours non modélisée.
