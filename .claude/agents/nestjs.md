@@ -133,7 +133,7 @@ GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
 GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs (nom [a-zA-Z0-9][a-zA-Z0-9_-]*, sinon 400 ; canal SSH fermé à la fermeture de l'onglet)
 GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
-GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
+GET    /api/admin/users                ADMIN → liste (?page&limit&search&source&medium&campaign) ┐
 GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
@@ -1457,6 +1457,12 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   `@mtc/shared`) : une requête SQL groupée par source, hors `isDemo` et hors ADMIN. Premium =
   `stripeSubscriptionStatus IN ('active','trialing','past_due')`, `trialing` renvoyé à part.
   `source: null` = direct / non renseigné. Page admin : `/acquisition` (nav Business).
+- **Inscrits d'une campagne (#625)** : `GET /admin/users?source=&medium=&campaign=`
+  (`AdminListQueryDto`, normalisés comme `RegisterDto`) filtre à l'**égalité exacte** ; paramètre
+  absent = ignoré, `-` (`UTM_NONE`, `@mtc/shared` acquisition-filter) = non renseigné (null).
+  `ADMIN_USER_SELECT` renvoie les 3 champs ; la fiche (`identity.acquisition`) aussi. Le récap
+  quotidien des inscriptions (`signup-digest.cron.ts`) ajoute la provenance à chaque ligne
+  (`instagram · dm · louis`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
   `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
   campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,

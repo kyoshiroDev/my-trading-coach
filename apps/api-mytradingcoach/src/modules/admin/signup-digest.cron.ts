@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
+import { acquisitionLabel } from '@mtc/shared';
 import { offerDigestLines } from './offer-digest.util';
 
 const DAY_MS = 24 * 3600_000;
@@ -29,7 +30,10 @@ export class SignupDigestCron {
     const since = new Date(now.getTime() - DAY_MS);
     const users = await this.prisma.user.findMany({
       where: { createdAt: { gte: since, lt: now }, isDemo: false, role: { not: Role.ADMIN } },
-      select: { email: true, name: true, createdAt: true },
+      select: {
+        email: true, name: true, createdAt: true,
+        acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
+      },
       orderBy: { createdAt: 'asc' },
     });
     // Offre fondateur et codes partenaires (#525) : une ligne d'état, plus un palier franchi.
@@ -38,7 +42,12 @@ export class SignupDigestCron {
     if (users.length === 0 && !milestone) return 0;
 
     const fmt = (d: Date) => d.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
-    const lines = users.map((u) => `- ${fmt(u.createdAt)} · ${u.name ?? '(nom non renseigné)'} · ${u.email}`);
+    // Provenance (#625) : repérer les inscrits d'une campagne (ex. mois offert à activer sous 48 h).
+    const origin = (u: (typeof users)[number]) =>
+      u.acquisitionSource || u.acquisitionMedium || u.acquisitionCampaign
+        ? acquisitionLabel({ source: u.acquisitionSource, medium: u.acquisitionMedium, campaign: u.acquisitionCampaign })
+        : 'direct';
+    const lines = users.map((u) => `- ${fmt(u.createdAt)} · ${u.name ?? '(nom non renseigné)'} · ${u.email} · ${origin(u)}`);
     const offerBlock = offers.length ? `\n\n${offers.join('\n')}` : '';
     await this.resend
       .sendAdminAlert(

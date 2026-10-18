@@ -1,5 +1,6 @@
 import type { AuthProvider, Plan, Role } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
+import type { AcquisitionUtm } from '../acquisition-filter';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
 
@@ -18,6 +19,8 @@ export interface AdminUserDetail {
     offeredPremium: boolean;
     isDemo: boolean;
     ambassadorRefCode: string | null;
+    /** UTM enregistrés à l'inscription (#625) ; null = non renseigné. */
+    acquisition: AcquisitionUtm;
     createdAt: string;
     lastActivityAt: string | null;
   };
