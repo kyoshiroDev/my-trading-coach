@@ -151,6 +151,49 @@ src/
   - `?promo=CODE` (script de `Base.astro`) : format `^[A-Z0-9_-]{3,20}$`, gardé 30 j en localStorage
     `mtc_promo` (comme `ref`), ajouté à tous les liens `/register`, à côté des UTM d'origine.
   - JSON-LD : prix NORMAL uniquement. CGU : clauses `#offre-fondateur` et `#codes-partenaires`.
+  - **Logique client partagée** : `src/lib/founder-pricing.ts` (`initFounderPricing(section)` : compteur,
+    insertion depuis le gabarit, retrait, paramètres de suivi recopiés du lien `.is-premium`). Toute page
+    qui affiche la carte Fondateur l'appelle avec sa section ; jamais de copie du script. Le garde
+    `libs/shared/src/founder-seats-usage.spec.ts` vérifie que ce module passe par `founderSeatsLabel`.
+
+---
+
+## Page `/prop-firm` (test publicitaire, oct. 2026)
+
+Landing épurée pour le **trader futures en prop firm** (tests de lecture du 17-18/10 : la home
+était jugée trop dense, trop d'emojis, et lue « crypto »). Comparée à la home via les clics CTA de
+l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change pas.
+
+- Fichiers : `src/pages/prop-firm.astro` + `src/components/prop-firm-page/` (`PfHeader`, `PfRules`,
+  `PfPricing`). Maquettes : `maquettes/maquette-landing-prop-firm-{mobile,desktop}.html` (locales).
+  **Rien d'autre n'en dépend** : la supprimer = ces fichiers + la ligne `/prop-firm` du filtre sitemap
+  (`astro.config.mjs`).
+- **`noindex`** + canonical vers elle-même (`Base.astro` émet le canonical d'une page noindex seulement
+  s'il est passé explicitement ; la 404 n'en a toujours pas), absente du sitemap et de la navigation.
+  JSON-LD : `ORGANIZATION` seul (le `WEBSITE` par défaut dit « crypto et forex »).
+- Même `Base.astro` (UTM, `/public/visit`, `cta_click`, bandeau cookies, mode interne) et même
+  `Footer.astro`. En-tête propre (logo `logo-navbar.svg`, ancres + inscription sur ordinateur,
+  « Se connecter » seul en mobile), **sans** `FounderBanner` ni barre sticky.
+- **Pas d'emoji hors footer**, icônes en SVG ; aucun logo de prop firm (noms en texte) ; logo
+  NinjaTrader au seul footer, « Référencé dans l'écosystème NinjaTrader » en texte (clause 17).
+  « Crypto » / « forex » seulement dans « Et aussi » et la FAQ, jamais en haut ni dans la description.
+- Sélecteur firm → plan → phase : même catalogue (`buildPropFirmCatalog`) et même logique que la home
+  via `src/lib/prop-firm-picker.ts` (pur, sans DOM : sélection initiale Apex 50K EOD, 50K par défaut à
+  chaque firm, date de relevé `sourceLabel`). `PropFirmLive.astro` l'utilise aussi. Puces = vrais
+  `<button>`, 6 en vedette puis « + N autres ».
+- Carte d'exemple « Il te reste 480 $ » : montant et barre en **jaune** (alerte), perte du jour en
+  rouge (design.md : rouge = pertes uniquement), mention « Exemple avec des données de démonstration ».
+- Tarifs (`PfPricing`) : même mécanisme fondateur que la home (`founderOpen` au build + `initFounderPricing`),
+  mêmes `data-cta` (`free` / `founder` / `premium`). Premium « Recommandé » quand la carte Fondateur
+  est absente, « Prix normal » sinon. Listes courtes, « Comptes illimités » seulement si
+  `FEATURES.multiAccounts`.
+- Témoignages : section rendue seulement si `TEMOIGNAGES` n'est pas vide (ne rien inventer).
+- Mesure du 2026-10-18 (preview locale, iPhone 390×844, UA Instagram, Slow 4G 150 ms / 1,6 Mbit/s,
+  CPU ×4) : LCP ≈ 0,7 s, chargement 1,5 s, 185 Ko, CLS 0,02 ; bouton du haut à 540 px, au-dessus du
+  bandeau cookies même en 390×664.
+- Extraction de `founder-pricing.ts` / `prop-firm-picker.ts` : la feuille de style `Nav` de la home sort
+  dans un fichier CSS à part (Vite découpe, /prop-firm n'ayant pas la Nav) — même contenu, même poids
+  total, une requête de plus.
 
 ---
 

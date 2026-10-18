@@ -34,6 +34,8 @@ export default defineConfig({
       priority: 0.7,
       filter: (page) => {
         if (page.includes('/404') || page.includes('/confidentialite')) return false;
+        // Page de test publicitaire (noindex), accessible par le lien de la pub seulement.
+        if (/\/prop-firm\/?$/.test(page)) return false;
         if (!MULTI_ACCOUNTS && page.includes('/journal-trading-prop-firm')) return false;
         if (!REFERRAL && page.includes('/ambassadeur')) return false;
         return true;

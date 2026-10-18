@@ -10,7 +10,8 @@ describe('founderSeatsLabel est utilisé par tous les affichages du compteur', (
   const sources = {
     'modale de plans (app)': 'apps/app-mytradingcoach/src/app/shared/components/plan-modal/plan-modal.component.ts',
     'page de paiement (app)': 'apps/app-mytradingcoach/src/app/features/checkout/checkout-copy.ts',
-    'carte Fondateur (landing)': 'apps/landing-mytradingcoach/src/components/Pricing.astro',
+    // Carte Fondateur de la home ET de /prop-firm : un seul module (initFounderPricing).
+    'carte Fondateur (landing)': 'apps/landing-mytradingcoach/src/lib/founder-pricing.ts',
     'bandeau (landing)': 'apps/landing-mytradingcoach/src/components/FounderBanner.astro',
     'e-mail de lancement': 'apps/api-mytradingcoach/src/modules/resend/campaigns/campaign-templates.ts',
   };
