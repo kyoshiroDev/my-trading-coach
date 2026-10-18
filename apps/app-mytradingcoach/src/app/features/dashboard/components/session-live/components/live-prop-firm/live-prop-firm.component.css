@@ -76,12 +76,12 @@
 }
 .pf-notify:hover { border-color: rgba(255, 255, 255, .24); }
 
-/* Plan à renseigner (#612) : à la place des 3 jauges, à leur hauteur exacte (3 × 78 px + 2 écarts),
-   pour que la colonne ne saute pas quand le plan est relié. */
+/* Plan à renseigner (#612) : à la place des 3 jauges, jamais plus haut qu'elles (jauge mesurée à
+   61 px : libellé + barre + sous-ligne d'une ligne), pour que la colonne ne grandisse pas. */
 .pf-plan-cta {
   --pf-gap: 16px;
-  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 12px;
-  height: calc(3 * 78px + 2 * var(--pf-gap)); box-sizing: border-box;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 10px;
+  height: calc(3 * 61px + 2 * var(--pf-gap)); box-sizing: border-box;
   padding: 16px; border: 1px dashed rgba(139, 92, 246, .35); border-radius: 10px;
   background: var(--purple-dim);
 }

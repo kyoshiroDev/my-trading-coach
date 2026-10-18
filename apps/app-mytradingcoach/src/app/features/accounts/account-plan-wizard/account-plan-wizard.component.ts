@@ -76,6 +76,11 @@ export class AccountPlanWizardComponent implements OnInit {
     const g = this.guess();
     return g.kind === 'found' || g.kind === 'ambiguous' ? (this.catalog().find((f) => f.id === g.firmId)?.name ?? '') : '';
   });
+  /** « (Évaluation) » après le plan deviné, collé à la virgule qui suit ; vide si la phase est inconnue. */
+  protected readonly guessPhaseSuffix = computed(() => {
+    const g = this.guess();
+    return g.kind === 'found' && g.phase ? ` (${this.phaseLabel(g.phase)})` : '';
+  });
   protected readonly sizes = computed(() => {
     const firm = this.firm();
     return firm ? [...new Set(firm.plans.map((p) => p.accountSize))].sort((a, b) => a - b) : [];

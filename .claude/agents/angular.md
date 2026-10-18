@@ -685,7 +685,7 @@ n'est pas dans la liste » et « Plus tard » posent `planLinkChoice`. Disclaime
   `LATER`, jamais archivé / `PERSONAL` / `UNLISTED`) : bandeau `plan-link-<id>` sur la ligne de Mes
   comptes (bouton « Relier » → même modale, **pas de masquage** : l'ancien bandeau masquable en
   localStorage et limité aux comptes qui collaient à un plan a été retiré) ; Session live : bloc
-  `live-prop-firm-plan-cta` **à la place des 3 jauges**, hauteur fixe `3 × 78 px + 2 écarts` (la
+  `live-prop-firm-plan-cta` **à la place des 3 jauges**, hauteur fixe `3 × 61 px + 2 écarts` (jauge mesurée au banc local) (la
   colonne ne saute pas quand le plan est relié), modale au palier 1000. Pas de modale bloquante, pas d'email.
 
 ## Connexion broker par compte — pattern (PROMPT-208, Tradovate)

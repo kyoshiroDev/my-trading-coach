@@ -16,8 +16,7 @@
       @if (guess(); as g) {
         @if (g.kind === 'found') {
           <p class="apw-q" data-testid="apw-guess">
-            On dirait un <span class="apw-plan">{{ guessFirmName() }} {{ sizeLabel(g.accountSize) }}</span>
-            @if (g.phase) { ({{ phaseLabel(g.phase) }}) }, c'est bien ça&nbsp;?
+            On dirait un <span class="apw-plan">{{ guessFirmName() }} {{ sizeLabel(g.accountSize) }}</span>{{ guessPhaseSuffix() }}, c'est bien ça&nbsp;?
           </p>
         } @else if (g.kind === 'personal') {
           <p class="apw-q" data-testid="apw-guess">On dirait un <span class="apw-plan">compte perso</span>, pas une prop firm. C'est bien ça&nbsp;?</p>

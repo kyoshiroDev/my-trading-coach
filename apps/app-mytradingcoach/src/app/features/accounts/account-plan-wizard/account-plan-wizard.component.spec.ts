@@ -70,7 +70,7 @@ describe('AccountPlanWizardComponent — « Quel est ce compte ? »', () => {
   it('pré-sélection : « On dirait un Apex 50K », Oui → programme → plan, phase et règles enregistrés', () => {
     const { q, click, updates, done } = mount(APEX_HINT);
     expect(q('apw-guess')!.textContent).toContain('Apex Trader Funding 50K');
-    expect(q('apw-guess')!.textContent).toContain('Évaluation');
+    expect(q('apw-guess')!.textContent!.replace(/\s+/g, ' ')).toContain('50K (Évaluation), c\'est bien ça');
     click('apw-guess-yes');
     // Deux programmes Apex en 50K : le nom du compte ne dit pas lequel, on demande.
     click('apw-program-apex-intraday-50k');
