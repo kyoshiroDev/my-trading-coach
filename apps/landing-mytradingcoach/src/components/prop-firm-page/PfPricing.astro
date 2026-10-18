@@ -60,7 +60,7 @@ const premium = [
           <strong>ou {FOUNDER_OFFER.priceAnnualEur} €/an</strong>, au lieu de {PREMIUM_PRICE_EUR.monthly} €/mois.
           Prix bloqué à vie tant que ton abonnement reste actif, réservé aux {FOUNDER_OFFER.seats} premiers.
         </p>
-        <p class="pp-lead">Tout Premium inclus :</p>
+        <p class="pp-lead">Tout Premium inclus :</p>
         <ul class="pp-feats">{premium.map((f) => <li>{f}</li>)}</ul>
         <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="pp-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pf-pricing">Devenir fondateur</a>
         <span class="pp-foot">Paiement immédiat, sans essai · Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</span>
@@ -74,7 +74,7 @@ const premium = [
           <span><span class="pp-amt">{PREMIUM_PRICE_EUR.monthly} €</span><span class="pp-per">/mois</span></span>
         </div>
         <p class="pp-sub">ou {PREMIUM_PRICE_EUR.annual} €/an, tu économises {PREMIUM_ANNUAL_SAVINGS_EUR} €. 1 mois offert sur le mensuel.</p>
-        <p class="pp-lead">Tout le Gratuit, plus :</p>
+        <p class="pp-lead">Tout le Gratuit, plus :</p>
         <ul class="pp-feats">{premium.map((f) => <li>{f}</li>)}</ul>
         <a href={`${APP_URL}/register?plan=premium`} class="pp-cta pp-cta-premium" data-cta="premium" data-ga-event="cta_trial" data-ga-place="pf-pricing">Essayer Premium · 1 mois offert</a>
         <span class="pp-foot">Carte requise · annulable en un clic</span>

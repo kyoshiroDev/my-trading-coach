@@ -73,21 +73,34 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
             ))}
           </dl>
           <p class="pfr-src" data-pfr-src>{sourceLabel(firm)}</p>
-          <p class="pfr-src">Calcul indicatif : la plateforme de ta firme fait foi.</p>
+          <p class="pfr-src">Calcul indicatif : la plateforme de ta firme fait foi.</p>
         </div>
 
         <a href={`${APP_URL}/register`} class="pfr-cta" data-ga-event="cta_signup" data-ga-place="pf-rules">Suivre mon compte prop firm gratuitement</a>
       </div>
 
       <figure class="pfr-shots">
-        <a href="/showcase/app-prop-firm-rules.webp" target="_blank" rel="noopener" aria-label="Agrandir la capture d'un compte en évaluation">
+        {/* Mobile : capture dédiée, prise dans l'app en 390 px (2x) sur le compte démo, recadrée sur
+            objectif, drawdown et perte du jour d'Apex 50K EOD Trail en évaluation (la sélection par
+            défaut du sélecteur) : lisible sans zoom, contrairement à la capture ordinateur réduite. */}
+        <a href="/showcase/app-prop-firm-rules-mobile.webp" target="_blank" rel="noopener" class="pfr-shot-mob" aria-label="Agrandir la capture des règles d'un compte en évaluation">
+          <img
+            src="/showcase/app-prop-firm-rules-mobile.webp"
+            width="640"
+            height="1340"
+            loading="lazy"
+            decoding="async"
+            alt="Capture réelle de MyTradingCoach sur téléphone : règles officielles Apex Trader Funding du plan EOD Trail 50K en évaluation, objectif 3 000 $, drawdown max 2 000 $, perte journalière max 1 000 $."
+          />
+        </a>
+        <a href="/showcase/app-prop-firm-rules.webp" target="_blank" rel="noopener" class="pfr-shot-desk" aria-label="Agrandir la capture d'un compte en évaluation">
           <img
             src="/showcase/app-prop-firm-rules.webp"
             width="1568"
             height="536"
             loading="lazy"
             decoding="async"
-            alt="Capture réelle de MyTradingCoach : compte Apex 50K EOD Trail en évaluation, solde lu chez Tradovate, marge calculée avec les règles officielles, objectif restant."
+            alt="Capture réelle de MyTradingCoach : compte Apex 50K EOD Trail en évaluation, solde lu chez Tradovate, marge calculée avec les règles officielles, objectif restant."
           />
         </a>
         <a href="/showcase/app-prop-firm-funded.webp" target="_blank" rel="noopener" class="pfr-shot-desk" aria-label="Agrandir la capture d'un compte funded">
@@ -97,7 +110,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
             height="507"
             loading="lazy"
             decoding="async"
-            alt="Capture réelle de MyTradingCoach : compte Tradeify 50K funded, seuil figé, conditions restantes avant le prochain payout."
+            alt="Capture réelle de MyTradingCoach : compte Tradeify 50K funded, seuil figé, conditions restantes avant le prochain payout."
           />
         </a>
         <figcaption>Capture réelle · compte de démonstration relié à Tradovate</figcaption>
@@ -309,6 +322,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
   }
   .pfr-shots a:hover img { border-color: var(--blue); }
   .pfr-shots figcaption { font-size: 13px; color: var(--txt3); }
+  .pfr-shot-mob { display: none !important; }
 
   @media (max-width: 900px) {
     .pfr { padding: 44px 20px; }
@@ -321,8 +335,10 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     .pfr-side { display: contents; }
     .pfr-shots { order: 1; }
     .pfr-cta { order: 2; text-align: center; }
-    /* Capture funded : ordinateur seulement (image lazy non affichée = non téléchargée). */
+    /* Captures ordinateur masquées, capture mobile affichée (image lazy non affichée = non
+       téléchargée : chaque taille ne charge que la sienne). */
     .pfr-shot-desk { display: none !important; }
+    .pfr-shot-mob { display: block !important; max-width: 420px; width: 100%; margin: 0 auto; }
     .pfr-shots figcaption { text-align: center; font-size: 12px; }
   }
 </style>
