@@ -1,4 +1,4 @@
-:host { display: block; }
+:host { display: block; container: recent-trades / inline-size; }
 
 /* Tableau historique des trades */
 .mtc-table-wrap { overflow-x: auto; margin-top: 14px; }
@@ -23,3 +23,28 @@
 }
 .mtc-res { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .4px; padding: 4px 10px; border-radius: 100px; background: var(--red-dim); color: var(--red); border: 1px solid rgba(239, 68, 68, .25); }
 .mtc-res.win { background: var(--green-dim); color: var(--green); border-color: rgba(16, 185, 129, .25); }
+
+/* Cartes (téléphone) : masquées tant que le tableau tient. */
+.mtc-trade-cards { display: none; list-style: none; margin: 14px 0 0; padding: 0; }
+.mtc-tc { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.mtc-tc:first-child { border-top: 0; }
+.mtc-tc-asset { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text); }
+.mtc-tc-pnl { font-family: var(--font-mono); font-size: 14px; font-weight: 600; text-align: right; }
+.mtc-tc-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 0 4px; min-width: 0; font-family: var(--font-mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; }
+.mtc-tc-pct { font-family: var(--font-mono); font-size: 11px; text-align: right; }
+
+/* Carte moyenne (tablette, PC 1024) : sans Sortie ni Résultat (doublon de la couleur du P&L), le
+   tableau tient sans défiler. */
+@container recent-trades (max-width: 900px) {
+  .mtc-table { min-width: 0; }
+  .mtc-table th,
+  .mtc-table td { padding-left: 8px; padding-right: 8px; }
+  .col-exit,
+  .col-res { display: none; }
+}
+
+/* Carte étroite (téléphone) : une carte de 2 lignes par trade, P&L toujours visible. */
+@container recent-trades (max-width: 720px) {
+  .mtc-table-wrap { display: none; }
+  .mtc-trade-cards { display: block; }
+}
