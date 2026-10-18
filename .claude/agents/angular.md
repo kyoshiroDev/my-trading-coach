@@ -667,6 +667,21 @@ sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
 
 ---
 
+## « Quel est ce compte ? » — liaison au plan prop firm (#612, 2026-10-18)
+
+`features/accounts/account-plan-wizard` (`mtc-account-plan-wizard`, entrée `accountId`, sortie
+`done`) : un choix par écran, firm → taille → phase (si le catalogue en distingue deux) → programme.
+Charge lui-même catalogue + `AccountsApi.planHint`, enregistre lui-même (PATCH) et émet le compte :
+le parent recharge son store. Pré-sélection via `guessPlan` (`@mtc/shared`) : `found` → « On dirait
+un Apex 50K » Oui / Changer · `personal` → « compte perso ? » · `ambiguous` → firm pré-choisie,
+écran taille · `none` → firm. Le **programme** n'est jamais deviné. « Compte perso », « Ma firm
+n'est pas dans la liste » et « Plus tard » posent `planLinkChoice`. Disclaimer d'estimation en pied.
+
+- Branché **après** `selectThenSync` réussi (historique importé = solde de départ connu) :
+  onboarding étape 8 (`tvPlanAccountId`, les autres options masquées, puis étape 9 sur `done`) et
+  Mes comptes (modale `plan-wizard-modal`, feuille pleine largeur < 768 px), compte sans plan.
+- Champ texte en `[value]` + `(input)` (pas `ngModel`, asynchrone : intestable sans `whenStable`).
+
 ## Connexion broker par compte — pattern (PROMPT-208, Tradovate)
 
 Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le back).

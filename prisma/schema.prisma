@@ -322,6 +322,13 @@ model TradeSession {
   @@index([accountId])
 }
 
+/// Réponse à « Quel est ce compte ? » pour un compte sans plan du catalogue (#612).
+enum PlanLinkChoice {
+  LATER
+  PERSONAL
+  UNLISTED
+}
+
 // ── Multi-comptes (prop firms + perso) ──────────────────────────────────────
 model TradingAccount {
   id              String         @id @default(cuid())
@@ -349,6 +356,12 @@ model TradingAccount {
   lastPayoutAt      DateTime?      @db.Date
   propFirmPlanId    String?
   propFirmPlan      PropFirmPlan?      @relation(fields: [propFirmPlanId], references: [id], onDelete: SetNull)
+  /// Réponse à « Quel est ce compte ? » quand il n'est PAS relié à un plan (#612) : `LATER` =
+  /// « Plus tard » (plan à renseigner), `PERSONAL` = compte perso, `UNLISTED` = firm absente du
+  /// catalogue (`unlistedFirm`). Null = jamais demandé. Remis à null quand un plan est relié.
+  planLinkChoice    PlanLinkChoice?
+  /// Firm saisie à « Ma firm n'est pas dans la liste » : ce qu'il faut ajouter au catalogue.
+  unlistedFirm      String?
   trades          Trade[]
   tradeSessions   TradeSession[]
   brokerConnections BrokerConnection[]

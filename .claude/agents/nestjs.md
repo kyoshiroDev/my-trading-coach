@@ -1518,6 +1518,11 @@ redéployer : rien à lancer sur le VPS.
   (`none` = la firm n'en a pas · `known` · `unknown` = règle au montant non publié), calculé par
   `dailyLossLimitStatus` de `@mtc/shared`. `dailyLossLimit` seul ne suffit pas : `null` y vaut pour
   `none` comme pour `unknown`. Côté JSON, une DLL inconnue s'écrit en objet `amount: null` (pas `null`).
+- **Indices de plan** (`GET /accounts/:id/plan-hint`, #612) : `AccountPlanHint` (`@mtc/shared`) =
+  nom et hôte du sous-compte, propriétaire = login (démo perso) via `availableAccounts[].userId` ↔
+  `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
+  **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
+  (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,

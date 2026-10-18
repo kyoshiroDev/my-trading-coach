@@ -1,0 +1,116 @@
+<section class="apw" data-testid="account-plan-wizard" aria-labelledby="apw-title">
+  <header class="apw-head">
+    <h3 id="apw-title" class="apw-title">Quel est ce compte&nbsp;?</h3>
+    <p class="apw-sub">
+      @if (hint(); as h) { <span class="apw-ext">{{ h.externalName }}</span> · }
+      Relie-le à son plan pour suivre ta perte max du jour, ton plancher et ton objectif.
+    </p>
+  </header>
+
+  @switch (step()) {
+    @case ('loading') {
+      <p class="apw-loading" data-testid="apw-loading">Chargement des prop firms…</p>
+    }
+
+    @case ('guess') {
+      @if (guess(); as g) {
+        @if (g.kind === 'found') {
+          <p class="apw-q" data-testid="apw-guess">
+            On dirait un <span class="apw-plan">{{ guessFirmName() }} {{ sizeLabel(g.accountSize) }}</span>
+            @if (g.phase) { ({{ phaseLabel(g.phase) }}) }, c'est bien ça&nbsp;?
+          </p>
+        } @else if (g.kind === 'personal') {
+          <p class="apw-q" data-testid="apw-guess">On dirait un <span class="apw-plan">compte perso</span>, pas une prop firm. C'est bien ça&nbsp;?</p>
+        }
+      }
+      <div class="apw-cards">
+        <button type="button" class="apw-card primary" (click)="confirmGuess()" [disabled]="saving()" data-testid="apw-guess-yes">Oui</button>
+        <button type="button" class="apw-card" (click)="changeGuess()" [disabled]="saving()" data-testid="apw-guess-change">Changer</button>
+      </div>
+    }
+
+    @case ('firm') {
+      <p class="apw-q">Chez quelle prop firm&nbsp;?</p>
+      <div class="apw-cards apw-grid">
+        @for (f of firms(); track f.id) {
+          <button type="button" class="apw-card" (click)="pickFirm(f.id)" [disabled]="saving()" [attr.data-testid]="'apw-firm-' + f.id">
+            <span class="apw-card-name">{{ f.name }}</span>
+            <svg [lucideIcon]="ChevronRightIcon" [size]="16"></svg>
+          </button>
+        }
+      </div>
+      <div class="apw-cards apw-other">
+        <button type="button" class="apw-card" (click)="pickPersonal()" [disabled]="saving()" data-testid="apw-personal">
+          <span class="apw-card-name">Compte perso (pas une prop firm)</span>
+        </button>
+        <button type="button" class="apw-card" (click)="openUnlisted()" [disabled]="saving()" data-testid="apw-unlisted">
+          <span class="apw-card-name">Ma firm n'est pas dans la liste</span>
+        </button>
+      </div>
+    }
+
+    @case ('size') {
+      <p class="apw-q">{{ firm()?.name }} : quelle taille de compte&nbsp;?</p>
+      <div class="apw-cards apw-grid">
+        @for (s of sizes(); track s) {
+          <button type="button" class="apw-card mono" (click)="pickSize(s)" [disabled]="saving()" [attr.data-testid]="'apw-size-' + s">
+            {{ sizeLabel(s) }}
+          </button>
+        }
+      </div>
+      @if (!canGoBack()) {
+        <button type="button" class="apw-link" (click)="changeGuess()" data-testid="apw-change-firm">Ce n'est pas {{ firm()?.name }}</button>
+      }
+    }
+
+    @case ('phase') {
+      <p class="apw-q">Ce compte est en&nbsp;:</p>
+      <div class="apw-cards">
+        @for (p of phases(); track p) {
+          <button type="button" class="apw-card" (click)="pickPhase(p)" [disabled]="saving()" [attr.data-testid]="'apw-phase-' + p">
+            {{ phaseLabel(p) }}
+          </button>
+        }
+      </div>
+    }
+
+    @case ('program') {
+      <p class="apw-q">Quel programme {{ firm()?.name }} {{ sizeLabel(size() ?? 0) }}&nbsp;?</p>
+      <p class="apw-hint">Le nom du compte ne le dit pas : choisis celui que tu as acheté.</p>
+      <div class="apw-cards">
+        @for (p of programs(); track p.key) {
+          <button type="button" class="apw-card" (click)="pickProgram(p.plan)" [disabled]="saving()" [attr.data-testid]="'apw-program-' + p.plan.id">
+            <span class="apw-card-name">{{ p.label }}</span>
+            @if (p.inviteOnly) { <span class="apw-card-meta">sur invitation</span> }
+          </button>
+        }
+      </div>
+    }
+
+    @case ('unlisted') {
+      <label class="apw-q" for="apw-unlisted-name">Le nom de ta prop firm&nbsp;:</label>
+      <input id="apw-unlisted-name" class="apw-input" type="text" maxlength="80" autocomplete="off"
+             placeholder="Ex : FTMO" [value]="unlistedName()" (input)="onUnlistedInput($event)"
+             (keydown.enter)="saveUnlisted()" data-testid="apw-unlisted-name" />
+      <p class="apw-hint">On s'en sert pour savoir quelle firm ajouter ensuite.</p>
+      <button type="button" class="apw-card primary" (click)="saveUnlisted()"
+              [disabled]="saving() || !unlistedName().trim()" data-testid="apw-unlisted-save">Enregistrer</button>
+    }
+  }
+
+  @if (error(); as msg) {
+    <p class="apw-error" role="alert" data-testid="apw-error">{{ msg }}</p>
+  }
+
+  @if (step() !== 'loading') {
+    <footer class="apw-foot">
+      @if (canGoBack()) {
+        <button type="button" class="apw-back" (click)="back()" [disabled]="saving()" data-testid="apw-back">
+          <svg [lucideIcon]="ChevronLeftIcon" [size]="16"></svg> Retour
+        </button>
+      }
+      <button type="button" class="apw-later" (click)="later()" [disabled]="saving()" data-testid="apw-later">Plus tard</button>
+    </footer>
+    <p class="apw-disclaimer">Les règles affichées ensuite sont une estimation MyTradingCoach, pas le calcul officiel de ta firm.</p>
+  }
+</section>

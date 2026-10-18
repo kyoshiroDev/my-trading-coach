@@ -222,6 +222,36 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     expect(q('tradovate-sync-a')).toBeNull();
   });
 
+  it('sous-compte choisi puis synchronisé : « Quel est ce compte ? » s\'ouvre (compte sans plan)', () => {
+    const { fixture, el, tv, store } = setup({
+      accounts: [acct('a', 'A')],
+      connections: [conn('a', { externalAccountId: null, externalAccountName: null, needsAccountSelection: true })],
+    });
+    const cmp = fixture.componentInstance as unknown as { pickTradovateAccount: (a: unknown, id: string) => void; onPlanLinked: () => void };
+    cmp.pickTradovateAccount(store.accounts()[0], '2');
+    const done = tv.selectThenSync.mock.calls[0][2] as (r: unknown) => void;
+    done({ created: 3 });
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="plan-wizard-modal"] mtc-account-plan-wizard')).not.toBeNull();
+
+    cmp.onPlanLinked();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="plan-wizard-modal"]')).toBeNull();
+    expect(store.load).toHaveBeenCalled();
+  });
+
+  it('synchro en échec après le choix : pas de question', () => {
+    const { fixture, el, tv, store } = setup({
+      accounts: [acct('a', 'A')],
+      connections: [conn('a', { externalAccountId: null, externalAccountName: null, needsAccountSelection: true })],
+    });
+    const cmp = fixture.componentInstance as unknown as { pickTradovateAccount: (a: unknown, id: string) => void };
+    cmp.pickTradovateAccount(store.accounts()[0], '2');
+    (tv.selectThenSync.mock.calls[0][2] as (r: unknown) => void)(null);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="plan-wizard-modal"]')).toBeNull();
+  });
+
   it('choix du compte en attente (mauvais login) : Déconnecter reste rendu et cliquable', () => {
     const { q, click, tv, el } = setup({
       accounts: [acct('a', 'A')],

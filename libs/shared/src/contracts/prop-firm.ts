@@ -174,3 +174,17 @@ export interface PropFirmPlanDetail {
   firm: { id: string; name: string; website: string; verifiedAt: string };
   phases: PropFirmPhaseRules[];
 }
+
+// ── Indices pour deviner le plan d'un compte connecté (GET /accounts/:id/plan-hint, #612) ────
+
+/** Ce que MTC sait déjà du sous-compte broker, sans nouvel appel. */
+export interface AccountPlanHint {
+  /** Nom du sous-compte chez le broker (`APEX…`, `PAAPEX…`, `DEMO…`). */
+  externalName: string;
+  /** `live` = compte réel, `demo` = simulé (prop firm ou démo perso). */
+  env: 'live' | 'demo';
+  /** Le propriétaire du compte est le trader connecté (démo perso) ; null = inconnu. */
+  ownerIsLogin: boolean | null;
+  /** Solde de départ lu sur la première clôture officielle importée ; null sans historique. */
+  startingBalance: number | null;
+}

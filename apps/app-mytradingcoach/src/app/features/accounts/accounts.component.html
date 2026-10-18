@@ -501,6 +501,18 @@
 }
 
 <!-- ── Modal create / edit ── -->
+@if (planWizardFor(); as pw) {
+  <div class="modal-overlay" role="button" tabindex="-1"
+       (click)="closePlanWizard()" (keydown.escape)="closePlanWizard()">
+    <div class="modal apw-modal" role="dialog" aria-modal="true" mtcDialog (mtcDialogClose)="closePlanWizard()" aria-label="Quel est ce compte ?"
+         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" data-testid="plan-wizard-modal">
+      <div class="modal-body">
+        <mtc-account-plan-wizard [accountId]="pw.id" [accountLabel]="pw.label" (done)="onPlanLinked()" />
+      </div>
+    </div>
+  </div>
+}
+
 @if (formOpen()) {
   <div class="modal-overlay" role="button" tabindex="-1"
        (click)="closeForm()" (keydown.escape)="closeForm()">

@@ -17,4 +17,5 @@ export * from './email-markdown';
 export * from './prop-firm-rules/catalog';
 export * from './prop-firm-rules/plan-match';
 export * from './prop-firm-rules/daily-loss-status';
+export * from './prop-firm-rules/plan-guess';
 export * from './signup-funnel';

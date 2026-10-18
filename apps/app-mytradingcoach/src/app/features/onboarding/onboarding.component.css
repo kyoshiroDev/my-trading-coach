@@ -474,3 +474,5 @@
 /* Recherche d'instrument : aucun résultat / service indisponible (APP-03) */
 .asset-search-hint { margin: 6px 0 12px; font-size: var(--fs-xs); color: var(--text-3); }
 .asset-search-hint.warn { color: var(--yellow); }
+/* `display: grid` de .choice-grid l'emporte sur l'attribut hidden : le rétablir. */
+.choice-grid[hidden] { display: none; }

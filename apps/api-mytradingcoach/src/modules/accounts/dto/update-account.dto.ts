@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { AccountStatus, AccountType, DrawdownType } from '@prisma/client';
+import { AccountStatus, AccountType, DrawdownType, PlanLinkChoice } from '@prisma/client';
 import { ACCOUNT_CURRENCIES, normalizeCurrencyCode } from '@mtc/shared';
 
 // Tous les champs optionnels (update partiel). Le `status` est piloté par l'user
@@ -81,4 +81,15 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsISO8601({ strict: true }, { message: 'Date du dernier payout invalide (AAAA-MM-JJ).' })
   lastPayoutAt?: string | null;
+
+  // Réponse à « Quel est ce compte ? » sans plan relié (#612) ; null efface la réponse.
+  @IsOptional()
+  @IsEnum(PlanLinkChoice, { message: 'Réponse invalide (LATER, PERSONAL ou UNLISTED).' })
+  planLinkChoice?: PlanLinkChoice | null;
+
+  // « Ma firm n'est pas dans la liste » : nom saisi librement.
+  @IsOptional()
+  @IsString()
+  @MaxLength(80, { message: 'Le nom de la firm est trop long (80 caractères max).' })
+  unlistedFirm?: string | null;
 }

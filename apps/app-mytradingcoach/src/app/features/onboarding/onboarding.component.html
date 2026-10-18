@@ -411,7 +411,15 @@
             </div>
           }
 
-          <div class="choice-grid choice-grid-4">
+          <!-- Sous-compte synchronisé : relier le compte à son plan prop firm (#612). -->
+          @if (tvPlanAccountId(); as planId) {
+            <div class="ob-tv-pick" data-testid="onboarding-plan-link">
+              <mtc-account-plan-wizard [accountId]="planId" (done)="onPlanLinked()" />
+            </div>
+          }
+
+          <!-- Un seul choix à l'écran pendant « Quel est ce compte ? » : les autres options attendent. -->
+          <div class="choice-grid choice-grid-4" [hidden]="!!tvPlanAccountId()">
             <!-- Tradovate EN TÊTE (pleine largeur, accent --nt) ; le CSV reste pour
                  les autres brokers, mais au second plan avec le manuel et « zéro ». -->
             <button type="button" class="choice-card choice-action choice-tradovate choice-featured" (click)="chooseTradovate()"

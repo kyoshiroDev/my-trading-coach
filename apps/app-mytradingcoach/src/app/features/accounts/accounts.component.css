@@ -583,3 +583,11 @@
   .cell-sync { gap: 5px; }
   .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
 }
+
+/* « Quel est ce compte ? » (#612) : feuille pleine largeur en mobile, modale centrée au-delà. */
+.apw-modal { max-height: 92dvh; }
+@media (max-width: 767px) {
+  .modal-overlay:has(> .apw-modal) { align-items: flex-end; padding: 0; }
+  .apw-modal { max-width: none; border-radius: 16px 16px 0 0; }
+  .apw-modal .modal-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); }
+}

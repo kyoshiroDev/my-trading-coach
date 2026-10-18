@@ -78,6 +78,7 @@ import {
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
 import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { AccountPlanWizardComponent } from './account-plan-wizard/account-plan-wizard.component';
 import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
@@ -138,7 +139,7 @@ function readDismissedLinks(): string[] {
     DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
-    PropFirmRulesComponent,
+    PropFirmRulesComponent, AccountPlanWizardComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -158,6 +159,8 @@ export class AccountsComponent implements OnInit {
   protected readonly tv = inject(TradovateStore);
   /** Compte pour lequel l'écran de réassurance est ouvert. */
   protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
+  /** « Quel est ce compte ? » ouvert pour ce compte (après le choix du sous-compte Tradovate, #612). */
+  protected readonly planWizardFor = signal<{ id: string; label: string } | null>(null);
   /** Déconnexion en attente de confirmation (clé, pas l'objet : cf. angular.md). */
   protected readonly confirmDisconnectId = signal<string | null>(null);
   protected readonly relativeTime = relativeTime;
@@ -437,8 +440,26 @@ export class AccountsComponent implements OnInit {
     this.tv.sync(a.id, (r) => this.onSynced(r));
   }
 
+  /** Sous-compte choisi puis synchronisé : un compte sans plan enchaîne sur « Quel est ce compte ? ». */
   protected pickTradovateAccount(a: TradingAccount, externalId: string): void {
-    this.tv.selectThenSync(a.id, externalId, (r) => this.onSynced(r));
+    this.tv.selectThenSync(a.id, externalId, (r) => {
+      this.onSynced(r);
+      if (r && !a.propFirmPlanId) this.planWizardFor.set({ id: a.id, label: a.label });
+    });
+  }
+
+  protected openPlanWizard(a: TradingAccount): void {
+    this.planWizardFor.set({ id: a.id, label: a.label });
+  }
+
+  protected closePlanWizard(): void {
+    this.planWizardFor.set(null);
+  }
+
+  /** Réponse enregistrée : métriques et jauges repartent du serveur avec le plan relié. */
+  protected onPlanLinked(): void {
+    this.planWizardFor.set(null);
+    this.store.load();
   }
 
   protected askDisconnect(a: TradingAccount): void {

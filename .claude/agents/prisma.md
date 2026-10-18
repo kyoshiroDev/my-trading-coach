@@ -333,6 +333,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   logique ne la lit encore : les règles saisies par l'utilisateur sur `TradingAccount`
   (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
   pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
+- `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
+  `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
+  « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur
+  « LINKED » : un compte relié se lit sur `propFirmPlanId`. Le service remet la réponse à null dès
+  qu'un plan est relié (`withPlanLink`), et efface `unlistedFirm` pour toute réponse autre que `UNLISTED`.
 
 ## Séances prop firm vues en direct (#373, 2026-10-05)
 

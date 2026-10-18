@@ -91,6 +91,14 @@ export const AdminPushEvent = {
 } as const;
 export type AdminPushEvent = (typeof AdminPushEvent)[keyof typeof AdminPushEvent];
 
+/** Réponse à « Quel est ce compte ? » sans plan relié (#612). */
+export const PlanLinkChoice = {
+  LATER: 'LATER',
+  PERSONAL: 'PERSONAL',
+  UNLISTED: 'UNLISTED',
+} as const;
+export type PlanLinkChoice = (typeof PlanLinkChoice)[keyof typeof PlanLinkChoice];
+
 /** Tous les enums ci-dessus, par nom Prisma : utilisé par le test de synchronisation. */
 export const CONTRACT_ENUMS = {
   TradeSide,
@@ -112,4 +120,5 @@ export const CONTRACT_ENUMS = {
   PartnerRedemptionStatus,
   CheckoutReservationKind,
   AdminPushEvent,
+  PlanLinkChoice,
 } as const;
