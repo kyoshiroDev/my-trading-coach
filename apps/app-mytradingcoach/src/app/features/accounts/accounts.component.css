@@ -265,7 +265,7 @@
    colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
    recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
    Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
-@media (min-width: 1025px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
+@media (min-width: 1081px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
@@ -463,7 +463,9 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-@media (max-width: 1024px) {
+/* 1080 et non 1024 : de 1025 à ~1060 px, les 8 colonnes (≈ 850 px mini) dépassaient et le contenu
+   défilait de côté (#642). */
+@media (max-width: 1080px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -507,7 +509,13 @@
      Sur mobile c'est la page qui défile (le topbar reste sticky). */
   :host { flex: none; }
   .content { overflow-y: visible; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .content { padding: 16px; }
+  /* 5 cartes en 2 colonnes : la dernière prend toute la largeur au lieu de rester seule à gauche. */
+  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* Libellé sur une ligne (« CAPITAL SUIVI » passait sur deux). */
+  .stat-label { font-size: var(--fs-2xs); letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fld-row { flex-wrap: wrap; }
   .acct-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .acct-name { font-size: 13px; }
