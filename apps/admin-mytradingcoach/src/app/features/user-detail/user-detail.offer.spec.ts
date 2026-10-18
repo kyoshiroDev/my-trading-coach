@@ -16,7 +16,7 @@ function makeData(identity: Partial<Identity> = {}): UserDetailData {
   return {
     identity: {
       id: 'u1', name: 'Alex', email: 'alex@test.com', plan: 'FREE', role: 'USER',
-      subscriptionStatus: null, ambassadorRefCode: null,
+      subscriptionStatus: null, ambassadorRefCode: null, acquisition: { source: null, medium: null, campaign: null },
       trialEndsAt: null, offeredPremium: false, isDemo: false,
       createdAt: '2026-09-01T00:00:00.000Z', lastActivityAt: null,
       ...identity,

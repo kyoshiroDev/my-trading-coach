@@ -1,5 +1,6 @@
 import { wsUrl } from './tradovate-hosts';
 import type { TradovateEnv } from './tradovate.types';
+import type { TradovateOrderEntity, TradovateOrderVersionEntity } from './tradovate-orders';
 
 /**
  * Protocole du WebSocket Tradovate « données utilisateur » (temps réel) — fonctions PURES.
@@ -27,11 +28,13 @@ export const QUOTA_BACKOFF_MS = 5 * 60_000;
 
 /** Entités qui annoncent un trade (nouveau fill, paire appariée, position modifiée). */
 export const TRADE_ENTITY_TYPES = ['fill', 'fillPair', 'position'] as const;
+/** Ordres actifs (SL / TP posés, #601) : `order` porte le lien, `orderVersion` le type et les prix. */
+export const ORDER_ENTITY_TYPES = ['order', 'orderVersion'] as const;
 /**
- * Entités souscrites : les trades, plus le solde RÉALISÉ officiel du compte (`cashBalance`,
- * poussé à chaque variation). Le latent, lui, n'est pas poussé : il dépend des cotations.
+ * Entités souscrites : les trades, le solde RÉALISÉ officiel du compte (`cashBalance`, poussé à
+ * chaque variation) et les ordres. Le latent, lui, n'est pas poussé : il dépend des cotations.
  */
-export const LIVE_ENTITY_TYPES = [...TRADE_ENTITY_TYPES, 'cashBalance'] as const;
+export const LIVE_ENTITY_TYPES = [...TRADE_ENTITY_TYPES, 'cashBalance', ...ORDER_ENTITY_TYPES] as const;
 
 /** Id de la requête `user/syncrequest` : sa réponse porte l'état initial du compte. */
 export const SYNC_REQUEST_ID = 1;
@@ -142,6 +145,9 @@ export interface InitialAccountState {
   balance: BalanceUpdate | null;
   /** Positions dont `netPos` ≠ 0 sur le compte suivi. */
   openPositions: number;
+  /** Ordres de la séance (tous statuts : le carnet ne garde que les actifs). */
+  orders: TradovateOrderEntity[];
+  orderVersions: TradovateOrderVersionEntity[];
 }
 
 /**
@@ -150,7 +156,12 @@ export interface InitialAccountState {
  */
 export function initialAccountState(m: TradovateWsMessage, externalAccountId: number): InitialAccountState | null {
   if (m.i !== SYNC_REQUEST_ID || m.s !== 200) return null;
-  const d = m.d as { cashBalances?: CashBalanceEntity[]; positions?: { accountId?: number; netPos?: number }[] } | undefined;
+  const d = m.d as {
+    cashBalances?: CashBalanceEntity[];
+    positions?: { accountId?: number; netPos?: number }[];
+    orders?: TradovateOrderEntity[];
+    orderVersions?: TradovateOrderVersionEntity[];
+  } | undefined;
   if (!d || typeof d !== 'object') return null;
   // Un compte peut avoir un solde par devise et par séance : le plus récent fait foi.
   const balances = (Array.isArray(d.cashBalances) ? d.cashBalances : [])
@@ -159,7 +170,28 @@ export function initialAccountState(m: TradovateWsMessage, externalAccountId: nu
     .sort((a, b) => b.at.getTime() - a.at.getTime());
   const openPositions = (Array.isArray(d.positions) ? d.positions : [])
     .filter((p) => p.accountId === externalAccountId && isFiniteNumber(p.netPos) && p.netPos !== 0).length;
-  return { balance: balances[0] ?? null, openPositions };
+  return {
+    balance: balances[0] ?? null,
+    openPositions,
+    orders: Array.isArray(d.orders) ? d.orders : [],
+    orderVersions: Array.isArray(d.orderVersions) ? d.orderVersions : [],
+  };
+}
+
+export type OrderEvent =
+  | { entityType: 'order'; eventType?: string; entity: TradovateOrderEntity }
+  | { entityType: 'orderVersion'; eventType?: string; entity: TradovateOrderVersionEntity };
+
+/** Ordre posé, modifié, rempli ou annulé (événement `props` `order` / `orderVersion`). */
+export function orderEvent(m: TradovateWsMessage): OrderEvent | null {
+  if (m.e !== 'props') return null;
+  const d = m.d as { entityType?: string; eventType?: string; entity?: unknown } | undefined;
+  if (!d?.entity || typeof d.entity !== 'object') return null;
+  if (d.entityType === 'order') return { entityType: 'order', eventType: d.eventType, entity: d.entity as TradovateOrderEntity };
+  if (d.entityType === 'orderVersion') {
+    return { entityType: 'orderVersion', eventType: d.eventType, entity: d.entity as TradovateOrderVersionEntity };
+  }
+  return null;
 }
 
 /** `shutdown` poussé par Tradovate avant fermeture (ex. `ConnectionQuotaReached`). */

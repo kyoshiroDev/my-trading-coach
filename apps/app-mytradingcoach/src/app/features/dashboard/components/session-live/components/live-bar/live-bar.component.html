@@ -1,0 +1,52 @@
+<header class="lb-bar" data-testid="live-bar-header">
+  @if (clock(); as c) {
+    @if (c.kind === 'stale') {
+      <div class="lb-stale" data-testid="live-bar-stale">
+        <span>Session ouverte depuis le {{ c.since }}, clôture-la</span>
+        <button type="button" class="lb-stale-close" (click)="closeSession.emit()">Clôturer</button>
+      </div>
+    } @else {
+      <div class="lb-clock" data-testid="live-bar-clock"><span class="lb-dot" aria-hidden="true"></span>{{ c.label }}</div>
+    }
+  }
+  @if (accountLabel(); as a) {
+    <span class="lb-wide lb-account" data-testid="live-bar-account">{{ a }}</span>
+  }
+  @if (mood(); as m) {
+    <span class="lb-wide lb-mood" data-testid="live-bar-mood">{{ m }}</span>
+  }
+  <span class="lb-trades" data-testid="live-bar-trades">
+    Trades <strong>{{ tradesCount() }}@if (tradesMax() !== null) { / {{ tradesMax() }} }</strong>
+  </span>
+  @let total = totalPnl();
+  @let shown = total ?? realizedPnl();
+  <span class="lb-pnl" data-testid="live-bar-pnl" [class.green]="shown > 0" [class.red]="shown < 0"
+        [attr.title]="total === null ? 'Réalisé seul : latent de la position ouverte inconnu' : 'Réalisé + latent du jour'">
+    {{ fmt(shown) }}
+  </span>
+  <div class="lb-wide lb-market" data-testid="live-bar-market">
+    @for (t of tickers(); track t.label) {
+      <span class="lb-tick">{{ t.label }} {{ t.value }}
+        @if (t.change) { <span [class.up]="t.dir === 'up'" [class.down]="t.dir === 'down'">{{ t.change }}</span> }
+      </span>
+    }
+    <button type="button" class="lb-context" data-testid="live-bar-context" (click)="openContext.emit()">Contexte</button>
+  </div>
+  <button type="button" class="lb-wide lb-end" data-testid="live-bar-close" (click)="closeSession.emit()">Clôturer la session</button>
+  @if (tickerTape().length) {
+    <!-- Contexte marché qui défile sous le chrono (< 1100 px) ; toucher = détail (8 tickers + news) -->
+    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché : ouvrir le détail" (click)="openContext.emit()">
+      <span class="lb-tape-track" [style.animation-duration.s]="tickerTape().length * 5">
+        @for (copy of [0, 1]; track copy) {
+          <span class="lb-tape-set" [attr.aria-hidden]="copy === 1">
+            @for (t of tickerTape(); track t.label) {
+              <span class="lb-tape-item">{{ t.label }} {{ t.value }}
+                @if (t.change) { <span [class.up]="t.dir === 'up'" [class.down]="t.dir === 'down'">{{ t.change }}</span> }
+              </span>
+            }
+          </span>
+        }
+      </span>
+    </button>
+  }
+</header>

@@ -472,7 +472,10 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     const { prisma, created } = fakePrisma([]);
     const res = await seedDemo(prisma);
 
-    expect(created['trade'].every((t) => (t['commission'] as number) > 0)).toBe(true);
+    const closed = created['trade'].filter((t) => t['pnl'] !== null);
+    expect(closed.every((t) => (t['commission'] as number) > 0)).toBe(true);
+    // Seule exception : la position encore ouverte de la session live (ni sortie, ni P&L, ni frais).
+    expect(created['trade'].filter((t) => t['pnl'] === null)).toHaveLength(1);
     expect(res.fees).toBeGreaterThan(400);
     expect(res.grossPnl - res.pnl).toBeCloseTo(res.fees, 1);
     expect(res.pnl).toBeLessThan(res.grossPnl);
@@ -506,14 +509,24 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     }
   });
 
-  it('le week-end : pas de session live ni de trade du jour, le dernier jour tradé est vendredi', async () => {
+  it('le week-end : session live quand même (vitrine), marché fermé, position gardée depuis vendredi', async () => {
     const now = saturdayAt(11);
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma, now);
 
-    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(0);
-    const last = Math.max(...created['trade'].map((t) => (t['tradedAt'] as Date).getTime()));
+    const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
+    expect(active).toHaveLength(1);
+    expect((active[0]['startedAt'] as Date) <= now).toBe(true);
+    // Aucun trade daté du week-end ; dernier trade clôturé et position ouverte : vendredi.
+    const last = Math.max(...created['trade'].filter((t) => t['pnl'] !== null).map((t) => (t['tradedAt'] as Date).getTime()));
     expect(new Date(last).getDay()).toBe(5);
+    const open = created['trade'].filter((t) => t['pnl'] === null);
+    expect(open).toHaveLength(1);
+    expect((open[0]['tradedAt'] as Date).getDay()).toBe(5);
+    // Faux Prisma : id = `<modèle>-<rang de création>` ; la position est rattachée à la session live.
+    expect(open[0]['sessionId']).toBe(`tradeSession-${created['tradeSession'].indexOf(active[0]) + 1}`);
+    expect(open[0]['stopLoss']).not.toBeNull();
+    expect(open[0]['takeProfit']).not.toBeNull();
   });
 
   it('garde-fou : un trade un week-end ou hors futures fait échouer le seed', () => {
@@ -580,14 +593,18 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
 });
 
 describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => {
-  it('à 03:20 (avant l’ouverture) : aucune séance du jour, rien dans le futur, récap daté d’hier', async () => {
+  it('à 03:20 (avant l’ouverture) : aucun trade du jour, session live avec la position d’hier, récap daté d’hier', async () => {
     const now = weekdayAt(3, 20);
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma, now);
 
     expect(created['trade'].filter((t) => (t['tradedAt'] as Date) > now)).toHaveLength(0);
-    // Plus de trades « du jour » à 01:40 / 02:45 : la séance du jour attend l'ouverture.
-    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(0);
+    // Plus de trades « du jour » à 01:40 / 02:45 : la séance du jour attend l'ouverture. La vitrine
+    // montre quand même une session live, avec la position ouverte la veille au soir.
+    const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
+    expect(created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfDay)).toHaveLength(0);
+    expect(created['tradeSession'].filter((x) => x['status'] === 'ACTIVE')).toHaveLength(1);
+    expect(created['trade'].filter((t) => t['pnl'] === null)).toHaveLength(1);
 
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
@@ -606,9 +623,13 @@ describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => 
       const { prisma, created } = fakePrisma([]);
       await seedDemo(prisma, now);
       const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-      const today = created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfToday);
+      const today = created['trade'].filter((t) => (t['tradedAt'] as Date) >= startOfToday && t['pnl'] !== null);
       const hhmm = (d: Date) => d.toTimeString().slice(0, 5);
       expect(today.map((t) => hhmm(t['tradedAt'] as Date)), `séance de ${hour} h`).toEqual([first, last]);
+      // Puis une position encore ouverte, 4 min après le dernier trade (barre SL / TP de la vitrine).
+      const open = created['trade'].filter((t) => t['pnl'] === null);
+      expect(open).toHaveLength(1);
+      expect((open[0]['tradedAt'] as Date) < now).toBe(true);
       expect(today.every((t) => t['accountId'] === 'tradingAccount-1')).toBe(true); // Apex
       const active = created['tradeSession'].filter((x) => x['status'] === 'ACTIVE');
       expect(active).toHaveLength(1);

@@ -131,28 +131,66 @@ la maquette design (« The Terminal »).
   n'est jamais écrasée : `collapsed.set` ne l'écrit pas, seul `toggleCollapse` le fait.
 - **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
   carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
-- **Onglet Session live** → `session-live.component` : Contexte marché (cellules
-  « Ticker (Descripteur) » + valeur/variation sur une ligne) + News (ticker horizontal)
-  + **zone gauche** (4 mini-stats sur la largeur Calendrier+Live feed, puis Calendrier |
-  Live feed) + **Trade rapide en colonne pleine hauteur à droite**. Live feed en **ligne
-  compacte** : heure · asset · sens (▲/▼) · émotion (`emotionEmojiPipe`) · P&L / ● LIVE.
-- **Colonne droite de la session live** : compte de la session **éval ou funded synchronisé
-  Tradovate** (`isLivePropAccount`, `live-prop-firm.util.ts`) → `mtc-live-prop-firm` (suivi prop
-  firm, FREE) **à la place** de Trade rapide. `SessionLiveComponent` charge lui-même `TradovateStore`
-  s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437). `.pf-panel` en
-  `flex: 1` : bas aligné sur le calendrier et le Live feed. Solde et latent du broker, marge avant le plancher
-  et avancement objectif / payout, tout calculé par l'API (`metrics` de `GET /accounts`, règles du
-  plan relié). Temps réel = `tradovate:balance` → `SelectedAccountStore.reloadSoon()` ; le panneau
-  ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
-  trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
-  non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
-- **Trade en cours (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** :
-  `mtc-live-position` sous les mini-stats, si `liveStats().broker` existe (compte synchronisé).
-  Positions ouvertes chez le broker dès l'entrée, Réalisé / Latent (daté, « il y a 40 s ») /
-  Total = réalisé + latent (`live-position.util.ts`). Latent inconnu → « Latent indisponible pour
-  ce compte », pas de total. « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis
-  `refreshLive`. Rafraîchi par `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1
-  relecture). Jamais de polling rapide : le latent ne bouge qu'aux événements du compte.
+- **Onglet Session live (v3, #593, retours de Val « trop chargée »)** → `session-live.component`,
+  **mobile d'abord** (base = 390 px, `@media (min-width)` uniquement, jamais `max-width` dans cette vue).
+  Ordre mobile (= ordre du DOM) : `mtc-live-bar` (bandeau `position: sticky`) → `mtc-live-next-event`
+  → grille plate `.lv-grid` (`mtc-live-position`, `.lv-account`, `.lv-closed`) → `.lv-actions`
+  (« Contexte marché » + « Clôturer la session », en BAS, loin de « Clôturer ce trade »).
+  Paliers : **≥ 768** bandeau sur une ligne (Contexte + clôture dedans, `.lv-actions` masqué), grille
+  `pos | acc` puis `closed` pleine largeur · **≥ 1100** grille 2/3 · 1/3 (`"pos acc" "closed acc"`),
+  compte + plan et tickers dans le bandeau, suivi prop firm étiré sur la hauteur.
+  Retirés : 4 mini-stats, bandeau news, calendrier pleine hauteur, live feed (le calendrier complet
+  reste en Pré-session). Contexte marché (8 tickers) + news → feuille `mtc-market-context-bar` +
+  `mtc-live-news` (plein écran mobile, panneau latéral ≥ 768, `mtcDialog`).
+  Logique pure dans **`session-live.util.ts`** (testée) : `positionBar`, `priceFromLatent`, `pointValue`
+  (table `GET /instruments`, tickValue / tickSize), `nextAnnouncement`, `closeKind`, `bannerTickers`
+  (NQ, **SPX** — le flux n'a pas l'ES, jamais renommé —, DXY, 10Y), `moodLabel`, `planKindShort`.
+  - **Bandeau** (`live-bar`) : chrono `SessionStore.sessionClock()` (`HH:MM:SS`, ou alerte « Session
+    ouverte depuis le JJ/MM, clôture-la » au-delà de 24 h, `session-clock.util.ts`), `Trades N / max`
+    (`User.tradesPerDayMax`, sinon `Trades N`), P&L du jour = réalisé + latent (`liveTotals`), réalisé
+    seul si le latent est inconnu. **Sous 1100 px**, le contexte marché **défile** sous le chrono
+    (`lb-tape` : NQ, SPX, DXY, taux 2/10/30 ans, valeurs inconnues masquées, deux copies pour la
+    boucle, pause au survol, figé en `prefers-reduced-motion`) ; le toucher ouvre la feuille Contexte
+    (le bouton « Contexte marché » du bas n'apparaît plus que si le contexte n'est pas chargé). Sur l'onglet live, la pilule « Session active » du header de la
+    page est masquée (le bandeau la remplace) ; « Clôturer la session » émet `closeSession` → le
+    parent ouvre sa confirmation.
+  - **Prochaine annonce** (`live-next-event`) : prochaine annonce non publiée du jour, compte à rebours
+    recalculé chaque minute, **absente** s'il n'en reste aucune. Annonces à la même heure regroupées
+    (`nextAnnouncement` → `events`, `byImpact`), couleur rouge / ambre selon l'impact le plus fort. Marché CME fermé (ven. 16:00 →
+    dim. 17:00 Chicago, `cmeClosed`) : « Marché fermé · Réouverture des futures <jour HH:MM> » à la
+    place (la démo montre sa session live même le week-end). Sur `EcoSocketService.newReleases$`,
+    la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA
+    (`analyze-result`), reste dépliable ; retour à la suivante sur « J'ai lu » ou après 15 min.
+    Mêmes appels que l'ancien calendrier live (`refreshAnalysis` → `ecoCalendarRefreshed`, puis une
+    analyse par annonce) : **aucun appel IA de plus**.
+  - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
+    `liveStats.broker`, sinon 1er trade saisi à la main sans sortie), latent 32 px (40 px PC), barre
+    SL / entrée / TP (axe toujours perte → gain, SHORT compris). Broker : SL/TP = `stopPrice` /
+    `targetPrice` de la position (ordres actifs lus en direct, #601) ; `null` → repli entrée → prix +
+    « Aucun stop détecté chez Tradovate ». Événement socket `tradovate:orders` → `refreshLiveSoon` ; prix déduit du
+    latent (`priceFromLatent`) avec « relevé à HH:MM:SS », **masqué si plusieurs positions**.
+    « Clôturer ce trade » **uniquement pour un trade saisi à la main** (lecture seule Tradovate) :
+    prix de sortie → `tradeClosed`. Aucune position → carte d'une ligne `live-position-none`.
+  - **Suivi du compte** (`live-prop-firm`) : equity sur une ligne (30 px « Equity en direct » +
+    réalisé en PC), puis 3 jauges **le risque avant le gain** : perte max du jour (Premium, sinon
+    teaser à la même place et même hauteur, 78 px) → marge avant le plancher → objectif. Compte non
+    synchronisé / perso : carte P&L du jour + « Lier un compte prop firm », et **Trade rapide reste
+    affiché** (seul moyen de logger un trade) ; compte synchronisé : Trade rapide sur « Saisir un
+    trade à la main » (lien masqué quand Trade rapide est déjà là).
+  - **Trades clôturés** (`live-closed-trades`) : 2 niveaux en mobile (sens + actif + résultat ; heure
+    · entrée → sortie · TP/SL/Manuel), grille alignée ≥ 768 (`display: contents` sur les 2 niveaux).
+- **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
+  (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
+  `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
+  Solde et latent du broker, marge avant le plancher et avancement objectif / payout, tout calculé
+  par l'API (`metrics` de `GET /accounts`, règles du plan relié). Temps réel = `tradovate:balance` →
+  `SelectedAccountStore.reloadSoon()` ; le panneau ne fait qu'UNE relecture `refreshBalance` à
+  l'ouverture (jamais en compte démo).
+- **Latent broker (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** : relevé
+  daté, « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis `refreshLive`. Rafraîchi par
+  `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1 relecture). Jamais de polling
+  rapide : le latent ne bouge qu'aux événements du compte. Latent inconnu → « Latent indisponible
+  pour ce compte », jamais un chiffre.
   **Cohérence avec le suivi du compte** : les deux panneaux lisent le même relevé broker par deux
   requêtes (`GET /session/today/stats` sondé 30 s, `GET /accounts`). `SessionLiveComponent`
   compare `liveStats.broker.openPnlAt` et `metrics.broker.equityAt` (`laggingBrokerPanel`) et relit
@@ -633,6 +671,27 @@ sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
 
 ---
 
+## « Quel est ce compte ? » — liaison au plan prop firm (#612, 2026-10-18)
+
+`features/accounts/account-plan-wizard` (`mtc-account-plan-wizard`, entrée `accountId`, sortie
+`done`) : un choix par écran, firm → taille → phase (si le catalogue en distingue deux) → programme.
+Charge lui-même catalogue + `AccountsApi.planHint`, enregistre lui-même (PATCH) et émet le compte :
+le parent recharge son store. Pré-sélection via `guessPlan` (`@mtc/shared`) : `found` → « On dirait
+un Apex 50K » Oui / Changer · `personal` → « compte perso ? » · `ambiguous` → firm pré-choisie,
+écran taille · `none` → firm. Le **programme** n'est jamais deviné. « Compte perso », « Ma firm
+n'est pas dans la liste » et « Plus tard » posent `planLinkChoice`. Disclaimer d'estimation en pied.
+
+- Branché **après** `selectThenSync` réussi (historique importé = solde de départ connu) :
+  onboarding étape 8 (`tvPlanAccountId`, les autres options masquées, puis étape 9 sur `done`) et
+  Mes comptes (modale `plan-wizard-modal`, feuille pleine largeur < 768 px), compte sans plan.
+- Champ texte en `[value]` + `(input)` (pas `ngModel`, asynchrone : intestable sans `whenStable`).
+- **Rattrapage** (« plan à renseigner » = `needsPlanLink` de `@mtc/shared` : prop firm sans plan ou
+  `LATER`, jamais archivé / `PERSONAL` / `UNLISTED`) : bandeau `plan-link-<id>` sur la ligne de Mes
+  comptes (bouton « Relier » → même modale, **pas de masquage** : l'ancien bandeau masquable en
+  localStorage et limité aux comptes qui collaient à un plan a été retiré) ; Session live : bloc
+  `live-prop-firm-plan-cta` **à la place des 3 jauges**, hauteur fixe `3 × 61 px + 2 écarts` (jauge mesurée au banc local) (la
+  colonne ne saute pas quand le plan est relié), modale au palier 1000. Pas de modale bloquante, pas d'email.
+
 ## Connexion broker par compte — pattern (PROMPT-208, Tradovate)
 
 Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le back).
@@ -809,10 +868,10 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   Les specs du dashboard lisent des membres du parent (`summary`, `baseCapital`,
   `currentCapital`, `accountReallyEmpty`, `dashboardPeriod`, `setPeriod`, `plGranularity`,
   `plTitle`, `periodRange`, `showCsvImport`) : ne pas les déplacer dans un panneau.
-- **Session live** : le parent garde le cadre (CTA sans session, carte marché, mini-stats,
-  grilles `.live-layout` / `.live-cols`). La **connexion du WebSocket éco** est dans
-  `SessionStore` depuis SCA-B4 (voir « Polling »). Calendrier éco, live feed, trade rapide et news
-  (ticker + modale) sont dans `session-live/components/`.
+- **Session live** (v3) : le parent garde le cadre (CTA sans session, grille `.lv-grid`, feuille
+  Contexte). La **connexion du WebSocket éco** est dans `SessionStore` depuis SCA-B4 (voir
+  « Polling »). Bandeau, prochaine annonce, trade en cours, suivi du compte, trades clôturés, trade
+  rapide et news (ticker + modale) sont dans `session-live/components/`.
 - **CSS encapsulée** : le style d'une viz vit dans SON composant (un sélecteur du parent ne
   descend pas dans l'enfant). L'hôte d'un panneau de grille est un flex colonne
   (`:host { display:flex; flex-direction:column; min-width:0; min-height:0 }`) et le bloc
@@ -1057,6 +1116,21 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 
+### Admin : inscrits d'une campagne (#625)
+
+Page Utilisateurs : le filtre vit dans l'URL (`/users?source=&medium=&campaign=`, relu à chaque
+changement de `queryParamMap`), bandeau « Inscrits de … · N inscrits » + « Retirer le filtre ».
+Entrées : Acquisition › Détail par campagne (« Inscrits total » cliquable, triplet exact via
+`acquisitionQueryParams`, null → `-`) et la ligne « Acquisition » de la fiche utilisateur. Colonne
+Abonnement : badge « Offert » pour un mois Premium offert (plan FREE + `trialEndsAt` futur).
+
+### Admin : liaison compte ↔ plan prop firm (#612)
+
+Dashboard, bandeau « Fidélisation & activation » : 6e stat `kpi-plan-links` (taux, reliés / connectés),
+lien vers `/brokers`. Détail en tête de la page Brokers : `mtc-admin-plan-links-card` (réponses des
+comptes sans plan, firms absentes du catalogue). Specs admin : builder Angular, `templateUrl` compilé
+directement (pas de `?raw` comme dans l'app).
+
 ### Admin : offre fondateur et codes partenaires (#525)
 
 - Dashboard : 7e KPI « Fondateurs » (`X / 200`, `N actifs · R restantes`, barre fine, badge « fermée »)
@@ -1096,3 +1170,42 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   surveillance. Nouvel élément fixe ou collé à un bord → ces variables, jamais `env()` en dur.
   Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
   Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.
+
+## Connexion Google (#618, 2026-10-18)
+
+- `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans
+  `environment.*.ts`), script GIS `accounts.google.com/gsi/client` injecté **à la demande** et
+  seulement si actif. Aucune dépendance npm Google côté front.
+- `mtc-google-auth-button` (`shared/components`) : bouton **officiel** rendu par Google (jamais
+  redessiné) : `outline`, `large`, `rectangular`, `continue_with`, logo à gauche, largeur = largeur
+  mesurée de l'hôte (max 400), redessiné au redimensionnement (`ResizeObserver`, 150 ms) ; zone de
+  44 px sans fond. Bouton personnalisé « Continuer en tant que… » : affiché par Google dès qu'une
+  session a accepté le site, **aucune option ne le désactive** en `large` ≥ 200 px (doc GIS) ; il
+  reçoit les mêmes réglages. Séparateur « ou ». Rien si inactif ou script
+  bloqué. Navigateur intégré (`isInAppBrowser` de `@mtc/shared`) : invitation à ouvrir le
+  navigateur + « Copier le lien », pas de bouton. Zone toujours présente (classe `.gone`) : le
+  script y dessine, un `viewChild` dans un `@if` n'était pas résolu à temps. Bouton Google = iframe
+  de 40 px (non modifiable) centrée dans une zone de 44 px.
+- `GoogleSignInService` : parrain (`mtc_ref`) et UTM (`mtc_utm`) lus dans le stockage
+  (`signup-context.ts`) ; compte créé → `/inscription/finaliser` (`GoogleFinalizeComponent`, opt-in
+  non coché, `plan=premium` repassé) ; compte relié → toast au 1er passage (mention du mot de passe
+  retiré) ; sinon `PostSignupService.afterLogin`. Erreurs : `googleAuthErrorMessage` (par `code`).
+- `PostSignupService` : navigation après inscription / connexion **commune** e-mail et Google (offre
+  du lien, paiement Premium, tableau de bord). Toute nouvelle suite d'inscription va là.
+- **Bundle initial** : `/register` importe le bouton (+8,5 kB bruts, +3,1 kB gz : 476,7 → 485,2 kB,
+  budget bloquant 500). `GoogleSignInService` y est importé à la demande (`import()` au clic). Pas
+  de `@defer` : son moteur coûtait plus que le gain.
+- Intercepteur `front-auth` : seul `POST …/auth/google` exact est une route d'auth (sans jeton) ;
+  `/auth/google/finalize` et `DELETE /auth/google` gardent le jeton.
+- Profil : « Définir » (mot de passe absent, même e-mail que « Modifier ») ; ligne « Connexion
+  Google » avec « Délier » désactivé tant qu'aucun mot de passe n'existe.
+
+## Autoremplissage navigateur (2026-10-18)
+
+- Règle globale dans **`src/styles.css`** (`input/textarea/select:-webkit-autofill`) : ombre interne
+  `var(--autofill-bg, var(--bg-2))`, `-webkit-text-fill-color: var(--text)`, `background-clip:
+  padding-box !important` (sinon le fond clair imposé passe sous la bordure semi-transparente : le
+  raccourci `background:` des champs de composant remet `border-box`). Champ sur un autre fond →
+  poser `--autofill-bg`.
+- ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
+  règle globale va dans `styles.css`, pas là.

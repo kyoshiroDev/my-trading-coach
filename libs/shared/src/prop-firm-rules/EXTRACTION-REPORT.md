@@ -453,3 +453,42 @@ Relecture dans Chrome des pages que les requêtes directes ne voyaient pas (sél
 | BluSky | Prix du sélecteur de blusky.pro (Launch 59 / 69 / 79 $ par mois, Propel 150 à 320 $, Orbit 199 à 419 $ en paiement unique, Instant 599 $). Direct to Funded absent du sélecteur. | Prix renseignés sur 14 plans ; `needs_review` maintenu (contrôle en séance du Sim Funded, Buffer Zone) |
 | Phidias | API du centre d'aide relue (30 articles) : la liquidation est décrite sur le « solde » / « capital » sans dire si le latent compte. Deux heures différentes : recalcul du drawdown à 22:00 UTC+2, fermeture obligatoire (Fundamental) à 21:59 UTC. | Inchangé, question au support |
 | Bulenox | CMS public relu : règles du Master classique conformes au catalogue. Le Momentum Master n'a pas de drawdown chiffré à part. | Inchangé, question au support |
+
+## Relecture Apex et Lucid du 2026-10-18 (#614)
+
+Déclenchée par le chantier « relier chaque compte à son plan » (#612) : vérifier que la perte max du jour et le max contrats d'Apex et Lucid sont complets avant de les proposer à la connexion. Sources : centres d'aide officiels uniquement (Lucid en requête directe, Apex dans Chrome, le site bloquant les requêtes hors navigateur). Seuls les articles modifiés depuis le relevé précédent ont été relus (veille `pnpm prop-firms:watch` pour Lucid, `help-center-sitemap.xml` pour Apex).
+
+| Firm | Article (date de modification) | Constat | Effet |
+|---|---|---|---|
+| Apex | Legacy Evaluation Rules (2026-10-15) | Drawdowns 1 500 à 7 500 $, tailles 4 à 35 minis, pas de DLL, 7 jours minimum, gel au solde objectif sur Rithmic / WealthCharts, trailing sans fin sur Tradovate : conforme. | Aucun |
+| Apex | Intraday Trailing Drawdown Explained (2026-10-12) | 1 000 / 2 000 / 3 000 / 4 000 $, latent compris, temps réel ; PA figé à départ + 100 $ ; évaluation Rithmic / WealthCharts figée au solde objectif ; Tradovate sans fin : conforme. | Aucun |
+| Apex | Inactivity Policy on PA (2026-10-08) | 2 jours à 50 $ net par période glissante de 30 jours, fermeture au 30e jour : conforme. | Aucun |
+| Apex | — | Perte max du jour : EOD en évaluation (500 / 1 000 / 1 500 / 2 000 $), paliers en PA Intraday et EOD ; **aucune** sur les évaluations Intraday et sur tout le Legacy (règle officielle). Max contrats renseignés partout. | `verified_at` → 2026-10-18 |
+| Lucid | LucidFlex Funded Account (2026-10-13) | 1 000 / 2 000 / 3 000 / 4 500 $ EOD, DLL optionnelle à l'achat, pas de consistency ni de buffer, 2 / 4 / 6 / 10 minis : conforme. | Aucun |
+| Lucid | Supported Platforms (2026-10-12) | Mêmes 12 plateformes (CQG : NinjaTrader, Tradovate, TradingView ; Rithmic : 9). | Aucun |
+| Lucid | LucidMaxx Overview, Eval Rules, Eval Pricing | Passés en contenu **Legacy** (slugs `legacy-…`). La grille de prix par paliers « n'est plus applicable » depuis le 2026-10-04, sans prix de remplacement publié. L'ancien minimum de 5 jours de trading n'apparaît plus dans le nouveau programme (« potential 3 day pass »). | `lucid-maxx-*` : `price.amount` et `min_trading_days` à `null`, `needs_review: true`, sources Legacy retirées |
+| Lucid | New LucidMaxx Program (2026-10-09) | Évaluation 40 % de consistency, Pre-Live sans consistency, Live : MLL statique 100 $, sans DLL : conforme aux notes. | Aucun |
+| Lucid | New Live Structure | L'article `13425130` est devenu « Legacy Live Structure », remplacé par `16558826-new-live-structure` (payout 5 = entrée en revue live, live à 0 $, EOD, sans DLL). | Source remplacée sur les 12 plans qui la citaient ; `verified_at` → 2026-10-18 |
+
+Perte max du jour **introuvable** sur Apex et Lucid : aucune. Règles laissées vides : prix et minimum de jours de LucidMaxx (cf. ci-dessus). Phase Pre-Live de LucidMaxx toujours non modélisée.
+
+## Veille du 2026-10-18 (issue #553)
+
+Relecture des sources signalées par `pnpm prop-firms:watch` (relevé du jour : 61 sources modifiées sur 13 firms, plus que les 29 de l'issue du 2026-10-12). Sources officielles uniquement, aucune question envoyée aux firms. Les firms relues passent à `verified_at: 2026-10-18`.
+
+| Firm | Trouvé | Effet |
+|---|---|---|
+| Lucid | LucidMaxx : déjà relu le même jour (#614, ci-dessus). En plus : option de retrait complet au lieu du live (2026-10-09), délai de 2 semaines avant un nouvel achat. | Notes des 4 plans `lucid-maxx-*` |
+| BluSky | Sim Funded (2026-10-08) : retrait minimum 500 $ depuis le 2026-10-01 (l'article Propel du 2026-09-11 indique encore 250 $), 500 $ de nouveau profit entre deux demandes, passage en live à 0 $ avec « Bonus Vault » ou rachat à 50 % du drawdown. Resets Orbit 50K / 100K : 129 / 199 $. | `min_cycle_profit: 500` sur 14 plans, Propel `min_amount: 500`, prix des resets Orbit |
+| Bulenox | Le site affiche « Keep up to 90% of profits » et l'article Fast Track « A Trader keeps 90% » : les 100 % sur les 10 000 premiers dollars ont disparu. | 24 plans : `split_pct: 0.9`, `split_after: null` |
+| Take Profit Trader | Article PRO (2026-10-09) : le buffer ne se retire qu'à 50 % à la clôture ; le palier à 80 % après 60 jours de trading n'y figure plus. | Notes de payout des 5 plans |
+| Top One Futures | Option « No Daily Loss Limit » au checkout depuis le 2026-10-16 (Elite Daily, Elite ACCESS, Elite ACCESS Intraday, Ignite), environ +30 % ; prix exacts dans les attributs de la page d'accueil. Resets d'évaluation Elite Daily : 84 / 104 / 194 / 270 $ (article « Reset Fees » et page d'accueil ; l'article Overview garde un ancien tarif). | 16 plans `toponefutures-*-nodll-*` ajoutés (DLL `null`), `configuration.daily_loss_limit` sur les plans de base, prix des resets Elite Daily |
+| TradeDay | Fast Pass 100K / 150K : 350 / 530 $ par mois (330 / 500 $ au relevé du 2026-10-03) ; promotions Fast Pass 65 / 95 / 175 / 265 $. | Prix de 2 plans, notes des 4 plans Fast Pass |
+| UProfit | Taille 10K ajoutée le 2026-10-08 en Soft (29 $/mois, DLL 220 $) et Flex (39 $/mois) : objectif 800 $, drawdown EOD 400 $, 5 micros, SafetyNet 500 $, plafond 300 $ par retrait. Tailles 50K à 150K inchangées (le changement d'empreinte venait du menu du centre d'aide). | 2 plans `uprofit-*-10k` ajoutés (`minis: null`, micros seulement) |
+| Earn2Trade, Elite Trader Funding, Funded Futures Family, MyFundedFutures, Topstep | Articles et pages relus : conformes au catalogue (FFF Premier+ et MFFU Pro inchangés, payouts Topstep et grilles de prix identiques). | `verified_at` seul |
+
+Points ouverts :
+- Lucid : prix du nouveau LucidMaxx (non publié).
+- BluSky : retrait minimum Propel (500 $ retenu, l'article du plan dit encore 250 $) ; prix des plans sur blusky.pro (sélecteur JavaScript, à relire dans un navigateur).
+- Top One : DLL Elite Daily 150K à 1 850 $ dans les articles, 1 750 $ sur la page d'accueil (1 850 $ conservé) ; reset des comptes « No DLL » non publié.
+- Bulenox : l'article Momentum ne cite pas le partage ; 90/10 retenu d'après le site.

@@ -23,11 +23,13 @@ import { TradesModule } from '../trades/trades.module';
 import { FounderOfferModule } from '../founder-offer/founder-offer.module';
 import { AdminBrokerMappingsController } from './admin-broker-mappings.controller';
 import { SignupFunnelService } from './signup-funnel.service';
+import { AdminPropFirmsController } from './admin-prop-firms.controller';
+import { PlanLinkStatsService } from './plan-link-stats.service';
 
 @Module({
   imports: [DemoSeedModule, ResendModule, UsersModule, PrismaModule, DiscordModule, StripeModule, VpsModule, AmbassadorModule, ReferralModule, TradesModule, FounderOfferModule],
   // Toutes les routes admin vivent sous /admin (guard au niveau de chaque classe).
-  controllers: [AdminController, AdminUsersController, AdminAmbassadorsController, AdminBrokerMappingsController],
-  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, SignupDigestCron, DeletedAccountService, UserDetailService, DemoSeedCron, SignupFunnelService],
+  controllers: [AdminController, AdminUsersController, AdminAmbassadorsController, AdminBrokerMappingsController, AdminPropFirmsController],
+  providers: [AdminService, AnthropicCostService, EmailCampaignService, MetricsSnapshotCron, SignupDigestCron, DeletedAccountService, UserDetailService, DemoSeedCron, SignupFunnelService, PlanLinkStatsService],
 })
 export class AdminModule {}

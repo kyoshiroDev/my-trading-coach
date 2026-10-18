@@ -39,6 +39,7 @@ Sort en code 1 au moindre écart. Contrôles : schéma, `firm.id` = nom du fichi
 - **Pourcentages** : décimales (`0.5` = 50 %).
 - **Heures** : `"HH:MM <fuseau IANA>"`, ex. `"18:00 America/New_York"`. Les firms écrivent souvent « EST » pour l'heure de New York toute l'année : on stocke `America/New_York`.
 - **`null`** : la règle n'existe pas. Si la règle existe mais que la valeur n'est pas publiée : `null` + `needs_review: true` sur le plan + explication dans `notes`. Jamais de valeur supposée.
+- **Perte journalière (`daily_loss_limit`)** : exception à la règle précédente, pour que l'app distingue « pas de perte max du jour » et « on ne sait pas ». `null` = la firm n'en a pas ; règle existante au montant non publié = objet avec `amount: null`, sans `tiers` ni `scaling_rule`, + `needs_review`. L'API en déduit `dailyLossLimitStatus` (`none` / `known` / `unknown`, `daily-loss-status.ts`).
 - **Ids de plan** : `firm-plan[-options]-taille`, ex. `lucid-daily-dll-eod-50k`, `apex-intraday-100k`. Stables : un id publié ne change jamais. Si une firm change les règles d'un plan existant, on met à jour le plan ; si elle crée un nouveau produit, on crée un nouvel id.
 - **Options au checkout** : quand une option change les règles (DLL ON/OFF, drawdown d'évaluation EOD ou intraday), chaque combinaison est un plan distinct, décrit par `configuration`. Une option qui ne change que le prix (ex. Apex « No Activation Fee ») reste dans `price.notes`.
 - **Pas de tiret long** dans les textes.

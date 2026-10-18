@@ -3,7 +3,7 @@ import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from '
 
 // UTM normalisés (trim + minuscules) pour que « NinjaTrader » et « ninjatrader » tombent
 // dans la même source à l'agrégation admin ; chaîne vide → absent (null en base).
-const normalizeUtm = ({ value }: { value: unknown }): unknown =>
+export const normalizeUtm = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' ? value.trim().toLowerCase() || undefined : value;
 
 export class RegisterDto {

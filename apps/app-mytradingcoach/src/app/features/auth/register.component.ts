@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Injector,
   computed,
   inject,
   signal,
@@ -11,14 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EyeIconComponent } from '../../shared/components/eye-icon/eye-icon.component';
 import { AuthService, type Acquisition } from '../../core/auth/auth.service';
-import { BillingService } from '../../core/services/billing.service';
 import { OfferIntentService } from '../../core/services/offer-intent.service';
-import { OffersStore } from '../../core/stores/offers.store';
 import { whenIdle } from '../../core/auth/authenticated-preloading';
 import { SignupFunnelService, registerErrorCode } from '../../core/services/signup-funnel.service';
-
-/** UTM d'acquisition en attente d'inscription (cf. resolveAcquisition). */
-const UTM_STORAGE_KEY = 'mtc_utm';
+import { PostSignupService } from '../../core/auth/post-signup.service';
+import { REFERRAL_STORAGE_KEY, UTM_STORAGE_KEY } from '../../core/auth/signup-context';
+import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
 
 /** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
 export function referrerHost(referrer: string): string {
@@ -32,20 +31,20 @@ export function referrerHost(referrer: string): string {
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, EyeIconComponent],
+  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './register.component.css',
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
-  private readonly billing = inject(BillingService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly offerIntent = inject(OfferIntentService);
   private readonly funnel = inject(SignupFunnelService);
-  private readonly offersStore = inject(OffersStore);
+  private readonly postSignup = inject(PostSignupService);
+  private readonly injector = inject(Injector);
 
 
   protected readonly name = signal('');
@@ -55,6 +54,8 @@ export class RegisterComponent {
   protected readonly marketingConsent = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly apiError = signal<string | null>(null);
+  protected readonly googleLoading = signal(false);
+  protected readonly googleError = signal<string | null>(null);
   protected readonly showPassword = signal(false);
   protected readonly showConfirm = signal(false);
   protected readonly submitted = signal(false);
@@ -138,7 +139,7 @@ export class RegisterComponent {
    * interne de l'app (register → login → register) avant l'inscription.
    */
   private resolveReferralCode(): string {
-    const KEY = 'mtc_ref';
+    const KEY = REFERRAL_STORAGE_KEY;
     const fromUrl = (this.route.snapshot.queryParamMap.get('ref') ?? '')
       .trim()
       .toUpperCase();
@@ -207,23 +208,7 @@ export class RegisterComponent {
       .subscribe({
         next: () => {
           this.funnel.track('register_success');
-          // Lien d'offre (#578) : offres demandées tout de suite (le compte existe enfin), en
-          // parallèle de la navigation, pour être là quand la modale de plans s'ouvre.
-          if (this.offerFlow()) this.offersStore.load({ silent: true });
-          try {
-            sessionStorage.removeItem(UTM_STORAGE_KEY);
-          } catch {
-            /* sessionStorage indisponible */
-          }
-          if (this.offerFlow()) {
-            // La modale (OfferIntentHost, dans le shell) prend le relais.
-            this.router.navigate(['/dashboard']);
-          } else if (this.isPremiumFlow()) {
-            // Page de paiement : un échec y est affiché, avec le retour au tableau de bord.
-            this.billing.startCheckout('premium_monthly');
-          } else {
-            this.router.navigate(['/dashboard']);
-          }
+          this.postSignup.afterSignup({ premium: this.isPremiumFlow() });
         },
         error: (err) => {
           const status = err.status;
@@ -232,6 +217,35 @@ export class RegisterComponent {
             this.apiError.set('Un compte existe déjà avec cette adresse email');
           else this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);
+        },
+      });
+  }
+
+  /**
+   * Retour du bouton Google (#618). Parrain et UTM viennent du stockage (posés à l'ouverture de
+   * la page) ; un compte créé passe par l'écran de finalisation avant la suite du parcours.
+   */
+  async onGoogleCredential(credential: string) {
+    this.googleLoading.set(true);
+    this.googleError.set(null);
+    this.funnel.track('register_submit');
+    // Import à la demande : la suite Google n'alourdit pas le bundle initial de /register.
+    const { GoogleSignInService, googleAuthErrorMessage } = await import(
+      '../../core/auth/google-sign-in.service'
+    );
+    this.injector
+      .get(GoogleSignInService)
+      .signIn(credential, { premium: this.isPremiumFlow() })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (status) => {
+          if (status === 'created') this.funnel.track('register_success');
+        },
+        error: (err: unknown) => {
+          const status = (err as { status?: number }).status;
+          this.funnel.track('register_error', registerErrorCode(status));
+          this.googleError.set(googleAuthErrorMessage(err));
+          this.googleLoading.set(false);
         },
       });
   }

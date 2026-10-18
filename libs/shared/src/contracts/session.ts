@@ -31,6 +31,12 @@ export interface LiveOpenPosition {
   entryPrice: number | null;
   /** Ouverture de la position (ISO), `null` si le broker ne la donne pas. */
   since: string | null;
+  /**
+   * SL / TP posés chez le broker (ordres actifs lus en direct, #601). `null` = aucun ordre, ou
+   * plusieurs candidats sans lien de bracket : jamais une association devinée.
+   */
+  stopPrice: number | null;
+  targetPrice: number | null;
 }
 
 /**

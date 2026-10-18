@@ -99,11 +99,11 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 | Couleur | Usage autorisé | Usage INTERDIT |
 |---|---|---|
 | `--green` | Gains, PnL > 0 | Décoratif, succès génériques |
-| `--red` | Pertes, PnL < 0 | Erreurs non-trading, danger générique |
+| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 | Erreurs non-trading, danger générique |
 | `--blue` | CTA, liens, éléments interactifs | Statuts trading |
-| `--yellow` | Warnings, attention, urgence | Succès, gains |
+| `--yellow` | Warnings, attention, urgence ; session live : annonce éco à **impact moyen** et jauge perte du jour (≥ 50 % consommés) | Succès, gains |
 | `--cyan` | Indicateurs live / IA (pulse) | Décoratif, CTA |
-| `--purple` | Logo mark, avatars, badge beta | Statuts, CTA |
+| `--purple` | Logo mark, avatars, badge beta, chip de plan prop firm | Statuts, CTA |
 | `--nt` | Flux Tradovate : carte « le plus complet », bouton « Connecter », mot « Tradovate » | Tout le reste de l'app (ce n'est pas un accent de marque MTC) |
 
 ---
@@ -189,7 +189,9 @@ Bouton « Réinitialiser » associé : même gabarit, ton plus discret (`--text-
 
 ### Info-bulle d'aide (`mtc-info-tooltip`) — métriques calculées
 
-Petite icône `?` (14px, cercle bordure `--border`) posée **après le libellé** d'une métrique calculée ou ambiguë, qui explique **comment la donnée est calculée** au survol / tap / focus clavier (+ Échap et clic-extérieur pour fermer). Composant partagé `shared/components/info-tooltip`.
+Petite icône `?` (14px, cercle bordure `--border` ; sur écran tactile, `::before` transparent qui
+porte la zone de clic à 44 px sans changer le rendu — pas à la souris, il débordait sur les lignes
+de semaine cliquables du journal) posée **après le libellé** d'une métrique calculée ou ambiguë, qui explique **comment la donnée est calculée** au survol / tap / focus clavier (+ Échap et clic-extérieur pour fermer). Composant partagé `shared/components/info-tooltip`.
 
 - **Réservé aux données calculées/ambiguës** (win rate, R:R, note d'exécution, drawdown, profit factor, émotion effective, frais…). **Jamais décoratif** : pas sur Date, Actif, Direction, Entrée, Sortie, Quantité, Setup — sinon l'icône devient du bruit et l'utilisateur l'ignore.
 - Uniquement sur les **en-têtes de colonnes et libellés de KPI**, jamais sur les cellules de données.
@@ -229,7 +231,8 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
     dans l'écran**, plafonné à `max-height: calc(100vh - 103px)`, le trop-plein scrolle **à
     l'intérieur du composant** (pas d'allongement de page, header toujours visible). Cibles du
     plafond : Pré-session → les 2 colonnes `.daily-row` + `.eco-card` (liste `.eco-events` scrolle) ·
-    Session live → `[data-testid="session-live-view"]` · Débrief → `.session-debrief`.
+    Débrief → `.session-debrief`. **Session live v3 : pas de plafond**, la page scrolle et le bandeau
+    reste collé en haut (`position: sticky`).
     Offset 103 = padding-top 16 + header 57 + margin 14 + padding-bottom 16 ; `.session-page`
     colle au haut du viewport donc `100vh` est la bonne référence (robuste aux écrans courts).
   - **Tablette/mobile `≤980px`** : **pas** de plafond → flow naturel + **scroll de page**
@@ -237,8 +240,8 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
     overflow:visible` (`@container (max-width:820px)`).
 - Listes internes bornées **à partir de 821px** : `.feed-list`, `.cal-events-list` gardent `overflow-y:auto`
   borné par `max-height` sur le panneau parent (≈420px). **≤820px** (colonnes empilées) : plafond
-  levé, la liste s'affiche en entier et c'est la page qui scrolle — jamais de scroll dans le scroll sur mobile. Container-queries live : `.live-layout`
-  1 col ≤1100 · `.live-cols` 1 col ≤820 · `.mini-stats-row` 2 col ≤820 puis 1 col ≤520 ·
+  levé, la liste s'affiche en entier et c'est la page qui scrolle — jamais de scroll dans le scroll sur mobile.
+  Session live : voir « Session live v3 » ci-dessous (media queries `min-width` 768 / 1100) ·
   `.ctx-grid` 4 col ≤1100 puis 2 col ≤680 · `.qt-pnl-row` 1 col ≤520.
 
 - **Header** (grille `1fr auto 1fr`) : titre `Space Grotesk 21px/700 -.4px` + sous-titre
@@ -258,11 +261,44 @@ display:block; container-type:inline-size; flex:1; min-height:0; overflow-y:auto
 - **MoodRow** : boutons transparents `1px --border`, sélection = border `--blue-bright` + fond
   `--blue-glow` + texte `--text` (jamais violet). Grille 2 col en fin de session, flex sinon.
 - **Contexte marché** (live) : cellule `bg-2`, radius 10, valeur mono 15px, variation mono
-  10.5/600 (vert/rouge), descripteur `--text-faint`, **sans barre d'accent**. Contexte + grille
-  + news ticker dans **une seule carte** (`.mkt-card`).
+  10.5/600 (vert/rouge), descripteur `--text-faint`, **sans barre d'accent**. Session live v3 :
+  détail complet (8 tickers + news) dans la feuille « Contexte » ; le bandeau PC n'en garde que 4.
 - **Anti-pattern** : ne jamais réintroduire un accent `::before` sur ces cellules/cartes, ni le
   violet sur la mood row de fin de session (bleu = sélection).
 - `@keyframes mtc-blink { 0%,100%{opacity:1} 50%{opacity:.25} }` — pill session active.
+
+### Session live v3 (#593) — mobile d'abord
+
+Maquettes : `docs/mockups/mockup-session-live-v3-mobile.html` (390 px, référence première) et
+`docs/mockups/mockup-session-live-v3.html` (PC). Base = mobile, paliers `@media (min-width: 768px)`
+et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 360 px.
+
+- **Hiérarchie** : bandeau collant → prochaine annonce → trade en cours → suivi du compte →
+  trades clôturés → (mobile) Contexte marché + Clôturer la session en bas de page.
+- **Couleurs** : vert = gains, rouge = pertes, **cyan = live / IA** (chrono, pastille, badge LIVE,
+  analyse IA d'une annonce publiée), violet = chip de plan. Ligne d'annonce : **rouge si impact
+  fort, ambre si impact moyen** (couleur = impact le plus fort du créneau) ; ambre aussi pour la jauge
+  perte du jour. Plusieurs annonces à la même heure : **une seule ligne**, la plus importante en
+  tête, chip « +N » qui déplie une liste compacte (point de couleur + nom + impact) ; publiées : « N
+  PUBLIÉES », les autres dans le dépliage sur 2 niveaux (nom ; publié · prévu · précédent en gris),
+  un seul « J'ai lu » sur la ligne du titre. **≥ 2 annonces fortes** : avant publication toutes
+  nommées (« 2 ANNONCES FORTES »), « +N » pour les moyennes seulement ; publiées, un **onglet** par
+  annonce forte (nom court, 44 px, une ligne qui glisse), la plus surprenante (écart publié / prévu)
+  ouverte d'abord, point cyan sur une analyse pas encore lue ; une seule analyse visible à la fois. Chiffres publiés d'une annonce : neutres (au-dessus de la
+  prévision n'est ni un gain ni une perte). Variations de marché du bandeau : vert / rouge.
+- **Jauges** (libellé + valeur à droite, barre 8 px radius 99, sous-ligne 12 px `--text-2`) :
+  perte max du jour = part **consommée**, neutre `--text-faint` < 50 %, ambre ≥ 50 %, rouge ≥ 75 %
+  (seuils `drawdownTone`, comme « Mes comptes » — pas de seuil propre) ; marge plancher = gris
+  ardoise `--text-faint` ; objectif = vert. Teaser Premium : même place, même hauteur (78 px),
+  une ligne, bordure pointillée, badge violet.
+- **Barre SL / entrée / TP** : piste `--bg-3` 10 px, segment perte `--red` 35 %, gain `--green` 28 %,
+  trait d'entrée 2×20 px `--text`, pastille 18 px (rouge en perte, verte en gain). Libellés :
+  montants sous les prix jusqu'à 1100 px, sur la même ligne au-delà.
+- **Typo** : actif Space Grotesk 24 px (28 PC), latent JetBrains Mono 32 px (40 PC), libellés de
+  carte JetBrains Mono 11 px `.08em` majuscules `--text-2`. Texte jamais < 12 px, cibles ≥ 44 px
+  en mobile (≥ 40 px en PC). **Aucun emoji** dans la vue (humeur en texte seul).
+- **Clôturer la session** : rouge discret (bordure rouge 45 %, fond rouge 8 %, texte rouge éclairci),
+  bien séparé de « Clôturer ce trade » (neutre `--bg-3`).
 
 ---
 

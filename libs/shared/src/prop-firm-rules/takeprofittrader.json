@@ -16,7 +16,7 @@
       "finamark"
     ]
   },
-  "verified_at": "2026-10-03",
+  "verified_at": "2026-10-18",
   "plans": [
     {
       "id": "takeprofittrader-test-25k",
@@ -111,7 +111,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (26500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO : 50 % jusqu'à 60 jours de trading, 80 % au-delà. Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (26500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO, à 50 % (article « PRO Account Profit Split & Withdrawal Rules », 2026-10-09 : le palier à 80 % après 60 jours de trading n'y figure plus). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
           }
         }
       ],
@@ -224,7 +224,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52000,
-            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (52000 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO : 50 % jusqu'à 60 jours de trading, 80 % au-delà. Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (52000 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO, à 50 % (article « PRO Account Profit Split & Withdrawal Rules », 2026-10-09 : le palier à 80 % après 60 jours de trading n'y figure plus). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
           }
         }
       ],
@@ -337,7 +337,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 77500,
-            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (77500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO : 50 % jusqu'à 60 jours de trading, 80 % au-delà. Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (77500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO, à 50 % (article « PRO Account Profit Split & Withdrawal Rules », 2026-10-09 : le palier à 80 % après 60 jours de trading n'y figure plus). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
           }
         }
       ],
@@ -450,7 +450,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103000,
-            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (103000 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO : 50 % jusqu'à 60 jours de trading, 80 % au-delà. Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (103000 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO, à 50 % (article « PRO Account Profit Split & Withdrawal Rules », 2026-10-09 : le palier à 80 % après 60 jours de trading n'y figure plus). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
           }
         }
       ],
@@ -563,7 +563,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154500,
-            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (154500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO : 50 % jusqu'à 60 jours de trading, 80 % au-delà. Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
+            "notes": "Retrait dès le premier jour, 80/20, sur le profit au-dessus du buffer (154500 $ = solde de départ + drawdown). Le buffer lui-même ne se retire qu'en clôturant le PRO, à 50 % (article « PRO Account Profit Split & Withdrawal Rules », 2026-10-09 : le palier à 80 % après 60 jours de trading n'y figure plus). Frais de 50 $ sur un retrait du wallet de 250 $ ou moins. PRO+ (live, sur invitation) : 90/10, sans buffer."
           }
         }
       ],

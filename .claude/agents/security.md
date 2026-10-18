@@ -338,3 +338,27 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
 `GET /api/pricing/partner/:code` : `@Public`, **20 req/min/IP** (anti-énumération), paramètre tronqué à
 40 caractères, ne renvoie ni le libellé (nom du partenaire) ni le nombre d'utilisations.
 
+
+## Connexion Google (#618, 2026-10-18)
+
+- **Vérification** : `GoogleIdTokenVerifier` (`modules/auth/google-id-token.verifier.ts`,
+  `google-auth-library` épinglée) : signature, `aud` = `GOOGLE_CLIENT_ID` de l'environnement,
+  `iss`, expiration, puis `email_verified === true`. Message de la lib jamais relayé. Spec avec
+  une vraie clé RSA de test (seuls les certificats Google sont remplacés).
+- **Flag** : `resolveGoogleAuthConfig` (`config/google-auth-config.ts`) : actif seulement si
+  `FEATURE_GOOGLE_AUTH=true` ET `GOOGLE_CLIENT_ID` défini, sinon `POST /auth/google` → 404.
+  `GET /auth/google/config` (`@Public`, cache 5 min) donne `{ enabled, clientId }` au front : rien
+  en dur dans les `environment.*.ts`.
+- **Liaison sur un compte jamais vérifié** (aucune vérification d'e-mail à l'inscription classique) :
+  mot de passe supprimé + `tokenVersion` incrémenté (`passwordCleared: true` dans la réponse). Sans
+  ça, un tiers ayant pré-créé un compte sur l'adresse garderait son mot de passe et sa session.
+- **Refresh token** : porte `tv` (version) ; `refresh` refuse une version ≠ `User.tokenVersion`
+  (jeton sans `tv` = version 0). Incrémenter `tokenVersion` = déconnecter toutes les sessions.
+- **Exclus** : comptes `isDemo` et `ADMIN` (403 `GOOGLE_NOT_ALLOWED`), en connexion comme en liaison.
+  Une liaison existante n'est jamais remplacée par un autre `sub` (409 `GOOGLE_ALREADY_LINKED`).
+- **Délier** (`DELETE /auth/google`) refusé sans mot de passe (400 `PASSWORD_REQUIRED`).
+- **Mot de passe oublié** d'un compte sans mot de passe : même 204, e-mail « Connexion à ton
+  compte » qui rappelle Google et sert à définir un mot de passe (`googleOnly`).
+- **Rate limit** `POST /auth/google` : 10/min (`default`, par IP faute d'e-mail dans le corps) +
+  30/10 min (`ip`). **Logs** : issue (`created | linked | login`, raison d'un refus) + id interne
+  seulement, jamais le jeton, l'e-mail ni le `sub`.

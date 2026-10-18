@@ -1,0 +1,50 @@
+/* Trades clôturés (session live v3) — mobile d'abord : ligne sur 2 niveaux, grille à partir de 768 px. */
+:host { display: block; min-width: 0; }
+
+.ct-card {
+  background: var(--bg-2); border: 1px solid rgba(255, 255, 255, .06); border-radius: 14px; padding: 16px; min-width: 0;
+}
+.ct-head { display: flex; align-items: center; gap: 10px; }
+.ct-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); }
+.ct-wide { display: none; }
+.ct-empty { margin: 10px 0 0; font-size: 13px; color: var(--text-3); }
+
+.ct-list { list-style: none; margin: 6px 0 0; padding: 0; }
+.ct-row { padding: 11px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.ct-row:last-child { border-bottom: none; }
+/* Niveau 1 : sens · actif · résultat à droite */
+.ct-l1 { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.ct-side { font-size: 11px; font-weight: 600; }
+.ct-side.long { color: var(--green); }
+.ct-side.short { color: var(--red); }
+.ct-asset { font-weight: 600; color: var(--text); }
+.ct-pnl { margin-left: auto; font-family: var(--font-mono); color: var(--text); font-variant-numeric: tabular-nums; }
+.ct-pnl.green { color: var(--green); }
+.ct-pnl.red { color: var(--red); }
+/* Niveau 2, en gris : heure · entrée → sortie · TP/SL */
+.ct-l2 { display: flex; flex-wrap: wrap; column-gap: 6px; margin-top: 4px; font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+.ct-prices::before, .ct-kind::before { content: '· '; }
+
+.ct-manual {
+  background: none; border: none; color: var(--blue-bright); font: 500 13px var(--font-body); cursor: pointer;
+}
+.ct-manual:hover { text-decoration: underline; }
+.ct-manual-top { display: none; }
+.ct-manual-bottom { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: 6px; }
+
+@media (min-width: 768px) {
+  .ct-wide { display: inline; }
+  .ct-manual-top { display: inline-flex; margin-left: auto; min-height: 40px; align-items: center; }
+  .ct-manual-bottom { display: none; }
+  /* Une ligne en grille alignée : heure, sens, actif, entrée → sortie, TP/SL, résultat */
+  .ct-row { display: grid; grid-template-columns: 48px 52px 56px minmax(0, 1fr) 64px auto; column-gap: 8px; align-items: center; }
+  .ct-l1, .ct-l2 { display: contents; }
+  .ct-time { grid-column: 1; grid-row: 1; }
+  .ct-side { grid-column: 2; grid-row: 1; }
+  .ct-asset { grid-column: 3; grid-row: 1; }
+  .ct-prices { grid-column: 4; grid-row: 1; }
+  .ct-kind { grid-column: 5; grid-row: 1; }
+  .ct-pnl { grid-column: 6; grid-row: 1; margin-left: 0; text-align: right; }
+  .ct-time, .ct-prices, .ct-kind { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+  .ct-prices::before, .ct-kind::before { content: none; }
+}

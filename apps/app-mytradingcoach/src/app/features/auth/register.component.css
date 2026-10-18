@@ -312,3 +312,8 @@ input::placeholder {
   margin-bottom: 16px;
   text-align: center;
 }
+
+/* Erreur de la connexion Google, entre le bouton et le formulaire. */
+.google-error {
+  margin: 0 0 16px;
+}

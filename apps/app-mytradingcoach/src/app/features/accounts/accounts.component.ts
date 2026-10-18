@@ -59,7 +59,7 @@ import {
 } from '../../core/utils/tradovate-return.util';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
-import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney, matchPlans } from '@mtc/shared';
+import { ACCOUNT_CURRENCIES, commonCurrency, formatMoney, matchPlans, needsPlanLink } from '@mtc/shared';
 import {
   AccountType,
   AccountStatus,
@@ -78,6 +78,7 @@ import {
   type FirmChoice,
 } from './prop-firm-plan-picker/prop-firm-plan-picker.component';
 import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/prop-firm-plans.util';
+import { AccountPlanWizardComponent } from './account-plan-wizard/account-plan-wizard.component';
 import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 
@@ -116,17 +117,6 @@ function emptyForm(): AccountFormState {
   };
 }
 
-const DISMISSED_LINKS_KEY = 'mtc.accounts.planLinkDismissed';
-
-function readDismissedLinks(): string[] {
-  try {
-    const v: unknown = JSON.parse(localStorage.getItem(DISMISSED_LINKS_KEY) ?? '[]');
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
 // « Mes comptes » (tous plans) : CRUD des comptes + barres de règles prop firm
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 // Seul le NOMBRE de comptes ACTIVE est gaté (FREE 1 · Premium illimité), côté back dans
@@ -138,7 +128,7 @@ function readDismissedLinks(): string[] {
     DialogDirective,
     DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
-    PropFirmRulesComponent,
+    PropFirmRulesComponent, AccountPlanWizardComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -158,6 +148,8 @@ export class AccountsComponent implements OnInit {
   protected readonly tv = inject(TradovateStore);
   /** Compte pour lequel l'écran de réassurance est ouvert. */
   protected readonly connectTarget = signal<{ id: string; label: string } | null>(null);
+  /** « Quel est ce compte ? » ouvert pour ce compte (après le choix du sous-compte Tradovate, #612). */
+  protected readonly planWizardFor = signal<{ id: string; label: string } | null>(null);
   /** Déconnexion en attente de confirmation (clé, pas l'objet : cf. angular.md). */
   protected readonly confirmDisconnectId = signal<string | null>(null);
   protected readonly relativeTime = relativeTime;
@@ -196,26 +188,11 @@ export class AccountsComponent implements OnInit {
         .map((a) => a.broker || a.label),
     ),
   );
-  /** Comptes dont l'utilisateur a écarté la proposition de plan (ce navigateur seulement). */
-  private readonly dismissedLinks = signal<string[]>(readDismissedLinks());
   /**
-   * Comptes prop firm saisis avant le catalogue, dont la firm y figure : on propose de les relier
-   * à leur plan (id du compte → nom de la firm). L'API relie seule ceux qu'un plan unique désigne ;
-   * pour les autres, plusieurs programmes partagent les mêmes règles et seul l'utilisateur sait
-   * lequel il a acheté.
+   * Comptes « plan à renseigner » (#612) : bandeau sur la ligne, qui ouvre « Quel est ce compte ? ».
+   * Pas de masquage : « Plus tard » laisse le compte à renseigner, perso / firm absente l'en sortent.
    */
-  protected readonly linkSuggestions = computed(() => {
-    const catalog = this.catalog();
-    const out = new Map<string, string>();
-    if (!catalog?.length) return out;
-    const dismissed = this.dismissedLinks();
-    for (const a of this.store.accounts()) {
-      if (a.propFirmPlanId || a.status === 'ARCHIVED' || dismissed.includes(a.id)) continue;
-      const match = matchPlans(catalog, a);
-      if (match?.plans.length) out.set(a.id, match.firm.name);
-    }
-    return out;
-  });
+  protected readonly needsPlan = needsPlanLink;
   /** Règles complètes des plans reliés, chargées au premier dépli d'un compte (par id de plan). */
   protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
@@ -437,8 +414,26 @@ export class AccountsComponent implements OnInit {
     this.tv.sync(a.id, (r) => this.onSynced(r));
   }
 
+  /** Sous-compte choisi puis synchronisé : un compte sans plan enchaîne sur « Quel est ce compte ? ». */
   protected pickTradovateAccount(a: TradingAccount, externalId: string): void {
-    this.tv.selectThenSync(a.id, externalId, (r) => this.onSynced(r));
+    this.tv.selectThenSync(a.id, externalId, (r) => {
+      this.onSynced(r);
+      if (r && !a.propFirmPlanId) this.planWizardFor.set({ id: a.id, label: a.label });
+    });
+  }
+
+  protected openPlanWizard(a: TradingAccount): void {
+    this.planWizardFor.set({ id: a.id, label: a.label });
+  }
+
+  protected closePlanWizard(): void {
+    this.planWizardFor.set(null);
+  }
+
+  /** Réponse enregistrée : métriques et jauges repartent du serveur avec le plan relié. */
+  protected onPlanLinked(): void {
+    this.planWizardFor.set(null);
+    this.store.load();
   }
 
   protected askDisconnect(a: TradingAccount): void {
@@ -658,15 +653,6 @@ export class AccountsComponent implements OnInit {
     if (a.propFirmPlanId) return '';
     const firm = matchPlans(this.catalog() ?? [], a)?.firm;
     return firm ? firm.id : a.broker ? OTHER_FIRM : '';
-  }
-
-  protected dismissLinkSuggestion(id: string): void {
-    this.dismissedLinks.update((ids) => [...ids, id]);
-    try {
-      localStorage.setItem(DISMISSED_LINKS_KEY, JSON.stringify(this.dismissedLinks()));
-    } catch {
-      // Stockage indisponible (navigation privée) : la proposition reviendra au prochain chargement.
-    }
   }
 
   protected closeForm(): void {

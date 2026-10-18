@@ -274,3 +274,20 @@ input::placeholder {
     min-height: 48px;
   }
 }
+
+/* Erreur de la connexion Google, entre le bouton et le formulaire. */
+.google-error {
+  margin: 0 0 16px;
+}
+
+/* Mot de passe oublié : rappel pour les comptes créés avec Google. */
+.google-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.google-hint a {
+  color: var(--blue-bright);
+}

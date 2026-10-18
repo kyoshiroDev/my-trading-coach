@@ -24,6 +24,13 @@ export class AuthRefreshState {
 const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/logout', '/auth/demo-login'];
 
 /**
+ * Connexion Google (#618) : seul le POST sur `/auth/google` exact est une route d'auth. Les routes
+ * `/auth/google/finalize` et `DELETE /auth/google` sont faites connecté et gardent le jeton.
+ */
+const isGoogleSignIn = (method: string, url: string) =>
+  method === 'POST' && url.split('?')[0].endsWith('/auth/google');
+
+/**
  * Ajoute le JWT à chaque requête et, sur un 401, renouvelle le token UNE fois (les requêtes
  * arrivées pendant le renouvellement l'attendent), puis rejoue la requête. Si le refresh échoue,
  * l'utilisateur est déconnecté.
@@ -35,7 +42,8 @@ export const jwtRefreshInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AUTH_TOKEN_SOURCE);
   const state = inject(AuthRefreshState);
   const isRefreshCall = req.url.includes('/auth/refresh');
-  const isAuthCall = AUTH_ROUTES.some((route) => req.url.includes(route));
+  const isAuthCall =
+    AUTH_ROUTES.some((route) => req.url.includes(route)) || isGoogleSignIn(req.method, req.url);
 
   const withToken = (token: string | null) =>
     token

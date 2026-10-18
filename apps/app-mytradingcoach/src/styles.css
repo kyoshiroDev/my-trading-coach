@@ -164,3 +164,22 @@ textarea {
 body.live-mode-active .main-content {
   overflow: hidden;
 }
+
+/* Autoremplissage du navigateur (email, mot de passe…) : Chrome et Safari imposent un fond clair
+   et un texte sombre, illisibles sur le thème. Le fond est repeint par une ombre interne (seul moyen
+   de couvrir le fond imposé), le texte forcé en clair, et la transition retarde indéfiniment le
+   repeint du navigateur (sans effet sur l'aperçu de Chrome, d'où l'ombre). Fond par défaut `--bg-2` (champs de l'app) ; un champ sur un autre fond
+   pose `--autofill-bg`. Tous les champs de l'app, pas seulement l'auth. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--autofill-bg, var(--bg-2)) inset;
+  /* Le fond clair imposé ne passe plus sous la bordure semi-transparente (liseré blanc).
+     `!important` : le raccourci `background:` des champs de composant remet `border-box`. */
+  background-clip: padding-box !important;
+  transition: background-color 9999s ease-out 0s;
+}

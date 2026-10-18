@@ -72,6 +72,40 @@ describe('AdminService.getAiCost', () => {
     expect(res.unattributed).toBe(0);
   });
 });
+describe('AdminService.getSignupMethods (#618)', () => {
+  const raw = () => (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
+  beforeEach(() => raw().mockReset());
+
+  it('répartit e-mail / Google, part sur 30 j, finalisation et comptes reliés', async () => {
+    raw().mockResolvedValueOnce([
+      { method: 'EMAIL', d7: 2n, d30: 6n, total: 40n, finalized: 0n, linked: 3n },
+      { method: 'GOOGLE', d7: 1n, d30: 2n, total: 4n, finalized: 3n, linked: 4n },
+    ]);
+    const res = await service.getSignupMethods();
+    expect(res.rows).toEqual([
+      { method: 'EMAIL', signups7d: 2, signups30d: 6, signupsTotal: 40, share30d: 75 },
+      { method: 'GOOGLE', signups7d: 1, signups30d: 2, signupsTotal: 4, share30d: 25 },
+    ]);
+    expect(res.google).toEqual({ finalized: 3, finalizationRate: 75, linkedEmailAccounts: 3 });
+  });
+
+  it('aucune inscription Google : la ligne est là, à zéro, sans division par zéro', async () => {
+    raw().mockResolvedValueOnce([{ method: 'EMAIL', d7: 0n, d30: 0n, total: 5n, finalized: 0n, linked: 0n }]);
+    const res = await service.getSignupMethods();
+    expect(res.rows.map((r) => r.method)).toEqual(['EMAIL', 'GOOGLE']);
+    expect(res.rows[1]).toMatchObject({ signupsTotal: 0, share30d: 0 });
+    expect(res.google.finalizationRate).toBe(0);
+  });
+
+  it('exclut démo et ADMIN dans la requête', async () => {
+    raw().mockResolvedValueOnce([]);
+    await service.getSignupMethods();
+    const sql = (raw().mock.calls[0][0] as TemplateStringsArray).join('?');
+    expect(sql).toContain('"isDemo" = false');
+    expect(sql).toContain(`"role" <> 'ADMIN'`);
+  });
+});
+
 describe('AdminService.getAcquisition', () => {
   const raw = () => (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
   const today = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });

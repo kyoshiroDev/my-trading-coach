@@ -63,4 +63,19 @@ describe('jwtRefreshInterceptor', () => {
     expect(auth.refreshToken).not.toHaveBeenCalled();
     expect(auth.logout).not.toHaveBeenCalled();
   });
+
+  it('connexion Google (POST /auth/google) : sans jeton, 401 renvoyé tel quel', () => {
+    http.post('/api/auth/google', {}).subscribe({ error: () => undefined });
+    const req = backend.expectOne('/api/auth/google');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(auth.refreshToken).not.toHaveBeenCalled();
+  });
+
+  it('finalisation et déliaison Google gardent le jeton (routes connectées)', () => {
+    http.post('/api/auth/google/finalize', {}).subscribe();
+    http.delete('/api/auth/google').subscribe();
+    expect(backend.expectOne('/api/auth/google/finalize').request.headers.get('Authorization')).toBe('Bearer ancien');
+    expect(backend.expectOne((r) => r.method === 'DELETE').request.headers.get('Authorization')).toBe('Bearer ancien');
+  });
 });

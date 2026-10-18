@@ -39,7 +39,8 @@ import { GA_ID } from '../config';
       <ul>
         <li>Prénom, nom</li>
         <li>Adresse email</li>
-        <li>Mot de passe (hashé argon2, jamais stocké en clair)</li>
+        <li>Mot de passe, si vous en définissez un (hashé argon2, jamais stocké en clair)</li>
+        <li>Si vous utilisez « Continuer avec Google » : identifiant technique de votre compte Google (voir f)</li>
         <li>Date d'inscription</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
       </ul>
@@ -77,6 +78,20 @@ import { GA_ID } from '../config';
         <li>Aucune donnée de carte bancaire (gérée exclusivement par Stripe PCI-DSS)</li>
       </ul>
 
+      <h3>f) Connexion avec Google</h3>
+      <p>
+        Si vous choisissez « Continuer avec Google », Google nous transmet uniquement votre nom, votre
+        adresse email (vérifiée par Google) et un identifiant technique de votre compte Google. Nous ne
+        recevons ni votre mot de passe Google, ni votre photo de profil, ni vos contacts, ni aucune autre
+        donnée de votre compte Google, et nous n'accédons à aucun service Google en votre nom.
+      </p>
+      <p>
+        Ces données servent uniquement à créer votre compte ou à vous connecter. Si un compte
+        MyTradingCoach existe déjà avec la même adresse email, la connexion Google y est reliée. Vous
+        pouvez délier Google à tout moment depuis Profil &gt; Paramètres, après avoir défini un mot de
+        passe. Recevoir nos emails reste un choix séparé : une case à cocher, jamais cochée par défaut.
+      </p>
+
       <h2>2. Finalités et bases légales</h2>
       <table>
         <thead>
@@ -87,6 +102,7 @@ import { GA_ID } from '../config';
         </thead>
         <tbody>
           <tr><td>Fourniture du service</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr><td>Connexion avec Google</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
           <tr><td>Génération des analyses IA</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
@@ -109,6 +125,7 @@ import { GA_ID } from '../config';
           <tr><td>Logs techniques</td><td>12 mois</td></tr>
           <tr><td>IP anonymisées</td><td>30 jours</td></tr>
           <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
+          <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
         </tbody>
       </table>
 
@@ -117,11 +134,15 @@ import { GA_ID } from '../config';
       <ul>
         <li><strong>Anthropic (USA)</strong> : traitement IA des insights. Base : clauses contractuelles types (CCT). Données transmises : trades anonymisés pour analyse.</li>
         <li><strong>Stripe (USA)</strong> : gestion des paiements. Base : CCT. Certifié PCI-DSS.</li>
-        <li><strong>OVH (France)</strong> : hébergement API et base de données. Sous-traitant EU, RGPD compliant.</li>
-        <li><strong>Vercel (USA)</strong> : hébergement frontend. Base : CCT.</li>
+        <li><strong>OVH (France)</strong> : hébergement de l'API, de la base de données, de l'application et du site vitrine. Sous-traitant EU, RGPD compliant.</li>
         <li><strong>Resend (USA)</strong> : envoi d'emails transactionnels. Base : CCT.</li>
         {GA_ID && <li><strong>Google (USA)</strong> : mesure d'audience du site vitrine (Google Analytics 4), uniquement après votre consentement. Base : CCT et Data Privacy Framework.</li>}
       </ul>
+      <p>
+        <strong>Google (USA)</strong>, si vous choisissez « Continuer avec Google » : la connexion passe par
+        Google, qui nous transmet les données décrites en 1.f. Nous ne transmettons à Google aucune donnée
+        de MyTradingCoach. Google traite cette connexion selon sa propre politique de confidentialité.
+      </p>
       <p>Aucune vente de données à des tiers.</p>
 
       <h2>5. Vos droits (Art. 15 à 22 RGPD)</h2>

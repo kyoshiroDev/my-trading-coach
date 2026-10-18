@@ -10,7 +10,7 @@
       "ninjatrader"
     ]
   },
-  "verified_at": "2026-10-09",
+  "verified_at": "2026-10-18",
   "plans": [
     {
       "id": "bulenox-qualification-trailing-25k",
@@ -102,11 +102,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -118,7 +115,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -223,11 +220,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -239,7 +233,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -344,11 +338,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -360,7 +351,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -465,11 +456,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -481,7 +469,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -628,11 +616,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -644,7 +629,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -803,11 +788,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -819,7 +801,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -990,11 +972,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1006,7 +985,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -1177,11 +1156,8 @@
             "min_daily_profit": null,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1193,7 +1169,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). 100 % des 10 000 premiers dollars par profil, puis 90 %. Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -1274,11 +1250,8 @@
               1500,
               1000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1290,7 +1263,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1371,11 +1344,8 @@
               3000,
               2000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1387,7 +1357,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1468,11 +1438,8 @@
               6000,
               3000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1484,7 +1451,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1565,11 +1532,8 @@
               9000,
               4500
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1581,7 +1545,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1662,11 +1626,8 @@
               1500,
               1000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1678,7 +1639,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 1500 $ pour le 1er payout, puis 1000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 1000 $ (payouts 1 à 3) puis 1250 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1767,11 +1728,8 @@
               3000,
               2000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1783,7 +1741,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 3000 $ pour le 1er payout, puis 2000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2000 $ (payouts 1 à 3) puis 2500 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1872,11 +1830,8 @@
               6000,
               3000
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1888,7 +1843,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 6000 $ pour le 1er payout, puis 3000 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 2500 $ (payouts 1 à 3) puis 3000 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -1977,11 +1932,8 @@
               9000,
               4500
             ],
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -1993,7 +1945,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "Pas de jours minimum. Objectif 9000 $ pour le 1er payout, puis 4500 $ de nouveau profit par cycle. Minimum 1 000 $, plafond 3000 $ (payouts 1 à 3) puis 3500 $. Un payout ne peut pas ramener le solde au seuil. Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2098,11 +2050,8 @@
             "min_daily_profit": 100,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 500,
             "max_amount": null,
@@ -2114,7 +2063,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2219,11 +2168,8 @@
             "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -2235,7 +2181,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2340,11 +2286,8 @@
             "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -2356,7 +2299,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2461,11 +2404,8 @@
             "min_daily_profit": 250,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -2477,7 +2417,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2598,11 +2538,8 @@
             "min_daily_profit": 100,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 500,
             "max_amount": null,
@@ -2614,7 +2551,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2735,11 +2672,8 @@
             "min_daily_profit": 150,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -2751,7 +2685,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -2872,11 +2806,8 @@
             "min_daily_profit": 200,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -2888,7 +2819,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],
@@ -3009,11 +2940,8 @@
             "min_daily_profit": 250,
             "min_cycle_profit": null,
             "min_cycle_profit_schedule": null,
-            "split_pct": 1,
-            "split_after": {
-              "paid_out_over": 10000,
-              "split_pct": 0.9
-            },
+            "split_pct": 0.9,
+            "split_after": null,
             "split_by_profit": null,
             "min_amount": 1000,
             "max_amount": null,
@@ -3025,7 +2953,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). 100 % des 10 000 premiers dollars par profil, puis 90 %."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
           }
         }
       ],

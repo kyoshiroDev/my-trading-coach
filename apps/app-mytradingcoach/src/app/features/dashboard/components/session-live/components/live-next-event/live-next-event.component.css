@@ -1,0 +1,70 @@
+:host { display: block; min-width: 0; }
+.ne-line {
+  /* Couleur d'impact : ambre = moyen (défaut), rouge = fort (.ne-high) */
+  --ne-accent: var(--yellow);
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  background: var(--bg-2); border: 1px solid color-mix(in srgb, var(--ne-accent) 35%, transparent);
+}
+.ne-line.ne-high { --ne-accent: var(--red); }
+.ne-body { flex: 1; min-width: 0; }
+.ne-lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--ne-accent); }
+.ne-name { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 3px; overflow-wrap: anywhere; }
+.ne-impact { font-size: 12px; font-weight: 400; color: var(--text-2); margin-left: 4px; }
+.ne-count { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--ne-accent); white-space: nowrap; }
+
+/* État « publiée » : chiffres neutres (ni gain ni perte), analyse IA en cyan */
+.ne-released { align-items: flex-start; flex-wrap: wrap; }
+.ne-values { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); margin-top: 4px; }
+.ne-values b { color: var(--text); font-weight: 600; }
+.ne-ai { font-size: 13px; color: var(--cyan); margin-top: 8px; line-height: 1.45; }
+.ne-ai-off { color: var(--text-3); }
+.ne-more { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-top: 6px; }
+.ne-more p { margin: 0 0 6px; }
+.ne-asset { font-size: 12px; margin-top: 2px; }
+.ne-asset b { color: var(--text); font-family: var(--font-mono); }
+.ne-btn {
+  min-height: 44px; padding: 0 12px; border-radius: 10px; cursor: pointer; font: 500 13px var(--font-body);
+  background: transparent; border: 1px solid rgba(255, 255, 255, .12); color: var(--text);
+}
+.ne-btn:hover { border-color: rgba(255, 255, 255, .24); }
+.ne-toggle { margin-top: 8px; border: none; padding: 0; color: var(--blue-bright); }
+.ne-toggle:hover { text-decoration: underline; }
+.ne-dismiss { flex-shrink: 0; }
+/* Titre de l'état publié : libellé à gauche, « J'ai lu » à droite (toute la largeur reste aux onglets) */
+.ne-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -6px 0 0; }
+
+/* Marché fermé : neutre (ni annonce, ni alerte) */
+.ne-closed { border-color: rgba(255, 255, 255, .08); }
+.ne-closed .ne-lbl { color: var(--text-2); }
+
+/* Plusieurs annonces au même créneau : « +N » puis liste compacte, jamais une carte par annonce */
+.ne-more-btn {
+  min-width: 44px; min-height: 32px; margin-left: 6px; padding: 0 8px; border-radius: 99px; cursor: pointer;
+  font: 600 12px var(--font-mono); color: var(--text); background: var(--bg-3); border: 1px solid rgba(255, 255, 255, .12);
+}
+.ne-others { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text); }
+.ne-others { gap: 8px; }
+/* Ligne 1 : point d'impact + nom ; ligne 2, en gris : publié · prévu · précédent (ou l'impact) */
+.ne-others li { display: grid; grid-template-columns: 7px minmax(0, 1fr); column-gap: 8px; row-gap: 2px; align-items: center; }
+.ne-others-name { grid-column: 2; font-weight: 600; }
+.ne-others-val { grid-column: 2; }
+.ne-others-val b { color: var(--text); font-weight: 600; }
+/* Liste dépliée : le compte à rebours reste en haut, à côté du titre */
+.ne-line.ne-open { align-items: flex-start; }
+.ne-line.ne-open .ne-count { margin-top: 14px; }
+.ne-others-val { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); }
+.ne-dot { grid-row: 1; width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); }
+.ne-dot.ne-dot-high { background: var(--red); }
+
+/* Onglets : plusieurs annonces fortes publiées au même créneau, une analyse à la fois */
+.ne-tabs { display: flex; gap: 6px; margin-top: 6px; overflow-x: auto; scrollbar-width: none; }
+.ne-tabs::-webkit-scrollbar { display: none; }
+.ne-tab {
+  position: relative; min-height: 44px; padding: 0 14px; border-radius: 99px; cursor: pointer;
+  font: 600 13px var(--font-body); color: var(--text-2); background: transparent;
+  border: 1px solid rgba(255, 255, 255, .12); white-space: nowrap; flex-shrink: 0;
+}
+.ne-tab:hover { color: var(--text); }
+.ne-tab-on { color: var(--text); background: var(--bg-3); border-color: color-mix(in srgb, var(--ne-accent) 55%, transparent); }
+/* Analyse pas encore lue (cyan = IA) */
+.ne-tab-dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--cyan); vertical-align: middle; }

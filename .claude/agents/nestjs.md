@@ -133,7 +133,7 @@ GET    /api/vps/backups                ADMIN
 POST   /api/vps/backups                ADMIN → pg_dump via SSH
 GET    /api/vps/logs/:container        ADMIN → SSE stream docker logs (nom [a-zA-Z0-9][a-zA-Z0-9_-]*, sinon 400 ; canal SSH fermé à la fermeture de l'onglet)
 GET    /api/admin/ai-cost              ADMIN → coût IA 30 j (réel + estimé)
-GET    /api/admin/users                ADMIN → liste (?page&limit&search)   ┐
+GET    /api/admin/users                ADMIN → liste (?page&limit&search&source&medium&campaign) ┐
 GET    /api/admin/users/stats          ADMIN → KPIs (MRR, inscrits, essais) │ AdminUsersController
 GET    /api/admin/users/online         ADMIN                                │ (littéraux AVANT :id)
 GET    /api/admin/users/subscriptions  ADMIN → abonnements                  │
@@ -662,12 +662,21 @@ await this.prisma.aiUsageLog.create({
 Toujours passer `{ userId, feature }` dans les options. Features valides :
 `'insights'` | `'chat'` | `'debrief'` | `'csv_import'` | `'daily_recap'` | `'eco_calendar'`
 
+### Session active = journée de trading en cours (#595)
+
+Ne jamais écrire `where: { userId, status: ACTIVE }` sur `TradeSession` : passer par
+`activeSessionWhere(userId)` (`modules/session/active-session.ts`), qui ajoute
+`startedAt >= tradingDayStart(now)` (17:00 Chicago, cf. `tradingDay`). Une session d'une
+journée précédente n'est jamais renvoyée comme active (chrono à 265 h, P&L du jour rapporté à
+une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` sans borne.
+
 ### Crons V2
 
 | Cron | Planning | Rôle |
 |---|---|---|
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
+| `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
@@ -698,10 +707,20 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
   `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
   depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
-- **Séance du jour aux heures de marché** (`demoTodaySlot`, `demo-data/generate.ts`) : avant 09:45
-  aucune séance du jour (veille complète, Pré-session) ; 09:45–16:15 Londres (trades 09:22 / 09:38) ;
-  après, New York (15:38 / 15:57). `isStale` re-seede quand un créneau s'est ouvert depuis le dernier
-  seed (seed de 03:20 puis visite à 11:00). Avant : trades « du jour » à 01:40 / 02:45, timer > 22 h.
+- **Session live TOUJOURS présente** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
+  c'est pas bon ») : le seed crée à chaque run une session ACTIVE du jour sur Apex, avec une
+  position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
+  stats) rattachée à la session. Trades du jour aux heures de marché (`demoTodaySlot`) : 09:45–16:15
+  Londres (09:22 / 09:38), après New York (15:38 / 15:57), position ouverte 4 min après. Week-end et
+  avant 09:45 : **aucun trade du jour** (garde-fou `assertDemoCalendar` inchangé, il couvre aussi
+  `openTrade`), session ouverte il y a 30 min et position datée de la dernière séance à 21:40 (le
+  front affiche « Marché fermé » le week-end CME). `isStale` re-seede si aucune session n'est active
+  pour la journée de trading en cours (`activeSessionWhere` : après la bascule de minuit, au
+  week-end) ou si un créneau s'est ouvert depuis le dernier seed ; le dernier trade CLÔTURÉ attendu
+  est celui de la séance précédente avant 09:45 (avant : re-seed à chaque connexion matinale).
+- **Trade encore ouvert gardé après minuit** : `getTodayTrades` = trades du jour **ou** trade sans
+  P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
+  ouverte à 23:50) et sert la position de la vitrine.
 - **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
   et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
   live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
@@ -710,7 +729,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
 `DEMO_WINDOW_DAYS` (42, soit 6 semaines) derniers jours, la vue « 1M » restant pleine · J-0 et
-J-1 peuplés · session du jour ACTIVE, démarrée aujourd'hui, **aucun trade après `now`** (même
+J-1 peuplés · session du jour ACTIVE **même le week-end**, démarrée aujourd'hui, une seule position
+ouverte (SL + TP), **aucun trade après `now`** ni un samedi / dimanche (même
 quand le cron tourne à 03:20 : les trades du jour sont calés avant l'heure du run) ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests
@@ -891,6 +911,17 @@ export class CreateTradeDto {
   et leurs dates ; `null` si compte non synchronisé. Latent inconnu avec position → `openPnl: null`
   (jamais un chiffre inventé) ; à plat → 0. Le total de session reste le RÉALISÉ : le latent est à
   part.
+- **SL / TP des positions (ordres actifs, #601)** : le WebSocket souscrit aussi `order` +
+  `orderVersion` (`ORDER_ENTITY_TYPES`, permission `Orders:Read` déjà accordée, **lecture seule**).
+  `order` porte le lien (`parentId`, `ocoId`, `ordStatus`), `orderVersion` le type et les prix : il
+  faut les deux. Carnet en mémoire par connexion (`tradovate-orders.ts`, remis à zéro à chaque
+  instantané `user/syncrequest`), ne garde que `Working` / `PendingReplace` ; regroupé 500 ms puis
+  écrit dans Redis `tradovate:orders:<connexion>` (TTL 12 h) **seulement s'il change** → événement
+  front `tradovate:orders`. `0` appel REST : la Trade API ne garde les ordres que pendant la séance.
+  `getLiveBrokerState` relie via `protectionFor` (position Redis porte `contractId`) : même contrat,
+  sens opposé, SL = stop sous l'entrée d'un LONG (`stopPrice`), TP = `Limit` au-dessus (`price`) ;
+  **plusieurs candidats sans lien de bracket → `null`** (jamais une association devinée). Mapping
+  jamais validé sur un vrai bracket : trames `order` / `orderVersion` brutes en `logger.debug`.
 
 ## Synchro broker par API — pattern (PROMPT-207, Tradovate / NinjaTrader)
 
@@ -1426,6 +1457,12 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   `@mtc/shared`) : une requête SQL groupée par source, hors `isDemo` et hors ADMIN. Premium =
   `stripeSubscriptionStatus IN ('active','trialing','past_due')`, `trialing` renvoyé à part.
   `source: null` = direct / non renseigné. Page admin : `/acquisition` (nav Business).
+- **Inscrits d'une campagne (#625)** : `GET /admin/users?source=&medium=&campaign=`
+  (`AdminListQueryDto`, normalisés comme `RegisterDto`) filtre à l'**égalité exacte** ; paramètre
+  absent = ignoré, `-` (`UTM_NONE`, `@mtc/shared` acquisition-filter) = non renseigné (null).
+  `ADMIN_USER_SELECT` renvoie les 3 champs ; la fiche (`identity.acquisition`) aussi. Le récap
+  quotidien des inscriptions (`signup-digest.cron.ts`) ajoute la provenance à chaque ligne
+  (`instagram · dm · louis`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
   `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
   campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,
@@ -1482,7 +1519,20 @@ redéployer : rien à lancer sur le VPS.
   les autres répondent `locked`. Redémarrage sans changement = `unchanged`, zéro écriture.
   Un échec est loggé (`Synchro du catalogue prop firm ignorée`) et **n'empêche jamais le boot**.
 - Ajouter une firm : son JSON + une ligne dans `libs/shared/src/prop-firm-rules/catalog.ts`.
-- **Veille des règles** (2026-10-07) : `pnpm prop-firms:watch` + workflow hebdomadaire « Veille règles prop firm » (issue `veille-prop-firm`). Toute mise à jour d'une firm se termine par `pnpm prop-firms:watch --update` (relevé `veille/sources.json`), voir le README du catalogue.
+- **Veille des règles** (2026-10-07) : `pnpm prop-firms:watch` + workflow hebdomadaire « Veille règles prop firm » (issue `veille-prop-firm`). Toute mise à jour d'une firm se termine par `pnpm prop-firms:watch --update` (relevé `veille/sources.json`), voir le README du catalogue. `--update` réécrit le relevé de **toutes** les firms : quand on ne relit qu'une firm, ne garder dans le diff que ses URL, sinon les alertes en attente des autres disparaissent.
+- **Perte journalière dans le résumé** (`GET /prop-firms`, 2026-10-18, #614) : `PropFirmPhaseSummary.dailyLossLimitStatus`
+  (`none` = la firm n'en a pas · `known` · `unknown` = règle au montant non publié), calculé par
+  `dailyLossLimitStatus` de `@mtc/shared`. `dailyLossLimit` seul ne suffit pas : `null` y vaut pour
+  `none` comme pour `unknown`. Côté JSON, une DLL inconnue s'écrit en objet `amount: null` (pas `null`).
+- **Indices de plan** (`GET /accounts/:id/plan-hint`, #612) : `AccountPlanHint` (`@mtc/shared`) =
+  nom et hôte du sous-compte, propriétaire = login (démo perso) via `availableAccounts[].userId` ↔
+  `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
+  **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
+  (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
+- **Mesure admin** (`GET /admin/prop-firms/plan-links`, `AdminPropFirmsController` + `PlanLinkStatsService`,
+  calcul pur `plan-link-stats.ts`) : comptes **connectés** (sous-compte choisi, non archivés) reliés à un
+  plan / connectés, filtre `REAL_USERS` (hors démo, hors ADMIN) ; répartition des comptes sans plan par
+  `planLinkChoice` ; firms « absentes » regroupées sans casse. Contrat `AdminPlanLinkStats` (`@mtc/shared`).
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,
@@ -1531,7 +1581,8 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
 
 `TradovateBalanceService` (`integrations/tradovate/tradovate-balance.service.ts`) remplit les colonnes
 `BrokerConnection.broker*` : solde réalisé officiel, equity (`netLiq`), latent, positions ouvertes.
-- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`) ;
+- **Solde réalisé en temps réel** : le WebSocket souscrit aussi `cashBalance` (`LIVE_ENTITY_TYPES`,
+  avec `order` / `orderVersion` pour les SL / TP, cf. « SL / TP des positions ») ;
   chaque variation → `recordCashBalance` → événement front `tradovate:balance`, **sans** synchro
   REST. L'état initial (réponse du `user/syncrequest`, id `SYNC_REQUEST_ID`) donne solde + positions.
 - **Equity + latent** : `POST /cashBalance/getcashbalancesnapshot`, seule lecture en POST, via
@@ -1882,3 +1933,65 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
 - **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
   `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.
+
+## Détecteurs de comportement (#602, phase 1 : moteur + mode silencieux, 2026-10-18)
+
+Module `modules/behavior/`. **Rien n'est affiché** tant que Greg n'a pas validé les chiffres du rejeu
+(`docs/rapport-detecteurs-silencieux.md`). Méthode et limites : `docs/audit-detecteurs-comportement.md`.
+
+- **Principe** : ne jamais prendre un style pour du tilt. B, C1 et C3 comparent le trader **à
+  lui-même** (référence personnelle), B exige **au moins 2 signaux**. A (règles du plan) et C2
+  (limite déclarée `tradesPerDayMax`) ont des seuils fixes parce que la règle vient d'ailleurs.
+- **Tous les seuils** dans `behavior.constants.ts`, documentés. Pas de seuil ailleurs.
+- **Lignes → positions** (`behavior-positions.ts`) : un `Trade` importé est une PAIRE de fills ; une
+  ligne prolonge la position précédente (même compte / actif / sens) si elle sort dans les 2 s ou
+  partage un prix d'entrée. Séance du moteur = **compte × journée CME** (`tradingDay`), pas
+  `TradeSession` (rarement rattachée aux trades synchronisés).
+- **Référence** (`behavior-baseline.ts`, pur) : 20 dernières séances CLÔTURÉES, persistée dans
+  `BehaviorBaseline` par `BehaviorBaselineService` : cron `10 17 * * 1-5` Chicago (après
+  `SessionCloseCron`, traders des dernières 26 h, hors démo) + recalcul à la volée si datée d'une
+  journée précédente. Apprentissage : < 10 séances → B, C1, C3 muets.
+- **Détecteurs** (`behavior-detectors.ts`, purs, aucun appel IA) : A1 taille > max du plan (micros
+  ramenés en minis si mélange), A2 points défavorables avant la perte max du jour (seuils par actif),
+  A3 entrée avec > 50 % de la perte max consommée, B vengeance, C1 3 pertes d'affilée, C2 au-delà de
+  `tradesPerDayMax`, C3 taille ≥ 2× la perte précédente du même actif. Anti-spam : même type ≤ 1 fois
+  / 15 min / séance. **Messages factuels** : décrire, jamais conseiller (AMF), pas de tiret cadratin.
+- **Règles du plan** (`behavior-plan.ts`) : phase selon le type de compte, palier de max de contrats
+  selon le profit, perte max via `dailyLossLimitAmount`. Sans plan relié au catalogue, A est muet.
+- **En direct** (`BehaviorAlertsService`) : branché dans `tradovate-live.gateway.ts` sur
+  `tradovate:balance` (émis après chaque synchro live, donc chaque fill / position), regroupé 1,5 s par
+  compte, worker titulaire. Nouvelle entrée = position Redis (`tradovate:positions:<connexion>`)
+  absente, retournée ou renforcée par rapport au dernier état vu (`behavior:pos:<compte>`, 12 h) ;
+  premier relevé = mémorisé sans alerte. Perte max du jour et solde lus dans `AccountsService.list`
+  (rien recalculé). Anti-spam partagé : `behavior:spam:<compte>:<journée>:<type>` (SET NX PX 15 min).
+  Alerte **enregistrée** (`BehaviorAlert`) ; événement `behavior:alert` seulement si
+  `BEHAVIOR_ALERTS_UI=true`. `BEHAVIOR_ALERTS_RECORD=false` coupe tout. Aucun appel Tradovate en
+  plus, aucune synchro relancée. Hors démo. Rien ne tourne app fermée.
+- ⚠️ **Heure d'entrée absente en base** (`tradedAt` = clôture) : au rejeu, l'entrée est datée de la
+  première sortie (comme la référence) ; en direct, de l'ouverture Tradovate, comparée à une
+  référence mesurée de sortie à sortie → biais vers plus d'alertes B en direct. Correctif proposé :
+  `Trade.openedAt` (non fait).
+- ⚠️ **Recoupement avec l'anti-tilt #371** (`tilt-detection.ts`, affiché, seuils fixes ligne par
+  ligne) : laissé tel quel en phase 1. Si les détecteurs sont validés, l'UI de phase 2 le remplace.
+- **Rejeu** : `apps/api-mytradingcoach/scripts/replay-behavior-alerts.ts` (lecture de fichiers
+  exportés en lecture seule et pseudonymisés, requêtes en annexe du rapport ; jamais de connexion à
+  la base). `behavior-replay.ts` (pur) : référence de chaque séance sur les journées précédentes
+  seulement, verrouillé par `behavior-replay.spec.ts`.
+
+## Connexion Google (#618, 2026-10-18)
+
+Routes (`modules/auth`) : `GET /auth/google/config` (public), `POST /auth/google` (public,
+`GoogleAuthDto` : `credential` + `referralCode` + UTM normalisés comme `RegisterDto`, **pas**
+d'opt-in marketing), `POST /auth/google/finalize` (`GoogleFinalizeDto { marketingConsent }`,
+idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /auth/google`.
+- `POST /auth/google` renvoie comme login/register (`access_token`, cookie de refresh, `user`) +
+  `googleStatus` (`login | linked | created`) + `passwordCleared`.
+- Création **commune** e-mail / Google : `AuthService.createAccount` (parrain, UTM, setups par
+  défaut, e-mail de bienvenue, push admin). Toute nouvelle conséquence d'une inscription va là.
+- Double clic Google : P2002 à la création → nouvel essai unique qui tombe sur la connexion.
+- Utilisateur renvoyé au front : `toMe(row)` sur `ME_ROW_SELECT` ajoute `hasPassword`,
+  `googleLinked`, `needsSignupFinalization` et retire `password` / `googleId`. Ne jamais
+  renvoyer `ME_ROW_SELECT` brut.
+- Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
+  `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
+  `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
