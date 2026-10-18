@@ -166,7 +166,8 @@
                         <tr class="r-ev"
                             [class.published]="row.state === 'published'"
                             [class.next]="row.state === 'next'"
-                            [class.high]="event.impact === 'high'">
+                            [class.high]="event.impact === 'high'"
+                            [class.medium]="event.impact === 'medium'">
                           <td class="c-pin">
                             <button class="pin" [class.on]="isPinned(event)" (click)="togglePin(event)"
                                     [title]="isPinned(event) ? 'Désépingler' : 'Épingler'">{{ isPinned(event) ? '★' : '☆' }}</button>
