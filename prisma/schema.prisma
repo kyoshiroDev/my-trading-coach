@@ -9,12 +9,22 @@ datasource db {
 model User {
   id          String    @id @default(cuid())
   email       String    @unique
-  password    String
+  // null = compte créé avec Google, sans mot de passe défini (#618).
+  password    String?
   name        String?
   role        Role      @default(USER)
   plan        Plan      @default(FREE)
   trialEndsAt DateTime?
   trialUsed   Boolean   @default(false)
+
+  // ── Connexion Google (#618) ─────────────────────────────────────────────
+  // googleId = `sub` du jeton Google, jamais renvoyé au front (seulement `googleLinked`).
+  googleId          String?      @unique
+  authProvider      AuthProvider @default(EMAIL) // méthode de création du compte
+  emailVerifiedAt   DateTime? // adresse prouvée (Google) ; null = jamais vérifiée
+  signupFinalizedAt DateTime? // écran de finalisation validé (inscriptions Google)
+  // Incrémenté pour révoquer tous les refresh tokens (liaison Google sur un compte non vérifié).
+  tokenVersion      Int          @default(0)
 
   // ── Reset mot de passe ──────────────────────────────────────────────────
   resetPasswordToken   String?   @unique
@@ -742,6 +752,12 @@ enum Role {
   USER
   BETA_TESTER
   AMBASSADOR
+}
+
+/// Méthode de création du compte (#618) : répartition des inscriptions dans l'admin.
+enum AuthProvider {
+  EMAIL
+  GOOGLE
 }
 
 enum Plan {

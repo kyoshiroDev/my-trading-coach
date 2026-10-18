@@ -184,12 +184,15 @@ export class ResendService {
     to: string;
     userName: string;
     resetToken: string;
+    /** Compte créé avec Google, sans mot de passe : l'e-mail sert à en définir un (#618). */
+    googleOnly?: boolean;
   }): Promise<void> {
     const resetUrl = `${this.frontendUrl}/reset-password?token=${params.resetToken}`;
     const { subject, html } = resetPasswordTemplate({
       userName: params.userName,
       resetUrl,
       expiresIn: '1 heure',
+      googleOnly: params.googleOnly,
     });
     await this.send({ to: params.to, subject, html });
   }

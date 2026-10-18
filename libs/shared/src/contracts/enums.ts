@@ -62,6 +62,10 @@ export type DrawdownType = (typeof DrawdownType)[keyof typeof DrawdownType];
 export const Role = { ADMIN: 'ADMIN', USER: 'USER', BETA_TESTER: 'BETA_TESTER', AMBASSADOR: 'AMBASSADOR' } as const;
 export type Role = (typeof Role)[keyof typeof Role];
 
+// Méthode de création du compte (#618 connexion Google).
+export const AuthProvider = { EMAIL: 'EMAIL', GOOGLE: 'GOOGLE' } as const;
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
+
 export const Plan = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export type Plan = (typeof Plan)[keyof typeof Plan];
 
@@ -113,6 +117,7 @@ export const CONTRACT_ENUMS = {
   AccountStatus,
   DrawdownType,
   Role,
+  AuthProvider,
   Plan,
   BrokerProvider,
   BrokerConnectionStatus,
