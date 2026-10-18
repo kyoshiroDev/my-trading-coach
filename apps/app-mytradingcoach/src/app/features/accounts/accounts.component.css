@@ -589,3 +589,11 @@
   .apw-modal { max-width: none; border-radius: 16px 16px 0 0; }
   .apw-modal .modal-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); }
 }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .acct-expand,
+  .acct-menu { position: relative; }
+  .acct-expand::before,
+  .acct-menu::before { content: ''; position: absolute; inset: -12px; }
+}
