@@ -240,6 +240,32 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     expect(store.load).toHaveBeenCalled();
   });
 
+  describe('plan à renseigner (#612)', () => {
+    it('compte prop firm sans plan : bandeau compact, « Relier » ouvre « Quel est ce compte ? »', () => {
+      const { q, click, el } = setup({ accounts: [acct('a', 'A')] });
+      expect(q('plan-link-a')!.textContent).toContain('Relie ce compte à son plan pour suivre ta perte max du jour et ton plancher');
+      click('plan-link-open-a');
+      expect(el.querySelector('[data-testid="plan-wizard-modal"] mtc-account-plan-wizard')).not.toBeNull();
+    });
+
+    it('« Plus tard » : le compte reste à renseigner, le bandeau reste affiché', () => {
+      const { q } = setup({ accounts: [acct('a', 'A', { type: 'PERSONAL', planLinkChoice: 'LATER' })] });
+      expect(q('plan-link-a')).not.toBeNull();
+    });
+
+    it('plan relié, compte perso, firm absente du catalogue ou archivé : pas de bandeau', () => {
+      const { q } = setup({
+        accounts: [
+          acct('a', 'A', { propFirmPlanId: 'apex-eod-50k' }),
+          acct('b', 'B', { planLinkChoice: 'PERSONAL' }),
+          acct('c', 'C', { planLinkChoice: 'UNLISTED', unlistedFirm: 'FTMO' }),
+          acct('d', 'D', { status: 'ARCHIVED' }),
+        ],
+      });
+      for (const id of ['a', 'b', 'c', 'd']) expect(q(`plan-link-${id}`), id).toBeNull();
+    });
+  });
+
   it('synchro en échec après le choix : pas de question', () => {
     const { fixture, el, tv, store } = setup({
       accounts: [acct('a', 'A')],

@@ -48,8 +48,11 @@ const account = (m: AccountRuleMetrics): TradingAccount => ({
   lastPayoutAt: null, createdAt: '', updatedAt: '', metrics: m,
 });
 
-function setup(m: AccountRuleMetrics, opts: { demo?: boolean; premium?: boolean; permission?: string } = {}) {
-  const store = { accounts: signal([account(m)]), load: vi.fn() };
+function setup(
+  m: AccountRuleMetrics,
+  opts: { demo?: boolean; premium?: boolean; permission?: string; account?: Partial<TradingAccount> } = {},
+) {
+  const store = { accounts: signal([{ ...account(m), ...opts.account }]), load: vi.fn() };
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
   const tv = { loaded: signal(false), load: vi.fn() };
   const alerts = { permission: signal(opts.permission ?? 'granted'), requestPermission: vi.fn() };
@@ -114,6 +117,44 @@ describe('Session live — suivi prop firm', () => {
   it('sans règle de drawdown : renvoie vers « Mes comptes » au lieu d’une barre vide', () => {
     const { text } = setup(metrics({ drawdown: null }));
     expect(text('live-prop-firm-drawdown')).toContain('Relie-le à son plan');
+  });
+
+  describe('plan à renseigner (#612)', () => {
+    const GAUGES = ['live-prop-firm-daily-loss', 'live-prop-firm-premium-teaser', 'live-prop-firm-drawdown', 'live-prop-firm-objective'];
+
+    it('compte prop firm sans plan : appel à l’action à la place des jauges', () => {
+      const { q, text } = setup(metrics(), { account: { propFirmPlanId: null } });
+      expect(text('live-prop-firm-plan-cta')).toContain('Relie ce compte à son plan');
+      for (const id of GAUGES) expect(q(id), id).toBeNull();
+      // Equity et disclaimer restent : seul le bloc des jauges est remplacé.
+      expect(q('live-prop-firm-balance')).not.toBeNull();
+    });
+
+    it('« Plus tard » : toujours à renseigner, l’appel à l’action reste', () => {
+      const { q } = setup(metrics(), { account: { propFirmPlanId: null, type: 'PERSONAL', planLinkChoice: 'LATER' } });
+      expect(q('live-prop-firm-plan-cta')).not.toBeNull();
+    });
+
+    it('compte déclaré perso : pas d’appel à l’action', () => {
+      const { q } = setup(metrics(), { account: { propFirmPlanId: null, type: 'PERSONAL', planLinkChoice: 'PERSONAL' } });
+      expect(q('live-prop-firm-plan-cta')).toBeNull();
+    });
+
+    it('le bouton ouvre « Quel est ce compte ? » ; plan relié → comptes rechargés, jauges affichées', () => {
+      const { q, fixture, store } = setup(metrics(), { account: { propFirmPlanId: null } });
+      q('live-prop-firm-plan-link')!.click();
+      fixture.detectChanges();
+      expect(q('live-prop-firm-plan-modal')!.querySelector('mtc-account-plan-wizard')).not.toBeNull();
+
+      (fixture.componentInstance as unknown as { onPlanLinked: () => void }).onPlanLinked();
+      expect(store.load).toHaveBeenCalled();
+      // Le rechargement ramène le compte relié au plan : les jauges remplacent l'appel à l'action.
+      store.accounts.set([account(metrics())]);
+      fixture.detectChanges();
+      expect(q('live-prop-firm-plan-modal')).toBeNull();
+      expect(q('live-prop-firm-plan-cta')).toBeNull();
+      expect(q('live-prop-firm-drawdown')).not.toBeNull();
+    });
   });
 
   it('relit le solde chez le broker une fois à l’ouverture, puis recharge les comptes', () => {

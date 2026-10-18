@@ -279,18 +279,13 @@
             </div>
           </div>
 
-          <!-- Compte saisi avant le catalogue : le relier à son plan officiel. Plusieurs programmes
-               de la firm partagent ses règles, seul l'utilisateur sait lequel il a acheté. -->
-          @if (linkSuggestions().get(a.id); as firmName) {
+          <!-- Plan à renseigner (#612) : compte prop firm sans plan, ou laissé à « Plus tard ». -->
+          @if (needsPlan(a)) {
             <div class="acct-sub plan-link" [attr.data-testid]="'plan-link-' + a.id">
               <svg [lucideIcon]="BadgeCheckIcon" [size]="14"></svg>
-              <span class="tv-text">Relie ce compte à son plan {{ firmName }} pour suivre les règles officielles (drawdown EOD ou intraday, limite journalière…).</span>
-              <button type="button" class="tv-btn sm sync" (click)="openEdit(a)"
-                      [attr.data-testid]="'plan-link-open-' + a.id">Choisir le programme</button>
-              <button type="button" class="plan-link-close" (click)="dismissLinkSuggestion(a.id)"
-                      aria-label="Ne plus proposer pour ce compte" title="Ne plus proposer">
-                <svg [lucideIcon]="XIcon" [size]="13"></svg>
-              </button>
+              <span class="tv-text">Relie ce compte à son plan pour suivre ta perte max du jour et ton plancher.</span>
+              <button type="button" class="tv-btn sm sync plan-link-btn" (click)="openPlanWizard(a)"
+                      [attr.data-testid]="'plan-link-open-' + a.id">Relier</button>
             </div>
           }
 

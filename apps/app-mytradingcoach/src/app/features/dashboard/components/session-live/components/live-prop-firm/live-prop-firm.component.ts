@@ -18,7 +18,7 @@ import {
   LucideShieldCheck as ShieldCheck,
 } from '@lucide/angular';
 import { catchError, of } from 'rxjs';
-import { formatMoney } from '@mtc/shared';
+import { formatMoney, needsPlanLink } from '@mtc/shared';
 import { TradovateApi } from '@app/core/api/tradovate.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
@@ -29,6 +29,7 @@ import { AlertSoundService } from '@app/core/services/alert-sound.service';
 import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal.component';
 import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
+import { AccountPlanWizardComponent } from '@app/features/accounts/account-plan-wizard/account-plan-wizard.component';
 import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 
 /**
@@ -42,7 +43,7 @@ import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
 @Component({
   selector: 'mtc-live-prop-firm',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent],
+  imports: [LucideDynamicIcon, RouterLink, PlanModalComponent, AccountPlanWizardComponent],
   templateUrl: './live-prop-firm.component.html',
   styleUrl: './live-prop-firm.component.css',
 })
@@ -58,6 +59,8 @@ export class LivePropFirmComponent {
   protected readonly alerts = inject(PropAlertsService);
   protected readonly sound = inject(AlertSoundService);
   protected readonly showPlanModal = signal(false);
+  /** « Quel est ce compte ? » ouvert depuis l'appel à l'action (compte sans plan, #612). */
+  protected readonly planWizardOpen = signal(false);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly live = inject(TradovateLiveSocketService);
 
@@ -69,6 +72,11 @@ export class LivePropFirmComponent {
     () => this.accounts.accounts().find((a) => a.id === this.accountId()) ?? null,
   );
   protected readonly metrics = computed(() => this.account()?.metrics ?? null);
+  /** Compte prop firm sans plan, ou laissé à « Plus tard » : l'appel à l'action remplace les jauges. */
+  protected readonly needsPlan = computed(() => {
+    const a = this.account();
+    return !!a && needsPlanLink(a);
+  });
   protected readonly broker = computed(() => this.metrics()?.broker ?? null);
   protected readonly drawdown = computed(() => this.metrics()?.drawdown ?? null);
   protected readonly rule = computed(() => this.drawdown()?.rule ?? null);
@@ -143,6 +151,12 @@ export class LivePropFirmComponent {
           .subscribe(() => this.accounts.load()),
       );
     });
+  }
+
+  /** Plan relié (ou réponse enregistrée) : les comptes repartent du serveur, les jauges suivent. */
+  protected onPlanLinked(): void {
+    this.planWizardOpen.set(false);
+    this.accounts.load();
   }
 
   /** Montant dans la devise du compte, sans conversion. */
