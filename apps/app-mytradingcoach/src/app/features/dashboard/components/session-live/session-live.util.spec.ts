@@ -138,6 +138,15 @@ describe('bandeau PC (#597)', () => {
     expect(bannerTickers(null)).toEqual([]);
   });
 
+  it('bandeau défilant : taux 2 ans et 30 ans en plus', () => {
+    const t = bannerTickers({
+      nq: { value: 1, changePct: 0, source: 'x' }, spx: { value: 1, changePct: 0, source: 'x' }, dxy: { value: 1, changePct: 0, source: 'x' },
+      treasury: { t2y: 3.9, t2yChg: null, t5y: null, t5yChg: null, t10y: 4.31, t10yChg: null, t30y: null, t30yChg: null },
+      updatedAt: '',
+    }, true);
+    expect(t.map((x) => `${x.label} ${x.value}`)).toEqual(['NQ 1', 'SPX 1', 'DXY 1,00', '2Y 3,90 %', '10Y 4,31 %', '30Y -']);
+  });
+
   it('humeur en texte seul, type de plan court', () => {
     expect(moodLabel('FOCUSED')).toBe('Concentré');
     expect(moodLabel(null)).toBeNull();

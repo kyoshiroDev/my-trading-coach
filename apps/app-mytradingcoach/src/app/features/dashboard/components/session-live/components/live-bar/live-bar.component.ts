@@ -5,7 +5,8 @@ import { MoneyService } from '@app/core/services/money.service';
 
 /**
  * Bandeau de la session live v3, collant en haut : chrono (cyan = live), `Trades N / max`,
- * P&L total du jour (réalisé + latent). À partir de 768 px, sur une ligne : compte et plan,
+ * P&L total du jour (réalisé + latent), et dessous le contexte marché qui défile (toucher = détail).
+ * À partir de 768 px, sur une ligne : compte et plan,
  * humeur déclarée, contexte marché réduit (lien vers le détail) et « Clôturer la session ».
  * Session ouverte depuis plus de 24 h : alerte et clôture à la place du chrono (#595).
  */
@@ -29,6 +30,8 @@ export class LiveBarComponent {
   readonly accountLabel = input<string | null>(null);
   readonly mood = input<string | null>(null);
   readonly tickers = input<BannerTicker[]>([]);
+  /** Bandeau défilant sous le chrono (mobile, tablette) : contexte marché plus complet. */
+  readonly tickerTape = input<BannerTicker[]>([]);
   readonly closeSession = output<void>();
   readonly openContext = output<void>();
 

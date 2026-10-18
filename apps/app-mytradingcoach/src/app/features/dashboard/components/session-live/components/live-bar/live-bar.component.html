@@ -33,4 +33,20 @@
     <button type="button" class="lb-context" data-testid="live-bar-context" (click)="openContext.emit()">Contexte</button>
   </div>
   <button type="button" class="lb-wide lb-end" data-testid="live-bar-close" (click)="closeSession.emit()">Clôturer la session</button>
+  @if (tickerTape().length) {
+    <!-- Contexte marché qui défile sous le chrono (< 1100 px) ; toucher = détail (8 tickers + news) -->
+    <button type="button" class="lb-tape" data-testid="live-bar-tape" aria-label="Contexte marché : ouvrir le détail" (click)="openContext.emit()">
+      <span class="lb-tape-track" [style.animation-duration.s]="tickerTape().length * 5">
+        @for (copy of [0, 1]; track copy) {
+          <span class="lb-tape-set" [attr.aria-hidden]="copy === 1">
+            @for (t of tickerTape(); track t.label) {
+              <span class="lb-tape-item">{{ t.label }} {{ t.value }}
+                @if (t.change) { <span [class.up]="t.dir === 'up'" [class.down]="t.dir === 'down'">{{ t.change }}</span> }
+              </span>
+            }
+          </span>
+        }
+      </span>
+    </button>
+  }
 </header>

@@ -28,6 +28,7 @@
     [accountLabel]="accountLabel()"
     [mood]="mood()"
     [tickers]="tickers()"
+    [tickerTape]="tickerTape()"
     (closeSession)="closeSession.emit()"
     (openContext)="contextOpen.set(true)"
   />
@@ -75,10 +76,12 @@
       </div>
     </div>
 
-    <!-- 6. En bas en mobile : contexte marché (feuille) et clôture, loin de « Clôturer ce trade ».
-         À partir de 768 px, les deux sont dans le bandeau. -->
+    <!-- 6. En bas en mobile : clôture de session, loin de « Clôturer ce trade ». Le contexte marché
+         défile sous le chrono (toucher = détail). À partir de 768 px, la clôture est dans le bandeau. -->
     <div class="lv-actions">
-      <button type="button" class="lv-context-btn" data-testid="open-context" (click)="contextOpen.set(true)">Contexte marché</button>
+      @if (!marketCtx()) {
+        <button type="button" class="lv-context-btn" data-testid="open-context" (click)="contextOpen.set(true)">Contexte marché</button>
+      }
       <button type="button" class="lv-end-btn" data-testid="close-session-live" (click)="closeSession.emit()">Clôturer la session</button>
     </div>
   </div>

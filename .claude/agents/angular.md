@@ -148,7 +148,10 @@ la maquette design (« The Terminal »).
   - **Bandeau** (`live-bar`) : chrono `SessionStore.sessionClock()` (`HH:MM:SS`, ou alerte « Session
     ouverte depuis le JJ/MM, clôture-la » au-delà de 24 h, `session-clock.util.ts`), `Trades N / max`
     (`User.tradesPerDayMax`, sinon `Trades N`), P&L du jour = réalisé + latent (`liveTotals`), réalisé
-    seul si le latent est inconnu. Sur l'onglet live, la pilule « Session active » du header de la
+    seul si le latent est inconnu. **Sous 1100 px**, le contexte marché **défile** sous le chrono
+    (`lb-tape` : NQ, SPX, DXY, taux 2/10/30 ans, valeurs inconnues masquées, deux copies pour la
+    boucle, pause au survol, figé en `prefers-reduced-motion`) ; le toucher ouvre la feuille Contexte
+    (le bouton « Contexte marché » du bas n'apparaît plus que si le contexte n'est pas chargé). Sur l'onglet live, la pilule « Session active » du header de la
     page est masquée (le bandeau la remplace) ; « Clôturer la session » émet `closeSession` → le
     parent ouvre sa confirmation.
   - **Prochaine annonce** (`live-next-event`) : prochaine annonce non publiée du jour, compte à rebours

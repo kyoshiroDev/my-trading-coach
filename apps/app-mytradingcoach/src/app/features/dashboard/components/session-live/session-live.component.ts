@@ -157,6 +157,8 @@ export class SessionLiveComponent {
   });
   protected readonly mood = computed(() => moodLabel(this.session()?.moodStart));
   protected readonly tickers = computed(() => bannerTickers(this.marketCtx()));
+  /** Bandeau défilant : les valeurs inconnues (« - ») ne défilent pas, elles restent dans le détail. */
+  protected readonly tickerTape = computed(() => bannerTickers(this.marketCtx(), true).filter((t) => t.value !== '-'));
 
   protected readonly pnlDisplay = computed(() =>
     this.money.formatFor(this.session()?.accountId, this.dayPnl(), { decimals: 0, sign: true }),

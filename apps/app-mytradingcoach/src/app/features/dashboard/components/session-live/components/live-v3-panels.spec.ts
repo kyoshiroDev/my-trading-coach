@@ -75,6 +75,28 @@ describe('Session live v3 — bandeau', () => {
     expect(text('live-bar-pnl')).toBe('-40 $');
   });
 
+  it('contexte marché défilant sous le chrono : toucher = détail', () => {
+    const tape = [
+      { label: 'NQ', value: '18 584', change: '+0,62 %', dir: 'up' },
+      { label: '10Y', value: '4,31 %', change: null, dir: 'flat' },
+    ];
+    const { el, fixture } = render(LiveBarComponent, { clock: null, tickerTape: tape }, BAR_TEMPLATE);
+    const btn = el.querySelector('[data-testid="live-bar-tape"]') as HTMLButtonElement;
+    // Deux copies pour la boucle sans saut ; la seconde est masquée aux lecteurs d'écran.
+    expect(btn.querySelectorAll('.lb-tape-item').length).toBe(4);
+    expect(btn.querySelector('.lb-tape-set[aria-hidden="true"]')).not.toBeNull();
+    expect(btn.textContent).toContain('NQ 18 584');
+    const spy = vi.fn();
+    fixture.componentInstance.openContext.subscribe(spy);
+    btn.click();
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('pas de contexte marché chargé : pas de bandeau défilant', () => {
+    const { el } = render(LiveBarComponent, { clock: null, tickerTape: [] }, BAR_TEMPLATE);
+    expect(el.querySelector('[data-testid="live-bar-tape"]')).toBeNull();
+  });
+
   it('chrono > 24 h : alerte et clôture à la place du compteur (#595)', () => {
     const { el, text, fixture } = render(LiveBarComponent, { clock: { kind: 'stale', since: '06/10' } }, BAR_TEMPLATE);
     expect(el.querySelector('[data-testid="live-bar-clock"]')).toBeNull();

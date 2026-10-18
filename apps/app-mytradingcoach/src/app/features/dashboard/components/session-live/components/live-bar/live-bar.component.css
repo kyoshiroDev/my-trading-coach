@@ -23,14 +23,39 @@
   border: 1px solid color-mix(in srgb, var(--red) 45%, transparent); background: var(--red-dim); color: color-mix(in srgb, var(--red), var(--text) 45%);
 }
 
+/* Contexte marché défilant, ligne pleine largeur sous le chrono */
+.lb-tape {
+  flex-basis: 100%; order: 10; display: block; overflow: hidden; min-height: 32px; padding: 0;
+  margin: 0 -16px -8px; border: none; border-top: 1px solid rgba(255, 255, 255, .06); background: none;
+  cursor: pointer; text-align: left;
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+.lb-tape-track { display: inline-flex; white-space: nowrap; animation: lb-tape linear infinite; }
+.lb-tape:hover .lb-tape-track, .lb-tape:focus-visible .lb-tape-track { animation-play-state: paused; }
+.lb-tape-set { display: inline-flex; }
+.lb-tape-item {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px 8px 16px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+.lb-tape-item .up { color: var(--green); }
+.lb-tape-item .down { color: var(--red); }
+@keyframes lb-tape { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
 /* Éléments du bandeau complet (tablette et PC) : absents en mobile, ils sont ailleurs (feuille Contexte, bas de page) */
 .lb-wide { display: none; }
 
 @keyframes lb-blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-@media (prefers-reduced-motion: reduce) { .lb-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .lb-dot { animation: none; }
+  /* Pas de défilement : la ligne reste lisible et se fait glisser au doigt */
+  .lb-tape { overflow-x: auto; mask-image: none; }
+  .lb-tape-track { animation: none; }
+  .lb-tape-set[aria-hidden='true'] { display: none; }
+}
 
 @media (min-width: 768px) {
-  .lb-bar { gap: 10px 16px; padding: 14px 20px; flex-wrap: nowrap; }
+  .lb-bar { gap: 10px 16px; padding: 14px 20px 0; }
+  .lb-tape { margin: 4px -20px 0; }
   .lb-wide { display: initial; }
   /* Tablette : une seule ligne, le compte et les tickers attendent le PC (détail via « Contexte ») */
   .lb-account, .lb-tick { display: none; }
@@ -61,6 +86,8 @@
 }
 
 @media (min-width: 1100px) {
-  .lb-bar { gap: 10px 22px; flex-wrap: wrap; }
+  .lb-bar { gap: 10px 22px; padding-bottom: 14px; }
   .lb-account, .lb-tick { display: initial; }
+  /* PC : les tickers sont fixes dans le bandeau, pas de ligne défilante */
+  .lb-tape { display: none; }
 }

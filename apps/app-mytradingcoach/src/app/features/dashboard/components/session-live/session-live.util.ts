@@ -194,20 +194,25 @@ export interface BannerTicker { label: string; value: string; change: string | n
 
 /**
  * Contexte marché réduit du bandeau PC : NQ, SPX, DXY, 10Y. Le flux n'a pas l'ES (future) mais le
- * S&P 500 comptant : affiché « SPX », jamais renommé. Valeur inconnue → « - ».
+ * S&P 500 comptant : affiché « SPX », jamais renommé. Valeur inconnue → « - ». `full` : version du
+ * bandeau défilant (mobile, tablette), avec aussi les taux 2 ans et 30 ans.
  */
-export function bannerTickers(ctx: MarketContext | null | undefined): BannerTicker[] {
+export function bannerTickers(ctx: MarketContext | null | undefined, full = false): BannerTicker[] {
   if (!ctx) return [];
   const pct = (v: number | null | undefined) => (v === null || v === undefined || !Number.isFinite(v)
     ? null : `${v > 0 ? '+' : ''}${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} %`);
   const dir = (v: number | null | undefined): BannerTicker['dir'] => (!v ? 'flat' : v > 0 ? 'up' : 'down');
   const num = (v: number | null | undefined, d: number) => (v === null || v === undefined || !Number.isFinite(v)
     ? '-' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const rate = (label: string, v: number | null | undefined): BannerTicker =>
+    ({ label, value: v == null ? '-' : `${num(v, 2)} %`, change: null, dir: 'flat' });
   return [
     { label: 'NQ', value: num(ctx.nq?.value, 0), change: pct(ctx.nq?.changePct), dir: dir(ctx.nq?.changePct) },
     { label: 'SPX', value: num(ctx.spx?.value, 0), change: pct(ctx.spx?.changePct), dir: dir(ctx.spx?.changePct) },
     { label: 'DXY', value: num(ctx.dxy?.value, 2), change: pct(ctx.dxy?.changePct), dir: dir(ctx.dxy?.changePct) },
-    { label: '10Y', value: ctx.treasury?.t10y == null ? '-' : `${num(ctx.treasury.t10y, 2)} %`, change: null, dir: 'flat' },
+    ...(full ? [rate('2Y', ctx.treasury?.t2y)] : []),
+    rate('10Y', ctx.treasury?.t10y),
+    ...(full ? [rate('30Y', ctx.treasury?.t30y)] : []),
   ];
 }
 
