@@ -707,10 +707,20 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
   **dev** tourne sans cron (`IS_CRON_WORKER=false` dans `.env.dev`, process unique hors
   `NODE_ENV=production`) ; sa démo était restée au 2026-06-07 (aucun compte, session ouverte
   depuis 2 900 h). `DemoSeedService` vit dans `DemoSeedModule` (importé par Admin et Auth).
-- **Séance du jour aux heures de marché** (`demoTodaySlot`, `demo-data/generate.ts`) : avant 09:45
-  aucune séance du jour (veille complète, Pré-session) ; 09:45–16:15 Londres (trades 09:22 / 09:38) ;
-  après, New York (15:38 / 15:57). `isStale` re-seede quand un créneau s'est ouvert depuis le dernier
-  seed (seed de 03:20 puis visite à 11:00). Avant : trades « du jour » à 01:40 / 02:45, timer > 22 h.
+- **Session live TOUJOURS présente** (vitrine, 2026-10-18 : « si le visiteur ne voit pas le live,
+  c'est pas bon ») : le seed crée à chaque run une session ACTIVE du jour sur Apex, avec une
+  position saisie à la main **encore ouverte** (`DemoDay.openTrade`, MNQ, SL + TP, R/R 1 : 2, hors
+  stats) rattachée à la session. Trades du jour aux heures de marché (`demoTodaySlot`) : 09:45–16:15
+  Londres (09:22 / 09:38), après New York (15:38 / 15:57), position ouverte 4 min après. Week-end et
+  avant 09:45 : **aucun trade du jour** (garde-fou `assertDemoCalendar` inchangé, il couvre aussi
+  `openTrade`), session ouverte il y a 30 min et position datée de la dernière séance à 21:40 (le
+  front affiche « Marché fermé » le week-end CME). `isStale` re-seede si aucune session n'est active
+  pour la journée de trading en cours (`activeSessionWhere` : après la bascule de minuit, au
+  week-end) ou si un créneau s'est ouvert depuis le dernier seed ; le dernier trade CLÔTURÉ attendu
+  est celui de la séance précédente avant 09:45 (avant : re-seed à chaque connexion matinale).
+- **Trade encore ouvert gardé après minuit** : `getTodayTrades` = trades du jour **ou** trade sans
+  P&L rattaché à la session active (`sessionId`, `pnl: null`). Vaut pour tous les comptes (position
+  ouverte à 23:50) et sert la position de la vitrine.
 - **Les deux comptes prop firm de la démo sont « connectés »** (vitrine, faux jeton, une connexion
   et des clôtures officielles par compte, `tradovateAccount` dans `demo-data/config.ts`) : la session
   live exige un compte connecté pour montrer le suivi prop firm, et « Mes comptes » n'affiche plus de
@@ -719,7 +729,8 @@ Filets posés par `DemoSeedCron` (`modules/admin/demo-seed.cron.ts`) :
 Invariants verrouillés par `demo-seed-idempotence.spec.ts` : purge **avant** recréation
 et **scopée `userId`** (un re-run remplace, il n'empile pas) · tous les trades dans les
 `DEMO_WINDOW_DAYS` (42, soit 6 semaines) derniers jours, la vue « 1M » restant pleine · J-0 et
-J-1 peuplés · session du jour ACTIVE, démarrée aujourd'hui, **aucun trade après `now`** (même
+J-1 peuplés · session du jour ACTIVE **même le week-end**, démarrée aujourd'hui, une seule position
+ouverte (SL + TP), **aucun trade après `now`** ni un samedi / dimanche (même
 quand le cron tourne à 03:20 : les trades du jour sont calés avant l'heure du run) ·
 P&L total < 15 % du capital et pertes visibles (sobriété AMF : on montre la
 fonctionnalité, jamais une performance). Le capital n'y est **jamais en dur** : les tests

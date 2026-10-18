@@ -134,11 +134,23 @@ describe('SessionService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             userId: 'user-1',
-            tradedAt: expect.objectContaining({ gte: expect.any(Date) }),
+            OR: [{ tradedAt: expect.objectContaining({ gte: expect.any(Date) }) }],
           }),
         }),
       );
       expect(result).toHaveLength(2);
+    });
+
+    it('session active : son trade encore ouvert reste « en cours » même ouvert avant minuit', async () => {
+      mockPrisma.tradeSession.findFirst.mockResolvedValue({ id: 's-live', accountId: 'acc-session' });
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.getTodayTrades('user-1');
+
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where.OR).toEqual([
+        { tradedAt: { gte: expect.any(Date) } },
+        { sessionId: 's-live', pnl: null },
+      ]);
     });
 
     it('session active → seulement les trades de son compte (#457)', async () => {

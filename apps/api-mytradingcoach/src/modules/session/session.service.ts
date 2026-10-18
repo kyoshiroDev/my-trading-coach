@@ -309,13 +309,18 @@ export class SessionService {
     // (un trade synchronisé sur un autre compte gonflait le P&L de la carte, #457).
     const active = await this.prisma.tradeSession.findFirst({
       where: activeSessionWhere(userId),
-      select: { accountId: true },
+      select: { id: true, accountId: true },
     });
 
     return this.prisma.trade.findMany({
       where: {
         userId,
-        tradedAt: { gte: startOfDay },
+        // Trades du jour, plus un trade ENCORE OUVERT rattaché à la session active même s'il a été
+        // ouvert avant minuit (position gardée) : sinon « Trade en cours » le perdait à 00:00.
+        OR: [
+          { tradedAt: { gte: startOfDay } },
+          ...(active ? [{ sessionId: active.id, pnl: null }] : []),
+        ],
         ...(active?.accountId ? { accountId: active.accountId } : {}),
       },
       orderBy: { tradedAt: 'desc' },
