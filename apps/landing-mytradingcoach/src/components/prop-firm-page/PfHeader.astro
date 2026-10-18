@@ -1,9 +1,13 @@
 ---
 // En-tête simplifié de /prop-firm (page de test publicitaire, hors navigation du site) : le logo
 // de la Nav, « Se connecter », et sur ordinateur les ancres de la page + l'inscription. Pas de menu
-// hamburger ni de bandeau d'offre : une page courte, une seule décision à prendre.
+// hamburger : une page courte, une seule décision à prendre. Bandeau de l'offre fondateur : le même
+// composant que l'accueil (affiché seulement si l'offre vend), lien vers les tarifs de CETTE page.
 import { APP_URL } from '../../config';
+import FounderBanner from '../FounderBanner.astro';
 ---
+
+<FounderBanner href="#tarifs" />
 
 <header class="pfh">
   <div class="pfh-in">
@@ -33,6 +37,9 @@ import { APP_URL } from '../../config';
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--b);
   }
+  /* Bandeau de l'offre affiché : l'en-tête descend de 32 px par transform, comme la Nav de l'accueil
+     (aucun saut de mise en page). */
+  :global(html.has-offer-bar) .pfh { transform: translateY(32px); }
   .pfh-in {
     max-width: 1200px;
     height: 100%;
