@@ -1112,6 +1112,13 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 
+### Admin : liaison compte ↔ plan prop firm (#612)
+
+Dashboard, bandeau « Fidélisation & activation » : 6e stat `kpi-plan-links` (taux, reliés / connectés),
+lien vers `/brokers`. Détail en tête de la page Brokers : `mtc-admin-plan-links-card` (réponses des
+comptes sans plan, firms absentes du catalogue). Specs admin : builder Angular, `templateUrl` compilé
+directement (pas de `?raw` comme dans l'app).
+
 ### Admin : offre fondateur et codes partenaires (#525)
 
 - Dashboard : 7e KPI « Fondateurs » (`X / 200`, `N actifs · R restantes`, barre fine, badge « fermée »)

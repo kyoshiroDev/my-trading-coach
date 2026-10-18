@@ -207,3 +207,18 @@ export interface AdminSignupFunnelData {
   /** Triées par nombre décroissant, 50 max. */
   errors: AdminSignupFunnelError[];
 }
+
+// ── Liaison des comptes aux plans prop firm (GET /admin/prop-firms/plan-links, #612) ──────────
+
+/** Comptes connectés à un broker (sous-compte choisi, non archivés), hors démo et hors ADMIN. */
+export interface AdminPlanLinkStats {
+  connected: number;
+  /** Reliés à un plan du catalogue. */
+  linked: number;
+  /** `linked / connected`, en % arrondi ; null sans compte connecté. */
+  rate: number | null;
+  /** Comptes connectés SANS plan, par réponse à « Quel est ce compte ? » (`none` = jamais répondu). */
+  unlinked: { later: number; personal: number; unlisted: number; none: number };
+  /** Réponses « Ma firm n'est pas dans la liste » (tous comptes réels), regroupées par nom. */
+  unlistedFirms: { name: string; count: number; lastAt: string }[];
+}

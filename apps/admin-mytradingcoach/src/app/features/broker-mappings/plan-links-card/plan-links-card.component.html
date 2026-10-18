@@ -1,0 +1,28 @@
+<div class="card" data-testid="plan-links-card">
+  <div class="card-title">Comptes reliés à un plan prop firm</div>
+  @if (stats(); as s) {
+    <div class="pl-head">
+      <span class="pl-rate" data-testid="plan-links-rate">{{ s.rate === null ? '-' : s.rate + ' %' }}</span>
+      <span class="page-note"><b>{{ s.linked }}</b> / {{ s.connected }} comptes connectés · hors démo et ADMIN</span>
+    </div>
+    <div class="pl-split page-note" data-testid="plan-links-unlinked">
+      Sans plan : {{ s.unlinked.none }} jamais répondu · {{ s.unlinked.later }} « plus tard » ·
+      {{ s.unlinked.personal }} perso · {{ s.unlinked.unlisted }} firm absente
+    </div>
+
+    <div class="pl-sub">Firms absentes du catalogue</div>
+    @if (s.unlistedFirms.length) {
+      <ul class="pl-list" data-testid="plan-links-unlisted">
+        @for (f of s.unlistedFirms; track f.name) {
+          <li><span class="pl-name">{{ f.name }}</span><span class="pl-meta">{{ f.count }} · {{ f.lastAt | date: 'd MMM' }}</span></li>
+        }
+      </ul>
+    } @else {
+      <p class="page-note">Aucune firm signalée pour l'instant.</p>
+    }
+  } @else if (failed()) {
+    <p class="page-note">Mesure indisponible.</p>
+  } @else {
+    <p class="page-note">Chargement…</p>
+  }
+</div>

@@ -1523,6 +1523,10 @@ redéployer : rien à lancer sur le VPS.
   `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
   **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
   (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
+- **Mesure admin** (`GET /admin/prop-firms/plan-links`, `AdminPropFirmsController` + `PlanLinkStatsService`,
+  calcul pur `plan-link-stats.ts`) : comptes **connectés** (sous-compte choisi, non archivés) reliés à un
+  plan / connectés, filtre `REAL_USERS` (hors démo, hors ADMIN) ; répartition des comptes sans plan par
+  `planLinkChoice` ; firms « absentes » regroupées sans casse. Contrat `AdminPlanLinkStats` (`@mtc/shared`).
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement
   si un plan unique** colle (firm reconnue dans `broker` ou le libellé, taille, devise, objectif,

@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminAcquisitionData, AdminFunnelData, AdminSignupFunnelData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
 export interface AdminUser {
@@ -294,6 +295,8 @@ export class AdminApi {
   aiCost()              { return this.http.get<{ data: AiCostData }>(`${this.adminBase}/ai-cost`); }
   refreshAiCost()       { return this.http.post<{ data: { ok: boolean; rows: number; total30d: number } }>(`${this.adminBase}/ai-cost/refresh`, {}); }
   retention()           { return this.http.get<{ data: RetentionData }>(`${this.adminBase}/retention`); }
+  /** Comptes connectés reliés à un plan prop firm / connectés, firms absentes du catalogue (#612). */
+  planLinks()           { return this.http.get<{ data: AdminPlanLinkStats }>(`${this.adminBase}/prop-firms/plan-links`); }
   metricsHistory(days = 30) {
     return this.http.get<{ data: MetricsHistoryPoint[] }>(
       `${this.adminBase}/metrics/history`, { params: { days } },
