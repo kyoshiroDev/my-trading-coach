@@ -792,6 +792,12 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
 (`app.spec.ts`) : `ɵresolveComponentResources` avec un résolveur vide dans `beforeAll`, puis
 `overrideComponent(ToastsComponent, …)` AVANT `compileComponents()`.
 
+
+**Téléphone (≤ 768 px, 2026-10-18)** : pile **en haut**, sous la barre du burger / du bandeau démo
+(`top: safe-area + 60px`), **un seul toast visible** (`ToastService.setMaxVisible(1)` posé par
+`mtc-toasts` via `matchMedia`), les autres en file (« +N »). Avant : jusqu'à 3 toasts à 92 px du bas,
+en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **jamais** de toast :
+`demoInterceptor` ouvre déjà l'invite « Crée ton compte » (`ToastService.show` l'ignore).
 ## Librairie partagée `@mtc/shared` (2026-09-13)
 
 - Import `from '@mtc/shared'` (stats de trades, valeurs tarifaires) — source unique avec l'API.

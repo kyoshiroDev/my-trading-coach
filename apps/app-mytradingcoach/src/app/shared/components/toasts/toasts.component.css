@@ -156,19 +156,24 @@
   to   { transform: scaleX(0); }
 }
 
-/* Mobile : centré en bas, AU-DESSUS du bouton flottant « + » (56px à 24px du bas, topbar)
-   — le haut est pris par le burger. L'entrée monte depuis le bas. */
+/* Téléphone : EN HAUT, juste sous la barre du burger / du bandeau démo (≈ 52-54 px), un seul
+   toast à la fois (ToastService.setMaxVisible). Avant : jusqu'à 3 toasts empilés à 92 px du bas,
+   en plein milieu de ce qu'on lisait (barre SL/TP, bouton de clôture). Entrée depuis le haut ;
+   on le chasse toujours d'un glisser horizontal. */
 @media (max-width: 768px) {
   .toasts {
-    left: 16px;
-    right: 16px;
-    bottom: calc(env(safe-area-inset-bottom) + 92px);
+    left: 12px;
+    right: 12px;
+    top: calc(env(safe-area-inset-top) + 60px);
+    bottom: auto;
     width: auto;
     align-items: stretch;
   }
+  .toast-clip { padding-top: 0; }
+  .toast { padding: 11px 8px 9px 12px; }
   .toast-queue { align-self: center; }
   @keyframes toast-in {
-    from { opacity: 0; transform: translateY(calc(100% + 16px)); }
+    from { opacity: 0; transform: translateY(calc(-100% - 16px)); }
     to   { opacity: 1; transform: none; }
   }
 }

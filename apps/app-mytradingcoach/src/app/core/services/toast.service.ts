@@ -40,6 +40,9 @@ export const TOAST_DURATIONS: Record<ToastType, number> = {
 /** Au-delà, les toasts attendent leur tour : une rafale ne recouvre pas l'écran. */
 export const MAX_VISIBLE_TOASTS = 3;
 
+/** Refus « Action non disponible en mode démo » (DemoReadOnlyGuard) : couvert par l'invite démo. */
+const DEMO_BLOCKED = /mode démo/i;
+
 interface Timer {
   handle: ReturnType<typeof setTimeout> | null;
   remaining: number;
@@ -54,10 +57,19 @@ export class ToastService {
   private readonly pausedIds = signal<ReadonlySet<number>>(new Set());
   private nextId = 1;
 
-  /** Toasts affichés (les plus anciens d'abord), au plus MAX_VISIBLE_TOASTS. */
-  readonly visible = computed(() => this.all().slice(0, MAX_VISIBLE_TOASTS));
+  /** Places affichées : MAX_VISIBLE_TOASTS, 1 sur téléphone (posé par le conteneur). */
+  private readonly maxVisible = signal(MAX_VISIBLE_TOASTS);
+
+  /** Toasts affichés (les plus anciens d'abord), au plus `maxVisible`. */
+  readonly visible = computed(() => this.all().slice(0, this.maxVisible()));
   /** Nombre de toasts en file, affichés dès qu'une place se libère. */
-  readonly queued = computed(() => Math.max(0, this.all().length - MAX_VISIBLE_TOASTS));
+  readonly queued = computed(() => Math.max(0, this.all().length - this.maxVisible()));
+
+  /** Téléphone : un seul toast à la fois, les autres attendent (« +N »). */
+  setMaxVisible(n: number): void {
+    this.maxVisible.set(Math.max(1, n));
+    this.syncTimers(); // posé au démarrage (et à la rotation) : un toast qui gagne une place démarre
+  }
 
   success(message: string, opts?: ToastOptions): number { return this.show('success', message, opts); }
   error(message: string, opts?: ToastOptions): number { return this.show('error', message, opts); }
@@ -65,6 +77,9 @@ export class ToastService {
   warning(message: string, opts?: ToastOptions): number { return this.show('warning', message, opts); }
 
   show(type: ToastType, message: string, opts: ToastOptions = {}): number {
+    // Mode démo : le 403 « mode démo » ouvre déjà l'invite « Crée ton compte » (demoInterceptor) ;
+    // le même refus en toast doublait le message et masquait l'écran sur téléphone.
+    if (type === 'error' && DEMO_BLOCKED.test(message)) return 0;
     // Double-clic, même échec répété : on relance le toast déjà affiché au lieu d'empiler.
     const twin = this.all().find((t) => t.type === type && t.message === message);
     if (twin) {
