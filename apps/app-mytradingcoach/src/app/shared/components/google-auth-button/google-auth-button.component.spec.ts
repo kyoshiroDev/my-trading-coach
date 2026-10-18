@@ -40,7 +40,7 @@ describe('GoogleAuthButtonComponent (#618)', () => {
     google.config.mockResolvedValue({ enabled: true, clientId: 'x.apps.googleusercontent.com' });
     google.renderButton.mockResolvedValue(true);
     const el = await render();
-    expect(google.renderButton).toHaveBeenCalledWith(expect.any(HTMLElement), 'continue_with', expect.any(Function));
+    expect(google.renderButton).toHaveBeenCalledWith(expect.any(HTMLElement), 'continue_with', expect.any(Function), expect.any(Number));
     expect(el.querySelector('.separator')?.textContent).toContain('ou');
   });
 

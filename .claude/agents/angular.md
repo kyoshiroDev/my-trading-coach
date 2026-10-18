@@ -1165,7 +1165,11 @@ directement (pas de `?raw` comme dans l'app).
   `environment.*.ts`), script GIS `accounts.google.com/gsi/client` injecté **à la demande** et
   seulement si actif. Aucune dépendance npm Google côté front.
 - `mtc-google-auth-button` (`shared/components`) : bouton **officiel** rendu par Google (jamais
-  redessiné, thème `filled_black`, `continue_with`), séparateur « ou ». Rien si inactif ou script
+  redessiné) : `outline`, `large`, `rectangular`, `continue_with`, logo à gauche, largeur = largeur
+  mesurée de l'hôte (max 400), redessiné au redimensionnement (`ResizeObserver`, 150 ms) ; zone de
+  44 px sans fond. Bouton personnalisé « Continuer en tant que… » : affiché par Google dès qu'une
+  session a accepté le site, **aucune option ne le désactive** en `large` ≥ 200 px (doc GIS) ; il
+  reçoit les mêmes réglages. Séparateur « ou ». Rien si inactif ou script
   bloqué. Navigateur intégré (`isInAppBrowser` de `@mtc/shared`) : invitation à ouvrir le
   navigateur + « Copier le lien », pas de bouton. Zone toujours présente (classe `.gone`) : le
   script y dessine, un `viewChild` dans un `@if` n'était pas résolu à temps. Bouton Google = iframe
@@ -1183,3 +1187,13 @@ directement (pas de `?raw` comme dans l'app).
   `/auth/google/finalize` et `DELETE /auth/google` gardent le jeton.
 - Profil : « Définir » (mot de passe absent, même e-mail que « Modifier ») ; ligne « Connexion
   Google » avec « Délier » désactivé tant qu'aucun mot de passe n'existe.
+
+## Autoremplissage navigateur (2026-10-18)
+
+- Règle globale dans **`src/styles.css`** (`input/textarea/select:-webkit-autofill`) : ombre interne
+  `var(--autofill-bg, var(--bg-2))`, `-webkit-text-fill-color: var(--text)`, `background-clip:
+  padding-box !important` (sinon le fond clair imposé passe sous la bordure semi-transparente : le
+  raccourci `background:` des champs de composant remet `border-box`). Champ sur un autre fond →
+  poser `--autofill-bg`.
+- ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
+  règle globale va dans `styles.css`, pas là.

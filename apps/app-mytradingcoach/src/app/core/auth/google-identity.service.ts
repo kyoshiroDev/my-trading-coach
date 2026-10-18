@@ -45,8 +45,8 @@ declare global {
 
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 /** Largeurs acceptées par le bouton Google (px). */
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 400;
+export const GOOGLE_BUTTON_MIN_WIDTH = 200;
+export const GOOGLE_BUTTON_MAX_WIDTH = 400;
 
 /**
  * Connexion Google côté front : config lue sur l'API (activation et client ID par environnement,
@@ -73,13 +73,16 @@ export class GoogleIdentityService {
   }
 
   /**
-   * Affiche le bouton officiel Google dans `parent`. `onCredential` reçoit l'ID token après le
-   * choix du compte. Renvoie `false` si la connexion Google est inactive ou le script injoignable.
+   * Affiche le bouton officiel Google dans `parent`, à la largeur `width` (bornée 200-400 px par
+   * Google). `onCredential` reçoit l'ID token après le choix du compte. Renvoie `false` si la
+   * connexion Google est inactive ou le script injoignable. Rappelable (redimensionnement) : le
+   * contenu précédent est remplacé.
    */
   async renderButton(
     parent: HTMLElement,
     text: GoogleButtonText,
     onCredential: (credential: string) => void,
+    width: number,
   ): Promise<boolean> {
     const config = await this.config();
     if (!config.enabled || !config.clientId) return false;
@@ -102,15 +105,18 @@ export class GoogleIdentityService {
       auto_select: false,
       cancel_on_tap_outside: true,
     });
-    const width = Math.round(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, parent.clientWidth || MAX_WIDTH)));
+    parent.replaceChildren();
+    // Bouton personnalisé « Continuer en tant que… » : Google l'affiche dès qu'une session Google
+    // a déjà accepté le site. Aucune option ne le désactive en taille `large` et largeur ≥ 200 px
+    // (doc « personalized button ») : il reçoit donc les mêmes réglages que le bouton standard.
     api.renderButton(parent, {
       type: 'standard',
-      theme: 'filled_black',
+      theme: 'outline',
       size: 'large',
       text,
       shape: 'rectangular',
-      logo_alignment: 'center',
-      width,
+      logo_alignment: 'left',
+      width: Math.round(Math.min(GOOGLE_BUTTON_MAX_WIDTH, Math.max(GOOGLE_BUTTON_MIN_WIDTH, width))),
       locale: 'fr',
     });
     return true;

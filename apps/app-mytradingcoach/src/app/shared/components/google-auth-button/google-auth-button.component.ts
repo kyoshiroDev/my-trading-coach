@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   afterNextRender,
   inject,
@@ -9,7 +10,11 @@ import {
   signal,
 } from '@angular/core';
 import { isInAppBrowser } from '@mtc/shared';
-import { GoogleIdentityService, type GoogleButtonText } from '../../../core/auth/google-identity.service';
+import {
+  GOOGLE_BUTTON_MAX_WIDTH,
+  GoogleIdentityService,
+  type GoogleButtonText,
+} from '../../../core/auth/google-identity.service';
 
 type State = 'loading' | 'ready' | 'hidden' | 'in-app';
 
@@ -37,6 +42,9 @@ export class GoogleAuthButtonComponent {
   protected readonly state = signal<State>('loading');
   protected readonly linkCopied = signal(false);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  /** Largeur du dernier rendu : le bouton Google a une largeur fixe, redessiné si le formulaire change. */
+  private renderedWidth = 0;
 
   constructor() {
     afterNextRender(() => void this.init());
@@ -48,8 +56,36 @@ export class GoogleAuthButtonComponent {
     if (isInAppBrowser(navigator.userAgent)) return this.state.set('in-app');
     const slot = this.host.nativeElement.querySelector<HTMLElement>('.slot');
     if (!slot) return this.state.set('hidden');
-    const shown = await this.google.renderButton(slot, this.text(), (c) => this.credential.emit(c));
+    const shown = await this.render(slot);
     this.state.set(shown ? 'ready' : 'hidden');
+    if (shown) this.followWidth(slot);
+  }
+
+  /** Largeur réelle du formulaire (hôte en bloc pleine largeur), plafonnée à 400 px par Google. */
+  private width(): number {
+    return Math.min(GOOGLE_BUTTON_MAX_WIDTH, Math.floor(this.host.nativeElement.clientWidth));
+  }
+
+  private render(slot: HTMLElement): Promise<boolean> {
+    this.renderedWidth = this.width();
+    return this.google.renderButton(slot, this.text(), (c) => this.credential.emit(c), this.renderedWidth);
+  }
+
+  /** Rotation d'écran, fenêtre redimensionnée : bouton redessiné à la nouvelle largeur (150 ms). */
+  private followWidth(slot: HTMLElement): void {
+    if (typeof ResizeObserver === 'undefined') return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (this.width() !== this.renderedWidth) void this.render(slot);
+      }, 150);
+    });
+    observer.observe(this.host.nativeElement);
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(timer);
+      observer.disconnect();
+    });
   }
 
   protected async copyLink(): Promise<void> {

@@ -273,12 +273,14 @@
 .discord-info { flex: 1; min-width: 0; }
 .discord-server-name { font-size: 14px; font-weight: 700; color: var(--text); }
 .discord-server-desc { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); margin-top: 3px; }
+/* Blanc sur blurple Discord : 4,61:1 (AA) ; survol #4752c4 : 6,42:1. Cible ≥ 44 px. */
 .discord-join {
-  font-size: 13px; font-weight: 700; color: #7289da;
+  font-size: 13px; font-weight: 700; color: #ffffff;
   white-space: nowrap; flex-shrink: 0;
-  background: rgba(88,101,242,.15); padding: 6px 12px; border-radius: 8px;
+  background: #5865f2; padding: 0 12px; border-radius: 8px;
+  min-height: 44px; display: inline-flex; align-items: center;
 }
-.discord-card-link:hover .discord-join { background: rgba(88,101,242,.3); }
+.discord-card-link:hover .discord-join { background: #4752c4; }
 
 /* ── Wizard scrollable (étapes hautes : Stratégie / Actifs) ── */
 .wizard { display: flex; flex-direction: column; max-height: 92vh; }

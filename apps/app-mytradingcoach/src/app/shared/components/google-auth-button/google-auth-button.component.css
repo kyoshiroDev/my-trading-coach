@@ -2,7 +2,8 @@
   display: block;
 }
 
-/* Bouton rendu par Google (iframe, 40 px) centré dans une zone tactile de 44 px. */
+/* Bouton rendu par Google (iframe de 40 px, non modifiable) centré dans une zone de 44 px,
+   même hauteur visuelle que « Se connecter ». Aucun fond : le bouton Google a le sien. */
 .google-slot {
   min-height: 44px;
   display: flex;
@@ -14,12 +15,6 @@
   display: none;
 }
 
-.google-slot.loading {
-  /* Place réservée pendant le chargement du script : le formulaire ne saute pas. */
-  border-radius: 8px;
-  background: var(--bg-3);
-}
-
 .google-slot.busy {
   opacity: 0.6;
   pointer-events: none;
@@ -28,6 +23,7 @@
 .slot {
   width: 100%;
   max-width: 400px;
+  min-height: 40px;
   display: flex;
   justify-content: center;
 }
