@@ -164,6 +164,37 @@
       </div>
     </div>
 
+    @if (methods(); as m) {
+      <div class="card" data-testid="signup-methods">
+        <div class="card-head"><span class="card-label">Inscriptions par méthode</span><span class="card-label muted">hors démo et admin</span></div>
+        <table class="tbl">
+          <caption class="sr-only">Inscriptions par email et par Google</caption>
+          <thead><tr>
+            <th scope="col">Méthode</th>
+            <th scope="col" class="num">Inscrits 7j</th>
+            <th scope="col" class="num">Inscrits 30j</th>
+            <th scope="col" class="num">Part 30j</th>
+            <th scope="col" class="num">Inscrits total</th>
+          </tr></thead>
+          <tbody>
+            @for (r of m.rows; track r.method) {
+              <tr>
+                <td data-label="Méthode">{{ methodLabel[r.method] }}</td>
+                <td data-label="Inscrits 7j" class="td-mono num">{{ r.signups7d }}</td>
+                <td data-label="Inscrits 30j" class="td-mono num">{{ r.signups30d }}</td>
+                <td data-label="Part 30j" class="td-mono num">{{ r.share30d }}%</td>
+                <td data-label="Inscrits total" class="td-mono num muted">{{ r.signupsTotal }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="card-foot td-mono">
+          Google : <span class="teal">{{ m.google.finalizationRate }}%</span> finalisées
+          ({{ m.google.finalized }} écran(s) d'opt-in validé(s)) · {{ m.google.linkedEmailAccounts }} compte(s) email relié(s) à Google
+        </div>
+      </div>
+    }
+
     <div class="card">
       <div class="card-head"><span class="card-label">Par source</span><span class="card-label muted">tri : visites 30j</span></div>
       @if (d.rows.length) {

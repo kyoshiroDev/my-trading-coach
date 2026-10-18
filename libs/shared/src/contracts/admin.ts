@@ -1,4 +1,4 @@
-import type { Plan, Role } from './enums';
+import type { AuthProvider, Plan, Role } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
@@ -150,6 +150,30 @@ export interface AdminAcquisitionData {
   daily: AdminLandingDay[];
   /** Pages les plus vues sur 30 jours (10 max). */
   topPages: AdminLandingPage[];
+}
+
+/** Inscriptions d'une méthode (#618), hors démo et ADMIN. */
+export interface AdminSignupMethodRow {
+  method: AuthProvider;
+  signups7d: number;
+  signups30d: number;
+  signupsTotal: number;
+  /** Part des inscriptions des 30 derniers jours, en % (1 décimale). */
+  share30d: number;
+}
+
+/** GET /admin/signup-methods — répartition e-mail / Google et finalisation des inscriptions Google. */
+export interface AdminSignupMethodsData {
+  /** Toujours les deux méthodes, e-mail d'abord. */
+  rows: AdminSignupMethodRow[];
+  google: {
+    /** Inscriptions Google dont l'écran de finalisation (opt-in marketing) a été validé. */
+    finalized: number;
+    /** finalized / inscriptions Google, en % (1 décimale) ; 0 sans inscription Google. */
+    finalizationRate: number;
+    /** Comptes créés par e-mail puis reliés à Google. */
+    linkedEmailAccounts: number;
+  };
 }
 
 /** Une étape de l'entonnoir Premium : utilisateurs DISTINCTS (hors démo et admin) sur la période. */

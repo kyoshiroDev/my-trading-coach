@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -248,6 +248,7 @@ export interface StripeReconcileData {
 export type AcquisitionData = AdminAcquisitionData;
 export type FunnelData = AdminFunnelData;
 export type SignupFunnelData = AdminSignupFunnelData;
+export type SignupMethodsData = AdminSignupMethodsData;
 
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
@@ -307,6 +308,7 @@ export class AdminApi {
   }
   acquisition()         { return this.http.get<{ data: AcquisitionData }>(`${this.adminBase}/acquisition`); }
   funnel()              { return this.http.get<{ data: FunnelData }>(`${this.adminBase}/funnel`); }
+  signupMethods()       { return this.http.get<{ data: SignupMethodsData }>(`${this.adminBase}/signup-methods`); }
   signupFunnel(days: 7 | 30) { return this.http.get<{ data: SignupFunnelData }>(`${this.adminBase}/signup-funnel`, { params: { days } }); }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
   referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }

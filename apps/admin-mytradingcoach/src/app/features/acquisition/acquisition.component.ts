@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import type { ChartConfiguration } from 'chart.js';
-import { AdminApi, AcquisitionData, FunnelData, SignupFunnelData } from '../../core/api/admin.api';
+import { AdminApi, AcquisitionData, FunnelData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
 import { funnelRows, placeLabel, placeRows } from './funnel.util';
 import { SIGNUP_COLUMNS, signupErrors, signupLines, signupTotal, type BrowserFilter } from './signup-funnel.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
@@ -31,6 +31,10 @@ export class AcquisitionComponent {
   protected readonly funnelSteps = computed(() => funnelRows(this.funnel()));
   protected readonly funnelPlaces = computed(() => placeRows(this.funnel()));
   protected readonly placeLabel = placeLabel;
+
+  /** Inscriptions par méthode, e-mail / Google (GET /admin/signup-methods, #618) : chargé à part. */
+  protected readonly methods = signal<SignupMethodsData | null>(null);
+  protected readonly methodLabel = { EMAIL: 'Email', GOOGLE: 'Google' } as const;
 
   /** Parcours d'inscription par source (GET /admin/signup-funnel) : chargé à part, comme l'entonnoir. */
   protected readonly signupDays = signal<7 | 30>(30);
@@ -70,6 +74,10 @@ export class AcquisitionComponent {
 
   constructor() {
     this.loadSignup(30);
+    this.api.signupMethods().pipe(
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((r) => { if (r) this.methods.set(r.data); });
     this.api.funnel().pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),

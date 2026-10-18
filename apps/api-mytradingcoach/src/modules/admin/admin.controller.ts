@@ -110,6 +110,12 @@ export class AdminController {
     return this.signupFunnel.get(query.days ?? 30);
   }
 
+  /** Inscriptions par méthode (e-mail / Google) et finalisation des inscriptions Google (#618). */
+  @Get('signup-methods')
+  getSignupMethods() {
+    return this.adminService.getSignupMethods();
+  }
+
   /** Inscrits et conversion Premium par source UTM (null = direct / non renseigné). */
   @Get('acquisition')
   getAcquisition() {
