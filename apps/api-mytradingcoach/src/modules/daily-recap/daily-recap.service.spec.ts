@@ -102,6 +102,44 @@ describe('DailyRecapService', () => {
     );
   });
 
+  it('mois Premium offert (FREE + trialEndsAt futur) → aiOneLiner généré (#627)', async () => {
+    const trades = [
+      makeTrade({ pnl: 100 }),
+      makeTrade({ id: 'trade-2', pnl: 50 }),
+      makeTrade({ id: 'trade-3', pnl: 30 }),
+    ];
+    mockPrisma.trade.findMany.mockResolvedValueOnce(trades).mockResolvedValueOnce([]);
+    mockPrisma.user.findUnique.mockResolvedValue({
+      plan: Plan.FREE, role: 'USER', trialEndsAt: new Date(Date.now() + 10 * 86_400_000),
+    });
+    mockAi.generateDailyOneLiner.mockResolvedValue('Bonne gestion du risque.');
+    mockPrisma.dailyRecap.upsert.mockResolvedValue({});
+
+    await service.generateRecap('user-1', TODAY);
+
+    expect(mockAi.generateDailyOneLiner).toHaveBeenCalled();
+    expect(mockPrisma.dailyRecap.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ aiOneLiner: 'Bonne gestion du risque.' }) }),
+    );
+  });
+
+  it('mois offert expiré → plus d’aiOneLiner', async () => {
+    const trades = [
+      makeTrade({ pnl: 100 }),
+      makeTrade({ id: 'trade-2', pnl: 50 }),
+      makeTrade({ id: 'trade-3', pnl: 30 }),
+    ];
+    mockPrisma.trade.findMany.mockResolvedValue(trades);
+    mockPrisma.user.findUnique.mockResolvedValue({
+      plan: Plan.FREE, role: 'USER', trialEndsAt: new Date(Date.now() - 86_400_000),
+    });
+    mockPrisma.dailyRecap.upsert.mockResolvedValue({ aiOneLiner: null });
+
+    await service.generateRecap('user-1', TODAY);
+
+    expect(mockAi.generateDailyOneLiner).not.toHaveBeenCalled();
+  });
+
   it('ne génère pas de aiOneLiner si < 3 trades', async () => {
     const trades = [
       makeTrade({ pnl: 100 }),

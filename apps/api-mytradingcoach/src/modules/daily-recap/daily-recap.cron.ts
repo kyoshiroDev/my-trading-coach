@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
+import { Plan, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DAILY_RECAP_JOB_OPTIONS, DAILY_RECAP_QUEUE, dailyRecapJobId, type DailyRecapJob } from './daily-recap.queue';
 
@@ -22,7 +23,14 @@ export class DailyRecapCron {
     const activeUsers = await this.prisma.user.findMany({
       where: {
         isDemo: false,
-        plan: 'PREMIUM',
+        // Accès Premium réel (`isPremiumAccess`), comme le Weekly Debrief : un mois offert par
+        // l'admin garde le plan FREE avec `trialEndsAt` futur (#627).
+        OR: [
+          { plan: Plan.PREMIUM },
+          { role: Role.ADMIN },
+          { role: Role.BETA_TESTER },
+          { trialEndsAt: { gt: today } },
+        ],
         trades: {
           some: { tradedAt: { gte: new Date(today.toDateString()) } },
         },
