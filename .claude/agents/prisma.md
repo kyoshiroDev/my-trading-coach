@@ -540,3 +540,16 @@ push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). M
   `mutedByUser` (prévus pour l'UI de phase 2). Index `(userId, createdAt)`, `(accountId, tradeDay)`.
   Volume attendu ≈ 1 alerte par séance de trader actif : conservation à décider avant la phase 2
   (`RETENTION_RULES`).
+
+## Connexion Google (#618, 2026-10-18)
+
+Migration `20261018140000_google_auth`, additive et compatible N-1 :
+- `User.password` **nullable** : null = compte créé avec Google sans mot de passe. Tout code qui lit
+  le hash doit traiter null (`login` → 401 identique, jamais `argon2.verify(null)`).
+- `googleId String? @unique` (`sub` Google, jamais renvoyé au front), `authProvider AuthProvider
+  @default(EMAIL)` (enum `EMAIL | GOOGLE`, copié dans `@mtc/shared` `CONTRACT_ENUMS`),
+  `emailVerifiedAt` (posé par Google et par un reset de mot de passe réussi), `signupFinalizedAt`
+  (écran de finalisation Google validé), `tokenVersion Int @default(0)` (révocation des refresh
+  tokens). Comptes existants : `EMAIL`, non vérifiés, version 0, aucun backfill.
+- Recherche d'un compte par e-mail pour Google : `mode: 'insensitive'` (les e-mails ne sont pas
+  normalisés en minuscules à l'inscription classique).

@@ -1970,3 +1970,21 @@ Module `modules/behavior/`. **Rien n'est affiché** tant que Greg n'a pas valid�
   exportés en lecture seule et pseudonymisés, requêtes en annexe du rapport ; jamais de connexion à
   la base). `behavior-replay.ts` (pur) : référence de chaque séance sur les journées précédentes
   seulement, verrouillé par `behavior-replay.spec.ts`.
+
+## Connexion Google (#618, 2026-10-18)
+
+Routes (`modules/auth`) : `GET /auth/google/config` (public), `POST /auth/google` (public,
+`GoogleAuthDto` : `credential` + `referralCode` + UTM normalisés comme `RegisterDto`, **pas**
+d'opt-in marketing), `POST /auth/google/finalize` (`GoogleFinalizeDto { marketingConsent }`,
+idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /auth/google`.
+- `POST /auth/google` renvoie comme login/register (`access_token`, cookie de refresh, `user`) +
+  `googleStatus` (`login | linked | created`) + `passwordCleared`.
+- Création **commune** e-mail / Google : `AuthService.createAccount` (parrain, UTM, setups par
+  défaut, e-mail de bienvenue, push admin). Toute nouvelle conséquence d'une inscription va là.
+- Double clic Google : P2002 à la création → nouvel essai unique qui tombe sur la connexion.
+- Utilisateur renvoyé au front : `toMe(row)` sur `ME_ROW_SELECT` ajoute `hasPassword`,
+  `googleLinked`, `needsSignupFinalization` et retire `password` / `googleId`. Ne jamais
+  renvoyer `ME_ROW_SELECT` brut.
+- Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
+  `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
+  `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
