@@ -76,9 +76,6 @@ export class DashboardKpisComponent {
     return this.equitySeries().map((v) => { peak = Math.max(peak, v); return v - peak; });
   });
 
-  /** Donut mini win rate (KPI). */
-  protected readonly winRateDonut = computed(() => {
-    const wr = Math.max(0, Math.min(100, this.summary()?.winRate ?? 0));
-    return `conic-gradient(var(--blue) 0% ${wr}%, rgba(143,163,191,.18) ${wr}% 100%)`;
-  });
+  /** Barre win rate (KPI), pleine largeur de la carte comme les autres visuels (#642). */
+  protected readonly winRatePct = computed(() => Math.max(0, Math.min(100, this.summary()?.winRate ?? 0)));
 }

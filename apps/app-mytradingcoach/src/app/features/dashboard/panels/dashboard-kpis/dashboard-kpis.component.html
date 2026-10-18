@@ -16,10 +16,10 @@
       </div>
       @let cap = sparkPath(capitalSeries());
       @if (cap.line) {
-        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="cap.area" fill="var(--blue)" fill-opacity="0.13" />
-          <path [attr.d]="cap.line" fill="none" stroke="var(--blue-bright)" stroke-width="1.6" stroke-linejoin="round" />
-          <circle [attr.cx]="cap.cx" [attr.cy]="cap.cy" r="1.9" fill="var(--blue-bright)" />
+          <path [attr.d]="cap.line" fill="none" stroke="var(--blue-bright)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          <path [attr.d]="'M' + cap.cx + ' ' + cap.cy + 'h0'" stroke="var(--blue-bright)" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
         </svg>
       }
     </div>
@@ -34,10 +34,10 @@
       </div>
       @let pnl = sparkPath(equitySeries());
       @if (pnl.line) {
-        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="pnl.area" fill="var(--green)" fill-opacity="0.13" />
-          <path [attr.d]="pnl.line" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round" />
-          <circle [attr.cx]="pnl.cx" [attr.cy]="pnl.cy" r="1.9" fill="var(--green)" />
+          <path [attr.d]="pnl.line" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          <path [attr.d]="'M' + pnl.cx + ' ' + pnl.cy + 'h0'" stroke="var(--green)" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
         </svg>
       }
     </div>
@@ -53,7 +53,7 @@
           @if ((summary()?.totalTrades ?? 0) > 0) { sur {{ summary()?.totalTrades }} trades } @else { Aucune donnée }
         </div>
       </div>
-      <div class="mtc-mini-donut" [style.background]="winRateDonut()"><span></span></div>
+      <div class="mtc-wr-bar"><span [style.width.%]="winRatePct()"></span></div>
     </div>
     <!-- Profit factor -->
     <div class="mtc-kpi" style="--glow:var(--purple)">
@@ -69,10 +69,10 @@
       </div>
       @let pf = sparkPath(equitySeries());
       @if (pf.line) {
-        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="pf.area" fill="var(--purple)" fill-opacity="0.13" />
-          <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" />
-          <circle [attr.cx]="pf.cx" [attr.cy]="pf.cy" r="1.9" fill="var(--purple-bright)" />
+          <path [attr.d]="pf.line" fill="none" stroke="var(--purple-bright)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          <path [attr.d]="'M' + pf.cx + ' ' + pf.cy + 'h0'" stroke="var(--purple-bright)" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
         </svg>
       }
     </div>
@@ -110,10 +110,10 @@
       </div>
       @let dd = sparkPath(ddSeries());
       @if (dd.line) {
-        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none" width="72" height="42">
+        <svg class="mtc-spark" viewBox="0 0 72 42" preserveAspectRatio="none">
           <path [attr.d]="dd.area" fill="var(--red)" fill-opacity="0.13" />
-          <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" />
-          <circle [attr.cx]="dd.cx" [attr.cy]="dd.cy" r="1.9" fill="var(--red)" />
+          <path [attr.d]="dd.line" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+          <path [attr.d]="'M' + dd.cx + ' ' + dd.cy + 'h0'" stroke="var(--red)" stroke-width="4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
         </svg>
       }
     </div>
