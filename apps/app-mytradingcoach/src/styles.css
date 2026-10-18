@@ -151,6 +151,13 @@ textarea {
   select {
     font-size: 16px !important;
   }
+
+  /* Bouton « + » flottant (56 px à 24 px du bas, rendu par mtc-topbar) : sans cette marge, il cachait
+     la fin de page (envoi du chat Coach IA, mention NinjaTrader de Mes comptes, dernier objectif du
+     débrief) (#631). Global : le bouton et .main-content vivent dans deux composants différents. */
+  .main-content:has(.floating-add-btn) {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 92px);
+  }
 }
 
 /* ─── Live mode : bloquer le scroll du main pour laisser les colonnes scroller ─── */
