@@ -584,3 +584,11 @@
   .cell-sync { gap: 5px; }
   .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
 }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .acct-expand,
+  .acct-menu { position: relative; }
+  .acct-expand::before,
+  .acct-menu::before { content: ''; position: absolute; inset: -12px; }
+}

@@ -309,3 +309,9 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   .r-now td::before, .r-sep td::before, .r-ai td::before { content: none; }
   .ai-panel { margin: 0 7px 8px; }
 }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .pin { position: relative; min-width: 22px; }
+  .pin::before { content: ''; position: absolute; inset: -11px; }
+}

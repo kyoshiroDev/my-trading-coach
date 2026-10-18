@@ -488,3 +488,9 @@
   .day-header .day-stats { order: 1; flex-basis: 100%; justify-content: flex-start; padding-left: 20px; }
   .day-winrate, .day-commission { display: none; }
 }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .date-preset { position: relative; }
+  .date-preset::before { content: ''; position: absolute; inset: -11px 0; }
+}

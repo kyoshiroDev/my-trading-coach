@@ -596,3 +596,9 @@
 }
 .equity-pnl-total.pos { color: var(--green); }
 .equity-pnl-total.neg { color: var(--red); }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .period-tab { position: relative; }
+  .period-tab::before { content: ''; position: absolute; inset: -11px 0; }
+}
