@@ -154,7 +154,16 @@ describe('Session live v3 — prochaine annonce', () => {
     expect(el.querySelectorAll('[data-testid="live-next-event-others"] li').length).toBe(2);
   });
 
-  it('annonce à venir : nom, heure, impact et compte à rebours', () => {
+  it('créneau à venir avec deux annonces fortes : toutes deux nommées, « +N » pour les moyennes seulement', () => {
+    const { text } = render(LiveNextEventComponent, {
+      events: [{ ...ev('23:59'), name: 'NFP' }, { ...ev('23:59'), name: 'Unemployment Rate' }, { ...ev('23:59'), name: 'Jobless Claims', impact: 'medium' }],
+    }, NEXT_TEMPLATE);
+    expect(text('live-next-event')).toContain('2 ANNONCES FORTES');
+    expect(text('live-next-event')).toContain('NFP');
+    expect(text('live-next-event-more')).toBe('+1');
+  });
+
+    it('annonce à venir : nom, heure, impact et compte à rebours', () => {
     const { text } = render(LiveNextEventComponent, { events: [ev('23:59')] }, NEXT_TEMPLATE);
     expect(text('live-next-event')).toContain('23:59');
     expect(text('live-next-event')).toContain('impact fort');
@@ -202,10 +211,39 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     expect(text('live-release-values')).toContain('3,4%'); // le CPI (impact fort) en tête
     (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(text('live-release-others')).toContain('publié 220K · prévu 215K');
+    expect(text('live-release-others')).toContain('Jobless Claims publié 220K · prévu 215K');
     (el.querySelector('[data-testid="live-release-dismiss"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(el.querySelector('[data-testid="live-release"]')).toBeNull();
+  });
+
+  it('deux annonces fortes publiées ensemble : un onglet chacune, la plus surprenante ouverte, l’autre marquée non lue', () => {
+    ecoApi.analyzeResult.mockImplementation(((name: string) => of({ data: {
+      interpretation: name === 'NFP' ? 'Emploi bien au-dessus des attentes. Fed patiente.' : 'Chômage stable. Peu d’effet.',
+      assetSentiments: [],
+    } })) as never);
+    const { el, text, fixture } = render(LiveNextEventComponent, { events: [] }, NEXT_TEMPLATE);
+    releases$.next([
+      { ...released, name: 'Unemployment Rate', actual: 4.1, estimate: 4.2, unit: '%' },
+      { ...released, name: 'NFP', actual: 254, estimate: 150, unit: 'K' },
+      { ...released, name: 'Jobless Claims', impact: 'medium', actual: 220, estimate: 215, unit: 'K' },
+    ]);
+    fixture.detectChanges();
+    const tabs = [...el.querySelectorAll('[data-testid="live-release-tab"]')] as HTMLButtonElement[];
+    expect(tabs.map((t) => t.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+    expect(text('live-release-values')).toContain('254K'); // NFP : la plus grosse surprise
+    expect(text('live-release-analysis')).toBe('Emploi bien au-dessus des attentes.');
+    expect(tabs[1].querySelector('.ne-tab-dot'), 'chômage pas encore lu').not.toBeNull();
+    tabs[1].click();
+    fixture.detectChanges();
+    expect(text('live-release-values')).toContain('4,1%');
+    expect(text('live-release-analysis')).toBe('Chômage stable.');
+    expect(el.querySelector('.ne-tab-dot')).toBeNull();
+    // L'annonce à impact moyen reste dans le dépliage, sans onglet
+    (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(text('live-release-others')).toContain('publié 220K');
+    expect(ecoApi.analyzeResult).toHaveBeenCalledTimes(3); // une analyse par annonce, aucune de plus
   });
 
   it('« J’ai lu » : retour à l’annonce suivante', () => {

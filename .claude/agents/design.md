@@ -280,7 +280,11 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
   fort, ambre si impact moyen** (couleur = impact le plus fort du créneau) ; ambre aussi pour la jauge
   perte du jour. Plusieurs annonces à la même heure : **une seule ligne**, la plus importante en
   tête, chip « +N » qui déplie une liste compacte (point de couleur + nom + impact) ; publiées : « N
-  PUBLIÉES », les autres en lignes publié / prévu dans le dépliage, un seul « J'ai lu ». Chiffres publiés d'une annonce : neutres (au-dessus de la
+  PUBLIÉES », les autres dans le dépliage sur 2 niveaux (nom ; publié · prévu · précédent en gris),
+  un seul « J'ai lu » sur la ligne du titre. **≥ 2 annonces fortes** : avant publication toutes
+  nommées (« 2 ANNONCES FORTES »), « +N » pour les moyennes seulement ; publiées, un **onglet** par
+  annonce forte (nom court, 44 px, une ligne qui glisse), la plus surprenante (écart publié / prévu)
+  ouverte d'abord, point cyan sur une analyse pas encore lue ; une seule analyse visible à la fois. Chiffres publiés d'une annonce : neutres (au-dessus de la
   prévision n'est ni un gain ni une perte). Variations de marché du bandeau : vert / rouge.
 - **Jauges** (libellé + valeur à droite, barre 8 px radius 99, sous-ligne 12 px `--text-2`) :
   perte max du jour = part **consommée**, neutre `--text-faint` < 50 %, ambre ≥ 50 %, rouge ≥ 75 %

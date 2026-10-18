@@ -156,6 +156,20 @@ export function nextAnnouncement(events: readonly EcoEvent[], now: Date): NextAn
   return { event: group[0], events: group, minutes: best, impact: group[0].impact };
 }
 
+/**
+ * Surprise d'une annonce publiée : écart publié / prévu rapporté à la prévision (0,5 = 50 %).
+ * C'est elle qui fait bouger le marché ; null sans chiffre publié ou sans prévision.
+ */
+export function surprise(e: Pick<EcoEvent, 'actual' | 'estimate'>): number | null {
+  if (e.actual == null || e.estimate == null) return null;
+  return Math.abs(e.actual - e.estimate) / Math.max(Math.abs(e.estimate), 1e-9);
+}
+
+/** Annonces fortes publiées ensemble : la plus surprenante d'abord (inconnue en dernier). */
+export function bySurprise<T extends Pick<EcoEvent, 'actual' | 'estimate'>>(events: readonly T[]): T[] {
+  return [...events].sort((a, b) => (surprise(b) ?? -1) - (surprise(a) ?? -1));
+}
+
 /** « dans 18 min », « dans 1 h 05 », « maintenant ». */
 export function countdownLabel(minutes: number): string {
   if (minutes <= 0) return 'maintenant';

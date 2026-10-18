@@ -3,10 +3,26 @@
   <section class="ne-line ne-released" [class.ne-high]="r.event.impact === 'high'" data-testid="live-release"
            aria-label="Annonce publiée" aria-live="polite">
     <div class="ne-body">
-      <div class="ne-lbl">
-        {{ releaseGroup().length > 1 ? releaseGroup().length + ' PUBLIÉES' : 'PUBLIÉE' }} · {{ time(r.event.time) }}
+      <div class="ne-head">
+        <div class="ne-lbl">
+          {{ releaseGroup().length > 1 ? releaseGroup().length + ' PUBLIÉES' : 'PUBLIÉE' }} · {{ time(r.event.time) }}
+        </div>
+        <button type="button" class="ne-btn ne-dismiss" data-testid="live-release-dismiss" (click)="dismiss()">J'ai lu</button>
       </div>
-      <div class="ne-name">{{ name(r.event.name) }} <span class="ne-impact">{{ impactLabel(r.event.impact) }}</span></div>
+      @if (useTabs()) {
+        <!-- Plusieurs annonces fortes : un onglet chacune, une seule analyse visible à la fois -->
+        <div class="ne-tabs" role="tablist" aria-label="Annonces fortes publiées">
+          @for (t of strongReleases(); track t.event.name) {
+            <button type="button" role="tab" class="ne-tab" data-testid="live-release-tab"
+                    [class.ne-tab-on]="t === r" [attr.aria-selected]="t === r" (click)="selectTab(t.event.name)">
+              {{ tabName(t.event.name) }}
+              @if (unread(t.event.name)) { <span class="ne-tab-dot" aria-label="non lue"></span> }
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="ne-name">{{ name(r.event.name) }} <span class="ne-impact">{{ impactLabel(r.event.impact) }}</span></div>
+      }
       <div class="ne-values" data-testid="live-release-values">
         Publié <b>{{ value(r.event.actual, r.event.unit) }}</b>
         @if (r.event.estimate !== null) { · prévu {{ value(r.event.estimate, r.event.unit) }} }
@@ -34,27 +50,29 @@
         }
       }
       <!-- Autres annonces du même créneau : une ligne compacte chacune, dans le dépliage -->
-      @if (expanded() && releaseGroup().length > 1) {
+      @if (expanded() && otherReleases().length) {
         <ul class="ne-others" data-testid="live-release-others">
-          @for (o of releaseGroup().slice(1); track o.event.name) {
+          @for (o of otherReleases(); track o.event.name) {
             <li>
               <span class="ne-dot" [class.ne-dot-high]="o.event.impact === 'high'" aria-hidden="true"></span>
-              <span>{{ name(o.event.name) }}
-                <span class="ne-others-val">publié {{ value(o.event.actual, o.event.unit) }}@if (o.event.estimate !== null) { · prévu {{ value(o.event.estimate, o.event.unit) }} }</span>
+              <span class="ne-others-name">{{ name(o.event.name) }}</span>
+              <span class="ne-others-val">
+                publié <b>{{ value(o.event.actual, o.event.unit) }}</b>
+                @if (o.event.estimate !== null) { · prévu {{ value(o.event.estimate, o.event.unit) }} }
+                @if (o.event.previous !== null) { · précédent {{ value(o.event.previous, o.event.unit) }} }
               </span>
             </li>
           }
         </ul>
       }
-      @if (r.analysis || releaseGroup().length > 1) {
+      @if (r.analysis || otherReleases().length) {
         <button type="button" class="ne-btn ne-toggle" [attr.aria-expanded]="expanded()" (click)="expanded.set(!expanded())">
           @if (expanded()) { Replier }
-          @else if (releaseGroup().length > 1) { Lire l’analyse et les {{ releaseGroup().length - 1 }} autre{{ releaseGroup().length > 2 ? 's' : '' }} }
+          @else if (otherReleases().length) { Lire l’analyse et {{ otherReleases().length === 1 ? 'l’autre annonce' : 'les ' + otherReleases().length + ' autres' }} }
           @else { Lire l’analyse }
         </button>
       }
     </div>
-    <button type="button" class="ne-btn ne-dismiss" data-testid="live-release-dismiss" (click)="dismiss()">J'ai lu</button>
   </section>
 } @else if (reopen(); as r) {
   <section class="ne-line ne-closed" data-testid="live-market-closed" aria-label="Marché fermé">
@@ -64,24 +82,35 @@
     </div>
   </section>
 } @else if (next(); as n) {
-  <section class="ne-line" [class.ne-high]="n.impact === 'high'" [class.ne-open]="showAll() && n.events.length > 1" data-testid="live-next-event" aria-label="Prochaine annonce">
+  <section class="ne-line" [class.ne-high]="n.impact === 'high'" [class.ne-open]="showAll() && nextRest().length > 0" data-testid="live-next-event" aria-label="Prochaine annonce">
     <div class="ne-body">
-      <div class="ne-lbl">{{ n.events.length > 1 ? n.events.length + ' ANNONCES' : 'PROCHAINE ANNONCE' }} · {{ time(n.event.time) }}</div>
+      <div class="ne-lbl">
+        @if (nextStrong().length > 1) { {{ nextStrong().length }} ANNONCES FORTES }
+        @else if (n.events.length > 1) { {{ n.events.length }} ANNONCES }
+        @else { PROCHAINE ANNONCE }
+        · {{ time(n.event.time) }}
+      </div>
       <div class="ne-name">
-        {{ name(n.event.name) }}
-        <span class="ne-impact">{{ impactLabel(n.event.impact) }}</span>
-        @if (n.events.length > 1) {
+        @if (nextStrong().length > 1) {
+          <!-- Plusieurs annonces fortes : toutes nommées, pas cachées derrière « +N » -->
+          @for (e of nextStrong(); track e.name; let last = $last) { {{ name(e.name) }}@if (!last) { · } }
+        } @else {
+          {{ name(n.event.name) }}
+          <span class="ne-impact">{{ impactLabel(n.event.impact) }}</span>
+        }
+        @if (nextRest().length) {
           <button type="button" class="ne-more-btn" data-testid="live-next-event-more" [attr.aria-expanded]="showAll()"
-                  [attr.aria-label]="(showAll() ? 'Masquer' : 'Voir') + ' les ' + (n.events.length - 1) + ' autres annonces'"
-                  (click)="showAll.set(!showAll())">+{{ n.events.length - 1 }}</button>
+                  [attr.aria-label]="(showAll() ? 'Masquer' : 'Voir') + ' les ' + nextRest().length + ' autres annonces'"
+                  (click)="showAll.set(!showAll())">+{{ nextRest().length }}</button>
         }
       </div>
-      @if (showAll() && n.events.length > 1) {
+      @if (showAll() && nextRest().length) {
         <ul class="ne-others" data-testid="live-next-event-others">
-          @for (o of n.events.slice(1); track o.name) {
+          @for (o of nextRest(); track o.name) {
             <li>
               <span class="ne-dot" [class.ne-dot-high]="o.impact === 'high'" aria-hidden="true"></span>
-              <span>{{ name(o.name) }} <span class="ne-others-val">{{ impactLabel(o.impact) }}</span></span>
+              <span class="ne-others-name">{{ name(o.name) }}</span>
+              <span class="ne-others-val">{{ impactLabel(o.impact) }}</span>
             </li>
           }
         </ul>

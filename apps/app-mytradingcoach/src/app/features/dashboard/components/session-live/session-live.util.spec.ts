@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EcoEvent } from '@mtc/shared';
 import type { InstrumentDto } from '@app/core/api/trades.api';
 import {
-  bannerTickers, cmeClosed, cmeReopenLabel, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
+  bannerTickers, bySurprise, surprise, cmeClosed, cmeReopenLabel, moodLabel, planKindShort, RELEASE_DISPLAY_MS, releaseExpired, splitFirstSentence, closeKind, countdownLabel, nextAnnouncement, pointValue, positionBar, priceFromLatent,
 } from './session-live.util';
 
 // Extrait de instruments.const.ts (API) : valeur du point = tickValue / tickSize.
@@ -176,5 +176,20 @@ describe('marché CME fermé (vitrine démo le week-end)', () => {
   it('heure de réouverture en clair, rien si le marché est ouvert', () => {
     expect(cmeReopenLabel(new Date('2026-10-18T12:00:00Z'))).toMatch(/^(dimanche|lundi) \d{2}:\d{2}$/);
     expect(cmeReopenLabel(new Date('2026-10-19T09:00:00Z'))).toBeNull();
+  });
+});
+
+describe('plusieurs annonces fortes publiées ensemble', () => {
+  it('surprise = écart publié / prévu rapporté à la prévision ; inconnue sans prévision', () => {
+    expect(surprise({ actual: 254, estimate: 150 })).toBeCloseTo(0.693, 3);
+    expect(surprise({ actual: 4.1, estimate: 4.2 })).toBeCloseTo(0.024, 3);
+    expect(surprise({ actual: 4.1, estimate: null })).toBeNull();
+  });
+
+  it('onglet ouvert en premier : la plus surprenante', () => {
+    const nfp = { name: 'NFP', actual: 254, estimate: 150 };
+    const unemp = { name: 'Chômage', actual: 4.1, estimate: 4.2 };
+    const noEst = { name: 'X', actual: 1, estimate: null };
+    expect(bySurprise([unemp, noEst, nfp]).map((e) => e.name)).toEqual(['NFP', 'Chômage', 'X']);
   });
 });
