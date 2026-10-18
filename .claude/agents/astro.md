@@ -263,7 +263,11 @@ Règles :
   **Depuis l'import d'historique par la Reporting API, tout l'historique remonte à la connexion**
   (`launchFullImport`, cf. nestjs.md « toute la vie du compte ») puis les trades + frais arrivent en
   direct. L'ancienne règle « le passé s'importe à part en CSV » est périmée (corrigée le 2026-10-06).
-  L'import CSV couvre aussi les autres brokers.
+  L'import CSV couvre aussi les autres brokers, **mais pas tous en gratuit** : formats reconnus d'office
+  (Tradovate, Binance, Bybit, MT4/5, IBKR, MEXC) = Gratuit ; tout autre broker passe par l'import IA =
+  **Premium** (cf. plans.md). Jamais « import CSV universel » ni « tout broker » sur le Gratuit (#507) :
+  Pricing (Gratuit + ligne Premium « Import IA »), Compare (« brokers reconnus » / « + import IA »), FAQ,
+  Features, `/prop-firm` et `/journal-trading-prop-firm` disent la même chose.
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
   « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
   footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.

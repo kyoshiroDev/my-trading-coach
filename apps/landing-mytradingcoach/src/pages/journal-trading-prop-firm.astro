@@ -22,7 +22,7 @@ const faq = [
   },
   {
     q: 'Peut-on importer les trades exportés des plateformes prop firm ?',
-    a: "Oui, via l'import CSV universel. Tu exportes ton historique depuis ta plateforme et tu l'importes dans le compte correspondant. Tout ton historique est importé : les trades sont illimités, y compris en plan Gratuit.",
+    a: "Oui. Tu exportes ton historique depuis ta plateforme et tu l'importes dans le compte correspondant. Les exports Tradovate sont reconnus automatiquement, en gratuit, et la synchro Tradovate remonte même tout l'historique sans fichier. Pour une autre plateforme, l'import IA lit ton fichier tel quel : il est réservé au Premium. Les trades sont illimités, y compris en plan Gratuit.",
   },
   {
     q: 'Combien de comptes puis-je suivre ?',
@@ -108,9 +108,10 @@ const faqSchema = {
     <section class="pf-sec">
       <h2>Import CSV des plateformes prop firm</h2>
       <p>
-        Tu exportes l'historique de ta plateforme et tu l'importes dans le bon compte
-        avec l'import CSV universel. Ton historique importé ne compte pas dans ta limite
-        mensuelle de trades, tu pars donc avec tout ton passif déjà en place.
+        Tu exportes l'historique de ta plateforme et tu l'importes dans le bon compte.
+        Les exports Tradovate sont reconnus automatiquement, en gratuit ; pour une autre
+        plateforme, l'import IA lit ton fichier tel quel (Premium). Les trades sont illimités,
+        tu pars donc avec tout ton passif déjà en place.
       </p>
     </section>
 
