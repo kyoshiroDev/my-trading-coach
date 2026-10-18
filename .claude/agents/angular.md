@@ -155,7 +155,8 @@ la maquette design (« The Terminal »).
     page est masquée (le bandeau la remplace) ; « Clôturer la session » émet `closeSession` → le
     parent ouvre sa confirmation.
   - **Prochaine annonce** (`live-next-event`) : prochaine annonce non publiée du jour, compte à rebours
-    recalculé chaque minute, **absente** s'il n'en reste aucune. Marché CME fermé (ven. 16:00 →
+    recalculé chaque minute, **absente** s'il n'en reste aucune. Annonces à la même heure regroupées
+    (`nextAnnouncement` → `events`, `byImpact`), couleur rouge / ambre selon l'impact le plus fort. Marché CME fermé (ven. 16:00 →
     dim. 17:00 Chicago, `cmeClosed`) : « Marché fermé · Réouverture des futures <jour HH:MM> » à la
     place (la démo montre sa session live même le week-end). Sur `EcoSocketService.newReleases$`,
     la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA

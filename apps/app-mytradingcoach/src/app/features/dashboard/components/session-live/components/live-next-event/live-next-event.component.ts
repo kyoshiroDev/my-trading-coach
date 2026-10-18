@@ -5,7 +5,7 @@ import type { EcoEvent } from '@mtc/shared';
 import { EcoCalendarApi, EcoCalendarData, EcoResultAnalysis } from '@app/core/api/eco-calendar.api';
 import { translateEcoEvent } from '@app/core/data/eco-event-translations';
 import { EcoSocketService } from '@app/core/services/eco-socket.service';
-import { cmeReopenLabel, countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence } from '../../session-live.util';
+import { byImpact, cmeReopenLabel, countdownLabel, nextAnnouncement, releaseExpired, splitFirstSentence } from '../../session-live.util';
 
 /** Annonce qui vient de tomber, avec l'analyse IA existante (null tant qu'elle n'est pas arrivée). */
 interface Release {
@@ -21,6 +21,9 @@ interface Release {
  * la Pré-session.
  *
  * Marché fermé (week-end CME) : la ligne le dit, avec l'heure de réouverture.
+ *
+ * Couleur : rouge si le créneau contient une annonce à impact fort, ambre sinon. Plusieurs annonces
+ * à la même heure : une seule ligne, la plus importante en tête, « +N » déplie la liste des autres.
  *
  * Quand une annonce tombe (WebSocket éco `eco:new-releases`), la ligne passe à l'état « publiée » :
  * chiffre publié et prévision, première phrase de l'analyse IA (le reste se déplie). Mêmes appels
@@ -46,8 +49,19 @@ export class LiveNextEventComponent {
   /** Marché CME fermé (week-end) : « réouverture dimanche 23:00 » à la place de l'annonce. */
   protected readonly reopen = computed(() => cmeReopenLabel(this.now()));
   protected readonly releases = signal<Release[]>([]);
-  protected readonly release = computed(() => this.releases()[0] ?? null);
+  /** Annonces publiées du même créneau (même heure) : une ligne, la plus importante en tête. */
+  protected readonly releaseGroup = computed(() => {
+    const list = this.releases();
+    if (!list.length) return [];
+    const time = list[0].event.time;
+    const group = list.filter((r) => r.event.time === time);
+    const order = byImpact(group.map((r) => r.event));
+    return order.map((e) => group.find((r) => r.event === e)!);
+  });
+  protected readonly release = computed(() => this.releaseGroup()[0] ?? null);
   protected readonly expanded = signal(false);
+  /** Liste des autres annonces du créneau à venir dépliée. */
+  protected readonly showAll = signal(false);
   protected readonly summary = computed(() => {
     const a = this.release()?.analysis;
     return a ? splitFirstSentence(a.interpretation) : null;
@@ -99,10 +113,15 @@ export class LiveNextEventComponent {
       })));
   }
 
-  /** « J'ai lu » : l'annonce publiée laisse la place à la suivante. */
+  /** « J'ai lu » : les annonces publiées du créneau laissent la place aux suivantes. */
   protected dismiss(): void {
-    this.releases.update((list) => list.slice(1));
+    const read = new Set(this.releaseGroup());
+    this.releases.update((list) => list.filter((r) => !read.has(r)));
     this.expanded.set(false);
+  }
+
+  protected impactLabel(impact: 'high' | 'medium'): string {
+    return impact === 'high' ? 'impact fort' : 'impact moyen';
   }
 
   protected time(t: string): string {

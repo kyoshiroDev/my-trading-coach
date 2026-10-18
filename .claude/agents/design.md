@@ -99,9 +99,9 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 | Couleur | Usage autorisé | Usage INTERDIT |
 |---|---|---|
 | `--green` | Gains, PnL > 0 | Décoratif, succès génériques |
-| `--red` | Pertes, PnL < 0 | Erreurs non-trading, danger générique |
+| `--red` | Pertes, PnL < 0 ; session live : annonce éco à **impact fort** (ligne Prochaine annonce / Publiée), choix produit 2026-10-18 | Erreurs non-trading, danger générique |
 | `--blue` | CTA, liens, éléments interactifs | Statuts trading |
-| `--yellow` | Warnings, attention, urgence ; session live : ligne « Prochaine annonce » et jauge perte du jour (≥ 50 % consommés) | Succès, gains |
+| `--yellow` | Warnings, attention, urgence ; session live : annonce éco à **impact moyen** et jauge perte du jour (≥ 50 % consommés) | Succès, gains |
 | `--cyan` | Indicateurs live / IA (pulse) | Décoratif, CTA |
 | `--purple` | Logo mark, avatars, badge beta, chip de plan prop firm | Statuts, CTA |
 | `--nt` | Flux Tradovate : carte « le plus complet », bouton « Connecter », mot « Tradovate » | Tout le reste de l'app (ce n'est pas un accent de marque MTC) |
@@ -276,8 +276,11 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 - **Hiérarchie** : bandeau collant → prochaine annonce → trade en cours → suivi du compte →
   trades clôturés → (mobile) Contexte marché + Clôturer la session en bas de page.
 - **Couleurs** : vert = gains, rouge = pertes, **cyan = live / IA** (chrono, pastille, badge LIVE,
-  analyse IA d'une annonce publiée), violet = chip de plan, **ambre seulement** pour la ligne
-  d'annonce et la jauge perte du jour. Chiffres publiés d'une annonce : neutres (au-dessus de la
+  analyse IA d'une annonce publiée), violet = chip de plan. Ligne d'annonce : **rouge si impact
+  fort, ambre si impact moyen** (couleur = impact le plus fort du créneau) ; ambre aussi pour la jauge
+  perte du jour. Plusieurs annonces à la même heure : **une seule ligne**, la plus importante en
+  tête, chip « +N » qui déplie une liste compacte (point de couleur + nom + impact) ; publiées : « N
+  PUBLIÉES », les autres en lignes publié / prévu dans le dépliage, un seul « J'ai lu ». Chiffres publiés d'une annonce : neutres (au-dessus de la
   prévision n'est ni un gain ni une perte). Variations de marché du bandeau : vert / rouge.
 - **Jauges** (libellé + valeur à droite, barre 8 px radius 99, sous-ligne 12 px `--text-2`) :
   perte max du jour = part **consommée**, neutre `--text-faint` < 50 %, ambre ≥ 50 %, rouge ≥ 75 %

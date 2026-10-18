@@ -122,18 +122,38 @@ export function eventMinutesFromNow(time: string | null | undefined, now: Date):
   return h * 60 + (Number.isFinite(m) ? m : 0) - (now.getHours() * 60 + now.getMinutes());
 }
 
-export interface NextAnnouncement { event: EcoEvent; minutes: number }
+export interface NextAnnouncement {
+  /** Annonce mise en avant : la plus importante du créneau (impact fort d'abord). */
+  event: EcoEvent;
+  /** Toutes les annonces du même créneau (même heure), la mise en avant en premier. */
+  events: EcoEvent[];
+  minutes: number;
+  /** Impact le plus fort du créneau : couleur de la ligne (rouge = fort, ambre = moyen). */
+  impact: 'high' | 'medium';
+}
 
-/** Prochaine annonce non publiée d'aujourd'hui ; null s'il n'en reste aucune (la ligne disparaît). */
+/** Annonces d'un même créneau, la plus importante d'abord (impact fort, puis ordre d'arrivée). */
+export function byImpact(events: readonly EcoEvent[]): EcoEvent[] {
+  return [...events].sort((a, b) => (a.impact === b.impact ? 0 : a.impact === 'high' ? -1 : 1));
+}
+
+/**
+ * Prochain créneau d'annonces non publiées d'aujourd'hui, regroupées quand plusieurs tombent à la
+ * même heure (une seule ligne, pas une carte par annonce) ; null s'il n'en reste aucune.
+ */
 export function nextAnnouncement(events: readonly EcoEvent[], now: Date): NextAnnouncement | null {
-  let best: NextAnnouncement | null = null;
+  let best: number | null = null;
+  const pending: { event: EcoEvent; minutes: number }[] = [];
   for (const event of events) {
     if (event.isReleased || !event.name?.trim()) continue;
     const minutes = eventMinutesFromNow(event.time, now);
     if (minutes === null || minutes < 0) continue;
-    if (!best || minutes < best.minutes) best = { event, minutes };
+    pending.push({ event, minutes });
+    if (best === null || minutes < best) best = minutes;
   }
-  return best;
+  if (best === null) return null;
+  const group = byImpact(pending.filter((p) => p.minutes === best).map((p) => p.event));
+  return { event: group[0], events: group, minutes: best, impact: group[0].impact };
 }
 
 /** « dans 18 min », « dans 1 h 05 », « maintenant ». */

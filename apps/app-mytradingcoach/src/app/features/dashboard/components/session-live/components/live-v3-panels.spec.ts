@@ -133,6 +133,27 @@ describe('Session live v3 — prochaine annonce', () => {
     expect(text('live-market-closed')).toMatch(/^MARCHÉ FERMÉ ?Réouverture des futures (dimanche|lundi) \d{2}:\d{2}$/);
   });
 
+  it('couleur de la ligne : rouge si impact fort, ambre (défaut) si impact moyen', () => {
+    const { el } = render(LiveNextEventComponent, { events: [ev('23:59')] }, NEXT_TEMPLATE);
+    expect(el.querySelector('[data-testid="live-next-event"]')!.classList.contains('ne-high')).toBe(true);
+    TestBed.resetTestingModule();
+    const medium = render(LiveNextEventComponent, { events: [{ ...ev('23:59'), impact: 'medium' }] }, NEXT_TEMPLATE).el;
+    expect(medium.querySelector('[data-testid="live-next-event"]')!.classList.contains('ne-high')).toBe(false);
+  });
+
+  it('plusieurs annonces à la même heure : une ligne, impact fort en tête, « +N » déplie les autres', () => {
+    const { el, text, fixture } = render(LiveNextEventComponent, {
+      events: [{ ...ev('23:59'), name: 'Jobless Claims', impact: 'medium' }, { ...ev('23:59'), name: 'Retail Sales MoM' }, { ...ev('23:59'), name: 'Philly Fed', impact: 'medium' }],
+    }, NEXT_TEMPLATE);
+    expect(el.querySelectorAll('[data-testid="live-next-event"]').length).toBe(1);
+    expect(text('live-next-event')).toContain('3 ANNONCES');
+    expect(text('live-next-event-more')).toBe('+2');
+    expect(el.querySelector('[data-testid="live-next-event-others"]')).toBeNull();
+    (el.querySelector('[data-testid="live-next-event-more"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('[data-testid="live-next-event-others"] li').length).toBe(2);
+  });
+
   it('annonce à venir : nom, heure, impact et compte à rebours', () => {
     const { text } = render(LiveNextEventComponent, { events: [ev('23:59')] }, NEXT_TEMPLATE);
     expect(text('live-next-event')).toContain('23:59');
@@ -170,6 +191,21 @@ describe('Session live v3 — annonce publiée (WebSocket éco)', () => {
     expect(ecoApi.analyzeResult).toHaveBeenCalledTimes(1);
     expect(ecoApi.analyzeResult).toHaveBeenCalledWith('CPI');
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('plusieurs annonces publiées au même créneau : une ligne, les autres dans le dépliage, un seul « J’ai lu »', () => {
+    const { el, text, fixture } = render(LiveNextEventComponent, { events: [] }, NEXT_TEMPLATE);
+    releases$.next([{ ...released, name: 'Jobless Claims', impact: 'medium', actual: 220, estimate: 215, unit: 'K' }, released]);
+    fixture.detectChanges();
+    expect(text('live-release')).toContain('2 PUBLIÉES');
+    expect(el.querySelector('[data-testid="live-release"]')!.classList.contains('ne-high')).toBe(true);
+    expect(text('live-release-values')).toContain('3,4%'); // le CPI (impact fort) en tête
+    (el.querySelector('.ne-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(text('live-release-others')).toContain('publié 220K · prévu 215K');
+    (el.querySelector('[data-testid="live-release-dismiss"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="live-release"]')).toBeNull();
   });
 
   it('« J’ai lu » : retour à l’annonce suivante', () => {

@@ -89,6 +89,15 @@ describe('nextAnnouncement (#593)', () => {
       .toMatchObject({ event: { name: 'PMI UK' }, minutes: 18 });
   });
 
+  it('plusieurs annonces à la même heure : un seul créneau, impact fort en tête et couleur de la ligne', () => {
+    const medium = { ...ev('14:30', false, 'Jobless Claims'), impact: 'medium' as const };
+    const n = nextAnnouncement([medium, ev('14:30', false, 'Retail Sales MoM'), ev('16:00', false, 'ISM')], now)!;
+    expect(n.events.map((e) => e.name)).toEqual(['Retail Sales MoM', 'Jobless Claims']);
+    expect(n.event.name).toBe('Retail Sales MoM');
+    expect(n.impact).toBe('high');
+    expect(nextAnnouncement([medium], now)!.impact).toBe('medium');
+  });
+
   it('aucune annonce restante aujourd’hui → null (ligne absente)', () => {
     expect(nextAnnouncement([ev('09:00'), ev('11:00', true)], now)).toBeNull();
     expect(nextAnnouncement([], now)).toBeNull();
