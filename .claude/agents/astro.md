@@ -203,6 +203,17 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   est absente, « Prix normal » sinon. Listes courtes, « Comptes illimités » seulement si
   `FEATURES.multiAccounts`.
 - Témoignages : section rendue seulement si `TEMOIGNAGES` n'est pas vide (ne rien inventer).
+- **Redirection temporaire de la pub (2026-10-18, fin prévue vers le 25/10)** : le boost Instagram en
+  cours pointe sur `/?utm_source=instagram&utm_medium=paid&utm_campaign=gratuit-reel` (lien non
+  modifiable chez Meta). Script inline tout en haut du `<head>` de `index.astro` (slot `head-start` de
+  `Base.astro`, avant tout autre script, style ou préchargement) : si `utm_medium` vaut **exactement**
+  `paid`, `location.replace('/prop-firm' + search + hash)` (paramètres intacts, aucune entrée
+  d'historique). Il pose `window.__mtcPaidRedirect` : le script d'acquisition de `Base.astro` et GA4
+  (`Analytics.astro`) n'envoient alors rien depuis `/`, la visite part de `/prop-firm`. Choisi plutôt
+  qu'une 302 nginx car la conf nginx de la landing n'est pas déployée par le CD (cf. deploy.md).
+  Coût mesuré (Slow 4G, CPU ×4, UA Instagram) : bouton de `/prop-firm` visible en ~0,42 s via `/` au
+  lieu de ~0,24 s en direct ; LCP de `/` inchangé pour les autres visiteurs. **Retrait** : supprimer le
+  bloc `head-start` de `index.astro` (les gardes `__mtcPaidRedirect` deviennent inertes).
 - Mesure du 2026-10-18 (preview locale, iPhone 390×844, UA Instagram, Slow 4G 150 ms / 1,6 Mbit/s,
   CPU ×4) : LCP ≈ 0,7 s, chargement 1,5 s, 185 Ko, CLS 0,02 ; bouton du haut à 540 px, au-dessus du
   bandeau cookies même en 390×664. Après ajout du bandeau d'offre et de la ligne de confiance : bouton
