@@ -188,6 +188,14 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   via `src/lib/prop-firm-picker.ts` (pur, sans DOM : sélection initiale Apex 50K EOD, 50K par défaut à
   chaque firm, date de relevé `sourceLabel`). `PropFirmLive.astro` l'utilise aussi. Puces = vrais
   `<button>`, 6 en vedette puis « + N autres ».
+- Capture des règles **sur mobile** (≤ 900 px) : image dédiée `showcase/app-prop-firm-rules-mobile.webp`
+  (640×1340, 2x, ~47 Ko), prise dans l'app en 390 px sur le compte démo prod (« Mes comptes », Apex
+  50K EOD Trail déplié, Évaluation : la sélection par défaut du sélecteur), recadrée sur objectif,
+  drawdown et perte journalière. La capture ordinateur réduite à 358 px donnait ~7 px de texte. Chaque
+  taille ne charge que son image (lien masqué = image lazy non téléchargée). À refaire si l'écran des
+  règles change dans l'app : `/demo?internal=1`, fenêtre 390 px DPR 2, aucune donnée ni e-mail réel.
+- Textes de la page : espace insécable avant « ? », « ! » et « : » (pas de ponctuation seule en début
+  de ligne). L'en-tête garde « Se connecter » sur une ligne (`white-space: nowrap`, 360 px compris).
 - Carte d'exemple « Il te reste 480 $ » : montant et barre en **jaune** (alerte), perte du jour en
   rouge (design.md : rouge = pertes uniquement), mention « Exemple avec des données de démonstration ».
 - Tarifs (`PfPricing`) : même mécanisme fondateur que la home (`founderOpen` au build + `initFounderPricing`),
