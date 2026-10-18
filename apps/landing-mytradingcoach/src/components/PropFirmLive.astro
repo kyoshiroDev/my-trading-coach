@@ -6,18 +6,16 @@
 import { APP_URL } from '../config';
 import { buildPropFirmCatalog } from '../data/prop-firm-catalog';
 import { PHASE_LABEL, ruleRows } from '../data/prop-firm-rules-view';
+import { initialSelection, sourceLabel } from '../lib/prop-firm-picker';
 import PropFirmMarquee from './PropFirmMarquee.astro';
 
 const catalog = buildPropFirmCatalog();
 const planCount = catalog.reduce((n, f) => n + f.plans.length, 0);
 
 // Sélection par défaut : le plan de la capture (Apex 50K EOD), sinon le premier du catalogue.
-const firm = catalog.find((f) => f.id === 'apex') ?? catalog[0];
-const plan = firm.plans.find((p) => p.size === 50000 && /EOD/.test(p.label)) ?? firm.plans[0];
+const { firm, plan } = initialSelection(catalog);
 const phase = plan.phases[0];
 const rows = ruleRows(phase, plan.currency);
-const verified = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 // JSON embarqué : « < » échappé pour ne jamais fermer la balise <script>.
 const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
@@ -62,7 +60,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
           ))}
         </div>
 
-        <p class="pfl-src" data-pf-src>Règles officielles {firm.name}, relevées le {verified(firm.verifiedAt)}.</p>
+        <p class="pfl-src" data-pf-src>{sourceLabel(firm)}</p>
       </div>
 
       {/* Règles du plan choisi, en grand : elles suivent le sélecteur (avant : une capture figée sur Apex 50K, illisible). */}
@@ -103,9 +101,9 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
           height="536"
           loading="lazy"
           decoding="async"
-          alt="Compte Apex 50K EOD Trail en évaluation dans MyTradingCoach : solde et equity lus chez le broker, marge calculée avec les règles officielles, plus haut de clôture officiel, objectif restant, puis les règles du plan."
+          alt="Compte de démonstration Apex 50K EOD Trail en évaluation dans MyTradingCoach : solde, marge calculée avec les règles officielles, plus haut de clôture, objectif restant, puis les règles du plan."
         />
-        <figcaption>Capture réelle · compte en évaluation de la démo, relié à Tradovate · cliquer pour agrandir</figcaption>
+        <figcaption>Capture réelle · compte de démonstration · cliquer pour agrandir</figcaption>
       </a>
       <a href="/showcase/app-prop-firm-funded.webp" target="_blank" rel="noopener" class="pfl-thumb" data-shot-panel="funded" hidden aria-label="Agrandir la capture d'un compte funded">
         <img
@@ -114,9 +112,9 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
           height="507"
           loading="lazy"
           decoding="async"
-          alt="Compte Tradeify 50K funded dans MyTradingCoach : solde chez le broker, seuil qui se fige à 50 100 $, conditions restantes avant le prochain payout, puis les règles funded du plan (taille par palier, payout)."
+          alt="Compte de démonstration Tradeify 50K funded dans MyTradingCoach : solde, seuil qui se fige à 50 100 $, conditions restantes avant le prochain payout, puis les règles funded du plan (taille par palier, payout)."
         />
-        <figcaption>Capture réelle · compte funded de la démo, relié à Tradovate · cliquer pour agrandir</figcaption>
+        <figcaption>Capture réelle · compte de démonstration · cliquer pour agrandir</figcaption>
       </a>
       <ul class="pfl-points">
         <li><strong>Solde et equity lus chez Tradovate</strong>, positions ouvertes comprises, au lieu d'une estimation</li>
@@ -130,7 +128,8 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
 </section>
 
 <script>
-  import { PHASE_LABEL, ruleRows, type CompactFirm, type CompactPlan } from '../data/prop-firm-rules-view';
+  import { PHASE_LABEL, ruleRows, type CompactFirm } from '../data/prop-firm-rules-view';
+  import { createPropFirmPicker, sourceLabel, type PickerState } from '../lib/prop-firm-picker';
 
   const root = document.querySelector<HTMLElement>('[data-pf-root]');
   const raw = document.getElementById('pf-data')?.textContent;
@@ -151,14 +150,8 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
       if (text !== undefined) e.textContent = text;
       return e;
     };
-    const verified = (iso: string) =>
-      new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 
-    let firm = catalog.find((f) => f.id === root.dataset.firm) ?? catalog[0];
-    let plan: CompactPlan = firm.plans.find((p) => p.id === root.dataset.plan) ?? firm.plans[0];
-    let phase = 0;
-
-    const renderRules = () => {
+    const renderRules = ({ firm, plan, phase }: PickerState) => {
       const rows = ruleRows(plan.phases[phase], plan.currency);
       headEl.textContent = `${firm.name} · ${plan.label} · ${PHASE_LABEL[plan.phases[phase].phase]}`;
       rulesEl.replaceChildren(
@@ -177,38 +170,35 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
       });
     };
 
-    const renderPhases = () => {
-      phase = 0;
+    const renderPhases = ({ plan }: PickerState) => {
       phasesEl.replaceChildren(
         ...plan.phases.map((p, i) => {
           const b = el('button', undefined, PHASE_LABEL[p.phase]) as HTMLButtonElement;
           b.type = 'button';
-          b.addEventListener('click', () => {
-            phase = i;
-            renderRules();
-          });
+          b.addEventListener('click', () => picker.selectPhase(i));
           return b;
         }),
       );
-      renderRules();
     };
 
-    const renderPlans = () => {
+    const renderPlans = ({ firm, plan }: PickerState) => {
       planSel.replaceChildren(...firm.plans.map((p) => {
         const o = el('option', undefined, p.label) as HTMLOptionElement;
         o.value = p.id;
         return o;
       }));
-      plan = firm.plans.find((p) => p.size === 50000) ?? firm.plans[0];
       planSel.value = plan.id;
-      srcEl.textContent = `Règles officielles ${firm.name}, relevées le ${verified(firm.verifiedAt)}.`;
-      renderPhases();
+      firmSel.value = firm.id;
+      srcEl.textContent = sourceLabel(firm);
     };
 
-    firmSel.addEventListener('change', () => {
-      firm = catalog.find((f) => f.id === firmSel.value) ?? firm;
-      renderPlans();
+    const picker = createPropFirmPicker(catalog, { firmId: root.dataset.firm, planId: root.dataset.plan }, (s, change) => {
+      if (change === 'firm') renderPlans(s);
+      if (change !== 'phase') renderPhases(s);
+      renderRules(s);
     });
+
+    firmSel.addEventListener('change', () => picker.selectFirm(firmSel.value));
     // Switch des captures de l'app : évaluation / funded.
     const shotBtns = section.querySelectorAll<HTMLButtonElement>('[data-shot]');
     shotBtns.forEach((b) =>
@@ -226,20 +216,14 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     // Noms du carrousel : un clic choisit la firm et ramène le sélecteur à l'écran.
     section.querySelectorAll<HTMLButtonElement>('[data-pf-pick]').forEach((b) =>
       b.addEventListener('click', () => {
-        const picked = catalog.find((f) => f.id === b.dataset.pfPick);
-        if (!picked) return;
-        firm = picked;
-        firmSel.value = picked.id;
-        renderPlans();
+        if (!catalog.some((f) => f.id === b.dataset.pfPick)) return;
+        picker.selectFirm(b.dataset.pfPick!);
         root.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }),
     );
-    planSel.addEventListener('change', () => {
-      plan = firm.plans.find((p) => p.id === planSel.value) ?? plan;
-      renderPhases();
-    });
+    planSel.addEventListener('change', () => picker.selectPlan(planSel.value));
     // Boutons de phase rendus au build : on leur branche le même comportement.
-    renderPhases();
+    picker.refresh();
   }
 </script>
 

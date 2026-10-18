@@ -1,0 +1,344 @@
+---
+// « Ta firme, ton plan. Tes vraies règles. » (/prop-firm) : sélecteur firm → plan → phase. Mêmes
+// données que la home (`buildPropFirmCatalog`, catalogue de l'app réduit au build) et même logique
+// de sélection (`src/lib/prop-firm-picker.ts`) ; seul le balisage change (puces de firm, règles en
+// liste). Noms de firm en texte, jamais leurs logos (marques déposées).
+import { APP_URL } from '../../config';
+import { buildPropFirmCatalog } from '../../data/prop-firm-catalog';
+import { PHASE_LABEL, ruleRows } from '../../data/prop-firm-rules-view';
+import { initialSelection, sourceLabel } from '../../lib/prop-firm-picker';
+
+const catalog = buildPropFirmCatalog();
+const { firm, plan } = initialSelection(catalog);
+const rows = ruleRows(plan.phases[0], plan.currency);
+
+// Puces visibles d'emblée (les plus demandées), le reste derrière « + N autres ».
+const FEATURED = ['apex', 'topstep', 'tradeify', 'lucid', 'myfundedfutures', 'takeprofittrader'];
+const featured = FEATURED.flatMap((id) => catalog.filter((f) => f.id === id));
+const firms = [...featured, ...catalog.filter((f) => !FEATURED.includes(f.id))];
+const others = firms.length - featured.length;
+
+// JSON embarqué : « < » échappé pour ne jamais fermer la balise <script>.
+const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
+---
+
+<section class="pfr" id="prop-firms">
+  <div class="pfr-in">
+    <div class="pfr-head">
+      <span class="pf-eyebrow">Les vraies règles</span>
+      <h2 class="pf-h2">Ta firme, ton plan. Tes vraies règles.</h2>
+    </div>
+
+    <div class="pfr-grid">
+      <div class="pfr-side" data-pfr-root data-firm={firm.id} data-plan={plan.id}>
+        <div class="pfr-firms" role="group" aria-label="Prop firm">
+          {firms.map((f, i) => (
+            <button
+              type="button"
+              class:list={['pfr-chip', { on: f.id === firm.id }]}
+              aria-pressed={f.id === firm.id ? 'true' : 'false'}
+              data-firm-id={f.id}
+              hidden={i >= featured.length}
+            >{f.name}</button>
+          ))}
+          {others > 0 && (
+            <button type="button" class="pfr-chip pfr-more" aria-expanded="false" data-pfr-more>+ {others} autres</button>
+          )}
+        </div>
+
+        <div class="pfr-card">
+          <label class="pfr-plan">
+            <span>Plan</span>
+            <select data-pfr-plan>
+              {firm.plans.map((p) => <option value={p.id} selected={p.id === plan.id}>{p.label}</option>)}
+            </select>
+          </label>
+          <p class="pfr-title" data-pfr-title>{firm.name} · {plan.label}</p>
+          <div class="pfr-phases" role="group" aria-label="Phase du compte" data-pfr-phases>
+            {plan.phases.map((p, i) => (
+              <button type="button" class={i === 0 ? 'on' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>
+                {PHASE_LABEL[p.phase]}
+              </button>
+            ))}
+          </div>
+          <dl class="pfr-rules" aria-live="polite" data-pfr-rules>
+            {rows.map((r) => (
+              <div class="pfr-row">
+                <dt>{r.label}</dt>
+                <dd>
+                  <span class="pfr-v">{r.value}</span>
+                  {r.detail && <span class="pfr-d">{r.detail}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p class="pfr-src" data-pfr-src>{sourceLabel(firm)}</p>
+          <p class="pfr-src">Calcul indicatif : la plateforme de ta firme fait foi.</p>
+        </div>
+
+        <a href={`${APP_URL}/register`} class="pfr-cta" data-ga-event="cta_signup" data-ga-place="pf-rules">Suivre mon compte prop firm gratuitement</a>
+      </div>
+
+      <figure class="pfr-shots">
+        {/* Mobile : capture dédiée, prise dans l'app en 390 px (2x) sur le compte démo, recadrée sur
+            objectif, drawdown et perte du jour d'Apex 50K EOD Trail en évaluation (la sélection par
+            défaut du sélecteur) : lisible sans zoom, contrairement à la capture ordinateur réduite. */}
+        <a href="/showcase/app-prop-firm-rules-mobile.webp" target="_blank" rel="noopener" class="pfr-shot-mob" aria-label="Agrandir la capture des règles d'un compte en évaluation">
+          <img
+            src="/showcase/app-prop-firm-rules-mobile.webp"
+            width="640"
+            height="1340"
+            loading="lazy"
+            decoding="async"
+            alt="Capture réelle de MyTradingCoach sur téléphone : règles officielles Apex Trader Funding du plan EOD Trail 50K en évaluation, objectif 3 000 $, drawdown max 2 000 $, perte journalière max 1 000 $."
+          />
+        </a>
+        <a href="/showcase/app-prop-firm-rules.webp" target="_blank" rel="noopener" class="pfr-shot-desk" aria-label="Agrandir la capture d'un compte en évaluation">
+          <img
+            src="/showcase/app-prop-firm-rules.webp"
+            width="1568"
+            height="536"
+            loading="lazy"
+            decoding="async"
+            alt="Capture réelle de MyTradingCoach : compte de démonstration Apex 50K EOD Trail en évaluation, marge calculée avec les règles officielles, objectif restant."
+          />
+        </a>
+        <a href="/showcase/app-prop-firm-funded.webp" target="_blank" rel="noopener" class="pfr-shot-desk" aria-label="Agrandir la capture d'un compte funded">
+          <img
+            src="/showcase/app-prop-firm-funded.webp"
+            width="1568"
+            height="507"
+            loading="lazy"
+            decoding="async"
+            alt="Capture réelle de MyTradingCoach : compte Tradeify 50K funded, seuil figé, conditions restantes avant le prochain payout."
+          />
+        </a>
+        <figcaption>Capture réelle · compte de démonstration</figcaption>
+      </figure>
+    </div>
+  </div>
+  <script type="application/json" id="pfr-data" set:html={data} />
+</section>
+
+<script>
+  import { PHASE_LABEL, ruleRows, type CompactFirm } from '../../data/prop-firm-rules-view';
+  import { createPropFirmPicker, sourceLabel, type PickerState } from '../../lib/prop-firm-picker';
+
+  const root = document.querySelector<HTMLElement>('[data-pfr-root]');
+  const raw = document.getElementById('pfr-data')?.textContent;
+  if (root && raw) {
+    const catalog = JSON.parse(raw) as CompactFirm[];
+    const chips = root.querySelectorAll<HTMLButtonElement>('[data-firm-id]');
+    const more = root.querySelector<HTMLButtonElement>('[data-pfr-more]');
+    const planSel = root.querySelector<HTMLSelectElement>('[data-pfr-plan]')!;
+    const titleEl = root.querySelector<HTMLElement>('[data-pfr-title]')!;
+    const phasesEl = root.querySelector<HTMLElement>('[data-pfr-phases]')!;
+    const rulesEl = root.querySelector<HTMLElement>('[data-pfr-rules]')!;
+    const srcEl = root.querySelector<HTMLElement>('[data-pfr-src]')!;
+
+    const el = (tag: string, cls?: string, text?: string) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    };
+
+    const renderRules = ({ firm, plan, phase }: PickerState) => {
+      titleEl.textContent = `${firm.name} · ${plan.label}`;
+      rulesEl.replaceChildren(
+        ...ruleRows(plan.phases[phase], plan.currency).map((r) => {
+          const row = el('div', 'pfr-row');
+          const dd = el('dd');
+          dd.append(el('span', 'pfr-v', r.value));
+          if (r.detail) dd.append(el('span', 'pfr-d', r.detail));
+          row.append(el('dt', undefined, r.label), dd);
+          return row;
+        }),
+      );
+      phasesEl.querySelectorAll('button').forEach((b, i) => {
+        b.classList.toggle('on', i === phase);
+        b.setAttribute('aria-pressed', String(i === phase));
+      });
+    };
+
+    const renderPhases = ({ plan }: PickerState) => {
+      phasesEl.replaceChildren(
+        ...plan.phases.map((p, i) => {
+          const b = el('button', undefined, PHASE_LABEL[p.phase]) as HTMLButtonElement;
+          b.type = 'button';
+          b.addEventListener('click', () => picker.selectPhase(i));
+          return b;
+        }),
+      );
+    };
+
+    const renderFirm = ({ firm, plan }: PickerState) => {
+      chips.forEach((c) => {
+        const on = c.dataset.firmId === firm.id;
+        c.classList.toggle('on', on);
+        c.setAttribute('aria-pressed', String(on));
+      });
+      planSel.replaceChildren(...firm.plans.map((p) => {
+        const o = el('option', undefined, p.label) as HTMLOptionElement;
+        o.value = p.id;
+        return o;
+      }));
+      planSel.value = plan.id;
+      srcEl.textContent = sourceLabel(firm);
+    };
+
+    const picker = createPropFirmPicker(catalog, { firmId: root.dataset.firm, planId: root.dataset.plan }, (s, change) => {
+      if (change === 'firm') renderFirm(s);
+      if (change !== 'phase') renderPhases(s);
+      renderRules(s);
+    });
+
+    chips.forEach((c) => c.addEventListener('click', () => picker.selectFirm(c.dataset.firmId!)));
+    // « + N autres » : affiche toutes les firms, puis disparaît (le focus passe à la 1re révélée).
+    more?.addEventListener('click', () => {
+      const hidden = [...chips].filter((c) => c.hidden);
+      hidden.forEach((c) => { c.hidden = false; });
+      more.setAttribute('aria-expanded', 'true');
+      more.hidden = true;
+      hidden[0]?.focus();
+    });
+    planSel.addEventListener('change', () => picker.selectPlan(planSel.value));
+    // Boutons de phase rendus au build : on leur branche le même comportement.
+    picker.refresh();
+  }
+</script>
+
+<style>
+  .pfr { padding: 88px 20px; }
+  .pfr-in { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+  .pfr-head { display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+
+  .pfr-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .pfr-side { display: flex; flex-direction: column; gap: 18px; }
+
+  .pfr-firms { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pfr-chip {
+    font-family: var(--body);
+    font-size: 14px;
+    padding: 8px 14px;
+    min-height: 40px;
+    border-radius: 100px;
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--txt2);
+    cursor: pointer;
+  }
+  .pfr-chip[hidden] { display: none; }
+  .pfr-chip:hover { border-color: var(--blue); color: var(--txt); }
+  .pfr-chip.on { background: rgba(59, 130, 246, 0.18); border-color: var(--blue2); color: var(--txt); }
+  .pfr-chip:focus-visible,
+  .pfr-plan select:focus-visible,
+  .pfr-phases :global(button:focus-visible) { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .pfr-more { border-style: dashed; }
+
+  .pfr-card {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .pfr-plan { display: flex; flex-direction: column; gap: 6px; }
+  .pfr-plan span {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--txt3);
+  }
+  .pfr-plan select {
+    width: 100%;
+    background: var(--bg3);
+    color: var(--txt);
+    border: 1px solid var(--b2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: var(--body);
+    font-size: 15px;
+  }
+  .pfr-title { margin: 0; font-size: 17px; font-weight: 600; color: var(--txt); }
+
+  /* Boutons de phase recréés par le script → :global(), bornés au groupe. */
+  .pfr-phases {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 6px;
+    background: var(--bg3);
+    padding: 4px;
+    border-radius: 12px;
+  }
+  .pfr-phases :global(button) {
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 40px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--txt2);
+    cursor: pointer;
+  }
+  .pfr-phases :global(button:hover) { color: var(--txt); }
+  .pfr-phases :global(button.on) { background: var(--blue); color: #fff; }
+
+  /* Lignes de règles recréées par le script → :global(), bornées à la liste. */
+  .pfr-rules { margin: 0; display: flex; flex-direction: column; }
+  .pfr-rules :global(.pfr-row) {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--b);
+  }
+  .pfr-rules :global(.pfr-row:first-child) { border-top: 0; }
+  .pfr-rules :global(dt) { font-size: 15px; color: var(--txt2); flex: none; max-width: 45%; }
+  .pfr-rules :global(dd) { margin: 0; display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; min-width: 0; }
+  .pfr-rules :global(.pfr-v) {
+    font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--txt); font-variant-numeric: tabular-nums;
+  }
+  .pfr-rules :global(.pfr-d) { font-size: 13px; color: var(--txt3); line-height: 1.4; }
+
+  .pfr-src { margin: 0; font-size: 13px; color: var(--txt3); }
+  .pfr-cta { font-size: 16px; font-weight: 600; color: var(--blue2); padding: 10px 0; }
+  .pfr-cta:hover { color: var(--txt); }
+
+  .pfr-shots { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+  .pfr-shots a { display: block; line-height: 0; }
+  .pfr-shots img {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    border: 1px solid var(--b2);
+    transition: border-color 0.2s;
+  }
+  .pfr-shots a:hover img { border-color: var(--blue); }
+  .pfr-shots figcaption { font-size: 13px; color: var(--txt3); }
+  .pfr-shot-mob { display: none !important; }
+
+  @media (max-width: 900px) {
+    .pfr { padding: 44px 20px; }
+    .pfr-in { gap: 18px; }
+    .pfr-head { align-items: flex-start; text-align: left; }
+    .pfr-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .pfr-chip { font-size: 13px; padding: 7px 12px; }
+    .pfr-card { padding: 20px; gap: 14px; }
+    /* Ordre de la maquette mobile : firms, règles, capture, PUIS le lien d'inscription. */
+    .pfr-side { display: contents; }
+    .pfr-shots { order: 1; }
+    .pfr-cta { order: 2; text-align: center; }
+    /* Captures ordinateur masquées, capture mobile affichée (image lazy non affichée = non
+       téléchargée : chaque taille ne charge que la sienne). */
+    .pfr-shot-desk { display: none !important; }
+    .pfr-shot-mob { display: block !important; max-width: 420px; width: 100%; margin: 0 auto; }
+    .pfr-shots figcaption { text-align: center; font-size: 12px; }
+  }
+</style>

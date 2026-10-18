@@ -1,0 +1,207 @@
+---
+// Tarifs de /prop-firm : Gratuit, Fondateur, Premium. La carte Fondateur suit EXACTEMENT le
+// mécanisme de la home (`Pricing.astro`, cf. astro.md « Offre fondateur ») : rendue si l'offre vend
+// au build (`founderOpen`), sinon gabarit <template> inerte ; ensuite `initFounderPricing`
+// (src/lib/founder-pricing.ts) remplit le compteur ou retire la carte. Premium toujours affiché,
+// « Recommandé » quand la carte Fondateur n'est pas là. Tous les montants viennent de @mtc/shared.
+import { APP_URL, FEATURES } from '../../config';
+import {
+  ACCOUNT_LIMITS,
+  FOUNDER_OFFER,
+  FOUNDER_REFUND_DAYS,
+  PREMIUM_ANNUAL_SAVINGS_EUR,
+  PREMIUM_PRICE_EUR,
+} from '@mtc/shared';
+
+const { founderOpen = false } = Astro.props;
+const FounderWrap = founderOpen ? 'div' : 'template';
+
+// Listes courtes (la home détaille tout) : chaque ligne existe dans la grille de plans.md.
+const free = [
+  'Synchro Tradovate automatique',
+  `Suivi prop firm en direct, ${ACCOUNT_LIMITS.free} compte`,
+  'Journal et trades illimités',
+  'Préparation et débrief de séance',
+];
+const premium = [
+  'Alertes avant la limite de perte',
+  'Anti-tilt pendant la séance',
+  'Coach IA et débrief de la semaine',
+  ...(FEATURES.multiAccounts ? ['Comptes illimités'] : []),
+];
+---
+
+<section class:list={['pfp-pricing', { 'has-founder': founderOpen }]} id="tarifs">
+  <div class="pp-in">
+    <h2 class="pf-h2 pp-title">Gratuit pour l'essentiel</h2>
+    <div class="pp-grid">
+
+      <div class="pp-card">
+        <span class="pp-eyebrow">Pour commencer</span>
+        <div class="pp-price"><span class="pp-name">Gratuit</span><span class="pp-amt">0 €</span></div>
+        <ul class="pp-feats">{free.map((f) => <li>{f}</li>)}</ul>
+        <a href={`${APP_URL}/register`} class="pp-cta ghost" data-cta="free" data-ga-event="cta_signup" data-ga-place="pf-pricing-free">Commencer gratuitement</a>
+        <span class="pp-foot">Sans carte bancaire</span>
+      </div>
+
+      {/* FONDATEUR : même enveloppe et mêmes attributs que la home (data-founder-*). */}
+      <FounderWrap data-founder-tpl={founderOpen ? undefined : ''} class={founderOpen ? 'founder-slot' : undefined}>
+      <div class="pp-card pp-founder" id="fondateur" data-founder-card>
+        <span class="pp-eyebrow pp-eyebrow-founder">
+          Offre fondateur
+          {/* Compteur : place réservée (masqué, pas retiré) jusqu'au vrai chiffre de l'API (founderSeatsLabel). */}
+          <span class="founder-seats is-pending"> · <span data-founder-left>&nbsp;</span></span>
+        </span>
+        <div class="pp-price">
+          <span class="pp-name">Premium</span>
+          <span><span class="pp-amt">{FOUNDER_OFFER.priceMonthlyEur} €</span><span class="pp-per">/mois</span></span>
+        </div>
+        <p class="pp-sub">
+          <strong>ou {FOUNDER_OFFER.priceAnnualEur} €/an</strong>, au lieu de {PREMIUM_PRICE_EUR.monthly} €/mois.
+          Prix bloqué à vie tant que ton abonnement reste actif, réservé aux {FOUNDER_OFFER.seats} premiers.
+        </p>
+        <p class="pp-lead">Tout Premium inclus :</p>
+        <ul class="pp-feats">{premium.map((f) => <li>{f}</li>)}</ul>
+        <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="pp-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pf-pricing">Devenir fondateur</a>
+        <span class="pp-foot">Paiement immédiat, sans essai · Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</span>
+      </div>
+      </FounderWrap>
+
+      <div class="pp-card is-premium">
+        <span class="pp-eyebrow"><span class="pp-rec">Recommandé</span><span class="pp-normal">Prix normal</span></span>
+        <div class="pp-price">
+          <span class="pp-name">Premium</span>
+          <span><span class="pp-amt">{PREMIUM_PRICE_EUR.monthly} €</span><span class="pp-per">/mois</span></span>
+        </div>
+        <p class="pp-sub">ou {PREMIUM_PRICE_EUR.annual} €/an, tu économises {PREMIUM_ANNUAL_SAVINGS_EUR} €. 1 mois offert sur le mensuel.</p>
+        <p class="pp-lead">Tout le Gratuit, plus :</p>
+        <ul class="pp-feats">{premium.map((f) => <li>{f}</li>)}</ul>
+        <a href={`${APP_URL}/register?plan=premium`} class="pp-cta pp-cta-premium" data-cta="premium" data-ga-event="cta_trial" data-ga-place="pf-pricing">Essayer Premium · 1 mois offert</a>
+        <span class="pp-foot">Carte requise · annulable en un clic</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  import { captureCtaFromUrl } from '../../lib/founder-offer';
+  import { initFounderPricing } from '../../lib/founder-pricing';
+
+  captureCtaFromUrl();
+  initFounderPricing(document.getElementById('tarifs'));
+</script>
+
+<style>
+  .pfp-pricing {
+    padding: 88px 20px;
+    background: var(--bg2);
+    border-top: 1px solid var(--b);
+   
+  }
+  .pp-in { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+  .pp-title { text-align: center; }
+
+  /* Sans offre fondateur : 2 cartes centrées. Avec : 3 colonnes. */
+  .pp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 380px));
+    justify-content: center;
+    gap: 24px;
+    align-items: stretch;
+  }
+  .has-founder .pp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Enveloppe de la carte rendue au build : transparente pour la grille. */
+  .founder-slot { display: contents; }
+
+  .pp-card {
+    background: var(--card);
+    border: 1px solid var(--b2);
+    border-radius: 18px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .pp-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--txt3);
+    min-height: 16px;
+  }
+  .pp-eyebrow-founder { color: var(--pulse); }
+  .founder-seats.is-pending { visibility: hidden; }
+  .pp-price { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .pp-name { font-size: 19px; font-weight: 600; }
+  .pp-amt { font-family: var(--disp); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pp-per { font-size: 14px; color: var(--txt2); }
+  .pp-sub { margin: 0; font-size: 14px; line-height: 1.5; color: var(--txt2); }
+  .pp-sub strong { color: var(--txt); font-weight: 600; }
+  .pp-lead { margin: 4px 0 0; font-size: 13px; color: var(--txt3); }
+  .pp-feats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--txt);
+    flex-grow: 1;
+  }
+  .pp-feats li { position: relative; padding-left: 24px; }
+  .pp-feats li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.45em;
+    width: 11px;
+    height: 6px;
+    border-left: 2px solid var(--blue2);
+    border-bottom: 2px solid var(--blue2);
+    transform: rotate(-45deg);
+  }
+  .pp-cta {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-family: var(--disp);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 6px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .pp-cta.ghost,
+  .pp-cta-premium { border: 1px solid rgba(96, 165, 250, 0.5); color: var(--txt); }
+  .pp-cta.ghost:hover,
+  .pp-cta-premium:hover { border-color: var(--blue2); background: rgba(59, 130, 246, 0.08); }
+  .pp-cta.prim { background: var(--blue); color: #fff; }
+  .pp-cta.prim:hover { background: var(--blue2); }
+  .pp-cta:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
+  .pp-foot { text-align: center; font-size: 13px; color: var(--txt2); }
+
+  .pp-founder { background: var(--card2); border-color: rgba(34, 211, 238, 0.45); }
+
+  /* Premium : mis en avant (« Recommandé », bouton plein) tant que la carte Fondateur est absente. */
+  .pp-normal { display: none; }
+  .pfp-pricing:not(.has-founder) .is-premium { border-color: var(--blue); }
+  .pfp-pricing:not(.has-founder) .pp-rec { color: var(--blue2); }
+  .pfp-pricing:not(.has-founder) .pp-cta-premium { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .pfp-pricing:not(.has-founder) .pp-cta-premium:hover { background: var(--blue2); }
+  .has-founder .pp-rec { display: none; }
+  .has-founder .pp-normal { display: inline; }
+
+  @media (max-width: 1024px) {
+    .pfp-pricing { padding: 40px 20px; }
+    .pp-in { gap: 18px; }
+    .pp-title { text-align: left; }
+    .pp-grid,
+    .has-founder .pp-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .pp-card { padding: 22px; }
+    .pp-amt { font-size: 26px; }
+  }
+</style>

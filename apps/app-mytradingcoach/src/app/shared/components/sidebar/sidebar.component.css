@@ -407,8 +407,11 @@
 /* Mobile : bandeau ras du sol (la phrase longue tombe, le CTA reste). Il doit rester
    une ligne d'information, jamais un demi-écran mangé sur un téléphone. */
 @media (max-width: 768px) {
-  .main-content.has-demo-banner { --demo-banner-h: 40px; }
-  .demo-banner { gap: 10px; padding: 0 12px; font-size: 12px; }
+  /* 52 px : le burger fixe (40 px) tient DANS le bandeau, centré (6 px). À 40 px il débordait
+     de 14 px sous le bandeau, sur le contenu de la page. Marge droite pour le CTA. */
+  .main-content.has-demo-banner { --demo-banner-h: 52px; }
+  .demo-banner { gap: 10px; padding: 0 68px 0 12px; font-size: 12px; }
+  .burger.in-demo-banner { top: calc(env(safe-area-inset-top) + 6px); }
   .demo-banner-long { display: none; }
   .demo-banner-cta { font-size: 11px; padding: 5px 10px; }
 }

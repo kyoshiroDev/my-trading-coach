@@ -117,4 +117,24 @@ describe('ToastService — file, durées, pause', () => {
     expect(toast.visible()).toEqual([]);
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  describe('téléphone et mode démo', () => {
+    it('setMaxVisible(1) : un seul toast affiché, les autres en file', () => {
+      const svc = new ToastService();
+      svc.setMaxVisible(1);
+      svc.info('a'); svc.info('b'); svc.info('c');
+      expect(svc.visible().map((t) => t.message)).toEqual(['a']);
+      expect(svc.queued()).toBe(2);
+      svc.dismiss(svc.visible()[0].id);
+      expect(svc.visible().map((t) => t.message)).toEqual(['b']);
+    });
+
+    it('refus « mode démo » : pas de toast, l’invite d’inscription le dit déjà', () => {
+      const svc = new ToastService();
+      expect(svc.error('Action non disponible en mode démo')).toBe(0);
+      expect(svc.visible()).toHaveLength(0);
+      svc.error('Échec de la clôture du trade');
+      expect(svc.visible()).toHaveLength(1);
+    });
+  });
 });
