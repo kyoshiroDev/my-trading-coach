@@ -131,28 +131,59 @@ la maquette design (« The Terminal »).
   n'est jamais écrasée : `collapsed.set` ne l'écrit pas, seul `toggleCollapse` le fait.
 - **Onglet Pré-session** → `session-morning.component` (features/dashboard/components/) :
   carte Prépare (mood/plan/compte projeté) + Hier + Objectifs · Agenda du jour IA.
-- **Onglet Session live** → `session-live.component` : Contexte marché (cellules
-  « Ticker (Descripteur) » + valeur/variation sur une ligne) + News (ticker horizontal)
-  + **zone gauche** (4 mini-stats sur la largeur Calendrier+Live feed, puis Calendrier |
-  Live feed) + **Trade rapide en colonne pleine hauteur à droite**. Live feed en **ligne
-  compacte** : heure · asset · sens (▲/▼) · émotion (`emotionEmojiPipe`) · P&L / ● LIVE.
-- **Colonne droite de la session live** : compte de la session **éval ou funded synchronisé
-  Tradovate** (`isLivePropAccount`, `live-prop-firm.util.ts`) → `mtc-live-prop-firm` (suivi prop
-  firm, FREE) **à la place** de Trade rapide. `SessionLiveComponent` charge lui-même `TradovateStore`
-  s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437). `.pf-panel` en
-  `flex: 1` : bas aligné sur le calendrier et le Live feed. Solde et latent du broker, marge avant le plancher
-  et avancement objectif / payout, tout calculé par l'API (`metrics` de `GET /accounts`, règles du
-  plan relié). Temps réel = `tradovate:balance` → `SelectedAccountStore.reloadSoon()` ; le panneau
-  ne fait qu'UNE relecture `refreshBalance` à l'ouverture (jamais en compte démo). « Saisir un
-  trade à la main » réaffiche Trade rapide (`manualEntry`), « ← Suivi du compte » revient. Compte
-  non synchronisé / perso → Trade rapide comme avant (seul moyen de logger un trade).
-- **Trade en cours (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** :
-  `mtc-live-position` sous les mini-stats, si `liveStats().broker` existe (compte synchronisé).
-  Positions ouvertes chez le broker dès l'entrée, Réalisé / Latent (daté, « il y a 40 s ») /
-  Total = réalisé + latent (`live-position.util.ts`). Latent inconnu → « Latent indisponible pour
-  ce compte », pas de total. « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis
-  `refreshLive`. Rafraîchi par `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1
-  relecture). Jamais de polling rapide : le latent ne bouge qu'aux événements du compte.
+- **Onglet Session live (v3, #593, retours de Val « trop chargée »)** → `session-live.component`,
+  **mobile d'abord** (base = 390 px, `@media (min-width)` uniquement, jamais `max-width` dans cette vue).
+  Ordre mobile (= ordre du DOM) : `mtc-live-bar` (bandeau `position: sticky`) → `mtc-live-next-event`
+  → grille plate `.lv-grid` (`mtc-live-position`, `.lv-account`, `.lv-closed`) → `.lv-actions`
+  (« Contexte marché » + « Clôturer la session », en BAS, loin de « Clôturer ce trade »).
+  Paliers : **≥ 768** bandeau sur une ligne (Contexte + clôture dedans, `.lv-actions` masqué), grille
+  `pos | acc` puis `closed` pleine largeur · **≥ 1100** grille 2/3 · 1/3 (`"pos acc" "closed acc"`),
+  compte + plan et tickers dans le bandeau, suivi prop firm étiré sur la hauteur.
+  Retirés : 4 mini-stats, bandeau news, calendrier pleine hauteur, live feed (le calendrier complet
+  reste en Pré-session). Contexte marché (8 tickers) + news → feuille `mtc-market-context-bar` +
+  `mtc-live-news` (plein écran mobile, panneau latéral ≥ 768, `mtcDialog`).
+  Logique pure dans **`session-live.util.ts`** (testée) : `positionBar`, `priceFromLatent`, `pointValue`
+  (table `GET /instruments`, tickValue / tickSize), `nextAnnouncement`, `closeKind`, `bannerTickers`
+  (NQ, **SPX** — le flux n'a pas l'ES, jamais renommé —, DXY, 10Y), `moodLabel`, `planKindShort`.
+  - **Bandeau** (`live-bar`) : chrono `SessionStore.sessionClock()` (`HH:MM:SS`, ou alerte « Session
+    ouverte depuis le JJ/MM, clôture-la » au-delà de 24 h, `session-clock.util.ts`), `Trades N / max`
+    (`User.tradesPerDayMax`, sinon `Trades N`), P&L du jour = réalisé + latent (`liveTotals`), réalisé
+    seul si le latent est inconnu. Sur l'onglet live, la pilule « Session active » du header de la
+    page est masquée (le bandeau la remplace) ; « Clôturer la session » émet `closeSession` → le
+    parent ouvre sa confirmation.
+  - **Prochaine annonce** (`live-next-event`) : prochaine annonce non publiée du jour, compte à rebours
+    recalculé chaque minute, **absente** s'il n'en reste aucune. Sur `EcoSocketService.newReleases$`,
+    la ligne passe à « publiée » : chiffre publié / prévu / précédent, 1re phrase de l'analyse IA
+    (`analyze-result`), reste dépliable ; retour à la suivante sur « J'ai lu » ou après 15 min.
+    Mêmes appels que l'ancien calendrier live (`refreshAnalysis` → `ecoCalendarRefreshed`, puis une
+    analyse par annonce) : **aucun appel IA de plus**.
+  - **Trade en cours** (`live-position`) : une position (broker si rôle `LIVE_POSITION_ROLES` et
+    `liveStats.broker`, sinon 1er trade saisi à la main sans sortie), latent 32 px (40 px PC), barre
+    SL / entrée / TP (axe toujours perte → gain, SHORT compris). Broker : SL/TP **non lus** chez
+    Tradovate (#601) → repli entrée → prix + « Aucun stop détecté chez Tradovate » ; prix déduit du
+    latent (`priceFromLatent`) avec « relevé à HH:MM:SS », **masqué si plusieurs positions**.
+    « Clôturer ce trade » **uniquement pour un trade saisi à la main** (lecture seule Tradovate) :
+    prix de sortie → `tradeClosed`. Aucune position → carte d'une ligne `live-position-none`.
+  - **Suivi du compte** (`live-prop-firm`) : equity sur une ligne (30 px « Equity en direct » +
+    réalisé en PC), puis 3 jauges **le risque avant le gain** : perte max du jour (Premium, sinon
+    teaser à la même place et même hauteur, 78 px) → marge avant le plancher → objectif. Compte non
+    synchronisé / perso : carte P&L du jour + « Lier un compte prop firm », et **Trade rapide reste
+    affiché** (seul moyen de logger un trade) ; compte synchronisé : Trade rapide sur « Saisir un
+    trade à la main » (lien masqué quand Trade rapide est déjà là).
+  - **Trades clôturés** (`live-closed-trades`) : 2 niveaux en mobile (sens + actif + résultat ; heure
+    · entrée → sortie · TP/SL/Manuel), grille alignée ≥ 768 (`display: contents` sur les 2 niveaux).
+- **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
+  (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
+  `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
+  Solde et latent du broker, marge avant le plancher et avancement objectif / payout, tout calculé
+  par l'API (`metrics` de `GET /accounts`, règles du plan relié). Temps réel = `tradovate:balance` →
+  `SelectedAccountStore.reloadSoon()` ; le panneau ne fait qu'UNE relecture `refreshBalance` à
+  l'ouverture (jamais en compte démo).
+- **Latent broker (bêta, rôles `LIVE_POSITION_ROLES` : BETA_TESTER, ADMIN, AMBASSADOR)** : relevé
+  daté, « Actualiser » = `refreshBalance` (bridé 20 s côté API) puis `refreshLive`. Rafraîchi par
+  `tradovate:balance` → `SessionStore.refreshLiveSoon()` (rafale → 1 relecture). Jamais de polling
+  rapide : le latent ne bouge qu'aux événements du compte. Latent inconnu → « Latent indisponible
+  pour ce compte », jamais un chiffre.
   **Cohérence avec le suivi du compte** : les deux panneaux lisent le même relevé broker par deux
   requêtes (`GET /session/today/stats` sondé 30 s, `GET /accounts`). `SessionLiveComponent`
   compare `liveStats.broker.openPnlAt` et `metrics.broker.equityAt` (`laggingBrokerPanel`) et relit
@@ -799,10 +830,10 @@ affichés (service réel, pas besoin de le mocker). Pour un composant qui monte 
   Les specs du dashboard lisent des membres du parent (`summary`, `baseCapital`,
   `currentCapital`, `accountReallyEmpty`, `dashboardPeriod`, `setPeriod`, `plGranularity`,
   `plTitle`, `periodRange`, `showCsvImport`) : ne pas les déplacer dans un panneau.
-- **Session live** : le parent garde le cadre (CTA sans session, carte marché, mini-stats,
-  grilles `.live-layout` / `.live-cols`). La **connexion du WebSocket éco** est dans
-  `SessionStore` depuis SCA-B4 (voir « Polling »). Calendrier éco, live feed, trade rapide et news
-  (ticker + modale) sont dans `session-live/components/`.
+- **Session live** (v3) : le parent garde le cadre (CTA sans session, grille `.lv-grid`, feuille
+  Contexte). La **connexion du WebSocket éco** est dans `SessionStore` depuis SCA-B4 (voir
+  « Polling »). Bandeau, prochaine annonce, trade en cours, suivi du compte, trades clôturés, trade
+  rapide et news (ticker + modale) sont dans `session-live/components/`.
 - **CSS encapsulée** : le style d'une viz vit dans SON composant (un sélecteur du parent ne
   descend pas dans l'enfant). L'hôte d'un panneau de grille est un flex colonne
   (`:host { display:flex; flex-direction:column; min-width:0; min-height:0 }`) et le bloc

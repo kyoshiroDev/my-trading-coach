@@ -61,7 +61,7 @@
       </div>
 
       <div class="lv-closed">
-        <mtc-live-closed-trades [trades]="todayTrades()" (manualEntry)="manualEntry.set(true)" />
+        <mtc-live-closed-trades [trades]="todayTrades()" [canEnterManually]="!!propFirmAccountId() && !manualEntry()" (manualEntry)="manualEntry.set(true)" />
         @if (!propFirmAccountId() || manualEntry()) {
           <div class="lv-quick">
             @if (propFirmAccountId()) {

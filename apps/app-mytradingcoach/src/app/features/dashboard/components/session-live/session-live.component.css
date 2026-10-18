@@ -147,6 +147,7 @@
     grid-template-areas: "pos acc" "closed acc";
     grid-template-rows: auto 1fr;
   }
+  /* Le suivi prop firm remplit la colonne (disclaimer en pied) ; le simple P&L reste compact */
   .lv-account { align-self: stretch; display: flex; flex-direction: column; }
-  .lv-account > * { flex: 1; }
+  .lv-account > mtc-live-prop-firm { flex: 1; }
 }

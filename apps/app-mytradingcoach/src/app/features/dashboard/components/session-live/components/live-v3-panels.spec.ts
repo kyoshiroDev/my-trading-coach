@@ -178,8 +178,13 @@ describe('Session live v3 — trades clôturés', () => {
     expect(text('live-closed-empty')).toBe('Aucun trade clôturé pour l\'instant');
   });
 
+  it('Trade rapide déjà affiché : pas de lien « Saisir un trade à la main »', () => {
+    const { el } = render(LiveClosedTradesComponent, { trades: [], canEnterManually: false }, CLOSED_TEMPLATE, [MoneyPipe]);
+    expect(el.textContent).not.toContain('Saisir un trade à la main');
+  });
+
   it('« Saisir un trade à la main » prévient le parent', () => {
-    const { el, fixture } = render(LiveClosedTradesComponent, { trades: [] }, CLOSED_TEMPLATE, [MoneyPipe]);
+    const { el, fixture } = render(LiveClosedTradesComponent, { trades: [], canEnterManually: true }, CLOSED_TEMPLATE, [MoneyPipe]);
     const spy = vi.fn();
     fixture.componentInstance.manualEntry.subscribe(spy);
     (el.querySelector('[data-testid="live-manual-entry"]') as HTMLButtonElement).click();

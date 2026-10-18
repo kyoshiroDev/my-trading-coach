@@ -3,9 +3,11 @@
     <span class="ct-title" data-testid="live-closed-title">
       <span class="ct-wide">TRADES </span>CLÔTURÉS · {{ closed().length }} · {{ winners() }} GAGNANT{{ winners() > 1 ? 'S' : '' }}
     </span>
-    <button type="button" class="ct-manual ct-manual-top" data-testid="live-manual-entry" (click)="manualEntry.emit()">
-      Saisir un trade à la main
-    </button>
+    @if (canEnterManually()) {
+      <button type="button" class="ct-manual ct-manual-top" data-testid="live-manual-entry" (click)="manualEntry.emit()">
+        Saisir un trade à la main
+      </button>
+    }
   </header>
 
   @if (closed().length === 0) {
@@ -29,5 +31,7 @@
     </ul>
   }
 
-  <button type="button" class="ct-manual ct-manual-bottom" (click)="manualEntry.emit()">Saisir un trade à la main</button>
+  @if (canEnterManually()) {
+    <button type="button" class="ct-manual ct-manual-bottom" (click)="manualEntry.emit()">Saisir un trade à la main</button>
+  }
 </section>

@@ -18,6 +18,8 @@ import { closeKind, formatPrice } from '../../session-live.util';
 })
 export class LiveClosedTradesComponent {
   readonly trades = input<SessionTrade[]>([]);
+  /** Faux quand Trade rapide est déjà affiché (compte non synchronisé) : le lien ne servirait à rien. */
+  readonly canEnterManually = input(true);
   /** « Saisir un trade à la main » : le parent affiche Trade rapide. */
   readonly manualEntry = output<void>();
 

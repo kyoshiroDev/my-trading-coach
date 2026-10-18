@@ -59,7 +59,9 @@
 
 /* Couche Premium en teaser (compte gratuit, plan relié) : une ligne, à la place exacte de la jauge du jour. */
 .pf-teaser {
-  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 44px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;
+  /* Même hauteur que la jauge Premium (libellé + barre + sous-ligne) : pas de saut entre gratuit et Premium */
+  min-height: 78px;
   background: transparent; border: 1px dashed rgba(255, 255, 255, .14); border-radius: 10px; padding: 0 12px;
   font: 13px var(--font-body); color: var(--text-2); text-align: left; cursor: pointer;
 }
