@@ -486,6 +486,8 @@
   .day-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .day-header .day-stats { order: 1; flex-basis: 100%; justify-content: flex-start; padding-left: 20px; }
   .day-winrate, .day-commission { display: none; }
+  /* Le point qui suivait le win rate masqué restait : « 3 trades · · +$41.60 » (#642). */
+  .day-winrate + .day-dot { display: none; }
 }
 
 /* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
