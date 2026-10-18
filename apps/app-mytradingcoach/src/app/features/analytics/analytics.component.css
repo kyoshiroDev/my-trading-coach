@@ -150,10 +150,19 @@
 
 .card-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
   gap: 12px;
+}
+
+/* Périodes + total : passent sous le titre quand la carte est étroite (le total sortait de la carte, #636). */
+.equity-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .card-title {
