@@ -275,8 +275,9 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
 /* Tablette : masque Prév./Précédent pour garder le tableau lisible */
 @media (max-width: 1024px) { .hide-sm { display: none; } }
 
-/* Stack : 1 colonne, Ma sélection au-dessus, onglets scrollables */
-@media (max-width: 1024px) {
+/* Stack : 1 colonne, Ma sélection au-dessus, onglets scrollables. Jusqu'à 1440 px : à 1280, la colonne
+   Ma sélection (1/3) écrasait le tableau, coupé à la colonne IA, noms d'annonce sur 3 lignes (#634). */
+@media (max-width: 1440px) {
   :host, .eco-page { display: block; min-height: 0; }
   .eco-layout { grid-template-columns: 1fr; flex: none; overflow: visible; }
   .eco-selection-col { order: -1; margin-bottom: 10px; }
@@ -285,28 +286,40 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
   .eco-sess-tabs { overflow-x: auto; flex-wrap: nowrap; }
 }
 
-/* Mobile : le tableau devient des cartes empilées (label : valeur) */
+/* Mobile : le tableau devient une liste compacte, une annonce par ligne de 2 niveaux */
 @media (max-width: 768px) {
   /* 5 pastilles × 80 px min débordaient de 70 px : elles se partagent la largeur. */
   .eco-day-pills { gap: 6px; }
   .eco-day-pill { min-width: 0; padding: 10px 4px; }
   /* Un seul scroll vertical sur mobile : la sélection s'affiche en entier. */
   .eco-selection-body { max-height: none; overflow-y: visible; }
+  /* Une annonce = une ligne de 2 niveaux (#634) : heure, devise, nom et épingle, puis actuel · prévu ·
+     précédent · IA. Les cartes « libellé : valeur » faisaient 330 px chacune (6 600 px pour une journée).
+     Impact : liseré rouge (fort) ou ambre (moyen), comme dans la session live. L'heure est ramenée dans
+     la marge gauche (58 px) : tout ce qui passe à la ligne s'aligne sous le nom. */
   .cal thead { display: none; }
   .cal, .cal tbody { display: block; width: 100%; }
   .eco-table-wrap { border: none; background: transparent; }
-  .cal tbody tr.r-ev { display: block; border: 1px solid var(--border); border-radius: 10px; margin: 7px; background: var(--bg-card); }
-  .cal tbody tr.r-ev.high { border-left: 3px solid var(--red); }
+  .cal tbody tr.r-ev { display: flex; flex-wrap: wrap; align-items: flex-start; padding: 10px 0 10px 58px; border-top: 1px solid var(--border); }
+  .cal tbody tr.r-ev.high { box-shadow: inset 3px 0 0 var(--red); }
+  .cal tbody tr.r-ev.medium { box-shadow: inset 3px 0 0 var(--yellow); }
   .cal tbody tr.r-ev.published { opacity: .6; }
-  .cal tbody tr.r-ev td { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 12px; border: none; }
-  .cal tbody tr.r-ev td.hide-sm { display: flex; }
-  .cal tbody tr.r-ev td::before { content: attr(data-label); font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
-  .cal td.c-pin { justify-content: flex-start; padding-top: 8px; }
-  .cal td.c-pin::before { content: none; }
-  .cal td.cell-evt { flex-direction: column; align-items: flex-start; gap: 3px; }
-  .cal td.r { text-align: left; }
+  .cal tbody tr.r-ev.next { background: #0f1d33; }
+  .cal tbody tr.r-ev td { display: block; padding: 0; border: none; background: none; order: 5; }
+  .cal tbody tr.r-ev td.c-time { order: 1; flex: 0 0 46px; margin-left: -46px; padding-top: 1px; font-size: 12px; }
+  .cal tbody tr.r-ev td[data-label="Devise"] { order: 2; flex: 0 0 64px; }
+  .cal tbody tr.r-ev td.cell-evt { order: 3; flex: 1 1 calc(100% - 64px - 44px); min-width: 0; }
+  .cal tbody tr.r-ev td.c-pin { order: 4; flex: 0 0 44px; display: flex; justify-content: center; margin-top: -4px; }
+  .cal tbody tr.r-ev td[data-label="Impact"] { display: none; }
+  .cal tbody tr.r-ev td.r,
+  .cal tbody tr.r-ev td.hide-sm,
+  .cal tbody tr.r-ev td.c-ia { display: flex; align-items: center; gap: 4px; margin-top: 4px; margin-right: 12px; font-family: var(--font-mono); font-size: 11px; text-align: left; }
+  .cal tbody tr.r-ev td.r::before,
+  .cal tbody tr.r-ev td.c-ia::before { content: attr(data-label); color: var(--text-3); }
+  .cal tbody tr.r-ev td.c-ia:has(.ia-na) { display: none; }
+  .cal .evt { font-size: 13px; line-height: 1.35; }
+  .r-sep td { padding: 10px 12px 6px; }
   .r-now td, .r-sep td, .r-ai td { display: block; }
-  .r-now td::before, .r-sep td::before, .r-ai td::before { content: none; }
   .ai-panel { margin: 0 7px 8px; }
 }
 
