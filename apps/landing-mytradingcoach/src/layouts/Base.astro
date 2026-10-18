@@ -49,7 +49,9 @@ const robots = noindex
   <!-- ═══ SEO PRIMARY ═══ -->
   <title>{title}</title>
   <meta name="description" content={description} />
-  {!noindex && <link rel="canonical" href={canonical} />}
+  {/* Page noindex : canonical seulement s'il est passé explicitement (page de test publicitaire
+      comme /prop-firm, qui pointe sur elle-même) ; jamais sur une page technique (404). */}
+  {(!noindex || Astro.props.canonical) && <link rel="canonical" href={canonical} />}
   <meta name="robots" content={robots} />
   <meta name="author" content="MyTradingCoach" />
   <meta name="geo.region" content="FR" />
