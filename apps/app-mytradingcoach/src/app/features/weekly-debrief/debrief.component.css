@@ -89,11 +89,15 @@
 /* ─── Debrief header ─── */
 .debrief-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 20px;
-  gap: 16px;
+  gap: 12px 16px;
 }
+/* Le bloc titre prend la ligne et le bouton Export passe dessous quand il manque de place : la
+   méta de la semaine était tassée dans une colonne de 180 px sur téléphone (#642). */
+.debrief-header > div:first-child { flex: 1 1 260px; min-width: 0; }
 
 .week-title {
   font-family: var(--font-display);
@@ -106,12 +110,14 @@
 
 .week-meta {
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
   font-family: var(--font-mono);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
 }
+.week-meta svg { flex-shrink: 0; margin-top: 3px; }
 
 .export-btn {
   display: flex;
@@ -496,16 +502,23 @@
 /* ── Tableau « par compte en un coup d'œil » ── */
 .cmp-card { margin-bottom: 16px; }
 .cmp { display: flex; flex-direction: column; }
+/* Grille fixe : les colonnes Trades / Win rate / P&L s'alignent d'un compte à l'autre (en flex,
+   elles suivaient la longueur du nom, #642). Téléphone : nom sur sa ligne, 3 stats dessous. */
 .cmp-row {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  display: grid; grid-template-columns: minmax(170px, 1.6fr) repeat(3, minmax(80px, 1fr));
+  align-items: center; gap: 10px 12px;
   padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+@media (max-width: 600px) {
+  .cmp-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cmp-name { grid-column: 1 / -1; min-width: 0; }
 }
 .cmp-row:last-child { border-bottom: none; }
 .cmp-name {
-  font-weight: 600; font-size: 14px; min-width: 170px;
+  font-weight: 600; font-size: 14px;
   display: flex; align-items: center; gap: 8px;
 }
-.cmp-stat { font-family: var(--font-mono); font-size: 13px; min-width: 92px; }
+.cmp-stat { font-family: var(--font-mono); font-size: 13px; }
 .cmp-l {
   font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--text-3);
   text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: .4px;
