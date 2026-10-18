@@ -1112,6 +1112,14 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 
+### Admin : inscrits d'une campagne (#625)
+
+Page Utilisateurs : le filtre vit dans l'URL (`/users?source=&medium=&campaign=`, relu à chaque
+changement de `queryParamMap`), bandeau « Inscrits de … · N inscrits » + « Retirer le filtre ».
+Entrées : Acquisition › Détail par campagne (« Inscrits total » cliquable, triplet exact via
+`acquisitionQueryParams`, null → `-`) et la ligne « Acquisition » de la fiche utilisateur. Colonne
+Abonnement : badge « Offert » pour un mois Premium offert (plan FREE + `trialEndsAt` futur).
+
 ### Admin : liaison compte ↔ plan prop firm (#612)
 
 Dashboard, bandeau « Fidélisation & activation » : 6e stat `kpi-plan-links` (taux, reliés / connectés),

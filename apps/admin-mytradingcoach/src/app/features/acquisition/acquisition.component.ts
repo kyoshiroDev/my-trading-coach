@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
+import { acquisitionQueryParams } from '@mtc/shared';
 import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AcquisitionData, FunnelData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
 import { funnelRows, placeLabel, placeRows } from './funnel.util';
@@ -14,7 +16,7 @@ import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
  */
 @Component({
   selector: 'mtc-admin-acquisition',
-  imports: [ChartCanvasComponent],
+  imports: [ChartCanvasComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './acquisition.component.css',
   templateUrl: './acquisition.component.html',
@@ -22,6 +24,9 @@ import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
 export class AcquisitionComponent {
   private readonly api = inject(AdminApi);
   private readonly destroyRef = inject(DestroyRef);
+
+  /** Inscrits d'une ligne campagne → liste Utilisateurs filtrée sur ce triplet exact (#625). */
+  protected readonly utmParams = acquisitionQueryParams;
 
   protected readonly data = signal<AcquisitionData | null>(null);
   protected readonly error = signal<string | null>(null);

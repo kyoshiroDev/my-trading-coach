@@ -12,7 +12,7 @@ function makeData(over: {
     identity: {
       id: 'u1', name: 'KHARN', email: 'k@test.com',
       plan: over.plan ?? 'FREE', role: 'USER',
-      subscriptionStatus: null, ambassadorRefCode: null,
+      subscriptionStatus: null, ambassadorRefCode: null, acquisition: { source: null, medium: null, campaign: null },
       trialEndsAt: null, offeredPremium: false, isDemo: false,
       createdAt: '2026-06-01T00:00:00.000Z', lastActivityAt: null,
     },

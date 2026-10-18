@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -11,6 +11,8 @@ export interface AdminUser {
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
+  /** UTM d'inscription (#625), null = non renseigné. */
+  acquisitionSource?: string | null; acquisitionMedium?: string | null; acquisitionCampaign?: string | null;
   /** Abonnés Stripe seulement (#525) : place fondateur et code partenaire, pour le montant réel. */
   founderSeat?: { number: number; status: FounderSeatStatus } | null;
   partnerRedemption?: {
@@ -257,9 +259,14 @@ export class AdminApi {
   private readonly adminBase = `${environment.apiUrl}/admin`;
   private readonly usersBase = `${this.adminBase}/users`;
 
-  list(page = 1, limit = 20, search?: string) {
+  /** `utm` : inscrits d'une campagne (#625), champ absent = ignoré, `UTM_NONE` = non renseigné. */
+  list(page = 1, limit = 20, search?: string, utm: Partial<AcquisitionUtm> = {}) {
     let params = new HttpParams().set('page', page).set('limit', limit);
     if (search) params = params.set('search', search);
+    for (const key of ['source', 'medium', 'campaign'] as const) {
+      const v = utm[key];
+      if (v) params = params.set(key, v);
+    }
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
   update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
