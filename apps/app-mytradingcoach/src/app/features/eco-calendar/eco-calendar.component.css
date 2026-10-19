@@ -279,11 +279,15 @@ table.cal { width: 100%; border-collapse: collapse; font-size: 13px; }
    Ma sélection (1/3) écrasait le tableau, coupé à la colonne IA, noms d'annonce sur 3 lignes (#634). */
 @media (max-width: 1440px) {
   :host, .eco-page { display: block; min-height: 0; }
-  .eco-layout { grid-template-columns: 1fr; flex: none; overflow: visible; }
-  .eco-selection-col { order: -1; margin-bottom: 10px; }
+  /* minmax(0, …) et min-width: 0 : une annonce épinglée (date, nom, badge, ✕) imposait sa largeur
+     minimale à la colonne et la page débordait à 320 px (#642). */
+  .eco-layout { grid-template-columns: minmax(0, 1fr); flex: none; overflow: visible; }
+  .eco-selection-col { order: -1; margin-bottom: 10px; min-width: 0; }
   .eco-table-wrap, .eco-selection-body { flex: none; overflow-y: visible; }
   .eco-selection-body { max-height: 260px; overflow-y: auto; }
-  .eco-sess-tabs { overflow-x: auto; flex-wrap: nowrap; }
+  /* Défilement au doigt sans barre visible : elle s'affichait en bleu sous les onglets (#642). */
+  .eco-sess-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .eco-sess-tabs::-webkit-scrollbar { display: none; }
 }
 
 /* Mobile : le tableau devient une liste compacte, une annonce par ligne de 2 niveaux */
