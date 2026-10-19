@@ -45,7 +45,7 @@ src/app/
 ├── features/
 │   ├── dashboard/          dashboard.component.ts + .html + .css (état, cadre, états vides)
 │   │   ├── dashboard-charts.util.ts   ← calculs purs des viz (sparklines, donuts, P&L, coach)
-│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis · equity-chart ·
+│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis ·
 │   │   │                                top-assets · pl-bars · coach-feedback · donut-chart ·
 │   │   │                                recent-trades-table
 │   │   └── components/
@@ -372,8 +372,9 @@ de l'onboarding et de la page Comptes, validation API), `formatMoney(value, curr
 l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
 commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
 
-**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
-drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+**Courbe d'équité / drawdown** : composant partagé `mtc-perf-chart` (dashboard + analytics, style
+dans `design.md`) → `ChartService` ; séries dans `chart-series.util.ts`, qui préfixe un point
+« Départ » : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
 envoyées à l'API sont des horodatages ISO complets.
 
 **Capital, courbe et drawdown : une seule définition** (`core/services/equity-period.util.ts`) :

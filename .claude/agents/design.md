@@ -199,6 +199,40 @@ de semaine cliquables du journal) posée **après le libellé** d'une métrique 
 - Le contenu remet `text-transform:none` + `letter-spacing:normal` (les libellés parents sont souvent en majuscules espacées).
 - Bords : `class="align-end"` (métrique la plus à droite) / `align-start` (la plus à gauche) sur `<mtc-info-tooltip>` — géré via `:host(.align-end)` — pour éviter le débordement horizontal.
 
+### Courbes d'équité et de drawdown (`mtc-perf-chart`)
+
+Un seul composant partagé `shared/components/perf-chart` (Chart.js via `ChartService`, séries et
+formats purs dans `core/services/chart-series.util.ts`) : dashboard (équité) et Analytics (équité +
+drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « glow » du dashboard est retiré).
+
+- **Carte** : `--bg-card`, `--border`, `--radius-card`, padding 20 px (24 px ≥ 768 px). Hauteur du
+  tracé 210 px mobile, 280 px ≥ 768 px.
+- **En-tête** : icône Lucide 14 px (`ChartSpline` équité, `TrendingDown` drawdown) + titre JetBrains
+  Mono 11–12 px majuscules `.08em` `--text-2` ; à droite la valeur clé mono 14–15 px `tabular-nums`
+  (équité : P&L de la période vert / rouge ; drawdown : actuel en rouge, « (max …) » si la carte
+  fait ≥ 560 px). Onglets de période projetés en `[chartControls]`, info-bulle en `[chartInfo]`.
+- **Ligne** 1,5 px, `cubicInterpolationMode: 'monotone'` (ne dépasse pas les vrais extrêmes),
+  **aucun point** ; pastille seulement au survol. **Remplissage** : dégradé de la couleur de la ligne
+  18 % → 0 % (équité : de la ligne vers le bas ; drawdown : 0 % sur la ligne de 0 → 18 % vers la courbe).
+- **Couleurs** : équité verte si la période finit ≥ capital de départ, rouge sinon ; drawdown
+  toujours `--red` ; limite de plan `--yellow`. Lues dans les tokens au moment du tracé (un canvas ne
+  lit pas `var()`), jamais en dur.
+- **Grille** `--chart-grid` (rgba blanc 4 %) horizontale et verticale, sans bordure d'axe ni
+  graduations ; ligne de 0 du drawdown en `--chart-zero` (12 %).
+- **Axes** : JetBrains Mono 10 px (carte < 560 px) / 11 px, `--text-3`. Montants compacts
+  `compactMoney` (`$135k`, `-$2.4k`, `$1.2M`, devise du compte), dates `06/01/25`, ou `janv. 25`
+  au-delà de ~6 mois. Repères : 4 + 4 si carte < 560 px, sinon 7 dates / 6 montants, sans rotation.
+- **Échelle** : équité `grace: '7%'` (ne part pas de 0) ; drawdown `max: 0`, bas = 108 % du plus
+  profond entre le max et la limite du plan.
+- **Drawdown** : pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas ; ligne
+  pointillée `Limite du plan -$2,500` (ambre, à droite) **seulement** si le compte sélectionné est relié
+  à un plan prop firm dont le montant est publié (`metrics.drawdown.source === 'plan'`).
+- **Survol / toucher** : crosshair vertical fin + pastille + infobulle `--bg-3` (date, valeur,
+  « Jour ±$x ») dessinée dans le canvas → ne sort jamais de l'écran ; `touch-action: pan-y`.
+- **Animation** : découverte gauche → droite 380 ms quand les données changent, aucune si
+  `prefers-reduced-motion` ou simple redimensionnement.
+- **Accessibilité** : canvas `role="img"` + `aria-label` (départ, actuel, max pour le drawdown, période).
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css
