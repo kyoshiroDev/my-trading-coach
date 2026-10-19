@@ -107,6 +107,7 @@ import { GA_ID } from '../config';
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
           <tr><td>Communications marketing</td><td>Consentement (Art. 6.1.a RGPD)</td></tr>
+          <tr><td>E-mails d'aide à la prise en main</td><td>Intérêt légitime (Art. 6.1.f RGPD), désinscription dans chaque e-mail</td></tr>
           <tr><td>Sécurité et prévention fraude</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
         </tbody>
       </table>
@@ -135,7 +136,7 @@ import { GA_ID } from '../config';
         <li><strong>Anthropic (USA)</strong> : traitement IA des insights. Base : clauses contractuelles types (CCT). Données transmises : trades anonymisés pour analyse.</li>
         <li><strong>Stripe (USA)</strong> : gestion des paiements. Base : CCT. Certifié PCI-DSS.</li>
         <li><strong>OVH (France)</strong> : hébergement de l'API, de la base de données, de l'application et du site vitrine. Sous-traitant EU, RGPD compliant.</li>
-        <li><strong>Resend (USA)</strong> : envoi d'emails transactionnels. Base : CCT.</li>
+        <li><strong>Resend (USA)</strong> : envoi des e-mails (liés au compte, aide à la prise en main et, avec votre consentement, offres et nouveautés). Base : CCT.</li>
         {GA_ID && <li><strong>Google (USA)</strong> : mesure d'audience du site vitrine (Google Analytics 4), uniquement après votre consentement. Base : CCT et Data Privacy Framework.</li>}
       </ul>
       <p>
@@ -152,7 +153,7 @@ import { GA_ID } from '../config';
         <li><strong>Droit de rectification</strong> : corriger des données inexactes</li>
         <li><strong>Droit à l'effacement</strong> : supprimer votre compte et vos données</li>
         <li><strong>Droit à la portabilité</strong> : recevoir vos données en format CSV</li>
-        <li><strong>Droit d'opposition</strong> : vous opposer au traitement marketing</li>
+        <li><strong>Droit d'opposition</strong> : vous opposer au traitement marketing et aux e-mails d'aide à la prise en main (lien de désinscription dans chaque e-mail)</li>
         <li><strong>Droit à la limitation</strong> : restreindre certains traitements</li>
       </ul>
       <p>
