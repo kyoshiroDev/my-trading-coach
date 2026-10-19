@@ -7,6 +7,8 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg-2);
+  /* Texte de phrase, pas libellé de champ : police du corps (les label sont en mono). */
+  font-family: var(--font-body);
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-2);
