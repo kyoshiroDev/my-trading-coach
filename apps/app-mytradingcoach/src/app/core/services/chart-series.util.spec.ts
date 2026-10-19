@@ -6,11 +6,22 @@ import {
   drawdownSeries,
   equitySeries,
   maxDrawdownIndex,
+  planDrawdownLimit,
+  planObjectiveLine,
   spanDays,
   tickDate,
 } from './chart-series.util';
+import type { TradingAccount } from '../api/accounts.api';
 
 const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
+
+/** Compte minimal : seuls les champs lus par les repères du plan. */
+const account = (metrics: Record<string, unknown>, propFirmPlanId: string | null = 'apex-eod-50k') =>
+  ({ id: 'a', propFirmPlanId, metrics: { objective: null, progress: null, drawdown: null, drawdownUnconfirmed: false, ...metrics } }) as unknown as TradingAccount;
+const planProgress = (required: number, current: number, kind = 'objective') => ({
+  kind,
+  requirements: [{ key: 'profit', met: current >= required, current, required, unit: 'usd' }],
+});
 
 describe('compactMoney (libellés d\'axes)', () => {
   it('format compact lisible, jamais « 135000$ »', () => {
@@ -94,5 +105,38 @@ describe('chartAriaLabel', () => {
 
   it('sans données', () => {
     expect(chartAriaLabel('equity', equitySeries([], 0), 'USD')).toContain('aucune donnée');
+  });
+});
+
+describe('repères du plan', () => {
+  it('objectif du plan sur « Tout » : niveau = objectif', () => {
+    const acc = account({ progress: planProgress(3_000, 1_200) });
+    expect(planObjectiveLine(acc, [pt('2025-01-06', 1_200)])).toEqual({ pnl: 3_000, amount: 3_000, source: 'plan' });
+  });
+
+  it('période partielle : le gain fait avant la période est retiré du niveau', () => {
+    // Gain total 1 200, dont 400 sur la période → 800 faits avant : objectif atteint à +2 200 sur la courbe.
+    const acc = account({ progress: planProgress(3_000, 1_200) });
+    expect(planObjectiveLine(acc, [pt('2025-01-06', 400)])?.pnl).toBe(2_200);
+  });
+
+  it('sans plan : objectif saisi sur le compte', () => {
+    const acc = account({ objective: { current: 500, target: 2_000, pct: 0.25 } }, null);
+    expect(planObjectiveLine(acc, [pt('2025-01-06', 500)])).toEqual({ pnl: 2_000, amount: 2_000, source: 'manual' });
+  });
+
+  it('aucun objectif : « Tous les comptes », funded en cycle de payout, pas de données', () => {
+    expect(planObjectiveLine(null, [pt('2025-01-06', 100)])).toBeNull();
+    expect(planObjectiveLine(account({ progress: planProgress(1_000, 200, 'payout') }), [pt('2025-01-06', 200)])).toBeNull();
+    expect(planObjectiveLine(account({ progress: planProgress(3_000, 0) }), [])).toBeNull();
+  });
+
+  it('limite de drawdown seulement pour un plan relié au montant publié', () => {
+    const dd = { maxDrawdown: 2_500, source: 'plan' };
+    expect(planDrawdownLimit(account({ drawdown: dd }))).toBe(2_500);
+    expect(planDrawdownLimit(account({ drawdown: { ...dd, source: 'manual' } }))).toBeNull();
+    expect(planDrawdownLimit(account({ drawdown: dd, drawdownUnconfirmed: true }))).toBeNull();
+    expect(planDrawdownLimit(account({ drawdown: dd }, null))).toBeNull();
+    expect(planDrawdownLimit(null)).toBeNull();
   });
 });

@@ -25,6 +25,7 @@ import {
   drawdownSeries,
   equitySeries,
   maxDrawdownIndex,
+  ObjectiveLine,
 } from '../../../core/services/chart-series.util';
 
 /** Sous cette largeur de carte : repères mobiles (4 par axe) et max du drawdown masqué. */
@@ -50,6 +51,8 @@ export class PerfChartComponent {
   readonly limit = input<number | null>(null);
   /** Drawdown : historique avant la période (sommet déjà atteint, règle EOD). */
   readonly before = input<PeriodBefore | null>(null);
+  /** Équité : objectif de gain du plan / du compte (`planObjectiveLine`) ; null → pas de ligne. */
+  readonly objective = input<ObjectiveLine | null>(null);
   readonly emptyMessage = input('Aucun trade sur cette période');
   readonly loading = input(false);
 
@@ -105,6 +108,7 @@ export class PerfChartComponent {
         narrow: this.narrow(),
         limit: this.limit(),
         before: this.before(),
+        objective: this.objective(),
         // Tracé animé quand les données changent (pas au simple redimensionnement).
         animate: points !== this.lastPoints && !this.reducedMotion(),
       };

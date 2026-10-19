@@ -23,6 +23,7 @@ import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
 import { anchoredDrawdown, viewBalance } from '../../core/services/equity-period.util';
+import { planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
@@ -311,6 +312,10 @@ export class DashboardComponent {
   );
   protected readonly equityCurve = computed(
     () => this.equityCurveResource.value()?.data?.points ?? [],
+  );
+  /** Objectif de gain du compte sélectionné, tracé sur la courbe d'équité. */
+  protected readonly equityObjective = computed(() =>
+    planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   /** P&L cumulé le long de la courbe : source de la courbe d'équité et des sparklines. */
   protected readonly eqSeries = computed(() => this.equityCurve().map((p) => p.cumulativePnl));

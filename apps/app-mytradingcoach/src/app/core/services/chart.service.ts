@@ -21,6 +21,7 @@ import {
   drawdownSeries,
   equitySeries,
   maxDrawdownIndex,
+  ObjectiveLine,
   spanDays,
   tickDate,
   tooltipDate,
@@ -35,6 +36,8 @@ export interface PerfChartOptions {
   limit?: number | null;
   /** Drawdown : historique avant la période (`before` de l'API) → part du sommet déjà atteint. */
   before?: PeriodBefore | null;
+  /** Équité : objectif de gain (repère de la période) → ligne pointillée verte, sinon rien. */
+  objective?: ObjectiveLine | null;
 }
 
 /** Couleurs lues dans les tokens de `theme.css` (un canvas ne lit pas `var(--x)`). */
@@ -110,9 +113,15 @@ export class ChartService {
     // Un seul jour suffit : la courbe part du capital de base (point « Départ »).
     if (points.length < 1) return null;
     const series = equitySeries(points, startingCapital);
-    const up = series.values[series.values.length - 1] >= series.values[0];
-    // Marge au-dessus / en dessous des extrêmes : l'axe ne part pas de 0.
-    return this.build(canvas, series, opts, (p) => (up ? p.green : p.red), { grace: '7%' });
+    const base = series.values[0];
+    const up = series.values[series.values.length - 1] >= base;
+    const goal = opts.objective ? { value: base + opts.objective.pnl, line: opts.objective } : null;
+    // Marge au-dessus / en dessous des extrêmes : l'axe ne part pas de 0. L'objectif reste visible.
+    const yRange = {
+      grace: '7%',
+      ...(goal && goal.value > Math.max(...series.values) ? { suggestedMax: goal.value } : {}),
+    };
+    return this.build(canvas, series, opts, (p) => (up ? p.green : p.red), yRange, null, goal);
   }
 
   buildDrawdownChart(
@@ -140,8 +149,9 @@ export class ChartService {
     series: ChartSeries,
     opts: PerfChartOptions,
     lineColor: (p: Palette) => string,
-    yRange: { grace?: string; suggestedMin?: number; max?: number },
+    yRange: { grace?: string; suggestedMin?: number; suggestedMax?: number; max?: number },
     limit: number | null = null,
+    goal: { value: number; line: ObjectiveLine } | null = null,
   ): Chart | null {
     // jsdom / navigateur sans canvas 2D : rien à dessiner.
     if (!canvas.getContext('2d')) return null;
@@ -207,12 +217,31 @@ export class ChartService {
     const marks: Plugin<'line'> = {
       id: 'mtcMarks',
       afterDatasetsDraw: (chart) => {
-        if (!isDrawdown || progress() < 1) return;
+        if (progress() < 1) return;
         const ctx = chart.ctx;
         const { left, right, top, bottom } = chart.chartArea;
         const y = chart.scales['y'];
         ctx.save();
         ctx.font = `${fontSize}px ${MONO}`;
+
+        if (goal) {
+          const gy = Math.round(y.getPixelForValue(goal.value)) + 0.5;
+          ctx.strokeStyle = alpha(p.green, 0.7);
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(left, gy);
+          ctx.lineTo(right, gy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = p.green;
+          ctx.textAlign = 'right';
+          // Sous la ligne si elle colle au haut de la zone, au-dessus sinon.
+          const below = gy - fontSize - 4 < top;
+          ctx.textBaseline = below ? 'top' : 'bottom';
+          const what = goal.line.source === 'plan' ? 'Objectif du plan' : 'Objectif';
+          ctx.fillText(`${what} ${this.money(goal.line.amount, true)}`, right, below ? gy + 4 : gy - 4);
+        }
 
         if (limit) {
           const ly = Math.round(y.getPixelForValue(-limit)) + 0.5;

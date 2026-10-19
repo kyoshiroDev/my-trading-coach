@@ -227,6 +227,11 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
 - **Drawdown** : pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas ; ligne
   pointillée `Limite du plan -$2,500` (ambre, à droite) **seulement** si le compte sélectionné est relié
   à un plan prop firm dont le montant est publié (`metrics.drawdown.source === 'plan'`).
+- **Équité** : ligne pointillée verte `Objectif du plan +$3,000` (ou `Objectif` pour un objectif
+  saisi sans plan) si le compte sélectionné en a un (`planObjectiveLine` : exigence `profit` de la
+  progression du plan, consistency comprise, sinon `metrics.objective`). L'objectif se compte depuis
+  le début du compte : la ligne est placée en retirant le gain fait avant la période affichée.
+  Rien en « Tous les comptes » ni pour un funded en cycle de payout. L'échelle s'étend pour la montrer.
 - **Survol / toucher** : crosshair vertical fin + pastille + infobulle `--bg-3` (date, valeur,
   « Jour ±$x ») dessinée dans le canvas → ne sort jamais de l'écran ; `touch-action: pan-y`.
 - **Animation** : découverte gauche → droite 380 ms quand les données changent, aucune si

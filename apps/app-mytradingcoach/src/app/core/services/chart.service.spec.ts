@@ -98,6 +98,22 @@ describe('ChartService — style des courbes', () => {
     expect(configs[0].plugins?.map((p) => p.id)).toContain('mtcMarks');
   });
 
+  it('équité avec objectif : échelle étendue jusqu’à l’objectif', () => {
+    const { service, configs, canvas } = setup();
+    service.buildEquityChart(canvas, [pt('2025-01-06', 500)], 50_000, {
+      narrow: false,
+      animate: false,
+      objective: { pnl: 3_000, amount: 3_000, source: 'plan' },
+    });
+    expect(configs[0].options?.scales?.['y']).toMatchObject({ grace: '7%', suggestedMax: 53_000 });
+  });
+
+  it('équité sans objectif : pas d’extension d’échelle', () => {
+    const { service, configs, canvas } = setup();
+    service.buildEquityChart(canvas, [pt('2025-01-06', 500)], 50_000);
+    expect(configs[0].options?.scales?.['y']).not.toHaveProperty('suggestedMax');
+  });
+
   it('infobulle : date, valeur, variation du jour', () => {
     const { service, configs, canvas } = setup();
     service.buildEquityChart(canvas, [pt('2025-01-06T12:00:00', 300), pt('2025-01-07T12:00:00', 250)], 10_000);

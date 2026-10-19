@@ -1,6 +1,7 @@
 import { formatMoney } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
 import { anchoredDrawdown, NO_HISTORY } from './equity-period.util';
+import { TradingAccount } from '../api/accounts.api';
 
 /**
  * Séries et libellés des courbes d'équité / drawdown (fonctions pures, testées dans
@@ -118,4 +119,52 @@ export function chartAriaLabel(
   const maxIdx = maxDrawdownIndex(series.values);
   const max = maxIdx === null ? 0 : series.values[maxIdx];
   return `Drawdown ${period} : départ ${fmt(0)}, actuel ${fmt(last)}, max ${fmt(max)}.`;
+}
+
+/** Objectif de gain tracé sur la courbe d'équité. */
+export interface ObjectiveLine {
+  /** Niveau en P&L cumulé DE LA PÉRIODE (repère de la courbe) où l'objectif est atteint. */
+  pnl: number;
+  /** Montant affiché : l'objectif lui-même (depuis le début du compte). */
+  amount: number;
+  /** `plan` : règle du plan prop firm relié ; `manual` : objectif saisi sur le compte. */
+  source: 'plan' | 'manual';
+}
+
+/**
+ * Objectif de gain du compte sélectionné, ramené au repère de la courbe. L'objectif se compte
+ * depuis le solde de départ du compte, la courbe depuis le début de la période : on retire le gain
+ * déjà fait avant la période (gain total − gain de la période). Plan relié → exigence `profit` de
+ * la progression (objectif effectif, consistency comprise) ; sinon objectif saisi ; sinon null
+ * (« Tous les comptes », compte funded en cycle de payout, aucun objectif).
+ */
+export function planObjectiveLine(
+  account: TradingAccount | null,
+  points: EquityPoint[],
+): ObjectiveLine | null {
+  if (!account || !points.length) return null;
+  const periodPnl = points[points.length - 1].cumulativePnl;
+  const m = account.metrics;
+  const req =
+    m.progress?.kind === 'objective'
+      ? m.progress.requirements.find((r) => r.key === 'profit' && r.unit === 'usd')
+      : undefined;
+  const target = req
+    ? { amount: req.required, current: req.current, source: 'plan' as const }
+    : m.objective && m.objective.target > 0
+      ? { amount: m.objective.target, current: m.objective.current, source: 'manual' as const }
+      : null;
+  if (!target || target.amount <= 0) return null;
+  const beforePeriod = target.current - periodPnl;
+  return { pnl: target.amount - beforePeriod, amount: target.amount, source: target.source };
+}
+
+/**
+ * Limite de drawdown du plan prop firm relié (montant positif). Null sans plan, en « Tous les
+ * comptes » ou si le plan ne publie pas de montant.
+ */
+export function planDrawdownLimit(account: TradingAccount | null): number | null {
+  const dd = account?.metrics?.drawdown;
+  if (!account?.propFirmPlanId || account.metrics.drawdownUnconfirmed || dd?.source !== 'plan') return null;
+  return dd.maxDrawdown > 0 ? dd.maxDrawdown : null;
 }

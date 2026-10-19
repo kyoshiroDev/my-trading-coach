@@ -31,6 +31,7 @@ import { PerfChartComponent } from '../../shared/components/perf-chart/perf-char
 import { periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
+import { planDrawdownLimit, planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
@@ -136,16 +137,11 @@ export class AnalyticsComponent {
     if (current !== null) return periodStartCapital(current, this.equityCurve());
     return this.userStore.startingCapital() + (this.equityData()?.before?.pnl ?? 0);
   });
-  /**
-   * Limite de drawdown du plan prop firm relié au compte sélectionné (ligne pointillée du
-   * graphique). Null sans plan, en « Tous les comptes » ou si le plan ne publie pas de montant.
-   */
-  protected readonly planDrawdownLimit = computed(() => {
-    const acc = this.selectedAccount.selected();
-    const dd = acc?.metrics?.drawdown;
-    if (!acc?.propFirmPlanId || acc.metrics.drawdownUnconfirmed || dd?.source !== 'plan') return null;
-    return dd.maxDrawdown > 0 ? dd.maxDrawdown : null;
-  });
+  /** Repères du plan relié au compte sélectionné : limite de drawdown, objectif de gain. */
+  protected readonly planDrawdownLimit = computed(() => planDrawdownLimit(this.selectedAccount.selected()));
+  protected readonly planObjective = computed(() =>
+    planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
+  );
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
   );
