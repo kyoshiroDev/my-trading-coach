@@ -1,3 +1,4 @@
+import { classifyTrade, netPnl, TradeOutcome } from '@mtc/shared';
 import { AnalyticsSummary, EmotionStat, SetupStat, TopAsset } from '../../core/api/analytics.api';
 import { Trade } from '../../core/stores/trades.store';
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
@@ -342,5 +343,24 @@ export function buildCoachInsights(
 
 // ── Historique des trades ────────────────────────────────────────────────────
 
-/** Ligne du tableau « historique » : P&L % sur le capital de base, `null` si capital inconnu. */
-export type DashboardTradeRow = Trade & { win: boolean; pct: number | null };
+/** Issue d'une ligne : classement partagé sur le net, `open` tant que le trade n'est pas clôturé. */
+export type TradeRowOutcome = TradeOutcome | 'open';
+
+/** Ligne du tableau « historique » : P&L % sur le capital de base, `null` si capital inconnu ou trade ouvert. */
+export type DashboardTradeRow = Trade & { outcome: TradeRowOutcome; pct: number | null };
+
+/**
+ * Lignes de l'historique sur le P&L NET (frais déduits), comme les KPIs et le calendrier. Un trade
+ * ouvert (pnl absent) n'est ni gagnant ni perdant : `open`, sans P&L % (#655).
+ */
+export function buildTradeRows(trades: readonly Trade[], baseCapital: number): DashboardTradeRow[] {
+  return trades.map((t) => {
+    const net = netPnl(t);
+    return {
+      ...t,
+      pnl: net,
+      outcome: net === null ? 'open' : classifyTrade(net),
+      pct: net !== null && baseCapital > 0 ? (net / baseCapital) * 100 : null,
+    };
+  });
+}

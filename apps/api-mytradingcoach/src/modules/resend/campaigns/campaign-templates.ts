@@ -252,7 +252,8 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'}, tu utilises MyTradingCoach activement. Va plus loin avec
-        le Coach IA, le Weekly Debrief automatique, les analytics avancés et l'import CSV.
+        les alertes avant ta limite de perte, l'anti-tilt en direct, le débrief de ta semaine par le
+        coach IA et les analyses avancées.
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
         1 mois offert · Carte requise · Annulable en un clic.
@@ -263,7 +264,7 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
 
   return {
     subject: '⚡ Passe à Premium · 1 mois offert',
-    html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.', ACCENT.brand, unsubUrl),
+    html: emailWrapper(content, 'Alertes avant ta limite, anti-tilt, débrief IA de ta semaine.', ACCENT.brand, unsubUrl),
   };
 }
 

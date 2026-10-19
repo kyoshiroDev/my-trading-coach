@@ -51,6 +51,7 @@ import {
   buildEmotionsDonut,
   buildEquityGlow,
   buildPlBuckets,
+  buildTradeRows,
   emotionShares,
   plGranularityFor,
   plTitleFor,
@@ -67,7 +68,6 @@ import { CoachFeedbackComponent } from './panels/coach-feedback/coach-feedback.c
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
 import { MoneyPipe } from '../../shared/pipes';
-import { netPnl } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
 /**
@@ -454,19 +454,9 @@ export class DashboardComponent {
    * P&L % = rendement sur le capital de base ; `null` si ce capital est
    * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
-  protected readonly tradeRows = computed<DashboardTradeRow[]>(() => {
-    const base = this.baseCapital();
-    return this.tradesStore.trades().slice(0, 8).map((t) => {
-      // P&L NET (frais déduits), comme les KPIs et le calendrier.
-      const net = netPnl(t);
-      return {
-        ...t,
-        pnl: net,
-        win: (net ?? 0) >= 0,
-        pct: base > 0 ? ((net ?? 0) / base) * 100 : null,
-      };
-    });
-  });
+  protected readonly tradeRows = computed<DashboardTradeRow[]>(() =>
+    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital()),
+  );
 
   goToJournal() { this.showTradeForm.set(true); }
 

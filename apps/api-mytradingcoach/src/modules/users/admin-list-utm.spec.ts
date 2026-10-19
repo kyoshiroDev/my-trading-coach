@@ -25,9 +25,9 @@ describe('UsersService.adminFindAll — filtre par campagne', () => {
   });
 
   it('triplet complet : égalité exacte sur les 3 champs, même filtre pour le total', async () => {
-    await service.adminFindAll(1, 20, undefined, { source: 'instagram', medium: 'dm', campaign: 'louis' });
+    await service.adminFindAll(1, 20, undefined, { source: 'instagram', medium: 'dm', campaign: 'exemple' });
     const expected = {
-      isDemo: false, acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'louis',
+      isDemo: false, acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'exemple',
     };
     expect(where()).toEqual(expected);
     expect(prisma.user.count).toHaveBeenCalledWith({ where: expected });
@@ -39,8 +39,8 @@ describe('UsersService.adminFindAll — filtre par campagne', () => {
   });
 
   it('se combine avec la recherche e-mail / nom', async () => {
-    await service.adminFindAll(1, 20, 'gmail', { campaign: 'louis' });
-    expect(where()).toMatchObject({ acquisitionCampaign: 'louis', OR: expect.any(Array) });
+    await service.adminFindAll(1, 20, 'gmail', { campaign: 'exemple' });
+    expect(where()).toMatchObject({ acquisitionCampaign: 'exemple', OR: expect.any(Array) });
   });
 });
 

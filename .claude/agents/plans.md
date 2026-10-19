@@ -55,9 +55,32 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 💬 **Chat coach IA**¹
 - 🏆 **Score trader /100** hebdomadaire
 - 📈 **Analytics avancés** (heatmap heure, equity/drawdown détaillé, by-setup)
-- 📄 **Export PDF** rapport mensuel
+- 📄 **PDF du débrief de la semaine** (aucun rapport mensuel n'existe)
 - 🌙 **Recap journalier email 17h30**
-- **Comptes illimités** + règles prop firm par compte · sync crypto
+- **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
+- 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
+  compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, ni e-mail ni push)
+
+### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
+
+Source UNIQUE des listes courtes : fenêtre des offres (app), cartes de tarifs de `/` et `/prop-firm`,
+e-mail de bienvenue Premium. Toute ligne = une fonction livrée ; toute ligne Premium = une fonction
+réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` seulement.
+- **Gratuit** : Synchro Tradovate automatique, en lecture seule · 1 compte avec les règles de sa prop
+  firm, suivi en direct pendant la séance (equity, marge avant le plancher, objectif ou payout) ·
+  Journal et trades illimités, historique complet · Préparation et débrief de chaque séance ·
+  Calendrier éco, news et contexte marché.
+- **Premium** : Alertes avant d'atteindre ta limite de perte, app ouverte pendant ta séance (compte
+  Tradovate connecté) · Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de
+  position après une perte, taille qui grossit, surtrading · Comptes illimités, chacun avec les
+  règles de sa prop firm · Débrief de ta semaine rédigé par le coach IA · Analyses avancées : par
+  setup, par heure, drawdown détaillé · Coach IA : insights, chat et récap du jour à 17 h 30.
+- **Fondateur** : les 6 lignes Premium + prix bloqué à vie + satisfait ou remboursé (`FOUNDER_REFUND_DAYS`).
+- La landing masque « Comptes illimités » tant que `FEATURES.multiAccounts` est éteint ; sur la home,
+  l'encart « comptes » des cartes le dit déjà, la liste ne le répète pas.
+- Bloc détaillé « Ce que Premium ajoute au Gratuit » (home, `Pricing.astro`) : plus long, mais même
+  règle (livré ET réservé au Premium). Jamais « sync crypto » (non livrée), jamais « rapport PDF
+  mensuel », jamais le calendrier éco ni l'import CSV d'un broker connu (gratuits) présentés comme Premium.
 
 ¹ **Chat coach** : usage réel mesuré ≈ **0 %** (admin, 30 j). NE PAS en faire l'ancre Premium. L'ancre Premium réelle = Insights + Weekly Debrief + analytics avancés + comptes illimités.
 
@@ -215,7 +238,7 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).
 - **Suivi prop firm de la session live** (#369) : **FREE**, aucun guard — mêmes données que « Mes comptes » (on ne verrouille pas la vue de ses propres données), sur le compte de la session.
 - **Perte journalière + alertes « avant la casse »** (#370) : **PREMIUM**, gating CÔTÉ API aux deux points : `GET /accounts` ne calcule `metrics.dailyLoss` que si `isPremiumAccess` (sinon `null`), et `PropAlertsService.check` sort sans rien envoyer hors Premium / démo. Front : bloc « Perte du jour » si `dailyLoss` présent, teaser PREMIUM (modale des offres) pour un compte gratuit relié à un plan. Coût IA nul. Consistency (gain max du jour), objectif atteint et payout possible : aussi en alerte (#370, 2e partie), même gating. Anti-tilt en direct (#371 : revenge, taille après une perte, surtrading) : PREMIUM, même gating côté API (`TiltAlertsService`). Récap 17h30 et Weekly Debrief nourris par les séances suivies en direct (#373 / #374, `PropRiskContextService`) : PREMIUM comme ces deux IA (classe « BORNÉ », prompt plus riche, aucun appel en plus).
-- **Synchro Tradovate par API** (PROMPT-207) : **FREE**, aucun guard — même règle que l'import CSV d'un broker connu (socle « import »), zéro coût IA. Décision Greg 2026-09-11. Le FREE reste borné à 1 compte, donc à 1 connexion. Ne pas la confondre avec « sync crypto » (ligne PREMIUM ci-dessus, non livrée) : si une synchro Binance/Bybit arrive, trancher explicitement son palier et mettre à jour cette ligne.
+- **Synchro Tradovate par API** (PROMPT-207) : **FREE**, aucun guard — même règle que l'import CSV d'un broker connu (socle « import »), zéro coût IA. Décision Greg 2026-09-11. Le FREE reste borné à 1 compte, donc à 1 connexion. Aucune « sync crypto » n'existe (retirée de la grille et des listes le 2026-10-19) : si une synchro Binance/Bybit arrive, trancher explicitement son palier et l'ajouter à `PLAN_BENEFITS`.
 - **Front** : `isPremium` = PREMIUM / trial / admin / beta (l'alias `isStarterOrAbove` a été supprimé).
 
 ## Essai 30 jours (mensuel uniquement)

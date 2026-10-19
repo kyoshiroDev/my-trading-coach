@@ -5,34 +5,31 @@ import {
   FOUNDER_OFFER,
   FOUNDER_REFUND_DAYS,
   PREMIUM_ANNUAL_SAVINGS_EUR,
+  PLAN_BENEFITS,
   PREMIUM_PRICE_EUR,
 } from '@mtc/shared';
 
-// Ce que Premium ajoute au Gratuit : UNE liste, rendue deux fois (bloc « Ce que Premium
-// ajoute » au-dessus des prix, et carte Premium). `key` = ancres réelles du Premium
-// (cf. plans.md : Insights, Weekly Debrief, analytics avancés, comptes illimités ; le chat
-// coach n'en fait pas partie). Retour de Val : le menu « Tarifs » arrivait sur les prix sans
-// dire ce qui change, il fallait comparer deux listes en scrollant.
-interface PremiumPlus { text: string; key?: string }
-const premiumPlus: PremiumPlus[] = [
-  { text: '✨ IA Insights : analyse de tes patterns', key: 'L’IA analyse tes patterns : ce qui te fait gagner, ce qui te coûte' },
-  { text: '📋 Weekly Debrief automatique', key: 'Un débrief IA de ta semaine, chaque dimanche, sans rien faire' },
-  { text: 'Analytics avancés : heatmap, equity curve', key: 'Analytics avancés : par setup, par heure, heatmap, equity curve' },
-  { text: '🚨 Alertes prop firm en direct (Tradovate) : drawdown, perte du jour, consistency, objectif atteint, payout possible', key: 'Alertes prop firm et anti-tilt en direct pendant ta séance, avec le son (Tradovate)' },
-  { text: '🔔 Alertes sonores pendant ta séance' },
-  { text: '🧘 Anti-tilt en séance : revenge, taille, surtrading' },
-  { text: '💬 Chat coach IA personnalisé' },
-  { text: '🏆 Score trader /100 hebdomadaire' },
-  { text: '📄 Export PDF rapport mensuel' },
-  { text: '📥 Import IA des autres brokers : ton fichier lu tel quel' },
-  { text: '🌙 Recap 17h30 et Weekly Debrief nourris par tes séances suivies en direct' },
+// Cartes Gratuit / Fondateur / Premium : listes courtes PARTAGÉES avec l'app et les e-mails
+// (PLAN_BENEFITS, @mtc/shared). Comptes illimités : déjà dans l'encart « comptes » des cartes
+// quand le multi-comptes est publié, donc jamais répété dans la liste.
+const freeBenefits = PLAN_BENEFITS.free.map((b) => b.text);
+const premiumBenefits = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts').map((b) => b.text);
+// Bloc « Ce que Premium ajoute au Gratuit » : le détail. Chaque ligne = une fonction LIVRÉE et
+// RÉSERVÉE au Premium (gating vérifié le 2026-10-19, cf. plans.md). Alertes et anti-tilt : synchro
+// Tradovate en direct, donc app ouverte et compte Tradovate connecté.
+const premiumDetails = [
+  ...(FEATURES.multiAccounts ? ['Comptes de trading illimités, chacun avec les règles de sa prop firm'] : []),
+  'Alertes prop firm en direct, app ouverte (compte Tradovate connecté) : perte du jour, drawdown, consistency, objectif atteint, payout possible',
+  'Alertes sonores et notifications pendant ta séance',
+  'Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
+  'Débrief de ta semaine rédigé par le coach IA, chaque dimanche où tu as tradé, en PDF',
+  'IA Insights : l’analyse de tes patterns, à la demande',
+  'Chat avec le coach IA',
+  'Récap du jour par e-mail à 17 h 30, nourri par tes séances suivies en direct',
+  'Analyses avancées : par setup, par heure (heatmap), drawdown détaillé',
+  'Score trader /100 sur 5 axes',
+  'Import IA des brokers non reconnus : ton fichier lu tel quel',
 ];
-// Comptes illimités : déjà dans l'encart « comptes » de la carte, donc seulement dans le bloc.
-const premiumKeys = [
-  ...(FEATURES.multiAccounts ? ['Comptes de trading illimités, chacun avec ses règles prop firm'] : []),
-  ...premiumPlus.flatMap((p) => (p.key ? [p.key] : [])),
-];
-
 // Offre fondateur ouverte AU BUILD (src/lib/founder-build.ts) : carte et note rendues dans le HTML,
 // place réservée, plus aucun saut de mise en page quand l'API répond. Fermée au build : gabarits
 // <template> inertes comme avant (insérés si l'offre ouvre ensuite). Même balisage dans les deux
@@ -51,7 +48,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     <div class="plus-box reveal" aria-labelledby="plus-title">
       <div id="plus-title" class="plus-title">Ce que Premium ajoute au Gratuit</div>
       <ul class="plus-list">
-        {premiumKeys.map((k) => <li>{k}</li>)}
+        {premiumDetails.map((k) => <li>{k}</li>)}
       </ul>
     </div>
     <div class="price-grid reveal delay-1">
@@ -72,17 +69,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
         )}
         <div class="price-divider"></div>
         <ul class="price-feats">
-          <li>Trades illimités</li>
-          <li>Journal complet : émotions, setup, notes</li>
-          <li>🌅 Pré-session : humeur &amp; objectifs du jour</li>
-          <li>⚡ Session live : trade rapide &amp; suivi</li>
-          <li>📈 Suivi prop firm en direct dans la session</li>
-          <li>🌙 Débrief de session : P&amp;L, émotion, journal</li>
-          <li>📅 Calendrier éco IA : analyse bull/bear</li>
-          <li>📰 News live &amp; contexte marché (DXY, taux US, indices)</li>
-          <li>Stats de base : win rate, P&amp;L · Historique illimité</li>
-          <li>🔗 Synchro Tradovate automatique (lecture seule) · Import CSV Tradovate, Binance, Bybit, MT4/5, IBKR, MEXC</li>
-          <li>💰 Solde broker, objectif &amp; prochain payout</li>
+          {freeBenefits.map((f) => <li>{f}</li>)}
         </ul>
         <a href={`${APP_URL}/register`} class="price-cta ghost" data-cta="free" data-ga-event="cta_signup" data-ga-place="pricing-free">Commencer gratuitement</a>
       </div>
@@ -121,7 +108,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
         <div class="price-divider"></div>
         <div class="price-plus-lead">Tout Premium <em>inclus :</em></div>
         <ul class="price-feats">
-          {premiumPlus.map((p) => <li>{p.text}</li>)}
+          {premiumBenefits.map((f) => <li>{f}</li>)}
         </ul>
         <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="price-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pricing">
           <span class="cta-main">Devenir fondateur →</span>
@@ -149,7 +136,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
         <div class="price-divider"></div>
         <div class="price-plus-lead">Tout le Gratuit, <em>plus :</em></div>
         <ul class="price-feats">
-          {premiumPlus.map((p) => <li>{p.text}</li>)}
+          {premiumBenefits.map((f) => <li>{f}</li>)}
         </ul>
         <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim" data-cta="premium" data-ga-event="cta_trial" data-ga-place="pricing">
           <span class="cta-main">Essayer Premium · 1 mois offert →</span>

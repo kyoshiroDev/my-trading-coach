@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { formatMoney } from '@mtc/shared';
+import { PLAN_BENEFITS, formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -379,14 +379,8 @@ export function welcomePremiumTemplate(params: {
 }): { subject: string; html: string } {
   const { userName, isTrial, appUrl } = params;
 
-  const features = [
-    'Trades illimités',
-    'Analytics avancés : heatmap, equity curve, drawdown',
-    'Analyse IA de chaque session + phrase coaching',
-    'Calendrier économique filtré pour tes actifs',
-    'Weekly Debrief IA automatique chaque dimanche',
-    'Score trader /100 · Export PDF',
-  ];
+  // Ce que Premium ajoute : liste partagée avec l'app et la landing (PLAN_BENEFITS, @mtc/shared).
+  const features = PLAN_BENEFITS.premium.map((b) => b.text);
 
   const content = `
     ${card(`
