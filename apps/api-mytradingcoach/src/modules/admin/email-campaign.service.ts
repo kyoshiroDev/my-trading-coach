@@ -5,9 +5,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EmailDispatchService } from '../resend/email-dispatch.service';
 import {
   CAMPAIGNS_BY_KEY,
+  CampaignContextMap,
+  CampaignLoadDeps,
   EmailCampaign,
 } from '../resend/campaigns/campaign-registry';
-import { announcementTemplate, type CampaignContent } from '../resend/campaigns/campaign-templates';
+import {
+  announcementTemplate,
+  type CampaignBuildCtx,
+  type CampaignContent,
+} from '../resend/campaigns/campaign-templates';
 import { renderEmailMarkdown } from '@mtc/shared';
 import { ResendService } from '../resend/resend.service';
 import { FounderOfferService } from '../founder-offer/founder-offer.service';
@@ -22,10 +28,21 @@ const TEST_FIRST_NAME = 'Alex';
 const REQUIRES_TEST = new Set<CampaignType>(['founder_launch']);
 const testKey = (type: CampaignType) => `campaign-test:${type}`;
 const TEST_TTL_SECONDS = 7 * 24 * 3600;
+/** Bilan d'exemple (aperçu / test de first_week_recap) : aucune donnée réelle d'un utilisateur. */
+const SAMPLE_FIRST_WEEK = { trades: 12, days: 4, pnl: '+$340.00' };
+/** Id fictif passé aux `loadContext` pour l'aperçu : seules les données communes reviennent. */
+const SAMPLE_ID = '__apercu__';
+/** Envoi manuel : données chargées par pages, comme le cron. */
+const SEND_PAGE_SIZE = 500;
 
 // Types exposés à l'admin (compat front). Chacun pointe vers une campagne du
 // registre : source unique des segments et des templates.
 export type CampaignType =
+  | 'connect_tradovate'
+  | 'prop_firm_rules'
+  | 'first_week_recap'
+  | 'founder_followup'
+  | 'first_trade_nudge'
   | 'discord_invite'
   | 'premium_upsell'
   | 'reengagement'
@@ -36,6 +53,11 @@ export type CampaignType =
 
 // Mapping type admin → clé du registre.
 const TYPE_TO_KEY: Record<CampaignType, string> = {
+  connect_tradovate: 'connect_tradovate',
+  prop_firm_rules: 'prop_firm_rules',
+  first_week_recap: 'first_week_recap',
+  founder_followup: 'founder_followup',
+  first_trade_nudge: 'first_trade_nudge',
   discord_invite: 'discord_invite',
   premium_upsell: 'premium_upsell',
   reengagement: 'reengagement',
@@ -54,6 +76,11 @@ interface CampaignPresentation {
 
 // Présentation (icône/texte) propre à l'admin, hors logique métier (registre).
 const PRESENTATION: CampaignPresentation[] = [
+  { type: 'connect_tradovate', emoji: '🔌', desc: 'Suite d’onboarding : relier Tradovate (e-mail de service)', targetDesc: 'Inscrits de 1 à 14 j sans connexion broker ni trade' },
+  { type: 'prop_firm_rules',   emoji: '📐', desc: 'Suite d’onboarding : choisir sa firme et son plan (e-mail de service)', targetDesc: 'Inscrits de 4 à 21 j avec un compte prop firm sans plan' },
+  { type: 'first_week_recap',  emoji: '🗓️', desc: 'Suite d’onboarding : bilan J0-J7 puis ce que Premium ajoute', targetDesc: 'FREE de 7 à 14 j qui ont tradé la 1re semaine' },
+  { type: 'founder_followup',  emoji: '🔥', desc: 'Suite d’onboarding : offre fondateur (si ouverte avec des places)', targetDesc: 'FREE non abonnés de 10 à 30 j, sans founder_launch reçu' },
+  { type: 'first_trade_nudge', emoji: '📈', desc: 'Relance premier trade (remplacée par connect_tradovate)', targetDesc: 'Inscrits de 1 à 14 j sans trade' },
   { type: 'discord_invite',   emoji: '💬', desc: 'Inviter les users à rejoindre le Discord',          targetDesc: 'Users sans Discord lié' },
   { type: 'premium_upsell',   emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',           targetDesc: 'Users FREE actifs (14 derniers j)' },
   { type: 'reengagement',     emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',      targetDesc: 'Users sans trade depuis 7j' },
@@ -65,7 +92,7 @@ const PRESENTATION: CampaignPresentation[] = [
 
 export interface CampaignMeta extends CampaignPresentation {
   label: string;
-  kind: 'transactional' | 'marketing';
+  kind: EmailCampaign['kind'];
   automated: boolean;
   requiresConsent: boolean;
   targetCount: number; // users dans le segment (matching)
@@ -81,6 +108,13 @@ export interface CampaignMeta extends CampaignPresentation {
   /** Le dernier test correspond-il au contenu actuel ? */
   testedCurrent: boolean;
   testEmail: string;
+  /** Envois réels de la campagne, depuis toujours (EmailSend). */
+  sentTotal: number;
+  /**
+   * connect_tradovate seulement : parmi les envois de plus de 3 jours, combien de personnes ont
+   * connecté un broker dans les 3 jours qui suivent. `null` pour les autres campagnes.
+   */
+  connectedWithin3d: { connected: number; sent: number } | null;
 }
 
 // Users réels (hors démo / admin), filtre commun à tous les segments.
@@ -102,10 +136,24 @@ export class EmailCampaignService {
     return process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
   }
 
+  private get loadDeps(): CampaignLoadDeps {
+    return { prisma: this.prisma, founderState: () => this.founders.publicState() };
+  }
+
+  /**
+   * Données d'aperçu / de test d'une campagne à `loadContext` : les données communes (firmes,
+   * places), un bilan d'exemple ; jamais celles d'un vrai utilisateur.
+   */
+  private async sampleContext(c: EmailCampaign): Promise<Partial<CampaignBuildCtx>> {
+    if (!c.loadContext) return {};
+    const loaded = (await c.loadContext(this.loadDeps, [SAMPLE_ID], new Date())).get(SAMPLE_ID) ?? {};
+    return { firstWeek: SAMPLE_FIRST_WEEK, ...loaded };
+  }
+
   /** Rendu d'une campagne : annonce = contenu saisi ; founder_launch = places restantes. */
   private render(
     type: CampaignType,
-    ctx: { userName: string; unsubUrl: string; seatsLeft?: number },
+    ctx: Partial<CampaignBuildCtx> & { userName: string; unsubUrl: string },
     subject?: string,
     body?: string,
   ): CampaignContent {
@@ -156,17 +204,29 @@ export class EmailCampaignService {
     const lastByType = new Map<string, (typeof logs)[number]>();
     for (const log of logs) if (!lastByType.has(log.type)) lastByType.set(log.type, log);
 
+    const sentByKey = new Map(
+      (await this.prisma.emailSend.groupBy({ by: ['campaignKey'], _count: { _all: true } })).map((r) => [
+        r.campaignKey,
+        r._count._all,
+      ]),
+    );
+
     return Promise.all(
       PRESENTATION.map(async (p) => {
         const c = this.campaign(p.type);
         const where = this.segmentWhere(c, now);
-        const [matching, alreadyContacted, withConsent] = await Promise.all([
+        const [matching, alreadyContacted, consenting, connectedWithin3d] = await Promise.all([
           this.prisma.user.count({ where }),
           this.prisma.user.count({
             where: { AND: [where, { emailSends: { some: { campaignKey: c.key } } }] },
           }),
-          this.prisma.user.count({ where: { AND: [where, { marketingConsent: true }] } }),
+          // E-mail de service : pas de consentement requis, tout le segment est joignable.
+          c.requiresConsent
+            ? this.prisma.user.count({ where: { AND: [where, { marketingConsent: true }] } })
+            : Promise.resolve(null),
+          c.key === 'connect_tradovate' ? this.connectedWithin3d(c.key) : Promise.resolve(null),
         ]);
+        const withConsent = consenting ?? matching;
         const requiresTest = REQUIRES_TEST.has(p.type);
         const log = lastByType.get(p.type);
         return {
@@ -185,9 +245,30 @@ export class EmailCampaignService {
           requiresTest,
           testedCurrent: requiresTest ? await this.testedCurrent(p.type) : false,
           testEmail: testEmail(),
+          sentTotal: sentByKey.get(c.key) ?? 0,
+          connectedWithin3d,
         };
       }),
     );
+  }
+
+  /**
+   * Taux d'action de connect_tradovate : envois d'au moins 3 jours (fenêtre complète) suivis d'une
+   * connexion broker créée dans les 3 jours. Une requête, agrégée en base.
+   */
+  private async connectedWithin3d(campaignKey: string): Promise<{ connected: number; sent: number }> {
+    const [row] = await this.prisma.$queryRaw<{ sent: number; connected: number }[]>(Prisma.sql`
+      SELECT count(*)::int AS "sent",
+             count(*) FILTER (WHERE EXISTS (
+               SELECT 1 FROM "BrokerConnection" b
+                WHERE b."userId" = e."userId"
+                  AND b."createdAt" > e."sentAt"
+                  AND b."createdAt" <= e."sentAt" + interval '3 days'
+             ))::int AS "connected"
+        FROM "EmailSend" e
+       WHERE e."campaignKey" = ${campaignKey}
+         AND e."sentAt" <= now() - interval '3 days'`);
+    return { sent: row?.sent ?? 0, connected: row?.connected ?? 0 };
   }
 
   async preview(type: CampaignType, subject?: string, body?: string) {
@@ -202,7 +283,8 @@ export class EmailCampaignService {
     const userName = recipients[0]?.name ?? '';
     const sampleUnsub = this.dispatch.buildUnsubUrl('apercu-token');
     const seatsLeft = type === 'founder_launch' ? (await this.founderSelling()).seatsLeft : undefined;
-    const content = this.render(type, { userName, unsubUrl: sampleUnsub, seatsLeft }, subject, body);
+    const sample = await this.sampleContext(c);
+    const content = this.render(type, { ...sample, userName, unsubUrl: sampleUnsub, seatsLeft: seatsLeft ?? sample.seatsLeft }, subject, body);
     return { html: inlineLogoForPreview(content.html), recipients };
   }
 
@@ -216,11 +298,18 @@ export class EmailCampaignService {
     if (type === 'announcement' && !subject?.trim()) {
       throw new BadRequestException('Sujet requis pour une annonce');
     }
-    this.campaign(type);
+    const c = this.campaign(type);
     const seatsLeft = type === 'founder_launch' ? (await this.founderSelling()).seatsLeft : undefined;
+    const sample = await this.sampleContext(c);
+    const unsubScope = c.kind === 'service' ? 'service' : undefined;
     const content = this.render(
       type,
-      { userName: TEST_FIRST_NAME, unsubUrl: this.dispatch.buildUnsubUrl('envoi-test'), seatsLeft },
+      {
+        ...sample,
+        userName: TEST_FIRST_NAME,
+        unsubUrl: this.dispatch.buildUnsubUrl('envoi-test', unsubScope),
+        seatsLeft: seatsLeft ?? sample.seatsLeft,
+      },
       subject,
       body,
     );
@@ -265,8 +354,18 @@ export class EmailCampaignService {
     const now = new Date();
     const recipients = await this.prisma.user.findMany({
       where: this.segmentWhere(c, now),
-      select: { id: true, email: true, name: true, marketingConsent: true, unsubToken: true },
+      select: { id: true, email: true, name: true, marketingConsent: true, serviceEmailsOptOutAt: true, unsubToken: true },
     });
+
+    // Données par destinataire (bilan, places, firmes), chargées par pages de 500 comme le cron.
+    let contexts: CampaignContextMap | null = null;
+    if (c.loadContext) {
+      contexts = new Map();
+      for (let i = 0; i < recipients.length; i += SEND_PAGE_SIZE) {
+        const ids = recipients.slice(i, i + SEND_PAGE_SIZE).map((u) => u.id);
+        for (const [id, ctx] of await c.loadContext(this.loadDeps, ids, now)) contexts.set(id, ctx);
+      }
+    }
 
     const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
     let success = 0;
@@ -274,8 +373,9 @@ export class EmailCampaignService {
     let skipped = 0;
 
     for (const user of recipients) {
-      if (!(await this.dispatch.canSend(c, user, { force }))) {
-        skipped++;
+      const extra = contexts ? contexts.get(user.id) : { seatsLeft };
+      if (!extra || !(await this.dispatch.canSend(c, user, { force }))) {
+        skipped++; // sans objet pour cette personne (pas de trade, offre fermée…) ou non autorisé
         continue;
       }
       try {
@@ -287,7 +387,7 @@ export class EmailCampaignService {
                 { subject, bodyHtml: renderEmailMarkdown(body ?? '') },
               )
             : undefined;
-        await this.dispatch.dispatch(c, user, override, { seatsLeft });
+        await this.dispatch.dispatch(c, user, override, extra);
         success++;
         await new Promise((r) => setTimeout(r, 150));
       } catch {

@@ -123,6 +123,75 @@ describe('EmailDispatchService', () => {
     expect(await service.canSend(campaign, { id: 'u1', marketingConsent: false }, { force: true })).toBe(false);
   });
 
+  describe('plafond de 4 jours : tolérance d’une heure (cron de 10 h)', () => {
+    const campaign = baseCampaign({ requiresConsent: false, recurringCooldownDays: 1 });
+    const at = async (msAgo: number) => {
+      lastMarketing.mockResolvedValue({ sentAt: new Date(Date.now() - msAgo) });
+      return service.canSend(campaign, { id: 'u1', marketingConsent: true });
+    };
+
+    it('4 jours moins quelques secondes (examiné plus tôt dans le passage) → autorisé', async () => {
+      expect(await at(4 * DAY - 5_000)).toBe(true);
+      expect(await at(4 * DAY - 59 * 60e3)).toBe(true);
+    });
+
+    it('plus d’une heure avant les 4 jours → refusé (le plafond en jours ne bouge pas)', async () => {
+      expect(await at(4 * DAY - 61 * 60e3)).toBe(false);
+      expect(await at(3 * DAY)).toBe(false);
+    });
+  });
+
+  describe('e-mails de service (aide à la prise en main)', () => {
+    const service_ = baseCampaign({ kind: 'service', requiresConsent: false });
+
+    it('partent sans consentement marketing', async () => {
+      expect(await service.canSend(service_, { id: 'u1', marketingConsent: false })).toBe(true);
+    });
+
+    it('ne partent plus après « ne plus recevoir ces conseils » ou une désinscription', async () => {
+      expect(
+        await service.canSend(service_, { id: 'u1', marketingConsent: false, serviceEmailsOptOutAt: new Date() }),
+      ).toBe(false);
+    });
+
+    it('partagent le plafond du marketing, dans les deux sens', async () => {
+      lastMarketing.mockResolvedValue({ sentAt: new Date(Date.now() - DAY) });
+      expect(await service.canSend(service_, { id: 'u1', marketingConsent: true })).toBe(false);
+      expect(lastMarketing).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'u1', kind: { in: ['marketing', 'service'] } } }),
+      );
+    });
+
+    it('allowedUsers : plafond lu sur marketing + service', async () => {
+      mockPrisma.emailSend.groupBy.mockResolvedValue([]);
+      await service.allowedUsers(service_, [{ id: 'u1', marketingConsent: false }]);
+      expect(mockPrisma.emailSend.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { kind: { in: ['marketing', 'service'] }, userId: { in: ['u1'] } } }),
+      );
+    });
+
+    it('lien de désinscription limité aux conseils (scope=service)', async () => {
+      const build = vi.fn(() => ({ subject: 'S', html: 'H' }));
+      await service.dispatch({ ...service_, build }, {
+        id: 'u1', email: 'a@test.com', name: null, marketingConsent: false, unsubToken: 'tok',
+      });
+      expect(build).toHaveBeenCalledWith(
+        expect.objectContaining({ unsubUrl: 'https://api.test/api/emails/unsubscribe?token=tok&scope=service' }),
+      );
+      expect(mockPrisma.emailSend.create).toHaveBeenCalledWith({ data: { campaignKey: 'test', userId: 'u1', kind: 'service' } });
+    });
+
+    it('marketing : lien de désinscription complet (sans scope)', async () => {
+      const build = vi.fn(() => ({ subject: 'S', html: 'H' }));
+      await service.dispatch(baseCampaign({ build }), {
+        id: 'u1', email: 'a@test.com', name: null, marketingConsent: true, unsubToken: 'tok',
+      });
+      expect(build).toHaveBeenCalledWith(
+        expect.objectContaining({ unsubUrl: 'https://api.test/api/emails/unsubscribe?token=tok' }),
+      );
+    });
+  });
+
   describe('allowedUsers : même décision que canSend, 2 requêtes par page (SCA-B5-07)', () => {
     const users = [
       { id: 'jamais', marketingConsent: true },

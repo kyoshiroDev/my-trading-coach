@@ -31,7 +31,10 @@
           [ngModel]="marketingConsent()"
           (ngModelChange)="marketingConsent.set($event)"
         />
-        <span>J'accepte de recevoir des emails de MyTradingCoach (conseils, nouveautés). Désinscription à tout moment.</span>
+        <span>
+          <strong class="consent-title">Recevoir les conseils pour bien démarrer et les offres MyTradingCoach</strong>
+          <span class="consent-hint">Désinscription en un clic dans chaque e-mail.</span>
+        </span>
       </label>
 
       <button type="submit" data-testid="finalize-submit" [disabled]="isLoading()" class="btn-submit">

@@ -297,6 +297,10 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   sur 200 » ; 0 → `null`, l'offre complète n'affiche pas de compteur. Total = `seatsTotal` de l'API,
   sinon `FOUNDER_OFFER.seats`. Seul le bandeau COURT mobile affiche le nombre nu (« 154 places »).
   Garde : `libs/shared/src/founder-seats-usage.spec.ts`.
+- **E-mails de la suite d'onboarding** (`first_week_recap`, `founder_followup`) : prix, essai, places
+  et délai de remboursement lus dans `@mtc/shared` (`FOUNDER_OFFER`, `PREMIUM_PRICE_EUR`,
+  `TRIAL_PERIOD_DAYS`, `FOUNDER_REFUND_DAYS`, `founderSeatsLabel`). Changer une valeur → les e-mails
+  suivent. `founder_followup` ne part que si l'offre est ouverte avec des places, vérifié à l'envoi.
 - **Messages de refus** (`closed`, `sold_out`, `excluded`, `already_founder`, `tariff_lost`,
   `subscribed`) : `FOUNDER_INELIGIBLE_MESSAGES` de `@mtc/shared`, source UNIQUE du 400 du checkout
   ET de la modale de plans quand un lien `plan=founder` tombe sur une offre inaccessible (#578).

@@ -7,19 +7,30 @@ import { EmailCampaign } from './campaigns/campaign-registry';
 import type { CampaignBuildCtx, CampaignContent } from './campaigns/campaign-templates';
 
 const DAY_MS = 24 * 3600e3;
+/**
+ * Marge du plafond : le cron passe chaque jour à 10 h et examine les campagnes par priorité. Sans
+ * marge, un e-mail plus prioritaire que le précédent est examiné quelques secondes plus tôt que
+ * 4 jours pile et glisse d'un jour. Une heure ne change pas le plafond en jours.
+ */
+export const CAP_TOLERANCE_MS = 3600e3;
+/** Types comptés dans le plafond de fréquence : marketing et e-mails de service (même plafond). */
+const CAPPED_KINDS = ['marketing', 'service'];
+
+type Recipient = { id: string; marketingConsent: boolean; serviceEmailsOptOutAt?: Date | null };
 
 export interface DispatchUser {
   id: string;
   email: string;
   name: string | null;
   marketingConsent: boolean;
+  serviceEmailsOptOutAt?: Date | null;
   unsubToken: string | null;
 }
 
 /**
  * Garde d'envoi : SEUL point qui décide si un email part (cron + admin).
- * Centralise consentement, anti-doublon (oneShot), cooldown (recurring),
- * plafond de fréquence marketing, log EmailSend et lien de désinscription.
+ * Centralise consentement, désinscription des e-mails de service, anti-doublon (oneShot), cooldown
+ * (recurring), plafond de fréquence (marketing + service), log EmailSend et lien de désinscription.
  */
 @Injectable()
 export class EmailDispatchService {
@@ -40,10 +51,10 @@ export class EmailDispatchService {
    */
   async canSend(
     campaign: EmailCampaign,
-    user: { id: string; marketingConsent: boolean },
+    user: Recipient,
     opts: { force?: boolean } = {},
   ): Promise<boolean> {
-    if (campaign.requiresConsent && !user.marketingConsent) return false;
+    if (!this.reachable(campaign, user)) return false;
     const [lastOfCampaign, lastMarketing] = await Promise.all([
       opts.force
         ? null
@@ -52,9 +63,9 @@ export class EmailDispatchService {
             orderBy: { sentAt: 'desc' },
             select: { sentAt: true },
           }),
-      campaign.kind === 'marketing'
+      isCapped(campaign)
         ? this.prisma.emailSend.findFirst({
-            where: { userId: user.id, kind: 'marketing' },
+            where: { userId: user.id, kind: { in: CAPPED_KINDS } },
             orderBy: { sentAt: 'desc' },
             select: { sentAt: true },
           })
@@ -69,7 +80,7 @@ export class EmailDispatchService {
    */
   async allowedUsers(
     campaign: EmailCampaign,
-    users: { id: string; marketingConsent: boolean }[],
+    users: Recipient[],
   ): Promise<Set<string>> {
     const ids = users.map((u) => u.id);
     if (ids.length === 0) return new Set();
@@ -79,10 +90,10 @@ export class EmailDispatchService {
         where: { campaignKey: campaign.key, userId: { in: ids } },
         _max: { sentAt: true },
       }),
-      campaign.kind === 'marketing'
+      isCapped(campaign)
         ? this.prisma.emailSend.groupBy({
             by: ['userId'],
-            where: { kind: 'marketing', userId: { in: ids } },
+            where: { kind: { in: CAPPED_KINDS }, userId: { in: ids } },
             _max: { sentAt: true },
           })
         : Promise.resolve([]),
@@ -98,21 +109,32 @@ export class EmailDispatchService {
     );
   }
 
-  /** Règle de décision, pure : consentement, oneShot / cooldown de la campagne, plafond marketing. */
+  /** Consentement (marketing) et désinscription des e-mails de service. */
+  private reachable(campaign: EmailCampaign, user: Recipient): boolean {
+    if (campaign.requiresConsent && !user.marketingConsent) return false;
+    if (campaign.kind === 'service' && user.serviceEmailsOptOutAt) return false;
+    return true;
+  }
+
+  /** Règle de décision, pure : joignable, oneShot / cooldown de la campagne, plafond de fréquence. */
   private allowed(
     campaign: EmailCampaign,
-    user: { marketingConsent: boolean },
+    user: Recipient,
     lastOfCampaign: Date | null,
     lastMarketing: Date | null,
     opts: { force?: boolean } = {},
   ): boolean {
-    if (campaign.requiresConsent && !user.marketingConsent) return false;
+    if (!this.reachable(campaign, user)) return false;
     if (!opts.force && lastOfCampaign) {
       if (!campaign.recurringCooldownDays) return false; // oneShot déjà envoyé
       if (Date.now() < lastOfCampaign.getTime() + campaign.recurringCooldownDays * DAY_MS) return false;
     }
-    // plafond global marketing (1 marketing / cooldownDays)
-    if (campaign.kind === 'marketing' && lastMarketing && Date.now() - lastMarketing.getTime() < this.cooldownDays * DAY_MS) {
+    // plafond global (1 e-mail marketing ou de service / cooldownDays, à une heure près)
+    if (
+      isCapped(campaign) &&
+      lastMarketing &&
+      Date.now() - lastMarketing.getTime() < this.cooldownDays * DAY_MS - CAP_TOLERANCE_MS
+    ) {
       return false;
     }
     return true;
@@ -130,7 +152,8 @@ export class EmailDispatchService {
   ): Promise<boolean> {
     const appUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
     const unsubToken = await this.ensureUnsubToken(user);
-    const unsubUrl = this.buildUnsubUrl(unsubToken);
+    // E-mail de service : « ne plus recevoir ces conseils » (n'arrête que ces e-mails).
+    const unsubUrl = this.buildUnsubUrl(unsubToken, campaign.kind === 'service' ? 'service' : undefined);
 
     const content: CampaignContent =
       override ?? campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
@@ -143,10 +166,14 @@ export class EmailDispatchService {
     return true;
   }
 
-  /** URL publique de désinscription (token unique du user). Préfixe global 'api'. */
-  buildUnsubUrl(token: string): string {
+  /**
+   * URL publique de désinscription (token unique du user). Préfixe global 'api'. Sans portée : tous
+   * les e-mails non transactionnels ; `service` : seulement les e-mails d'aide à la prise en main.
+   */
+  buildUnsubUrl(token: string, scope?: 'service'): string {
     const apiUrl = this.config.get<string>('API_URL') ?? 'https://api.mytradingcoach.app';
-    return `${apiUrl.replace(/\/+$/, '')}/api/emails/unsubscribe?token=${token}`;
+    const base = `${apiUrl.replace(/\/+$/, '')}/api/emails/unsubscribe?token=${token}`;
+    return scope ? `${base}&scope=${scope}` : base;
   }
 
   /** Génère et persiste un unsubToken si le user n'en a pas encore (lazy). */
@@ -157,4 +184,8 @@ export class EmailDispatchService {
     user.unsubToken = token;
     return token;
   }
+}
+
+function isCapped(campaign: EmailCampaign): boolean {
+  return CAPPED_KINDS.includes(campaign.kind);
 }

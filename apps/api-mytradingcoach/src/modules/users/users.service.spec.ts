@@ -164,6 +164,36 @@ describe('UsersService', () => {
     });
   });
 
+  describe('updatePreferences : consentement e-mails', () => {
+    const save = async (current: boolean, next: boolean) => {
+      mockPrisma.user.findUnique.mockResolvedValue({ marketingConsent: current });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      await service.updatePreferences('user-1', { marketingConsent: next });
+      return mockPrisma.user.update.mock.calls.at(-1)![0].data;
+    };
+
+    it('l’activer horodate le consentement et rétablit les conseils de prise en main', async () => {
+      expect(await save(false, true)).toEqual({
+        marketingConsent: true,
+        marketingConsentAt: expect.any(Date),
+        serviceEmailsOptOutAt: null,
+      });
+    });
+
+    it('le couper arrête aussi les conseils (le réglage du profil les couvre)', async () => {
+      expect(await save(true, false)).toEqual({
+        marketingConsent: false,
+        marketingConsentAt: null,
+        serviceEmailsOptOutAt: expect.any(Date),
+      });
+    });
+
+    it('valeur inchangée (le profil la renvoie à chaque enregistrement) : ni horodatage ni conseils touchés', async () => {
+      expect(await save(true, true)).toEqual({ marketingConsent: true });
+      expect(await save(false, false)).toEqual({ marketingConsent: false });
+    });
+  });
+
   describe('deleteMe', () => {
     it('supprime le compte utilisateur (avec trace DeletedAccount)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
