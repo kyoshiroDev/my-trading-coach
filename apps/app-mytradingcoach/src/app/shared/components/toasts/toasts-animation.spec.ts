@@ -71,6 +71,30 @@ describe('mtc-toasts — barre de compte à rebours en haut', () => {
   });
 });
 
+describe('mtc-toasts — téléphone (#611 : en haut, sous le bandeau démo)', () => {
+  // Bloc @media téléphone isolé : rule()/keyframes() renverraient la version desktop.
+  const PHONE = (() => {
+    const start = CSS.indexOf('@media (max-width: 768px)');
+    return CSS.slice(start, CSS.indexOf('@media (prefers-reduced-motion', start));
+  })();
+  const phoneToasts = PHONE.match(/\.toasts\s*\{([^}]*)\}/)?.[1] ?? '';
+  // Hauteur du bandeau démo mobile (sidebar) : la pile doit commencer sous lui.
+  const SIDEBAR_CSS = read('../sidebar/sidebar.component.css');
+  const bannerH = parseFloat(
+    SIDEBAR_CSS.match(/\.main-content\.has-demo-banner\s*\{\s*--demo-banner-h:\s*(\d+)px/g)?.at(-1)?.match(/(\d+)px/)?.[1] ?? 'NaN',
+  );
+
+  it('ancrée en haut (plus en bas, au milieu du contenu)', () => {
+    expect(phoneToasts).toContain('bottom: auto');
+    const top = parseFloat(phoneToasts.match(/top:\s*calc\(env\(safe-area-inset-top\)\s*\+\s*(\d+)px\)/)?.[1] ?? 'NaN');
+    expect(top).toBeGreaterThanOrEqual(bannerH); // ne recouvre ni le bandeau ni le burger
+  });
+
+  it('entre depuis le haut', () => {
+    expect(PHONE).toMatch(/@keyframes toast-in\s*\{\s*from\s*\{[^}]*translateY\(calc\(-100% - 16px\)\)/);
+  });
+});
+
 describe('mtc-toasts — glisser et mouvement réduit', () => {
   it('glisser horizontal sans bloquer le défilement vertical', () => {
     expect(rule('.toast')).toContain('touch-action: pan-y');

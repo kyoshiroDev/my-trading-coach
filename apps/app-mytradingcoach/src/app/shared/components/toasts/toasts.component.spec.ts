@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ToastsComponent } from './toasts.component';
@@ -26,6 +26,38 @@ function pointer(target: Element, type: string, clientX: number, pointerType = '
   Object.defineProperty(e, 'pointerId', { value: 1 });
   target.dispatchEvent(e);
 }
+
+describe('mtc-toasts — téléphone : un seul toast à la fois (#611)', () => {
+  let listener: (() => void) | null = null;
+  const mq = { matches: true, addEventListener: (_: string, fn: () => void) => (listener = fn), removeEventListener: vi.fn() };
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    mq.matches = true;
+    listener = null;
+    // jsdom n'a pas matchMedia : sans ce bouchon le composant garde ses 3 places.
+    Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: vi.fn(() => mq) });
+  });
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+    TestBed.resetTestingModule(); // remet le service à 3 places pour les autres specs
+  });
+
+  it('≤ 768 px : 1 visible, le reste en file ; repasse à 3 en sortant du mode téléphone', () => {
+    const { service, render, msgs } = mount();
+    service.info('A');
+    service.info('B');
+    service.info('C');
+    render();
+    expect(msgs()).toEqual(['A']);
+    expect(service.queued()).toBe(2);
+
+    mq.matches = false;
+    listener?.();
+    render();
+    expect(msgs()).toEqual(['A', 'B', 'C']);
+  });
+});
 
 describe('mtc-toasts — rendu et accessibilité', () => {
   beforeEach(() => TestBed.resetTestingModule());
