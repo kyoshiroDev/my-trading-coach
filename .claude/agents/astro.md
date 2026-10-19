@@ -255,6 +255,10 @@ Règles :
 - **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
   logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
+- **Plateforme uniquement, jamais le courtage** (Affiliate Success Playbook NinjaTrader) : l'affiliation
+  porte sur l'inscription à la **plateforme** NinjaTrader. Jamais « ouvrir un compte » (de courtage),
+  frais de courtage, commissions de trading ni marges en lien avec NinjaTrader (corrigé le 2026-10-19
+  dans la divulgation d'affiliation de `disclaimer.astro`).
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
