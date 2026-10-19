@@ -135,7 +135,7 @@
 .acct-line {
   display: grid;
   grid-template-columns:
-    minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(130px, 1fr)
+    minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(140px, 1fr)
     minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
   gap: 0 14px;
   align-items: center;
