@@ -521,7 +521,9 @@
   .acct-name { font-size: 13px; }
   /* Trades passe au dépli : sur un écran étroit, solde et P&L suffisent à décider. */
   .cell-trades { display: none; }
-  .acct-block.is-open .cell-trades { display: block; grid-column: 1; grid-row: 6; }
+  /* 5 classes : doit battre `.acct-line .cell.num.right` (4 classes, grid-row: 2 du repli),
+     sinon Trades restait en ligne 2 et se superposait au Solde une fois la ligne dépliée. */
+  .acct-block.is-open .acct-line .cell.cell-trades { display: block; grid-column: 1; grid-row: 6; }
   /* Colonne pleine largeur : l'en-tête doit s'étirer pour que le bouton suive. */
   .cell-sync, .sync-head { width: 100%; }
   .cell-sync .tv-btn { flex: 1 1 auto; justify-content: center; }
