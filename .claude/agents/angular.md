@@ -425,7 +425,10 @@ et `accounts.component.css` :
 - repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
   chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une
-  ligne ouverte à la fois), jamais derrière un scroll horizontal.
+  ligne ouverte à la fois), jamais derrière un scroll horizontal ;
+- la bascule en repli suit la largeur du **tableau** (`container: acct-table / inline-size` +
+  `@container acct-table (max-width: 980px)`), pas celle de la fenêtre : la barre latérale prend
+  70 à 216 px, et un seuil en `@media` laissait les colonnes se chevaucher (Mes comptes à 1100 px).
 
 ⚠️ **Deux pièges de sélecteurs**, tous deux rencontrés en vrai sur « Mes comptes » :
 - `:nth-of-type()` compte les **éléments** (tous les `div`), pas les classes : `.cell.num:nth-of-type(2)`
