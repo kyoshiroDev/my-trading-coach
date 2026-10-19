@@ -40,7 +40,11 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
     <ul class="mtc-trade-cards">
       @for (t of rows(); track t.id) {
         <li class="mtc-tc">
-          <span class="mtc-tc-asset">{{ t.asset | uppercase }} <span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></span>
+          <span class="mtc-tc-asset">
+            {{ t.asset | uppercase }} <span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span>
+            <!-- La colonne Résultat n'existe pas en carte : un trade ouvert garde son badge. -->
+            @if (t.outcome === 'open') { <span class="mtc-res open">{{ LABEL.open }}</span> }
+          </span>
           <span class="mtc-tc-pnl" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
           <span class="mtc-tc-sub">
             {{ t.tradedAt | date:'d MMM' }} · <span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}
