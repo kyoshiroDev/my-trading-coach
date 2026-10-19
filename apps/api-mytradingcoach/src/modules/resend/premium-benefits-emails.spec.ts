@@ -11,7 +11,7 @@ const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&#39;|&rsq
 describe('e-mails Premium : avantages réels', () => {
   it('bienvenue Premium : exactement la liste partagée, sans fonction gratuite ni non livrée', () => {
     const t = text(welcomePremiumTemplate({ userName: 'Alex', isTrial: true, appUrl: 'https://app.test' }).html);
-    for (const b of PLAN_BENEFITS.premium) expect(t, b.id).toContain(b.text);
+    for (const b of PLAN_BENEFITS.premium) expect(t, b.id).toContain(b.text.replace(/\s+/g, ' '));
     expect(t).not.toMatch(/Calendrier économique|Trades illimités|Export PDF|crypto/i);
   });
 

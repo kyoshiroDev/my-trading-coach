@@ -39,6 +39,6 @@ export const PLAN_BENEFITS: { free: readonly PlanBenefit[]; premium: readonly Pl
     { id: 'accounts', text: 'Comptes illimités, chacun avec les règles de sa prop firm' },
     { id: 'weekly_debrief', text: 'Débrief de ta semaine rédigé par le coach IA' },
     { id: 'analytics', text: 'Analyses avancées : par setup, par heure, drawdown détaillé' },
-    { id: 'ai_coach', text: 'Coach IA : insights, chat et récap du jour à 17 h 30' },
+    { id: 'ai_coach', text: 'Coach IA : insights, chat et récap du jour à 17\u00a0h\u00a030' },
   ],
 };
