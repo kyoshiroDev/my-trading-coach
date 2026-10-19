@@ -1896,6 +1896,11 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
   `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
   requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
+- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
+  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
+  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+  `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
+  route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
 - Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
   `onboarding-templates.spec.ts` (règles d'écriture), `onboarding-sequence.simulation.spec.ts` (VRAI
   cron + dispatch sur 21 jours, 6 profils : modifier une priorité ou une fenêtre = mettre à jour le
