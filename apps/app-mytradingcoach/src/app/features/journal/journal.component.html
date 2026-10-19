@@ -19,7 +19,7 @@
 
       <!-- Résultat -->
       <span class="filter-select" [class.active]="filterResult() !== 'ALL'">
-        <select aria-label="Filtrer par résultat"
+        <select #fsResult aria-label="Filtrer par résultat"
           [value]="filterResult()"
           (change)="filterResult.set($any($event.target).value)">
           <option value="ALL">Résultat : tous</option>
@@ -27,12 +27,13 @@
           <option value="LOSS">Loss</option>
           <option value="BREAKEVEN">Break-even</option>
         </select>
+        <span class="fs-label" aria-hidden="true">{{ fsResult.options.item(fsResult.selectedIndex)?.text }}</span>
         <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Setup (remplace les chips) -->
       <span class="filter-select" [class.active]="filterSetup() !== null">
-        <select aria-label="Filtrer par setup"
+        <select #fsSetup aria-label="Filtrer par setup"
           [value]="filterSetup() ?? ''"
           (change)="filterSetup.set($any($event.target).value || null)">
           <option value="">Setup : tous</option>
@@ -40,12 +41,13 @@
             <option [value]="s.id">{{ s.title }}</option>
           }
         </select>
+        <span class="fs-label" aria-hidden="true">{{ fsSetup.options.item(fsSetup.selectedIndex)?.text }}</span>
         <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Execution -->
       <span class="filter-select" [class.active]="filterExecution() !== 'ALL'">
-        <select aria-label="Filtrer par note d'exécution"
+        <select #fsExecution aria-label="Filtrer par note d'exécution"
           [value]="filterExecution()"
           (change)="filterExecution.set($any($event.target).value)">
           <option value="ALL">Execution : toutes</option>
@@ -55,12 +57,13 @@
           <option value="MAUVAIS">Mauvais</option>
           <option value="NONE">Non évaluée</option>
         </select>
+        <span class="fs-label" aria-hidden="true">{{ fsExecution.options.item(fsExecution.selectedIndex)?.text }}</span>
         <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
       <!-- Émotion (effective) -->
       <span class="filter-select" [class.active]="filterEmotion() !== 'ALL'">
-        <select aria-label="Filtrer par émotion"
+        <select #fsEmotion aria-label="Filtrer par émotion"
           [value]="filterEmotion()"
           (change)="filterEmotion.set($any($event.target).value)">
           <option value="ALL">Émotion : toutes</option>
@@ -73,6 +76,7 @@
           <option value="TIRED">Fatigué</option>
           <option value="NONE">Non renseignée</option>
         </select>
+        <span class="fs-label" aria-hidden="true">{{ fsEmotion.options.item(fsEmotion.selectedIndex)?.text }}</span>
         <svg class="fs-chev" [lucideIcon]="ChevronDownIcon" [size]="10"></svg>
       </span>
 
