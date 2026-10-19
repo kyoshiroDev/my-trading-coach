@@ -9,6 +9,7 @@
 export * from './api-error';
 export * from './currency';
 export * from './pricing';
+export * from './plan-benefits';
 export * from './trade-stats';
 export * from './contracts';
 export * from './eco-event-key';

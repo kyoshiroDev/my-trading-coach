@@ -1462,7 +1462,7 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   absent = ignoré, `-` (`UTM_NONE`, `@mtc/shared` acquisition-filter) = non renseigné (null).
   `ADMIN_USER_SELECT` renvoie les 3 champs ; la fiche (`identity.acquisition`) aussi. Le récap
   quotidien des inscriptions (`signup-digest.cron.ts`) ajoute la provenance à chaque ligne
-  (`instagram · dm · louis`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
+  (`instagram · dm · exemple`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
   `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
   campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,

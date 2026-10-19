@@ -34,7 +34,7 @@ describe('SignupDigestCron — un récap par jour au lieu d’un e-mail par insc
     prisma.user.findMany.mockResolvedValue([
       {
         email: 'a@test.local', name: 'A', createdAt: new Date('2026-09-30T10:00:00Z'),
-        acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'louis',
+        acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'exemple',
       },
       {
         email: 'b@test.local', name: 'B', createdAt: new Date('2026-09-30T18:00:00Z'),
@@ -44,7 +44,7 @@ describe('SignupDigestCron — un récap par jour au lieu d’un e-mail par insc
 
     await cron.sendDigest(NOW);
     const body: string = resend.sendAdminAlert.mock.calls[0][1];
-    expect(body).toContain('a@test.local · instagram · dm · louis');
+    expect(body).toContain('a@test.local · instagram · dm · exemple');
     expect(body).toContain('b@test.local · direct');
   });
 
