@@ -22,7 +22,9 @@ function makeService(over: { open?: boolean; seatsLeft?: number } = {}) {
       count: vi.fn().mockResolvedValue(0),
     },
     emailCampaignLog: { findMany: vi.fn().mockResolvedValue([]), create: vi.fn().mockResolvedValue({}) },
-    emailSend: { create: vi.fn() },
+    emailSend: { create: vi.fn(), groupBy: vi.fn().mockResolvedValue([{ campaignKey: 'founder_launch', _count: { _all: 3 } }]) },
+    $queryRaw: vi.fn().mockResolvedValue([{ sent: 0, connected: 0 }]),
+    propFirm: { count: vi.fn().mockResolvedValue(16) },
   };
   const dispatch = {
     canSend: vi.fn(async (_c: unknown, u: { marketingConsent: boolean }) => u.marketingConsent),
