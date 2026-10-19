@@ -457,6 +457,11 @@ du code** :
 >   d'erreur `email_taken|validation|network|server|other`), sinon `''`.
 > - **Aucune donnée personnelle** : ni UA brut (seul le booléen `inApp`), ni e-mail, ni IP, ni
 >   identifiant de session, ni lien `User`. Ne jamais y ajouter de colonne identifiante (exemption CNIL).
+> - **Engagement landing** (migration `20261019120000_funnel_event_path`, additive) : colonne `path`
+>   (`/` | `/prop-firm` pour `scroll_depth` / `time_on_page` / `rules_use`, `''` pour les étapes
+>   d'inscription et les lignes antérieures), ajoutée à l'unique
+>   `(date, step, source, medium, campaign, inApp, detail, path)`. Le nom d'index, tronqué à 63
+>   caractères par Prisma, ne change pas. `detail` porte le seuil (`25|50|75|100` ou `10|30|60`).
 
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 

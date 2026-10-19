@@ -166,7 +166,9 @@ const robots = noindex
           CNIL) → indépendant du bandeau ;
        3) clic sur un lien /register → étape `cta_click` du parcours d'inscription
           (POST /public/funnel par sendBeacon, detail = data-cta, sinon plan du lien, sinon free) ;
-          le bouton passe à « Ouverture… » et un 2e appui dans les 2 s est ignoré (1 appui = 1 clic).
+          le bouton passe à « Ouverture… » et un 2e appui dans les 2 s est ignoré (1 appui = 1 clic) ;
+       4) engagement de / et /prop-firm (défilement, temps passé, sélecteur de règles) : module
+          lib/engagement.ts, par la même fonction d'envoi (window.mtcFunnel).
        `inApp` = navigateur intégré Instagram / Facebook / TikTok (motif partagé @mtc/shared) : seul
        ce booléen part, jamais le user-agent.
        Mode interne : ?internal=1 (localStorage mtc_internal) → ni visite ni étape envoyée depuis ce
@@ -283,8 +285,20 @@ const robots = noindex
           body: JSON.stringify(Object.assign({ path: location.pathname, entry: entry }, origin))
         }).catch(function () {});
 
+        // Étape anonyme → POST /public/funnel. sendBeacon en text/plain : requête simple, part même
+        // quand la page change. Exposée à lib/engagement.ts (défilement, temps, sélecteur) : absente
+        // en mode interne et pendant la redirection de la pub, donc rien n'y est envoyé.
+        var sendFunnel = function (fields) {
+          var body = JSON.stringify(Object.assign({}, fields, origin));
+          var sent = false;
+          try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(apiUrl + '/public/funnel', new Blob([body], { type: 'text/plain' }))); } catch (e) {}
+          if (!sent) {
+            fetch(apiUrl + '/public/funnel', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: body }).catch(function () {});
+          }
+        };
+        window.mtcFunnel = sendFunnel;
+
         // Clic CTA d'inscription (délégation : couvre aussi la carte Fondateur insérée plus tard).
-        // sendBeacon en text/plain : requête simple, part même quand la page change.
         document.addEventListener('click', function (ev) {
           var a = ev.target && ev.target.closest ? ev.target.closest('a[href*="/register"]') : null;
           if (!a) return;
@@ -293,15 +307,15 @@ const robots = noindex
             try { cta = new URL(a.href).searchParams.get('plan'); } catch (e) { cta = null; }
             if (cta !== 'founder' && cta !== 'premium') cta = 'free';
           }
-          var body = JSON.stringify(Object.assign({ step: 'cta_click', detail: cta }, origin));
-          var sent = false;
-          try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(apiUrl + '/public/funnel', new Blob([body], { type: 'text/plain' }))); } catch (e) {}
-          if (!sent) {
-            fetch(apiUrl + '/public/funnel', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain' }, body: body }).catch(function () {});
-          }
+          sendFunnel({ step: 'cta_click', detail: cta });
         }, true);
       } catch (e) {}
     })();
+  </script>
+  <!-- Module différé (après le script ci-dessus) : ne fait rien hors de / et /prop-firm. -->
+  <script>
+    import { startEngagement } from '../lib/engagement';
+    startEngagement();
   </script>
 </body>
 </html>

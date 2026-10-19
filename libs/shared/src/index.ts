@@ -20,4 +20,5 @@ export * from './prop-firm-rules/daily-loss-status';
 export * from './prop-firm-rules/plan-guess';
 export * from './prop-firm-rules/plan-link';
 export * from './signup-funnel';
+export * from './landing-engagement';
 export * from './acquisition-filter';

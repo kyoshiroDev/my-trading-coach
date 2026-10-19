@@ -81,6 +81,53 @@
     }
   </div>
 
+  <div class="card signup-card" data-testid="landing-engagement">
+    <div class="card-head">
+      <span class="card-label">Engagement landing · {{ engagementDays() }} jours</span>
+      <span class="card-label muted">1 fois par seuil et par page vue · taux = / vues</span>
+    </div>
+    <div class="signup-filters">
+      <div class="section-tabs" role="tablist" aria-label="Période">
+        @for (d of [7, 30]; track d) {
+          <button type="button" role="tab" class="tab" [class.active]="engagementDays() === d" [attr.aria-selected]="engagementDays() === d" (click)="loadEngagement($any(d))">{{ d }} j</button>
+        }
+      </div>
+    </div>
+    @if (engagementGroups().length) {
+      <table class="tbl signup-tbl">
+        <caption class="sr-only">Engagement de l'accueil et de /prop-firm par source, medium et campagne</caption>
+        <thead><tr>
+          <th scope="col">Page · source · medium · campagne</th>
+          @for (c of engagementColumns; track c.label) { <th scope="col" class="num" [attr.title]="c.hint">{{ c.label }}</th> }
+        </tr></thead>
+        <tbody>
+          @for (g of engagementGroups(); track g.path) {
+            <tr class="signup-total">
+              <td data-label="Page">{{ g.label }} <span class="muted td-mono">{{ g.path }}</span></td>
+              @for (cell of g.total; track $index) {
+                <td [attr.data-label]="engagementColumns[$index].hint" class="td-mono num"><span class="signup-val">{{ cell.value }}@if (cell.rate !== null) {<span class="signup-rate">{{ cell.rate }} %</span>}</span></td>
+              }
+            </tr>
+            @for (l of g.lines; track l.key) {
+              <tr>
+                <td data-label="Source">
+                  @if (l.source) { <span class="td-mono">{{ l.source }}</span> }
+                  @else { <span class="muted">direct / non renseigné</span> }
+                  @if (l.medium || l.campaign) { <span class="signup-sub td-mono">{{ l.medium || '-' }} · {{ l.campaign || '-' }}</span> }
+                </td>
+                @for (cell of l.cells; track $index) {
+                  <td [attr.data-label]="engagementColumns[$index].hint" class="td-mono num"><span class="signup-val">{{ cell.value }}@if (cell.rate !== null) {<span class="signup-rate">{{ cell.rate }} %</span>}</span></td>
+                }
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty">{{ engagementLoading() ? 'Chargement…' : 'Engagement indisponible' }}</div>
+    }
+  </div>
+
   @if (funnel(); as f) {
     <div class="card funnel-card">
       <div class="card-head">

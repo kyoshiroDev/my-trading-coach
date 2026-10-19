@@ -80,8 +80,9 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
-POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription { step, source?, medium?, campaign?, inApp?, detail? }
+POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
+GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
@@ -1490,6 +1491,17 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes. Depuis oct. 2026,
   l'app envoie aussi TOUTES ses étapes ainsi (`register_view` dès l'arrivée par un script inline
   d'`index.html`, puis `SignupFunnelService`) : plus aucun appel JSON sur cette route.
+- **Engagement landing** (19/10/2026) : la même route accepte `FUNNEL_BEACON_STEPS` = étapes
+  d'inscription + `LANDING_ENGAGEMENT_STEPS` (`scroll_depth` detail `25|50|75|100`, `time_on_page`
+  detail `10|30|60`, `rules_use` sans detail) et `path?` (64 car. max). Le service ramène `path` à
+  `LANDING_ENGAGEMENT_PAGES` (`/`, `/prop-firm`, `/` final retiré) : engagement hors page mesurée ou
+  sans seuil reconnu → rien écrit ; étape d'inscription → `path = ''` quel que soit le corps. Le
+  `ON CONFLICT` liste les 8 colonnes de l'unique, `path` compris.
+- `GET /admin/landing-engagement` (`LandingEngagementService`, fusion pure `landing-engagement.util.ts`,
+  contrat `AdminLandingEngagementData`) : pages vues (`LandingVisitDaily.pageviews`, base des taux)
+  + événements d'engagement par (page, source, medium, campagne), navigateurs confondus ; `scroll` /
+  `time` = tableaux dans l'ordre des seuils partagés. Tri page puis vues, 100 lignes max. Le
+  parcours d'inscription (`buildSignupFunnelRows`) ignore ces étapes (hors `SIGNUP_FUNNEL_STEPS`).
 - CORS (`main.ts`) : `maxAge: 600` (`Access-Control-Max-Age`) : le navigateur garde 10 min la réponse
   à la requête préalable au lieu d'en refaire une avant chaque appel JSON de l'app (un aller-retour en
   4G lente). Les origines autorisées restent `CORS_ORIGINS`.
