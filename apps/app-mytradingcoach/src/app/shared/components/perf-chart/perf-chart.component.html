@@ -1,0 +1,28 @@
+<div class="pc-head">
+  <div class="pc-title">
+    <svg [lucideIcon]="icon()" [size]="14" class="pc-icon" aria-hidden="true"></svg>
+    <span>{{ title() }}</span>
+    <ng-content select="[chartInfo]" />
+  </div>
+  @if (keyValue(); as kv) {
+    <span class="pc-value" [class.pos]="kv.tone === 'pos'" [class.neg]="kv.tone === 'neg'" data-testid="perf-chart-value">
+      {{ kv.text }}
+      @if (kv.max && !narrow()) {
+        <span class="pc-max">(max {{ kv.max }})</span>
+      }
+    </span>
+  }
+  <div class="pc-controls"><ng-content select="[chartControls]" /></div>
+</div>
+<div class="pc-body">
+  <canvas
+    #canvas
+    class="pc-canvas"
+    role="img"
+    [attr.aria-label]="ariaLabel()"
+    [attr.data-testid]="kind() === 'equity' ? 'equity-curve' : 'drawdown-curve'"
+  ></canvas>
+  @if (!points().length && !loading()) {
+    <div class="pc-empty">{{ emptyMessage() }}</div>
+  }
+</div>

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   buildCoachInsights,
   buildEmotionsDonut,
-  buildEquityGlow,
   buildPlBuckets,
   buildTradeRows,
   emotionShares,
@@ -18,10 +17,9 @@ const summary = (over: Partial<AnalyticsSummary> = {}): AnalyticsSummary =>
   ({ winRate: 60, totalPnl: 100, totalTrades: 10, maxDrawdown: 0, profitFactor: 2, streak: 0,
      topSession: '', topSessionWinRate: 0, topHour: '', ...over }) as AnalyticsSummary;
 
-describe('sparkPath / buildEquityGlow', () => {
+describe('sparkPath', () => {
   it('moins de 2 points → rien à tracer', () => {
     expect(sparkPath([5]).line).toBe('');
-    expect(buildEquityGlow([5], true)).toBeNull();
   });
 
   it('2 points → trait du bas-gauche au haut-droite, point final au bout', () => {
@@ -30,10 +28,6 @@ describe('sparkPath / buildEquityGlow', () => {
     expect([p.cx, p.cy]).toEqual([72, 2]);
   });
 
-  it('couleur de la courbe selon le signe du P&L', () => {
-    expect(buildEquityGlow([0, 1], true)?.color).toBe('var(--green)');
-    expect(buildEquityGlow([0, 1], false)?.color).toBe('var(--red)');
-  });
 });
 
 describe('P&L par période', () => {

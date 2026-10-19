@@ -42,6 +42,10 @@
   --text-3: #8398b5;
   --text-faint: #7890b0; /* libellés discrets (axes, jours non tradés) : ≥ 5:1 sur les cartes */
 
+  /* ─── Graphiques (équité, drawdown) : grille très discrète, ligne de 0 un cran au-dessus ─── */
+  --chart-grid: rgba(255, 255, 255, 0.04);
+  --chart-zero: rgba(255, 255, 255, 0.12);
+
   /* ─── Brand gradient — logo mark + avatars uniquement ─── */
   --grad-brand: linear-gradient(135deg, #3b82f6, #8b5cf6);
 

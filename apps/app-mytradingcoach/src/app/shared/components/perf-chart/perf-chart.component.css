@@ -1,0 +1,86 @@
+/* Carte courbe d'équité / drawdown : mobile d'abord, palier desktop à 768 px. */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card, 12px);
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+:host(:hover) { border-color: var(--border-hover); }
+
+.pc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.pc-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.pc-icon { flex-shrink: 0; color: var(--text-3); }
+
+.pc-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.pc-value.pos { color: var(--green); }
+.pc-value.neg { color: var(--red); }
+.pc-max { font-weight: 400; font-size: 12px; color: var(--text-3); margin-left: 4px; }
+
+/* Onglets de période : ligne à part en mobile, à gauche de la valeur en desktop. */
+.pc-controls { flex-basis: 100%; min-width: 0; }
+.pc-controls:empty { display: none; }
+
+.pc-body {
+  position: relative;
+  height: 210px;
+  width: 100%;
+  min-width: 0;
+}
+.pc-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  /* Le toucher horizontal pilote l'infobulle ; le défilement vertical de la page reste libre. */
+  touch-action: pan-y;
+}
+
+.pc-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 16px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+@media (min-width: 768px) {
+  :host { padding: 24px; }
+  .pc-head { margin-bottom: 16px; }
+  .pc-title { font-size: 12px; }
+  .pc-value { font-size: 15px; order: 2; }
+  .pc-controls { flex-basis: auto; order: 1; }
+  .pc-body { height: 280px; }
+}

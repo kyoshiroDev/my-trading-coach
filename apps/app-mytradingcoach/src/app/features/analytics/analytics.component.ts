@@ -2,9 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  ViewChild,
-  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -30,10 +27,10 @@ import {
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
+import { periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
-import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
-import { anchoredDrawdown, maxDrawdownOf, periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
@@ -54,6 +51,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PlanModalComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
+    PerfChartComponent,
     MixedCurrencyNoticeComponent,
     ErrorStateComponent,
   ],
@@ -62,14 +60,9 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
-  @ViewChild('equityCanvas') equityCanvasRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('drawdownCanvas')
-  drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
-
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
@@ -136,17 +129,23 @@ export class AnalyticsComponent {
    * Solde au début de la période : la courbe finit sur le solde du compte (sélecteur, Mes comptes).
    * Jamais `startingCapital` de l'API (capital du profil : un compte de 50K partait de 100K).
    */
-  private readonly equityStartCapital = computed(() => {
+  protected readonly equityStartCapital = computed(() => {
     const current = this.selectedAccount.loaded()
       ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance')
       : null;
     if (current !== null) return periodStartCapital(current, this.equityCurve());
     return this.userStore.startingCapital() + (this.equityData()?.before?.pnl ?? 0);
   });
-  /** Plus fort drawdown de la période, sommet d'avant la période compris (même calcul que le graphe). */
-  protected readonly periodMaxDrawdown = computed(() =>
-    maxDrawdownOf(anchoredDrawdown(this.equityCurve(), this.equityData()?.before)),
-  );
+  /**
+   * Limite de drawdown du plan prop firm relié au compte sélectionné (ligne pointillée du
+   * graphique). Null sans plan, en « Tous les comptes » ou si le plan ne publie pas de montant.
+   */
+  protected readonly planDrawdownLimit = computed(() => {
+    const acc = this.selectedAccount.selected();
+    const dd = acc?.metrics?.drawdown;
+    if (!acc?.propFirmPlanId || acc.metrics.drawdownUnconfirmed || dd?.source !== 'plan') return null;
+    return dd.maxDrawdown > 0 ? dd.maxDrawdown : null;
+  });
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
   );
@@ -219,21 +218,6 @@ export class AnalyticsComponent {
   });
 
   constructor() {
-    afterRenderEffect(() => {
-      const curve = this.equityCurve();
-      // Un seul jour tradé suffit : les graphes partent d'un point « Départ » à 0.
-      if (curve.length >= 1) {
-        const equityCanvas = this.equityCanvasRef?.nativeElement;
-        const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
-        if (equityCanvas) {
-          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartCapital());
-        }
-        if (drawdownCanvas) {
-          this.chartService.buildDrawdownChart(drawdownCanvas, curve, this.equityData()?.before);
-        }
-      }
-    });
-
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
     if (this.userStore.isPremium()) {

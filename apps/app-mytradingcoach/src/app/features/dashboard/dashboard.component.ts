@@ -12,7 +12,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
-  LucideTrendingUp as TrendingUp,
   LucideCoins as Coins,
   LucideBarChart3 as BarChart3,
   LucideSparkles as Sparkles,
@@ -50,7 +49,6 @@ import {
   DashboardTradeRow,
   buildCoachInsights,
   buildEmotionsDonut,
-  buildEquityGlow,
   buildPlBuckets,
   buildTradeRows,
   emotionShares,
@@ -62,7 +60,7 @@ import {
   topAssetBars,
 } from './dashboard-charts.util';
 import { DashboardKpisComponent } from './panels/dashboard-kpis/dashboard-kpis.component';
-import { EquityChartComponent } from './panels/equity-chart/equity-chart.component';
+import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
 import { TopAssetsComponent } from './panels/top-assets/top-assets.component';
 import { PlBarsComponent } from './panels/pl-bars/pl-bars.component';
 import { CoachFeedbackComponent } from './panels/coach-feedback/coach-feedback.component';
@@ -88,7 +86,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
     LucideDynamicIcon,
     InfoTooltipComponent,
     DashboardKpisComponent,
-    EquityChartComponent,
+    PerfChartComponent,
     TopAssetsComponent,
     PlBarsComponent,
     CoachFeedbackComponent,
@@ -121,7 +119,6 @@ export class DashboardComponent {
   protected readonly PRICING = PRICING;
 
   // Icônes d'en-tête de panel (Lucide) : fidélité design.
-  protected readonly EquityIcon   = TrendingUp;
   protected readonly AssetsIcon   = Coins;
   protected readonly PlDayIcon     = BarChart3;
   protected readonly CoachIcon    = Sparkles;
@@ -302,13 +299,6 @@ export class DashboardComponent {
   protected readonly drawdownSeries = computed(() =>
     anchoredDrawdown(this.equityCurve(), this.equityCurveResource.value()?.data?.before),
   );
-  /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
-  protected readonly equitySub = computed(() => {
-    const base   = this.baseCapital();
-    const period = this.summary()?.totalPnl ?? 0;
-    const fmt    = (n: number, sign: boolean) => this.money.format(n, { decimals: 0, sign });
-    return `${fmt(period, true)} ${this.periodShort()} · base ${fmt(base, false)}`;
-  });
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
    * comptent (critère d'acceptation de la courbe). Une courbe a besoin d'au moins 2 jours tradés ;
@@ -435,11 +425,6 @@ export class DashboardComponent {
   }
 
   // ── Viz (calculs dans dashboard-charts.util.ts) ────────────────────────────
-
-  /** Courbe d'équité « glow », verte ou rouge selon le P&L de la période. */
-  protected readonly equityGlow = computed(() =>
-    buildEquityGlow(this.eqSeries(), (this.summary()?.totalPnl ?? 0) >= 0),
-  );
 
   /** Vue donut setups selon le plan : profondeur (win rate) en Premium, répartition % en FREE. */
   protected readonly setupsDonutView = computed(() =>
