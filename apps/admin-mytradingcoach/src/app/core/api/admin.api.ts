@@ -116,7 +116,7 @@ export interface CampaignMeta {
   emoji: string;
   desc: string;
   targetDesc: string;
-  kind: 'transactional' | 'marketing';
+  kind: 'transactional' | 'marketing' | 'service'; // service = aide à la prise en main, sans consentement
   automated: boolean;
   requiresConsent: boolean;
   lastSent?: string | null;
@@ -129,6 +129,9 @@ export interface CampaignMeta {
   requiresTest: boolean; // envoi réel bloqué tant qu'aucun test n'a été fait sur le contenu actuel
   testedCurrent: boolean;
   testEmail: string; // adresse des envois test (configuration serveur)
+  sentTotal: number; // envois réels depuis toujours
+  /** connect_tradovate : envois de plus de 3 j suivis d'une connexion broker sous 3 j. */
+  connectedWithin3d: { connected: number; sent: number } | null;
 }
 
 export interface AdminAmbassador {
