@@ -13,8 +13,12 @@ export class EmailsController {
 
   @Public()
   @Get('unsubscribe')
-  async unsubscribe(@Query('token') token: string, @Res() res: Response) {
-    await this.emails.unsubscribe(token);
+  async unsubscribe(@Query('token') token: string, @Query('scope') scope: string, @Res() res: Response) {
+    const serviceOnly = scope === 'service';
+    await this.emails.unsubscribe(token, serviceOnly ? 'service' : undefined);
+    const message = serviceOnly
+      ? "Tu ne recevras plus les conseils pour bien démarrer. Les e-mails liés à ton compte (sécurité, paiement) continuent d'arriver."
+      : "Tu ne recevras plus d'emails marketing ni de conseils de MyTradingCoach. Tu peux te réinscrire à tout moment depuis tes paramètres.";
     res.type('html').send(
       `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Désinscription</title></head>
        <body style="margin:0;background:#080c14;font-family:'Inter',-apple-system,Arial,sans-serif;color:#e2eaf5;">
@@ -22,8 +26,7 @@ export class EmailsController {
            <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#22d3ee;">MyTradingCoach</div>
            <h1 style="font-size:20px;margin:0 0 12px;">Tu es désinscrit</h1>
            <p style="font-size:14px;color:#9db4ce;line-height:1.7;margin:0;">
-             Tu ne recevras plus d'emails marketing de MyTradingCoach.
-             Tu peux te réinscrire à tout moment depuis tes paramètres.
+             ${message}
            </p>
          </div>
        </body></html>`,
