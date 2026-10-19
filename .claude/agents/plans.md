@@ -209,7 +209,9 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   Le débrief **automatique** (cron dimanche + rattrapage lundi + régénération admin « tous ») ne vise
   que ceux qui ont **tradé dans la semaine** (`getEligibleUsers(refDate)`, SCA-B5-08, décision du
   2026-10-07) : semaine vide = ni appel IA ni e-mail. La génération manuelle depuis l'app reste ouverte.
-- **Daily recap** : PREMIUM only.
+- **Daily recap** : accès Premium réel (`isPremiumAccess` : PREMIUM, ADMIN, BETA_TESTER, essai / **mois offert**
+  actif), même règle que le Weekly Debrief, au cron (`DailyRecapCron`) ET à la génération de la phrase IA
+  (`DailyRecapService`). Avant #627, `plan: 'PREMIUM'` seul : un mois offert n'avait pas son récap.
 - **Comptes** : controller **non gaté** (FREE accède à son 1 compte) — le plafond est appliqué dans `AccountsService` (FREE 1, Premium illimité).
 - **Suivi prop firm de la session live** (#369) : **FREE**, aucun guard — mêmes données que « Mes comptes » (on ne verrouille pas la vue de ses propres données), sur le compte de la session.
 - **Perte journalière + alertes « avant la casse »** (#370) : **PREMIUM**, gating CÔTÉ API aux deux points : `GET /accounts` ne calcule `metrics.dailyLoss` que si `isPremiumAccess` (sinon `null`), et `PropAlertsService.check` sort sans rien envoyer hors Premium / démo. Front : bloc « Perte du jour » si `dailyLoss` présent, teaser PREMIUM (modale des offres) pour un compte gratuit relié à un plan. Coût IA nul. Consistency (gain max du jour), objectif atteint et payout possible : aussi en alerte (#370, 2e partie), même gating. Anti-tilt en direct (#371 : revenge, taille après une perte, surtrading) : PREMIUM, même gating côté API (`TiltAlertsService`). Récap 17h30 et Weekly Debrief nourris par les séances suivies en direct (#373 / #374, `PropRiskContextService`) : PREMIUM comme ces deux IA (classe « BORNÉ », prompt plus riche, aucun appel en plus).

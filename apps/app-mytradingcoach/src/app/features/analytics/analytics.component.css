@@ -150,10 +150,19 @@
 
 .card-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
   gap: 12px;
+}
+
+/* Périodes + total : passent sous le titre quand la carte est étroite (le total sortait de la carte, #636). */
+.equity-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .card-title {
@@ -531,7 +540,6 @@
 @media (max-width: 768px) {
   .content {
     padding: 16px;
-    padding-top: 70px;
   }
 
   .stats-row {
@@ -588,3 +596,9 @@
 }
 .equity-pnl-total.pos { color: var(--green); }
 .equity-pnl-total.neg { color: var(--red); }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .period-tab { position: relative; }
+  .period-tab::before { content: ''; position: absolute; inset: -11px 0; }
+}

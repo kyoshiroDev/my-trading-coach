@@ -24,9 +24,13 @@
 
 /* Fidélisation : entonnoir 5 stats (activation → traders actifs 7j/30j → J+7 → fantômes) */
 @media (min-width: 1024px) {
-  .ret-grid.funnel { grid-template-columns: repeat(5, 1fr); }
+  .ret-grid.funnel { grid-template-columns: repeat(6, 1fr); }
 }
 .ret-stat .v.green { color: var(--green); }
+.ret-stat .v.purple { color: var(--purple); }
+/* Liaison compte ↔ plan (#612) : détail sur la page Brokers */
+.ret-link { text-decoration: none; color: inherit; cursor: pointer; }
+.ret-link:hover .kpi-label { color: var(--text2); }
 
 .sys-body { padding: 16px 18px; }
 

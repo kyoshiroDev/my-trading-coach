@@ -84,7 +84,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Equity Curve</div>
-          <div style="display:flex;align-items:center;gap:6px;">
+          <div class="equity-controls">
             <div class="period-tabs">
               @for (p of periods; track p.key) {
                 <button
@@ -373,7 +373,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium · 1 mois offert →
+            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
           </button>
         </div>
       </div>
@@ -405,7 +405,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium · 1 mois offert →
+            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
           </button>
         </div>
       </div>
@@ -436,7 +436,7 @@
             data-testid="upgrade-cta"
             (click)="showPlanModal.set(true)"
           >
-            Essayer Premium · 1 mois offert →
+            {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
           </button>
         </div>
       </div>

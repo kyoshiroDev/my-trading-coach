@@ -9,14 +9,16 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { DialogDirective } from '@mtc/front-ui';
+import { catchError, map, of } from 'rxjs';
 import { EcoCalendarData } from '@app/core/api/eco-calendar.api';
 import { MoodState, TradingSession, LiveStats, SessionTrade } from '@app/core/api/session.api';
-import { CreateTradeDto, MarketContext, NewsItem } from '@app/core/api/trades.api';
+import { CreateTradeDto, MarketContext, NewsItem, TradesApi } from '@app/core/api/trades.api';
 import { MarketContextBarComponent } from '../market-context-bar/market-context-bar.component';
 import { MoneyService } from '@app/core/services/money.service';
 import { LiveNewsComponent } from './components/live-news/live-news.component';
-import { LiveFeedComponent } from './components/live-feed/live-feed.component';
-import { LiveEcoCalendarComponent } from './components/live-eco-calendar/live-eco-calendar.component';
 import { QuickTradeComponent } from './components/quick-trade/quick-trade.component';
 import { LivePropFirmComponent } from './components/live-prop-firm/live-prop-firm.component';
 import { isLivePropAccount } from './components/live-prop-firm/live-prop-firm.util';
@@ -24,22 +26,29 @@ import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradovateStore } from '@app/core/stores/tradovate.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { LivePositionComponent } from './components/live-position/live-position.component';
-import { LIVE_POSITION_ROLES, laggingBrokerPanel } from './components/live-position/live-position.util';
+import { LIVE_POSITION_ROLES, laggingBrokerPanel, liveTotals } from './components/live-position/live-position.util';
+import { LiveBarComponent } from './components/live-bar/live-bar.component';
+import { LiveNextEventComponent } from './components/live-next-event/live-next-event.component';
+import { LiveClosedTradesComponent } from './components/live-closed-trades/live-closed-trades.component';
 import { SessionStore } from '@app/core/stores/session.store';
+import { bannerTickers, moodLabel, planKindShort } from './session-live.util';
 
 /**
- * Onglet « Session live » : cadre de la vue (CTA sans session, carte marché, mini-stats,
- * grille). Chaque panneau est un composant : calendrier éco, live feed, trade rapide, news.
- * Compte de la session synchronisé (Tradovate, éval ou funded) : le suivi prop firm prend la
- * place de Trade rapide, ses trades arrivant seuls ; « Saisir un trade à la main » le réaffiche.
+ * Onglet « Session live » v3 (#593, retours de Val : « trop chargée, on se perd ») : l'essentiel
+ * d'abord, mobile d'abord. Bandeau collant (chrono, P&L total du jour, trades N / max), prochaine
+ * annonce, trade en cours, suivi du compte, trades clôturés ; le contexte marché et les news
+ * passent dans une feuille « Contexte ». Compte de la session synchronisé (Tradovate, éval ou
+ * funded) : ses trades arrivent seuls, « Saisir un trade à la main » ouvre Trade rapide ; sinon
+ * Trade rapide reste affiché (seul moyen de logger un trade).
  */
 @Component({
   selector: 'mtc-session-live',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './session-live.component.css',
   imports: [
-    MarketContextBarComponent, LiveNewsComponent, LiveFeedComponent, LiveEcoCalendarComponent,
-    QuickTradeComponent, LivePropFirmComponent, LivePositionComponent,
+    MarketContextBarComponent, LiveNewsComponent, QuickTradeComponent, LivePropFirmComponent,
+    LivePositionComponent, LiveBarComponent, LiveNextEventComponent, LiveClosedTradesComponent,
+    RouterLink, DialogDirective,
   ],
   templateUrl: './session-live.component.html',
 })
@@ -61,7 +70,8 @@ export class SessionLiveComponent {
   readonly tradeLogged = output<CreateTradeDto>();
   readonly ecoCalendarRefreshed = output<EcoCalendarData>();
   readonly goToDebrief = output<void>();
-
+  /** « Clôturer la session » : le parent ouvre sa confirmation. */
+  readonly closeSession = output<void>();
 
   // News live + contexte marché = IA mutualisée → FREE, accessible à tous.
 
@@ -103,14 +113,21 @@ export class SessionLiveComponent {
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tradovate = inject(TradovateStore);
   private readonly userStore = inject(UserStore);
-  private readonly sessionStore = inject(SessionStore);
+  protected readonly sessionStore = inject(SessionStore);
   private lastBrokerGap: string | null = null;
 
-  /** « Trade en cours » (bêta) : compte de la session synchronisé par API, rôle de test. */
+  /** Table des valeurs du point (barre SL/TP, prix au relevé) : une lecture, repli vide. */
+  protected readonly instruments = toSignal(
+    inject(TradesApi).getInstruments().pipe(map((r) => r.data ?? []), catchError(() => of([]))),
+    { initialValue: [] },
+  );
+
+  /** Position broker (bêta) : compte de la session synchronisé par API, rôle de test. */
   protected readonly showLivePosition = computed(() => {
     const role = this.userStore.user()?.role;
     return !!role && LIVE_POSITION_ROLES.includes(role) && !!this.liveStats()?.broker;
   });
+  protected readonly broker = computed(() => (this.showLivePosition() ? this.liveStats()?.broker ?? null : null));
 
   /** Compte de la session si son suivi prop firm peut remplacer Trade rapide, sinon null. */
   protected readonly propFirmAccountId = computed(() => {
@@ -119,17 +136,31 @@ export class SessionLiveComponent {
     const account = this.accounts.accounts().find((a) => a.id === id);
     return isLivePropAccount(account, this.tradovate.byAccount().get(id)) ? id : null;
   });
-  /** L'utilisateur a choisi « Saisir un trade à la main » : Trade rapide réaffiché. */
+  /** L'utilisateur a choisi « Saisir un trade à la main » : Trade rapide affiché sous les trades. */
   protected readonly manualEntry = signal(false);
+  /** Feuille « Contexte marché » (tickers + news) ouverte. */
+  protected readonly contextOpen = signal(false);
+
+  protected readonly openTrades = computed(() => this.todayTrades().filter((t) => t.pnl === null));
+
+  /** P&L du jour : réalisé (MTC) + latent (broker), total null si le latent est inconnu. */
+  protected readonly totals = computed(() => liveTotals(this.liveStats()?.totalPnl ?? 0, this.broker()));
+  protected readonly dayPnl = computed(() => this.totals().total ?? this.totals().realized);
+  protected readonly tradesMax = computed(() => this.userStore.user()?.tradesPerDayMax ?? null);
+
+  /** Bandeau PC : « Apex 50k · EOD », humeur déclarée, contexte marché réduit. */
+  protected readonly accountLabel = computed(() => {
+    const a = this.accounts.accounts().find((x) => x.id === this.session()?.accountId);
+    if (!a) return null;
+    const kind = planKindShort(a.metrics?.drawdown?.rule?.kind);
+    return kind ? `${a.label} · ${kind}` : a.label;
+  });
+  protected readonly mood = computed(() => moodLabel(this.session()?.moodStart));
+  protected readonly tickers = computed(() => bannerTickers(this.marketCtx()));
+  /** Bandeau défilant : les valeurs inconnues (« - ») ne défilent pas, elles restent dans le détail. */
+  protected readonly tickerTape = computed(() => bannerTickers(this.marketCtx(), true).filter((t) => t.value !== '-'));
 
   protected readonly pnlDisplay = computed(() =>
-    this.money.format(this.liveStats()?.totalPnl ?? 0, { decimals: 0 }),
+    this.money.formatFor(this.session()?.accountId, this.dayPnl(), { decimals: 0, sign: true }),
   );
-
-  protected moodEmoji(mood?: MoodState | null): string {
-    const map: Record<string, string> = {
-      CONFIDENT: '😎', FOCUSED: '🎯', NEUTRAL: '😐', TIRED: '😰', STRESSED: '😰',
-    };
-    return map[mood ?? ''] ?? '😐';
-  }
 }

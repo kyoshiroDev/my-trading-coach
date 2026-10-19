@@ -11,6 +11,7 @@ import {
   RetentionData,
   MetricsHistoryPoint,
   AdminFoundersData,
+  AdminPlanLinkStats,
 } from '../../core/api/admin.api';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 import { visiblePoll } from '../../core/utils/visible-poll';
@@ -39,6 +40,8 @@ export class DashboardComponent {
     return f ? `scaleX(${Math.min(1, f.totals.taken / f.offer.seatsTotal)})` : 'scaleX(0)';
   });
   protected readonly retention = signal<RetentionData | null>(null);
+  /** Liaison compte ↔ plan prop firm (#612) : null tant que non chargée ou en échec. */
+  protected readonly planLinks = signal<AdminPlanLinkStats | null>(null);
   protected readonly history = signal<MetricsHistoryPoint[]>([]);
   protected readonly onlineUsers = signal<AdminOnlineUser[]>([]);
   protected readonly vpsStats = signal<VpsStats | null>(null);
@@ -188,6 +191,8 @@ export class DashboardComponent {
 
     this.adminApi.retention().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.retention.set(r?.data ?? null));
+    this.adminApi.planLinks().pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((r) => this.planLinks.set(r?.data ?? null));
 
     this.adminApi.metricsHistory(30).pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe((r) => this.history.set(r?.data ?? []));

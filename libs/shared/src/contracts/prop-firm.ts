@@ -6,6 +6,13 @@
 
 export type PropFirmPhaseKind = 'evaluation' | 'funded' | 'direct';
 export type PropFirmDrawdownKind = 'static' | 'trailing_eod' | 'trailing_intraday';
+/**
+ * Perte journalière max d'une phase : `none` = la firm n'en a pas (règle officielle) ;
+ * `known` = montant, paliers ou règle d'échelle publiés ; `unknown` = la règle existe mais son
+ * montant n'est pas publié. Ne jamais confondre `none` et `unknown` : l'un se dit au trader,
+ * l'autre s'affiche comme une donnée manquante.
+ */
+export type DailyLossLimitStatus = 'none' | 'known' | 'unknown';
 
 export interface PropFirmPhaseSummary {
   phase: PropFirmPhaseKind;
@@ -15,8 +22,9 @@ export interface PropFirmPhaseSummary {
   profitTarget: number | null;
   maxDrawdown: number;
   drawdownType: PropFirmDrawdownKind;
-  /** Perte journalière max, null si la règle n'existe pas ou n'est pas publiée. */
+  /** Perte journalière max (premier palier s'il y en a), null sans montant : voir `dailyLossLimitStatus`. */
   dailyLossLimit: number | null;
+  dailyLossLimitStatus: DailyLossLimitStatus;
 }
 
 export interface PropFirmPlanSummary {
@@ -165,4 +173,18 @@ export interface PropFirmPlanDetail {
   active: boolean;
   firm: { id: string; name: string; website: string; verifiedAt: string };
   phases: PropFirmPhaseRules[];
+}
+
+// ── Indices pour deviner le plan d'un compte connecté (GET /accounts/:id/plan-hint, #612) ────
+
+/** Ce que MTC sait déjà du sous-compte broker, sans nouvel appel. */
+export interface AccountPlanHint {
+  /** Nom du sous-compte chez le broker (`APEX…`, `PAAPEX…`, `DEMO…`). */
+  externalName: string;
+  /** `live` = compte réel, `demo` = simulé (prop firm ou démo perso). */
+  env: 'live' | 'demo';
+  /** Le propriétaire du compte est le trader connecté (démo perso) ; null = inconnu. */
+  ownerIsLogin: boolean | null;
+  /** Solde de départ lu sur la première clôture officielle importée ; null sans historique. */
+  startingBalance: number | null;
 }

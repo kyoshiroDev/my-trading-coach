@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -13,6 +16,7 @@ import { SetupsService } from '../setups/setups.service';
 import { DemoSeedService } from '../admin/demo-seed.service';
 import { ProductEventsService } from '../product-events/product-events.service';
 import { AdminNotifier } from '../admin-push/admin-notifier.service';
+import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-token.verifier';
 
 // Mock argon2 globally for all tests
 vi.mock('argon2', () => ({
@@ -68,6 +72,9 @@ const mockProductEvents = { record: vi.fn().mockResolvedValue(undefined) };
 
 const mockNotifier = { notify: vi.fn() };
 
+const GOOGLE_IDENTITY = { googleId: 'g-sub-1', email: 'trader@gmail.com', name: 'Trader' };
+const mockVerifier = { verify: vi.fn() };
+
 const mockResend = {
   sendWelcomeFree: vi.fn().mockResolvedValue(undefined),
   sendResetPassword: vi.fn().mockResolvedValue(undefined),
@@ -93,6 +100,7 @@ describe('AuthService', () => {
         { provide: DemoSeedService, useValue: mockDemoSeed },
         { provide: ProductEventsService, useValue: mockProductEvents },
         { provide: AdminNotifier, useValue: mockNotifier },
+        { provide: GoogleIdTokenVerifier, useValue: mockVerifier },
       ],
     }).compile();
 
@@ -384,6 +392,240 @@ describe('AuthService', () => {
       expect(query.where.resetPasswordToken).not.toBe(rawToken);
       // Doit être une string hexadécimale de 64 chars (SHA256)
       expect(query.where.resetPasswordToken).toMatch(/^[a-f0-9]{64}$/);
+    });
+  });
+
+  describe('googleAuth (#618)', () => {
+    const dto = { credential: 'x'.repeat(40) };
+    const env = { ...process.env };
+
+    beforeEach(() => {
+      process.env['FEATURE_GOOGLE_AUTH'] = 'true';
+      process.env['GOOGLE_CLIENT_ID'] = 'mtc-test.apps.googleusercontent.com';
+      mockVerifier.verify.mockResolvedValue(GOOGLE_IDENTITY);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser, id: 'new-user', email: GOOGLE_IDENTITY.email, tokenVersion: 0 });
+    });
+
+    afterEach(() => {
+      process.env = { ...env };
+    });
+
+    it('flag coupé → 404, le jeton n’est même pas vérifié', async () => {
+      process.env['FEATURE_GOOGLE_AUTH'] = 'false';
+      await expect(service.googleAuth(dto)).rejects.toThrow(NotFoundException);
+      expect(mockVerifier.verify).not.toHaveBeenCalled();
+    });
+
+    it('vérifie le jeton contre le client ID de l’environnement', async () => {
+      await service.googleAuth(dto);
+      expect(mockVerifier.verify).toHaveBeenCalledWith(dto.credential, 'mtc-test.apps.googleusercontent.com');
+    });
+
+    it.each(['invalid_token', 'email_not_verified'] as const)('jeton refusé (%s) → aucun compte touché', async (reason) => {
+      mockVerifier.verify.mockRejectedValue(new GoogleTokenRefusedException(reason));
+      await expect(service.googleAuth(dto)).rejects.toThrow(GoogleTokenRefusedException);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('googleId connu → connexion, sans création ni liaison', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-123', email: 'test@test.com', role: 'USER', isDemo: false, tokenVersion: 2 });
+      const res = await service.googleAuth(dto);
+      expect(res.googleStatus).toBe('login');
+      expect(res.access_token).toBe('mock_token');
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      // Le refresh token porte la version courante des sessions.
+      expect(mockJwt.signAsync).toHaveBeenCalledWith(expect.objectContaining({ sub: 'user-123', tv: 2 }), expect.anything());
+    });
+
+    it('e-mail existant (casse différente) → liaison sur CE compte, jamais de doublon', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 'user-123', email: 'Trader@Gmail.com', role: 'USER', isDemo: false,
+        googleId: null, emailVerifiedAt: new Date('2026-01-01'), tokenVersion: 0,
+      });
+      mockPrisma.user.update.mockResolvedValue({ ...mockSafeUser, password: 'hash', googleId: 'g-sub-1', tokenVersion: 0 });
+
+      const res = await service.googleAuth(dto);
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { email: { equals: 'trader@gmail.com', mode: 'insensitive' } } }),
+      );
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      const { data } = mockPrisma.user.update.mock.calls[0][0];
+      expect(data.googleId).toBe('g-sub-1');
+      // Adresse déjà prouvée : le mot de passe est gardé.
+      expect(data).not.toHaveProperty('password');
+      expect(res).toMatchObject({ googleStatus: 'linked', passwordCleared: false });
+      expect(res.user).toMatchObject({ hasPassword: true, googleLinked: true });
+      expect(res.user).not.toHaveProperty('password');
+      expect(res.user).not.toHaveProperty('googleId');
+    });
+
+    it('liaison sur un compte jamais vérifié → mot de passe retiré et sessions révoquées', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 'user-123', email: 'trader@gmail.com', role: 'USER', isDemo: false,
+        googleId: null, emailVerifiedAt: null, tokenVersion: 0,
+      });
+      mockPrisma.user.update.mockResolvedValue({ ...mockSafeUser, password: null, googleId: 'g-sub-1', tokenVersion: 1 });
+
+      const res = await service.googleAuth(dto);
+
+      const { data } = mockPrisma.user.update.mock.calls[0][0];
+      expect(data).toMatchObject({
+        password: null,
+        resetPasswordToken: null,
+        tokenVersion: { increment: 1 },
+        emailVerifiedAt: expect.any(Date),
+      });
+      expect(res.passwordCleared).toBe(true);
+      // Nouveau refresh token émis à la NOUVELLE version : les anciens ne passent plus.
+      expect(mockJwt.signAsync).toHaveBeenCalledWith(expect.objectContaining({ tv: 1 }), expect.anything());
+    });
+
+    it('compte déjà relié à un AUTRE compte Google → 409, rien n’est écrasé', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        id: 'user-123', email: 'trader@gmail.com', role: 'USER', isDemo: false,
+        googleId: 'autre-sub', emailVerifiedAt: new Date(), tokenVersion: 0,
+      });
+      await expect(service.googleAuth(dto)).rejects.toThrow(ConflictException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['démo', { role: 'USER', isDemo: true }],
+      ['ADMIN', { role: 'ADMIN', isDemo: false }],
+    ])('compte %s → Google refusé (connexion comme liaison)', async (_label, flags) => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u', email: 'a@b.c', tokenVersion: 0, ...flags });
+      await expect(service.googleAuth(dto)).rejects.toThrow(ForbiddenException);
+
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findFirst.mockResolvedValue({ id: 'u', email: 'a@b.c', googleId: null, emailVerifiedAt: null, tokenVersion: 0, ...flags });
+      await expect(service.googleAuth(dto)).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('nouvel e-mail → création avec parrain, UTM conservés, e-mail vérifié, sans mot de passe', async () => {
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // googleId
+        .mockResolvedValueOnce({ referralCode: 'VAL' }); // parrain
+      const res = await service.googleAuth({
+        ...dto,
+        referralCode: 'val',
+        acquisitionSource: 'instagram',
+        acquisitionMedium: 'story',
+        acquisitionCampaign: 'oct',
+      });
+
+      const { data } = mockPrisma.user.create.mock.calls[0][0];
+      expect(data).toMatchObject({
+        email: 'trader@gmail.com',
+        password: null,
+        name: 'Trader',
+        referredBy: 'VAL',
+        acquisitionSource: 'instagram',
+        acquisitionMedium: 'story',
+        acquisitionCampaign: 'oct',
+        authProvider: 'GOOGLE',
+        googleId: 'g-sub-1',
+        emailVerifiedAt: expect.any(Date),
+      });
+      expect(res.googleStatus).toBe('created');
+      // Mêmes effets qu'une inscription e-mail.
+      expect(mockResend.sendWelcomeFree).toHaveBeenCalledTimes(1);
+      expect(mockNotifier.notify).toHaveBeenCalledTimes(1);
+    });
+
+    it('inscription Google → opt-in marketing FAUX par défaut', async () => {
+      await service.googleAuth(dto);
+      const { data } = mockPrisma.user.create.mock.calls[0][0];
+      expect(data.marketingConsent).toBe(false);
+      expect(data.marketingConsentAt).toBeNull();
+    });
+
+    it('double clic : la 2de création échoue sur l’unicité → connexion au compte créé', async () => {
+      mockPrisma.user.create.mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'test', meta: { target: ['googleId'] } }),
+      );
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce(null) // 1er passage : googleId inconnu
+        .mockResolvedValueOnce({ id: 'new-user', email: 'trader@gmail.com', role: 'USER', isDemo: false, tokenVersion: 0 });
+      const res = await service.googleAuth(dto);
+      expect(res.googleStatus).toBe('login');
+    });
+  });
+
+  describe('login d’un compte Google sans mot de passe', () => {
+    it('401 identique à un mauvais mot de passe, argon2 jamais appelé', async () => {
+      const argon2 = await import('argon2');
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      await expect(service.login({ email: 'test@test.com', password: 'Password123' })).rejects.toThrow(
+        new UnauthorizedException('Identifiants invalides'),
+      );
+      expect(argon2.verify).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('finalizeGoogleSignup', () => {
+    it('enregistre le choix explicite et la date de finalisation', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ authProvider: 'GOOGLE', signupFinalizedAt: null });
+      await service.finalizeGoogleSignup('user-123', true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { signupFinalizedAt: expect.any(Date), marketingConsent: true, marketingConsentAt: expect.any(Date) },
+        }),
+      );
+    });
+
+    it('déjà finalisée → consentement non réécrit', async () => {
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce({ authProvider: 'GOOGLE', signupFinalizedAt: new Date() })
+        .mockResolvedValueOnce(mockSafeUser);
+      await service.finalizeGoogleSignup('user-123', true);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('compte e-mail → 400', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ authProvider: 'EMAIL', signupFinalizedAt: null });
+      await expect(service.finalizeGoogleSignup('user-123', false)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('unlinkGoogle', () => {
+    it('refusé sans mot de passe défini (le compte deviendrait inaccessible)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ password: null, googleId: 'g-sub-1' });
+      await expect(service.unlinkGoogle('user-123')).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('avec mot de passe → googleId retiré', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ password: 'hash', googleId: 'g-sub-1' });
+      await service.unlinkGoogle('user-123');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({ data: { googleId: null } }));
+    });
+  });
+
+  describe('refresh : révocation par version', () => {
+    it('refresh token d’une version périmée → 401', async () => {
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue({ sub: 'user-123', email: 'a@b.c', tv: 0 });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: null, googleId: 'g', tokenVersion: 1 });
+      await expect(service.refresh('t')).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('refresh token d’avant #618 (sans version) = version 0 → accepté', async () => {
+      (mockJwt as Record<string, unknown>)['verifyAsync'] = vi.fn().mockResolvedValue({ sub: 'user-123', email: 'a@b.c' });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockSafeUser, password: 'h', googleId: null, tokenVersion: 0 });
+      await expect(service.refresh('t')).resolves.toMatchObject({ access_token: 'mock_token' });
+    });
+  });
+
+  describe('forgotPassword d’un compte Google sans mot de passe', () => {
+    it('même traitement (204) mais e-mail « définir un mot de passe »', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, password: null });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+      await service.forgotPassword('test@test.com');
+      expect(mockResend.sendResetPassword).toHaveBeenCalledWith(expect.objectContaining({ googleOnly: true }));
     });
   });
 });

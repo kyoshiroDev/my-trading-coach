@@ -1,5 +1,6 @@
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { normalizeUtm } from '../../auth/dto/register.dto';
 import { Plan, Role } from '@prisma/client';
 
 export class SetRoleDto {
@@ -17,6 +18,13 @@ export class AdminListQueryDto {
   @IsOptional() @IsString() search?: string;
   @IsOptional() @Type(() => Number) @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @Min(1) limit?: number;
+  /**
+   * Inscrits d'une campagne (#625) : égalité exacte, normalisée comme à l'inscription.
+   * `-` (`UTM_NONE`) = non renseigné. Cf. `@mtc/shared` acquisition-filter.
+   */
+  @IsOptional() @Transform(normalizeUtm) @IsString() @MaxLength(100) source?: string;
+  @IsOptional() @Transform(normalizeUtm) @IsString() @MaxLength(100) medium?: string;
+  @IsOptional() @Transform(normalizeUtm) @IsString() @MaxLength(100) campaign?: string;
 }
 
 /** Mois Premium offert par l'admin : durée en jours (défaut 30). */

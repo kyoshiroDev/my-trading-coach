@@ -1,5 +1,6 @@
-import type { Plan, Role } from './enums';
+import type { AuthProvider, Plan, Role } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
+import type { AcquisitionUtm } from '../acquisition-filter';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
 
@@ -18,6 +19,8 @@ export interface AdminUserDetail {
     offeredPremium: boolean;
     isDemo: boolean;
     ambassadorRefCode: string | null;
+    /** UTM enregistrés à l'inscription (#625) ; null = non renseigné. */
+    acquisition: AcquisitionUtm;
     createdAt: string;
     lastActivityAt: string | null;
   };
@@ -152,6 +155,30 @@ export interface AdminAcquisitionData {
   topPages: AdminLandingPage[];
 }
 
+/** Inscriptions d'une méthode (#618), hors démo et ADMIN. */
+export interface AdminSignupMethodRow {
+  method: AuthProvider;
+  signups7d: number;
+  signups30d: number;
+  signupsTotal: number;
+  /** Part des inscriptions des 30 derniers jours, en % (1 décimale). */
+  share30d: number;
+}
+
+/** GET /admin/signup-methods — répartition e-mail / Google et finalisation des inscriptions Google. */
+export interface AdminSignupMethodsData {
+  /** Toujours les deux méthodes, e-mail d'abord. */
+  rows: AdminSignupMethodRow[];
+  google: {
+    /** Inscriptions Google dont l'écran de finalisation (opt-in marketing) a été validé. */
+    finalized: number;
+    /** finalized / inscriptions Google, en % (1 décimale) ; 0 sans inscription Google. */
+    finalizationRate: number;
+    /** Comptes créés par e-mail puis reliés à Google. */
+    linkedEmailAccounts: number;
+  };
+}
+
 /** Une étape de l'entonnoir Premium : utilisateurs DISTINCTS (hors démo et admin) sur la période. */
 export interface AdminFunnelStep {
   key: 'premium_seen' | 'plan_modal_open' | 'trial_click' | 'checkout_success' | 'checkout_canceled';
@@ -206,4 +233,19 @@ export interface AdminSignupFunnelData {
   rows: AdminSignupFunnelRow[];
   /** Triées par nombre décroissant, 50 max. */
   errors: AdminSignupFunnelError[];
+}
+
+// ── Liaison des comptes aux plans prop firm (GET /admin/prop-firms/plan-links, #612) ──────────
+
+/** Comptes connectés à un broker (sous-compte choisi, non archivés), hors démo et hors ADMIN. */
+export interface AdminPlanLinkStats {
+  connected: number;
+  /** Reliés à un plan du catalogue. */
+  linked: number;
+  /** `linked / connected`, en % arrondi ; null sans compte connecté. */
+  rate: number | null;
+  /** Comptes connectés SANS plan, par réponse à « Quel est ce compte ? » (`none` = jamais répondu). */
+  unlinked: { later: number; personal: number; unlisted: number; none: number };
+  /** Réponses « Ma firm n'est pas dans la liste » (tous comptes réels), regroupées par nom. */
+  unlistedFirms: { name: string; count: number; lastAt: string }[];
 }

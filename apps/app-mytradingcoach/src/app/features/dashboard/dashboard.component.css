@@ -148,7 +148,6 @@
 @media (max-width: 768px) {
   .content {
     padding: 14px 14px calc(env(safe-area-inset-bottom) + 14px);
-    padding-top: 70px;
   }
 
   .premium-banner {
@@ -278,3 +277,9 @@
 @keyframes mtcBlink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
 .mtc-empty { display: flex; align-items: center; justify-content: center; min-height: 180px; color: var(--text-3); font-size: 13px; text-align: center; }
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .mtc-eq-tabs button { position: relative; }
+  .mtc-eq-tabs button::before { content: ''; position: absolute; inset: -11px 0; }
+}

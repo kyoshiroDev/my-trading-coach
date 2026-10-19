@@ -48,6 +48,14 @@ export const appRoutes: Routes = [
     component: RegisterComponent,
   },
   {
+    // Finalisation d'une inscription Google (#618) : hors coque, comme l'inscription.
+    path: 'inscription/finaliser',
+    canActivate: [authGuard],
+    data: { seo: { title: 'Finaliser l’inscription', noindex: true } },
+    loadComponent: () =>
+      import('./features/auth/google-finalize.component').then((m) => m.GoogleFinalizeComponent),
+  },
+  {
     path: 'forgot-password',
     data: { seo: { title: 'Mot de passe oublié', noindex: true } },
     loadComponent: () =>

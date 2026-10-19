@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Session live, base Val</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#080c14}
+a{color:#22d3ee}a:hover{color:#67e8f9}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 900px; background: #080c14; color: #e6edf7; font-family: Inter, system-ui, sans-serif; display: flex; flex-wrap: wrap">
+  <nav aria-label="Navigation" style="flex: 0 0 64px; background: #0b1219; border-right: 1px solid rgba(255,255,255,.06); display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 18px">
+    <div style="width: 34px; height: 34px; border-radius: 9px; background: #7c3aed"></div>
+    <div style="width: 20px; height: 20px; border-radius: 5px; background: #1c2a40"></div>
+    <div style="width: 20px; height: 20px; border-radius: 5px; background: #22d3ee"></div>
+    <div style="width: 20px; height: 20px; border-radius: 5px; background: #1c2a40"></div>
+    <div style="width: 20px; height: 20px; border-radius: 5px; background: #1c2a40"></div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px">
+
+    <header style="background: #0b1219; border: 1px solid rgba(34,211,238,.18); border-radius: 14px; padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 22px">
+      <div style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #22d3ee"><span style="width: 8px; height: 8px; border-radius: 50%; background: #22d3ee"></span>01:12:38</div>
+      <span style="font-size: 13px; color: #8b98ad">Apex 50k · EOD</span>
+      <span style="font-size: 13px; color: #e6edf7; background: #111b2e; padding: 4px 10px; border-radius: 99px">Concentré</span>
+      <span style="font-size: 13px; color: #8b98ad">Trades <strong style="font-family: 'JetBrains Mono', monospace; color: #e6edf7">4 / 5</strong></span>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #4ade80">+$730</span>
+      <div style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8b98ad">
+        <span>NQ 18 584 <span style="color: #4ade80">+0.62%</span></span>
+        <span>ES 5 912 <span style="color: #4ade80">+0.41%</span></span>
+        <span>DXY 104.20 <span style="color: #f87171">-0.18%</span></span>
+        <span>10Y 4.31%</span>
+        <a href="#" style="font-family: Inter, sans-serif">Contexte</a>
+      </div>
+      <button type="button" style="height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid rgba(248,113,113,.45); background: rgba(248,113,113,.08); color: #fca5a5; font: 600 13px Inter, sans-serif">Clôturer la session</button>
+    </header>
+
+    <section style="background: #0b1219; border: 1px solid rgba(245,158,11,.35); border-radius: 12px; padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; color: #fbbf24">PROCHAINE ANNONCE</span>
+      <span style="font-size: 14px; font-weight: 600">PMI Services Royaume-Uni · 10:30</span>
+      <span style="font-size: 12px; color: #8b98ad">impact moyen</span>
+      <span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #fbbf24">dans 18 min</span>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; flex: 1">
+      <div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+        <section aria-label="Trade en cours" style="background: #0b1219; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 22px 24px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; color: #8b98ad">TRADE EN COURS</span>
+            <span style="font-size: 11px; font-weight: 600; color: #22d3ee; background: rgba(34,211,238,.1); padding: 3px 8px; border-radius: 99px">LIVE</span>
+            <span style="font-size: 11px; color: #8b98ad">· ouvert depuis 6 min</span>
+            <button type="button" style="margin-left: auto; height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: #111b2e; color: #e6edf7; font: 600 13px Inter, sans-serif">Clôturer ce trade</button>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-top: 18px">
+            <span style="font-size: 12px; font-weight: 600; color: #4ade80; background: rgba(74,222,128,.1); padding: 4px 10px; border-radius: 6px">LONG</span>
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700">MNQ</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8b98ad">2 contrats @ 18 540</span>
+            <div style="margin-left: auto; text-align: right">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 40px; font-weight: 600; line-height: 1; color: #f87171">-$80</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8b98ad; margin-top: 6px">prix actuel 18 520</div>
+            </div>
+          </div>
+          <div style="position: relative; height: 10px; border-radius: 99px; margin-top: 22px; background: #1c2a40; overflow: visible">
+            <div style="position: absolute; left: 0; top: 0; width: 33%; height: 100%; border-radius: 99px 0 0 99px; background: rgba(248,113,113,.35)"></div>
+            <div style="position: absolute; left: 33%; top: 0; width: 67%; height: 100%; border-radius: 0 99px 99px 0; background: rgba(74,222,128,.25)"></div>
+            <div style="position: absolute; left: 33%; top: -5px; width: 2px; height: 20px; background: #e6edf7"></div>
+            <div style="position: absolute; left: 17%; top: -4px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #f87171; border: 3px solid #0b1219; box-sizing: border-box"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+            <span style="color: #f87171">SL 18 500 · -$160</span>
+            <span style="color: #8b98ad">Entrée 18 540</span>
+            <span style="color: #4ade80">TP 18 620 · +$320</span>
+          </div>
+          <div style="font-size: 12px; color: #8b98ad; margin-top: 10px">Risque/rendement 1 : 2 · stop à 20 pts</div>
+        </section>
+
+        <section aria-label="Trades clôturés" style="flex: 1; background: #0b1219; border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 20px 24px">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; color: #8b98ad">TRADES CLÔTURÉS · 4 · 3 GAGNANTS</span>
+            <a href="#" style="font-size: 12px">Saisir un trade à la main</a>
+          </div>
+          <div style="display: flex; flex-direction: column; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+            <div style="display: grid; grid-template-columns: 64px 72px 64px 1fr 40px 80px; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.06)"><span style="color: #8b98ad">11:42</span><span style="font-size: 11px; color: #4ade80">LONG</span><span>NQ</span><span style="color: #8b98ad">18 420 → 18 436</span><span style="font-size: 11px; color: #8b98ad">TP</span><span style="text-align: right; color: #4ade80">+$320</span></div>
+            <div style="display: grid; grid-template-columns: 64px 72px 64px 1fr 40px 80px; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.06)"><span style="color: #8b98ad">10:55</span><span style="font-size: 11px; color: #4ade80">LONG</span><span>MNQ</span><span style="color: #8b98ad">18 450 → 18 510</span><span style="font-size: 11px; color: #8b98ad">TP</span><span style="text-align: right; color: #4ade80">+$240</span></div>
+            <div style="display: grid; grid-template-columns: 64px 72px 64px 1fr 40px 80px; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.06)"><span style="color: #8b98ad">10:12</span><span style="font-size: 11px; color: #f87171">SHORT</span><span>ES</span><span style="color: #8b98ad">5 905 → 5 908</span><span style="font-size: 11px; color: #8b98ad">SL</span><span style="text-align: right; color: #f87171">-$150</span></div>
+            <div style="display: grid; grid-template-columns: 64px 72px 64px 1fr 40px 80px; align-items: center; padding: 11px 0"><span style="color: #8b98ad">09:34</span><span style="font-size: 11px; color: #4ade80">LONG</span><span>NQ</span><span style="color: #8b98ad">18 210 → 18 230</span><span style="font-size: 11px; color: #8b98ad">TP</span><span style="text-align: right; color: #4ade80">+$400</span></div>
+          </div>
+        </section>
+      </div>
+
+      <aside aria-label="Suivi du compte" style="flex: 1 1 320px; min-width: 0; background: #0b1219; border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 22px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; color: #8b98ad">SUIVI DU COMPTE</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #c4b5fd; background: rgba(124,58,237,.15); padding: 3px 8px; border-radius: 6px">Apex 50K · EOD</span>
+        </div>
+
+        <div>
+          <div style="font-size: 12px; color: #8b98ad">Equity en direct</div>
+          <div style="display: flex; align-items: baseline; gap: 12px; margin-top: 6px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 600">$50,730</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4ade80">+$810 réalisé</span>
+          </div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8b98ad; margin-top: 4px">latent <span style="color: #f87171">-$80</span></div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Perte max du jour</span><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">$1,000 dispo</span></div>
+          <div style="height: 8px; border-radius: 99px; background: #1c2a40; margin-top: 8px; overflow: hidden"><div style="width: 0%; height: 100%; background: #f59e0b"></div></div>
+          <div style="font-size: 12px; color: #8b98ad; margin-top: 6px">Journée en positif · au-delà de -$1,000, trading coupé jusqu'à demain</div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Marge avant le plancher</span><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600">$2,730</span></div>
+          <div style="height: 8px; border-radius: 99px; background: #1c2a40; margin-top: 8px; overflow: hidden"><div style="width: 91%; height: 100%; background: #64748b"></div></div>
+          <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8b98ad; margin-top: 6px"><span>Plancher $48,000</span><span>mis à jour à la clôture</span></div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Objectif de profit</span><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600"><span style="color: #4ade80">+$730</span> / $3,000</span></div>
+          <div style="height: 8px; border-radius: 99px; background: #1c2a40; margin-top: 8px; overflow: hidden"><div style="width: 24%; height: 100%; background: #4ade80"></div></div>
+          <div style="font-size: 12px; color: #8b98ad; margin-top: 6px">Il te reste $2,270</div>
+        </div>
+
+        <div style="margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); font-size: 12px; color: #8b98ad; line-height: 1.5">Estimation MyTradingCoach, pas le calcul officiel de ta firm. <a href="#">Détail des règles</a></div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

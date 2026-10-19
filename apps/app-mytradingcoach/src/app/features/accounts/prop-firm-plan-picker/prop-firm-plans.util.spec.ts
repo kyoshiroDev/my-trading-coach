@@ -12,8 +12,8 @@ function plan(p: Partial<PropFirmPlanSummary> & { id: string }): PropFirmPlanSum
     needsReview: false,
     platformDependent: [],
     phases: [
-      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
-      { phase: 'funded', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: 1200 },
+      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null, dailyLossLimitStatus: 'none' },
+      { phase: 'funded', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: 1200, dailyLossLimitStatus: 'known' },
     ],
     ...p,
   };
@@ -73,8 +73,8 @@ describe('libellés', () => {
 
   it('funded qui démarre à 0 $ : le solde de départ pré-rempli suit la phase', () => {
     const xfa = plan({ id: 'topstep-standard-50k', phases: [
-      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
-      { phase: 'funded', startingBalance: 0, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null },
+      { phase: 'evaluation', startingBalance: 50_000, profitTarget: 3000, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null, dailyLossLimitStatus: 'none' },
+      { phase: 'funded', startingBalance: 0, profitTarget: null, maxDrawdown: 2000, drawdownType: 'trailing_eod', dailyLossLimit: null, dailyLossLimitStatus: 'none' },
     ] });
     expect(rulesFromPlan(xfa, 'FUNDED')).toMatchObject({ accountSize: 50_000, startingBalance: 0 });
     expect(rulesFromPlan(xfa, 'EVALUATION')).toMatchObject({ startingBalance: 50_000 });
@@ -120,7 +120,7 @@ describe('phaseFor / rulesFromPlan', () => {
   it('plan direct : la phase direct sert de funded', () => {
     const direct = plan({
       id: 'lucid-direct-50k',
-      phases: [{ phase: 'direct', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2500, drawdownType: 'static', dailyLossLimit: null }],
+      phases: [{ phase: 'direct', startingBalance: 50_000, profitTarget: null, maxDrawdown: 2500, drawdownType: 'static', dailyLossLimit: null, dailyLossLimitStatus: 'none' }],
     });
     expect(phaseFor(direct, 'FUNDED')?.phase).toBe('direct');
     expect(rulesFromPlan(direct, 'FUNDED')).toMatchObject({ maxDrawdown: 2500, drawdownType: 'STATIC' });

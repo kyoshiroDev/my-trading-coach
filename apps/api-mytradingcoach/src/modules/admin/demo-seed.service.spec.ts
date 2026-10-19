@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DemoSeedService, DEMO_RESEED_LOCK } from './demo-seed.service';
 
 /** Fraîcheur de la démo, indépendante des crons (dev tourne sans cron). */
-function setup(lastTrade: Date | null, user = true) {
+function setup(lastTrade: Date | null, user = true, live = true) {
   const prisma = {
     user: { findUnique: vi.fn().mockResolvedValue(user ? { id: 'demo' } : null) },
+    tradeSession: { findFirst: vi.fn().mockResolvedValue(live ? { id: 'live' } : null) },
     trade: { findFirst: vi.fn().mockResolvedValue(lastTrade ? { tradedAt: lastTrade } : null) },
   };
   const redis = { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn().mockResolvedValue(1) } };
@@ -47,10 +48,17 @@ describe('DemoSeedService.ensureFresh', () => {
     const day = new Date('2026-10-06T00:00:00'); // mardi
     const at = (h: number, m = 0) => { const d = new Date(day); d.setHours(h, m, 0, 0); return d; };
     expect(await setup(at(2, 45)).service.isStale(at(8))).toBe(false); // avant l'ouverture
+    expect(await setup(at(-9, 0)).service.isStale(at(8)), 'veille 15:00, avant 09:45 : séance d’hier suffit').toBe(false);
     expect(await setup(at(2, 45)).service.isStale(at(11))).toBe(true); // Londres ouverte
     expect(await setup(at(9, 38)).service.isStale(at(11))).toBe(false); // déjà montrée
     expect(await setup(at(9, 38)).service.isStale(at(17))).toBe(true); // New York ouverte
     expect(await setup(at(15, 57)).service.isStale(at(22))).toBe(false);
+  });
+
+  it('aucune session live pour la journée de trading en cours (week-end, après minuit) → re-seed', async () => {
+    const { service, run } = setup(new Date(), true, false);
+    expect(await service.ensureFresh('connexion démo')).toBe(true);
+    expect(run).toHaveBeenCalled();
   });
 
   it('week-end : un trade du vendredi suffit', async () => {

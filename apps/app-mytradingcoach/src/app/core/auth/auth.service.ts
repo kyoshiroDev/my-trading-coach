@@ -43,6 +43,11 @@ export interface AuthUser {
   tradingAssets?: string[];
   favoriteAsset?: string | null;
   discordId?: string | null;
+  /** Connexion Google (#618) : jamais l'identifiant Google, seulement ces indicateurs. */
+  hasPassword?: boolean;
+  googleLinked?: boolean;
+  /** Inscription Google dont l'écran de finalisation (opt-in marketing) reste à valider. */
+  needsSignupFinalization?: boolean;
 }
 
 /** UTM du lien d'inscription (landing → /register), transmis tels quels à l'API. */
@@ -56,6 +61,17 @@ interface AuthResponse {
   data: {
     access_token: string;
     user: AuthUser;
+  };
+}
+
+/** Issue d'une connexion Google : `linked` = compte e-mail existant relié au 1er passage. */
+export type GoogleAuthStatus = 'login' | 'linked' | 'created';
+
+interface GoogleAuthResponse {
+  data: AuthResponse['data'] & {
+    googleStatus: GoogleAuthStatus;
+    /** Liaison sur un compte jamais vérifié : son ancien mot de passe a été retiré. */
+    passwordCleared: boolean;
   };
 }
 
@@ -127,6 +143,34 @@ export class AuthService {
         { withCredentials: true },
       )
       .pipe(tap((res) => this.handleAuthResponse(res)));
+  }
+
+  /**
+   * Connexion ou inscription avec Google (#618) : l'ID token GIS + parrain et UTM, utilisés
+   * seulement si le compte est créé. Jamais d'opt-in marketing ici (écran de finalisation).
+   */
+  googleAuth(credential: string, referralCode?: string, acquisition?: Acquisition) {
+    return this.http
+      .post<GoogleAuthResponse>(
+        `${environment.apiUrl}/auth/google`,
+        { credential, referralCode, ...acquisition },
+        { withCredentials: true },
+      )
+      .pipe(tap((res) => this.handleAuthResponse(res)));
+  }
+
+  /** Écran de finalisation d'une inscription Google : choix explicite de l'opt-in marketing. */
+  finalizeGoogleSignup(marketingConsent: boolean) {
+    return this.http
+      .post<{ data: AuthUser }>(`${environment.apiUrl}/auth/google/finalize`, { marketingConsent })
+      .pipe(tap((res) => this.setCurrentUser(res.data)));
+  }
+
+  /** Délier Google (refusé par l'API sans mot de passe défini). */
+  unlinkGoogle() {
+    return this.http
+      .delete<{ data: AuthUser }>(`${environment.apiUrl}/auth/google`)
+      .pipe(tap((res) => this.setCurrentUser(res.data)));
   }
 
   logout() {

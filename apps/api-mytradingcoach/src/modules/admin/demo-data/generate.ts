@@ -3,7 +3,7 @@ import { TradeSide, EmotionState, TradingSession, MoodState, ExecutionMethod } f
 import { BEHAVIORAL_MIN_TRADES, computeBehavioralGrade, computeExecutionGrade, median } from '@api/common/utils/execution-grade.util';
 import { type AccountKey, DEMO_ACCOUNTS, DEMO_WINDOW_DAYS, INSTRUMENTS, type Rand, SETUP_PROFILES, type SetupTitle, type Sym, between, pick, rng, round2, toTick } from './config';
 import { NOTES_LOSS, NOTES_WIN } from './texts';
-import { type DemoDay, type DemoStats, type DemoTrade, meetsTargets, net, statsOf } from './model';
+import { type DemoDay, type DemoOpenTrade, type DemoStats, type DemoTrade, meetsTargets, net, statsOf } from './model';
 import { isoWeek } from './reports';
 
 // ── Génération ─────────────────────────────────────────────────────────────
@@ -47,6 +47,20 @@ export function buildTrade(
     riskReward, quantity: o.quantity, pnl, commission: round2(inst.fee * o.quantity), emotion,
     timeframe: prof.tf, session: sessionOf(o.at.getHours()), tradedAt: o.at, notes,
     daysAgo: o.daysAgo, executionScore: null, executionGrade: null, executionMethod: null,
+  };
+}
+
+/** Position MNQ encore ouverte, SL et TP posés (R/R 1 : 2) : la barre complète de « Trade en cours ». */
+export function buildOpenTrade(r: Rand, o: { at: Date; daysAgo: number }): DemoOpenTrade {
+  const t = buildTrade(r, { account: 'apex', setup: 'Pullback', win: true, asset: 'MNQ', quantity: 2, at: o.at, daysAgo: o.daysAgo, moodStart: 'FOCUSED', emotion: 'FOCUSED' });
+  const dir = t.side === TradeSide.LONG ? 1 : -1;
+  const stopPts = toTick(between(r, INSTRUMENTS.MNQ.stop));
+  return {
+    account: t.account, asset: t.asset, setup: t.setup, side: t.side, entry: t.entry,
+    stopLoss: t.entry - dir * stopPts, takeProfit: t.entry + dir * 2 * stopPts, riskReward: 2,
+    quantity: t.quantity, emotion: t.emotion, timeframe: t.timeframe, session: t.session,
+    tradedAt: t.tradedAt, notes: null, daysAgo: t.daysAgo,
+    executionScore: null, executionGrade: null, executionMethod: null,
   };
 }
 
@@ -165,14 +179,22 @@ export function generate(now: Date, seed: number): DemoDay[] {
     days.push({ daysAgo: d, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'yesterday', trades: [a, b] });
   }
 
-  // Aujourd'hui (J-0), jour ouvré et séance ouverte (`demoTodaySlot`) : session ACTIVE sur le
-  // compte Apex connecté (panneau de suivi prop firm de la session live), trades AVANT `now`.
+  // Aujourd'hui (J-0) : la vitrine montre TOUJOURS une session live (compte Apex connecté, suivi
+  // prop firm), avec un trade saisi à la main encore ouvert (barre SL / entrée / TP).
+  //  - jour ouvré et séance ouverte (`demoTodaySlot`) : deux trades du jour AVANT `now`, puis la
+  //    position ouverte quelques minutes après ;
+  //  - week-end ou avant 09:45 : marché fermé, aucun trade du jour (jamais un samedi / dimanche),
+  //    la position ouverte date de la dernière séance (gardée), d'où « ouvert depuis… ».
   const slot = demoTodaySlot(now);
   if (tradesToday && slot) {
     const [[h1, m1], [h2, m2]] = slot.trades;
     const a = buildTrade(r, { account: 'apex', setup: 'Breakout', win: true, asset: 'MNQ', quantity: 3, at: dayAt(now, 0, h1, m1), daysAgo: 0, moodStart: 'FOCUSED', emotion: 'CONFIDENT' });
     const b = buildTrade(r, { account: 'apex', setup: 'Scalping', win: true, asset: 'MES', quantity: 5, at: dayAt(now, 0, h2, m2), daysAgo: 0, moodStart: 'FOCUSED', forceNoStop: true, emotion: null });
-    days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades: [a, b] });
+    const openTrade = buildOpenTrade(r, { at: dayAt(now, 0, h2, m2 + 4), daysAgo: 0 });
+    days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'CONFIDENT', kind: 'today', trades: [a, b], openTrade });
+  } else {
+    const openTrade = buildOpenTrade(r, { at: dayAt(now, lastDay, 21, 40), daysAgo: lastDay });
+    days.push({ daysAgo: 0, account: 'apex', moodStart: 'FOCUSED', moodEnd: 'FOCUSED', kind: 'today', trades: [], openTrade });
   }
 
   days.sort((x, y) => y.daysAgo - x.daysAgo);
@@ -186,8 +208,8 @@ export function generate(now: Date, seed: number): DemoDay[] {
  * samedi ou un dimanche, aucun actif hors MES / MNQ / ES / NQ. Appelé avant TOUTE écriture :
  * une régression fait échouer le seed au lieu d'afficher une démo incohérente.
  */
-export function assertDemoCalendar(days: { trades: { tradedAt: Date; asset: string }[] }[]): void {
-  for (const t of days.flatMap((d) => d.trades)) {
+export function assertDemoCalendar(days: { trades: { tradedAt: Date; asset: string }[]; openTrade?: { tradedAt: Date; asset: string } }[]): void {
+  for (const t of days.flatMap((d) => (d.openTrade ? [...d.trades, d.openTrade] : d.trades))) {
     const wd = t.tradedAt.getDay();
     if (wd === 0 || wd === 6) {
       throw new Error(`Seed démo : trade un week-end (${t.tradedAt.toISOString()}), refusé.`);

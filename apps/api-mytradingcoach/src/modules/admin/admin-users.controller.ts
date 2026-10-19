@@ -33,7 +33,9 @@ export class AdminUsersController {
 
   @Get()
   list(@Query() query: AdminListQueryDto) {
-    return this.usersService.adminFindAll(query.page, query.limit, query.search);
+    return this.usersService.adminFindAll(query.page, query.limit, query.search, {
+      source: query.source, medium: query.medium, campaign: query.campaign,
+    });
   }
 
   /** KPIs globaux (MRR, inscrits, essais…). */

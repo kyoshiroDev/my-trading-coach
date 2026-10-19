@@ -8,6 +8,7 @@ import {
   cashBalanceUpdate,
   initialAccountState,
   isTradeEvent,
+  orderEvent,
   parseFrame,
   syncRequestMessage,
 } from './tradovate-live.protocol';
@@ -73,7 +74,10 @@ describe('Protocole Tradovate — fonctions pures', () => {
   it('user/syncrequest : le seul compte synchronisé, entityTypes renseignés (obligatoires)', () => {
     const [endpoint, id, query, body] = syncRequestMessage(1, EXT).split('\n');
     expect([endpoint, id, query]).toEqual(['user/syncrequest', '1', '']);
-    expect(JSON.parse(body)).toEqual({ accounts: [EXT], entityTypes: ['fill', 'fillPair', 'position', 'cashBalance'] });
+    expect(JSON.parse(body)).toEqual({
+      accounts: [EXT],
+      entityTypes: ['fill', 'fillPair', 'position', 'cashBalance', 'order', 'orderVersion'],
+    });
   });
 
   it('événements utiles : fill / fillPair / position créés ou modifiés, du bon compte', () => {
@@ -240,10 +244,52 @@ describe('Protocole live — solde du compte', () => {
 
   it('état initial : uniquement la réponse 200 du syncrequest (id 1)', () => {
     const d = { cashBalances: [{ accountId: EXT, amount: 10, timestamp: '2026-10-03T10:00:00Z' }], positions: [] };
-    expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toEqual({ balance: { amount: 10, at: new Date('2026-10-03T10:00:00Z') }, openPositions: 0 });
+    expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toEqual({
+      balance: { amount: 10, at: new Date('2026-10-03T10:00:00Z') }, openPositions: 0, orders: [], orderVersions: [],
+    });
     expect(initialAccountState({ s: 200, i: 0, d }, EXT)).toBeNull();
     expect(initialAccountState({ s: 401, i: 1, d }, EXT)).toBeNull();
-    expect(initialAccountState({ s: 200, i: 1, d: {} }, EXT)).toEqual({ balance: null, openPositions: 0 });
+    expect(initialAccountState({ s: 200, i: 1, d: {} }, EXT)).toEqual({ balance: null, openPositions: 0, orders: [], orderVersions: [] });
+  });
+
+  it('état initial : ordres et versions de la séance transmis tels quels', () => {
+    const d = { orders: [{ id: 1, accountId: EXT, ordStatus: 'Working' }], orderVersions: [{ id: 2, orderId: 1, orderType: 'Stop' }] };
+    expect(initialAccountState({ s: 200, i: 1, d }, EXT)).toMatchObject(d);
+  });
+});
+
+describe('Protocole live — ordres (#601)', () => {
+  const props = (entityType: string, entity: object, eventType = 'Updated') =>
+    ({ e: 'props', d: { entityType, eventType, entity } });
+
+  it('order / orderVersion → événement d\'ordre ; ni trade ni solde', () => {
+    expect(orderEvent(props('order', { id: 1, ordStatus: 'Working' }, 'Created')))
+      .toEqual({ entityType: 'order', eventType: 'Created', entity: { id: 1, ordStatus: 'Working' } });
+    expect(orderEvent(props('orderVersion', { orderId: 1, stopPrice: 21_480 })))
+      .toMatchObject({ entityType: 'orderVersion', entity: { orderId: 1 } });
+    expect(orderEvent(props('fill', { id: 1 }))).toBeNull();
+    expect(orderEvent({ s: 200, i: 1 })).toBeNull();
+    expect(isTradeEvent(props('order', { accountId: EXT }) as never, EXT)).toBe(false);
+  });
+
+  it('connexion : un événement d\'ordre est relayé, sans déclencher de synchro', async () => {
+    vi.useFakeTimers();
+    const onOrder = vi.fn();
+    const onTradeEvent = vi.fn();
+    const sockets: FakeSocket[] = [];
+    const conn = new TradovateLiveConnection({
+      url: TRADOVATE_WS_URL.demo, externalAccountId: EXT, getToken: async () => 'AT-1', onTradeEvent, onOrder,
+      socketFactory: (url) => { const s = new FakeSocket(url); sockets.push(s); return s; },
+    });
+    conn.start();
+    await vi.advanceTimersByTimeAsync(0);
+    sockets[0].server('o');
+    sockets[0].server('a[{"s":200,"i":0}]');
+    sockets[0].server('a[{"e":"props","d":{"entityType":"order","eventType":"Created","entity":{"id":5}}}]');
+    expect(onOrder).toHaveBeenCalledWith({ entityType: 'order', eventType: 'Created', entity: { id: 5 } });
+    expect(onTradeEvent).not.toHaveBeenCalled();
+    conn.stop();
+    vi.useRealTimers();
   });
 });
 

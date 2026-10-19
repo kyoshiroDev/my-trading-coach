@@ -164,6 +164,37 @@
       </div>
     </div>
 
+    @if (methods(); as m) {
+      <div class="card" data-testid="signup-methods">
+        <div class="card-head"><span class="card-label">Inscriptions par méthode</span><span class="card-label muted">hors démo et admin</span></div>
+        <table class="tbl">
+          <caption class="sr-only">Inscriptions par email et par Google</caption>
+          <thead><tr>
+            <th scope="col">Méthode</th>
+            <th scope="col" class="num">Inscrits 7j</th>
+            <th scope="col" class="num">Inscrits 30j</th>
+            <th scope="col" class="num">Part 30j</th>
+            <th scope="col" class="num">Inscrits total</th>
+          </tr></thead>
+          <tbody>
+            @for (r of m.rows; track r.method) {
+              <tr>
+                <td data-label="Méthode">{{ methodLabel[r.method] }}</td>
+                <td data-label="Inscrits 7j" class="td-mono num">{{ r.signups7d }}</td>
+                <td data-label="Inscrits 30j" class="td-mono num">{{ r.signups30d }}</td>
+                <td data-label="Part 30j" class="td-mono num">{{ r.share30d }}%</td>
+                <td data-label="Inscrits total" class="td-mono num muted">{{ r.signupsTotal }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="card-foot td-mono">
+          Google : <span class="teal">{{ m.google.finalizationRate }}%</span> finalisées
+          ({{ m.google.finalized }} écran(s) d'opt-in validé(s)) · {{ m.google.linkedEmailAccounts }} compte(s) email relié(s) à Google
+        </div>
+      </div>
+    }
+
     <div class="card">
       <div class="card-head"><span class="card-label">Par source</span><span class="card-label muted">tri : visites 30j</span></div>
       @if (d.rows.length) {
@@ -232,7 +263,12 @@
                 <td data-label="Visites 30j" class="td-mono num">{{ c.visits30d }}</td>
                 <td data-label="Inscrits 30j" class="td-mono num">{{ c.signups30d }}</td>
                 <td data-label="Visite → inscription" class="td-mono num" [class.amber]="c.visitToSignupRate > 0">{{ c.visits30d ? c.visitToSignupRate + '%' : '-' }}</td>
-                <td data-label="Inscrits total" class="td-mono num muted">{{ c.signupsTotal }}</td>
+                <td data-label="Inscrits total" class="td-mono num muted">
+                  @if (c.signupsTotal > 0) {
+                    <a class="signup-link" [routerLink]="['/users']" [queryParams]="utmParams(c)"
+                      [attr.aria-label]="'Voir les ' + c.signupsTotal + ' inscrits de cette campagne'">{{ c.signupsTotal }} →</a>
+                  } @else { {{ c.signupsTotal }} }
+                </td>
                 <td data-label="Premium" class="td-mono num" [class.teal]="c.premium > 0">{{ c.premium }}</td>
               </tr>
             }
@@ -244,7 +280,7 @@
     </div>
     <p class="page-note">
       <b>Visites</b> = 1re page vue d'une session, comptée par l'API sans cookie ni donnée personnelle (robots exclus) : 100 % des visiteurs, accepté ou refusé.
-      <b>Source</b> = utm_source du lien, sinon le site d'origine (ex. ninjatrader.com) ; « direct » si aucun des deux. <b>Medium</b> / <b>Campagne</b> = utm_medium / utm_campaign (medium « referral » = source déduite du site d'origine).
+      <b>Source</b> = utm_source du lien, sinon le site d'origine (ex. ninjatrader.com) ; « direct » si aucun des deux. <b>Medium</b> / <b>Campagne</b> = utm_medium / utm_campaign (medium « referral » = source déduite du site d'origine). <b>Inscrits total</b> d'une campagne : clic → la liste de ses comptes (e-mail, plan, Premium offert).
       <b>Premium</b> = abonnement Stripe en cours. Inscrits hors compte démo et comptes admin.
     </p>
   } @else if (error()) {

@@ -403,26 +403,34 @@ export function resetPasswordTemplate(params: {
   userName: string;
   resetUrl: string;
   expiresIn: string;
+  /** Compte Google sans mot de passe : rappel de la connexion Google, lien pour en définir un. */
+  googleOnly?: boolean;
 }): { subject: string; html: string } {
-  const { userName, resetUrl, expiresIn } = params;
+  const { userName, resetUrl, expiresIn, googleOnly } = params;
+
+  const intro = googleOnly
+    ? `Bonjour ${userName || 'Trader'}, ton compte MyTradingCoach utilise la connexion Google :
+      tu peux simplement te connecter avec le bouton « Continuer avec Google ».
+      Si tu veux aussi un mot de passe, définis-le avec le lien ci-dessous.`
+    : `Bonjour ${userName || 'Trader'}, tu as demandé à réinitialiser ton mot de passe.`;
 
   const content = card(`
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Sécurité</p>
     <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
-      Réinitialisation du mot de passe
+      ${googleOnly ? 'Connexion à ton compte' : 'Réinitialisation du mot de passe'}
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;">
-      Bonjour ${userName || 'Trader'}, tu as demandé à réinitialiser ton mot de passe.
+      ${intro}
     </p>
     <p style="${FONT}font-size:12px;color:#6b8299;margin:0 0 20px 0;">
       Ce lien expire dans <strong style="color:#e2eaf5;">${expiresIn}</strong>.
       Si tu n'es pas à l'origine de cette demande, ignore cet email.
     </p>
-    ${cta('Réinitialiser mon mot de passe →', resetUrl)}
+    ${cta(googleOnly ? 'Définir mon mot de passe →' : 'Réinitialiser mon mot de passe →', resetUrl)}
   `, 'rgba(239,68,68,.3)');
 
   return {
-    subject: '🔐 Réinitialisation de ton mot de passe',
+    subject: googleOnly ? '🔐 Connexion à ton compte MyTradingCoach' : '🔐 Réinitialisation de ton mot de passe',
     html: emailWrapper(content, `Lien valable ${expiresIn}.`, ACCENT.alert),
   };
 }

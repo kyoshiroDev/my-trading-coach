@@ -277,21 +277,47 @@
               }
             </div>
 
-            <!-- Mot de passe (masqué en démo) -->
+            <!-- Mot de passe (masqué en démo). Compte Google sans mot de passe : « Définir », par
+                 le même lien e-mail que la modification (prouve la possession de l'adresse). -->
             @if (!userStore.isDemo()) {
               <div class="settings-row">
                 <div class="settings-row-left">
                   <span class="settings-row-label">Mot de passe</span>
                   @if (passwordResetSent()) {
                     <span class="settings-row-hint success-hint">Email envoyé, vérifie ta boîte mail</span>
-                  } @else {
+                  } @else if (hasPassword()) {
                     <span class="settings-row-value">••••••••••••</span>
+                  } @else {
+                    <span class="settings-row-value">Aucun : tu te connectes avec Google</span>
                   }
                 </div>
                 @if (!passwordResetSent()) {
-                  <button class="settings-edit-btn" (click)="resetPassword()">Modifier</button>
+                  <button class="settings-edit-btn" data-testid="password-edit" (click)="resetPassword()">
+                    {{ hasPassword() ? 'Modifier' : 'Définir' }}
+                  </button>
                 }
               </div>
+
+              <!-- Connexion Google (#618) : délier exige un mot de passe, sinon le compte serait perdu. -->
+              @if (userStore.user()?.googleLinked) {
+                <div class="settings-row">
+                  <div class="settings-row-left">
+                    <span class="settings-row-label">Connexion Google</span>
+                    <span class="settings-row-value">Reliée à {{ userStore.user()?.email }}</span>
+                    @if (!hasPassword()) {
+                      <span class="settings-row-hint">Définis d'abord un mot de passe pour pouvoir délier Google.</span>
+                    }
+                  </div>
+                  <button
+                    class="settings-edit-btn"
+                    data-testid="google-unlink"
+                    [disabled]="!hasPassword() || unlinkingGoogle()"
+                    (click)="unlinkGoogle()"
+                  >
+                    {{ unlinkingGoogle() ? 'Un instant…' : 'Délier' }}
+                  </button>
+                </div>
+              }
             }
 
           </div>
@@ -477,8 +503,10 @@
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
                     @if (offersStore.founderAvailable()) {
                       ⚡ Passer Premium · dès {{ PRICING.founder.monthly }} €/mois (offre fondateur) →
-                    } @else {
+                    } @else if (userStore.trialAvailable()) {
                       ⚡ Essayer Premium · 1 mois offert →
+                    } @else {
+                      ⚡ Passer à Premium →
                     }
                   </button>
                 </div>

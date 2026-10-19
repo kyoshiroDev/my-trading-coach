@@ -8,6 +8,7 @@ import { type DemoDay, type DemoStats, net } from './demo-data/model';
 import { assertDemoCalendar, buildDemoDataset, dayAt } from './demo-data/generate';
 import { PROFILE, isoWeek, setupRanking, usd } from './demo-data/reports';
 import { tradingDay } from '../accounts/account-rules';
+import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
 
@@ -111,12 +112,17 @@ export async function seedTradingData(
   // Sessions (une par jour de trading) + trades rattachés.
   let reflectionToggle = 0;
   for (const d of days) {
-    if (!d.trades.length) continue;
-    const first = d.trades[0].tradedAt, last = d.trades[d.trades.length - 1].tradedAt;
+    if (!d.trades.length && !d.openTrade) continue;
+    const isToday = d.kind === 'today';
+    // Session du jour sans trade clôturé (week-end, avant 09:45) : ouverte il y a 30 min, jamais
+    // avant le début de la journée de trading en cours (sinon elle ne serait pas « active »).
+    const now = new Date();
+    const first = d.trades[0]?.tradedAt ?? new Date(Math.max(tradingDayStart(now).getTime(), now.getTime() - 30 * 60_000) + 25 * 60_000);
+    const last = d.trades[d.trades.length - 1]?.tradedAt ?? first;
     const dayStats = computeTradeStats(d.trades);
     let cum = 0, peak = 0, maxDd = 0;
     for (const t of d.trades) { cum += net(t); peak = Math.max(peak, cum); maxDd = Math.min(maxDd, cum - peak); }
-    const best = d.trades.reduce((a, b) => (net(b) > net(a) ? b : a));
+    const best = d.trades.length ? d.trades.reduce((a, b) => (net(b) > net(a) ? b : a)) : null;
     const green = dayStats.totalPnl >= 0;
     const reflection =
       d.kind === 'revenge' ? REFLECTION_REVENGE
@@ -124,7 +130,6 @@ export async function seedTradingData(
           : d.kind === 'yesterday' || reflectionToggle++ % 2 === 0
             ? (green ? REFLECTIONS_GREEN : REFLECTIONS_RED)[d.daysAgo % 3]
             : null;
-    const isToday = d.kind === 'today';
     // Session du jour : jamais démarrée la veille, même si le seed tourne juste après minuit.
     const dayStart = new Date(first); dayStart.setHours(0, 0, 0, 0);
     const session = await prisma.tradeSession.create({
@@ -140,7 +145,7 @@ export async function seedTradingData(
         // Stats figées des sessions clôturées (le live du jour se calcule via getTodayTrades).
         ...(isToday ? {} : {
           totalPnl: dayStats.totalPnl, totalTrades: d.trades.length, winRate: dayStats.winRate,
-          maxDrawdown: round2(maxDd), bestTradePnl: round2(net(best)), bestTradeAsset: best.asset,
+          maxDrawdown: round2(maxDd), bestTradePnl: best ? round2(net(best)) : null, bestTradeAsset: best?.asset ?? null,
         }),
       },
     });
@@ -154,6 +159,20 @@ export async function seedTradingData(
           setupId: setupIdFor(t.setup), session: t.session, timeframe: t.timeframe,
           notes: t.notes, tags: ['DEMO'], tradedAt: t.tradedAt,
           executionScore: t.executionScore, executionGrade: t.executionGrade, executionMethod: t.executionMethod,
+        },
+      });
+    }
+    // Position encore ouverte (session du jour) : ni sortie ni P&L, « Trade en cours » de la vitrine.
+    if (d.openTrade) {
+      const t = d.openTrade;
+      await prisma.trade.create({
+        data: {
+          userId: user.id, accountId: accountIdByKey.get(t.account)!, sessionId: session.id,
+          asset: t.asset, side: t.side, entry: t.entry, exit: null,
+          stopLoss: t.stopLoss, takeProfit: t.takeProfit, riskReward: t.riskReward,
+          quantity: t.quantity, pnl: null, commission: null, emotion: t.emotion,
+          setupId: setupIdFor(t.setup), session: t.session, timeframe: t.timeframe,
+          notes: t.notes, tags: ['DEMO'], tradedAt: t.tradedAt,
         },
       });
     }

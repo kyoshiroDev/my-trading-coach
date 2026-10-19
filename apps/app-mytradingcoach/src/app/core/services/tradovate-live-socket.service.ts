@@ -75,6 +75,10 @@ export class TradovateLiveSocketService {
       this.accounts.reloadSoon();
       if (this.session.hasActiveSession()) this.session.refreshLiveSoon();
     });
+    // SL / TP posés, déplacés ou annulés chez le broker : la barre « Trade en cours » se relit.
+    socket.on('tradovate:orders', () => {
+      if (this.session.hasActiveSession()) this.session.refreshLiveSoon();
+    });
     // Alerte prop firm « avant la casse » (Premium) : décidée par le serveur.
     socket.on('prop:alert', (e: PropAlertEvent) => this.alerts.handle(e));
     // Anti-tilt (Premium) : nudge non bloquant sur le dernier trade synchronisé.

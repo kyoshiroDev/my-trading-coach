@@ -133,6 +133,15 @@
           <div class="ret-stat"><span class="kpi-label">Traders actifs 30j</span><span class="v green">{{ stats()?.tradersActifs30d ?? 0 }}</span><span class="kpi-sub">≥1 trade sur 30 jours</span></div>
           <div class="ret-stat"><span class="kpi-label">Reviennent à J+7</span><span class="v">{{ r.retentionD7.rate }}%</span><span class="kpi-sub">{{ r.retentionD7.retained }} / {{ r.retentionD7.eligible }} cohorte</span></div>
           <div class="ret-stat"><span class="kpi-label">Inscrits sans trade</span><span class="v red">{{ r.ghostUsers }}</span><span class="kpi-sub">fantômes (onboarding)</span></div>
+          <a class="ret-stat ret-link" routerLink="/brokers" data-testid="kpi-plan-links">
+            <span class="kpi-label">Comptes reliés à un plan</span>
+            @if (planLinks(); as p) {
+              <span class="v purple">{{ p.rate === null ? '-' : p.rate + '%' }}</span>
+              <span class="kpi-sub">{{ p.linked }} / {{ p.connected }} connectés · prop firm</span>
+            } @else {
+              <span class="v">-</span><span class="kpi-sub">indisponible</span>
+            }
+          </a>
         </div>
       } @else {
         <div class="card-body"><div class="empty">Données de fidélisation indisponibles</div></div>

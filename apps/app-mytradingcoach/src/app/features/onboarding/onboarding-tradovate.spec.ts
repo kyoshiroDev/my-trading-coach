@@ -68,6 +68,7 @@ function mount() {
   const cmp = fixture.componentInstance as unknown as {
     step: () => number;
     onTradovatePicked: (id: string) => void;
+    onPlanLinked: () => void;
   };
   return { fixture, el, q, cmp };
 }
@@ -206,7 +207,7 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
     expect(q('onboarding-tradovate-excluded')).toBeNull();
   });
 
-  it('plusieurs comptes Tradovate : choix à l’étape 8, puis synchro et écran final', () => {
+  it('plusieurs comptes Tradovate : choix à l’étape 8, synchro, « Quel est ce compte ? » puis écran final', () => {
     saveProgress(8);
     returnUrl('tradovate=select_account&accountId=acc-1&from=wizard');
     const { q, cmp, el, fixture } = mount();
@@ -230,6 +231,13 @@ describe('Onboarding — retour après OAuth Tradovate (écran 2bis)', () => {
       created: 12, duplicates: 0, failed: 0, total: 12, skipped: 0, openPositions: 0,
       feesImported: { assigned: 5, expected: 5, reconciled: true, count: 12 }, lastSyncAt: '2026-09-12T00:00:00Z',
     });
+    fixture.detectChanges();
+    // Historique importé : on relie le compte à son plan avant l'écran final (#612), seul choix à l'écran.
+    expect(cmp.step()).toBe(8);
+    expect(q('onboarding-plan-link')!.querySelector('mtc-account-plan-wizard')).not.toBeNull();
+    expect((q('onboarding-choice-tradovate')!.closest('.choice-grid') as HTMLElement).hidden).toBe(true);
+
+    cmp.onPlanLinked();
     fixture.detectChanges();
     expect(cmp.step()).toBe(9);
     expect(q('onboarding-tradovate-recap')!.textContent).toContain('12 trades synchronisés');

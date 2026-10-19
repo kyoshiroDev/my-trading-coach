@@ -265,7 +265,7 @@
    colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
    recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
    Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
-@media (min-width: 1025px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
+@media (min-width: 1081px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
@@ -347,11 +347,7 @@
 .plan-link { color: var(--text-2); }
 .plan-link > svg { color: var(--blue-bright); flex-shrink: 0; }
 .plan-link .tv-text { flex: 1 1 220px; }
-.plan-link-close {
-  display: inline-flex; padding: 4px; border: none; border-radius: 6px;
-  background: none; color: var(--text-3); cursor: pointer;
-}
-.plan-link-close:hover { color: var(--text); background: var(--bg-3); }
+@media (max-width: 767px) { .plan-link-btn { min-height: 44px; } }
 
 /* Compte perso : pas de règles prop firm, mais son activité reste utile — au dépli. */
 .acct-activity { display: none; gap: 16px; }
@@ -416,11 +412,12 @@
 .quota-banner b { font-weight: 600; }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
+/* Palier 1000 des modales : au-dessus du bouton menu (150) et du « + » flottant (100) en mobile. */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(4,8,14,.7);
   display: flex; align-items: center; justify-content: center;
-  z-index: 100; padding: 20px;
+  z-index: 1000; padding: 20px;
 }
 .modal {
   background: var(--bg-card);
@@ -462,7 +459,9 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-@media (max-width: 1024px) {
+/* 1080 et non 1024 : de 1025 à ~1060 px, les 8 colonnes (≈ 850 px mini) dépassaient et le contenu
+   défilait de côté (#642). */
+@media (max-width: 1080px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -506,7 +505,13 @@
      Sur mobile c'est la page qui défile (le topbar reste sticky). */
   :host { flex: none; }
   .content { overflow-y: visible; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .content { padding: 16px; }
+  /* 5 cartes en 2 colonnes : la dernière prend toute la largeur au lieu de rester seule à gauche. */
+  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* Libellé sur une ligne (« CAPITAL SUIVI » passait sur deux). */
+  .stat-label { font-size: var(--fs-2xs); letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fld-row { flex-wrap: wrap; }
   .acct-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .acct-name { font-size: 13px; }
@@ -582,4 +587,22 @@
   /* Ligne étroite : la pastille garde sa place, le bouton de connexion prend le reste. */
   .cell-sync { gap: 5px; }
   .cell-sync .tv-btn.connect { flex: 1 1 100%; justify-content: center; }
+}
+
+/* « Quel est ce compte ? » (#612) : feuille pleine largeur en mobile, modale centrée au-delà. */
+/* Palier 1000 des modales : au-dessus du bouton menu de la barre mobile (z-index de page 100 sinon). */
+.modal-overlay:has(> .apw-modal) { z-index: 1000; }
+.apw-modal { max-height: 92dvh; }
+@media (max-width: 767px) {
+  .modal-overlay:has(> .apw-modal) { align-items: flex-end; padding: 0; }
+  .apw-modal { max-width: none; border-radius: 16px 16px 0 0; }
+  .apw-modal .modal-body { padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px); }
+}
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .acct-expand,
+  .acct-menu { position: relative; }
+  .acct-expand::before,
+  .acct-menu::before { content: ''; position: absolute; inset: -12px; }
 }

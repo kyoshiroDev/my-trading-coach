@@ -30,6 +30,24 @@ describe('SignupDigestCron — un récap par jour au lieu d’un e-mail par insc
     expect(body).toContain('b@test.local');
   });
 
+  it('chaque inscrit porte sa provenance : campagne UTM, sinon « direct » (#625)', async () => {
+    prisma.user.findMany.mockResolvedValue([
+      {
+        email: 'a@test.local', name: 'A', createdAt: new Date('2026-09-30T10:00:00Z'),
+        acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'louis',
+      },
+      {
+        email: 'b@test.local', name: 'B', createdAt: new Date('2026-09-30T18:00:00Z'),
+        acquisitionSource: null, acquisitionMedium: null, acquisitionCampaign: null,
+      },
+    ]);
+
+    await cron.sendDigest(NOW);
+    const body: string = resend.sendAdminAlert.mock.calls[0][1];
+    expect(body).toContain('a@test.local · instagram · dm · louis');
+    expect(body).toContain('b@test.local · direct');
+  });
+
   it('fenêtre des 24 dernières heures, sans compte démo ni admin', async () => {
     prisma.user.findMany.mockResolvedValue([]);
     await cron.sendDigest(NOW);

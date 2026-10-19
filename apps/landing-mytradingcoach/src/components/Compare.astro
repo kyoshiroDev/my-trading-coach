@@ -77,7 +77,9 @@ const rows: Row[] = [
     // TradesViz : synchro dès Basic, mais Basic n'importe que des actions (« Assets
     // Supported: Stock ») ; Tradovate = futures → Pro au minimum.
     rivals: [yes('Gratuit'), yes('Pro'), yes('Max · bêta')] },
-  { label: 'Import CSV tout broker', free: true, premium: true,
+  // Gratuit : formats reconnus d'office (Tradovate, Binance, Bybit, MT4/5, IBKR, MEXC) ; les autres
+  // brokers passent par l'import IA, réservé au Premium (cf. plans.md).
+  { label: 'Import CSV tout broker', free: 'brokers reconnus', premium: '+ import IA',
     rivals: [yes('Gratuit'), yes('Gratuit'), txt('Tradovate, TopStepX')] },
   { label: 'Hébergé en France 🇫🇷', free: true, premium: true,
     rivals: [false, false, false] },

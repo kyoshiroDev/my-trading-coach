@@ -9,6 +9,7 @@ import { SetupsModule } from '../setups/setups.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { GoogleIdTokenVerifier } from './google-id-token.verifier';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { JwtStrategy } from './jwt.strategy';
     AdminPushModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleIdTokenVerifier],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

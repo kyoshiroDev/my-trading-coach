@@ -170,11 +170,13 @@
 /* ── Header colonnes unique ── */
 .table-header {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
+  /* Actif réduit au profit du P&L (montant + %) et un espace entre colonnes : à 1280 px le P&L passait
+     sur 2 lignes et touchait la quantité (#635). */
+  grid-template-columns: 44px 0.8fr 0.7fr 0.9fr 0.9fr 1.7fr 0.5fr 0.6fr 1fr 1.3fr 1.1fr 64px;
+  column-gap: 8px;
   padding: 5px 16px 5px 32px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
-  gap: 0;
 }
 .table-header > span {
   font-size: var(--fs-2xs);
@@ -319,10 +321,11 @@
 }
 
 /* ── Modal confirm suppression journée ── */
+/* Palier 1000 des modales : au-dessus du bouton menu (150) et du « + » flottant (100) en mobile. */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
-  z-index: 100; display: flex; align-items: center; justify-content: center;
+  z-index: 1000; display: flex; align-items: center; justify-content: center;
   padding: 16px;
 }
 .confirm-modal {
@@ -362,11 +365,13 @@
 .day-trades { background: var(--bg); }
 .trade-row {
   display: grid;
-  grid-template-columns: 44px 1.2fr 0.7fr 0.9fr 0.9fr 1.3fr 0.5fr 0.6fr 0.9fr 1.3fr 1.1fr 64px;
+  /* Actif réduit au profit du P&L (montant + %) et un espace entre colonnes : à 1280 px le P&L passait
+     sur 2 lignes et touchait la quantité (#635). */
+  grid-template-columns: 44px 0.8fr 0.7fr 0.9fr 0.9fr 1.7fr 0.5fr 0.6fr 1fr 1.3fr 1.1fr 64px;
+  column-gap: 8px;
   align-items: center;
   padding: 7px 16px 7px 32px;
   border-top: 1px solid var(--border);
-  gap: 0;
   transition: background 0.12s;
 }
 .trade-row:hover { background: var(--bg-2); }
@@ -445,7 +450,7 @@
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
-  .content { padding: 12px 12px calc(env(safe-area-inset-bottom) + 12px); padding-top: 70px; gap: 12px; }
+  .content { padding: 12px 12px calc(env(safe-area-inset-bottom) + 12px); gap: 12px; }
   /* nowrap : avec flex-wrap, chaque ligne prend la largeur de son contenu et le stretch
      ne borne plus les filtres (997 px sur 390) → plus de scroll interne, la page glissait. */
   .filters-bar { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
@@ -482,4 +487,12 @@
   .day-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .day-header .day-stats { order: 1; flex-basis: 100%; justify-content: flex-start; padding-left: 20px; }
   .day-winrate, .day-commission { display: none; }
+  /* Le point qui suivait le win rate masqué restait : « 3 trades · · +$41.60 » (#642). */
+  .day-winrate + .day-dot { display: none; }
+}
+
+/* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
+@media (pointer: coarse) {
+  .date-preset { position: relative; }
+  .date-preset::before { content: ''; position: absolute; inset: -11px 0; }
 }

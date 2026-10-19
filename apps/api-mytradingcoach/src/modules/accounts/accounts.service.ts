@@ -4,13 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
+import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
   BrokerProvider,
   DrawdownType,
   Plan,
+  PlanLinkChoice,
   Role,
   TradingAccount,
 } from '@prisma/client';
@@ -600,7 +601,36 @@ export class AccountsService {
     if (dto.propFirmPlanId && dto.propFirmPlanId !== account.propFirmPlanId) {
       await this.assertCatalogPlan(dto.propFirmPlanId);
     }
-    return this.prisma.tradingAccount.update({ where: { id }, data: withDates(dto) });
+    return this.prisma.tradingAccount.update({ where: { id }, data: withPlanLink(withDates(dto)) });
+  }
+
+  /**
+   * Indices déjà stockés pour deviner le plan d'un compte connecté (#612), sans appel au broker :
+   * nom et hôte du sous-compte, propriétaire = login (compte démo perso) et solde de départ lu
+   * sur la PREMIÈRE clôture officielle importée. `null` sans connexion ou sous-compte choisi.
+   */
+  async planHint(userId: string, id: string): Promise<AccountPlanHint | null> {
+    await this.assertOwner(userId, id);
+    const conn = await this.prisma.brokerConnection.findFirst({
+      where: { accountId: id, userId, externalAccountId: { not: null } },
+      select: { externalAccountId: true, externalAccountName: true, externalEnv: true, externalUserId: true, availableAccounts: true },
+    });
+    if (!conn?.externalAccountName) return null;
+    const first = await this.prisma.brokerDailyClose.findFirst({
+      where: { accountId: id },
+      orderBy: { tradeDate: 'asc' },
+      select: { closingBalance: true, realizedPnl: true },
+    });
+    const ref = Array.isArray(conn.availableAccounts)
+      ? (conn.availableAccounts as { id?: string; userId?: string }[]).find((a) => a?.id === conn.externalAccountId)
+      : undefined;
+    return {
+      externalName: conn.externalAccountName,
+      env: conn.externalEnv === 'live' ? 'live' : 'demo',
+      // Propriétaire du compte = trader connecté : compte démo personnel, pas une prop firm.
+      ownerIsLogin: ref?.userId && conn.externalUserId ? ref.userId === conn.externalUserId : null,
+      startingBalance: first ? Math.round(first.closingBalance - first.realizedPnl) : null,
+    };
   }
 
   /**
@@ -793,6 +823,18 @@ function toRuleBroker(row: {
 }
 
 /** `lastPayoutAt` arrive en `AAAA-MM-JJ` (date de séance) : Prisma attend un Date pour un `@db.Date`. */
+/**
+ * Relier un plan efface la réponse « sans plan » (plus tard, perso, firm absente) ; une réponse
+ * autre que « firm absente » efface le nom saisi.
+ */
+function withPlanLink<T extends { propFirmPlanId?: string | null; planLinkChoice?: PlanLinkChoice | null; unlistedFirm?: string | null }>(data: T): T {
+  if (data.propFirmPlanId) return { ...data, planLinkChoice: null, unlistedFirm: null };
+  if (data.planLinkChoice !== undefined && data.planLinkChoice !== PlanLinkChoice.UNLISTED) {
+    return { ...data, unlistedFirm: null };
+  }
+  return data;
+}
+
 function withDates<T extends { lastPayoutAt?: string | null }>(dto: T): Omit<T, 'lastPayoutAt'> & { lastPayoutAt?: Date | null } {
   const { lastPayoutAt, ...rest } = dto;
   if (lastPayoutAt === undefined) return rest;

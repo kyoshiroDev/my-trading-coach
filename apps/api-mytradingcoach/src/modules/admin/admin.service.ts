@@ -3,7 +3,13 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
-import { todayParis, type AdminAcquisitionData, type AdminFunnelData, type AdminFunnelPlace } from '@mtc/shared';
+import {
+  todayParis,
+  type AdminAcquisitionData,
+  type AdminFunnelData,
+  type AdminFunnelPlace,
+  type AdminSignupMethodsData,
+} from '@mtc/shared';
 
 @Injectable()
 export class AdminService {
@@ -233,6 +239,48 @@ export class AdminService {
       steps: keys.map((key) => ({ key, users: step.get(key) ?? 0 })),
       byPlace: placeRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
       current: { trialing: Number(current?.trialing ?? 0), paying: Number(current?.paying ?? 0) },
+    };
+  }
+
+  /**
+   * Inscriptions par méthode (#618) : e-mail / Google sur 7 j, 30 j et au total, finalisation des
+   * inscriptions Google (opt-in choisi) et comptes e-mail reliés ensuite. Hors démo et ADMIN.
+   */
+  async getSignupMethods(): Promise<AdminSignupMethodsData> {
+    const rows = await this.prisma.$queryRaw<
+      { method: 'EMAIL' | 'GOOGLE'; d7: bigint; d30: bigint; total: bigint; finalized: bigint; linked: bigint }[]
+    >`
+      SELECT
+        u."authProvider"::text AS method,
+        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '7 days') AS d7,
+        COUNT(*) FILTER (WHERE u."createdAt" >= NOW() - INTERVAL '30 days') AS d30,
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE u."signupFinalizedAt" IS NOT NULL) AS finalized,
+        COUNT(*) FILTER (WHERE u."googleId" IS NOT NULL) AS linked
+      FROM "User" u
+      WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+      GROUP BY u."authProvider"
+    `;
+    const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
+    const of = (method: 'EMAIL' | 'GOOGLE') => rows.find((r) => r.method === method);
+    const total30 = rows.reduce((acc, r) => acc + Number(r.d30), 0);
+    const google = of('GOOGLE');
+    return {
+      rows: (['EMAIL', 'GOOGLE'] as const).map((method) => {
+        const r = of(method);
+        return {
+          method,
+          signups7d: Number(r?.d7 ?? 0),
+          signups30d: Number(r?.d30 ?? 0),
+          signupsTotal: Number(r?.total ?? 0),
+          share30d: pct(Number(r?.d30 ?? 0), total30),
+        };
+      }),
+      google: {
+        finalized: Number(google?.finalized ?? 0),
+        finalizationRate: pct(Number(google?.finalized ?? 0), Number(google?.total ?? 0)),
+        linkedEmailAccounts: Number(of('EMAIL')?.linked ?? 0),
+      },
     };
   }
 

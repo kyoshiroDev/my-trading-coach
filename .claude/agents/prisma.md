@@ -333,6 +333,11 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   logique ne la lit encore : les règles saisies par l'utilisateur sur `TradingAccount`
   (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
   pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
+- `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
+  `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
+  « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur
+  « LINKED » : un compte relié se lit sur `propFirmPlanId`. Le service remet la réponse à null dès
+  qu'un plan est relié (`withPlanLink`), et efface `unlistedFirm` pour toute réponse autre que `UNLISTED`.
 
 ## Séances prop firm vues en direct (#373, 2026-10-05)
 
@@ -516,3 +521,35 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 `lastSuccessAt`. Cascade à la suppression du User. Supprimé par l'API sur réponse 404/410 du service
 push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
 `20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).
+
+## Détecteurs de comportement (#602, phase 1, 2026-10-18)
+
+- `BehaviorBaseline` (migration `20261018120000_behavior_baseline`, table nouvelle, additive) : une
+  ligne par utilisateur (`userId` = PK, cascade), `sessionsUsed`, `throughDay` (`DATE`), `data` Json
+  = `BehaviorBaselineData` (`modules/behavior/behavior-baseline.ts` : délais entre positions, taille
+  médiane / p75 / p90 par actif, positions par séance). Table dédiée plutôt qu'un Json sur `User` :
+  `User` est lu à chaque requête authentifiée et la référence a son propre cycle (recalcul à la
+  bascule CME, à la volée si datée d'une journée précédente). Rien à ajouter au seed démo : la démo
+  n'enregistre pas d'alertes (lecture seule, pas de synchro live).
+- `BehaviorAlert` (migration `20261018130000_behavior_alert`, table nouvelle, additive) : alerte de
+  comportement enregistrée en direct, **en silence** en phase 1. `userId` (cascade), `accountId`
+  (cascade), `tradeDay` (`DATE`, journée CME = séance du moteur avec le compte), `sessionId`
+  (`TradeSession`, SetNull, souvent vide : les trades synchronisés sont rarement rattachés à une
+  session), `tradeId` (SetNull, vide en direct : le trade n'existe qu'à la sortie), `type` /
+  `severity` en TEXT (liste dans `behavior-detectors.ts`), `message`, `context` Json, `dismissedAt`,
+  `mutedByUser` (prévus pour l'UI de phase 2). Index `(userId, createdAt)`, `(accountId, tradeDay)`.
+  Volume attendu ≈ 1 alerte par séance de trader actif : conservation à décider avant la phase 2
+  (`RETENTION_RULES`).
+
+## Connexion Google (#618, 2026-10-18)
+
+Migration `20261018140000_google_auth`, additive et compatible N-1 :
+- `User.password` **nullable** : null = compte créé avec Google sans mot de passe. Tout code qui lit
+  le hash doit traiter null (`login` → 401 identique, jamais `argon2.verify(null)`).
+- `googleId String? @unique` (`sub` Google, jamais renvoyé au front), `authProvider AuthProvider
+  @default(EMAIL)` (enum `EMAIL | GOOGLE`, copié dans `@mtc/shared` `CONTRACT_ENUMS`),
+  `emailVerifiedAt` (posé par Google et par un reset de mot de passe réussi), `signupFinalizedAt`
+  (écran de finalisation Google validé), `tokenVersion Int @default(0)` (révocation des refresh
+  tokens). Comptes existants : `EMAIL`, non vérifiés, version 0, aucun backfill.
+- Recherche d'un compte par e-mail pour Google : `mode: 'insensitive'` (les e-mails ne sont pas
+  normalisés en minuscules à l'inscription classique).

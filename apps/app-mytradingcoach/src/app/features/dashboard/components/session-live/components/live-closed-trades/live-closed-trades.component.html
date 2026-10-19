@@ -1,0 +1,37 @@
+<section class="ct-card" data-testid="live-closed-trades" aria-label="Trades clôturés">
+  <header class="ct-head">
+    <span class="ct-title" data-testid="live-closed-title">
+      <span class="ct-wide">TRADES </span>CLÔTURÉS · {{ closed().length }} · {{ winners() }} GAGNANT{{ winners() > 1 ? 'S' : '' }}
+    </span>
+    @if (canEnterManually()) {
+      <button type="button" class="ct-manual ct-manual-top" data-testid="live-manual-entry" (click)="manualEntry.emit()">
+        Saisir un trade à la main
+      </button>
+    }
+  </header>
+
+  @if (closed().length === 0) {
+    <p class="ct-empty" data-testid="live-closed-empty">Aucun trade clôturé pour l'instant</p>
+  } @else {
+    <ul class="ct-list">
+      @for (r of closed(); track r.trade.id) {
+        <li class="ct-row" data-testid="live-closed-row">
+          <div class="ct-l1">
+            <span class="ct-side" [class.long]="r.trade.side === 'LONG'" [class.short]="r.trade.side === 'SHORT'">{{ r.trade.side }}</span>
+            <span class="ct-asset">{{ r.trade.asset }}</span>
+            <span class="ct-pnl" [class.green]="r.net > 0" [class.red]="r.net < 0">{{ r.net | money:0:true }}</span>
+          </div>
+          <div class="ct-l2">
+            <span class="ct-time">{{ time(r.trade.tradedAt) }}</span>
+            <span class="ct-prices">{{ price(r.trade.entry) }} → {{ price(r.trade.exit) }}</span>
+            <span class="ct-kind">{{ r.kind }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (canEnterManually()) {
+    <button type="button" class="ct-manual ct-manual-bottom" (click)="manualEntry.emit()">Saisir un trade à la main</button>
+  }
+</section>

@@ -9,7 +9,16 @@ import { TradovateBalanceService, toBalanceView, type BrokerBalanceView } from '
 import { TradovateException } from './tradovate.errors';
 import type { TradovateEnv } from './tradovate.types';
 import { wsUrl } from './tradovate-hosts';
-import type { InitialAccountState } from './tradovate-live.protocol';
+import type { InitialAccountState, OrderEvent } from './tradovate-live.protocol';
+import { OPEN_POSITIONS_TTL_S } from './tradovate-open-positions';
+import {
+  applyOrder,
+  applyOrderVersion,
+  emptyOrderBook,
+  workingOrders,
+  workingOrdersKey,
+  type OrderBook,
+} from './tradovate-orders';
 import {
   LiveFatalError,
   TradovateLiveConnection,
@@ -22,6 +31,8 @@ export const LIVE_LEASE_TTL_MS = 30_000;
 export const LIVE_LEASE_RENEW_MS = 10_000;
 /** Un trade = plusieurs événements (fills, paire, position) : on les regroupe. */
 export const LIVE_EVENT_DEBOUNCE_MS = 1_500;
+/** Poser un bracket = plusieurs événements (ordres + versions) : on les regroupe. */
+export const LIVE_ORDERS_DEBOUNCE_MS = 500;
 /** Rattrapage inutile si une synchro vient d'avoir lieu (autre onglet, retour OAuth). */
 export const CATCH_UP_FRESH_MS = 60_000;
 /**
@@ -62,10 +73,15 @@ export interface LiveStatusEvent {
   status: 'NEEDS_RECONNECT';
 }
 
+/** Ordres actifs du compte modifiés (SL / TP, #601) : la vue live se relit. */
+export interface LiveOrdersEvent {
+  accountId: string;
+}
+
 export type LiveEmitter = (
   userId: string,
   event: string,
-  payload: LiveTradesEvent | LiveStatusEvent | BrokerBalanceView,
+  payload: LiveTradesEvent | LiveStatusEvent | LiveOrdersEvent | BrokerBalanceView,
 ) => void;
 
 interface UserLive {
@@ -73,6 +89,11 @@ interface UserLive {
   conns: Map<string, TradovateLiveConnection>;
   debounce: Map<string, ReturnType<typeof setTimeout>>;
   lease: ReturnType<typeof setInterval> | null;
+  /** Carnet d'ordres actifs par connexion, tenu par le WebSocket. */
+  books: Map<string, OrderBook>;
+  orderFlush: Map<string, ReturnType<typeof setTimeout>>;
+  /** Dernier état écrit dans Redis par connexion : rien n'est réécrit ni émis s'il ne change pas. */
+  ordersWritten: Map<string, string>;
 }
 
 // Lua : ne prolonger / libérer QUE son propre bail (un autre worker a pu le reprendre).
@@ -220,7 +241,10 @@ export class TradovateLiveService implements OnModuleDestroy {
 
   private ensureLive(userId: string, conns: BrokerConnection[]): void {
     if (this.users.has(userId)) return;
-    const u: UserLive = { owner: false, conns: new Map(), debounce: new Map(), lease: null };
+    const u: UserLive = {
+      owner: false, conns: new Map(), debounce: new Map(), lease: null,
+      books: new Map(), orderFlush: new Map(), ordersWritten: new Map(),
+    };
     this.users.set(userId, u);
 
     const tick = async () => {
@@ -252,7 +276,11 @@ export class TradovateLiveService implements OnModuleDestroy {
         getToken: () => this.tokenFor(c.id),
         onTradeEvent: () => this.onTradeEvent(userId, c.accountId, u),
         onBalance: (b) => void this.pushBalance(userId, c.id, b.amount, b.at),
-        onInitialState: (s) => void this.applyInitialState(userId, c.id, s),
+        onInitialState: (s) => {
+          this.resetOrders(userId, c, u, s);
+          void this.applyInitialState(userId, c.id, s);
+        },
+        onOrder: (e) => this.onOrder(userId, c, u, e),
         onFatal: () => this.emitter(userId, 'tradovate:status', { accountId: c.accountId, status: 'NEEDS_RECONNECT' }),
         socketFactory: this.socketFactory,
         logger: this.logger,
@@ -275,6 +303,59 @@ export class TradovateLiveService implements OnModuleDestroy {
       if (view) this.emitter(userId, 'tradovate:balance', view);
     } catch (err) {
       this.logger.warn(`Solde live non enregistré (connexion ${connectionId}) : ${(err as Error).message}`);
+    }
+  }
+
+  // ── Ordres actifs (SL / TP, lecture seule, #601) ─────────────────────────────
+
+  /** Instantané initial (connexion ou reconnexion) : le carnet repart de zéro. */
+  private resetOrders(userId: string, c: BrokerConnection, u: UserLive, s: InitialAccountState): void {
+    const book = emptyOrderBook();
+    const ext = Number(c.externalAccountId);
+    for (const o of s.orders) applyOrder(book, o, ext);
+    for (const v of s.orderVersions) applyOrderVersion(book, v);
+    u.books.set(c.id, book);
+    this.scheduleOrdersFlush(userId, c, u);
+  }
+
+  private onOrder(userId: string, c: BrokerConnection, u: UserLive, e: OrderEvent): void {
+    const book = u.books.get(c.id);
+    if (!book) return; // avant l'instantané initial : il contiendra cet ordre
+    if (e.entityType === 'order') applyOrder(book, e.entity, Number(c.externalAccountId), e.eventType);
+    else applyOrderVersion(book, e.entity);
+    this.scheduleOrdersFlush(userId, c, u);
+  }
+
+  private scheduleOrdersFlush(userId: string, c: BrokerConnection, u: UserLive): void {
+    const prev = u.orderFlush.get(c.id);
+    if (prev) clearTimeout(prev);
+    u.orderFlush.set(
+      c.id,
+      setTimeout(() => {
+        u.orderFlush.delete(c.id);
+        void this.flushOrders(userId, c, u);
+      }, LIVE_ORDERS_DEBOUNCE_MS),
+    );
+  }
+
+  /** Ordres actifs → Redis (état éphémère, comme les positions), puis la vue live se relit. */
+  private async flushOrders(userId: string, c: BrokerConnection, u: UserLive): Promise<void> {
+    const book = u.books.get(c.id);
+    if (!book || this.users.get(userId) !== u) return;
+    const orders = workingOrders(book);
+    const key = JSON.stringify(orders);
+    if (u.ordersWritten.get(c.id) === key) return;
+    try {
+      await this.redis.client.set(
+        workingOrdersKey(c.id),
+        JSON.stringify({ at: new Date().toISOString(), orders }),
+        'EX',
+        OPEN_POSITIONS_TTL_S,
+      );
+      u.ordersWritten.set(c.id, key);
+      this.emitter(userId, 'tradovate:orders', { accountId: c.accountId });
+    } catch (err) {
+      this.logger.warn(`Ordres actifs non enregistrés (connexion ${c.id}) : ${(err as Error).message}`);
     }
   }
 
@@ -328,6 +409,10 @@ export class TradovateLiveService implements OnModuleDestroy {
 
   private closeConnections(u: UserLive): void {
     for (const id of u.conns.keys()) this.hosts.delete(id);
+    for (const t of u.orderFlush.values()) clearTimeout(t);
+    u.orderFlush.clear();
+    u.books.clear();
+    u.ordersWritten.clear();
     for (const c of u.conns.values()) c.stop();
     u.conns.clear();
   }

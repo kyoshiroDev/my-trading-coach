@@ -58,6 +58,12 @@ export class AccountsController {
     });
   }
 
+  /** Indices stockés pour deviner le plan du compte connecté (« Quel est ce compte ? », #612). */
+  @Get(':id/plan-hint')
+  planHint(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.accounts.planHint(user.id, id);
+  }
+
   /** « Ce n'était pas un payout » : écarte un payout détecté chez le broker du cycle de payout. */
   @Post(':id/payouts/:payoutId/dismiss')
   dismissPayout(

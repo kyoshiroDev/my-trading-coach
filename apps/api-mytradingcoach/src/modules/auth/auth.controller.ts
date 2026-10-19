@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Post,
@@ -15,6 +17,9 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
+import { GoogleFinalizeDto } from './dto/google-finalize.dto';
+import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -62,6 +67,43 @@ export class AuthController {
     const { refresh_token, ...result } = await this.authService.login(dto);
     setRefreshCookie(res, refresh_token);
     return result;
+  }
+
+  /** Bouton Google affiché ou non, et client ID de l'environnement (aucun secret). */
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 60 } })
+  @Header('Cache-Control', 'public, max-age=300')
+  @Get('google/config')
+  googleConfig() {
+    return resolveGoogleAuthConfig(process.env);
+  }
+
+  // Mêmes limites que /auth/login. Sans e-mail dans le corps, le compteur `default` est par IP.
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 }, ip: { ttl: 600_000, limit: 30 } })
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async google(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { refresh_token, ...result } = await this.authService.googleAuth(dto);
+    setRefreshCookie(res, refresh_token);
+    return result;
+  }
+
+  @Post('google/finalize')
+  @HttpCode(HttpStatus.OK)
+  finalizeGoogle(
+    @CurrentUser() user: { id: string },
+    @Body() dto: GoogleFinalizeDto,
+  ) {
+    return this.authService.finalizeGoogleSignup(user.id, dto.marketingConsent);
+  }
+
+  @Delete('google')
+  unlinkGoogle(@CurrentUser() user: { id: string }) {
+    return this.authService.unlinkGoogle(user.id);
   }
 
   @Public()

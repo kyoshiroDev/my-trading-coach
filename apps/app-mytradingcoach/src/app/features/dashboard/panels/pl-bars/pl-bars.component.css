@@ -1,4 +1,4 @@
-:host { display: block; }
+:host { display: block; container: plbars / inline-size; }
 
 /* P&L par jour (barres divergentes depuis la ligne médiane) */
 .mtc-plday { display: flex; align-items: stretch; gap: 3px; height: 200px; }
@@ -16,3 +16,9 @@
 .mtc-plday-val.neg { color: var(--red); margin-top: 2px; }
 
 .mtc-plday-day.skip { visibility: hidden; }
+
+/* Plus de 15 barres sur moins de 720 px : les valeurs voisines se chevauchaient (#639). On ne garde
+   que le meilleur et le pire ; les autres restent dans l'info-bulle de chaque barre. */
+@container plbars (max-width: 720px) {
+  .dense .mtc-plday-val.minor { display: none; }
+}

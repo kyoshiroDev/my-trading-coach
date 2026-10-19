@@ -155,6 +155,7 @@
 
 .insight-content {
   flex: 1;
+  min-width: 0;
 }
 .insight-title {
   font-size: 13px;
@@ -388,6 +389,7 @@
 
 .chat-input {
   flex: 1;
+  min-width: 0; /* sinon la largeur native du champ poussait le bouton d'envoi hors écran à 320 px (#642) */
   background: var(--bg-2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -479,7 +481,6 @@
 @media (max-width: 768px) {
   .content {
     padding: 16px;
-    padding-top: 70px;
   }
 
   .layout {
@@ -490,4 +491,23 @@
   .chat-messages {
     max-height: 300px;
   }
+
+  .chat-input-row {
+    padding: 12px 14px 14px;
+  }
+}
+
+/* Téléphone : l'étiquette (Force, Attention…) passe au-dessus du titre au lieu de lui voler une
+   colonne : le texte était tassé sur 4 ou 5 lignes (#642). */
+@media (max-width: 600px) {
+  .insight-item {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-areas: 'icon tag' 'icon content';
+    align-items: start;
+    gap: 6px 12px;
+  }
+  .insight-icon { grid-area: icon; }
+  .insight-content { grid-area: content; }
+  .insight-tag { grid-area: tag; justify-self: start; }
 }

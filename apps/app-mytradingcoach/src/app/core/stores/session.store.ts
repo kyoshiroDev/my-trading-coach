@@ -21,6 +21,7 @@ import { visibleInterval } from '../utils/visible-interval';
 import { apiErrorMessage } from '../utils/api-error';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
+import { sessionClock } from '../utils/session-clock.util';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
@@ -72,16 +73,11 @@ export class SessionStore {
   // ── Session timer ─────────────────────────────────────────────────────────
   private readonly sessionNow = signal(new Date());
 
-  readonly sessionTimer = computed(() => {
+  /** Chrono `HH:MM:SS`, ou alerte « ouverte depuis le JJ/MM » au-delà de 24 h (#595) ; null sans session active. */
+  readonly sessionClock = computed(() => {
     const session = this.activeSession();
-    if (!session?.startedAt || session.status !== 'ACTIVE') return '00:00:00';
-    const diff = Math.floor(
-      (this.sessionNow().getTime() - new Date(session.startedAt).getTime()) / 1000,
-    );
-    const h = Math.floor(diff / 3600).toString().padStart(2, '0');
-    const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
-    const s = (diff % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    if (!session?.startedAt || session.status !== 'ACTIVE') return null;
+    return sessionClock(session.startedAt, this.sessionNow());
   });
 
   constructor() {

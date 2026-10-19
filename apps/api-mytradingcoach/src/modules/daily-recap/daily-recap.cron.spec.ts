@@ -25,10 +25,18 @@ describe('DailyRecapCron (SCA-B5-01)', () => {
     expect(jobs[0].opts).toMatchObject({ ...DAILY_RECAP_JOB_OPTIONS, jobId: dailyRecapJobId('u1', new Date(jobs[0].data.at)) });
   });
 
-  it('cible les Premium non démo qui ont tradé aujourd’hui', async () => {
+  it('cible l’accès Premium réel non démo (mois offert compris, #627) qui a tradé aujourd’hui', async () => {
     await cron.generateDailyRecaps();
 
-    expect(findMany.mock.calls[0][0].where).toMatchObject({ isDemo: false, plan: 'PREMIUM' });
+    const where = findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ isDemo: false });
+    expect(where).not.toHaveProperty('plan');
+    expect(where.OR).toEqual([
+      { plan: 'PREMIUM' },
+      { role: 'ADMIN' },
+      { role: 'BETA_TESTER' },
+      { trialEndsAt: { gt: expect.any(Date) } },
+    ]);
   });
 
   it('relancé le même jour → mêmes ids de jobs (BullMQ n’enfile pas de doublon)', async () => {

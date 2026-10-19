@@ -15,7 +15,7 @@
       "tradesea"
     ]
   },
-  "verified_at": "2026-10-07",
+  "verified_at": "2026-10-18",
   "plans": [
     {
       "id": "blusky-launch-50k",
@@ -101,7 +101,7 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -111,7 +111,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3000,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -212,7 +212,7 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -222,7 +222,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3500,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 500 $. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -323,7 +323,7 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -333,7 +333,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3000,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -434,17 +434,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 1500,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 1500,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 1500 $, plafond 1500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 1500 $, plafond 1500 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -545,17 +545,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 2500,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3000,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -656,17 +656,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 3000,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3500,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -767,17 +767,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 1500,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 2000,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 2000 $, plafond 1500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 2000 $, plafond 1500 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -878,17 +878,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 2500,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3000,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3000 $, plafond 2500 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -989,17 +989,17 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
-            "min_amount": 250,
+            "min_amount": 500,
             "max_amount": 3000,
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 3500,
-            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 250 $. Un jour gagnant « significatif » entre deux payouts. S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10."
+            "notes": "Payout quotidien (lundi-vendredi) sur tout solde au-dessus de 3500 $, plafond 3000 $ par période de 7 jours, minimum 500 $ depuis le 2026-10-01 (article « Sim Funded Accounts Rules », 2026-10-08 ; l'article Propel du 2026-09-11 indique encore 250 $). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). S'arrêter pour la journée à +5 000 $ et pour la semaine à +10 000 $ ; au-delà de 10 000 $ de profit total, revue pour passage en Live. 90/10. Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -1027,7 +1027,7 @@
         "amount": 199,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, évaluation valable 30 jours. Reset 99 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 129 $ (article « Resets », 2026-10-15) (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1099,7 +1099,7 @@
           "payout": {
             "min_days": 3,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -1109,7 +1109,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52000,
-            "notes": "Payout tous les 3 jours de trading au-dessus de 52000 $, minimum 500 $, plafond 2000 $ par période de 7 jours. 90/10."
+            "notes": "Payout tous les 3 jours de trading au-dessus de 52000 $, minimum 500 $, plafond 2000 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -1137,7 +1137,7 @@
         "amount": 299,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Achat unique, évaluation valable 30 jours. Reset 109 $ (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
+        "notes": "Achat unique, évaluation valable 30 jours. Reset 199 $ (article « Resets », 2026-10-15) (ne prolonge pas les 30 jours). Prix relevés dans le sélecteur de blusky.pro le 2026-10-05."
       },
       "phases": [
         {
@@ -1209,7 +1209,7 @@
           "payout": {
             "min_days": 3,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -1219,7 +1219,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 103000,
-            "notes": "Payout tous les 3 jours de trading au-dessus de 103000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10."
+            "notes": "Payout tous les 3 jours de trading au-dessus de 103000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -1319,7 +1319,7 @@
           "payout": {
             "min_days": 3,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -1329,7 +1329,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 154500,
-            "notes": "Payout tous les 3 jours de trading au-dessus de 154500 $, minimum 500 $, plafond 3000 $ par période de 7 jours. 90/10."
+            "notes": "Payout tous les 3 jours de trading au-dessus de 154500 $, minimum 500 $, plafond 3000 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -1429,7 +1429,7 @@
           "payout": {
             "min_days": 3,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.9,
             "split_after": null,
@@ -1439,7 +1439,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 203000,
-            "notes": "Payout tous les 3 jours de trading au-dessus de 203000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10."
+            "notes": "Payout tous les 3 jours de trading au-dessus de 203000 $, minimum 500 $, plafond 2500 $ par période de 7 jours. 90/10. Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08). Passage en Live Brokerage depuis le 2026-10-01 : compte live à 0 $ (profits Sim Funded versés dans un « Bonus Vault »), ou rachat unique égal à 50 % du drawdown (article « Sim Funded Accounts Rules », 2026-10-08)."
           }
         }
       ],
@@ -1515,7 +1515,7 @@
           "payout": {
             "min_days": null,
             "min_daily_profit": null,
-            "min_cycle_profit": null,
+            "min_cycle_profit": 500,
             "min_cycle_profit_schedule": null,
             "split_pct": 0.8,
             "split_after": null,
@@ -1525,7 +1525,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum. Retrait minimum 500 $, montants en dollars entiers (article général « Sim Funded Payouts », 2026-10-07)."
+            "notes": "Payout chaque jour ouvré au-dessus de 53 000 $, plafond 2 500 $ par période de 7 jours, 80/20. 3 comptes maximum. Retrait minimum 500 $, montants en dollars entiers (article général « Sim Funded Payouts », 2026-10-07). Au moins 500 $ de nouveau profit entre deux demandes (article « Sim Funded Payouts », 2026-10-08)."
           }
         }
       ],

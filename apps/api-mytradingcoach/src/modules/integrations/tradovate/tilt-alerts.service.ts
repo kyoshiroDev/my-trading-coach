@@ -1,8 +1,9 @@
 import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
-import { MoodState, SessionStatus } from '@prisma/client';
+import { MoodState } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { tradingDay } from '../../accounts/account-rules';
+import { activeSessionWhere } from '../../session/active-session';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { detectTilt, type TiltFinding, type TiltTrade } from './tilt-detection';
 import { PropRiskJournalService } from './prop-risk-journal.service';
@@ -92,7 +93,7 @@ export class TiltAlertsService implements OnModuleDestroy {
     if (findings.length === 0) return;
 
     const session = await this.prisma.tradeSession.findFirst({
-      where: { userId, status: SessionStatus.ACTIVE },
+      where: activeSessionWhere(userId),
       orderBy: { startedAt: 'desc' },
       select: { moodStart: true },
     });

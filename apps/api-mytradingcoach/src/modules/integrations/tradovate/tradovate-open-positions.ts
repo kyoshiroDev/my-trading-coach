@@ -17,6 +17,8 @@ export interface BrokerOpenPosition {
   entryPrice: number | null;
   /** Ouverture de la position (`timestamp` Tradovate), `null` s'il manque. */
   since: string | null;
+  /** Contrat Tradovate : relie la position à ses ordres SL / TP (#601). Absent des anciens relevés. */
+  contractId?: number;
 }
 
 export interface BrokerOpenPositionsState {
@@ -47,6 +49,7 @@ export function toOpenPositions(
         quantity: Math.abs(p.netPos),
         entryPrice: finite(p.netPrice) ? p.netPrice : null,
         since: p.timestamp ?? null,
+        contractId: p.contractId,
       } satisfies BrokerOpenPosition;
     });
 }

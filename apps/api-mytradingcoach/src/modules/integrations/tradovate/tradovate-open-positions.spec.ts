@@ -15,7 +15,7 @@ describe('toOpenPositions', () => {
       contracts,
     );
     expect(out).toEqual([
-      { asset: 'MNQ', side: 'SHORT', quantity: 3, entryPrice: 21_480.5, since: '2026-10-06T14:02:00Z' },
+      { asset: 'MNQ', side: 'SHORT', quantity: 3, entryPrice: 21_480.5, since: '2026-10-06T14:02:00Z', contractId: 7 },
     ]);
   });
 

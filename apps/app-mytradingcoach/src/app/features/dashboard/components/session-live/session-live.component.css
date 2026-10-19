@@ -1,5 +1,6 @@
-/* Onglet live : hauteur pilotée par le contenu — la page (.session-page) est le seul
-   conteneur de scroll. Aucun remplissage vertical forcé (fin du terminal à hauteur fixe).
+/* Session live v3 (#593) — MOBILE D'ABORD : la base est la version 390 px, tablette et PC
+   s'ajoutent par min-width (aucune media query max-width dans cette vue). La page
+   (.session-page) est le seul conteneur de scroll ; le bandeau y colle en haut.
    Les styles de chaque panneau vivent dans son composant (components/*). */
 :host {
   display: flex;
@@ -9,7 +10,8 @@
 [data-testid="session-live-view"] {
   display: flex;
   flex-direction: column;
-  padding: 0 30px 10px;
+  padding: 0 0 10px;
+  min-width: 0;
 }
 
 /* ─── No session CTA ─── */
@@ -22,8 +24,6 @@
   padding: 60px 20px;
   text-align: center;
 }
-
-.no-session-icon { font-size: 40px; opacity: .5; }
 
 .no-session-title {
   font-family: var(--font-display);
@@ -64,133 +64,90 @@
   font-style: italic;
 }
 
-/* ─── Mini stats ─── */
-.mini-stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
-  gap: 12px;
-  margin-bottom: 0;
-  flex-shrink: 0;
-}
-.mini-stat {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px 14px;
-  text-align: center;
-}
-.mini-stat-val {
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-.mini-stat-val.green { color: var(--green); text-shadow: 0 0 18px rgba(16,185,129,.33); }
-.mini-stat-val.red { color: var(--red); text-shadow: 0 0 18px rgba(239,68,68,.33); }
-.mini-stat-val.blue { color: var(--blue-bright); }
-.mini-stat-lbl { font-size: var(--fs-2xs); color: var(--text-3); margin-top: 2px; }
+/* ─── Bandeau collant ─── */
+.lv-bar { border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .06); }
 
-/* ─── Live layout ─── */
-/* 2 colonnes : zone gauche (stats + calendrier + live feed) | Trade rapide pleine hauteur */
-.live-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: start; /* colonnes pilotées par leur contenu — plus de remplissage forcé */
-  width: 100%;
-  min-width: 0;
+.lv-body { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; min-width: 0; }
+
+/* Grille plate : l'ordre du DOM est l'ordre mobile (trade en cours, suivi du compte, clôturés) */
+.lv-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.lv-grid > * { min-width: 0; }
+.lv-closed { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* Pas de compte prop firm synchronisé */
+.lv-summary {
+  background: var(--bg-2); border: 1px solid rgba(255, 255, 255, .06); border-radius: 14px; padding: 16px;
+  display: flex; flex-direction: column; gap: 4px;
 }
-/* Zone gauche : mini-stats au-dessus des 2 colonnes calendrier/live feed */
-.live-main { gap: 12px; }
-.live-cols {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); /* Calendrier un peu plus large que Live feed */
-  gap: 12px;
-  min-width: 0;
+.lv-summary-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--text-2); }
+.lv-summary-pnl { font-family: var(--font-mono); font-size: 24px; font-weight: 600; color: var(--text); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.lv-summary-pnl.green { color: var(--green); }
+.lv-summary-pnl.red { color: var(--red); }
+.lv-summary-sub { font-size: 12px; color: var(--text-2); }
+.lv-link {
+  display: inline-flex; align-items: center; min-height: 44px; align-self: flex-start;
+  color: var(--blue-bright); font-size: 13px; text-decoration: none;
 }
-.live-cols > * {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.lv-link:hover { text-decoration: underline; }
+
+.lv-quick { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lv-back {
+  align-self: flex-start; min-height: 40px; background: transparent; border: none; padding: 0;
+  font: 13px var(--font-body); color: var(--blue-bright); cursor: pointer;
+}
+.lv-back:hover { text-decoration: underline; }
+
+/* ─── Bas de page mobile : contexte + clôture de session (loin de « Clôturer ce trade ») ─── */
+.lv-actions { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.lv-context-btn, .lv-end-btn { min-height: 48px; border-radius: 10px; font: 500 14px var(--font-body); cursor: pointer; }
+.lv-context-btn { border: 1px solid rgba(255, 255, 255, .12); background: transparent; color: var(--text); }
+.lv-context-btn:hover { border-color: rgba(255, 255, 255, .24); }
+/* Rouge discret : bordure et texte rouge clair, fond rouge à 8 % */
+.lv-end-btn {
+  font-weight: 600; border: 1px solid color-mix(in srgb, var(--red) 45%, transparent);
+  background: color-mix(in srgb, var(--red) 8%, transparent); color: color-mix(in srgb, var(--red), var(--text) 45%);
 }
 
-/* ── Carte marché unique (contexte marché + news ticker) — source LiveTab ── */
-.mkt-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-  flex-shrink: 0;
+/* ─── Feuille « Contexte marché » : plein écran en mobile ─── */
+.lv-sheet-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(4, 7, 12, .7); display: flex; }
+.lv-sheet {
+  flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; background: var(--bg);
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px);
 }
+.lv-sheet:focus-visible { outline: none; }
+.lv-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lv-sheet-title { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--text); }
+.lv-sheet-close {
+  width: 44px; height: 44px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .12);
+  background: transparent; color: var(--text); font-size: 16px; cursor: pointer;
+}
+.lv-sheet-empty { margin: 0; font-size: 13px; color: var(--text-2); }
 
-.live-layout > * {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Colonne droite en saisie manuelle (compte synchronisé) : retour au suivi prop firm. */
-.right-col { gap: 8px; }
-.back-prop {
-  align-self: flex-start;
-  background: transparent;
-  border: none;
-  padding: 2px 0;
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: var(--blue-bright);
-  cursor: pointer;
-}
-.back-prop:hover { text-decoration: underline; }
-
-/* Market context bar wrapper */
-.ctx-bar-wrap { padding: 0; flex-shrink: 0; }
-
-/* Container-queries — répondent à la largeur du conteneur .session-page (source §6).
-   ≤1100 : zone de travail 1 colonne · ≤820 : feed/calendrier empilés + stats 2 col ·
-   ≤520 : stats 1 col (les rangées du Trade rapide s'empilent dans son composant). La grille
-   marché (.ctx-grid) est gérée dans market-context-bar.component.css. */
-@container (max-width: 1024px) {
-  .live-layout { grid-template-columns: 1fr; }
-}
-@container (max-width: 820px) {
-  .live-cols { grid-template-columns: 1fr; }
-  .mini-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@container (max-width: 520px) {
-  .mini-stats-row { grid-template-columns: 1fr; }
-}
-
-/* Desktop (≥981px = header compact) : l'onglet Session live REMPLIT l'écran.
-   La vue fait exactement la hauteur visible ; les 3 panneaux (Calendrier économique, Live feed,
-   Trade rapide) s'étirent jusqu'en bas et le trop-plein scrolle À L'INTÉRIEUR de chaque panneau
-   (listes éco/feed + Trade rapide, règles dans leurs composants) — jamais la page. Offset 103 =
-   padding-top 16 + header 57 + margin 14 + padding-bottom 16 ; .session-page colle au haut du
-   viewport → 100vh est la réf.
-   --demo-banner-h (0 hors démo) retranche le bandeau « Mode démo », qui s'intercale
-   au-dessus de la vue : sans lui, la démo débordait de 52 px et scrollait.
-   Sous 980px (tablette/mobile) : pas de hauteur imposée → contenu naturel + scroll page normal. */
-@container (min-width: 981px) {
-  [data-testid="session-live-view"] {
-    height: calc(100vh - 103px - var(--demo-banner-h, 0px));
-    overflow: hidden;
-    min-height: 0;
+/* ─── Tablette (≥ 768 px) : trade en cours et suivi du compte côte à côte, clôturés dessous ─── */
+@media (min-width: 768px) {
+  .lv-body { gap: 16px; padding-top: 16px; }
+  .lv-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "pos acc" "closed closed";
+    gap: 16px; align-items: start;
   }
-  /* La zone de travail (sous la carte marché fixe) remplit la hauteur restante ;
-     grid-template-rows: minmax(0,1fr) contraint les colonnes à la hauteur du conteneur
-     (sinon les items de grille gardent leur hauteur de contenu et débordent). */
-  .live-layout {
-    flex: 1;
-    min-height: 0;
-    align-items: stretch;
-    grid-template-rows: minmax(0, 1fr);
+  .lv-position { grid-area: pos; }
+  .lv-account { grid-area: acc; }
+  .lv-closed { grid-area: closed; }
+  /* Contexte et clôture de session passent dans le bandeau */
+  .lv-actions { display: none; }
+  .lv-sheet-overlay { justify-content: flex-end; }
+  .lv-sheet { flex: 0 1 560px; border-left: 1px solid rgba(255, 255, 255, .08); padding: 24px; }
+}
+
+/* ─── PC (≥ 1100 px) : 2/3 (trade en cours + clôturés) · 1/3 (suivi du compte) ─── */
+@media (min-width: 1100px) {
+  .lv-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-areas: "pos acc" "closed acc";
+    grid-template-rows: auto 1fr;
   }
-  .live-cols {
-    flex: 1;
-    min-height: 0;
-    grid-template-rows: minmax(0, 1fr);
-  }
+  /* Le suivi prop firm remplit la colonne (disclaimer en pied) ; le simple P&L reste compact */
+  .lv-account { align-self: stretch; display: flex; flex-direction: column; }
+  .lv-account > mtc-live-prop-firm { flex: 1; }
 }

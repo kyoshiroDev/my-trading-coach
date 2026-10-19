@@ -11,4 +11,12 @@
 .it-btn:hover, .it-btn:focus-visible { color: var(--blue-bright); border-color: var(--blue); }
 .it-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--blue-glow); }
 
+/* Écran tactile : zone de clic portée à 44 px par un pseudo-élément transparent, sans rien changer
+   au rendu ni à la mise en page (le « ? » reste un rond de 14 px). Pas à la souris : la zone
+   élargie déborderait sur des lignes cliquables voisines (en-têtes de semaine du journal). */
+@media (pointer: coarse) {
+  .it-btn { position: relative; }
+  .it-btn::before { content: ''; position: absolute; inset: -15px; border-radius: 50%; }
+}
+
 @media (prefers-reduced-motion: reduce) { .it-btn { transition: none; } }

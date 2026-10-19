@@ -51,6 +51,7 @@ describe('UserDetailService', () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'u1', name: 'Val', email: 'val@test.com', plan: 'PREMIUM', role: 'AMBASSADOR',
       stripeSubscriptionStatus: 'active', referralCode: 'VAL',
+      acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'louis',
       createdAt: new Date(Date.now() - 10 * DAY), lastSeenAt: new Date(),
       market: 'CRYPTO', goal: 'PERFORMANCE', tradingStyle: 'SWING',
       tradingStrategy: ['ICT', 'SMC'], tradingSessions: ['NEW_YORK'],
@@ -108,6 +109,7 @@ describe('UserDetailService', () => {
     // Plus de devise globale au profil : la devise est celle de chaque compte.
     expect(r.profile).not.toHaveProperty('currency');
     expect(r.identity.ambassadorRefCode).toBe('VAL');
+    expect(r.identity.acquisition).toEqual({ source: 'instagram', medium: 'dm', campaign: 'louis' });
     expect(r.sessions[0]).toMatchObject({ trades: 3, pnl: 120, winRate: 66, emotion: 'CONFIDENT', durationMinutes: 90 });
     expect(r.kpis.sessionTimeMinutes).toBe(90);
   });
@@ -128,6 +130,7 @@ describe('UserDetailService', () => {
     expect(r.sessions).toEqual([]);
     expect(r.kpis.sessionTimeMinutes).toBeNull();
     expect(r.identity.ambassadorRefCode).toBeNull();
+    expect(r.identity.acquisition).toEqual({ source: null, medium: null, campaign: null });
     expect(r.kpis.lastConnection).toBeNull();
     // 0 trade : pas encore activé
     expect(r.usage).toEqual({ totalTrades: 0, tradesThisMonth: 0, totalPnl: 0, winRate: 0 });
