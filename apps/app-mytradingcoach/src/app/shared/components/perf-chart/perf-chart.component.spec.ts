@@ -1,0 +1,92 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { formatMoney } from '@mtc/shared';
+import { PerfChartComponent } from './perf-chart.component';
+import { ChartService } from '../../../core/services/chart.service';
+import { MoneyService } from '../../../core/services/money.service';
+
+const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
+
+describe('PerfChartComponent', () => {
+  const chart = { buildEquityChart: vi.fn(() => null), buildDrawdownChart: vi.fn(() => null) };
+
+  beforeEach(() => {
+    chart.buildEquityChart.mockClear();
+    chart.buildDrawdownChart.mockClear();
+    // Le JIT des specs ne résout pas `templateUrl` : on lui donne le vrai gabarit.
+    TestBed.overrideComponent(PerfChartComponent, {
+      set: {
+        template: readFileSync(join(__dirname, 'perf-chart.component.html'), 'utf-8'),
+        styleUrl: undefined,
+        styles: [],
+      },
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ChartService, useValue: chart },
+        {
+          provide: MoneyService,
+          useValue: { currency: signal('USD'), format: (v: number, o?: object) => formatMoney(v, 'USD', o) },
+        },
+      ],
+    });
+  });
+
+  function render(inputs: Record<string, unknown>) {
+    const f = TestBed.createComponent(PerfChartComponent);
+    // Entrées SIGNAL : `setInput` ne les alimente pas en JIT sous vitest (cf.
+    // tradovate-connect-modal.component.spec.ts) → remplacées avant le premier rendu.
+    const cmp = f.componentInstance as unknown as Record<string, unknown>;
+    const defaults = { points: [], startingCapital: null, limit: null, emptyMessage: 'Aucun trade sur cette période', loading: false };
+    for (const [k, v] of Object.entries({ ...defaults, ...inputs })) cmp[k] = signal(v);
+    f.detectChanges();
+    return f.nativeElement as HTMLElement;
+  }
+
+  it('données vides : message, pas de valeur clé', () => {
+    const el = render({ kind: 'equity', points: [], emptyMessage: 'Aucun trade sur la période' });
+    expect(el.querySelector('.pc-empty')?.textContent).toContain('Aucun trade sur la période');
+    expect(el.querySelector('[data-testid="perf-chart-value"]')).toBeNull();
+  });
+
+  it('pas de message vide pendant le chargement', () => {
+    const el = render({ kind: 'equity', points: [], loading: true });
+    expect(el.querySelector('.pc-empty')).toBeNull();
+  });
+
+  it('équité : titre, P&L de la période en vert, aria-label résumé', () => {
+    const el = render({
+      kind: 'equity',
+      points: [pt('2025-01-06T12:00:00', 300), pt('2025-01-07T12:00:00', 1_200)],
+      startingCapital: 50_000,
+    });
+    expect(el.querySelector('.pc-title')?.textContent).toContain("Courbe d'équité");
+    const value = el.querySelector('[data-testid="perf-chart-value"]');
+    expect(value?.textContent).toContain('+$1,200.00');
+    expect(value?.classList).toContain('pos');
+    expect(el.querySelector('canvas')?.getAttribute('aria-label')).toContain('actuel $51,200');
+  });
+
+  it('équité négative : valeur en rouge', () => {
+    const el = render({ kind: 'equity', points: [pt('2025-01-06', -450)], startingCapital: 10_000 });
+    expect(el.querySelector('[data-testid="perf-chart-value"]')?.classList).toContain('neg');
+  });
+
+  it('drawdown : titre et drawdown actuel en rouge', () => {
+    const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 500), pt('2025-01-07', -300)] });
+    const value = el.querySelector('[data-testid="perf-chart-value"]');
+    expect(el.querySelector('.pc-title')?.textContent).toContain('Drawdown');
+    expect(value?.textContent).toContain('-$800.00');
+    expect(value?.classList).toContain('neg');
+  });
+
+  it('drawdown à 0 : valeur neutre (pas de rouge sans perte)', () => {
+    const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 500)] });
+    const value = el.querySelector('[data-testid="perf-chart-value"]');
+    expect(value?.textContent).toContain('$0.00');
+    expect(value?.classList).not.toContain('neg');
+  });
+});
