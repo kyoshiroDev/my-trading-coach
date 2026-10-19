@@ -980,19 +980,23 @@ model LandingVisitDaily {
 model FunnelEventDaily {
   id       String   @id @default(cuid())
   date     DateTime @db.Date
-  /// landing_view | cta_click | register_view | register_submit | register_success | register_error | checkout_redirect
+  /// cta_click | register_view | register_submit | register_success | register_error | checkout_redirect
+  /// | scroll_depth | time_on_page | rules_use (engagement landing)
   step     String
   source   String   @default("")
   medium   String   @default("")
   campaign String   @default("")
   /// Ouvert dans le navigateur intégré Instagram / Facebook / TikTok.
   inApp    Boolean  @default(false)
-  /// Valeur d'une liste fermée : CTA (founder | free | premium), code d'erreur normalisé, ou ''.
+  /// Valeur d'une liste fermée : CTA (founder | free | premium), code d'erreur normalisé, seuil
+  /// d'engagement (25 | 50 | 75 | 100 % ou 10 | 30 | 60 s), ou ''.
   detail   String   @default("")
+  /// Page de la landing pour l'engagement (`/` | `/prop-firm`), '' pour les étapes d'inscription.
+  path     String   @default("")
   count    Int      @default(0)
 
   // L'unique (date en tête) sert aussi d'index pour les lectures par période.
-  @@unique([date, step, source, medium, campaign, inApp, detail])
+  @@unique([date, step, source, medium, campaign, inApp, detail, path])
 }
 
 // ── Catalogue des règles prop firm (PROMPT-136) ─────────────────────────────

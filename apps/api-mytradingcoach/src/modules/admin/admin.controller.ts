@@ -13,6 +13,7 @@ import { DiscordService } from '../discord/discord.service';
 import { CampaignContentDto, SendCampaignDto } from './dto/campaign.dto';
 import { SignupFunnelQueryDto } from './dto/signup-funnel-query.dto';
 import { SignupFunnelService } from './signup-funnel.service';
+import { LandingEngagementService } from './landing-engagement.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin')
@@ -26,6 +27,7 @@ export class AdminController {
     private readonly deletedAccounts: DeletedAccountService,
     private readonly demoSeed: DemoSeedService,
     private readonly signupFunnel: SignupFunnelService,
+    private readonly landingEngagement: LandingEngagementService,
   ) {}
 
   /** Comptes supprimés (trace analytique RGPD) : liste récente + agrégats. */
@@ -108,6 +110,12 @@ export class AdminController {
   @Get('signup-funnel')
   getSignupFunnel(@Query() query: SignupFunnelQueryDto) {
     return this.signupFunnel.get(query.days ?? 30);
+  }
+
+  /** Engagement de la landing (défilement, temps passé, sélecteur de règles) par page et campagne. */
+  @Get('landing-engagement')
+  getLandingEngagement(@Query() query: SignupFunnelQueryDto) {
+    return this.landingEngagement.get(query.days ?? 30);
   }
 
   /** Inscriptions par méthode (e-mail / Google) et finalisation des inscriptions Google (#618). */

@@ -135,15 +135,15 @@ describe('PublicService', () => {
     const values = () => mockPrisma.$executeRaw.mock.calls[0].slice(1);
     const sql = () => (mockPrisma.$executeRaw.mock.calls[0][0] as string[]).join('?');
 
-    it('upsert +1 sur la clé complète (jour, étape, source, medium, campagne, inApp, detail)', async () => {
+    it('upsert +1 sur la clé complète (jour, étape, source, medium, campagne, inApp, detail, page)', async () => {
       mockPrisma.$executeRaw.mockResolvedValueOnce(1);
       await service.recordFunnelEvent(
         { step: 'cta_click', source: 'instagram', medium: 'paid', campaign: 'fondateur-reel', inApp: true, detail: 'founder' },
         UA,
       );
-      expect(sql()).toContain('ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail")');
+      expect(sql()).toContain('ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail", "path")');
       expect(sql()).toContain('"count" = "FunnelEventDaily"."count" + 1');
-      expect(values()).toEqual([expect.any(Date), 'cta_click', 'instagram', 'paid', 'fondateur-reel', true, 'founder']);
+      expect(values()).toEqual([expect.any(Date), 'cta_click', 'instagram', 'paid', 'fondateur-reel', true, 'founder', '']);
     });
 
     it('ramène detail à sa liste blanche (jamais de texte libre en base)', async () => {
@@ -158,7 +158,23 @@ describe('PublicService', () => {
     it('absents → chaînes vides et inApp false', async () => {
       mockPrisma.$executeRaw.mockResolvedValueOnce(1);
       await service.recordFunnelEvent({ step: 'register_view' }, UA);
-      expect(values()).toEqual([expect.any(Date), 'register_view', '', '', '', false, '']);
+      expect(values()).toEqual([expect.any(Date), 'register_view', '', '', '', false, '', '']);
+    });
+
+    it("engagement : page mesurée et seuil gardés, le chemin d'une étape d'inscription ignoré", async () => {
+      mockPrisma.$executeRaw.mockResolvedValue(1);
+      await service.recordFunnelEvent({ step: 'scroll_depth', detail: '50', path: '/prop-firm/', medium: 'paid' }, UA);
+      await service.recordFunnelEvent({ step: 'rules_use', path: '/' }, UA);
+      await service.recordFunnelEvent({ step: 'cta_click', detail: 'free', path: '/prop-firm' }, UA);
+      const rows = mockPrisma.$executeRaw.mock.calls.map((c) => [c[2], c[7], c[8]]);
+      expect(rows).toEqual([['scroll_depth', '50', '/prop-firm'], ['rules_use', '', '/'], ['cta_click', 'free', '']]);
+    });
+
+    it('engagement hors page mesurée ou sans seuil reconnu : rien écrit', async () => {
+      await service.recordFunnelEvent({ step: 'scroll_depth', detail: '50', path: '/blog/x' }, UA);
+      await service.recordFunnelEvent({ step: 'time_on_page', detail: '45', path: '/' }, UA);
+      await service.recordFunnelEvent({ step: 'scroll_depth', path: '/' }, UA);
+      expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
     });
 
     it('ignore robots et UA absent, avale une erreur de base', async () => {

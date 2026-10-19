@@ -314,6 +314,18 @@ Règles :
   keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
   `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
   d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Engagement de `/` et `/prop-firm`** (19/10/2026, pour comparer les deux pages) : module
+  `src/lib/engagement.ts` (script bundlé de `Base.astro`, différé, ~2 ko) → `POST /public/funnel` par la
+  fonction d'envoi du script d'acquisition, exposée en `window.mtcFunnel` (même origine UTM, `inApp`,
+  sendBeacon text/plain). Absente en mode interne et pendant la redirection de la pub → rien envoyé.
+  Étapes `scroll_depth` (detail 25/50/75/100, `scrollDepthPercent` de `@mtc/shared`, à < 4 px du bas = 100),
+  `time_on_page` (10/30/60 s **onglet visible**, minuteur suspendu sur `visibilitychange`), `rules_use`
+  (1re utilisation du sélecteur : `click` sur un `button` ou `change` d'un `select` dans un conteneur
+  **`[data-track-rules]`** : carte de `PropFirmLive`, carrousel `PropFirmMarquee`, `PfRules`), avec
+  `path`. **Un envoi par seuil et par chargement de page** (pas par session : un rechargement recompte).
+  Écouteur de défilement passif, calcul une fois par image, retiré après 100 %. Nouvelle page à mesurer
+  → `LANDING_ENGAGEMENT_PAGES` (shared) + filtre `path IN (…)` de `LandingEngagementService`. Nouveau
+  sélecteur → poser `data-track-rules`. Résultat : carte « Engagement landing » de l'admin `/acquisition`.
 - **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
   réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
   AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
@@ -331,7 +343,8 @@ Règles :
   `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
   GA4 n'est pas concerné (il dépend du consentement).
 - Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
-  aussi les étapes de l'inscription et le booléen navigateur intégré. Toute nouvelle mesure → l'y ajouter.
+  aussi les étapes de l'inscription, le booléen navigateur intégré et l'engagement de l'accueil et de
+  /prop-firm (défilement, temps, sélecteur). Toute nouvelle mesure → l'y ajouter.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 

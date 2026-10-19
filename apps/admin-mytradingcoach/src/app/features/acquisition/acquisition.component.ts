@@ -4,9 +4,10 @@ import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { acquisitionQueryParams } from '@mtc/shared';
 import type { ChartConfiguration } from 'chart.js';
-import { AdminApi, AcquisitionData, FunnelData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
+import { AdminApi, AcquisitionData, FunnelData, LandingEngagementData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
 import { funnelRows, placeLabel, placeRows } from './funnel.util';
 import { SIGNUP_COLUMNS, signupErrors, signupLines, signupTotal, type BrowserFilter } from './signup-funnel.util';
+import { ENGAGEMENT_COLUMNS, engagementGroups } from './landing-engagement.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
 import { CHART_COLORS, fade, gridAxis } from '../../shared/charts/chart-theme';
 
@@ -56,6 +57,13 @@ export class AcquisitionComponent {
     { key: 'normal', label: 'Navigateur normal' },
   ];
 
+  /** Engagement de / et /prop-firm (GET /admin/landing-engagement) : chargé à part, avec sa propre période. */
+  protected readonly engagementDays = signal<7 | 30>(30);
+  protected readonly engagement = signal<LandingEngagementData | null>(null);
+  protected readonly engagementLoading = signal(false);
+  protected readonly engagementColumns = ENGAGEMENT_COLUMNS;
+  protected readonly engagementGroups = computed(() => engagementGroups(this.engagement()));
+
   /** Visites et pages vues par jour sur 30 jours. */
   protected readonly dailyConfig = computed<ChartConfiguration>(() => {
     const d = this.data()?.daily ?? [];
@@ -79,6 +87,7 @@ export class AcquisitionComponent {
 
   constructor() {
     this.loadSignup(30);
+    this.loadEngagement(30);
     this.api.signupMethods().pipe(
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
@@ -104,6 +113,20 @@ export class AcquisitionComponent {
       if (days === this.signupDays()) {
         this.signup.set(r?.data ?? null);
         this.signupLoading.set(false);
+      }
+    });
+  }
+
+  protected loadEngagement(days: 7 | 30): void {
+    this.engagementDays.set(days);
+    this.engagementLoading.set(true);
+    this.api.landingEngagement(days).pipe(
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((r) => {
+      if (days === this.engagementDays()) {
+        this.engagement.set(r?.data ?? null);
+        this.engagementLoading.set(false);
       }
     });
   }

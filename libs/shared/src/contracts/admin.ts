@@ -1,5 +1,6 @@
 import type { AuthProvider, Plan, Role } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
+import type { LandingEngagementPage } from '../landing-engagement';
 import type { AcquisitionUtm } from '../acquisition-filter';
 
 /** Back-office : formes JSON des routes /admin (API + app admin). */
@@ -233,6 +234,32 @@ export interface AdminSignupFunnelData {
   rows: AdminSignupFunnelRow[];
   /** Triées par nombre décroissant, 50 max. */
   errors: AdminSignupFunnelError[];
+}
+
+/**
+ * Engagement d'une page de la landing pour une source / medium / campagne (tous navigateurs).
+ * Compteurs d'événements anonymes : un seuil compte au plus une fois par chargement de page.
+ */
+export interface AdminLandingEngagementRow {
+  path: LandingEngagementPage;
+  source: string | null;
+  medium: string | null;
+  campaign: string | null;
+  /** Pages vues (`LandingVisitDaily.pageviews`) : la base des taux. */
+  views: number;
+  /** Chargements ayant atteint chaque seuil de `LANDING_SCROLL_THRESHOLDS`, dans le même ordre. */
+  scroll: number[];
+  /** Chargements restés visibles chaque seuil de `LANDING_TIME_THRESHOLDS`, dans le même ordre. */
+  time: number[];
+  /** Chargements où le sélecteur de règles a servi. */
+  rulesUse: number;
+}
+
+/** GET /admin/landing-engagement?days=7|30 — défilement, temps passé et sélecteur, par page et campagne. */
+export interface AdminLandingEngagementData {
+  days: 7 | 30;
+  /** Triées par page (ordre de `LANDING_ENGAGEMENT_PAGES`) puis vues décroissantes, 100 lignes max. */
+  rows: AdminLandingEngagementRow[];
 }
 
 // ── Liaison des comptes aux plans prop firm (GET /admin/prop-firms/plan-links, #612) ──────────

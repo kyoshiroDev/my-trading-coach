@@ -1067,6 +1067,13 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
   Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
 
+- **Carte « Engagement landing »** (19/10/2026, sous le parcours d'inscription) :
+  `GET /admin/landing-engagement?days=7|30` (`AdminApi.landingEngagement`), onglets période propres.
+  Logique pure testée dans `features/acquisition/landing-engagement.util.ts` : une section par page
+  (Accueil `/`, Prop firm `/prop-firm`, même vide) avec ligne Total puis lignes source · medium ·
+  campagne. Colonnes `ENGAGEMENT_COLUMNS` : Vues · 25/50/75/100 % · 10/30/60 s · Règles, taux = valeur
+  / vues de la ligne (pas l'étape précédente). Mêmes classes que le parcours (`signup-*`).
+
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
 - **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
