@@ -106,11 +106,11 @@ describe('toRows', () => {
     expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
   });
 
-  it('LucidMaxx reste invite_only ; à revoir depuis la relecture du 2026-10-18 (jours min et prix non publiés)', () => {
+  it('LucidMaxx reste invite_only ; à revoir pour les jours min non publiés, prix unique confirmé le 2026-10-19', () => {
     const maxx = plans.find((p) => p.id === 'lucid-maxx-50k')!;
     expect(maxx.availability).toBe('invite_only');
     expect(maxx.needsReview).toBe(true);
-    expect(maxx.price).toMatchObject({ amount: null });
+    expect(maxx.price).toMatchObject({ amount: 300, billing: 'one_time', activation_fee: 0 });
     const ev = (maxx.phases as { min_trading_days: number | null; max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
     expect(ev.min_trading_days).toBeNull();
     expect(ev.max_contracts.minis).toBe(4);

@@ -19,10 +19,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 29,
+        "amount": 49,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "29 $ tous les 30 jours. Reset évaluation 25 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
+        "notes": "49 $ tous les 30 jours (29 $ en promotion sur la page des programmes). Reset évaluation 25 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
       },
       "phases": [
         {
@@ -600,10 +600,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 39,
+        "amount": 65,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "39 $ tous les 30 jours. Reset évaluation 29 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
+        "notes": "65 $ tous les 30 jours (39 $ en promotion sur la page des programmes). Reset évaluation 29 $ ; renouvellement = reset gratuit. Pas d'activation. Taille ajoutée le 2026-10-08."
       },
       "phases": [
         {

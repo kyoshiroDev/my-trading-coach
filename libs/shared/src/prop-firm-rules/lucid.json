@@ -4513,10 +4513,10 @@
       "availability": "invite_only",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 185,
         "billing": "one_time",
-        "activation_fee": null,
-        "notes": "Prix non publié pour le nouveau programme : la grille par paliers (selon le nombre de comptes live perdus, palier 1 = 110 $) est passée en contenu Legacy le 2026-10-04 (article LucidMaxx Eval Pricing, relu le 2026-10-18). Aucune remise."
+        "activation_fee": 0,
+        "notes": "185 $ en paiement unique, reset au même prix, sans frais d'activation. Prix unique par taille depuis le 2026-10-04 (la grille par paliers selon les comptes live perdus est passée en Legacy) ; aucune remise ni coupon, le prix affiché est le prix final. Montants de la boutique du site (identiques Tradovate/NinjaTrader et Rithmic), confirmés par le support Lucid le 2026-10-19."
       },
       "phases": [
         {
@@ -4561,7 +4561,7 @@
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 1000 $, drawdown EOD 1000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 1000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 1000 $ répétable après +2000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) ni de prix : min_trading_days à null et plan à revoir."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 1000 $, drawdown EOD 1000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 1000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 1000 $ répétable après +2000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) : min_trading_days à null et plan à revoir pour ce seul point. Prix unique par taille confirmé par le support Lucid le 2026-10-19."
     },
     {
       "id": "lucid-maxx-50k",
@@ -4571,10 +4571,10 @@
       "availability": "invite_only",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 300,
         "billing": "one_time",
-        "activation_fee": null,
-        "notes": "Prix non publié pour le nouveau programme : la grille par paliers (selon le nombre de comptes live perdus, palier 1 = 180 $) est passée en contenu Legacy le 2026-10-04 (article LucidMaxx Eval Pricing, relu le 2026-10-18). Aucune remise."
+        "activation_fee": 0,
+        "notes": "300 $ en paiement unique, reset au même prix, sans frais d'activation. Prix unique par taille depuis le 2026-10-04 (la grille par paliers selon les comptes live perdus est passée en Legacy) ; aucune remise ni coupon, le prix affiché est le prix final. Montants de la boutique du site (identiques Tradovate/NinjaTrader et Rithmic), confirmés par le support Lucid le 2026-10-19."
       },
       "phases": [
         {
@@ -4619,7 +4619,7 @@
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 2000 $, drawdown EOD 2000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 2000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 2000 $ répétable après +4000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) ni de prix : min_trading_days à null et plan à revoir."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 2000 $, drawdown EOD 2000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 2000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 2000 $ répétable après +4000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) : min_trading_days à null et plan à revoir pour ce seul point. Prix unique par taille confirmé par le support Lucid le 2026-10-19."
     },
     {
       "id": "lucid-maxx-100k",
@@ -4629,10 +4629,10 @@
       "availability": "invite_only",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 450,
         "billing": "one_time",
-        "activation_fee": null,
-        "notes": "Prix non publié pour le nouveau programme : la grille par paliers (selon le nombre de comptes live perdus, palier 1 = 270 $) est passée en contenu Legacy le 2026-10-04 (article LucidMaxx Eval Pricing, relu le 2026-10-18). Aucune remise."
+        "activation_fee": 0,
+        "notes": "450 $ en paiement unique, reset au même prix, sans frais d'activation. Prix unique par taille depuis le 2026-10-04 (la grille par paliers selon les comptes live perdus est passée en Legacy) ; aucune remise ni coupon, le prix affiché est le prix final. Montants de la boutique du site (identiques Tradovate/NinjaTrader et Rithmic), confirmés par le support Lucid le 2026-10-19."
       },
       "phases": [
         {
@@ -4677,7 +4677,7 @@
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 3000 $, drawdown EOD 3000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 3000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 3000 $ répétable après +6000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) ni de prix : min_trading_days à null et plan à revoir."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 3000 $, drawdown EOD 3000 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 3000 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 3000 $ répétable après +6000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) : min_trading_days à null et plan à revoir pour ce seul point. Prix unique par taille confirmé par le support Lucid le 2026-10-19."
     },
     {
       "id": "lucid-maxx-150k",
@@ -4687,10 +4687,10 @@
       "availability": "invite_only",
       "configuration": null,
       "price": {
-        "amount": null,
+        "amount": 675,
         "billing": "one_time",
-        "activation_fee": null,
-        "notes": "Prix non publié pour le nouveau programme : la grille par paliers (selon le nombre de comptes live perdus, palier 1 = 425 $) est passée en contenu Legacy le 2026-10-04 (article LucidMaxx Eval Pricing, relu le 2026-10-18). Aucune remise."
+        "activation_fee": 0,
+        "notes": "675 $ en paiement unique, reset au même prix, sans frais d'activation. Prix unique par taille depuis le 2026-10-04 (la grille par paliers selon les comptes live perdus est passée en Legacy) ; aucune remise ni coupon, le prix affiché est le prix final. Montants de la boutique du site (identiques Tradovate/NinjaTrader et Rithmic), confirmés par le support Lucid le 2026-10-19."
       },
       "phases": [
         {
@@ -4735,7 +4735,7 @@
         "https://support.lucidtrading.com/en/articles/17327076-new-lucidmaxx-program"
       ],
       "needs_review": true,
-      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 4500 $, drawdown EOD 4500 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 4500 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 4500 $ répétable après +9000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) ni de prix : min_trading_days à null et plan à revoir."
+      "notes": "Réservé aux traders invités par l'équipe risque de Lucid (pas d'achat public). Nouveau programme (article « New LucidMaxx Program », relevé le 2026-10-05) : évaluation, puis étape Pre-Live (objectif 4500 $, drawdown EOD 4500 $, sans consistency, Live Scaling Plan standard ; non modélisée comme phase), puis Live (solde de départ 4500 $ retirable dès le 1er jour, MLL statique à 100 $, partage 90/10, payouts quotidiens sans plafond, bonus de 4500 $ répétable après +9000 $ et 20 jours tradés). 5 comptes simultanés maximum. Sans DLL. Taille max et blocage du drawdown identiques aux évaluations standard (support Lucid, 2026-10-05). Depuis le 2026-10-09 : option de retrait complet (« cashout », 90/10) au lieu du passage en live, à choisir sous 24 h ; délai de 2 semaines avant de racheter une évaluation après un compte live perdu ou un cashout ; pas de nouvel achat tant qu'un compte live est actif. Relecture du 2026-10-18 : les articles Overview, Eval Rules et Eval Pricing sont passés en Legacy ; le nouveau programme ne publie plus de minimum de jours de trading (l'ancien en exigeait 5, le nouveau parle d'une réussite possible en 3 jours) : min_trading_days à null et plan à revoir pour ce seul point. Prix unique par taille confirmé par le support Lucid le 2026-10-19."
     }
   ]
 }
