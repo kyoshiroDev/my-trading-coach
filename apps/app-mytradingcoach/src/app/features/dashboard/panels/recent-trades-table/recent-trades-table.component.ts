@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import { PnlFormatPipe } from '@app/shared/pipes';
-import { DashboardTradeRow } from '../../dashboard-charts.util';
+import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util';
 
 /**
  * « Historique des trades » du dashboard (derniers trades, P&L % sur le capital). Tableau sur tablette et
@@ -29,9 +29,9 @@ import { DashboardTradeRow } from '../../dashboard-charts.util';
               <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>
               <td class="mono dim r col-exit">{{ t.exit !== null ? (t.exit | number:'1.0-2') : '-' }}</td>
               <td class="mono dim r">{{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}</td>
-              <td class="mono strong r" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat : null : t.accountId }}</td>
-              <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
-              <td class="c col-res"><span class="mtc-res" [class.win]="t.win">{{ t.win ? 'WIN' : 'LOSS' }}</span></td>
+              <td class="mono strong r" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</td>
+              <td class="mono r" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</td>
+              <td class="c col-res"><span class="mtc-res" [class]="t.outcome">{{ LABEL[t.outcome] }}</span></td>
             </tr>
           }
         </tbody>
@@ -41,12 +41,12 @@ import { DashboardTradeRow } from '../../dashboard-charts.util';
       @for (t of rows(); track t.id) {
         <li class="mtc-tc">
           <span class="mtc-tc-asset">{{ t.asset | uppercase }} <span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></span>
-          <span class="mtc-tc-pnl" [style.color]="t.win ? 'var(--green)' : 'var(--red)'">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
+          <span class="mtc-tc-pnl" [style.color]="TONE[t.outcome]">{{ t.pnl | pnlFormat : null : t.accountId }}</span>
           <span class="mtc-tc-sub">
             {{ t.tradedAt | date:'d MMM' }} · <span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}
             · R:R {{ t.riskReward !== null ? ((t.riskReward >= 0 ? '+' : '') + (t.riskReward | number:'1.1-1')) : '-' }}
           </span>
-          <span class="mtc-tc-pct" [style.color]="t.pct === null ? 'var(--text-3)' : (t.win ? 'var(--green)' : 'var(--red)')">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</span>
+          <span class="mtc-tc-pct" [style.color]="t.pct === null ? 'var(--text-3)' : TONE[t.outcome]">{{ t.pct === null ? '-' : ((t.pct >= 0 ? '+' : '') + (t.pct | number:'1.2-2') + '%') }}</span>
         </li>
       }
     </ul>
@@ -54,4 +54,10 @@ import { DashboardTradeRow } from '../../dashboard-charts.util';
 })
 export class RecentTradesTableComponent {
   readonly rows = input<DashboardTradeRow[]>([]);
+
+  /** Badge « Résultat » : un trade ouvert n'est ni gagnant ni perdant (#655). */
+  protected readonly LABEL: Record<TradeRowOutcome, string> = { win: 'WIN', loss: 'LOSS', breakeven: 'BE', open: 'OUVERT' };
+  protected readonly TONE: Record<TradeRowOutcome, string> = {
+    win: 'var(--green)', loss: 'var(--red)', breakeven: 'var(--text-3)', open: 'var(--text-3)',
+  };
 }

@@ -9,7 +9,6 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -126,7 +125,7 @@ function emptyForm(): AccountFormState {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DialogDirective,
-    DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
+    FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
     PropFirmRulesComponent, AccountPlanWizardComponent,
   ],

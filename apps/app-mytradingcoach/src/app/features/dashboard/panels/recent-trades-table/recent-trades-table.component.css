@@ -23,6 +23,8 @@
 }
 .mtc-res { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .4px; padding: 4px 10px; border-radius: 100px; background: var(--red-dim); color: var(--red); border: 1px solid rgba(239, 68, 68, .25); }
 .mtc-res.win { background: var(--green-dim); color: var(--green); border-color: rgba(16, 185, 129, .25); }
+/* Ouvert ou break-even : ni vert ni rouge. */
+.mtc-res.open, .mtc-res.breakeven { background: transparent; color: var(--text-3); border-color: var(--border); }
 
 /* Cartes (téléphone) : masquées tant que le tableau tient. */
 .mtc-trade-cards { display: none; list-style: none; margin: 14px 0 0; padding: 0; }

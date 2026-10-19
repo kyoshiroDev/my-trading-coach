@@ -164,7 +164,7 @@
                   @if (objReached(a)) {
                     <span class="gauge-val text-green">atteint</span>
                   } @else {
-                    <span class="gauge-val">{{ obj.current | number:'1.0-0' }} / {{ money(obj.target, a.currency) }}</span>
+                    <span class="gauge-val">{{ money(obj.current, a.currency) }} / {{ money(obj.target, a.currency) }}</span>
                     <span class="gauge-pct">{{ objPct(a) }} %</span>
                   }
                 </div>
