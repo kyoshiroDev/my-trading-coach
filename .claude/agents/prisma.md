@@ -355,6 +355,13 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   `admin/demo-data/prop-risk.ts`. Rien ne les affiche tels quels : ils nourrissent les textes
   fixes du compte démo (PREMIUM, aucun appel IA), récap du jour de tilt et `propNote` Apex du débrief.
 
+## E-mails de service (oct. 2026)
+
+`User.serviceEmailsOptOutAt` (migration `20261019120000_service_emails_opt_out`, additive, nullable) :
+désinscription des e-mails d'aide à la prise en main (type `service`, sans consentement). Null =
+reçus. Rempli par « Ne plus recevoir ces conseils », la désinscription marketing ou la coupure du
+consentement dans le profil. Détails : nestjs.md, « Suite d'e-mails d'onboarding ».
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`

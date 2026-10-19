@@ -1856,6 +1856,51 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
 
+## Suite d'e-mails d'onboarding (oct. 2026, NinjaTrader mi-novembre)
+
+Moteur unique : registre `resend/campaigns/campaign-registry.ts`, `EmailDispatchService` (seul point de
+décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `EmailSend`.
+- **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
+  (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
+  propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
+  (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
+  le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Plafond** : 1 e-mail marketing OU service / `MARKETING_COOLDOWN_DAYS` (4) par personne, à
+  **1 h près** (`CAP_TOLERANCE_MS`) : le cron examine les campagnes par priorité, un e-mail plus
+  prioritaire que le précédent est vu quelques secondes avant 4 j pile et glissait d'un jour. Une
+  seule campagne par personne et par passage.
+- **Suite** (priorité · type · fenêtre d'âge) : `connect_tradovate` 100 · service · J1-J14 (aucune
+  connexion broker CONNECTED ni trade) ; `prop_firm_rules` 90 · service · J4-J21 (compte ACTIVE
+  EVALUATION/FUNDED sans plan, `planLinkChoice` null ou LATER) ; `first_week_recap` 80 · marketing ·
+  J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
+  (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
+  vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
+  transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
+- **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET
+  haute) : jamais d'envoi en masse vers d'anciens inscrits. Les 4 nouvelles exigent en plus
+  `createdAt >= ONBOARDING_SEQUENCE_START` (date ISO, env de l'API) ; absente ou invalide → elles ne
+  ciblent personne et le cron l'écrit en `warn` à chaque passage.
+- **Données à l'envoi** : `loadContext(deps, userIds, now)` sur la campagne, appelé UNE fois par page
+  de 500 autorisés (cron et envoi admin) ; un id absent de la Map = pas d'envoi (pas de trade J0-J7,
+  offre fermée). `loadFirstWeek` = une requête SQL groupée (trades clôturés, jours de Paris, P&L net
+  arrondi comme les stats, devises mélangées → montant sans symbole). Le cron est dans
+  `AutoCampaignsModule` (importe `FounderOfferModule`, qui importe déjà `ResendModule`).
+- **Liens** : `onboardingLink(appUrl, path, clé)` → `utm_source=email&utm_medium=onboarding&utm_campaign=<clé>`
+  (bienvenue = `welcome`). Connexion Tradovate et firme → `/accounts` ; CSV → `/journal` ; Premium →
+  `/dashboard?plan=premium&cta=email` ; fondateur → `/dashboard?plan=founder&cta=email` (les
+  destinataires ont un compte : pas `/register` comme la landing). Prix, essai, places, délai de
+  remboursement : `@mtc/shared` uniquement (un test lit le source et refuse tout montant littéral).
+- **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
+  `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
+  requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
+- Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
+  `onboarding-templates.spec.ts` (règles d'écriture), `onboarding-sequence.simulation.spec.ts` (VRAI
+  cron + dispatch sur 21 jours, 6 profils : modifier une priorité ou une fenêtre = mettre à jour le
+  calendrier attendu).
+
 ## Offre fondateur (#525, 2026-10-07)
 
 `modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
