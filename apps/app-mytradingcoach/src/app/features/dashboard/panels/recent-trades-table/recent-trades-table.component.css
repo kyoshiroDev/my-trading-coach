@@ -25,6 +25,8 @@
 .mtc-res.win { background: var(--green-dim); color: var(--green); border-color: rgba(16, 185, 129, .25); }
 /* Ouvert ou break-even : ni vert ni rouge. */
 .mtc-res.open, .mtc-res.breakeven { background: transparent; color: var(--text-3); border-color: var(--border); }
+/* Badge OUVERT à côté de l'actif : seulement quand la colonne Résultat est masquée. */
+.mtc-res-inline { display: none; margin-left: 6px; }
 
 /* Cartes (téléphone) : masquées tant que le tableau tient. */
 .mtc-trade-cards { display: none; list-style: none; margin: 14px 0 0; padding: 0; }
@@ -43,6 +45,7 @@
   .mtc-table td { padding-left: 8px; padding-right: 8px; }
   .col-exit,
   .col-res { display: none; }
+  .mtc-res-inline { display: inline-flex; }
 }
 
 /* Carte étroite (téléphone) : une carte de 2 lignes par trade, P&L toujours visible. */

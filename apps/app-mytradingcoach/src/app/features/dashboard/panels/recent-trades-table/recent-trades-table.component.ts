@@ -6,6 +6,8 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
 /**
  * « Historique des trades » du dashboard (derniers trades, P&L % sur le capital). Tableau sur tablette et
  * PC, cartes de 2 lignes sur téléphone : le tableau de 760 px défilait de côté et cachait le P&L (#633).
+ * Un trade ouvert garde son badge « OUVERT » à toutes les tailles : colonne Résultat (large), à côté de
+ * l'actif (moyenne, colonne masquée), dans la carte (téléphone).
  */
 @Component({
   selector: 'mtc-recent-trades-table',
@@ -23,7 +25,11 @@ import { DashboardTradeRow, TradeRowOutcome } from '../../dashboard-charts.util'
           @for (t of rows(); track t.id) {
             <tr>
               <td class="mono dim">{{ t.tradedAt | date:'d MMM' }}</td>
-              <td class="mono strong">{{ t.asset | uppercase }}</td>
+              <td class="mono strong">
+                {{ t.asset | uppercase }}
+                <!-- Taille moyenne : la colonne Résultat est masquée, un trade ouvert garde son badge ici. -->
+                @if (t.outcome === 'open') { <span class="mtc-res open mtc-res-inline">{{ LABEL.open }}</span> }
+              </td>
               <td><span class="mtc-side" [class.long]="t.side === 'LONG'">{{ t.side }}</span></td>
               <td><span class="mtc-setup-cell"><span class="setup-dot-sm" [style.background]="t.setup.color"></span>{{ t.setup.title }}</span></td>
               <td class="mono dim r">{{ t.entry | number:'1.0-2' }}</td>

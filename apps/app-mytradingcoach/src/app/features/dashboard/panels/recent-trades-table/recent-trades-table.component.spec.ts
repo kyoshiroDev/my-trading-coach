@@ -5,7 +5,7 @@ import { MoneyService } from '@app/core/services/money.service';
 import type { DashboardTradeRow } from '../../dashboard-charts.util';
 import { RecentTradesTableComponent } from './recent-trades-table.component';
 
-/** Historique du dashboard : un trade ouvert garde son badge « OUVERT » neutre dans les cartes mobiles. */
+/** Historique du dashboard : un trade ouvert garde son badge « OUVERT » neutre à toutes les tailles. */
 
 const row = (id: string, outcome: DashboardTradeRow['outcome'], pnl: number | null): DashboardTradeRow =>
   ({
@@ -22,7 +22,7 @@ function render(rows: DashboardTradeRow[]): HTMLElement {
   return fixture.nativeElement as HTMLElement;
 }
 
-describe('RecentTradesTableComponent · cartes mobiles', () => {
+describe('RecentTradesTableComponent · badge OUVERT', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [{ provide: MoneyService, useValue: { format: (v: number) => `$${v}`, formatFor: (_: string, v: number) => `$${v}` } }],
@@ -40,6 +40,13 @@ describe('RecentTradesTableComponent · cartes mobiles', () => {
     expect(badge?.classList.contains('open')).toBe(true);
     expect(card.querySelector('.mtc-tc-pnl')?.textContent?.trim()).toBe('-');
     expect(card.querySelector('.mtc-tc-pct')?.textContent?.trim()).toBe('-');
+  });
+
+  it('tableau : trade ouvert badgé à côté de l\'actif (taille moyenne) en plus de la colonne Résultat', () => {
+    const tr = render([row('a', 'open', null), row('w', 'win', 12.5)]).querySelectorAll('.mtc-table tbody tr');
+    expect(tr[0].querySelector('.mtc-res-inline.open')?.textContent?.trim()).toBe('OUVERT');
+    expect(tr[0].querySelector('.col-res .mtc-res')?.textContent?.trim()).toBe('OUVERT');
+    expect(tr[1].querySelector('.mtc-res-inline')).toBeNull();
   });
 
   it('trade clôturé : pas de badge dans la carte (le P&L coloré suffit)', () => {
