@@ -120,7 +120,7 @@ export class ResendService {
     userName: string;
     attemptCount: number;
   }): Promise<void> {
-    const portalUrl = `${this.frontendUrl}/settings`;
+    const portalUrl = this.billingUrl;
     const { subject, html } = paymentFailedTemplate({
       userName: params.userName,
       attemptCount: params.attemptCount,
@@ -152,7 +152,7 @@ export class ResendService {
     to: string;
     userName: string;
   }): Promise<void> {
-    const resubscribeUrl = `${this.frontendUrl}/settings`;
+    const resubscribeUrl = this.billingUrl;
     const { subject, html } = subscriptionCanceledTemplate({
       userName: params.userName,
       resubscribeUrl,
@@ -223,7 +223,7 @@ export class ResendService {
     userName: string;
     expiresAt: Date;
   }): Promise<void> {
-    const portalUrl = `${this.frontendUrl}/settings`;
+    const portalUrl = this.billingUrl;
     const { subject, html } = renewalReminderTemplate({ ...params, portalUrl });
     await this.send({ to: params.to, subject, html });
   }

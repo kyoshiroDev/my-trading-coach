@@ -89,7 +89,7 @@ export function connectTradovateTemplate({ userName, appUrl, unsubUrl }: Campaig
 
   return {
     subject: 'Connecte Tradovate en 2 minutes',
-    html: emailWrapper(content, 'Tes trades arrivent seuls, en lecture seule.'),
+    html: emailWrapper(content, 'Tes trades arrivent seuls, en lecture seule.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -109,7 +109,7 @@ export function propFirmRulesTemplate({ userName, appUrl, unsubUrl, propFirmCoun
 
   return {
     subject: 'Ta marge restante, avec les vraies règles de ta firme',
-    html: emailWrapper(content, 'Limite journalière, drawdown, objectif : les règles exactes de ton plan.'),
+    html: emailWrapper(content, 'Limite journalière, drawdown, objectif : les règles exactes de ton plan.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -129,7 +129,7 @@ export function firstWeekRecapTemplate({ userName, appUrl, unsubUrl, firstWeek }
 
   return {
     subject: 'Ta première semaine sur MyTradingCoach',
-    html: emailWrapper(content, `${trades}, ${days} : ton bilan de la semaine.`),
+    html: emailWrapper(content, `${trades}, ${days} : ton bilan de la semaine.`, ACCENT.brand, unsubUrl),
   };
 }
 
@@ -150,7 +150,7 @@ export function founderFollowupTemplate({ userName, appUrl, unsubUrl, seatsLeft,
 
   return {
     subject: `${m} €/mois à vie, pour les ${total} premiers`,
-    html: emailWrapper(content, `Premium à ${m} €/mois à vie au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`),
+    html: emailWrapper(content, `Premium à ${m} €/mois à vie au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
   };
 }
 
@@ -183,12 +183,12 @@ export function firstTradeTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
         </div>
       </div>
       ${divider}
-      ${cta('Enregistrer mon premier trade →', `${appUrl}/trades`)}
+      ${cta('Enregistrer mon premier trade →', `${appUrl}/journal`)}
     `) + marketingFooter(unsubUrl);
 
   return {
     subject: '📈 Enregistre ton premier trade en 30 secondes',
-    html: emailWrapper(content, 'Ta progression commence par ton premier trade journalisé.'),
+    html: emailWrapper(content, 'Ta progression commence par ton premier trade journalisé.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -207,12 +207,12 @@ export function profileTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         ta stratégie, tes sessions et ta fréquence de trades.
       </p>
       ${divider}
-      ${cta('Compléter mon profil →', `${appUrl}/parametres`)}
+      ${cta('Compléter mon profil →', `${appUrl}/profil`)}
     `) + marketingFooter(unsubUrl);
 
   return {
     subject: '🎯 Personnalise ton coach en 5 minutes',
-    html: emailWrapper(content, 'Un profil complet = un coaching vraiment adapté.'),
+    html: emailWrapper(content, 'Un profil complet = un coaching vraiment adapté.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -237,7 +237,7 @@ export function discordTemplate({ userName, unsubUrl }: CampaignBuildCtx): Campa
 
   return {
     subject: '💬 Rejoins la communauté Discord MyTradingCoach',
-    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.', ACCENT.discord),
+    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.', ACCENT.discord, unsubUrl),
   };
 }
 
@@ -258,12 +258,12 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         1 mois offert · Carte requise · Annulable en un clic.
       </p>
       ${divider}
-      ${cta('Essayer Premium →', `${appUrl}/parametres?upgrade=1`)}
+      ${cta('Essayer Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
     subject: '⚡ Passe à Premium · 1 mois offert',
-    html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.'),
+    html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -287,7 +287,7 @@ export function reengagementTemplate({ userName, unsubUrl }: CampaignBuildCtx): 
 
   return {
     subject: '📖 Un retour sur MyTradingCoach ?',
-    html: emailWrapper(content, 'Ton avis nous aide à améliorer l\'app.'),
+    html: emailWrapper(content, 'Ton avis nous aide à améliorer l\'app.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -315,7 +315,7 @@ export function announcementTemplate(
 
   return {
     subject: override?.subject?.trim() || '📣 Nouveauté MyTradingCoach',
-    html: emailWrapper(content),
+    html: emailWrapper(content, '', ACCENT.brand, unsubUrl),
   };
 }
 

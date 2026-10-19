@@ -59,7 +59,20 @@ function logo(): string {
 </table>`;
 }
 
-export function emailWrapper(content: string, preheader = '', accentGradient: string = ACCENT.brand): string {
+/**
+ * `unsubUrl` : lien de désinscription en un clic de l'e-mail (campagnes marketing / service). Sans lui
+ * (e-mails liés au compte), le pied mène aux préférences e-mail du profil.
+ */
+export function emailWrapper(
+  content: string,
+  preheader = '',
+  accentGradient: string = ACCENT.brand,
+  unsubUrl?: string,
+): string {
+  const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
+  const footerLink = unsubUrl
+    ? `<a href="${unsubUrl}" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>`
+    : `<a href="${appUrl}/profil?tab=params" style="color:#9db4ce;text-decoration:none;">Gérer mes e-mails</a>`;
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -114,7 +127,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
                 Fait en France 🇫🇷<br>
                 SIRET 512 926 460 00027<br>
                 <a href="https://www.mytradingcoach.app" style="color:#9db4ce;text-decoration:none;">mytradingcoach.app</a><br>
-                <a href="https://app.mytradingcoach.app/parametres" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>
+                ${footerLink}
               </p>
             </td>
           </tr>
