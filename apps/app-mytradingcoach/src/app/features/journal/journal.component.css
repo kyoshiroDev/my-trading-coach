@@ -64,6 +64,21 @@
   pointer-events: none; color: currentColor;
 }
 
+/* Mobile : styles.css force les champs à 16 px (sinon iOS zoome au toucher), et les menus
+   devenaient bien plus gros que les puces voisines. Le <select> natif reste à 16 px mais
+   transparent, posé sur une étiquette au gabarit de .filter-chip (#642). */
+.filter-select .fs-label { display: none; }
+@media (max-width: 768px) {
+  .filter-select .fs-label {
+    display: inline-block; padding: 5px 26px 5px 12px; border-radius: 8px;
+    font-size: 11px; line-height: normal; font-family: var(--font-mono); white-space: nowrap;
+    border: 1px solid var(--border); color: var(--text-2); transition: all .15s;
+  }
+  .filter-select select { position: absolute; inset: 0; width: 100%; opacity: 0; }
+  .filter-select.active .fs-label,
+  .filter-select:focus-within .fs-label { background: var(--blue-glow); border-color: var(--blue); color: var(--blue-bright); }
+}
+
 /* Réinitialiser : même gabarit que .filter-chip, ton plus discret */
 .filter-reset {
   display: inline-flex; align-items: center; gap: 5px;
