@@ -82,10 +82,11 @@ src/
 - **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
   `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
   Nouveau CTA d'inscription → ajouter les deux attributs.
-- **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
-  bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
-  `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
-  dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
+- **Tarifs (`Pricing.astro`, `PfPricing.astro`)** : les cartes Gratuit / Fondateur / Premium lisent
+  `PLAN_BENEFITS` (`@mtc/shared`, liste partagée avec l'app et les e-mails, cf. plans.md « Avantages
+  affichés ») ; jamais de liste d'avantages écrite dans la carte. Le bloc « Ce que Premium ajoute au
+  Gratuit » de la home garde un détail propre (`premiumDetails`) : chaque ligne = fonction livrée ET
+  réservée au Premium. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
   arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
 - **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
@@ -122,7 +123,7 @@ src/
     passe son ancre (`/prop-firm` → `#tarifs`), sinon le bandeau ferait sortir le visiteur de la page.
   - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
     → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
-    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `premiumPlus` que la
+    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `PLAN_BENEFITS.premium` que la
     carte Premium (« Tout Premium inclus »). Prix : « ou 290 €/an · au lieu de 49 €/mois ».
   - **Arrivée depuis la pub** (`/?utm_…#pricing`, campagne Instagram du 2026-10) : en mobile
     (≤ 1024 px), offre ouverte au build, `#pricing` ou `#fondateur` → la page s'arrête sur la carte
