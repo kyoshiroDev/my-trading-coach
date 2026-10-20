@@ -262,17 +262,79 @@ export function gradeAll(days: DemoDay[]): void {
 }
 
 /**
+ * Journées du compte statique (`elite`) : tirage SÉPARÉ du tirage principal, pour ne rien changer
+ * aux comptes Apex et Tradeify. 8 à 10 jours ouvrés des 4 dernières semaines (ni aujourd'hui, ni la
+ * veille, ni la journée de revenge), 1 à 2 trades en micros, taille adaptée à un compte de 25K.
+ */
+export function generateSecondary(now: Date, seed: number, main: DemoDay[]): DemoDay[] {
+  const r = rng(seed);
+  const taken = new Set(main.filter((d) => d.kind !== 'normal').map((d) => d.daysAgo));
+  // Dans les 4 dernières semaines : la vue « 1 mois » par défaut montre tout le parcours du compte.
+  const candidates = main.filter((d) => d.kind === 'normal' && !taken.has(d.daysAgo) && d.daysAgo <= 27);
+  const dayNet = (d: DemoDay) => d.trades.reduce((a, t) => a + net(t), 0);
+  // Pertes sur des dates DÉJÀ rouges (plus anciennes), gains sur des dates vertes (plus récentes) :
+  // le compte passe sous son départ puis remonte, sans changer le nombre de journées rouges.
+  const half = (list: DemoDay[]) => list.filter(() => r() < 0.75).slice(0, 4 + Math.floor(r() * 2));
+  const reds = half(candidates.filter((d) => dayNet(d) < 0 && d.daysAgo >= 12));
+  const greens = half(candidates.filter((d) => dayNet(d) >= 0 && d.daysAgo < 16 && !reds.includes(d)));
+  const moods: MoodState[] = ['FOCUSED', 'CONFIDENT', 'NEUTRAL'];
+  const setups: SetupTitle[] = ['Breakout', 'Pullback', 'Range'];
+  return [...reds.map((d) => ({ d, win: 0.15 })), ...greens.map((d) => ({ d, win: 0.85 }))].map(({ d, win }) => {
+    const daysAgo = d.daysAgo;
+    const moodStart = pick(r, moods);
+    const losing = win < 0.5;
+    const count = losing || r() < 0.5 ? 2 : 1;
+    const trades = Array.from({ length: count }, (_, k) => buildTrade(r, {
+      account: 'elite', setup: pick(r, setups), win: r() < win, asset: r() < 0.5 ? 'MNQ' : 'MES',
+      quantity: 1 + Math.floor(r() * (losing ? 3 : 2)), at: dayAt(now, daysAgo, 10 + k * 4, 12 + Math.floor(r() * 30)), daysAgo, moodStart,
+    }));
+    const total = trades.reduce((a, t) => a + net(t), 0);
+    return { daysAgo, account: 'elite' as const, moodStart, kind: 'secondary' as const, trades,
+      moodEnd: total >= 0 ? 'CONFIDENT' as MoodState : 'NEUTRAL' as MoodState };
+  });
+}
+
+/**
+ * Compte statique crédible ET lisible : il passe sous son solde de départ (25 à 70 % du drawdown,
+ * jamais au plancher), sinon la courbe plafonnée au solde initial resterait plate ; il finit
+ * au-dessus du départ, loin de l'objectif.
+ */
+function secondaryMeetsTargets(days: DemoDay[]): boolean {
+  const elite = DEMO_ACCOUNTS.find((a) => a.key === 'elite')!;
+  // Clôtures journalières (ce que trace la courbe), dans l'ordre chronologique.
+  const eliteDays = days.filter((d) => d.account === 'elite' && d.trades.length).sort((x, y) => y.daysAgo - x.daysAgo);
+  let cum = 0, low = 0;
+  for (const d of eliteDays) { cum += d.trades.reduce((a, t) => a + net(t), 0); low = Math.min(low, cum); }
+  const trades = eliteDays.reduce((n, d) => n + d.trades.length, 0);
+  // La démo « Tous les comptes » garde ses critères globaux (win rate net, journées rouges).
+  const all = statsOf(days);
+  const red = all.redDays / all.tradingDays;
+  return trades >= 10 && cum > 0 && cum < elite.profitTarget! * 0.5
+    && -low >= elite.maxDrawdown * 0.25 && -low < elite.maxDrawdown * 0.7
+    && all.winRateNet >= 52 && all.winRateNet <= 57 && red >= 0.35 && red <= 0.45;
+}
+
+/**
  * Jeu de données démo pour `now` : premier tirage (seeds successifs, déterministes) qui respecte
- * les contraintes de crédibilité. Pur (aucune base) : testé et affiché sans Prisma.
+ * les contraintes de crédibilité. Pur (aucune base) : testé et affiché sans Prisma. Le tirage
+ * principal est choisi sur Apex + Tradeify seuls, puis le compte statique a son propre tirage.
  */
 export function buildDemoDataset(now: Date = new Date()): { days: DemoDay[]; stats: DemoStats; seed: number } {
-  let last: { days: DemoDay[]; stats: DemoStats; seed: number } | null = null;
+  let main: { days: DemoDay[]; seed: number } | null = null;
   for (let seed = 20260919; seed < 20260919 + 5_000; seed++) {
     const days = generate(now, seed);
-    const stats = statsOf(days);
-    last = { days, stats, seed };
-    if (meetsTargets(stats)) return last;
+    main = { days, seed };
+    if (meetsTargets(statsOf(days))) break;
   }
-  return last!;
+  let days = main!.days;
+  for (let s2 = 1; s2 < 2_000; s2++) {
+    const merged = [...main!.days, ...generateSecondary(now, main!.seed * 31 + s2, main!.days)]
+      .sort((x, y) => y.daysAgo - x.daysAgo);
+    days = merged;
+    if (secondaryMeetsTargets(merged)) break;
+  }
+  gradeAll(days);
+  assertDemoCalendar(days);
+  return { days, stats: statsOf(days), seed: main!.seed };
 }
 

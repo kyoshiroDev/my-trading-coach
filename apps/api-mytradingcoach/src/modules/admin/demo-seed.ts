@@ -126,7 +126,7 @@ export async function seedTradingData(
     const green = dayStats.totalPnl >= 0;
     const reflection =
       d.kind === 'revenge' ? REFLECTION_REVENGE
-        : d.kind === 'today' ? null
+        : d.kind === 'today' || d.kind === 'secondary' ? null
           : d.kind === 'yesterday' || reflectionToggle++ % 2 === 0
             ? (green ? REFLECTIONS_GREEN : REFLECTIONS_RED)[d.daysAgo % 3]
             : null;
@@ -191,7 +191,8 @@ export async function seedTradingData(
   // Récaps quotidiens (J-1 → J-42) : chiffres NETS du jour, phrase selon le type de journée.
   let recaps = 0;
   for (const d of days) {
-    if (d.kind === 'today' || !d.trades.length) continue;
+    // Compte au tirage séparé : son jour est déjà couvert par le récap du compte principal.
+    if (d.kind === 'today' || d.kind === 'secondary' || !d.trades.length) continue;
     const s = computeTradeStats(d.trades);
     const gross = d.trades.reduce((a, t) => a + t.pnl, 0);
     // Journée avec alerte ou tilt : le récap Premium en parle d'abord (#374).
@@ -307,8 +308,8 @@ export async function seedTradingData(
   });
 
   // Comptes prop firm « Connectés » à Tradovate (vitrine de la connexion broker) : aucun vrai token,
-  // le compte démo ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST). LES
-  // DEUX comptes : quel que soit le compte de la séance, la session live montre le suivi prop firm
+  // le compte démo ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST). TOUS
+  // les comptes : quel que soit le compte de la séance, la session live montre le suivi prop firm
   // (il exige un compte connecté), et « Mes comptes » n'affiche plus de bouton « Connecter ».
   const apexId = accountIdByKey.get('apex')!;
   // Jamais sur un vrai compte : le cron de renouvellement tenterait ce faux jeton en boucle.

@@ -38,7 +38,8 @@ export interface DemoDay {
   account: AccountKey;
   moodStart: MoodState;
   moodEnd: MoodState;
-  kind: 'normal' | 'revenge' | 'yesterday' | 'today';
+  /** `secondary` : journée d'un compte au tirage séparé (pas de récap quotidien, unique par jour). */
+  kind: 'normal' | 'revenge' | 'yesterday' | 'today' | 'secondary';
   /** Trades CLÔTURÉS (seuls comptés dans les stats). */
   trades: DemoTrade[];
   /** Session du jour uniquement : position encore ouverte, hors stats. */
@@ -79,7 +80,12 @@ export function statsOf(days: DemoDay[]): DemoStats {
     for (const t of ts) { bal += net(t); hwm = Math.max(hwm, bal); worst = Math.max(worst, hwm - bal); }
     byAccount[a.key] = { trades: ts.length, netPnl: round2(bal), worstDrawdown: round2(worst) };
   }
-  const dayNets = days.filter((d) => d.trades.length).map((d) => d.trades.reduce((a, t) => a + net(t), 0));
+  // Par DATE (tous comptes) : un compte au tirage séparé peut trader le même jour qu'un autre.
+  const byDate = new Map<number, number>();
+  for (const d of days) {
+    if (d.trades.length) byDate.set(d.daysAgo, (byDate.get(d.daysAgo) ?? 0) + d.trades.reduce((a, t) => a + net(t), 0));
+  }
+  const dayNets = [...byDate.values()];
   return {
     trades: all.length,
     tradingDays: dayNets.length,
