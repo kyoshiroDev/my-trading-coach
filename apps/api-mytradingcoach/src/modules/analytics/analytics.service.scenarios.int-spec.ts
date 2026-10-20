@@ -290,6 +290,35 @@ describe('getEquityCurveDaily', () => {
     expect((await service.getEquityCurveDaily(userId)).points).toHaveLength(0);
   });
 
+  it('payouts reçus : ceux du compte, hors écartés et hors autres utilisateurs, avant la période à part', async () => {
+    await seed([]);
+    const other = await prisma.user.create({ data: { email: `int-b2-scen-other-${RUN}@test.local`, password: 'x' } });
+    try {
+      const [acc, foreign] = await Promise.all([
+        prisma.tradingAccount.create({ data: { userId, label: 'Payouts' } }),
+        prisma.tradingAccount.create({ data: { userId: other.id, label: 'Autre' } }),
+      ]);
+      const day = (d: string) => new Date(`${d}T00:00:00.000Z`);
+      await prisma.brokerPayout.createMany({
+        data: [
+          { accountId: acc.id, transactionId: 't1', tradeDate: day('2026-04-20'), amount: 800, changeType: 'fundtransaction' },
+          { accountId: acc.id, transactionId: 't2', tradeDate: day('2026-05-10'), amount: 1_200, changeType: 'fundtransaction' },
+          { accountId: acc.id, transactionId: 't3', tradeDate: day('2026-05-12'), amount: 300, changeType: 'manualadjustment', dismissedAt: new Date() },
+          { accountId: acc.id, transactionId: 't4', tradeDate: day('2026-06-03'), amount: 50, changeType: 'fundtransaction' },
+          { accountId: foreign.id, transactionId: 't5', tradeDate: day('2026-05-11'), amount: 999, changeType: 'fundtransaction' },
+        ],
+      });
+      const result = await service.getEquityCurveDaily(userId, new Date('2026-05-01'), new Date('2026-05-31'), acc.id);
+      expect(result.payouts).toEqual([{ date: day('2026-05-10'), amount: 1_200 }]);
+      expect(result.before.payouts).toBe(800);
+      // Vue tous comptes : mêmes payouts (l'autre utilisateur n'apparaît jamais).
+      expect((await service.getEquityCurveDaily(userId, new Date('2026-05-01'), new Date('2026-05-31'))).payouts).toHaveLength(1);
+    } finally {
+      await prisma.user.delete({ where: { id: other.id } });
+      await prisma.tradingAccount.deleteMany({ where: { userId } });
+    }
+  });
+
   it('getEquityCurveCurrentMonth ne garde que le mois courant', async () => {
     const now = new Date();
     await seed([
