@@ -113,6 +113,16 @@ describe('OrchestratorAgent', () => {
     expect(Array.isArray(result.insights)).toBe(true);
   });
 
+  // Compte perdu : insights = contexte global, comptes échoués et archivés exclus.
+  it('runInsightsFlow() ne lit pas les comptes échoués et archivés', async () => {
+    mockPrisma.trade.findMany.mockClear();
+    await orchestrator.runInsightsFlow('user-123');
+    expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toEqual({
+      userId: 'user-123',
+      OR: [{ accountId: null }, { account: { status: { notIn: ['FAILED', 'ARCHIVED'] } } }],
+    });
+  });
+
   it('dataAgent.buildTradesSummary() ne fait aucun appel Anthropic', () => {
     // DataAgent is a pure computation class with no Anthropic dependency
     const proto = Object.getOwnPropertyNames(Object.getPrototypeOf(dataAgent));

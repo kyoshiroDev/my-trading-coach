@@ -1,4 +1,4 @@
-import type { EmotionState, ExecutionGrade, ExecutionMethod, TradeSide, TradingSession } from './enums';
+import type { AccountStatus, EmotionState, ExecutionGrade, ExecutionMethod, TradeSide, TradingSession } from './enums';
 
 /** Setup tel que renvoyé par l'API sur un trade (relation). */
 export interface TradeSetup {
@@ -35,6 +35,8 @@ export interface Trade {
   setup: TradeSetup;
   /** Compte du trade : sa devise est celle de ce compte. */
   accountId?: string | null;
+  /** Compte du trade dans le journal (GET /trades) : badge « Échoué » / « Archivé » (compte perdu). */
+  account?: { id: string; label: string; status: AccountStatus } | null;
   session: TradingSession;
   timeframe: string;
   notes: string | null;

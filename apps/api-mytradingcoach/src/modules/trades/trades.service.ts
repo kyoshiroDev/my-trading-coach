@@ -344,6 +344,8 @@ export class TradesService {
         setup: { select: { id: true, title: true, color: true } },
         // Humeur de la journée → émotion effective côté front (affichage + «, » si null).
         tradeSession: { select: { moodStart: true } },
+        // Compte perdu : le journal garde tous les trades, badge « Échoué » / « Archivé » côté front.
+        account: { select: { id: true, label: true, status: true } },
       },
     });
 

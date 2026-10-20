@@ -37,6 +37,12 @@ class ChatDto {
   @ValidateNested({ each: true })
   @Type(() => ChatMessageDto)
   history?: ChatMessageDto[];
+
+  /** Compte choisi dans le sélecteur : le coach lit ses trades, même s'il est échoué ou archivé. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  accountId?: string;
 }
 
 @UseGuards(JwtAuthGuard, PremiumGuard)
@@ -71,6 +77,7 @@ export class AiController {
       dto.message,
       dto.history ?? [],
       user.isDemo === true,
+      dto.accountId && dto.accountId !== 'all' ? dto.accountId : undefined,
     );
   }
 }

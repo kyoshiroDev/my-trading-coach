@@ -226,6 +226,26 @@ describe('DebriefService', () => {
       expect(service.getWeekInfo(d).year).toBe(2026);
     });
 
+    // Compte perdu : le débrief hebdo est un contexte global → comptes échoués et archivés exclus
+    // (trades ET liste des comptes analysés), validés gardés.
+    it('comptes échoués et archivés hors du débrief (trades et comptes)', async () => {
+      mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
+      mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) => Promise.resolve(args.create));
+      mockPrisma.tradingAccount.findMany.mockResolvedValue([]);
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+      mockAiService.generateDebrief.mockResolvedValueOnce({ overview: { summary: '' }, accounts: [], objectives: [] });
+
+      await service.generate('user-123');
+
+      const tradeWhere = mockPrisma.trade.findMany.mock.calls[0][0].where;
+      expect(tradeWhere).toMatchObject({
+        userId: 'user-123',
+        OR: [{ accountId: null }, { account: { status: { notIn: ['FAILED', 'ARCHIVED'] } } }],
+      });
+      const accountWhere = mockPrisma.tradingAccount.findMany.mock.calls.at(-1)![0].where;
+      expect(accountWhere).toEqual({ userId: 'user-123', status: { notIn: ['FAILED', 'ARCHIVED'] } });
+    });
+
     it('par compte : UN SEUL appel IA, stats backend + analyse IA fusionnées', async () => {
       mockPrisma.weeklyDebrief.findFirst.mockResolvedValue(null);
       mockPrisma.weeklyDebrief.upsert.mockImplementation((args: { create: unknown }) =>

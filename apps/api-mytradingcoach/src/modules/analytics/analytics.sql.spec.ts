@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Prisma } from '@prisma/client';
-import { groupTrades, summaryTotals, cumulativeByTrade, processTimeZone, type GroupKey } from './analytics.sql';
+import { groupTrades, summaryTotals, cumulativeByTrade, closedTradeStats, processTimeZone, type GroupKey } from './analytics.sql';
 import type { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -38,7 +38,8 @@ describe('groupTrades', () => {
 
   it('sans compte ni période : aucun filtre superflu', async () => {
     await groupTrades(prisma, { userId: 'u1' }, 'setup');
-    expect(text()).not.toContain('"accountId"');
+    // Aucun compte précis (le filtre des comptes inactifs, lui, est attendu : voir plus bas).
+    expect(text()).not.toContain('t."accountId" = $');
     expect(text()).not.toContain('"tradedAt" >=');
   });
 
@@ -90,5 +91,40 @@ describe('summaryTotals / cumulativeByTrade', () => {
 
   it('processTimeZone renvoie le fuseau du processus (celui de getHours)', () => {
     expect(processTimeZone()).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  });
+});
+
+// Compte perdu : un seul `where`, donc une seule règle pour toutes les statistiques.
+describe('comptes échoués et archivés (compte perdu)', () => {
+  const INACTIVE = 'NOT EXISTS ( SELECT 1 FROM "TradingAccount" ia';
+
+  it.each([
+    ['groupTrades', () => groupTrades(prisma, { userId: 'u1' }, 'asset')],
+    ['summaryTotals', () => summaryTotals(prisma, { userId: 'u1' })],
+    ['cumulativeByTrade', () => cumulativeByTrade(prisma, { userId: 'u1' })],
+  ])('%s « tous les comptes » : échoués et archivés exclus par défaut, statuts liés', async (_n, run) => {
+    queryRaw.mockResolvedValue([{ count: 0, wins: 0, losses: 0, pnl: 0 }]);
+    await run();
+    expect(text()).toContain(INACTIVE);
+    expect(text()).toContain('t."accountId" IS NULL OR'); // trades sans compte gardés
+    expect(lastSql().values).toEqual(expect.arrayContaining(['FAILED', 'ARCHIVED']));
+    expect(lastSql().values).not.toContain('PASSED'); // validé compté
+  });
+
+  it('includeInactive : tout est réinclus', async () => {
+    await groupTrades(prisma, { userId: 'u1', includeInactive: true }, 'asset');
+    expect(text()).not.toContain('"TradingAccount"');
+  });
+
+  it('compte précis (même échoué) : lu normalement, sans filtre de statut', async () => {
+    await groupTrades(prisma, { userId: 'u1', accountId: 'acc-failed' }, 'asset');
+    expect(text()).toContain('t."accountId" = $');
+    expect(text()).not.toContain('"TradingAccount"');
+  });
+
+  it('fiche admin (closedTradeStats) : tous les comptes, inactifs compris', async () => {
+    queryRaw.mockResolvedValue([{ closed: 0, wins: 0, losses: 0, pnl: 0 }]);
+    await closedTradeStats(prisma, 'u1');
+    expect(text()).not.toContain('"TradingAccount"');
   });
 });
