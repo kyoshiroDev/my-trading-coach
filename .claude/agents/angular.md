@@ -376,6 +376,18 @@ commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
 drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
 envoyées à l'API sont des horodatages ISO complets.
 
+**Capital, courbe et drawdown : une seule définition** (`core/services/equity-period.util.ts`) :
+- **Capital** (KPI du dashboard) = solde actuel de la vue (`viewBalance(…, 'currentBalance')`) : le
+  même que le sélecteur de compte et Mes comptes (solde du broker pour un compte connecté). Jamais
+  « capital de départ + P&L de la période ». Le % compare au solde du début de la période.
+- **Courbe d'équité** : part de `periodStartCapital` = solde actuel − P&L de la période, donc finit
+  sur le solde affiché. **Jamais `startingCapital` de `/equity-curve/daily`** : c'est le capital du
+  PROFIL (un compte de 50K partait de 100K dans Statistiques).
+- **Drawdown** (KPI « Drawdown max », courbe et en-tête des Statistiques) = `anchoredDrawdown` :
+  clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
+  renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
+  Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
+
 ---
 
 ## Responsive mobile — OBLIGATOIRE sur tous les composants

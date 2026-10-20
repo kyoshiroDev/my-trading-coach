@@ -2057,3 +2057,11 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
+
+## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
+
+- Avec `from` : renvoie aussi `before = { pnl, peak }` (P&L net cumulé avant la période et son plus
+  haut en clôture de journée, ≥ 0, fonction `periodBefore`). Le front ancre le drawdown sur ce sommet.
+- `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
+  plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
+  la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
