@@ -58,6 +58,24 @@ export class AccountsController {
     });
   }
 
+  /**
+   * Compte perdu : nouvelle tentative depuis un compte ÉCHOUÉ (même firme, plan, taille et règles).
+   * Route dédiée plutôt que POST /accounts : le serveur garde le contrôle du statut d'origine, de
+   * la copie des règles et du libellé incrémenté (« Apex 50K #2 »), et applique le quota du plan.
+   */
+  @Post(':id/retry')
+  retry(
+    @CurrentUser()
+    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
+    @Param('id') id: string,
+  ) {
+    return this.accounts.retry(user.id, id, {
+      plan: user.plan,
+      role: user.role,
+      trialEndsAt: user.trialEndsAt,
+    });
+  }
+
   /** Indices stockés pour deviner le plan du compte connecté (« Quel est ce compte ? », #612). */
   @Get(':id/plan-hint')
   planHint(@CurrentUser() user: { id: string }, @Param('id') id: string) {
