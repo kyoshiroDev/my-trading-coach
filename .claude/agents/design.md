@@ -215,7 +215,7 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   **aucun point** ; pastille seulement au survol. **Remplissage** : dégradé de la couleur de la ligne
   18 % → 0 % (équité : de la ligne vers le bas ; drawdown : 0 % sur la ligne de 0 → 18 % vers la courbe).
 - **Couleurs** : équité verte si la période finit ≥ capital de départ, rouge sinon ; drawdown
-  sans plan toujours `--red` ; plancher du plan `--yellow`. Lues dans les tokens au moment du tracé (un canvas ne
+  drawdown toujours `--red` (avec plan : courbe et limite). Lues dans les tokens au moment du tracé (un canvas ne
   lit pas `var()`), jamais en dur.
 - **Grille** `--chart-grid` (rgba blanc 4 %) horizontale et verticale, sans bordure d'axe ni
   graduations ; ligne de 0 du drawdown en `--chart-zero` (12 %).
@@ -227,17 +227,18 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
 - **Drawdown sans plan** (« Tous les comptes », compte sans plan relié) : sous l'eau depuis 0,
   pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas, aucune limite.
 - **Drawdown avec plan prop firm relié** (`planFloorOf` : `metrics.drawdown.source === 'plan'`,
-  montant publié) : axe en montants du compte, deux tracés : le **solde** (`--text-2`, sans
-  remplissage) et le **plancher** en escalier ambre (`stepped: 'after'`, il ne bouge qu'aux
-  clôtures), zone sous le plancher en `--red` 6 %. Plancher jour par jour = `drawdownFloor` de
-  `@mtc/shared`, LA fonction du suivi du compte (API, Mes comptes, séance) : part de taille −
-  drawdown, suit le plus haut solde de clôture (suiveur) ou reste droit (statique), se fige selon
-  le plan ; dernier point = `metrics.drawdown.floor`. En-tête : `Marge avant le plancher $1,401` +
-  `Plancher $49,677` en plus petit (valeurs et format `decimals: 0` de la séance, teinte
-  `drawdownTone` : neutre, ambre, rouge) ; sur carte < 560 px, la marge passe sous le titre.
-  Libellés : `Plancher $49,677` sous le bout de la ligne, pastille ambre + `marge min $1,175 ·
-  14/10/26` centrée sous le point où la marge a été la plus faible. Infobulle : solde, jour, marge et
-  plancher du jour. La courbe d'équité ne montre PAS le plancher (seulement l'objectif).
+  montant publié) : axe en dollars du compte, du solde initial (en haut, `max`) jusqu'un peu sous la
+  limite (15 % du drawdown). Ligne **rouge fixe** `Limite du plan $48,000` (= solde initial − drawdown
+  max), zone rouge pâle (8 %) dessous. **Courbe rouge** (`--red`) = limite + marge restante, plafonnée
+  au solde initial, où marge = solde − plancher(t) et plancher(t) = `drawdownFloor` de `@mtc/shared`,
+  LA fonction du suivi du compte (statique, suiveur EOD / intraday, gel). Statique → le solde lui-même ;
+  suiveur → la baisse depuis le plus haut, reportée sous le solde initial. La courbe touche la limite
+  exactement quand le compte touche son vrai plancher ; dernier point = `metrics.drawdown.margin`.
+  « Départ » au solde initial quand la période couvre le début du compte. En-tête :
+  `Marge avant la limite $1,803` + `Solde $51,078 · plancher actuel $49,275` en petit (valeurs et
+  format `decimals: 0` de la séance, teinte `drawdownTone`) ; carte < 560 px → sous le titre.
+  Infobulle : date + `Marge $X` seulement — **jamais la valeur de la courbe présentée comme un solde**.
+  Pastille + `marge min $1,175 · 14/10` au point le plus bas. Plus de plancher en escalier.
 - **Équité** : objectif toujours visible quand un plan est relié (`planObjectiveLine`, d'après
   `metrics.progress`, la progression du suivi du compte) — ligne pointillée verte au niveau de solde :
   Évaluation `Objectif du plan +$3,000` (départ + objectif, consistency comprise) ; Funded
