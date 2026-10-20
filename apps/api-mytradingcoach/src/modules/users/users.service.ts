@@ -23,7 +23,7 @@ import { StripeAccountClosureService } from '../stripe/stripe-account-closure.se
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
   "La résiliation de ton abonnement a échoué : ton compte n'a pas été supprimé. " +
-  'Réessaie dans quelques minutes ; si ça persiste, écris à hello@mytradingcoach.app.';
+  'Réessaie dans quelques minutes ; si ça persiste, écris à support@mytradingcoach.app.';
 
 const USER_SELECT = {
   id: true,

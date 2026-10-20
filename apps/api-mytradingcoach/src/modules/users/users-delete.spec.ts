@@ -135,9 +135,31 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
 
       expect(err).toBeInstanceOf(ServiceUnavailableException);
       expect((err as ServiceUnavailableException).message).toBe(BILLING_CLOSURE_FAILED_MESSAGE);
+      // Adresse publique du support, jamais l'adresse interne hello@.
+      expect(BILLING_CLOSURE_FAILED_MESSAGE).toContain('support@mytradingcoach.app');
+      expect(BILLING_CLOSURE_FAILED_MESSAGE).not.toContain('hello@');
       expect(mockPrisma.deletedAccount.create).not.toHaveBeenCalled();
       expect(mockPrisma.user.delete).not.toHaveBeenCalled();
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    // Résiliation acquise, puis échec de la transaction : le compte reste, SANS abonnement
+    // (customer.subscription.deleted le repasse ensuite en FREE, cf. stripe-webhook.service.spec).
+    // L'erreur d'origine remonte (500 générique), pas le 503 « résiliation échouée », qui serait faux.
+    it('Stripe résilie puis la base échoue : erreur d’origine, compte conservé, nouvel essai possible', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, plan: 'PREMIUM', stripeCustomerId: 'cus_1' });
+      billingClosure.cancelAllSubscriptions.mockResolvedValueOnce(['sub_active']);
+      const dbDown = new Error('connexion Postgres perdue');
+      mockPrisma.$transaction.mockRejectedValueOnce(dbDown);
+
+      await expect(service.deleteMe('user-1')).rejects.toBe(dbDown);
+      expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledTimes(1);
+
+      // Nouvel essai : plus rien à résilier chez Stripe, la suppression aboutit.
+      billingClosure.cancelAllSubscriptions.mockResolvedValueOnce([]);
+      await expect(service.deleteMe('user-1')).resolves.toBeUndefined();
+      expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
     });
 
     it('adminDelete résilie aussi : même flux', async () => {
