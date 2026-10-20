@@ -21,16 +21,20 @@ export interface EquityPoint {
 export interface PeriodBefore {
   pnl: number;
   peak: number;
+  /** Trades avant la période : 0 → la période couvre le début du compte (courbe au solde de départ). */
+  count: number;
 }
 
-export function periodBefore(days: { key: string; pnl: number }[]): PeriodBefore {
+export function periodBefore(days: { key: string; pnl: number; count?: number }[]): PeriodBefore {
   let pnl = 0;
   let peak = 0;
+  let count = 0;
   for (const d of [...days].sort((a, b) => a.key.localeCompare(b.key))) {
     pnl += d.pnl;
+    count += d.count ?? 0;
     if (pnl > peak) peak = pnl;
   }
-  return { pnl: roundCents(pnl), peak: roundCents(peak) };
+  return { pnl: roundCents(pnl), peak: roundCents(peak), count };
 }
 
 /** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
