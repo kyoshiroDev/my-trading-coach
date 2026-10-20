@@ -220,41 +220,66 @@ const planAccount = (rule: Record<string, unknown>, dd: Record<string, unknown> 
     planId,
   );
 
-describe('plancher de drawdown du plan', () => {
-  it('sans plan relié : pas de plancher (graphique sous l’eau depuis 0)', () => {
+describe('drawdown d’un compte relié à un plan : limite du plan + marge', () => {
+  /** Dernier point : distance courbe → limite = marge de l'en-tête = marge du suivi du compte. */
+  const lastGap = (f: ReturnType<typeof floorSeries>) => f.values[f.values.length - 1] - f.limit;
+
+  it('sans plan relié : pas de limite (drawdown classique depuis le plus haut)', () => {
     expect(planFloorOf(planAccount({}, {}, null))).toBeNull();
     expect(planFloorOf(account({ drawdown: { source: 'manual', maxDrawdown: 2_000 } }))).toBeNull();
     expect(planFloorOf(account({ ...planAccount({}).metrics, drawdownUnconfirmed: true }))).toBeNull();
     expect(planFloorOf(null)).toBeNull();
   });
 
-  it('plan suiveur EOD : part de 48 000 et suit le plus haut solde de clôture', () => {
-    // +200 avant la période (plus haut +500), puis 50 500 · 50 100 · 51 100.
-    const plan = planFloorOf(planAccount({ peakBalance: 51_100 }, { floor: 49_100, margin: 2_000 }))!;
-    expect(plan.rule).toEqual({ kind: 'trailing_eod', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null });
-    const f = floorSeries([pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 900)], 50_200, plan, { pnl: 200, peak: 500 });
-    expect(f.balance).toEqual([50_200, 50_500, 50_100, 51_100]);
-    expect(f.floor).toEqual([48_500, 48_500, 48_500, 49_100]);
-    expect(f.minMarginIdx).toBe(2); // marge 1 600 le 02/10
-  });
-
-  it('dernier point = plancher du suivi du compte ; plus hauts bornés par celui retenu (broker)', () => {
-    const plan = planFloorOf(planAccount({ peakBalance: 51_000 }, { floor: 49_000 }))!;
-    const f = floorSeries([pt('2026-10-01', 1_100), pt('2026-10-02', 900)], 50_000, plan);
-    expect(f.floor).toEqual([48_000, 49_000, 49_000]);
-  });
-
-  it('plan statique : plancher droit à taille du compte − drawdown', () => {
-    const plan = planFloorOf(planAccount({ kind: 'static' }))!;
-    const f = floorSeries([pt('2026-10-01', 1_500), pt('2026-10-02', -800)], 50_000, plan);
-    expect(f.floor).toEqual([48_000, 48_000, 48_000]);
+  it('plan statique : la courbe est le solde, plafonnée au solde initial', () => {
+    const plan = planFloorOf(planAccount({ kind: 'static' }, { floor: 48_000, margin: 1_200 }))!;
+    const f = floorSeries([pt('2026-10-01', 600), pt('2026-10-02', -800)], 50_000, plan);
+    expect(f.limit).toBe(48_000);
+    expect(f.top).toBe(50_000);
+    expect(f.values).toEqual([50_000, 50_000, 49_200]); // 50 600 plafonné à 50 000
     expect(f.minMarginIdx).toBe(2);
+    expect(lastGap(f)).toBe(plan.margin);
   });
 
-  it('plancher gelé : figé dès que le solde atteint le seuil du plan', () => {
-    const plan = planFloorOf(planAccount({ locksAt: 52_100, lockedFloor: 50_100, locked: true }, { floor: 50_100 }))!;
+  it('suiveur EOD (Apex 50K) : baisse depuis le plus haut, reportée sous 50 000', () => {
+    // Plus haut 51 275.47 → plancher 49 275.47 ; solde 51 078.38 → marge 1 802.91 (suivi du compte).
+    const plan = planFloorOf(planAccount({ peakBalance: 51_275.47 }, { floor: 49_275.47, margin: 1_802.91 }))!;
+    const f = floorSeries([pt('2026-10-01', 1_275.47), pt('2026-10-14', 450), pt('2026-10-20', 1_078.38)], 50_000, plan);
+    expect(f.values[0]).toBe(50_000); // « Départ » au solde initial
+    expect(f.values[1]).toBeCloseTo(50_000); // nouveau plus haut : marge pleine
+    expect(f.values[2]).toBeCloseTo(49_174.53); // 825.47 sous le plus haut
+    expect(f.margin[2]).toBeCloseTo(1_174.53);
+    expect(f.minMarginIdx).toBe(2);
+    expect(lastGap(f)).toBeCloseTo(1_802.91);
+  });
+
+  it('la courbe touche la limite exactement quand le solde touche le plancher', () => {
+    const plan = planFloorOf(planAccount({ peakBalance: 50_500 }, { floor: 48_500, margin: 0, breached: true }))!;
+    const f = floorSeries([pt('2026-10-01', 500), pt('2026-10-02', -1_500)], 50_000, plan);
+    expect(f.floor[2]).toBe(48_500);
+    expect(f.balance[2]).toBe(48_500);
+    expect(f.values[2]).toBe(f.limit);
+  });
+
+  it('plancher gelé : figé dès que le solde atteint le seuil, la marge peut dépasser le drawdown', () => {
+    const plan = planFloorOf(planAccount({ locksAt: 52_100, lockedFloor: 50_100, locked: true }, { floor: 50_100, margin: 1_900 }))!;
     expect(plan.peakProfit).toBeNull();
     const f = floorSeries([pt('2026-10-01', 1_700), pt('2026-10-02', 2_400), pt('2026-10-03', 2_000)], 50_000, plan);
     expect(f.floor).toEqual([48_000, 49_700, 50_100, 50_100]);
+    expect(f.values).toEqual([50_000, 50_000, 50_000, 49_900]); // marge 2 300 plafonnée, puis 1 900
+    expect(lastGap(f)).toBe(1_900);
+  });
+
+  it('compte Funded (Tradeify 50K) : plancher suiveur depuis le plus haut d’avant la période', () => {
+    // 15/09 +105.12 (plus haut), 17/09 -161.18 avant la fenêtre ; solde 49 985.24, plancher 48 105.12.
+    const plan = planFloorOf(planAccount({ peakBalance: 50_105.12 }, { floor: 48_105.12, margin: 1_880.12 }, 'tradeify-select-flex-50k'))!;
+    const f = floorSeries(
+      [pt('2026-09-29', 40.6), pt('2026-10-02', 31.64), pt('2026-10-06', 41.3)],
+      49_943.94, plan, { pnl: -56.06, peak: 105.12, count: 6 },
+    );
+    expect(f.floor.every((v) => Math.abs(v - 48_105.12) < 0.01)).toBe(true);
+    expect(f.margin[0]).toBeCloseTo(1_838.82); // début de la fenêtre, déjà sous le plus haut du 15/09
+    expect(lastGap(f)).toBeCloseTo(1_880.12);
+    expect(f.minMarginIdx).toBe(0);
   });
 });

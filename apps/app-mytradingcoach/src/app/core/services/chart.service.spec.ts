@@ -87,25 +87,30 @@ describe('ChartService — style des courbes', () => {
     expect(configs[0].data.datasets).toHaveLength(1);
   });
 
-  it('drawdown d’un compte relié à un plan : solde + plancher en escalier, axe incluant le plancher', () => {
+  it('drawdown d’un compte relié à un plan : courbe rouge marge, limite fixe, axe du solde initial', () => {
     const { service, configs, canvas } = setup();
     const plan = {
       rule: { kind: 'trailing_eod' as const, amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 48_500, margin: 1_900, pct: 0.95, breached: false, peakProfit: 500,
+      floor: 48_500, margin: 1_900, pct: 0.95, breached: false, peakProfit: 500, balance: 50_400,
     };
     service.buildDrawdownChart(canvas, [pt('2025-01-06', 500), pt('2025-01-07', 400)], {
       narrow: false, animate: false, floor: { plan, periodStart: 50_000 },
     });
-    const [balance, floor] = configs[0].data.datasets;
-    expect(balance.data).toEqual([50_000, 50_500, 50_400]);
-    expect(floor.data).toEqual([48_000, 48_500, 48_500]);
-    expect(floor.stepped).toBe('after');
-    expect(floor.fill).toBe('start');
-    expect(configs[0].options?.scales?.['y']).toMatchObject({ grace: '7%', suggestedMin: 48_000 });
-    expect(configs[0].options?.scales?.['y']).not.toHaveProperty('max');
-    const footer = (configs[0].options?.plugins?.tooltip?.callbacks as unknown as { footer: (i: { dataIndex: number }[]) => string[] }).footer;
-    expect(footer([{ dataIndex: 2 }])).toEqual(['Jour -$100', 'Marge $1,900 · plancher $48,500']);
+    const [curve, limit] = configs[0].data.datasets;
+    expect(curve.data).toEqual([50_000, 50_000, 49_900]);
+    expect(curve.borderColor).toBe('#ef4444');
+    expect(limit.data).toEqual([48_000, 48_000, 48_000]);
+    expect(limit.fill).toBe('start');
+    expect(configs[0].options?.scales?.['y']).toMatchObject({ max: 50_000, suggestedMin: 47_700 });
+    const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as {
+      label: (i: { dataIndex: number; parsed: { y: number } }) => string;
+      footer: (i: { dataIndex: number }[]) => string[];
+    };
+    // Jamais la valeur de la courbe comme un solde : la marge restante seulement.
+    expect(cb.label({ dataIndex: 2, parsed: { y: 49_900 } })).toBe('Marge $1,900');
+    expect(cb.footer([{ dataIndex: 2 }])).toEqual([]);
   });
+
 
   it('équité avec objectif : échelle étendue jusqu’à l’objectif', () => {
     const { service, configs, canvas } = setup();

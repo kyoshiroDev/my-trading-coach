@@ -90,23 +90,23 @@ describe('PerfChartComponent', () => {
     expect(value?.classList).not.toContain('neg');
   });
 
-  it('drawdown avec plan : marge avant le plancher et plancher du suivi du compte', () => {
+  it('drawdown avec plan : marge avant la limite, solde et plancher actuel du suivi du compte', () => {
     const planFloor = {
       rule: { kind: 'trailing_eod', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 49_677.23, margin: 1_401.15, pct: 0.7, breached: false, peakProfit: 1_677.23,
+      floor: 49_275.47, margin: 1_802.91, pct: 0.9, breached: false, peakProfit: 1_275.47, balance: 51_078.38,
     };
     const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 500)], startingCapital: 50_000, planFloor });
     const value = el.querySelector('[data-testid="perf-chart-value"]');
-    expect(value?.textContent).toContain('Marge avant le plancher');
-    expect(value?.textContent).toContain('$1,401');
-    expect(el.querySelector('[data-testid="perf-chart-floor"]')?.textContent).toContain('Plancher $49,677');
+    expect(value?.textContent).toContain('Marge avant la limite');
+    expect(value?.textContent).toContain('$1,803');
+    expect(el.querySelector('[data-testid="perf-chart-floor"]')?.textContent).toContain('Solde $51,078 · plancher actuel $49,275');
     expect(value?.classList).not.toContain('neg');
   });
 
   it('drawdown avec plan, marge faible : en-tête rouge comme la séance', () => {
     const planFloor = {
       rule: { kind: 'static', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 48_000, margin: 300, pct: 0.15, breached: false, peakProfit: 0,
+      floor: 48_000, margin: 300, pct: 0.15, breached: false, peakProfit: 0, balance: 48_300,
     };
     const el = render({ kind: 'drawdown', points: [pt('2025-01-06', -1_700)], startingCapital: 50_000, planFloor });
     expect(el.querySelector('[data-testid="perf-chart-value"]')?.classList).toContain('neg');
