@@ -15,13 +15,16 @@ import {
 import { formatMoney } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
 import { MoneyService } from './money.service';
+import { alpha, drawLevel, drawPin } from './chart-marks';
 import {
   ChartSeries,
   compactMoney,
   drawdownSeries,
   equitySeries,
+  floorSeries,
   maxDrawdownIndex,
   ObjectiveLine,
+  PlanFloor,
   spanDays,
   tickDate,
   tooltipDate,
@@ -32,8 +35,11 @@ export interface PerfChartOptions {
   narrow: boolean;
   /** Tracé progressif à l'apparition (faux si `prefers-reduced-motion`). */
   animate: boolean;
-  /** Drawdown : limite du plan prop firm relié (montant positif), sinon null → pas de ligne. */
-  limit?: number | null;
+  /**
+   * Drawdown d'un compte relié à un plan prop firm : solde + plancher du plan (en montants du
+   * compte) au lieu du drawdown « sous l'eau ». `periodStart` = solde au début de la période.
+   */
+  floor?: { plan: PlanFloor; periodStart: number } | null;
   /** Drawdown : historique avant la période (`before` de l'API) → part du sommet déjà atteint. */
   before?: PeriodBefore | null;
   /** Équité : objectif de gain (repère de la période) → ligne pointillée verte, sinon rien. */
@@ -50,14 +56,6 @@ interface Palette {
 
 const MONO = '"JetBrains Mono", monospace';
 const REVEAL_MS = 380;
-
-/** `#10b981` → `rgba(16,185,129,a)` (les tokens sémantiques sont en hex). */
-function alpha(hex: string, a: number): string {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return hex;
-  const n = parseInt(m[1], 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
 
 /**
  * Courbes d'équité et de drawdown (Chart.js), style épuré commun : ligne fine lissée sans points,
@@ -121,7 +119,7 @@ export class ChartService {
       grace: '7%',
       ...(goal && goal.value > Math.max(...series.values) ? { suggestedMax: goal.value } : {}),
     };
-    return this.build(canvas, series, opts, (p) => (up ? p.green : p.red), yRange, null, goal);
+    return this.build(canvas, series, opts, (p) => (up ? p.green : p.red), yRange, { mode: 'equity', goal });
   }
 
   buildDrawdownChart(
@@ -130,9 +128,15 @@ export class ChartService {
     opts: PerfChartOptions = { narrow: false, animate: false },
   ): Chart | null {
     if (points.length < 1) return null;
+    if (opts.floor) {
+      const f = floorSeries(points, opts.floor.periodStart, opts.floor.plan, opts.before ?? undefined);
+      const series: ChartSeries = { dates: f.dates, values: f.balance, dayPnl: f.dayPnl };
+      // L'axe inclut toujours le plancher (marge de 7 %), en montants du compte.
+      const yRange = { grace: '7%', suggestedMin: Math.min(...f.floor), suggestedMax: Math.max(...f.balance) };
+      return this.build(canvas, series, opts, (p) => p.text2, yRange, { mode: 'floor', floor: f });
+    }
     const series = drawdownSeries(points, opts.before ?? undefined);
-    const limit = opts.limit && opts.limit > 0 ? opts.limit : null;
-    const deepest = Math.min(...series.values, limit ? -limit : 0);
+    const deepest = Math.min(...series.values);
     return this.build(
       canvas,
       series,
@@ -140,7 +144,7 @@ export class ChartService {
       (p) => p.red,
       // `suggestedMin` : Chart.js garde des repères ronds (un `min` imposé s'affichait « -$910 »).
       { max: 0, ...(deepest < 0 ? { suggestedMin: deepest * 1.08 } : {}) },
-      limit,
+      { mode: 'underwater' },
     );
   }
 
@@ -150,8 +154,11 @@ export class ChartService {
     opts: PerfChartOptions,
     lineColor: (p: Palette) => string,
     yRange: { grace?: string; suggestedMin?: number; suggestedMax?: number; max?: number },
-    limit: number | null = null,
-    goal: { value: number; line: ObjectiveLine } | null = null,
+    view: {
+      mode: 'equity' | 'underwater' | 'floor';
+      goal?: { value: number; line: ObjectiveLine } | null;
+      floor?: ReturnType<typeof floorSeries>;
+    },
   ): Chart | null {
     // jsdom / navigateur sans canvas 2D : rien à dessiner.
     if (!canvas.getContext('2d')) return null;
@@ -160,7 +167,9 @@ export class ChartService {
 
     const p = this.palette(canvas);
     const color = lineColor(p);
-    const isDrawdown = yRange.max === 0;
+    const isDrawdown = view.mode === 'underwater';
+    const goal = view.goal ?? null;
+    const floor = view.floor ?? null;
     const span = spanDays(series.dates);
     const fontSize = opts.narrow ? 10 : 11;
     const currency = this.moneyService.currency();
@@ -213,73 +222,40 @@ export class ChartService {
       },
     };
 
-    // Drawdown : pastille + libellé du max, ligne pointillée de la limite du plan.
+    // Objectif (équité), plancher (plan relié), pastille du max ou de la marge la plus faible.
     const marks: Plugin<'line'> = {
       id: 'mtcMarks',
       afterDatasetsDraw: (chart) => {
         if (progress() < 1) return;
         const ctx = chart.ctx;
-        const { left, right, top, bottom } = chart.chartArea;
+        const area = chart.chartArea;
         const y = chart.scales['y'];
+        const pts = chart.getDatasetMeta(0).data;
         ctx.save();
         ctx.font = `${fontSize}px ${MONO}`;
-
         if (goal) {
-          const gy = Math.round(y.getPixelForValue(goal.value)) + 0.5;
-          ctx.strokeStyle = alpha(p.green, 0.7);
-          ctx.setLineDash([4, 4]);
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(left, gy);
-          ctx.lineTo(right, gy);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = p.green;
-          ctx.textAlign = 'right';
-          // Sous la ligne si elle colle au haut de la zone, au-dessus sinon.
-          const below = gy - fontSize - 4 < top;
-          ctx.textBaseline = below ? 'top' : 'bottom';
           const what = goal.line.source === 'plan' ? 'Objectif du plan' : 'Objectif';
-          ctx.fillText(`${what} ${this.money(goal.line.amount, true)}`, right, below ? gy + 4 : gy - 4);
+          drawLevel(ctx, area, y.getPixelForValue(goal.value), {
+            stroke: alpha(p.green, 0.7), color: p.green, fontSize,
+            label: `${what} ${this.money(goal.line.amount, true)}`,
+          });
         }
-
-        if (limit) {
-          const ly = Math.round(y.getPixelForValue(-limit)) + 0.5;
-          ctx.strokeStyle = alpha(p.yellow, 0.75);
-          ctx.setLineDash([4, 4]);
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(left, ly);
-          ctx.lineTo(right, ly);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = p.yellow;
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(`Limite du plan ${this.money(-limit)}`, right, ly - 4);
+        if (floor) {
+          const last = floor.floor[floor.floor.length - 1];
+          drawLevel(ctx, area, y.getPixelForValue(last), { color: p.yellow, fontSize, below: true, label: `Plancher ${this.money(last)}` });
+          const i = floor.minMarginIdx;
+          if (pts[i]) {
+            drawPin(ctx, area, pts[i], {
+              fill: p.yellow, ring: p.bg, color: p.text2, fontSize, below: true,
+              label: `marge min ${this.money(floor.balance[i] - floor.floor[i])} · ${tickDate(series.dates[i], 0)}`,
+            });
+          }
         }
-
-        const pt = maxIdx === null ? undefined : chart.getDatasetMeta(0).data[maxIdx];
-        if (pt && maxIdx !== null) {
-          ctx.fillStyle = color;
-          ctx.strokeStyle = p.bg;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          const label = `max ${compactMoney(series.values[maxIdx], currency)} · ${tickDate(series.dates[maxIdx], 0)}`;
-          const w = ctx.measureText(label).width;
-          // À droite de la pastille si la place le permet, sinon à gauche ; au-dessus, ou dessous
-          // si la pastille colle au haut de la zone.
-          const toRight = pt.x + 8 + w <= right;
-          ctx.textAlign = toRight ? 'left' : 'right';
-          const lx = toRight ? pt.x + 8 : Math.max(left + w, pt.x - 8);
-          const below = pt.y - fontSize - 6 < top;
-          ctx.textBaseline = below ? 'top' : 'bottom';
-          const ly = below ? Math.min(pt.y + 6, bottom - fontSize) : pt.y - 6;
-          ctx.fillStyle = p.text2;
-          ctx.fillText(label, lx, ly);
+        if (maxIdx !== null && pts[maxIdx]) {
+          drawPin(ctx, area, pts[maxIdx], {
+            fill: color, ring: p.bg, color: p.text2, fontSize,
+            label: `max ${compactMoney(series.values[maxIdx], currency)} · ${tickDate(series.dates[maxIdx], 0)}`,
+          });
         }
         ctx.restore();
       },
@@ -301,10 +277,10 @@ export class ChartService {
             pointHoverBackgroundColor: color,
             pointHoverBorderColor: p.bg,
             pointHoverBorderWidth: 2,
-            fill: isDrawdown ? 'origin' : 'start',
+            fill: isDrawdown ? 'origin' : floor ? false : 'start',
             backgroundColor: (ctx: ScriptableContext<'line'>) => {
               const area = ctx.chart.chartArea;
-              if (!area) return 'transparent';
+              if (!area || floor) return 'transparent';
               const g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
               if (isDrawdown) {
                 // De la ligne de 0 (transparent) vers la courbe, plus dense en profondeur.
@@ -317,6 +293,20 @@ export class ChartService {
               return g;
             },
           },
+          // Plancher du plan : escalier ambre (il ne bouge qu'aux clôtures), zone dessous en rouge léger.
+          ...(floor
+            ? [{
+                data: floor.floor,
+                borderColor: p.yellow,
+                borderWidth: 1.5,
+                stepped: 'after' as const,
+                pointRadius: 0,
+                pointHitRadius: 0,
+                pointHoverRadius: 0,
+                fill: 'start' as const,
+                backgroundColor: alpha(p.red, 0.06),
+              }]
+            : []),
         ],
       },
       options: {
@@ -343,13 +333,18 @@ export class ChartService {
             footerColor: p.text2,
             footerFont: { family: MONO, size: 10, weight: 'normal' },
             footerMarginTop: 4,
+            // Une seule ligne de valeur : le solde (le plancher passe dans le pied).
+            filter: (item) => item.datasetIndex === 0,
             callbacks: {
               title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0]),
               label: (item) => this.money(item.parsed.y ?? 0),
               labelTextColor: () => color,
               footer: (items) => {
-                const d = series.dayPnl[items[0]?.dataIndex ?? 0];
-                return d === null || d === undefined ? '' : `Jour ${this.money(d, true)}`;
+                const i = items[0]?.dataIndex ?? 0;
+                const d = series.dayPnl[i];
+                const lines = d === null || d === undefined ? [] : [`Jour ${this.money(d, true)}`];
+                if (floor) lines.push(`Marge ${this.money(floor.balance[i] - floor.floor[i])} · plancher ${this.money(floor.floor[i])}`);
+                return lines;
               },
             },
           },

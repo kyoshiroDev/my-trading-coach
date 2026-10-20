@@ -104,7 +104,8 @@
         kind="drawdown"
         [points]="equityCurve()"
         [before]="equityData()?.before ?? null"
-        [limit]="planDrawdownLimit()"
+        [startingCapital]="equityStartCapital()"
+        [planFloor]="planFloor()"
         [loading]="equityLoading()"
       >
         <mtc-info-tooltip chartInfo label="Ce que représente le drawdown"

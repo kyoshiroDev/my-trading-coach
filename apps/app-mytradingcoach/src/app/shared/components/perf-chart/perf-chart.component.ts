@@ -26,7 +26,9 @@ import {
   equitySeries,
   maxDrawdownIndex,
   ObjectiveLine,
+  PlanFloor,
 } from '../../../core/services/chart-series.util';
+import { drawdownTone } from '../../../features/dashboard/components/session-live/components/live-prop-firm/live-prop-firm.util';
 
 /** Sous cette largeur de carte : repères mobiles (4 par axe) et max du drawdown masqué. */
 const NARROW_PX = 560;
@@ -47,8 +49,11 @@ export class PerfChartComponent {
   readonly kind = input.required<'equity' | 'drawdown'>();
   readonly points = input<EquityPoint[]>([]);
   readonly startingCapital = input<number | null>(null);
-  /** Drawdown : limite du plan prop firm relié (montant positif) ; null → pas de ligne. */
-  readonly limit = input<number | null>(null);
+  /**
+   * Drawdown d'un compte relié à un plan prop firm (`planFloorOf`) : solde + plancher du plan en
+   * montants du compte ; null → drawdown « sous l'eau » depuis 0.
+   */
+  readonly planFloor = input<PlanFloor | null>(null);
   /** Drawdown : historique avant la période (sommet déjà atteint, règle EOD). */
   readonly before = input<PeriodBefore | null>(null);
   /** Équité : objectif de gain du plan / du compte (`planObjectiveLine`) ; null → pas de ligne. */
@@ -77,6 +82,21 @@ export class PerfChartComponent {
       : drawdownSeries(this.points(), this.before() ?? undefined),
   );
 
+  /** Plancher du plan affiché (carte drawdown seulement). */
+  protected readonly floorMode = computed(() => (this.kind() === 'drawdown' ? this.planFloor() : null));
+
+  /**
+   * En-tête du mode plancher : marge et plancher du suivi du compte (mêmes valeurs et même format
+   * que la séance), teinte de la séance (`drawdownTone`) : neutre, ambre ≤ 50 %, rouge ≤ 25 %.
+   */
+  protected readonly floorHead = computed(() => {
+    const plan = this.floorMode();
+    if (!plan) return null;
+    const fmt = (v: number) => this.money.format(v, { decimals: 0, sign: false });
+    const tone = drawdownTone(plan);
+    return { margin: fmt(plan.margin), floor: fmt(plan.floor), tone: tone === 'green' ? '' : tone };
+  });
+
   /** Valeur de l'en-tête : P&L de la période (équité) ou drawdown actuel + max (drawdown). */
   protected readonly keyValue = computed(() => {
     const pts = this.points();
@@ -95,9 +115,11 @@ export class PerfChartComponent {
     };
   });
 
-  protected readonly ariaLabel = computed(() =>
-    chartAriaLabel(this.kind(), this.series(), this.money.currency()),
-  );
+  protected readonly ariaLabel = computed(() => {
+    const head = this.floorHead();
+    const base = chartAriaLabel(this.kind(), this.series(), this.money.currency());
+    return head ? `${base} Marge avant le plancher ${head.margin}, plancher ${head.floor}.` : base;
+  });
 
   constructor() {
     afterNextRender(() => this.followWidth());
@@ -106,7 +128,7 @@ export class PerfChartComponent {
       const points = this.points();
       const opts = {
         narrow: this.narrow(),
-        limit: this.limit(),
+        floor: this.floorMode() ? { plan: this.floorMode()!, periodStart: this.startingCapital() ?? 0 } : null,
         before: this.before(),
         objective: this.objective(),
         // Tracé animé quand les données changent (pas au simple redimensionnement).

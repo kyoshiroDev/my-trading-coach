@@ -1,4 +1,4 @@
-import { formatMoney } from '@mtc/shared';
+import { DrawdownFloorRule, drawdownFloor, formatMoney } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
 import { anchoredDrawdown, NO_HISTORY } from './equity-period.util';
 import { TradingAccount } from '../api/accounts.api';
@@ -160,11 +160,82 @@ export function planObjectiveLine(
 }
 
 /**
- * Limite de drawdown du plan prop firm relié (montant positif). Null sans plan, en « Tous les
- * comptes » ou si le plan ne publie pas de montant.
+ * Plancher de drawdown du plan prop firm relié au compte sélectionné, tel que le suivi du compte
+ * (séance, Mes comptes) l'affiche : `floor` et `margin` viennent de `metrics.drawdown`, la règle sert
+ * à retracer le plancher jour par jour avec la même fonction (`drawdownFloor` de `@mtc/shared`).
+ * Null sans plan relié, en « Tous les comptes » ou si le plan ne publie pas de montant.
  */
-export function planDrawdownLimit(account: TradingAccount | null): number | null {
+export interface PlanFloor {
+  rule: DrawdownFloorRule;
+  floor: number;
+  margin: number;
+  /** Part de la marge restante (0..1) et dépassement : teinte de l'en-tête, comme la séance. */
+  pct: number;
+  breached: boolean;
+  /** Plus haut gain retenu par le suivi du compte (borne des plus hauts recalculés) ; null si figé. */
+  peakProfit: number | null;
+}
+
+export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
   const dd = account?.metrics?.drawdown;
-  if (!account?.propFirmPlanId || account.metrics.drawdownUnconfirmed || dd?.source !== 'plan') return null;
-  return dd.maxDrawdown > 0 ? dd.maxDrawdown : null;
+  if (!account?.propFirmPlanId || account.metrics.drawdownUnconfirmed || dd?.source !== 'plan' || !dd.rule) return null;
+  if (!(dd.maxDrawdown > 0)) return null;
+  const startingBalance = account.metrics.startingBalance;
+  const rule: DrawdownFloorRule = {
+    kind: dd.rule.kind,
+    amount: dd.maxDrawdown,
+    startingBalance,
+    locksAt: dd.rule.locksAt,
+    lockedFloor: dd.rule.lockedFloor,
+  };
+  // EOD : plus haut solde de clôture retenu ; intraday : déduit du plancher (départ + plus haut − drawdown).
+  const peakProfit = dd.rule.locked
+    ? null
+    : rule.kind === 'static'
+      ? 0
+      : dd.rule.peakBalance != null
+        ? dd.rule.peakBalance - startingBalance
+        : dd.floor - startingBalance + dd.maxDrawdown;
+  return { rule, floor: dd.floor, margin: dd.margin, pct: dd.pct, breached: dd.breached, peakProfit };
+}
+
+export interface FloorSeries {
+  dates: (string | null)[];
+  /** Solde du compte à chaque clôture (départ de la période compris). */
+  balance: number[];
+  /** Plancher de drawdown après chaque clôture. */
+  floor: number[];
+  dayPnl: (number | null)[];
+  /** Point où la marge (solde − plancher) a été la plus faible. */
+  minMarginIdx: number;
+}
+
+/**
+ * Solde et plancher jour par jour sur la période. Le plus haut part de celui d'avant la période
+ * (`before`), suit les clôtures (plan suiveur), reste à 0 pour un plan statique, et le plancher se
+ * fige selon la règle (`drawdownFloor`). Le dernier point reprend le plancher du suivi du compte :
+ * l'en-tête et la séance affichent exactement la même valeur.
+ */
+export function floorSeries(
+  points: EquityPoint[],
+  periodStart: number,
+  plan: PlanFloor,
+  before: PeriodBefore = NO_HISTORY,
+): FloorSeries {
+  const { rule } = plan;
+  const balance = [periodStart, ...points.map((p) => periodStart + p.cumulativePnl)];
+  // Plus haut d'avant la période, recalé sur le solde réel (broker) du début de période.
+  const offset = periodStart - rule.startingBalance - before.pnl;
+  let peak = Math.max(0, before.peak + offset);
+  const cap = (v: number) => (plan.peakProfit === null ? v : Math.min(v, plan.peakProfit));
+  const floor = balance.map((b) => {
+    peak = Math.max(peak, b - rule.startingBalance);
+    return drawdownFloor(rule, cap(peak)).floor;
+  });
+  floor[floor.length - 1] = plan.floor;
+  let minMarginIdx = 0;
+  balance.forEach((b, i) => {
+    if (b - floor[i] < balance[minMarginIdx] - floor[minMarginIdx]) minMarginIdx = i;
+  });
+  return { dates: [null, ...points.map((p) => p.date)], balance, floor, dayPnl: dayPnlOf(points), minMarginIdx };
 }

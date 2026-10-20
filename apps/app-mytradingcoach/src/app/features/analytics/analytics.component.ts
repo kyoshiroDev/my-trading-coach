@@ -31,7 +31,7 @@ import { PerfChartComponent } from '../../shared/components/perf-chart/perf-char
 import { periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
-import { planDrawdownLimit, planObjectiveLine } from '../../core/services/chart-series.util';
+import { planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
@@ -137,8 +137,8 @@ export class AnalyticsComponent {
     if (current !== null) return periodStartCapital(current, this.equityCurve());
     return this.userStore.startingCapital() + (this.equityData()?.before?.pnl ?? 0);
   });
-  /** Repères du plan relié au compte sélectionné : limite de drawdown, objectif de gain. */
-  protected readonly planDrawdownLimit = computed(() => planDrawdownLimit(this.selectedAccount.selected()));
+  /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
+  protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));
   protected readonly planObjective = computed(() =>
     planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );

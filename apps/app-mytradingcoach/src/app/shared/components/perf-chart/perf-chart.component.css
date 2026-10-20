@@ -44,6 +44,13 @@
 }
 .pc-value.pos { color: var(--green); }
 .pc-value.neg { color: var(--red); }
+.pc-value.warn { color: var(--yellow); }
+
+/* Mode plancher : « Marge avant le plancher $1,401 » + « Plancher $49,677 » en plus petit. */
+.pc-floor { display: grid; grid-template-columns: auto auto; align-items: baseline; justify-items: end; column-gap: 6px; }
+.pc-vlab { font-size: 11px; font-weight: 400; color: var(--text-3); }
+.pc-floor.wide { flex-basis: 100%; justify-content: start; justify-items: start; order: 3; }
+.pc-floor-sub { grid-column: 1 / -1; font-size: 11px; font-weight: 400; color: var(--text-3); }
 .pc-max { font-weight: 400; font-size: 12px; color: var(--text-3); margin-left: 4px; }
 
 /* Onglets de période : ligne à part en mobile, à gauche de la valeur en desktop. */
