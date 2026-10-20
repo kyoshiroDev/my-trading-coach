@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AccountStatus, AccountType, DrawdownType, Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
+import { isFloorReached } from './account-retry';
 
 /**
  * Compte perdu côté comptes : nouvelle tentative (POST /accounts/:id/retry), et invalidation du
@@ -139,5 +140,70 @@ describe('AccountsService — statistiques à recalculer quand un statut change'
     const bare = new AccountsService(prisma as never);
     prisma.tradingAccount.findUnique.mockResolvedValue({ ...failed, status: AccountStatus.ACTIVE });
     await expect(bare.update('u1', 'acc-old', { status: AccountStatus.ARCHIVED } as never, PREMIUM)).resolves.toBeDefined();
+  });
+});
+
+// Détection du plancher sur des règles SAISIES À LA MAIN (sans plan du catalogue) : même calcul de
+// marge que pour un plan, donc même signal.
+describe('plancher atteint : règles de perte maximale saisies à la main', () => {
+  const svc = new AccountsService({} as never);
+  const manual = { accountSize: 50_000, startingBalance: 50_000, profitTarget: null, maxDrawdown: 2_000, drawdownType: DrawdownType.STATIC };
+  const loss = (pnl: number) => [{ pnl, commission: 0, tradedAt: new Date('2026-10-01T15:00:00.000Z') }];
+
+  it('perte au-delà du drawdown saisi → marge ≤ 0, floorReached', () => {
+    const m = svc.computeRuleMetrics(manual, loss(-2_100));
+    expect(m.drawdown).toMatchObject({ source: 'manual', breached: true });
+    expect(isFloorReached({ status: AccountStatus.ACTIVE }, m.drawdown)).toBe(true);
+  });
+
+  it('perte en deçà → pas de signal', () => {
+    const m = svc.computeRuleMetrics(manual, loss(-1_500));
+    expect(isFloorReached({ status: AccountStatus.ACTIVE }, m.drawdown)).toBe(false);
+  });
+
+  it('aucune règle de perte maximale → pas de signal, même en forte perte', () => {
+    const m = svc.computeRuleMetrics({ ...manual, maxDrawdown: null }, loss(-9_000));
+    expect(m.drawdown).toBeNull();
+    expect(isFloorReached({ status: AccountStatus.ACTIVE }, m.drawdown)).toBe(false);
+  });
+});
+
+describe('AccountsService.purge — suppression définitive', () => {
+  it.each([undefined, false, 'true', 1, {}])('confirm=%j → 400, aucune lecture ni écriture', async (confirm) => {
+    const prisma = { ...makePrisma(), $transaction: vi.fn() };
+    const svc = new AccountsService(prisma as never);
+    await expect(svc.purge('u1', 'acc-old', confirm)).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.tradingAccount.findUnique).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('compte d’un autre utilisateur → 404, aucune transaction', async () => {
+    const prisma = { ...makePrisma(), $transaction: vi.fn() };
+    prisma.tradingAccount.findUnique.mockResolvedValue({ ...failed, userId: 'u2' });
+    await expect(new AccountsService(prisma as never).purge('u1', 'acc-old', true)).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('trades, séances et connexion broker effacés AVANT le compte, dans la transaction ; cache vidé', async () => {
+    const calls: string[] = [];
+    const tx = {
+      trade: { deleteMany: vi.fn(async () => { calls.push('trades'); return { count: 12 }; }) },
+      tradeSession: { deleteMany: vi.fn(async () => { calls.push('sessions'); return { count: 3 }; }) },
+      brokerConnection: { deleteMany: vi.fn(async () => { calls.push('connexion'); return { count: 1 }; }) },
+      tradingAccount: { delete: vi.fn(async () => { calls.push('compte'); return {}; }) },
+    };
+    const prisma = { ...makePrisma(), $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)) };
+    prisma.tradingAccount.findUnique.mockResolvedValue(failed);
+    const multi = { incr: vi.fn(), expire: vi.fn(), exec: vi.fn(async () => []) };
+    multi.incr.mockReturnValue(multi);
+    multi.expire.mockReturnValue(multi);
+
+    const res = await new AccountsService(prisma as never, { client: { multi: () => multi } } as never).purge('u1', 'acc-old', true);
+
+    expect(res).toEqual({ deleted: true, tradesDeleted: 12 });
+    expect(calls).toEqual(['trades', 'sessions', 'connexion', 'compte']);
+    expect(tx.trade.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1', accountId: 'acc-old' } });
+    expect(tx.brokerConnection.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1', accountId: 'acc-old' } });
+    expect(multi.incr).toHaveBeenCalledWith('analytics:v:u1');
   });
 });

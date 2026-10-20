@@ -57,13 +57,14 @@ export function retryAccountData(
 }
 
 /**
- * Plancher estimé atteint : compte ACTIF relié à un plan du catalogue prop firm dont la marge
- * avant le plancher de drawdown est ≤ 0 (calcul existant de `computeRuleMetrics`). Signal pour le
- * front (bandeau « Plancher atteint ») ; aucun statut n'est changé : l'utilisateur confirme.
+ * Plancher estimé atteint : compte ACTIF qui a des règles de perte maximale (plan du catalogue
+ * prop firm OU drawdown saisi à la main : `computeRuleMetrics` calcule la même marge dans les deux
+ * cas) et dont la marge avant le plancher est ≤ 0. Signal pour le front (bandeau « Plancher
+ * atteint ») ; aucun statut n'est changé : l'utilisateur confirme.
  */
 export function isFloorReached(
-  account: Pick<TradingAccount, 'status' | 'propFirmPlanId'>,
+  account: Pick<TradingAccount, 'status'>,
   drawdown: { margin: number } | null,
 ): boolean {
-  return account.status === AccountStatus.ACTIVE && !!account.propFirmPlanId && !!drawdown && drawdown.margin <= 0;
+  return account.status === AccountStatus.ACTIVE && !!drawdown && drawdown.margin <= 0;
 }

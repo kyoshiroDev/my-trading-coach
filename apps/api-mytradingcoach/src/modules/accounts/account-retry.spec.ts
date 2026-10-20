@@ -76,13 +76,12 @@ describe('retryAccountData (contenu de la nouvelle tentative)', () => {
 });
 
 describe('isFloorReached (détection, aucun statut changé)', () => {
-  const active = { status: AccountStatus.ACTIVE, propFirmPlanId: 'plan-1' };
+  const active = { status: AccountStatus.ACTIVE };
   it.each([
-    ['actif + plan + marge négative', active, { margin: -12 }, true],
-    ['actif + plan + marge nulle', active, { margin: 0 }, true],
-    ['actif + plan + marge positive', active, { margin: 0.01 }, false],
-    ['sans plan prop firm (règles saisies)', { ...active, propFirmPlanId: null }, { margin: -500 }, false],
-    ['sans drawdown calculé', active, null, false],
+    ['actif + marge négative (plan ou règles saisies)', active, { margin: -12 }, true],
+    ['actif + marge nulle', active, { margin: 0 }, true],
+    ['actif + marge positive', active, { margin: 0.01 }, false],
+    ['sans règle de perte maximale (aucun drawdown calculé)', active, null, false],
     ['déjà échoué', { ...active, status: AccountStatus.FAILED }, { margin: -500 }, false],
     ['validé', { ...active, status: AccountStatus.PASSED }, { margin: -500 }, false],
     ['archivé', { ...active, status: AccountStatus.ARCHIVED }, { margin: -500 }, false],
