@@ -2065,3 +2065,9 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
   plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
   la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
+
+## Plancher de drawdown d'un plan (`drawdownFloor`, `@mtc/shared`)
+
+Source unique du plancher : `accounts.service` (suivi du compte → Mes comptes, séance) et la courbe
+de drawdown des Statistiques appellent `drawdownFloor(rule, peakProfit)`. Ne jamais recalculer un
+plancher à la main ailleurs : modifier la règle (verrouillage, statique) dans cette fonction seulement.

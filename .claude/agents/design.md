@@ -215,18 +215,29 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   **aucun point** ; pastille seulement au survol. **Remplissage** : dégradé de la couleur de la ligne
   18 % → 0 % (équité : de la ligne vers le bas ; drawdown : 0 % sur la ligne de 0 → 18 % vers la courbe).
 - **Couleurs** : équité verte si la période finit ≥ capital de départ, rouge sinon ; drawdown
-  toujours `--red` ; limite de plan `--yellow`. Lues dans les tokens au moment du tracé (un canvas ne
+  sans plan toujours `--red` ; plancher du plan `--yellow`. Lues dans les tokens au moment du tracé (un canvas ne
   lit pas `var()`), jamais en dur.
 - **Grille** `--chart-grid` (rgba blanc 4 %) horizontale et verticale, sans bordure d'axe ni
   graduations ; ligne de 0 du drawdown en `--chart-zero` (12 %).
 - **Axes** : JetBrains Mono 10 px (carte < 560 px) / 11 px, `--text-3`. Montants compacts
   `compactMoney` (`$135k`, `-$2.4k`, `$1.2M`, devise du compte), dates `06/01/25`, ou `janv. 25`
   au-delà de ~6 mois. Repères : 4 + 4 si carte < 560 px, sinon 7 dates / 6 montants, sans rotation.
-- **Échelle** : équité `grace: '7%'` (ne part pas de 0) ; drawdown `max: 0`, bas = 108 % du plus
-  profond entre le max et la limite du plan.
-- **Drawdown** : pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas ; ligne
-  pointillée `Limite du plan -$2,500` (ambre, à droite) **seulement** si le compte sélectionné est relié
-  à un plan prop firm dont le montant est publié (`metrics.drawdown.source === 'plan'`).
+- **Échelle** : équité `grace: '7%'` (ne part pas de 0) ; drawdown sans plan `max: 0`, bas = 108 %
+  du plus profond ; drawdown avec plan : `grace: '7%'` et l'axe inclut toujours le plancher.
+- **Drawdown sans plan** (« Tous les comptes », compte sans plan relié) : sous l'eau depuis 0,
+  pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas, aucune limite.
+- **Drawdown avec plan prop firm relié** (`planFloorOf` : `metrics.drawdown.source === 'plan'`,
+  montant publié) : axe en montants du compte, deux tracés : le **solde** (`--text-2`, sans
+  remplissage) et le **plancher** en escalier ambre (`stepped: 'after'`, il ne bouge qu'aux
+  clôtures), zone sous le plancher en `--red` 6 %. Plancher jour par jour = `drawdownFloor` de
+  `@mtc/shared`, LA fonction du suivi du compte (API, Mes comptes, séance) : part de taille −
+  drawdown, suit le plus haut solde de clôture (suiveur) ou reste droit (statique), se fige selon
+  le plan ; dernier point = `metrics.drawdown.floor`. En-tête : `Marge avant le plancher $1,401` +
+  `Plancher $49,677` en plus petit (valeurs et format `decimals: 0` de la séance, teinte
+  `drawdownTone` : neutre, ambre, rouge) ; sur carte < 560 px, la marge passe sous le titre.
+  Libellés : `Plancher $49,677` sous le bout de la ligne, pastille ambre + `marge min $1,175 ·
+  14/10/26` centrée sous le point où la marge a été la plus faible. Infobulle : solde, jour, marge et
+  plancher du jour. La courbe d'équité ne montre PAS le plancher (seulement l'objectif).
 - **Équité** : ligne pointillée verte `Objectif du plan +$3,000` (ou `Objectif` pour un objectif
   saisi sans plan) si le compte sélectionné en a un (`planObjectiveLine` : exigence `profit` de la
   progression du plan, consistency comprise, sinon `metrics.objective`). L'objectif se compte depuis
