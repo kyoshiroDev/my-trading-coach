@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { Goal, Market } from './dto/onboarding.dto';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -60,6 +61,7 @@ describe('UsersService', () => {
       providers: [
         { provide: RedisService, useValue: mockRedisService },
         UsersService,
+        { provide: StripeAccountClosureService, useValue: { cancelAllSubscriptions: vi.fn() } },
         { provide: PrismaService, useValue: mockPrisma },
         // setRole délègue à AmbassadorService pour garantir le referralCode
         // d'un AMBASSADOR ; non sollicité par ces tests.

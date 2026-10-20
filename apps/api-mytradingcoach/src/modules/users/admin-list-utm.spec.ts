@@ -9,7 +9,7 @@ import type { AmbassadorService } from '../ambassador/ambassador.service';
 
 /** Liste admin filtrée par UTM d'inscription (#625) : retrouver les inscrits d'une campagne. */
 const prisma = { user: { findMany: vi.fn(), count: vi.fn() } };
-const service = new UsersService(prisma as unknown as PrismaService, {} as AmbassadorService);
+const service = new UsersService(prisma as unknown as PrismaService, {} as AmbassadorService, {} as never);
 const where = () => prisma.user.findMany.mock.calls[0][0].where;
 
 beforeEach(() => {
