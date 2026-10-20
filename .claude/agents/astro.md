@@ -251,8 +251,10 @@ Règles :
 - Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
   elles supposent un lien d'affiliation actif.
 - Le wordmark est un **lien d'affiliation** (PROMPT-204) : `NINJATRADER_AFFILIATE_URL` dans
-  `Footer.astro`, `rel="noopener sponsored nofollow"` + `target="_blank"`. L'ID vendeur `7724604`
-  est dans l'URL — la modifier casse le tracking.
+  `Footer.astro`, `rel="noopener sponsored nofollow"` + `target="_blank"`. URL = **lien d'affiliation
+  unique** fourni par NinjaTrader, `https://ninjatraderdomesticvendor.sjv.io/DWZgnd` (remplace depuis le
+  2026-10-20 l'ancien `…/c/7724604/3069488/37581`, demande NinjaTrader avant la revue Compliance de la
+  newsletter). Il porte le tracking vendeur : ne jamais le modifier ni en utiliser un autre.
 - **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
   logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
