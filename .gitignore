@@ -70,6 +70,8 @@ Thumbs.db
 
 __screenshots__/
 
+socials/
+
 # Playwright
 test-output
 playwright-report
