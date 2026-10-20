@@ -493,3 +493,15 @@ Points ouverts :
 - BluSky : retrait minimum Propel (500 $ retenu, l'article du plan dit encore 250 $) ; prix des plans sur blusky.pro (sélecteur JavaScript, à relire dans un navigateur).
 - Top One : DLL Elite Daily 150K à 1 850 $ dans les articles, 1 750 $ sur la page d'accueil (1 850 $ conservé) ; reset des comptes « No DLL » non publié.
 - Bulenox : l'article Momentum ne cite pas le partage ; 90/10 retenu d'après le site.
+
+## Veille du 2026-10-19 : consistency LucidFlex
+
+`pnpm prop-firms:watch` : 284 sources relues, 5 articles Lucid modifiés le jour même, 48 pages illisibles hors navigateur (Apex, Tradeify, MyFundedFutures, accueil Lucid, une page OneUp : à relire à la revérification mensuelle).
+
+| Article | Trouvé | Effet |
+|---|---|---|
+| LucidFlex Evaluation Account, LucidFlex Consistency Percentage, LucidFlex Customization | Consistency de l'évaluation : **40 % en standard, 3 jours minimum** ; **50 % en option payante** au checkout, 2 jours minimum. La personnalisation croise désormais DLL ON / OFF et consistency 40 / 50 % (4 configurations par taille). Pas de consistency en funded. Prix non publiés. | Les 8 plans `lucid-flex-*` passent à 40 % et `min_trading_days: 3` ; 8 plans ajoutés `lucid-flex-c50-*` et `lucid-flex-dll-c50-*` (`configuration.addon: "consistency 50 %"`, 50 %, 2 jours). Catalogue à 290 plans |
+| LucidPro Customization | Une seule option, DLL ON / OFF : déjà modélisée. | Aucun |
+| LucidDirect Daily Loss Limit | DLL 1 200 / 2 100 / 3 000 $ (25K sans DLL), puis DLL LucidScale à 60 % du plus haut profit de fin de journée au-dessus de l'Initial Trail Balance : conforme. | Aucun |
+
+Une évaluation Flex achetée avant ce changement relevait de l'ancienne règle à 50 % : les notes des plans standard renvoient vers la variante « option consistency 50 % » de même taille pour ces comptes. Relevé de veille mis à jour pour ces 5 articles.

@@ -20,7 +20,7 @@ describe('parseCatalog', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(282);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(290);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -57,7 +57,7 @@ describe('toRows', () => {
       'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
       'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
     ]);
-    expect(plans).toHaveLength(282);
+    expect(plans).toHaveLength(290);
     expect(firms[1].verifiedAt).toEqual(new Date('2026-10-18T00:00:00Z'));
   });
 
@@ -117,13 +117,21 @@ describe('toRows', () => {
     expect(ev.max_drawdown).toMatchObject({ locks_at: 52_100, locked_floor: 50_100 });
   });
 
+  it('LucidFlex : consistency 40 % et 3 jours en standard, option 50 % et 2 jours (2026-10-19)', () => {
+    type Ev = { consistency: { max_single_day_pct: number }; min_trading_days: number | null };
+    const ev = (id: string) => (plans.find((p) => p.id === id)!.phases as Ev[])[0];
+    expect(ev('lucid-flex-dll-50k')).toMatchObject({ consistency: { max_single_day_pct: 0.4 }, min_trading_days: 3 });
+    expect(ev('lucid-flex-dll-c50-50k')).toMatchObject({ consistency: { max_single_day_pct: 0.5 }, min_trading_days: 2 });
+    expect(plans.find((p) => p.id === 'lucid-flex-c50-150k')!.configuration).toMatchObject({ daily_loss_limit: false, addon: 'consistency 50 %' });
+  });
+
   it('empreinte stable entre deux lectures, sensible au moindre changement de règle', () => {
     const again = toRows(parseCatalog(clone(PROP_FIRM_CATALOG_FILES))).plans;
     expect(again.map((p) => p.contentHash)).toEqual(plans.map((p) => p.contentHash));
 
     const files = clone(PROP_FIRM_CATALOG_FILES) as { plans: { phases: { max_drawdown: { amount: number } }[] }[] }[];
     files[1].plans[0].phases[0].max_drawdown.amount += 1;
-    expect(toRows(parseCatalog(files)).plans[40].contentHash).not.toBe(plans[40].contentHash);
+    expect(toRows(parseCatalog(files)).plans[48].contentHash).not.toBe(plans[48].contentHash);
   });
 
   it('contentHash dépend du contenu, pas de l’instance', () => {
@@ -135,10 +143,10 @@ describe('toRows', () => {
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
 
-  it('base vide : crée les 16 firms et les 282 plans', () => {
+  it('base vide : crée les 16 firms et les 290 plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
     expect(plan.firmsToCreate).toHaveLength(16);
-    expect(plan.plansToCreate).toHaveLength(282);
+    expect(plan.plansToCreate).toHaveLength(290);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);

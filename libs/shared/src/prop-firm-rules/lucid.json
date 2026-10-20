@@ -19,7 +19,7 @@
       "multicharts"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-10-19",
   "plans": [
     {
       "id": "lucid-flex-25k",
@@ -53,11 +53,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 2,
@@ -146,7 +146,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-50k",
@@ -180,11 +180,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 4,
@@ -279,7 +279,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-100k",
@@ -313,11 +313,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 6,
@@ -418,7 +418,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-150k",
@@ -452,11 +452,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 10,
@@ -563,7 +563,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF."
+      "notes": "Variante DLL OFF. Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-dll-25k",
@@ -605,11 +605,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 2,
@@ -706,7 +706,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-dll-50k",
@@ -748,11 +748,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 4,
@@ -855,7 +855,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-dll-100k",
@@ -897,11 +897,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 6,
@@ -1010,7 +1010,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
     },
     {
       "id": "lucid-flex-dll-150k",
@@ -1052,11 +1052,11 @@
             "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded. Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-19 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
-          "min_trading_days": null,
+          "min_trading_days": 3,
           "max_duration_days": null,
           "max_contracts": {
             "minis": 10,
@@ -1171,7 +1171,1167 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON (DLL en évaluation et en funded)."
+      "notes": "Variante DLL ON (DLL en évaluation et en funded). Consistency standard de 40 % en évaluation, 3 jours minimum (article LucidFlex Evaluation Account du 2026-10-19). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille."
+    },
+    {
+      "id": "lucid-flex-c50-25k",
+      "plan_name": "LucidFlex",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": null,
+                "minis": 2,
+                "micros": 20
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-c50-50k",
+      "plan_name": "LucidFlex",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-c50-100k",
+      "plan_name": "LucidFlex",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-c50-150k",
+      "plan_name": "LucidFlex",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-dll-c50-25k",
+      "plan_name": "LucidFlex",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 600 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (26100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 26100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (25100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": null,
+                "minis": 2,
+                "micros": 20
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 100,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-dll-c50-50k",
+      "plan_name": "LucidFlex",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1200 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (52100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 52100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (50100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 4,
+                "micros": 40
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 150,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 2000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-dll-c50-100k",
+      "plan_name": "LucidFlex",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 1800 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (103100) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 103100. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (100100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 3,
+                "micros": 30
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": null,
+                "minis": 6,
+                "micros": 60
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 2500,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-flex-dll-c50-150k",
+      "plan_name": "LucidFlex",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": null,
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null. Option DLL ON = version la moins chère."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant affiché sur le sélecteur de plans de lucidtrading.com. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": 2,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pas de scaling plan pendant l'évaluation."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Montant relevé sur le sélecteur lucidtrading.com (fiche « Funded Rules » : « DLL (Below Initial Trail) » 2700 $), identique à l'évaluation. Lucid ne dit pas ce que devient la DLL au-dessus de l'Initial Trail Balance (154600) sur LucidFlex (pas de LucidScale annoncée, contrairement à Pro et Direct). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidFlex Drawdown) : même trailing EOD que l'évaluation, figé à capital initial + 100 $ au-delà de 154600. Particularité Flex : dès la première demande de payout, le MLL passe automatiquement au niveau figé (150100). À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 999,
+                "minis": 4,
+                "micros": 40
+              },
+              {
+                "min_profit": 1000,
+                "max_profit": 1999,
+                "minis": 5,
+                "micros": 50
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": 2999,
+                "minis": 6,
+                "micros": 60
+              },
+              {
+                "min_profit": 3000,
+                "max_profit": 4499,
+                "minis": 8,
+                "micros": 80
+              },
+              {
+                "min_profit": 4500,
+                "max_profit": null,
+                "minis": 10,
+                "micros": 100
+              }
+            ],
+            "notes": "Scaling selon le profit simulé, mis à jour en fin de session. 10 micros = 1 mini (équivalence Lucid)."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Positions fermées automatiquement par Lucid à 16:45 ET (« EST » dans le texte), sans échec du compte. Reprise à 18:00 ET. Jours fériés : fermer avant la clôture anticipée. News autorisées sur Flex."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 250,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": 3000,
+            "max_amount_schedule": null,
+            "max_payouts": 5,
+            "safety_net_balance": null,
+            "notes": "5 jours au profit minimum par cycle (remis à zéro après chaque payout) et net positif sur le cycle. Plafond = 50 % du profit, dans la limite du max_amount. Pas de buffer. Après 5 payouts, passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/12945790-lucidflex-evaluation-account",
+        "https://support.lucidtrading.com/en/articles/12945795-lucidflex-funded-account",
+        "https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown",
+        "https://support.lucidtrading.com/en/articles/12945805-lucidflex-consistency-percentage",
+        "https://support.lucidtrading.com/en/articles/12945808-lucidflex-scaling-plan",
+        "https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts",
+        "https://support.lucidtrading.com/en/articles/16226050-lucidflex-customization",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON (DLL en évaluation et en funded), option consistency 50 % (payante au checkout) : évaluation réussie en 2 jours minimum. Prix plus élevé que la version à 40 %, non relevé."
     },
     {
       "id": "lucid-pro-25k",
