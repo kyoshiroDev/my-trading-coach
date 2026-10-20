@@ -140,3 +140,22 @@ describe('repères du plan', () => {
     expect(planDrawdownLimit(null)).toBeNull();
   });
 });
+
+describe('compte de 50K, gains avant et pendant la période', () => {
+  // +238 avant la période (plus haut +500), puis +300, -400, +940 sur la période. Solde 51 078.
+  const points = [pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)];
+  const startBalance = 51_078 - 840;
+
+  it('drawdown du graphique : part du sommet d’avant la période', () => {
+    const s = drawdownSeries(points, { pnl: 238, peak: 500 });
+    expect(s.values).toEqual([-262, 0, -400, 0]);
+    expect(maxDrawdownIndex(s.values)).toBe(2);
+  });
+
+  it('objectif du plan tracé à solde de départ + objectif (53 000), quelle que soit la période', () => {
+    const acc = account({ progress: planProgress(3_000, 1_078) });
+    const line = planObjectiveLine(acc, points)!;
+    expect(startBalance + line.pnl).toBe(53_000);
+    expect(equitySeries(points, startBalance).values.at(-1)).toBe(51_078);
+  });
+});
