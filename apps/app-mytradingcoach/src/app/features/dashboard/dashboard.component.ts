@@ -22,7 +22,7 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
-import { anchoredDrawdown, periodStartBalance, viewBalance } from '../../core/services/equity-period.util';
+import { anchoredDrawdown, cumulativePayouts, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
 import { planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
@@ -318,15 +318,18 @@ export class DashboardComponent {
       ? 'Pas assez de jours tradés pour tracer la courbe'
       : 'Aucun trade sur la période',
   );
-  protected readonly equityCurve = computed(
-    () => this.equityCurveResource.value()?.data?.points ?? [],
-  );
+  /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
+  protected readonly equityCurve = computed(() => {
+    const data = this.equityCurveResource.value()?.data;
+    return withPayouts(data?.points ?? [], data?.payouts);
+  });
   /** Objectif de gain du compte sélectionné, tracé sur la courbe d'équité. */
   protected readonly equityObjective = computed(() =>
     planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   /** P&L cumulé le long de la courbe : source de la courbe d'équité et des sparklines. */
   protected readonly eqSeries = computed(() => this.equityCurve().map((p) => p.cumulativePnl));
+  protected readonly payoutSeries = computed(() => cumulativePayouts(this.equityCurve()));
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   /** Stats par émotion (R moyen / win rate) : source du feedback coach. */
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);

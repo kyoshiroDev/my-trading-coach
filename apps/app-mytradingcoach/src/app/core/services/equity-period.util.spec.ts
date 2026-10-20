@@ -3,8 +3,11 @@ import {
   anchoredDrawdown,
   maxDrawdownOf,
   periodPnl,
+  periodStartBalance,
   periodStartCapital,
   viewBalance,
+  withPayouts,
+  cumulativePayouts,
 } from './equity-period.util';
 
 const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
@@ -62,5 +65,27 @@ describe('drawdown ancré sur le plus haut du compte (règle EOD)', () => {
   it('aucun point : seul le départ', () => {
     expect(anchoredDrawdown([], before)).toEqual([-262]);
     expect(maxDrawdownOf([])).toBe(0);
+  });
+});
+
+describe('payouts reçus', () => {
+  it('départ de la période : payouts d’avant déduits, aussi quand la période couvre le début du compte', () => {
+    expect(periodStartBalance(50_000, 0, 0, { pnl: 3_000, peak: 3_000, count: 2, payouts: 2_000 })).toBe(51_000);
+    expect(periodStartBalance(50_000, 0, 0, { pnl: 0, peak: 0, count: 0, payouts: 0 })).toBe(50_000);
+    expect(periodStartBalance(50_000, 0, 0, { pnl: 238, peak: 500, count: 2 })).toBe(50_238); // API sans payouts
+  });
+
+  it('fusion : plusieurs payouts le même jour additionnés, payout avant le premier trade au P&L 0', () => {
+    const pts = withPayouts([pt('2026-10-03T00:00:00.000Z', 100)], [
+      { date: '2026-10-01T00:00:00.000Z', amount: 500 },
+      { date: '2026-10-03T00:00:00.000Z', amount: 200 },
+      { date: '2026-10-03T00:00:00.000Z', amount: 50 },
+    ]);
+    expect(pts).toEqual([
+      { date: '2026-10-01T00:00:00.000Z', cumulativePnl: 0, payout: 500 },
+      { date: '2026-10-03T00:00:00.000Z', cumulativePnl: 100, payout: 250 },
+    ]);
+    expect(cumulativePayouts(pts)).toEqual([500, 750]);
+    expect(periodPnl(pts)).toBe(100); // le P&L de la période ne change pas
   });
 });
