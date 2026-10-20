@@ -359,6 +359,19 @@ export class ProfileComponent implements OnInit {
     return !!status && status !== 'canceled' && status !== 'incomplete_expired';
   });
 
+  /**
+   * Rappel du satisfait ou remboursé fondateur sur l'écran de suppression : même demande que
+   * `refundMailto`, adressée au support (adresse publique). Fin de fenêtre = `refundUntil` de l'API
+   * (prise de place + FOUNDER_REFUND_DAYS, null une fois passée) ; revérifiée ici pour une page
+   * restée ouverte au-delà de l'échéance.
+   */
+  protected readonly deleteRefund = computed(() => {
+    const until = this.offersStore.offers()?.founder?.refundUntil;
+    const mailto = this.refundMailto();
+    if (!until || !mailto || new Date(until).getTime() <= Date.now()) return null;
+    return { until, mailto: mailto.replace(/^mailto:[^?]+/, 'mailto:support@mytradingcoach.app') };
+  });
+
   protected async changeInterval() {
     const s = this.intervalSwitch();
     if (!s || this.changingInterval()) return;
