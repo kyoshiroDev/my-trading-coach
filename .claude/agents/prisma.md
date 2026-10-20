@@ -329,10 +329,19 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 - **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
   `PropFirmPlan.firmId` en `onDelete: Restrict`.
 - `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.
-- `TradingAccount.propFirmPlanId` : FK **nullable**, `onDelete: SetNull`, indexée. Aucune UI ni
-  logique ne la lit encore : les règles saisies par l'utilisateur sur `TradingAccount`
-  (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
-  pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
+- `TradingAccount.propFirmPlanId` : FK **nullable**, `onDelete: SetNull`, indexée. Plan relié →
+  ses règles priment sur la saisie manuelle (`profitTarget`, `maxDrawdown`, `drawdownType`, qui
+  restent le repli) : suivi du compte (`nestjs.md`, « Drawdown selon le plan prop firm relié »),
+  séance, Mes comptes et cartes Courbe d'équité / Drawdown (`design.md`). Le seed démo relie ses
+  3 comptes : `apex-eod-50k` (suiveur EOD), `tradeify-select-flex-50k` (funded, payout en jours),
+  `elitetraderfunding-static-25k` (statique, 25K).
+- **Règles présentes seulement dans les notes du catalogue** (`basis_notes`), sans champ structuré,
+  donc NON appliquées par `drawdownFloor` (audit du 2026-10-20, 538 phases) : **gel du plancher au
+  premier payout** (124 phases funded : Tradeify, Top One, Topstep, MyFundedFutures Pro, Lucid Flex,
+  Funded Futures Family, TradeDay) et **suivi sur le profit brut payouts compris** (TradeDay Quick
+  Pay). Pour les appliquer : ajouter un champ au schéma (ex. `max_drawdown.locks_on_first_payout`)
+  et le lire dans `drawdownFloor` avec les payouts du compte (`progress.payoutsReceived`). Les
+  suiveurs intraday sont approchés (trades clôturés, pas le plus haut latent).
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
   `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
   « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur

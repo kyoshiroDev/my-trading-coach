@@ -239,6 +239,10 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   format `decimals: 0` de la séance, teinte `drawdownTone`) ; carte < 560 px → sous le titre.
   Infobulle : date + `Marge $X` seulement — **jamais la valeur de la courbe présentée comme un solde**.
   Pastille + `marge min $1,175 · 14/10` au point le plus bas. Plus de plancher en escalier.
+  Tout vient du plan relié (solde initial, drawdown, type, gel, objectif) : aucune valeur propre à
+  une firme ou une taille dans les composants. Plancher gelé → `Plancher gelé à $X` dans l'en-tête.
+  « ? » de la carte (`drawdownHelp`) selon la règle : statique, suiveur, seuil de gel, et pour un
+  suiveur intraday « Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents. »
 - **Équité** : objectif toujours visible quand un plan est relié (`planObjectiveLine`, d'après
   `metrics.progress`, la progression du suivi du compte) — ligne pointillée verte au niveau de solde :
   Évaluation `Objectif du plan +$3,000` (départ + objectif, consistency comprise) ; Funded

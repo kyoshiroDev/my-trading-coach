@@ -1683,6 +1683,16 @@ prend montant, type, verrouillage et solde de départ dans la phase, **pas** la 
 - `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
   (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
 - Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).
+- **Fonctions partagées** (`libs/shared/src/prop-firm-rules/drawdown-floor.ts`), source unique du
+  suivi du compte ET de la carte Drawdown des Statistiques : `planDrawdownRule(phase, compte)`
+  (override plateforme, décalage du solde de départ), `drawdownPeakProfit(type, agg, equity, officiel)`
+  (plus haut retenu), `drawdownFloor(règle, plus haut)` (statique, suiveur, gel). Ne jamais
+  recalculer un plancher ailleurs : changer la règle dans ces fonctions seulement.
+- **Test sur tout le catalogue** : `apps/app-mytradingcoach/src/app/core/services/chart-floor.catalog.spec.ts`
+  rejoue un scénario générique sur chaque phase et chaque variante de plateforme (580 cas au
+  2026-10-20) : marge de l'en-tête = écart courbe / limite au dernier point = suivi du compte, et la
+  courbe touche la limite exactement quand le solde touche le plancher. Un plan ajouté au catalogue
+  est testé sans rien écrire.
 ### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
 
 `GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
