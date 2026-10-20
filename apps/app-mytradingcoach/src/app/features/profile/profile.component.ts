@@ -353,6 +353,12 @@ export class ProfileComponent implements OnInit {
     return `mailto:hello@mytradingcoach.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   });
 
+  /** Abonnement Stripe en cours (actif, essai, impayé…) : l'API le résilie avant de supprimer le compte. */
+  protected readonly hasStripeSubscription = computed(() => {
+    const status = this.offersStore.offers()?.subscription.status;
+    return !!status && status !== 'canceled' && status !== 'incomplete_expired';
+  });
+
   protected async changeInterval() {
     const s = this.intervalSwitch();
     if (!s || this.changingInterval()) return;
