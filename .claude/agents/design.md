@@ -238,11 +238,19 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   Libellés : `Plancher $49,677` sous le bout de la ligne, pastille ambre + `marge min $1,175 ·
   14/10/26` centrée sous le point où la marge a été la plus faible. Infobulle : solde, jour, marge et
   plancher du jour. La courbe d'équité ne montre PAS le plancher (seulement l'objectif).
-- **Équité** : ligne pointillée verte `Objectif du plan +$3,000` (ou `Objectif` pour un objectif
-  saisi sans plan) si le compte sélectionné en a un (`planObjectiveLine` : exigence `profit` de la
-  progression du plan, consistency comprise, sinon `metrics.objective`). L'objectif se compte depuis
-  le début du compte : la ligne est placée en retirant le gain fait avant la période affichée.
-  Rien en « Tous les comptes » ni pour un funded en cycle de payout. L'échelle s'étend pour la montrer.
+- **Équité** : objectif toujours visible quand un plan est relié (`planObjectiveLine`, d'après
+  `metrics.progress`, la progression du suivi du compte) — ligne pointillée verte au niveau de solde :
+  Évaluation `Objectif du plan +$3,000` (départ + objectif, consistency comprise) ; Funded
+  `Prochain payout $51,000` (le plus exigeant des seuils en $ : profit du cycle depuis le dernier
+  payout, solde de retrait). Exigences en jours restantes ajoutées au libellé (`Jours ≥ $150 : 0 / 5`) ;
+  seuil uniquement en jours (Tradeify) → légende seule, sans ligne. Sans plan : objectif saisi.
+  Rien en « Tous les comptes ».
+- **Axe des montants** (`spanRange`) : inclut toujours l'objectif (équité) et le plancher (drawdown),
+  et couvre au moins 2 % du solde de départ de la période : quelques dollars sur un compte de 50K
+  restent une ligne presque plate, pas une montagne.
+- **Départ de la courbe** (`periodStartBalance`) : solde de départ du compte + P&L d'avant la
+  période (`before` de l'API) ; exactement la taille du compte quand la période couvre son début
+  (« Tout », aucun trade avant). Carte étroite (< 560 px) : onglets de période sous le titre.
 - **Survol / toucher** : crosshair vertical fin + pastille + infobulle `--bg-3` (date, valeur,
   « Jour ±$x ») dessinée dans le canvas → ne sort jamais de l'écran ; `touch-action: pan-y`.
 - **Animation** : découverte gauche → droite 380 ms quand les données changent, aucune si
