@@ -2090,6 +2090,10 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
   plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
   la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
+- `payouts` (payouts `BrokerPayout` non écartés de la période, `{ date, amount }`) et
+  `before.payouts` (total retiré avant `from`), fonction `splitPayouts`. Lus **hors cache** dans
+  `getEquityCurveDaily` : une détection ou un « ce n'était pas un payout » se voit tout de suite, sans
+  invalider le cache des trades. Le front les déduit des courbes de solde, jamais du P&L.
 
 ## Plancher de drawdown d'un plan (`drawdownFloor`, `@mtc/shared`)
 

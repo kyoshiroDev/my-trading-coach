@@ -390,6 +390,13 @@ envoyées à l'API sont des horodatages ISO complets.
   clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
   renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
   Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
+- **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
+  les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
+  courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
+  Capital (`payoutSeries`). Elles finissent ainsi sur le Capital, et la marge baisse le jour du
+  payout au lieu de sauter au dernier point. Le P&L (KPIs, « Jour », drawdown « sous l'eau ») ne les
+  voit jamais : un retrait n'est pas une perte. Le plus haut d'avant la période n'est pas abaissé par
+  un payout (plancher inchangé). Comptes manuels : aucun payout (pas de saisie à ce jour).
 
 ---
 
