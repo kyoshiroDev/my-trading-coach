@@ -45,7 +45,7 @@ src/app/
 ├── features/
 │   ├── dashboard/          dashboard.component.ts + .html + .css (état, cadre, états vides)
 │   │   ├── dashboard-charts.util.ts   ← calculs purs des viz (sparklines, donuts, P&L, coach)
-│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis · equity-chart ·
+│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis ·
 │   │   │                                top-assets · pl-bars · coach-feedback · donut-chart ·
 │   │   │                                recent-trades-table
 │   │   └── components/
@@ -372,9 +372,24 @@ de l'onboarding et de la page Comptes, validation API), `formatMoney(value, curr
 l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
 commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
 
-**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
-drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+**Courbe d'équité / drawdown** : composant partagé `mtc-perf-chart` (dashboard + analytics, style
+dans `design.md`) → `ChartService` ; séries dans `chart-series.util.ts`, qui préfixe un point
+« Départ » : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
 envoyées à l'API sont des horodatages ISO complets.
+
+**Capital, courbe et drawdown : une seule définition** (`core/services/equity-period.util.ts`) :
+- **Capital** (KPI du dashboard) = solde actuel de la vue (`viewBalance(…, 'currentBalance')`) : le
+  même que le sélecteur de compte et Mes comptes (solde du broker pour un compte connecté). Jamais
+  « capital de départ + P&L de la période ». Le % compare au solde du début de la période.
+- **Courbe d'équité** : part de `periodStartBalance` = solde de départ + P&L d'avant la période
+  (`before.pnl`), soit la taille du compte quand la période couvre son début (`before.count === 0`).
+  Repli sans `before` (API ancienne) : solde actuel − P&L de la période. Un écart entre P&L 30 jours
+  et P&L total = des trades avant la fenêtre, pas une erreur. **Jamais `startingCapital` de `/equity-curve/daily`** : c'est le capital du
+  PROFIL (un compte de 50K partait de 100K dans Statistiques).
+- **Drawdown** (KPI « Drawdown max », courbe et en-tête des Statistiques) = `anchoredDrawdown` :
+  clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
+  renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
+  Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
 
 ---
 

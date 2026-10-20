@@ -22,7 +22,8 @@ import { describe, it, expect, vi } from 'vitest';
 // régression de code alors que c'était l'horloge. Même valeur que `vitest.integration.config.mts`.
 vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
-import { seedDemo, assertDemoCalendar, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
+import { generate } from './demo-data/generate';
 
 /** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
 function weekdayAt(hour: number, minute = 0): Date {
@@ -173,18 +174,58 @@ describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler
 });
 
 describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)', () => {
-  it('crée 2 comptes prop firm actifs en USD : Apex (éval) et Tradeify (funded)', async () => {
+  it('crée 3 comptes prop firm actifs en USD : Apex (éval), Tradeify (funded), Elite statique 25K (éval)', async () => {
     const { prisma, created } = fakePrisma([]);
     const res = await seedDemo(prisma);
 
     const accounts = created['tradingAccount'];
-    expect(accounts).toHaveLength(2);
-    expect(res.accounts).toBe(2);
+    expect(accounts).toHaveLength(3);
+    expect(res.accounts).toBe(3);
     expect(accounts.every((a) => a['status'] === 'ACTIVE')).toBe(true);
     expect(accounts.every((a) => a['currency'] === 'USD')).toBe(true);
-    expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'FUNDED']);
-    expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex Trader Funding', 'Tradeify']);
+    expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'EVALUATION', 'FUNDED']);
+    expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex Trader Funding', 'Elite Trader Funding', 'Tradeify']);
+    // Plan statique d'une autre firme et d'une autre taille : la carte drawdown change de comportement.
+    expect(accounts.find((a) => a['broker'] === 'Elite Trader Funding')).toMatchObject({
+      accountSize: 25_000, startingBalance: 25_000, maxDrawdown: 1_000, drawdownType: 'STATIC',
+    });
   });
+
+  it('compte statique : tirage séparé, les comptes Apex et Tradeify sont inchangés', () => {
+    const now = new Date('2026-10-20T15:00:00');
+    const { days } = buildDemoDataset(now);
+    const elite = days.filter((d) => d.account === 'elite');
+    expect(elite.length).toBeGreaterThanOrEqual(5);
+    expect(elite.every((d) => d.kind === 'secondary')).toBe(true);
+    expect(elite.every((d) => d.daysAgo <= 27)).toBe(true); // visible dans la vue « 1 mois »
+    // Passe sous son solde de départ (25 à 70 % du drawdown, en clôture), finit au-dessus.
+    let cum = 0, low = 0;
+    for (const d of [...elite].sort((x, y) => y.daysAgo - x.daysAgo)) {
+      cum += d.trades.reduce((a, t) => a + t.pnl - t.commission, 0);
+      low = Math.min(low, cum);
+    }
+    expect(-low).toBeGreaterThanOrEqual(250);
+    expect(-low).toBeLessThan(700);
+    expect(cum).toBeGreaterThan(0);
+    // Jamais un jour sans journée d'un compte principal (le récap du jour reste unique).
+    const mainDates = new Set(days.filter((d) => d.account !== 'elite').map((d) => d.daysAgo));
+    expect(elite.every((d) => mainDates.has(d.daysAgo))).toBe(true);
+    // Le tirage principal ne dépend pas du compte statique.
+    const main = days.filter((d) => d.account !== 'elite');
+    const seedOnly = generate(now, buildDemoDataset(now).seed);
+    expect(main.flatMap((d) => d.trades.map((t) => t.pnl))).toEqual(seedOnly.flatMap((d) => d.trades.map((t) => t.pnl)));
+  });
+
+  it.each(['2026-10-05T03:20:00', '2026-10-14T11:00:00', '2026-11-03T17:30:00', '2026-12-11T03:20:00', '2027-01-19T16:00:00'])(
+    'compte statique lisible quel que soit le jour du seed (%s)', (iso) => {
+      const { days } = buildDemoDataset(new Date(iso));
+      const elite = days.filter((d) => d.account === 'elite' && d.trades.length).sort((x, y) => y.daysAgo - x.daysAgo);
+      let cum = 0, low = 0;
+      for (const d of elite) { cum += d.trades.reduce((a, t) => a + t.pnl - t.commission, 0); low = Math.min(low, cum); }
+      expect(-low).toBeGreaterThanOrEqual(250);
+      expect(cum).toBeGreaterThan(0);
+    },
+  );
 
   it('Σ startingBalance des comptes === capital du profil (sinon les 2 pages divergent)', async () => {
     const calls: Call[] = [];
@@ -410,16 +451,16 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
 });
 
 describe('seedDemo — connexion Tradovate démo', () => {
-  it('les deux comptes prop firm apparaissent connectés, sans aucun vrai token, une connexion par compte', async () => {
+  it('tous les comptes prop firm apparaissent connectés, sans aucun vrai token, une connexion par compte', async () => {
     const calls: Call[] = [];
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
     const connections = created['brokerConnection'] ?? [];
-    // Les deux : la session live montre le suivi prop firm quel que soit le compte de la séance.
-    expect(connections).toHaveLength(2);
-    expect(connections.map((c) => c['accountId'])).toEqual(['tradingAccount-1', 'tradingAccount-2']);
-    expect(new Set(connections.map((c) => c['externalAccountId'])).size).toBe(2);
+    // Tous : la session live montre le suivi prop firm quel que soit le compte de la séance.
+    expect(connections).toHaveLength(3);
+    expect(connections.map((c) => c['accountId'])).toEqual(['tradingAccount-1', 'tradingAccount-2', 'tradingAccount-3']);
+    expect(new Set(connections.map((c) => c['externalAccountId'])).size).toBe(3);
     for (const conn of connections) {
       expect(conn).toMatchObject({ provider: 'TRADOVATE', status: 'CONNECTED' });
       expect(conn['lastSyncAt']).toBeInstanceOf(Date);
@@ -586,7 +627,7 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     expect(res.debriefs).toBeGreaterThanOrEqual(5);
     const d = created['weeklyDebrief'][0];
     const insights = d['insights'] as { accounts: { stats: { totalTrades: number } }[]; summary: string };
-    expect(insights.accounts).toHaveLength(2);
+    expect(insights.accounts).toHaveLength(3);
     expect(insights.summary).toMatch(/frais/);
     expect(created['dailyRecap'].length).toBe(res.tradingDays - 1); // tous sauf aujourd'hui
   });

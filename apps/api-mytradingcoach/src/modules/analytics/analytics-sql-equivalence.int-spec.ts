@@ -182,9 +182,27 @@ describe('B2-01 — statistiques SQL ≡ calculs JavaScript d’avant (5 000 tra
   it('courbe d’équité par trade (réduite) et journalière', async () => {
     const eq = await both('computeEquityCurve', userId);
     expectClose(eq.n, eq.l);
-    for (const args of [[userId], [userId, RANGE_FROM, RANGE_TO], [userId, RANGE_FROM, RANGE_TO, accA]]) {
+    for (const args of [[userId], [userId, RANGE_FROM, RANGE_TO], [userId, RANGE_FROM, RANGE_TO, accA]] as const) {
       const { n, l } = await both('computeEquityCurveDaily', ...args);
-      expectClose(n, l);
+      // `before` (historique avant la période) est un ajout : la courbe reste identique à l'ancien
+      // calcul, et `before` est vérifié contre l'ancien calcul borné juste avant la période.
+      const { before, ...curve } = n as { before: { pnl: number; peak: number; count: number } };
+      expectClose(curve, l);
+      const [, from, , accountId] = args as unknown as [string, Date | undefined, Date | undefined, string | undefined];
+      if (!from) {
+        expect(before).toEqual({ pnl: 0, peak: 0, count: 0 });
+        continue;
+      }
+      const earlier = (await call(legacy, 'computeEquityCurveDaily', userId, undefined, new Date(from.getTime() - 1), accountId)) as {
+        points: { cumulativePnl: number }[];
+      };
+      const cums = earlier.points.map((p) => p.cumulativePnl);
+      expect(before.pnl).toBeCloseTo(cums.at(-1) ?? 0, 2);
+      expect(before.peak).toBeCloseTo(Math.max(0, ...cums), 2);
+      const count = await prisma.trade.count({
+        where: { userId, pnl: { not: null }, tradedAt: { lt: from }, ...(accountId ? { accountId } : {}) },
+      });
+      expect(before.count).toBe(count);
     }
   });
 

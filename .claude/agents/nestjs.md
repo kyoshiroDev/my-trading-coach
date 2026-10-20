@@ -1683,6 +1683,16 @@ prend montant, type, verrouillage et solde de départ dans la phase, **pas** la 
 - `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
   (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
 - Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).
+- **Fonctions partagées** (`libs/shared/src/prop-firm-rules/drawdown-floor.ts`), source unique du
+  suivi du compte ET de la carte Drawdown des Statistiques : `planDrawdownRule(phase, compte)`
+  (override plateforme, décalage du solde de départ), `drawdownPeakProfit(type, agg, equity, officiel)`
+  (plus haut retenu), `drawdownFloor(règle, plus haut)` (statique, suiveur, gel). Ne jamais
+  recalculer un plancher ailleurs : changer la règle dans ces fonctions seulement.
+- **Test sur tout le catalogue** : `apps/app-mytradingcoach/src/app/core/services/chart-floor.catalog.spec.ts`
+  rejoue un scénario générique sur chaque phase et chaque variante de plateforme (580 cas au
+  2026-10-20) : marge de l'en-tête = écart courbe / limite au dernier point = suivi du compte, et la
+  courbe touche la limite exactement quand le solde touche le plancher. Un plan ajouté au catalogue
+  est testé sans rien écrire.
 ### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
 
 `GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
@@ -2057,3 +2067,17 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
+
+## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
+
+- Avec `from` : renvoie aussi `before = { pnl, peak }` (P&L net cumulé avant la période et son plus
+  haut en clôture de journée, ≥ 0, fonction `periodBefore`). Le front ancre le drawdown sur ce sommet.
+- `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
+  plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
+  la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
+
+## Plancher de drawdown d'un plan (`drawdownFloor`, `@mtc/shared`)
+
+Source unique du plancher : `accounts.service` (suivi du compte → Mes comptes, séance) et la courbe
+de drawdown des Statistiques appellent `drawdownFloor(rule, peakProfit)`. Ne jamais recalculer un
+plancher à la main ailleurs : modifier la règle (verrouillage, statique) dans cette fonction seulement.

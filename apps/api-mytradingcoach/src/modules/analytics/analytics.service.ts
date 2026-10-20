@@ -13,6 +13,30 @@ export interface EquityPoint {
   cumulativePnl: number;
 }
 
+/**
+ * Historique AVANT la période d'une courbe : P&L net cumulé et son plus haut en clôture de journée
+ * (≥ 0, le solde de départ compte comme premier sommet). Le drawdown de la période part de ce
+ * sommet, comme la règle EOD des prop firms, au lieu de repartir de 0 au début de la période.
+ */
+export interface PeriodBefore {
+  pnl: number;
+  peak: number;
+  /** Trades avant la période : 0 → la période couvre le début du compte (courbe au solde de départ). */
+  count: number;
+}
+
+export function periodBefore(days: { key: string; pnl: number; count?: number }[]): PeriodBefore {
+  let pnl = 0;
+  let peak = 0;
+  let count = 0;
+  for (const d of [...days].sort((a, b) => a.key.localeCompare(b.key))) {
+    pnl += d.pnl;
+    count += d.count ?? 0;
+    if (pnl > peak) peak = pnl;
+  }
+  return { pnl: roundCents(pnl), peak: roundCents(peak), count };
+}
+
 /** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
 export function minuteKey(d?: Date): string {
   return d ? d.toISOString().slice(0, 16) : '';
@@ -284,10 +308,11 @@ export class AnalyticsService {
     from?: Date,
     to?: Date,
     accountId?: string,
-  ): Promise<{ points: EquityPoint[]; startingCapital: number | null }> {
-    const [days, startingCapital] = await Promise.all([
+  ): Promise<{ points: EquityPoint[]; startingCapital: number | null; before: PeriodBefore }> {
+    const [days, startingCapital, earlier] = await Promise.all([
       groupTrades(this.prisma, { userId, accountId, from, to }, 'parisDate'),
       this.startingCapital(userId),
+      from ? groupTrades(this.prisma, { userId, accountId, before: from }, 'parisDate') : Promise.resolve([]),
     ]);
     // Jours du fuseau de Paris, triés ; P&L net cumulé jour après jour.
     let cumPnl = 0;
@@ -297,7 +322,7 @@ export class AnalyticsService {
         cumPnl += d.pnl;
         return { date: new Date(d.key), cumulativePnl: cumPnl };
       });
-    return { points, startingCapital };
+    return { points, startingCapital, before: periodBefore(earlier) };
   }
 
   private async computeEquityCurveCurrentMonth(userId: string, accountId?: string) {

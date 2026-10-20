@@ -75,8 +75,9 @@
   <mtc-dashboard-kpis
     [loading]="isLoading()"
     [summary]="summary()"
-    [baseCapital]="baseCapital()"
+    [periodStartCapital]="periodStartCapital()"
     [currentCapital]="currentCapital()"
+    [drawdownSeries]="drawdownSeries()"
     [equitySeries]="eqSeries()"
     [periodShort]="periodShort()"
     [fallbackTradesCount]="tradesStore.trades().length"
@@ -84,26 +85,20 @@
 
   <!-- Grille flagship (fidèle au design : 6 panels en 2 colonnes, sans calendrier) -->
   <div class="mtc-grid">
-    <!-- Courbe d'équité -->
-    <div class="mtc-panel">
-      <div class="mtc-panel-head">
-        <div class="mtc-panel-head-l"><svg [lucideIcon]="EquityIcon" [size]="15" class="mtc-phi"></svg><div><div class="mtc-panel-title">Courbe d'équité</div><div class="mtc-panel-sub">{{ equitySub() }}</div></div></div>
-        <div class="mtc-eq-tabs">
-          @for (p of periods; track p.key) {
-            <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
-          }
-        </div>
-      </div>
-      <div class="mtc-panel-body">
-        <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
-        @let eg = equityGlow();
-        @if (eg) {
-          <mtc-equity-chart [glow]="eg" />
-        } @else {
-          <div class="mtc-empty">{{ equityEmptyMsg() }}</div>
+    <!-- Courbe d'équité simple = vue de base FREE (profondeur = page /analytics). -->
+    <mtc-perf-chart
+      kind="equity"
+      [points]="equityCurve()"
+      [startingCapital]="periodStartCapital()"
+      [objective]="equityObjective()"
+      [emptyMessage]="equityEmptyMsg()"
+    >
+      <div chartControls class="mtc-eq-tabs">
+        @for (p of periods; track p.key) {
+          <button type="button" [class.on]="dashboardPeriod() === p.key" (click)="setPeriod(p.key)">{{ p.label }}</button>
         }
       </div>
-    </div>
+    </mtc-perf-chart>
 
     <!-- Top actifs -->
     <div class="mtc-panel">

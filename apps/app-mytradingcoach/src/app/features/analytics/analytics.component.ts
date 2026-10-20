@@ -2,9 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  ViewChild,
-  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -21,7 +18,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import {
   AnalyticsApi,
   AnalyticsSummary,
-  EquityPoint,
+  DailyEquityCurve,
   HeatmapCell,
   MonthlyActivitySummary,
   SetupStat,
@@ -30,9 +27,11 @@ import {
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
+import { periodPnl, periodStartBalance, viewBalance } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
-import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
+import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
@@ -53,6 +52,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PlanModalComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
+    PerfChartComponent,
     MixedCurrencyNoticeComponent,
     ErrorStateComponent,
   ],
@@ -61,14 +61,9 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
-  @ViewChild('equityCanvas') equityCanvasRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('drawdownCanvas')
-  drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
-
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
@@ -100,7 +95,7 @@ export class AnalyticsComponent {
     // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
     return { from: from.toISOString(), to: now.toISOString() };
   });
-  protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
+  protected readonly equityData = signal<DailyEquityCurve | null>(null);
   protected readonly equityLoading = signal(false);
 
   // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
@@ -131,8 +126,27 @@ export class AnalyticsComponent {
   protected readonly equityCurve = computed(
     () => this.equityData()?.points ?? [],
   );
-  private readonly equityStartingCapital = computed(
-    () => this.equityData()?.startingCapital ?? null,
+  /**
+   * Solde au début de la période : solde de départ du compte + P&L d'avant la période (la taille du
+   * compte quand la période couvre son début). Jamais `startingCapital` de l'API (capital du profil :
+   * un compte de 50K partait de 100K).
+   */
+  protected readonly equityStartCapital = computed(() => {
+    const before = this.equityData()?.before;
+    const loaded = this.selectedAccount.loaded();
+    const view = (key: 'startingBalance' | 'currentBalance') =>
+      loaded ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key) : null;
+    const start = view('startingBalance') ?? this.userStore.startingCapital();
+    const current = view('currentBalance');
+    if (current === null) return start + (before?.pnl ?? 0);
+    return periodStartBalance(start, current, periodPnl(this.equityCurve()), before);
+  });
+  /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
+  protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));
+  /** « ? » de la carte drawdown : règle du plan relié (statique, suiveur, gel, intraday). */
+  protected readonly drawdownHelp = computed(() => drawdownHelp(this.planFloor(), this.money.currency()));
+  protected readonly planObjective = computed(() =>
+    planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
@@ -206,21 +220,6 @@ export class AnalyticsComponent {
   });
 
   constructor() {
-    afterRenderEffect(() => {
-      const curve = this.equityCurve();
-      // Un seul jour tradé suffit : les graphes partent d'un point « Départ » à 0.
-      if (curve.length >= 1) {
-        const equityCanvas = this.equityCanvasRef?.nativeElement;
-        const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
-        if (equityCanvas) {
-          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartingCapital());
-        }
-        if (drawdownCanvas) {
-          this.chartService.buildDrawdownChart(drawdownCanvas, curve);
-        }
-      }
-    });
-
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
     if (this.userStore.isPremium()) {

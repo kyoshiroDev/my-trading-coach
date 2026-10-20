@@ -16,8 +16,8 @@ import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 
  
-function acc(startingBalance: number, status = 'ACTIVE'): any {
-  return { id: 'a' + startingBalance, status, metrics: { startingBalance, realizedPnl: 0 } };
+function acc(startingBalance: number, status = 'ACTIVE', currentBalance = startingBalance): any {
+  return { id: 'a' + startingBalance, status, metrics: { startingBalance, currentBalance, realizedPnl: currentBalance - startingBalance } };
 }
 
 interface Cfg {
@@ -92,8 +92,21 @@ describe('DashboardComponent — card capital scopée au compte', () => {
     expect(cmp.baseCapital()).toBe(10000);
   });
 
-  it('currentCapital = baseCapital + P&L (summary non résolu → +0)', () => {
-    const cmp = setup({ selected: acc(50000) });
-    expect(cmp.currentCapital()).toBe(50000);
+  it('Capital = solde actuel du compte (sélecteur, Mes comptes), pas départ + P&L de la période', () => {
+    // Compte de 50K : +238 avant la période, +839.83 pendant → solde 51 077.83.
+    const cmp = setup({ selected: acc(50000, 'ACTIVE', 51077.83) });
+    cmp.summaryResource.set({ data: { totalPnl: 839.83 } });
+    expect(cmp.currentCapital()).toBe(51077.83);
+    expect(cmp.periodStartCapital()).toBeCloseTo(50238);
+  });
+
+  it('« Tous les comptes » → somme des soldes actuels non archivés', () => {
+    const cmp = setup({ selected: null, accounts: [acc(50000, 'ACTIVE', 51078), acc(50000, 'ACTIVE', 49500), acc(1, 'ARCHIVED', 9999)] });
+    expect(cmp.currentCapital()).toBe(100578);
+  });
+
+  it('aucun compte chargé → repli : capital du profil + P&L', () => {
+    const cmp = setup({ loaded: false, startingCapital: 10000 });
+    expect(cmp.currentCapital()).toBe(10000);
   });
 });

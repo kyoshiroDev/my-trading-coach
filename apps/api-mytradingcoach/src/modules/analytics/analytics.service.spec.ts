@@ -13,7 +13,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate } from './analytics.service';
+import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate, periodBefore } from './analytics.service';
 
 const mockPrisma = {
   setup: {
@@ -225,10 +225,25 @@ describe('AnalyticsService', () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-05', { pnl: -50 }), agg('2026-05-04', { pnl: 100 })]);
       const eq = await svc()['computeEquityCurveDaily']('u1');
       expect(eq.points.map((p: { cumulativePnl: number }) => p.cumulativePnl)).toEqual([100, 50]);
+      expect(eq.before).toEqual({ pnl: 0, peak: 0, count: 0 }); // sans « from » : rien avant
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-04', { count: 2, wins: 1, losses: 1, pnl: 30 }), agg('2026-05-06', { count: 1, pnl: -10, losses: 1 })]);
       const m = await svc()['computeMonthlyActivity']('u1', 2026, 5);
       expect(m).toMatchObject({ totalPnl: 20, totalTrades: 3, tradingDays: 2 });
       expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ before: new Date(2026, 5, 1) });
+    });
+
+    it('équité journalière bornée : historique avant la période (P&L cumulé, plus haut en clôture)', async () => {
+      const from = new Date('2026-09-19T00:00:00.000Z');
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-09-25', { pnl: 840 })]);
+      // Avant la période : +500, puis -262 → cumul 238, sommet 500.
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-09-02', { pnl: -262, count: 1 }), agg('2026-09-01', { pnl: 500, count: 1 })]);
+      const eq = await svc()['computeEquityCurveDaily']('u1', from, undefined, 'acc-1');
+      expect(eq.before).toEqual({ pnl: 238, peak: 500, count: 2 });
+      expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ accountId: 'acc-1', before: from });
+    });
+
+    it('historique toujours négatif : sommet au solde de départ (0)', () => {
+      expect(periodBefore([agg('2026-09-01', { pnl: -100, count: 1 }), agg('2026-09-02', { pnl: -50, count: 1 })])).toEqual({ pnl: -150, peak: 0, count: 2 });
     });
   });
 });
