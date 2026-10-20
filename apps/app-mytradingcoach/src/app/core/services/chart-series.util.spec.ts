@@ -6,7 +6,8 @@ import {
   drawdownSeries,
   equitySeries,
   maxDrawdownIndex,
-  planDrawdownLimit,
+  floorSeries,
+  planFloorOf,
   planObjectiveLine,
   spanDays,
   tickDate,
@@ -131,14 +132,6 @@ describe('repères du plan', () => {
     expect(planObjectiveLine(account({ progress: planProgress(3_000, 0) }), [])).toBeNull();
   });
 
-  it('limite de drawdown seulement pour un plan relié au montant publié', () => {
-    const dd = { maxDrawdown: 2_500, source: 'plan' };
-    expect(planDrawdownLimit(account({ drawdown: dd }))).toBe(2_500);
-    expect(planDrawdownLimit(account({ drawdown: { ...dd, source: 'manual' } }))).toBeNull();
-    expect(planDrawdownLimit(account({ drawdown: dd, drawdownUnconfirmed: true }))).toBeNull();
-    expect(planDrawdownLimit(account({ drawdown: dd }, null))).toBeNull();
-    expect(planDrawdownLimit(null)).toBeNull();
-  });
 });
 
 describe('compte de 50K, gains avant et pendant la période', () => {
@@ -157,5 +150,58 @@ describe('compte de 50K, gains avant et pendant la période', () => {
     const line = planObjectiveLine(acc, points)!;
     expect(startBalance + line.pnl).toBe(53_000);
     expect(equitySeries(points, startBalance).values.at(-1)).toBe(51_078);
+  });
+});
+
+/** Compte de 50K relié à un plan : règle et suivi (`metrics.drawdown`) comme les renvoie l'API. */
+const planAccount = (rule: Record<string, unknown>, dd: Record<string, unknown> = {}, planId: string | null = 'apex-eod-50k') =>
+  account(
+    {
+      startingBalance: 50_000,
+      drawdown: {
+        source: 'plan', maxDrawdown: 2_000, floor: 48_000, margin: 2_000, pct: 1, breached: false,
+        rule: { kind: 'trailing_eod', locksAt: null, lockedFloor: null, locked: false, peakBalance: null, ...rule },
+        ...dd,
+      },
+    },
+    planId,
+  );
+
+describe('plancher de drawdown du plan', () => {
+  it('sans plan relié : pas de plancher (graphique sous l’eau depuis 0)', () => {
+    expect(planFloorOf(planAccount({}, {}, null))).toBeNull();
+    expect(planFloorOf(account({ drawdown: { source: 'manual', maxDrawdown: 2_000 } }))).toBeNull();
+    expect(planFloorOf(account({ ...planAccount({}).metrics, drawdownUnconfirmed: true }))).toBeNull();
+    expect(planFloorOf(null)).toBeNull();
+  });
+
+  it('plan suiveur EOD : part de 48 000 et suit le plus haut solde de clôture', () => {
+    // +200 avant la période (plus haut +500), puis 50 500 · 50 100 · 51 100.
+    const plan = planFloorOf(planAccount({ peakBalance: 51_100 }, { floor: 49_100, margin: 2_000 }))!;
+    expect(plan.rule).toEqual({ kind: 'trailing_eod', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null });
+    const f = floorSeries([pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 900)], 50_200, plan, { pnl: 200, peak: 500 });
+    expect(f.balance).toEqual([50_200, 50_500, 50_100, 51_100]);
+    expect(f.floor).toEqual([48_500, 48_500, 48_500, 49_100]);
+    expect(f.minMarginIdx).toBe(2); // marge 1 600 le 02/10
+  });
+
+  it('dernier point = plancher du suivi du compte ; plus hauts bornés par celui retenu (broker)', () => {
+    const plan = planFloorOf(planAccount({ peakBalance: 51_000 }, { floor: 49_000 }))!;
+    const f = floorSeries([pt('2026-10-01', 1_100), pt('2026-10-02', 900)], 50_000, plan);
+    expect(f.floor).toEqual([48_000, 49_000, 49_000]);
+  });
+
+  it('plan statique : plancher droit à taille du compte − drawdown', () => {
+    const plan = planFloorOf(planAccount({ kind: 'static' }))!;
+    const f = floorSeries([pt('2026-10-01', 1_500), pt('2026-10-02', -800)], 50_000, plan);
+    expect(f.floor).toEqual([48_000, 48_000, 48_000]);
+    expect(f.minMarginIdx).toBe(2);
+  });
+
+  it('plancher gelé : figé dès que le solde atteint le seuil du plan', () => {
+    const plan = planFloorOf(planAccount({ locksAt: 52_100, lockedFloor: 50_100, locked: true }, { floor: 50_100 }))!;
+    expect(plan.peakProfit).toBeNull();
+    const f = floorSeries([pt('2026-10-01', 1_700), pt('2026-10-02', 2_400), pt('2026-10-03', 2_000)], 50_000, plan);
+    expect(f.floor).toEqual([48_000, 49_700, 50_100, 50_100]);
   });
 });

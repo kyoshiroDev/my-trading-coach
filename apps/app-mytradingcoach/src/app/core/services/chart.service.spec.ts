@@ -76,7 +76,7 @@ describe('ChartService — style des courbes', () => {
     expect(configs[0].data.labels).toHaveLength(301);
   });
 
-  it('drawdown sans limite de plan : zone de 0 vers le bas, échelle bornée par le max', () => {
+  it('drawdown sans plan : sous l’eau depuis 0, un seul tracé', () => {
     const { service, configs, canvas } = setup();
     service.buildDrawdownChart(canvas, [pt('2025-01-06', 500), pt('2025-01-07', -500)]);
     const y = configs[0].options?.scales?.['y'] as { max: number; suggestedMin: number };
@@ -84,18 +84,27 @@ describe('ChartService — style des courbes', () => {
     expect(configs[0].data.datasets[0].fill).toBe('origin');
     expect(y.max).toBe(0);
     expect(y.suggestedMin).toBeCloseTo(-1080);
+    expect(configs[0].data.datasets).toHaveLength(1);
   });
 
-  it('drawdown avec limite de plan : échelle étendue jusqu’à la limite', () => {
+  it('drawdown d’un compte relié à un plan : solde + plancher en escalier, axe incluant le plancher', () => {
     const { service, configs, canvas } = setup();
-    service.buildDrawdownChart(canvas, [pt('2025-01-06', -500)], {
-      narrow: false,
-      animate: false,
-      limit: 2_500,
+    const plan = {
+      rule: { kind: 'trailing_eod' as const, amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
+      floor: 48_500, margin: 1_900, pct: 0.95, breached: false, peakProfit: 500,
+    };
+    service.buildDrawdownChart(canvas, [pt('2025-01-06', 500), pt('2025-01-07', 400)], {
+      narrow: false, animate: false, floor: { plan, periodStart: 50_000 },
     });
-    const y = configs[0].options?.scales?.['y'] as { suggestedMin: number };
-    expect(y.suggestedMin).toBeCloseTo(-2_700);
-    expect(configs[0].plugins?.map((p) => p.id)).toContain('mtcMarks');
+    const [balance, floor] = configs[0].data.datasets;
+    expect(balance.data).toEqual([50_000, 50_500, 50_400]);
+    expect(floor.data).toEqual([48_000, 48_500, 48_500]);
+    expect(floor.stepped).toBe('after');
+    expect(floor.fill).toBe('start');
+    expect(configs[0].options?.scales?.['y']).toMatchObject({ grace: '7%', suggestedMin: 48_000 });
+    expect(configs[0].options?.scales?.['y']).not.toHaveProperty('max');
+    const footer = (configs[0].options?.plugins?.tooltip?.callbacks as unknown as { footer: (i: { dataIndex: number }[]) => string[] }).footer;
+    expect(footer([{ dataIndex: 2 }])).toEqual(['Jour -$100', 'Marge $1,900 · plancher $48,500']);
   });
 
   it('équité avec objectif : échelle étendue jusqu’à l’objectif', () => {
@@ -120,11 +129,11 @@ describe('ChartService — style des courbes', () => {
     const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as {
       title: (i: { dataIndex: number }[]) => string;
       label: (i: { parsed: { y: number } }) => string;
-      footer: (i: { dataIndex: number }[]) => string;
+      footer: (i: { dataIndex: number }[]) => string[];
     };
     expect(cb.title([{ dataIndex: 2 }])).toMatch(/7 janv\.? 2025/);
     expect(cb.label({ parsed: { y: 10_250 } })).toBe('$10,250');
-    expect(cb.footer([{ dataIndex: 2 }])).toBe('Jour -$50');
-    expect(cb.footer([{ dataIndex: 0 }])).toBe('');
+    expect(cb.footer([{ dataIndex: 2 }])).toEqual(['Jour -$50']);
+    expect(cb.footer([{ dataIndex: 0 }])).toEqual([]);
   });
 });
