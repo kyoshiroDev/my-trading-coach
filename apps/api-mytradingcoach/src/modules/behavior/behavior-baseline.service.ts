@@ -43,6 +43,9 @@ export class BehaviorBaselineService {
 
   /** Recalcule sur les séances clôturées AVANT la journée de `now`, et l'enregistre. */
   async refresh(userId: string, now = new Date()): Promise<BehaviorBaselineData> {
+    // Volontairement TOUS les comptes, échoués et archivés compris : c'est le comportement habituel
+    // du trader (tailles, rythme), pas une statistique de performance. L'exclure fausserait la
+    // référence juste après un compte perdu, précisément quand le risque de tilt est le plus haut.
     const rows = await this.prisma.trade.findMany({
       where: { userId, pnl: { not: null } },
       orderBy: { tradedAt: 'desc' },
