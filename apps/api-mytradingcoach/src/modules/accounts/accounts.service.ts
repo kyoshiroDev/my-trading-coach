@@ -715,6 +715,34 @@ export class AccountsService {
   }
 
   /**
+   * Suppression DÉFINITIVE d'un compte de trading (compte perdu, « Supprimer ce compte de
+   * trading »), distincte de `remove` qui archive dès qu'il y a de l'historique. Exige
+   * `confirm === true` (400 sinon) : efface ses trades et ses séances, sa connexion broker
+   * (la synchro ne peut plus les recréer, comme une déconnexion Tradovate), puis le compte, dont
+   * les lignes dépendantes partent en cascade (clôtures, payouts, journal de risque, alertes de
+   * comportement). Une seule transaction. Ne touche ni au compte MyTradingCoach ni à Stripe.
+   * Démo : bloquée en amont par DemoReadOnlyGuard (DELETE).
+   */
+  async purge(userId: string, id: string, confirm: unknown): Promise<{ deleted: true; tradesDeleted: number }> {
+    if (confirm !== true) {
+      throw new BadRequestException({
+        code: 'CONFIRMATION_REQUIRED',
+        message: 'Confirme la suppression définitive : le compte et tous ses trades seront effacés.',
+      });
+    }
+    await this.assertOwner(userId, id);
+    const tradesDeleted = await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.trade.deleteMany({ where: { userId, accountId: id } });
+      await tx.tradeSession.deleteMany({ where: { userId, accountId: id } });
+      await tx.brokerConnection.deleteMany({ where: { userId, accountId: id } });
+      await tx.tradingAccount.delete({ where: { id } });
+      return count;
+    });
+    await this.invalidateStats(userId);
+    return { deleted: true, tradesDeleted };
+  }
+
+  /**
    * Helper de filtre lecture réutilisable. `accountId` absent ou 'all' → fragment vide
    * (agrégé, comportement actuel). Sinon vérifie l'appartenance au user (sinon 404) et
    * renvoie `{ accountId }` à fusionner dans un `where` Prisma.

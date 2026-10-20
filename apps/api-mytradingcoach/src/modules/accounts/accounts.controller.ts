@@ -96,4 +96,17 @@ export class AccountsController {
   remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.accounts.remove(user.id, id);
   }
+
+  /**
+   * Suppression DÉFINITIVE (compte perdu) : le compte ET ses trades. Corps obligatoire
+   * `{ "confirm": true }`, sinon 400. Réponse `{ deleted: true, tradesDeleted }`.
+   */
+  @Delete(':id/permanent')
+  purge(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() body?: { confirm?: unknown },
+  ) {
+    return this.accounts.purge(user.id, id, body?.confirm);
+  }
 }
