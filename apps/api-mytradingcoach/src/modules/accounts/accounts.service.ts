@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
+import { drawdownFloor } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
@@ -427,10 +428,11 @@ export class AccountsService {
           : 0;
         const locksAt = md.locks_at != null ? md.locks_at + shift : null;
         const lockedFloor = md.locked_floor != null ? md.locked_floor + shift : null;
-        const locked = md.type !== 'static' && locksAt != null && startingBalance + peakProfit >= locksAt;
-        const floor = locked
-          ? lockedFloor ?? locksAt! - md.amount
-          : startingBalance + peakProfit - md.amount;
+        // Même fonction que la courbe de drawdown des Statistiques (plancher jour par jour).
+        const { floor, locked } = drawdownFloor(
+          { kind: md.type, amount: md.amount, startingBalance, locksAt, lockedFloor },
+          peakProfit,
+        );
         const margin = equity - floor;
         drawdown = {
           type: md.type === 'static' ? DrawdownType.STATIC : DrawdownType.TRAILING,
