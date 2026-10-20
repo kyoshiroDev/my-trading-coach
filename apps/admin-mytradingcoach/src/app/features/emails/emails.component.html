@@ -20,6 +20,7 @@
             @if (c.requiresConsent) {
               <span class="camp-target camp-consent">{{ c.withConsent }} avec consentement · {{ c.withoutConsent }} sans (non contactés)</span>
             }
+            <span class="camp-target camp-consent">{{ c.sentTotal }} envoi{{ c.sentTotal !== 1 ? 's' : '' }} au total@if (c.connectedWithin3d; as r) { · {{ r.connected }} / {{ r.sent }} ont connecté Tradovate sous 3 j }@if (c.kind === 'service') { · <span class="badge-auto">service</span> }</span>
           </div>
           <div class="camp-right">
             <span class="camp-when">{{ c.lastSent ? ('Dernier · ' + (c.lastSent | date:'dd/MM HH:mm') + ' · ' + c.lastCount + ' envoyés') : 'Jamais envoyé' }}</span>

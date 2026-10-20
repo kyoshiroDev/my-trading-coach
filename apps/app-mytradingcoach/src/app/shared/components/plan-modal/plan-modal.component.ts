@@ -25,7 +25,7 @@ import { BillingApi, type CheckoutPlan, type PartnerValidation } from '@app/core
 import { OffersStore } from '@app/core/stores/offers.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { DialogDirective, ErrorStateComponent } from '@mtc/front-ui';
-import { FOUNDER_INELIGIBLE_MESSAGES, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
+import { FOUNDER_INELIGIBLE_MESSAGES, PLAN_BENEFITS, founderSeatsLabel, type FounderIneligibility } from '@mtc/shared';
 
 type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
@@ -55,6 +55,8 @@ export class PlanModalComponent implements OnInit {
   readonly preset = input<OfferIntent | null>(null);
 
   protected readonly PRICING = PRICING;
+  /** Avantages Premium : liste partagée avec la landing et les e-mails (`@mtc/shared`). */
+  protected readonly premiumBenefits = PLAN_BENEFITS.premium;
 
   // Icônes lucide, comme partout ailleurs dans l'app : les glyphes texte (✕ ⚡ ✓) ne
   // suivaient ni la graisse ni l'alignement du reste de l'interface.

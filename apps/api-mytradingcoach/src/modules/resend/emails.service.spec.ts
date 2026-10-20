@@ -7,12 +7,21 @@ function setup(count = 1) {
 }
 
 describe('EmailsService.unsubscribe', () => {
-  it('retire le consentement marketing du user porteur du token', async () => {
+  it('retire le consentement marketing ET coupe les e-mails de service du user porteur du token', async () => {
     const { service, prisma } = setup(1);
     await expect(service.unsubscribe('tok-123')).resolves.toBe(1);
     expect(prisma.user.updateMany).toHaveBeenCalledWith({
       where: { unsubToken: 'tok-123' },
-      data: { marketingConsent: false, marketingConsentAt: null },
+      data: { marketingConsent: false, marketingConsentAt: null, serviceEmailsOptOutAt: expect.any(Date) },
+    });
+  });
+
+  it('portée service : coupe seulement les conseils de prise en main, garde le consentement marketing', async () => {
+    const { service, prisma } = setup(1);
+    await expect(service.unsubscribe('tok-123', 'service')).resolves.toBe(1);
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { unsubToken: 'tok-123' },
+      data: { serviceEmailsOptOutAt: expect.any(Date) },
     });
   });
 

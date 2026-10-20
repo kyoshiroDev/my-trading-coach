@@ -25,7 +25,7 @@ export function acquisitionQueryParams(utm: AcquisitionUtm): Record<keyof Acquis
   };
 }
 
-/** Libellé court « instagram · dm · louis » (champ vide → « - »). */
+/** Libellé court « instagram · dm · exemple » (champ vide → « - »). */
 export function acquisitionLabel(utm: Partial<AcquisitionUtm>): string {
   return [utm.source, utm.medium, utm.campaign].map((v) => v ?? UTM_NONE).join(' · ');
 }

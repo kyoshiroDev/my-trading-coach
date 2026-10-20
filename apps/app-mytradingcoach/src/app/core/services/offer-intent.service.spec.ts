@@ -15,6 +15,15 @@ describe('intentFromSearch — lien d’arrivée (#525)', () => {
     expect(intentFromSearch('?plan=gold')).toBeNull();
   });
 
+  it('liens des e-mails d’onboarding (UTM en plus) : fondateur ou Premium, cta=email', () => {
+    expect(
+      intentFromSearch('?plan=founder&cta=email&utm_source=email&utm_medium=onboarding&utm_campaign=founder_followup'),
+    ).toEqual({ plan: 'founder', promo: null, cta: 'email' });
+    expect(
+      intentFromSearch('?plan=premium&cta=email&utm_source=email&utm_medium=onboarding&utm_campaign=first_week_recap'),
+    ).toEqual({ plan: 'premium', promo: null, cta: 'email' });
+  });
+
   it('valeurs hors format ignorées (code ou cta injectés)', () => {
     expect(intentFromSearch('?plan=founder&promo=<script>&cta=../x')).toEqual({ plan: 'founder', promo: null, cta: null });
   });

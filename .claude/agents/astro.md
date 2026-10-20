@@ -82,10 +82,11 @@ src/
 - **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
   `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
   Nouveau CTA d'inscription → ajouter les deux attributs.
-- **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
-  bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
-  `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
-  dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
+- **Tarifs (`Pricing.astro`, `PfPricing.astro`)** : les cartes Gratuit / Fondateur / Premium lisent
+  `PLAN_BENEFITS` (`@mtc/shared`, liste partagée avec l'app et les e-mails, cf. plans.md « Avantages
+  affichés ») ; jamais de liste d'avantages écrite dans la carte. Le bloc « Ce que Premium ajoute au
+  Gratuit » de la home garde un détail propre (`premiumDetails`) : chaque ligne = fonction livrée ET
+  réservée au Premium. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
   arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
 - **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
@@ -122,7 +123,7 @@ src/
     passe son ancre (`/prop-firm` → `#tarifs`), sinon le bandeau ferait sortir le visiteur de la page.
   - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
     → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
-    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `premiumPlus` que la
+    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `PLAN_BENEFITS.premium` que la
     carte Premium (« Tout Premium inclus »). Prix : « ou 290 €/an · au lieu de 49 €/mois ».
   - **Arrivée depuis la pub** (`/?utm_…#pricing`, campagne Instagram du 2026-10) : en mobile
     (≤ 1024 px), offre ouverte au build, `#pricing` ou `#fondateur` → la page s'arrête sur la carte
@@ -255,6 +256,10 @@ Règles :
 - **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
   logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
+- **Plateforme uniquement, jamais le courtage** (Affiliate Success Playbook NinjaTrader) : l'affiliation
+  porte sur l'inscription à la **plateforme** NinjaTrader. Jamais « ouvrir un compte » (de courtage),
+  frais de courtage, commissions de trading ni marges en lien avec NinjaTrader (corrigé le 2026-10-19
+  dans la divulgation d'affiliation de `disclaimer.astro`).
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
@@ -309,6 +314,18 @@ Règles :
   keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
   `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
   d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Engagement de `/` et `/prop-firm`** (19/10/2026, pour comparer les deux pages) : module
+  `src/lib/engagement.ts` (script bundlé de `Base.astro`, différé, ~2 ko) → `POST /public/funnel` par la
+  fonction d'envoi du script d'acquisition, exposée en `window.mtcFunnel` (même origine UTM, `inApp`,
+  sendBeacon text/plain). Absente en mode interne et pendant la redirection de la pub → rien envoyé.
+  Étapes `scroll_depth` (detail 25/50/75/100, `scrollDepthPercent` de `@mtc/shared`, à < 4 px du bas = 100),
+  `time_on_page` (10/30/60 s **onglet visible**, minuteur suspendu sur `visibilitychange`), `rules_use`
+  (1re utilisation du sélecteur : `click` sur un `button` ou `change` d'un `select` dans un conteneur
+  **`[data-track-rules]`** : carte de `PropFirmLive`, carrousel `PropFirmMarquee`, `PfRules`), avec
+  `path`. **Un envoi par seuil et par chargement de page** (pas par session : un rechargement recompte).
+  Écouteur de défilement passif, calcul une fois par image, retiré après 100 %. Nouvelle page à mesurer
+  → `LANDING_ENGAGEMENT_PAGES` (shared) + filtre `path IN (…)` de `LandingEngagementService`. Nouveau
+  sélecteur → poser `data-track-rules`. Résultat : carte « Engagement landing » de l'admin `/acquisition`.
 - **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
   réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
   AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
@@ -326,7 +343,8 @@ Règles :
   `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
   GA4 n'est pas concerné (il dépend du consentement).
 - Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
-  aussi les étapes de l'inscription et le booléen navigateur intégré. Toute nouvelle mesure → l'y ajouter.
+  aussi les étapes de l'inscription, le booléen navigateur intégré et l'engagement de l'accueil et de
+  /prop-firm (défilement, temps, sélecteur). Toute nouvelle mesure → l'y ajouter.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 

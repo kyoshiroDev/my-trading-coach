@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -116,7 +116,7 @@ export interface CampaignMeta {
   emoji: string;
   desc: string;
   targetDesc: string;
-  kind: 'transactional' | 'marketing';
+  kind: 'transactional' | 'marketing' | 'service'; // service = aide à la prise en main, sans consentement
   automated: boolean;
   requiresConsent: boolean;
   lastSent?: string | null;
@@ -129,6 +129,9 @@ export interface CampaignMeta {
   requiresTest: boolean; // envoi réel bloqué tant qu'aucun test n'a été fait sur le contenu actuel
   testedCurrent: boolean;
   testEmail: string; // adresse des envois test (configuration serveur)
+  sentTotal: number; // envois réels depuis toujours
+  /** connect_tradovate : envois de plus de 3 j suivis d'une connexion broker sous 3 j. */
+  connectedWithin3d: { connected: number; sent: number } | null;
 }
 
 export interface AdminAmbassador {
@@ -251,6 +254,7 @@ export type AcquisitionData = AdminAcquisitionData;
 export type FunnelData = AdminFunnelData;
 export type SignupFunnelData = AdminSignupFunnelData;
 export type SignupMethodsData = AdminSignupMethodsData;
+export type LandingEngagementData = AdminLandingEngagementData;
 
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
@@ -317,6 +321,7 @@ export class AdminApi {
   funnel()              { return this.http.get<{ data: FunnelData }>(`${this.adminBase}/funnel`); }
   signupMethods()       { return this.http.get<{ data: SignupMethodsData }>(`${this.adminBase}/signup-methods`); }
   signupFunnel(days: 7 | 30) { return this.http.get<{ data: SignupFunnelData }>(`${this.adminBase}/signup-funnel`, { params: { days } }); }
+  landingEngagement(days: 7 | 30) { return this.http.get<{ data: LandingEngagementData }>(`${this.adminBase}/landing-engagement`, { params: { days } }); }
   stripeReconcile()     { return this.http.get<{ data: StripeReconcileData }>(`${this.adminBase}/stripe/reconcile`); }
   referralOverview()    { return this.http.get<{ data: ReferralAdminOverview }>(`${this.adminBase}/referral/overview`); }
 

@@ -1,3 +1,9 @@
+import {
+  LANDING_ENGAGEMENT_STEPS,
+  LANDING_SCROLL_THRESHOLDS,
+  LANDING_TIME_THRESHOLDS,
+} from './landing-engagement';
+
 /**
  * Parcours d'inscription par source (landing → app → paiement), mesuré SANS cookie ni donnée
  * personnelle : uniquement des compteurs agrégés (`FunnelEventDaily`). Listes FERMÉES partagées par
@@ -18,6 +24,10 @@ export const SIGNUP_FUNNEL_STEPS = [
 ] as const;
 export type SignupFunnelStep = (typeof SIGNUP_FUNNEL_STEPS)[number];
 
+/** Toutes les étapes acceptées par `POST /public/funnel` : inscription + engagement landing. */
+export const FUNNEL_BEACON_STEPS = [...SIGNUP_FUNNEL_STEPS, ...LANDING_ENGAGEMENT_STEPS] as const;
+export type FunnelBeaconStep = (typeof FUNNEL_BEACON_STEPS)[number];
+
 /** Carte ou bouton d'inscription cliqué sur la landing (`data-cta`). */
 export const SIGNUP_FUNNEL_CTAS = ['founder', 'free', 'premium'] as const;
 export type SignupFunnelCta = (typeof SIGNUP_FUNNEL_CTAS)[number];
@@ -29,17 +39,19 @@ export const SIGNUP_FUNNEL_CHECKOUT_PLANS = ['founder', 'premium'] as const;
 export const SIGNUP_FUNNEL_ERRORS = ['email_taken', 'validation', 'network', 'server', 'other'] as const;
 export type SignupFunnelError = (typeof SIGNUP_FUNNEL_ERRORS)[number];
 
-const DETAILS: Partial<Record<SignupFunnelStep, readonly string[]>> = {
+const DETAILS: Partial<Record<FunnelBeaconStep, readonly string[]>> = {
   cta_click: SIGNUP_FUNNEL_CTAS,
   checkout_redirect: SIGNUP_FUNNEL_CHECKOUT_PLANS,
   register_error: SIGNUP_FUNNEL_ERRORS,
+  scroll_depth: LANDING_SCROLL_THRESHOLDS.map(String),
+  time_on_page: LANDING_TIME_THRESHOLDS.map(String),
 };
 
 /**
  * `detail` autorisé pour une étape : valeur de sa liste blanche, sinon `''`. Une erreur
  * d'inscription sans code reconnu devient `other` (elle reste comptée comme erreur).
  */
-export function signupFunnelDetail(step: SignupFunnelStep, detail: string | null | undefined): string {
+export function signupFunnelDetail(step: FunnelBeaconStep, detail: string | null | undefined): string {
   const allowed = DETAILS[step];
   if (!allowed) return '';
   const value = (detail ?? '').trim().toLowerCase();

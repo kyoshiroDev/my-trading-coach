@@ -2,15 +2,26 @@
 // Chaque template marketing DOIT inclure marketingFooter(unsubUrl) en pied.
 // Réutilise les helpers de style partagés (emailWrapper/card/cta/divider/FONT).
 
-import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, founderSeatsLabel } from '@mtc/shared';
+import {
+  FOUNDER_OFFER,
+  FOUNDER_REFUND_DAYS,
+  PREMIUM_PRICE_EUR,
+  TRIAL_PERIOD_DAYS,
+  founderSeatsLabel,
+} from '@mtc/shared';
 import {
   ACCENT,
   FONT,
+  RISK_NOTICE,
   card,
   cta,
   divider,
   emailWrapper,
+  firstNameOf,
   marketingFooter,
+  onboardingLink,
+  serviceFooter,
+  textLink,
 } from '../templates';
 
 import { GREG_FROM, GREG_LOGO_ATTACHMENT, GREG_REPLY_TO, gregLetter } from './greg-letter';
@@ -31,8 +42,116 @@ export interface CampaignBuildCtx {
   userName: string;
   appUrl: string;
   unsubUrl: string;
-  /** Places fondateur restantes, calculées au moment de l'envoi (campagne founder_launch). */
+  /** Places fondateur restantes, calculées au moment de l'envoi (founder_launch, founder_followup). */
   seatsLeft?: number;
+  /** Total des places fondateur (`seatsTotal` de l'API), sinon `FOUNDER_OFFER.seats`. */
+  seatsTotal?: number;
+  /** Nombre de prop firms du catalogue, lu au moment de l'envoi (prop_firm_rules). */
+  propFirmCount?: number;
+  /** Bilan des 7 premiers jours depuis l'inscription (first_week_recap), P&L net déjà formaté. */
+  firstWeek?: { trades: number; days: number; pnl: string };
+}
+
+const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;"`;
+const SMALL = `style="${FONT}font-size:13px;color:#8fa3bf;margin:16px 0 0 0;line-height:1.6;"`;
+const hello = (userName: string) => {
+  const firstName = firstNameOf(userName);
+  return firstName ? `Bonjour ${firstName},` : 'Bonjour,';
+};
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** « 1 mois offert » tant que l'essai fait 30 jours, sinon « N jours offerts » (valeur de @mtc/shared). */
+const trialLabel = () => (TRIAL_PERIOD_DAYS === 30 ? '1 mois offert' : `${TRIAL_PERIOD_DAYS} jours offerts`);
+
+function heading(eyebrow: string, title: string): string {
+  return `<p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">${eyebrow}</p>
+      <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">${title}</h1>`;
+}
+
+// ── Suite d'onboarding (oct. 2026) ──────────────────────────────────────────
+// connect_tradovate et prop_firm_rules : e-mails de SERVICE (aide à utiliser le compte gratuit,
+// intérêt légitime) → aucune mention d'offre payante, pied `serviceFooter`. first_week_recap et
+// founder_followup : marketing (consentement), pied `marketingFooter` + mention de risque.
+// Un seul bouton par e-mail, liens UTM email / onboarding / <clé>.
+
+export function connectTradovateTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx): CampaignContent {
+  const link = (path: string) => onboardingLink(appUrl, path, 'connect_tradovate');
+  const content =
+    card(`
+      ${heading('Étape 1', 'Connecte Tradovate en 2 minutes')}
+      <p ${P}>${hello(userName)} ton compte est créé. L'étape qui change tout : relier ton compte Tradovate.
+        Tes trades arrivent automatiquement, et tu vois pendant ta séance combien il te reste avant ta limite.</p>
+      <p ${P}>La connexion passe par la page officielle Tradovate / NinjaTrader, en lecture seule :
+        MyTradingCoach ne peut passer aucun ordre.</p>
+      ${cta('Connecter mon compte Tradovate →', link('/accounts'))}
+      <p ${SMALL}>Pas sur Tradovate ? ${textLink('Importe ton historique en CSV', link('/journal'))}.</p>
+    `) + serviceFooter(unsubUrl);
+
+  return {
+    subject: 'Connecte Tradovate en 2 minutes',
+    html: emailWrapper(content, 'Tes trades arrivent seuls, en lecture seule.', ACCENT.brand, unsubUrl),
+  };
+}
+
+export function propFirmRulesTemplate({ userName, appUrl, unsubUrl, propFirmCount }: CampaignBuildCtx): CampaignContent {
+  const firms = propFirmCount
+    ? ` ${plural(propFirmCount, 'prop firm est déjà intégrée', 'prop firms sont déjà intégrées')}.`
+    : '';
+  const content =
+    card(`
+      ${heading('Tes règles', 'Ta marge restante, avec les vraies règles de ta firme')}
+      <p ${P}>${hello(userName)} chaque firme a ses règles : limite journalière, drawdown suiveur ou en fin de
+        journée, objectif.</p>
+      <p ${P}>Choisis ta firme et ton plan, et MyTradingCoach calcule ta marge restante avec les règles exactes,
+        relevées et datées.${firms}</p>
+      ${cta('Choisir ma firme et mon plan →', onboardingLink(appUrl, '/accounts', 'prop_firm_rules'))}
+    `) + serviceFooter(unsubUrl);
+
+  return {
+    subject: 'Ta marge restante, avec les vraies règles de ta firme',
+    html: emailWrapper(content, 'Limite journalière, drawdown, objectif : les règles exactes de ton plan.', ACCENT.brand, unsubUrl),
+  };
+}
+
+export function firstWeekRecapTemplate({ userName, appUrl, unsubUrl, firstWeek }: CampaignBuildCtx): CampaignContent {
+  const week = firstWeek ?? { trades: 0, days: 0, pnl: '0.00' };
+  const trades = plural(week.trades, 'trade', 'trades');
+  const days = plural(week.days, 'jour de trading', 'jours de trading');
+  const content =
+    card(`
+      ${heading('Ta première semaine', 'Ta première semaine sur MyTradingCoach')}
+      <p ${P}>${hello(userName)} cette semaine : ${trades}, ${days}, P&amp;L ${week.pnl}.</p>
+      <p ${P}>Avec Premium, tu reçois des alertes avant d'atteindre ta limite, la détection des reprises de
+        position après une perte, et un débrief de ta semaine rédigé par le coach IA.</p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;">${trialLabel()} sur l'abonnement mensuel, carte requise, annulable en un clic.</p>
+      ${cta('Voir ce que Premium ajoute →', onboardingLink(appUrl, '/dashboard', 'first_week_recap', { plan: 'premium', cta: 'email' }))}
+    `) + RISK_NOTICE + marketingFooter(unsubUrl);
+
+  return {
+    subject: 'Ta première semaine sur MyTradingCoach',
+    html: emailWrapper(content, `${trades}, ${days} : ton bilan de la semaine.`, ACCENT.brand, unsubUrl),
+  };
+}
+
+export function founderFollowupTemplate({ userName, appUrl, unsubUrl, seatsLeft, seatsTotal }: CampaignBuildCtx): CampaignContent {
+  const total = seatsTotal ?? FOUNDER_OFFER.seats;
+  const { priceMonthlyEur: m, priceAnnualEur: y } = FOUNDER_OFFER;
+  // Jamais à zéro : la campagne ne part pas quand l'offre ne vend plus (loadContext).
+  const seatsText = founderSeatsLabel(seatsLeft ?? total, total) ?? founderSeatsLabel(total, total);
+  const content =
+    card(`
+      ${heading('Offre fondateur', `${m}&nbsp;€/mois à vie, pour les ${total} premiers`)}
+      <p ${P}>${hello(userName)} MyTradingCoach a ouvert une offre pour ses premiers utilisateurs : Premium à
+        <strong style="color:#e2eaf5;">${m}&nbsp;€/mois à vie</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
+      <p ${P}><strong style="color:#e2eaf5;">${seatsText}</strong>.</p>
+      <p ${P}>Pas d'essai sur cette offre : satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
+      ${cta('Devenir fondateur →', onboardingLink(appUrl, '/dashboard', 'founder_followup', { plan: 'founder', cta: 'email' }))}
+    `, 'rgba(139,92,246,.4)') + RISK_NOTICE + marketingFooter(unsubUrl);
+
+  return {
+    subject: `${m} €/mois à vie, pour les ${total} premiers`,
+    html: emailWrapper(content, `Premium à ${m} €/mois à vie au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
+  };
 }
 
 // ── Premier trade (J+1) ─────────────────────────────────────────────────────
@@ -64,12 +183,12 @@ export function firstTradeTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
         </div>
       </div>
       ${divider}
-      ${cta('Enregistrer mon premier trade →', `${appUrl}/trades`)}
+      ${cta('Enregistrer mon premier trade →', `${appUrl}/journal`)}
     `) + marketingFooter(unsubUrl);
 
   return {
     subject: '📈 Enregistre ton premier trade en 30 secondes',
-    html: emailWrapper(content, 'Ta progression commence par ton premier trade journalisé.'),
+    html: emailWrapper(content, 'Ta progression commence par ton premier trade journalisé.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -85,15 +204,15 @@ export function profileTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'}, tu n'as pas encore renseigné ton profil stratégie.
         En le complétant, tu permets à MyTradingCoach de vraiment te connaître : ton style,
-        ta stratégie (ICT, SMC, Price Action…), tes sessions et ta fréquence de trades.
+        ta stratégie, tes sessions et ta fréquence de trades.
       </p>
       ${divider}
-      ${cta('Compléter mon profil →', `${appUrl}/parametres`)}
+      ${cta('Compléter mon profil →', `${appUrl}/profil`)}
     `) + marketingFooter(unsubUrl);
 
   return {
     subject: '🎯 Personnalise ton coach en 5 minutes',
-    html: emailWrapper(content, 'Un profil complet = un coaching vraiment adapté.'),
+    html: emailWrapper(content, 'Un profil complet = un coaching vraiment adapté.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -107,8 +226,8 @@ export function discordTemplate({ userName, unsubUrl }: CampaignBuildCtx): Campa
         Rejoins les traders sur Discord 💬
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, des traders ICT, SMC et Price Action échangent chaque jour
-        leurs setups et s'entraident. C'est gratuit et ça prend 2 minutes.
+        Bonjour ${userName || 'Trader'}, des traders échangent chaque jour leurs setups et s'entraident.
+        C'est gratuit et ça prend 2 minutes.
       </p>
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
         📌 Tape <code style="background:#1e2533;padding:2px 6px;border-radius:4px;color:#00d4aa;font-family:monospace;">/verify</code> dans <strong>#👋-bienvenue</strong> pour obtenir ton rôle.
@@ -118,7 +237,7 @@ export function discordTemplate({ userName, unsubUrl }: CampaignBuildCtx): Campa
 
   return {
     subject: '💬 Rejoins la communauté Discord MyTradingCoach',
-    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.', ACCENT.discord),
+    html: emailWrapper(content, 'Échange tes setups avec des traders comme toi.', ACCENT.discord, unsubUrl),
   };
 }
 
@@ -133,18 +252,19 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
       </h1>
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">
         Bonjour ${userName || 'Trader'}, tu utilises MyTradingCoach activement. Va plus loin avec
-        le Coach IA, le Weekly Debrief automatique, les analytics avancés et l'import CSV.
+        les alertes avant ta limite de perte, l'anti-tilt en direct, le débrief de ta semaine par le
+        coach IA et les analyses avancées.
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
         1 mois offert · Carte requise · Annulable en un clic.
       </p>
       ${divider}
-      ${cta('Essayer Premium →', `${appUrl}/parametres?upgrade=1`)}
+      ${cta('Essayer Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
     subject: '⚡ Passe à Premium · 1 mois offert',
-    html: emailWrapper(content, 'Coach IA, Weekly Debrief, analytics avancés.'),
+    html: emailWrapper(content, 'Alertes avant ta limite, anti-tilt, débrief IA de ta semaine.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -168,7 +288,7 @@ export function reengagementTemplate({ userName, unsubUrl }: CampaignBuildCtx): 
 
   return {
     subject: '📖 Un retour sur MyTradingCoach ?',
-    html: emailWrapper(content, 'Ton avis nous aide à améliorer l\'app.'),
+    html: emailWrapper(content, 'Ton avis nous aide à améliorer l\'app.', ACCENT.brand, unsubUrl),
   };
 }
 
@@ -196,7 +316,7 @@ export function announcementTemplate(
 
   return {
     subject: override?.subject?.trim() || '📣 Nouveauté MyTradingCoach',
-    html: emailWrapper(content),
+    html: emailWrapper(content, '', ACCENT.brand, unsubUrl),
   };
 }
 

@@ -254,11 +254,12 @@
   list-style: none;
   padding: 0;
   margin: 0 0 14px;
+  /* Une colonne : les avantages (PLAN_BENEFITS) sont des phrases, pas des mots-clés. */
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 10px;
+  gap: 5px;
 }
-.plan-col-feats li { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 4px; }
+.plan-col-feats li { font-size: 11.5px; line-height: 1.45; color: var(--text-2); display: flex; align-items: flex-start; gap: 6px; }
+.plan-col-feats li svg { flex-shrink: 0; margin-top: 2px; }
 
 /* ─── Code partenaire ─── */
 .partner-field { margin-bottom: 14px; }

@@ -8,7 +8,7 @@ describe('acquisition-filter', () => {
   });
 
   it('libellé court', () => {
-    expect(acquisitionLabel({ source: 'instagram', medium: 'dm', campaign: 'louis' })).toBe('instagram · dm · louis');
+    expect(acquisitionLabel({ source: 'instagram', medium: 'dm', campaign: 'exemple' })).toBe('instagram · dm · exemple');
     expect(acquisitionLabel({ source: null, medium: null, campaign: null })).toBe('- · - · -');
   });
 });

@@ -1,20 +1,42 @@
 .consent-check {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: 10px;
   margin: 4px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  /* Texte de phrase, pas libellé de champ : police du corps (les label sont en mono). */
+  font-family: var(--font-body);
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-2);
   cursor: pointer;
+  transition: border-color 0.15s;
+}
+.consent-check:hover,
+.consent-check:has(input:checked) {
+  border-color: var(--border-hover);
 }
 .consent-check input {
   margin-top: 2px;
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
   flex-shrink: 0;
   accent-color: var(--blue);
   cursor: pointer;
+}
+.consent-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.consent-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-3);
 }
 
 .auth-page {

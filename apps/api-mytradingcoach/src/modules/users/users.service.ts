@@ -518,11 +518,21 @@ export class UsersService {
     // Plus de devise globale ni de taux : `currency` est ignoré s'il arrive encore.
     const prefs = { ...dto };
     delete prefs.currency;
-    // Horodate le consentement marketing quand il change (preuve RGPD).
-    const consentAt =
-      dto.marketingConsent === undefined
-        ? {}
-        : { marketingConsentAt: dto.marketingConsent ? new Date() : null };
+    // Consentement marketing : horodaté quand il CHANGE seulement (preuve RGPD ; le profil le renvoie
+    // à chaque enregistrement). Le réglage (« Conseils, nouveautés et offres ») couvre aussi les
+    // conseils de prise en main : l'activer les rétablit, le couper les arrête.
+    let consentAt = {};
+    if (dto.marketingConsent !== undefined) {
+      const current = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { marketingConsent: true },
+      });
+      if (current?.marketingConsent !== dto.marketingConsent) {
+        consentAt = dto.marketingConsent
+          ? { marketingConsentAt: new Date(), serviceEmailsOptOutAt: null }
+          : { marketingConsentAt: null, serviceEmailsOptOutAt: new Date() };
+      }
+    }
     return this.prisma.user.update({
       where: { id: userId },
       data: { ...prefs, ...consentAt },

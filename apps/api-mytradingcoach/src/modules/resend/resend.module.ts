@@ -3,7 +3,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { ResendService } from './resend.service';
 import { ResendCron } from './resend.cron';
 import { EmailDispatchService } from './email-dispatch.service';
-import { AutoCampaignsCron } from './crons/auto-campaigns.cron';
 import { EmailsController } from './emails.controller';
 import { EmailsService } from './emails.service';
 import { EmailProcessor } from './email.processor';
@@ -18,7 +17,6 @@ import { runsQueueProcessors } from '../../config/app-role';
     ResendService,
     ResendCron,
     EmailDispatchService,
-    AutoCampaignsCron,
     EmailsService,
     ...(runsQueueProcessors() ? [EmailProcessor] : []),
   ],

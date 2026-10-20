@@ -425,7 +425,10 @@ et `accounts.component.css` :
 - repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
   chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une
-  ligne ouverte à la fois), jamais derrière un scroll horizontal.
+  ligne ouverte à la fois), jamais derrière un scroll horizontal ;
+- la bascule en repli suit la largeur du **tableau** (`container: acct-table / inline-size` +
+  `@container acct-table (max-width: 980px)`), pas celle de la fenêtre : la barre latérale prend
+  70 à 216 px, et un seuil en `@media` laissait les colonnes se chevaucher (Mes comptes à 1100 px).
 
 ⚠️ **Deux pièges de sélecteurs**, tous deux rencontrés en vrai sur « Mes comptes » :
 - `:nth-of-type()` compte les **éléments** (tous les `div`), pas les classes : `.cell.num:nth-of-type(2)`
@@ -1063,6 +1066,13 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   source/medium/campagne, ligne Total, taux = étape / étape précédente (`-` si la précédente vaut 0),
   erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
   Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
+
+- **Carte « Engagement landing »** (19/10/2026, sous le parcours d'inscription) :
+  `GET /admin/landing-engagement?days=7|30` (`AdminApi.landingEngagement`), onglets période propres.
+  Logique pure testée dans `features/acquisition/landing-engagement.util.ts` : une section par page
+  (Accueil `/`, Prop firm `/prop-firm`, même vide) avec ligne Total puis lignes source · medium ·
+  campagne. Colonnes `ENGAGEMENT_COLUMNS` : Vues · 25/50/75/100 % · 10/30/60 s · Règles, taux = valeur
+  / vues de la ligne (pas l'étape précédente). Mêmes classes que le parcours (`signup-*`).
 
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 

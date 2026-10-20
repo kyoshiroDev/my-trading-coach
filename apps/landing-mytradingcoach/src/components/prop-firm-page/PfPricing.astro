@@ -6,9 +6,9 @@
 // « Recommandé » quand la carte Fondateur n'est pas là. Tous les montants viennent de @mtc/shared.
 import { APP_URL, FEATURES } from '../../config';
 import {
-  ACCOUNT_LIMITS,
   FOUNDER_OFFER,
   FOUNDER_REFUND_DAYS,
+  PLAN_BENEFITS,
   PREMIUM_ANNUAL_SAVINGS_EUR,
   PREMIUM_PRICE_EUR,
 } from '@mtc/shared';
@@ -16,19 +16,10 @@ import {
 const { founderOpen = false } = Astro.props;
 const FounderWrap = founderOpen ? 'div' : 'template';
 
-// Listes courtes (la home détaille tout) : chaque ligne existe dans la grille de plans.md.
-const free = [
-  'Synchro Tradovate automatique',
-  `Suivi prop firm en direct, ${ACCOUNT_LIMITS.free} compte`,
-  'Journal et trades illimités',
-  'Préparation et débrief de séance',
-];
-const premium = [
-  'Alertes avant la limite de perte',
-  'Anti-tilt pendant la séance',
-  'Coach IA et débrief de la semaine',
-  ...(FEATURES.multiAccounts ? ['Comptes illimités'] : []),
-];
+// Listes courtes PARTAGÉES avec la home, l'app et les e-mails (PLAN_BENEFITS, @mtc/shared).
+// Comptes illimités affichés seulement quand le multi-comptes est publié.
+const free = PLAN_BENEFITS.free.map((b) => b.text);
+const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATURES.multiAccounts).map((b) => b.text);
 ---
 
 <section class:list={['pfp-pricing', { 'has-founder': founderOpen }]} id="tarifs">

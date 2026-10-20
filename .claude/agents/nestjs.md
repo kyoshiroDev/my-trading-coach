@@ -80,8 +80,9 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
-POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription { step, source?, medium?, campaign?, inApp?, detail? }
+POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
+GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
@@ -1462,7 +1463,7 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   absent = ignoré, `-` (`UTM_NONE`, `@mtc/shared` acquisition-filter) = non renseigné (null).
   `ADMIN_USER_SELECT` renvoie les 3 champs ; la fiche (`identity.acquisition`) aussi. Le récap
   quotidien des inscriptions (`signup-digest.cron.ts`) ajoute la provenance à chaque ligne
-  (`instagram · dm · louis`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
+  (`instagram · dm · exemple`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
   `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
   campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,
@@ -1490,6 +1491,17 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes. Depuis oct. 2026,
   l'app envoie aussi TOUTES ses étapes ainsi (`register_view` dès l'arrivée par un script inline
   d'`index.html`, puis `SignupFunnelService`) : plus aucun appel JSON sur cette route.
+- **Engagement landing** (19/10/2026) : la même route accepte `FUNNEL_BEACON_STEPS` = étapes
+  d'inscription + `LANDING_ENGAGEMENT_STEPS` (`scroll_depth` detail `25|50|75|100`, `time_on_page`
+  detail `10|30|60`, `rules_use` sans detail) et `path?` (64 car. max). Le service ramène `path` à
+  `LANDING_ENGAGEMENT_PAGES` (`/`, `/prop-firm`, `/` final retiré) : engagement hors page mesurée ou
+  sans seuil reconnu → rien écrit ; étape d'inscription → `path = ''` quel que soit le corps. Le
+  `ON CONFLICT` liste les 8 colonnes de l'unique, `path` compris.
+- `GET /admin/landing-engagement` (`LandingEngagementService`, fusion pure `landing-engagement.util.ts`,
+  contrat `AdminLandingEngagementData`) : pages vues (`LandingVisitDaily.pageviews`, base des taux)
+  + événements d'engagement par (page, source, medium, campagne), navigateurs confondus ; `scroll` /
+  `time` = tableaux dans l'ordre des seuils partagés. Tri page puis vues, 100 lignes max. Le
+  parcours d'inscription (`buildSignupFunnelRows`) ignore ces étapes (hors `SIGNUP_FUNNEL_STEPS`).
 - CORS (`main.ts`) : `maxAge: 600` (`Access-Control-Max-Age`) : le navigateur garde 10 min la réponse
   à la requête préalable au lieu d'en refaire une avant chaque appel JSON de l'app (un aller-retour en
   4G lente). Les origines autorisées restent `CORS_ORIGINS`.
@@ -1855,6 +1867,56 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+
+## Suite d'e-mails d'onboarding (oct. 2026, NinjaTrader mi-novembre)
+
+Moteur unique : registre `resend/campaigns/campaign-registry.ts`, `EmailDispatchService` (seul point de
+décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `EmailSend`.
+- **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
+  (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
+  propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
+  (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
+  le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Plafond** : 1 e-mail marketing OU service / `MARKETING_COOLDOWN_DAYS` (4) par personne, à
+  **1 h près** (`CAP_TOLERANCE_MS`) : le cron examine les campagnes par priorité, un e-mail plus
+  prioritaire que le précédent est vu quelques secondes avant 4 j pile et glissait d'un jour. Une
+  seule campagne par personne et par passage.
+- **Suite** (priorité · type · fenêtre d'âge) : `connect_tradovate` 100 · service · J1-J14 (aucune
+  connexion broker CONNECTED ni trade) ; `prop_firm_rules` 90 · service · J4-J21 (compte ACTIVE
+  EVALUATION/FUNDED sans plan, `planLinkChoice` null ou LATER) ; `first_week_recap` 80 · marketing ·
+  J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
+  (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
+  vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
+  transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
+- **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET
+  haute) : jamais d'envoi en masse vers d'anciens inscrits. Les 4 nouvelles exigent en plus
+  `createdAt >= ONBOARDING_SEQUENCE_START` (date ISO, env de l'API) ; absente ou invalide → elles ne
+  ciblent personne et le cron l'écrit en `warn` à chaque passage.
+- **Données à l'envoi** : `loadContext(deps, userIds, now)` sur la campagne, appelé UNE fois par page
+  de 500 autorisés (cron et envoi admin) ; un id absent de la Map = pas d'envoi (pas de trade J0-J7,
+  offre fermée). `loadFirstWeek` = une requête SQL groupée (trades clôturés, jours de Paris, P&L net
+  arrondi comme les stats, devises mélangées → montant sans symbole). Le cron est dans
+  `AutoCampaignsModule` (importe `FounderOfferModule`, qui importe déjà `ResendModule`).
+- **Liens** : `onboardingLink(appUrl, path, clé)` → `utm_source=email&utm_medium=onboarding&utm_campaign=<clé>`
+  (bienvenue = `welcome`). Connexion Tradovate et firme → `/accounts` ; CSV → `/journal` ; Premium →
+  `/dashboard?plan=premium&cta=email` ; fondateur → `/dashboard?plan=founder&cta=email` (les
+  destinataires ont un compte : pas `/register` comme la landing). Prix, essai, places, délai de
+  remboursement : `@mtc/shared` uniquement (un test lit le source et refuse tout montant littéral).
+- **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
+  `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
+  requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
+- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
+  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
+  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+  `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
+  route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
+- Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
+  `onboarding-templates.spec.ts` (règles d'écriture), `onboarding-sequence.simulation.spec.ts` (VRAI
+  cron + dispatch sur 21 jours, 6 profils : modifier une priorité ou une fenêtre = mettre à jour le
+  calendrier attendu).
 
 ## Offre fondateur (#525, 2026-10-07)
 

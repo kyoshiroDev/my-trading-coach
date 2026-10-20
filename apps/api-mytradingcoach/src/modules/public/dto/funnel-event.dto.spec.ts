@@ -11,6 +11,14 @@ describe('FunnelEventDto', () => {
     }
   });
 
+  it("accepte les étapes d'engagement et borne la page", async () => {
+    for (const step of ['scroll_depth', 'time_on_page', 'rules_use']) {
+      expect(await check({ step, path: '/prop-firm' })).toHaveLength(0);
+    }
+    expect(await check({ step: 'scroll_depth', path: '/'.repeat(65) })).not.toHaveLength(0);
+    expect(await check({ step: 'scroll_depth', path: 42 })).not.toHaveLength(0);
+  });
+
   it("refuse landing_view (compté par /public/visit) et une étape inconnue", async () => {
     expect(await check({ step: 'landing_view' })).not.toHaveLength(0);
     expect(await check({ step: 'purchase' })).not.toHaveLength(0);

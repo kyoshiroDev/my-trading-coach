@@ -479,6 +479,9 @@ STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_t
 # Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
 MAIL_FROM=noreply@mytradingcoach.app
+ONBOARDING_SEQUENCE_START=2026-11-0XT00:00:00+01:00  # suite d'onboarding : seuls les inscrits APRÈS
+# cette date reçoivent les nouveaux e-mails. Absente → la suite ne part pas (warn du cron). À poser
+# en prod au déploiement de la suite, à la date de mise en prod (cf. nestjs.md).
 FRONTEND_URL=https://app.mytradingcoach.app
 CORS_ORIGINS=https://app.mytradingcoach.app,https://mytradingcoach.app
 PORT=3000

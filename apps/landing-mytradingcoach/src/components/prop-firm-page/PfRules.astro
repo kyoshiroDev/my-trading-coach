@@ -30,7 +30,7 @@ const data = JSON.stringify(catalog).replace(/</g, '\\u003c');
     </div>
 
     <div class="pfr-grid">
-      <div class="pfr-side" data-pfr-root data-firm={firm.id} data-plan={plan.id}>
+      <div class="pfr-side" data-pfr-root data-track-rules data-firm={firm.id} data-plan={plan.id}>
         <div class="pfr-firms" role="group" aria-label="Prop firm">
           {firms.map((f, i) => (
             <button

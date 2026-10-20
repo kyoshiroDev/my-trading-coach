@@ -9,6 +9,7 @@
 export * from './api-error';
 export * from './currency';
 export * from './pricing';
+export * from './plan-benefits';
 export * from './trade-stats';
 export * from './contracts';
 export * from './eco-event-key';
@@ -20,4 +21,5 @@ export * from './prop-firm-rules/daily-loss-status';
 export * from './prop-firm-rules/plan-guess';
 export * from './prop-firm-rules/plan-link';
 export * from './signup-funnel';
+export * from './landing-engagement';
 export * from './acquisition-filter';

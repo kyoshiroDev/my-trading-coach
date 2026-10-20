@@ -73,7 +73,18 @@ describe('PlanModalComponent — palier unique, plus de grille 2 colonnes', () =
     for (const glyphe of ['✓', '✕', '⚡']) {
       expect(h, `Glyphe ${glyphe} encore présent`).not.toContain(glyphe);
     }
-    // 8 features + fermeture + éclair du titre.
-    expect((h.match(/\[lucideIcon\]/g) ?? []).length).toBe(10); // @lucide/angular : <svg [lucideIcon]>
+    // « Tout le plan Gratuit » + la boucle des avantages (PLAN_BENEFITS) + fermeture + éclair du titre.
+    expect((h.match(/\[lucideIcon\]/g) ?? []).length).toBe(4); // @lucide/angular : <svg [lucideIcon]>
+  });
+});
+
+describe('PlanModalComponent — avantages Premium', () => {
+  const html = () => readFileSync(join(__dirname, 'plan-modal.component.html'), 'utf-8');
+
+  it('liste lue dans PLAN_BENEFITS (@mtc/shared), aucun avantage écrit en dur ni « crypto »', () => {
+    const feats = html().slice(html().indexOf('plan-col-feats'), html().indexOf('</ul>', html().indexOf('plan-col-feats')));
+    expect(feats).toContain('@for (b of premiumBenefits');
+    expect(feats.match(/<li>/g)).toHaveLength(2); // « Tout le plan Gratuit inclus » + la boucle
+    expect(html()).not.toMatch(/crypto/i);
   });
 });

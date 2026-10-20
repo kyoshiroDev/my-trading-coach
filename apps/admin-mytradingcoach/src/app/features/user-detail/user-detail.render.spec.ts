@@ -69,11 +69,11 @@ describe('UserDetailComponent — rendu densifié', () => {
   it('acquisition (#625) : triplet UTM cliquable vers les inscrits de la même campagne', async () => {
     const base = makeData();
     const { el } = await render(makeData({
-      identity: { ...base.identity, acquisition: { source: 'instagram', medium: 'dm', campaign: 'louis' } },
+      identity: { ...base.identity, acquisition: { source: 'instagram', medium: 'dm', campaign: 'exemple' } },
     }));
     const link = el.querySelector<HTMLAnchorElement>('a.ud-utm');
-    expect(link?.textContent?.trim()).toBe('instagram · dm · louis');
-    expect(link?.getAttribute('href')).toBe('/users?source=instagram&medium=dm&campaign=louis');
+    expect(link?.textContent?.trim()).toBe('instagram · dm · exemple');
+    expect(link?.getAttribute('href')).toBe('/users?source=instagram&medium=dm&campaign=exemple');
   });
 
   it('acquisition absente : « direct / non renseigné », sans lien', async () => {
