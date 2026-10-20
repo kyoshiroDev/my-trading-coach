@@ -6,6 +6,7 @@ import {
   drawdownSeries,
   equitySeries,
   maxDrawdownIndex,
+  drawdownHelp,
   floorSeries,
   planFloorOf,
   planObjectiveLine,
@@ -264,6 +265,7 @@ describe('drawdown d’un compte relié à un plan : limite du plan + marge', ()
   it('plancher gelé : figé dès que le solde atteint le seuil, la marge peut dépasser le drawdown', () => {
     const plan = planFloorOf(planAccount({ locksAt: 52_100, lockedFloor: 50_100, locked: true }, { floor: 50_100, margin: 1_900 }))!;
     expect(plan.peakProfit).toBeNull();
+    expect(plan.locked).toBe(true);
     const f = floorSeries([pt('2026-10-01', 1_700), pt('2026-10-02', 2_400), pt('2026-10-03', 2_000)], 50_000, plan);
     expect(f.floor).toEqual([48_000, 49_700, 50_100, 50_100]);
     expect(f.values).toEqual([50_000, 50_000, 50_000, 49_900]); // marge 2 300 plafonnée, puis 1 900
@@ -281,5 +283,27 @@ describe('drawdown d’un compte relié à un plan : limite du plan + marge', ()
     expect(f.margin[0]).toBeCloseTo(1_838.82); // début de la fenêtre, déjà sous le plus haut du 15/09
     expect(lastGap(f)).toBeCloseTo(1_880.12);
     expect(f.minMarginIdx).toBe(0);
+  });
+});
+
+describe('« ? » de la carte drawdown selon la règle du plan relié', () => {
+  const plan = (rule: Record<string, unknown>) => ({
+    rule: { kind: 'trailing_eod', amount: 1_000, startingBalance: 25_000, locksAt: null, lockedFloor: null, ...rule },
+    floor: 24_000, margin: 1_000, pct: 1, breached: false, peakProfit: 0, balance: 25_000, locked: false,
+  }) as Parameters<typeof drawdownHelp>[0];
+
+  it('sans plan : drawdown classique', () => {
+    expect(drawdownHelp(null, 'USD')).toContain('plus haut depuis l');
+  });
+  it('statique : plancher fixe, valeurs du plan (aucune valeur en dur)', () => {
+    expect(drawdownHelp(plan({ kind: 'static' }), 'USD')).toContain('plancher fixe du plan ($24,000)');
+  });
+  it('suiveur EOD avec gel', () => {
+    const t = drawdownHelp(plan({ locksAt: 26_100, lockedFloor: 25_100 }), 'USD');
+    expect(t).toContain('plus haut solde de clôture à $1,000');
+    expect(t).toContain('se fige à $25,100 quand ton solde atteint $26,100');
+  });
+  it('suiveur intraday : note sur les gains latents', () => {
+    expect(drawdownHelp(plan({ kind: 'trailing_intraday' }), 'USD')).toContain('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
   });
 });

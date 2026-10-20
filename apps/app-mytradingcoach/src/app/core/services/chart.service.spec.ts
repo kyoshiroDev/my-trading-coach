@@ -91,7 +91,7 @@ describe('ChartService — style des courbes', () => {
     const { service, configs, canvas } = setup();
     const plan = {
       rule: { kind: 'trailing_eod' as const, amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 48_500, margin: 1_900, pct: 0.95, breached: false, peakProfit: 500, balance: 50_400,
+      floor: 48_500, margin: 1_900, pct: 0.95, breached: false, peakProfit: 500, balance: 50_400, locked: false,
     };
     service.buildDrawdownChart(canvas, [pt('2025-01-06', 500), pt('2025-01-07', 400)], {
       narrow: false, animate: false, floor: { plan, periodStart: 50_000 },

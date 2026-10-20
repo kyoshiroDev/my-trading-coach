@@ -93,7 +93,7 @@ describe('PerfChartComponent', () => {
   it('drawdown avec plan : marge avant la limite, solde et plancher actuel du suivi du compte', () => {
     const planFloor = {
       rule: { kind: 'trailing_eod', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 49_275.47, margin: 1_802.91, pct: 0.9, breached: false, peakProfit: 1_275.47, balance: 51_078.38,
+      floor: 49_275.47, margin: 1_802.91, pct: 0.9, breached: false, peakProfit: 1_275.47, balance: 51_078.38, locked: false,
     };
     const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 500)], startingCapital: 50_000, planFloor });
     const value = el.querySelector('[data-testid="perf-chart-value"]');
@@ -106,9 +106,18 @@ describe('PerfChartComponent', () => {
   it('drawdown avec plan, marge faible : en-tête rouge comme la séance', () => {
     const planFloor = {
       rule: { kind: 'static', amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
-      floor: 48_000, margin: 300, pct: 0.15, breached: false, peakProfit: 0, balance: 48_300,
+      floor: 48_000, margin: 300, pct: 0.15, breached: false, peakProfit: 0, balance: 48_300, locked: false,
     };
     const el = render({ kind: 'drawdown', points: [pt('2025-01-06', -1_700)], startingCapital: 50_000, planFloor });
     expect(el.querySelector('[data-testid="perf-chart-value"]')?.classList).toContain('neg');
+  });
+
+  it('drawdown avec plancher gelé : « Plancher gelé à $X »', () => {
+    const planFloor = {
+      rule: { kind: 'trailing_eod', amount: 1_000, startingBalance: 25_000, locksAt: 26_100, lockedFloor: 25_100 },
+      floor: 25_100, margin: 1_400, pct: 1, breached: false, peakProfit: null, balance: 26_500, locked: true,
+    };
+    const el = render({ kind: 'drawdown', points: [pt('2025-01-06', 1_500)], startingCapital: 25_000, planFloor });
+    expect(el.querySelector('[data-testid="perf-chart-floor"]')?.textContent).toContain('Solde $26,500 · Plancher gelé à $25,100');
   });
 });
