@@ -343,6 +343,12 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 - **Satisfait ou remboursé (choix #525)** : demande par e-mail à hello@ depuis Profil > Abonnement
   (lien jusqu'à J+14 du 1er paiement), remboursement fait à la main dans Stripe ; le webhook
   `charge.refunded` rend la place et annule l'abonnement. Aucune route ne déplace d'argent toute seule.
+- **Suppression du compte MTC** : l'abonnement Stripe est résilié **immédiatement** (sans prorata
+  ni remboursement), avant la suppression ; Stripe en échec → rien supprimé. Le webhook
+  `customer.subscription.deleted` qui suit marque le tarif fondateur / partenaire perdu. L'écran de
+  suppression le dit (« Ton abonnement est résilié immédiatement. ») et rappelle le lien de
+  remboursement fondateur tant que `refundUntil` court. Un remboursement fait APRÈS la suppression
+  ne trouve plus l'utilisateur (`charge.refunded` sans effet sur la place) : à gérer à la main.
 - **Points d'affichage (cohérence)** : landing (bandeau, carte, FAQ), app (modale, cadenas, Profil,
   « Continuer en Premium »), API (checkout, webhooks), e-mails (phase F).
 
