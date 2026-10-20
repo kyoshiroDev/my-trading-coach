@@ -87,7 +87,7 @@ describe('ChartService — style des courbes', () => {
     expect(configs[0].data.datasets).toHaveLength(1);
   });
 
-  it('drawdown d’un compte relié à un plan : courbe rouge marge, limite fixe, axe du solde initial', () => {
+  it('drawdown d’un compte relié à un plan : courbe rouge marge, limite en pointillé, axe du solde initial', () => {
     const { service, configs, canvas } = setup();
     const plan = {
       rule: { kind: 'trailing_eod' as const, amount: 2_000, startingBalance: 50_000, locksAt: null, lockedFloor: null },
@@ -96,11 +96,10 @@ describe('ChartService — style des courbes', () => {
     service.buildDrawdownChart(canvas, [pt('2025-01-06', 500), pt('2025-01-07', 400)], {
       narrow: false, animate: false, floor: { plan, periodStart: 50_000 },
     });
-    const [curve, limit] = configs[0].data.datasets;
+    const [curve] = configs[0].data.datasets;
+    expect(configs[0].data.datasets).toHaveLength(1); // limite = pointillé dessiné par `marks`, sans zone
     expect(curve.data).toEqual([50_000, 50_000, 49_900]);
     expect(curve.borderColor).toBe('#ef4444');
-    expect(limit.data).toEqual([48_000, 48_000, 48_000]);
-    expect(limit.fill).toBe('start');
     expect(configs[0].options?.scales?.['y']).toMatchObject({ max: 50_000, suggestedMin: 47_700 });
     const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as {
       label: (i: { dataIndex: number; parsed: { y: number } }) => string;

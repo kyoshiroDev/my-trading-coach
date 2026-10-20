@@ -228,8 +228,8 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   pastille + libellé `max -$4.2k · 12/03/25` (`--text-2`) au point le plus bas, aucune limite.
 - **Drawdown avec plan prop firm relié** (`planFloorOf` : `metrics.drawdown.source === 'plan'`,
   montant publié) : axe en dollars du compte, du solde initial (en haut, `max`) jusqu'un peu sous la
-  limite (15 % du drawdown). Ligne **rouge fixe** `Limite du plan $48,000` (= solde initial − drawdown
-  max), zone rouge pâle (8 %) dessous. **Courbe rouge** (`--red`) = limite + marge restante, plafonnée
+  limite (15 % du drawdown). `Limite du plan $48,000` (= solde initial − drawdown max) en **pointillé
+  simple rouge**, même style que l'objectif de la courbe d'équité (trait 1 px, `--red` 70 %), sans zone. **Courbe rouge** (`--red`) = limite + marge restante, plafonnée
   au solde initial, où marge = solde − plancher(t) et plancher(t) = `drawdownFloor` de `@mtc/shared`,
   LA fonction du suivi du compte (statique, suiveur EOD / intraday, gel). Statique → le solde lui-même ;
   suiveur → la baisse depuis le plus haut, reportée sous le solde initial. La courbe touche la limite

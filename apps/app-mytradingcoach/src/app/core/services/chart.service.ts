@@ -243,8 +243,9 @@ export class ChartService {
           });
         }
         if (floor) {
+          // Même style que l'objectif de la courbe d'équité : pointillé simple, ici en rouge.
           drawLevel(ctx, area, y.getPixelForValue(floor.limit), {
-            stroke: p.red, dashed: false, color: p.red, fontSize, label: `Limite du plan ${this.money(floor.limit)}`,
+            stroke: alpha(p.red, 0.7), color: p.red, fontSize, label: `Limite du plan ${this.money(floor.limit)}`,
           });
           const i = floor.minMarginIdx;
           if (pts[i]) {
@@ -296,18 +297,6 @@ export class ChartService {
               return g;
             },
           },
-          // Limite du plan : niveau fixe (la ligne est dessinée par `marks`), zone rouge pâle dessous.
-          ...(floor
-            ? [{
-                data: floor.values.map(() => floor.limit),
-                borderWidth: 0,
-                pointRadius: 0,
-                pointHitRadius: 0,
-                pointHoverRadius: 0,
-                fill: 'start' as const,
-                backgroundColor: alpha(p.red, 0.08),
-              }]
-            : []),
         ],
       },
       options: {
