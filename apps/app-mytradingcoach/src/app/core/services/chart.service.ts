@@ -26,6 +26,7 @@ import {
   ObjectiveLine,
   PlanFloor,
   spanDays,
+  spanRange,
   tickDate,
   tooltipDate,
 } from './chart-series.util';
@@ -113,12 +114,10 @@ export class ChartService {
     const series = equitySeries(points, startingCapital);
     const base = series.values[0];
     const up = series.values[series.values.length - 1] >= base;
-    const goal = opts.objective ? { value: base + opts.objective.pnl, line: opts.objective } : null;
-    // Marge au-dessus / en dessous des extrêmes : l'axe ne part pas de 0. L'objectif reste visible.
-    const yRange = {
-      grace: '7%',
-      ...(goal && goal.value > Math.max(...series.values) ? { suggestedMax: goal.value } : {}),
-    };
+    const goal = opts.objective ?? null;
+    // L'axe inclut toujours l'objectif, avec une amplitude minimale : quelques dollars sur un compte
+    // de 50K ne doivent pas ressembler à une montagne.
+    const yRange = { grace: '7%', ...spanRange([...series.values, ...(goal?.value != null ? [goal.value] : [])], base) };
     return this.build(canvas, series, opts, (p) => (up ? p.green : p.red), yRange, { mode: 'equity', goal });
   }
 
@@ -132,7 +131,7 @@ export class ChartService {
       const f = floorSeries(points, opts.floor.periodStart, opts.floor.plan, opts.before ?? undefined);
       const series: ChartSeries = { dates: f.dates, values: f.balance, dayPnl: f.dayPnl };
       // L'axe inclut toujours le plancher (marge de 7 %), en montants du compte.
-      const yRange = { grace: '7%', suggestedMin: Math.min(...f.floor), suggestedMax: Math.max(...f.balance) };
+      const yRange = { grace: '7%', ...spanRange([...f.floor, ...f.balance], opts.floor.periodStart) };
       return this.build(canvas, series, opts, (p) => p.text2, yRange, { mode: 'floor', floor: f });
     }
     const series = drawdownSeries(points, opts.before ?? undefined);
@@ -156,7 +155,7 @@ export class ChartService {
     yRange: { grace?: string; suggestedMin?: number; suggestedMax?: number; max?: number },
     view: {
       mode: 'equity' | 'underwater' | 'floor';
-      goal?: { value: number; line: ObjectiveLine } | null;
+      goal?: ObjectiveLine | null;
       floor?: ReturnType<typeof floorSeries>;
     },
   ): Chart | null {
@@ -234,10 +233,12 @@ export class ChartService {
         ctx.save();
         ctx.font = `${fontSize}px ${MONO}`;
         if (goal) {
-          const what = goal.line.source === 'plan' ? 'Objectif du plan' : 'Objectif';
-          drawLevel(ctx, area, y.getPixelForValue(goal.value), {
-            stroke: alpha(p.green, 0.7), color: p.green, fontSize,
-            label: `${what} ${this.money(goal.line.amount, true)}`,
+          // Ligne si le seuil se compte en $ ; sinon légende seule en haut à droite.
+          const gy = goal.value != null ? y.getPixelForValue(goal.value) : area.top;
+          const label = [goal.label, ...goal.pending].join(' · ');
+          drawLevel(ctx, area, gy, {
+            stroke: goal.value != null ? alpha(p.green, 0.7) : undefined,
+            color: goal.value != null ? p.green : p.text2, fontSize, label,
           });
         }
         if (floor) {

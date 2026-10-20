@@ -22,6 +22,22 @@ export function periodStartCapital(currentBalance: number, points: EquityPoint[]
 }
 
 /**
+ * Solde au début de la période, ancré sur le solde de DÉPART du compte : départ + P&L d'avant la
+ * période (`before` de l'API). Quand la période couvre le début du compte (« Tout », aucun trade
+ * avant), la courbe part donc exactement de la taille du compte. Sans `before` (API ancienne) :
+ * repli sur solde actuel − P&L de la période.
+ */
+export function periodStartBalance(
+  startingBalance: number,
+  currentBalance: number,
+  pnlOfPeriod: number,
+  before: PeriodBefore | null | undefined,
+): number {
+  if (!before) return currentBalance - pnlOfPeriod;
+  return before.count === 0 ? startingBalance : startingBalance + before.pnl;
+}
+
+/**
  * Drawdown jour par jour (≤ 0), point de départ compris : clôture de journée moins le plus haut
  * des clôtures DEPUIS L'OUVERTURE DU COMPTE (sommet d'avant la période inclus, solde de départ
  * compris), comme la règle EOD des prop firms et la marge de Mes comptes. La période peut donc

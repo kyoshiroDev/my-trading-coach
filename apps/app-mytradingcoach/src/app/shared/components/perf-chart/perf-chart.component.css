@@ -83,6 +83,11 @@
   color: var(--text-3);
 }
 
+/* Carte étroite (< 560 px, ex. grille 3 colonnes du dashboard à 1440 px) : titre sur une ligne,
+   onglets de période en dessous. */
+.pc-title span { white-space: nowrap; }
+.pc-head.narrow .pc-controls { flex-basis: 100%; order: 3; }
+
 @media (min-width: 768px) {
   :host { padding: 24px; }
   .pc-head { margin-bottom: 16px; }

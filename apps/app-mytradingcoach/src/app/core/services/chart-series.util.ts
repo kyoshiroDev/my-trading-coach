@@ -2,6 +2,7 @@ import { DrawdownFloorRule, drawdownFloor, formatMoney } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
 import { anchoredDrawdown, NO_HISTORY } from './equity-period.util';
 import { TradingAccount } from '../api/accounts.api';
+import { requirementLabel } from '../../features/accounts/account-progress.util';
 
 /**
  * Séries et libellés des courbes d'équité / drawdown (fonctions pures, testées dans
@@ -80,6 +81,20 @@ export function compactMoney(value: number, currency: string | null, sign = fals
   return formatMoney(signed(rounded), currency, { decimals, sign }).replace(/(\d)(?!.*\d)/, `$1${unit}`);
 }
 
+/** Amplitude minimale de l'axe des montants : 2 % du solde de départ de la période. */
+const MIN_SPAN_RATIO = 0.02;
+
+/**
+ * Bornes suggérées de l'axe des montants : couvrent toutes les valeurs (courbe, objectif,
+ * plancher) et au moins 2 % du solde, pour qu'un écart de quelques dollars reste plat.
+ */
+export function spanRange(values: number[], base: number): { suggestedMin: number; suggestedMax: number } {
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const extra = Math.max(0, Math.abs(base) * MIN_SPAN_RATIO - (hi - lo)) / 2;
+  return { suggestedMin: lo - extra, suggestedMax: hi + extra };
+}
+
 /** Écart en jours entre deux dates ISO (0 si l'une manque). */
 export function spanDays(dates: (string | null)[]): number {
   const known = dates.filter((d): d is string => !!d).map((d) => new Date(d).getTime());
@@ -121,42 +136,56 @@ export function chartAriaLabel(
   return `Drawdown ${period} : départ ${fmt(0)}, actuel ${fmt(last)}, max ${fmt(max)}.`;
 }
 
-/** Objectif de gain tracé sur la courbe d'équité. */
+/** Objectif tracé sur la courbe d'équité (niveau de SOLDE, comme l'axe). */
 export interface ObjectiveLine {
-  /** Niveau en P&L cumulé DE LA PÉRIODE (repère de la courbe) où l'objectif est atteint. */
-  pnl: number;
-  /** Montant affiché : l'objectif lui-même (depuis le début du compte). */
-  amount: number;
-  /** `plan` : règle du plan prop firm relié ; `manual` : objectif saisi sur le compte. */
-  source: 'plan' | 'manual';
+  /** Solde à atteindre ; null si l'exigence restante ne se compte pas en $ (jours gagnants…). */
+  value: number | null;
+  /** Libellé au bout de la ligne, ou légende seule quand `value` est null. */
+  label: string;
+  /** Exigences hors $ encore à remplir (« Jours ≥ $150 : 0 / 5 »), ajoutées sous le libellé. */
+  pending: string[];
 }
 
 /**
- * Objectif de gain du compte sélectionné, ramené au repère de la courbe. L'objectif se compte
- * depuis le solde de départ du compte, la courbe depuis le début de la période : on retire le gain
- * déjà fait avant la période (gain total − gain de la période). Plan relié → exigence `profit` de
- * la progression (objectif effectif, consistency comprise) ; sinon objectif saisi ; sinon null
- * (« Tous les comptes », compte funded en cycle de payout, aucun objectif).
+ * Objectif du compte sélectionné, d'après la progression calculée par le suivi du compte
+ * (`metrics.progress`, même source que « Objectif » / « Prochain payout » de la séance et de Mes
+ * comptes) :
+ * - Évaluation : solde de départ + objectif de profit du plan (consistency comprise) ;
+ * - Funded : prochain seuil de payout = le plus exigeant des seuils en $ (profit du cycle depuis le
+ *   dernier payout, solde de retrait) ; seuil uniquement en jours → légende sans ligne ;
+ * - sans plan : objectif saisi sur le compte. Null en « Tous les comptes » ou sans objectif.
  */
 export function planObjectiveLine(
   account: TradingAccount | null,
   points: EquityPoint[],
+  currency: string | null = account?.currency ?? null,
 ): ObjectiveLine | null {
   if (!account || !points.length) return null;
-  const periodPnl = points[points.length - 1].cumulativePnl;
   const m = account.metrics;
-  const req =
-    m.progress?.kind === 'objective'
-      ? m.progress.requirements.find((r) => r.key === 'profit' && r.unit === 'usd')
-      : undefined;
-  const target = req
-    ? { amount: req.required, current: req.current, source: 'plan' as const }
-    : m.objective && m.objective.target > 0
-      ? { amount: m.objective.target, current: m.objective.current, source: 'manual' as const }
-      : null;
-  if (!target || target.amount <= 0) return null;
-  const beforePeriod = target.current - periodPnl;
-  return { pnl: target.amount - beforePeriod, amount: target.amount, source: target.source };
+  const fmt = (v: number, sign = false) => formatMoney(v, currency, { decimals: 0, sign });
+  const p = m.progress;
+  if (p) {
+    const usd = p.requirements.filter((r) => r.unit === 'usd' && r.key !== 'consistency');
+    const pending = p.requirements
+      .filter((r) => r.unit === 'days' && !r.met)
+      .map((r) => requirementLabel(r, currency ?? 'USD'));
+    if (p.kind === 'objective') {
+      const req = usd.find((r) => r.key === 'profit');
+      if (!req || !(req.required > 0)) return null;
+      return { value: m.startingBalance + req.required, label: `Objectif du plan ${fmt(req.required, true)}`, pending };
+    }
+    // Profit du cycle : solde actuel + ce qui manque ; solde de retrait : seuil absolu.
+    const levels = usd.map((r) => (r.key === 'safety_net' ? r.required : m.currentBalance + (r.required - r.current)));
+    if (levels.length) {
+      const value = Math.max(...levels);
+      return { value, label: `Prochain payout ${fmt(value)}`, pending };
+    }
+    return pending.length ? { value: null, label: 'Prochain payout', pending } : null;
+  }
+  if (m.objective && m.objective.target > 0) {
+    return { value: m.startingBalance + m.objective.target, label: `Objectif ${fmt(m.objective.target, true)}`, pending: [] };
+  }
+  return null;
 }
 
 /**

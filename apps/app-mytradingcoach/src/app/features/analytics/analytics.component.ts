@@ -28,7 +28,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
-import { periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
+import { periodPnl, periodStartBalance, viewBalance } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
 import { planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
@@ -127,15 +127,19 @@ export class AnalyticsComponent {
     () => this.equityData()?.points ?? [],
   );
   /**
-   * Solde au début de la période : la courbe finit sur le solde du compte (sélecteur, Mes comptes).
-   * Jamais `startingCapital` de l'API (capital du profil : un compte de 50K partait de 100K).
+   * Solde au début de la période : solde de départ du compte + P&L d'avant la période (la taille du
+   * compte quand la période couvre son début). Jamais `startingCapital` de l'API (capital du profil :
+   * un compte de 50K partait de 100K).
    */
   protected readonly equityStartCapital = computed(() => {
-    const current = this.selectedAccount.loaded()
-      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance')
-      : null;
-    if (current !== null) return periodStartCapital(current, this.equityCurve());
-    return this.userStore.startingCapital() + (this.equityData()?.before?.pnl ?? 0);
+    const before = this.equityData()?.before;
+    const loaded = this.selectedAccount.loaded();
+    const view = (key: 'startingBalance' | 'currentBalance') =>
+      loaded ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key) : null;
+    const start = view('startingBalance') ?? this.userStore.startingCapital();
+    const current = view('currentBalance');
+    if (current === null) return start + (before?.pnl ?? 0);
+    return periodStartBalance(start, current, periodPnl(this.equityCurve()), before);
   });
   /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
   protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));

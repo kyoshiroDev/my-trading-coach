@@ -52,6 +52,8 @@ export interface EquityPoint {
 export interface PeriodBefore {
   pnl: number;
   peak: number;
+  /** Trades avant la période ; 0 → la période couvre le début du compte. */
+  count?: number;
 }
 
 /** Réponse de `/equity-curve/daily`. `startingCapital` = capital du PROFIL, pas celui du compte :

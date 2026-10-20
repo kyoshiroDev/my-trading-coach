@@ -22,7 +22,7 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
-import { anchoredDrawdown, viewBalance } from '../../core/services/equity-period.util';
+import { anchoredDrawdown, periodStartBalance, viewBalance } from '../../core/services/equity-period.util';
 import { planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
@@ -289,9 +289,17 @@ export class DashboardComponent {
       : null;
     return current ?? this.baseCapital() + (this.summary()?.totalPnl ?? 0);
   });
-  /** Solde au début de la période : base du % et de la sparkline du capital. */
-  protected readonly periodStartCapital = computed(
-    () => this.currentCapital() - (this.summary()?.totalPnl ?? 0),
+  /**
+   * Solde au début de la période (base du %, de la sparkline et de la courbe) : solde de départ +
+   * P&L d'avant la période ; la taille du compte quand la période couvre son début.
+   */
+  protected readonly periodStartCapital = computed(() =>
+    periodStartBalance(
+      this.baseCapital(),
+      this.currentCapital(),
+      this.summary()?.totalPnl ?? 0,
+      this.equityCurveResource.value()?.data?.before,
+    ),
   );
   /**
    * Drawdown jour par jour sur la période, depuis le plus haut atteint depuis l'ouverture du
