@@ -119,11 +119,11 @@
         <div class="card-header">
           <div class="card-title">Courbe de Drawdown
             <mtc-info-tooltip label="Ce que représente le drawdown"
-              text="Écart entre ton P&L cumulé et son plus haut niveau atteint. Mesure la baisse depuis un pic, pas une perte définitive." />
+              text="Écart entre ton solde en clôture de journée et son plus haut depuis l'ouverture du compte, comme la règle EOD des prop firms. Mesure la baisse depuis un pic, pas une perte définitive." />
           </div>
-          @if (summary()) {
-            <span class="card-meta text-red">
-              {{ -summary()!.maxDrawdown | pnlFormat }} max
+          @if (equityCurve().length) {
+            <span class="card-meta" [class.text-red]="periodMaxDrawdown() < 0">
+              {{ periodMaxDrawdown() | pnlFormat }} max
             </span>
           }
         </div>

@@ -21,7 +21,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import {
   AnalyticsApi,
   AnalyticsSummary,
-  EquityPoint,
+  DailyEquityCurve,
   HeatmapCell,
   MonthlyActivitySummary,
   SetupStat,
@@ -33,6 +33,7 @@ import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-
 import { environment } from '@app/environments/environment';
 import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
+import { anchoredDrawdown, maxDrawdownOf, periodStartCapital, viewBalance } from '../../core/services/equity-period.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 
@@ -100,7 +101,7 @@ export class AnalyticsComponent {
     // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
     return { from: from.toISOString(), to: now.toISOString() };
   });
-  protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
+  protected readonly equityData = signal<DailyEquityCurve | null>(null);
   protected readonly equityLoading = signal(false);
 
   // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
@@ -131,8 +132,20 @@ export class AnalyticsComponent {
   protected readonly equityCurve = computed(
     () => this.equityData()?.points ?? [],
   );
-  private readonly equityStartingCapital = computed(
-    () => this.equityData()?.startingCapital ?? null,
+  /**
+   * Solde au début de la période : la courbe finit sur le solde du compte (sélecteur, Mes comptes).
+   * Jamais `startingCapital` de l'API (capital du profil : un compte de 50K partait de 100K).
+   */
+  private readonly equityStartCapital = computed(() => {
+    const current = this.selectedAccount.loaded()
+      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance')
+      : null;
+    if (current !== null) return periodStartCapital(current, this.equityCurve());
+    return this.userStore.startingCapital() + (this.equityData()?.before?.pnl ?? 0);
+  });
+  /** Plus fort drawdown de la période, sommet d'avant la période compris (même calcul que le graphe). */
+  protected readonly periodMaxDrawdown = computed(() =>
+    maxDrawdownOf(anchoredDrawdown(this.equityCurve(), this.equityData()?.before)),
   );
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
@@ -213,10 +226,10 @@ export class AnalyticsComponent {
         const equityCanvas = this.equityCanvasRef?.nativeElement;
         const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
         if (equityCanvas) {
-          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartingCapital());
+          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartCapital());
         }
         if (drawdownCanvas) {
-          this.chartService.buildDrawdownChart(drawdownCanvas, curve);
+          this.chartService.buildDrawdownChart(drawdownCanvas, curve, this.equityData()?.before);
         }
       }
     });

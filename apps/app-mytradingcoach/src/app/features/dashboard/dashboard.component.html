@@ -75,8 +75,9 @@
   <mtc-dashboard-kpis
     [loading]="isLoading()"
     [summary]="summary()"
-    [baseCapital]="baseCapital()"
+    [periodStartCapital]="periodStartCapital()"
     [currentCapital]="currentCapital()"
+    [drawdownSeries]="drawdownSeries()"
     [equitySeries]="eqSeries()"
     [periodShort]="periodShort()"
     [fallbackTradesCount]="tradesStore.trades().length"

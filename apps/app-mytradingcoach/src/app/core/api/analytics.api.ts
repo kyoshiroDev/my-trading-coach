@@ -45,6 +45,23 @@ export interface EquityPoint {
   cumulativePnl: number;
 }
 
+/**
+ * Historique avant la période d'une courbe (`/equity-curve/daily` avec `from`) : P&L net cumulé et
+ * son plus haut en clôture de journée (≥ 0). Sans `from` : 0 / 0.
+ */
+export interface PeriodBefore {
+  pnl: number;
+  peak: number;
+}
+
+/** Réponse de `/equity-curve/daily`. `startingCapital` = capital du PROFIL, pas celui du compte :
+ *  ne pas s'en servir pour placer la courbe (cf. `periodStartCapital`). */
+export interface DailyEquityCurve {
+  points: EquityPoint[];
+  startingCapital: number | null;
+  before?: PeriodBefore;
+}
+
 export interface EquityCurveResponse {
   points: EquityPoint[];
   startingCapital: number | null;
@@ -102,13 +119,13 @@ export class AnalyticsApi {
 
   /** Courbe d'équité jour par jour, bornée (`from`/`to`) et scopée compte (`accountId`). */
   getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null }): Observable<{
-    data: { points: EquityPoint[]; startingCapital: number | null };
+    data: DailyEquityCurve;
   }> {
     const params: Record<string, string> = {};
     if (query.from) params['from'] = query.from;
     if (query.to) params['to'] = query.to;
     if (query.accountId) params['accountId'] = query.accountId;
-    return this.http.get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
+    return this.http.get<{ data: DailyEquityCurve }>(
       `${this.base}/equity-curve/daily`,
       { params },
     );

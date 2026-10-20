@@ -23,6 +23,7 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
+import { anchoredDrawdown, viewBalance } from '../../core/services/equity-period.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
@@ -35,7 +36,7 @@ import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
   AnalyticsSummary,
-  EquityPoint,
+  DailyEquityCurve,
   SetupStat,
   EmotionStat,
   TopAsset,
@@ -204,7 +205,7 @@ export class DashboardComponent {
   // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
   // Scopée à la même période que les KPIs.
   private readonly equityCurveResource = httpResource<{
-    data: { points: EquityPoint[]; startingCapital: number | null };
+    data: DailyEquityCurve;
   }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
   // Activité journalière (P&L par jour) sur la même période : agrégée jour/semaine/mois côté front.
   private readonly activityResource = httpResource<{
@@ -278,8 +279,28 @@ export class DashboardComponent {
     if (active.length === 0) return this.userStore.startingCapital();
     return active.reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
   });
-  protected readonly currentCapital = computed(() =>
-    this.baseCapital() + (this.summary()?.totalPnl ?? 0),
+  /**
+   * Capital affiché = solde actuel du compte (ou des comptes non archivés), le MÊME que le
+   * sélecteur et Mes comptes (celui du broker pour un compte connecté). Avant : capital de départ
+   * + P&L de la PÉRIODE, donc faux dès que des trades précédaient la période.
+   * Sans compte chargé → capital de départ + P&L, comme avant.
+   */
+  protected readonly currentCapital = computed(() => {
+    const current = this.selectedAccount.loaded()
+      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance')
+      : null;
+    return current ?? this.baseCapital() + (this.summary()?.totalPnl ?? 0);
+  });
+  /** Solde au début de la période : base du % et de la sparkline du capital. */
+  protected readonly periodStartCapital = computed(
+    () => this.currentCapital() - (this.summary()?.totalPnl ?? 0),
+  );
+  /**
+   * Drawdown jour par jour sur la période, depuis le plus haut atteint depuis l'ouverture du
+   * compte (règle EOD) : même calcul que la courbe de drawdown des Statistiques.
+   */
+  protected readonly drawdownSeries = computed(() =>
+    anchoredDrawdown(this.equityCurve(), this.equityCurveResource.value()?.data?.before),
   );
   /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
   protected readonly equitySub = computed(() => {

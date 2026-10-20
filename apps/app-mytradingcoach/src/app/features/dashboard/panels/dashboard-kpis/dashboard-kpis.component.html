@@ -5,7 +5,7 @@
       <div class="mtc-kpi-l">
         <div class="mtc-kpi-lab">Capital
           <mtc-info-tooltip class="align-start" label="Comment le capital est calculé"
-            text="Capital de départ du compte, ajusté du P&L net de tes trades." />
+            text="Solde actuel du compte, le même que dans Mes comptes. Le % compare au solde du début de la période." />
         </div>
         <div class="mtc-kpi-val" data-testid="dashboard-capital" [style.color]="capitalColor()">{{ capitalDisplay() }}</div>
         <div class="mtc-kpi-sub">
@@ -101,11 +101,11 @@
       <div class="mtc-kpi-l">
         <div class="mtc-kpi-lab">Drawdown max
           <mtc-info-tooltip class="align-end" label="Comment le drawdown max est calculé"
-            text="Plus forte baisse de ton P&L cumulé depuis un sommet, sur la période affichée." />
+            text="Plus forte baisse de ton solde en clôture de journée sous son plus haut depuis l'ouverture du compte (règle EOD des prop firms), sur la période affichée." />
         </div>
         <div class="mtc-kpi-val" [style.color]="drawdownColor()">{{ drawdownDisplay() | pnlFormat }}</div>
         <div class="mtc-kpi-sub">
-          @if ((summary()?.totalTrades ?? 0) > 0) { sur capital } @else { Aucune donnée }
+          @if ((summary()?.totalTrades ?? 0) > 0) { {{ periodShort() }} } @else { Aucune donnée }
         </div>
       </div>
       @let dd = sparkPath(ddSeries());

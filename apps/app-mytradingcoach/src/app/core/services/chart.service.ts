@@ -10,7 +10,8 @@ import {
   Tooltip,
   ScriptableContext,
 } from 'chart.js';
-import { EquityPoint } from '../api/analytics.api';
+import { EquityPoint, PeriodBefore } from '../api/analytics.api';
+import { anchoredDrawdown, NO_HISTORY } from './equity-period.util';
 import { MoneyService } from './money.service';
 
 /** Libellé du point de départ ajouté devant chaque courbe (capital de base / drawdown 0). */
@@ -152,20 +153,19 @@ export class ChartService {
     });
   }
 
-  buildDrawdownChart(canvas: HTMLCanvasElement, points: EquityPoint[]): Chart | null {
+  /** `before` : historique avant la période → le drawdown part du sommet déjà atteint (règle EOD). */
+  buildDrawdownChart(
+    canvas: HTMLCanvasElement,
+    points: EquityPoint[],
+    before: PeriodBefore = NO_HISTORY,
+  ): Chart | null {
     if (points.length < 1) return null;
     this.register();
     Chart.getChart(canvas)?.destroy();
 
-    // Départ à 0 (pic initial) : un seul jour perdant trace déjà la baisse.
-    let peak = 0;
-    const drawdowns = [
-      0,
-      ...points.map((p) => {
-        if (p.cumulativePnl > peak) peak = p.cumulativePnl;
-        return p.cumulativePnl - peak;
-      }),
-    ];
+    // Sommet depuis l'ouverture du compte (solde de départ compris) : un seul jour perdant trace
+    // déjà la baisse, et une période qui commence sous un ancien sommet part en drawdown.
+    const drawdowns = anchoredDrawdown(points, before);
 
     const labels = [
       START_LABEL,
