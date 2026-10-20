@@ -211,6 +211,8 @@ export interface PlanFloor {
   peakProfit: number | null;
   /** Solde actuel du compte (en-tête « Solde $51,078 · plancher actuel $49,275 »). */
   balance: number;
+  /** Plancher gelé par la règle du plan (seuil de gel atteint) : en-tête « plancher gelé à $X ». */
+  locked: boolean;
 }
 
 export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
@@ -236,7 +238,33 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
   return {
     rule, floor: dd.floor, margin: dd.margin, pct: dd.pct, breached: dd.breached, peakProfit,
     balance: account.metrics.currentBalance,
+    locked: dd.rule.locked,
   };
+}
+
+/**
+ * Texte du « ? » de la carte drawdown, selon la règle du plan relié (aucune valeur en dur : tout
+ * vient du plan). Sans plan : drawdown classique depuis le plus haut.
+ */
+export function drawdownHelp(plan: PlanFloor | null, currency: string | null): string {
+  if (!plan) {
+    return "Écart entre ton solde en clôture de journée et son plus haut depuis l'ouverture du compte. Mesure la baisse depuis un pic, pas une perte définitive.";
+  }
+  const fmt = (v: number) => formatMoney(v, currency, { decimals: 0, sign: false });
+  const { rule } = plan;
+  const limit = fmt(rule.startingBalance - rule.amount);
+  const parts = [
+    rule.kind === 'static'
+      ? `Marge entre ton solde et le plancher fixe du plan (${limit}).`
+      : `Marge entre ton solde et le plancher du plan, qui suit ${rule.kind === 'trailing_eod' ? 'ton plus haut solde de clôture' : 'ton plus haut solde'} à ${fmt(rule.amount)} de distance. La courbe touche la limite (${limit}) quand ton solde touche le plancher.`,
+  ];
+  if (rule.kind !== 'static' && rule.locksAt != null) {
+    parts.push(`Le plancher se fige à ${fmt(rule.lockedFloor ?? rule.locksAt - rule.amount)} quand ton solde atteint ${fmt(rule.locksAt)}.`);
+  }
+  if (rule.kind === 'trailing_intraday') {
+    parts.push('Calcul sur les trades clôturés ; ta prop firm peut tenir compte des gains latents.');
+  }
+  return parts.join(' ');
 }
 
 export interface FloorSeries {

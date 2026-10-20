@@ -108,8 +108,7 @@
         [planFloor]="planFloor()"
         [loading]="equityLoading()"
       >
-        <mtc-info-tooltip chartInfo label="Ce que représente le drawdown"
-          text="Écart entre ton solde en clôture de journée et son plus haut depuis l'ouverture du compte, comme la règle EOD des prop firms. Mesure la baisse depuis un pic, pas une perte définitive." />
+        <mtc-info-tooltip chartInfo label="Ce que représente le drawdown" [text]="drawdownHelp()" />
       </mtc-perf-chart>
     </div>
 
