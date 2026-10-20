@@ -112,15 +112,24 @@ describe('ChartService — style des courbes', () => {
     service.buildEquityChart(canvas, [pt('2025-01-06', 500)], 50_000, {
       narrow: false,
       animate: false,
-      objective: { pnl: 3_000, amount: 3_000, source: 'plan' },
+      objective: { value: 53_000, label: 'Objectif du plan +$3,000', pending: [] },
     });
-    expect(configs[0].options?.scales?.['y']).toMatchObject({ grace: '7%', suggestedMax: 53_000 });
+    expect(configs[0].options?.scales?.['y']).toMatchObject({ grace: '7%', suggestedMin: 50_000, suggestedMax: 53_000 });
   });
 
-  it('équité sans objectif : pas d’extension d’échelle', () => {
+  it('équité sans objectif : amplitude minimale de 2 % (un écart de 500 $ reste une pente douce)', () => {
     const { service, configs, canvas } = setup();
     service.buildEquityChart(canvas, [pt('2025-01-06', 500)], 50_000);
-    expect(configs[0].options?.scales?.['y']).not.toHaveProperty('suggestedMax');
+    expect(configs[0].options?.scales?.['y']).toMatchObject({ suggestedMin: 49_750, suggestedMax: 50_750 });
+  });
+
+  it('Funded, seuil en jours seulement : légende sans ligne, échelle inchangée', () => {
+    const { service, configs, canvas } = setup();
+    service.buildEquityChart(canvas, [pt('2025-01-06', 41.3)], 49_943.94, {
+      narrow: false, animate: false, objective: { value: null, label: 'Prochain payout', pending: ['Jours ≥ $150 : 0 / 5'] },
+    });
+    const y = configs[0].options?.scales?.['y'] as { suggestedMin: number; suggestedMax: number };
+    expect(y.suggestedMax - y.suggestedMin).toBeCloseTo(998.88, 1);
   });
 
   it('infobulle : date, valeur, variation du jour', () => {

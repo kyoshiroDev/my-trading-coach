@@ -9,10 +9,12 @@ import {
   floorSeries,
   planFloorOf,
   planObjectiveLine,
+  spanRange,
   spanDays,
   tickDate,
 } from './chart-series.util';
 import type { TradingAccount } from '../api/accounts.api';
+import { periodStartBalance } from './equity-period.util';
 
 const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
 
@@ -109,47 +111,98 @@ describe('chartAriaLabel', () => {
   });
 });
 
-describe('repères du plan', () => {
-  it('objectif du plan sur « Tout » : niveau = objectif', () => {
-    const acc = account({ progress: planProgress(3_000, 1_200) });
-    expect(planObjectiveLine(acc, [pt('2025-01-06', 1_200)])).toEqual({ pnl: 3_000, amount: 3_000, source: 'plan' });
-  });
-
-  it('période partielle : le gain fait avant la période est retiré du niveau', () => {
-    // Gain total 1 200, dont 400 sur la période → 800 faits avant : objectif atteint à +2 200 sur la courbe.
-    const acc = account({ progress: planProgress(3_000, 1_200) });
-    expect(planObjectiveLine(acc, [pt('2025-01-06', 400)])?.pnl).toBe(2_200);
-  });
-
-  it('sans plan : objectif saisi sur le compte', () => {
-    const acc = account({ objective: { current: 500, target: 2_000, pct: 0.25 } }, null);
-    expect(planObjectiveLine(acc, [pt('2025-01-06', 500)])).toEqual({ pnl: 2_000, amount: 2_000, source: 'manual' });
-  });
-
-  it('aucun objectif : « Tous les comptes », funded en cycle de payout, pas de données', () => {
-    expect(planObjectiveLine(null, [pt('2025-01-06', 100)])).toBeNull();
-    expect(planObjectiveLine(account({ progress: planProgress(1_000, 200, 'payout') }), [pt('2025-01-06', 200)])).toBeNull();
-    expect(planObjectiveLine(account({ progress: planProgress(3_000, 0) }), [])).toBeNull();
-  });
-
-});
-
-describe('compte de 50K, gains avant et pendant la période', () => {
-  // +238 avant la période (plus haut +500), puis +300, -400, +940 sur la période. Solde 51 078.
-  const points = [pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)];
-  const startBalance = 51_078 - 840;
-
-  it('drawdown du graphique : part du sommet d’avant la période', () => {
+describe('drawdown d’un compte de 50K, gains avant et pendant la période', () => {
+  it('part du sommet d’avant la période', () => {
+    const points = [pt('2026-10-01', 300), pt('2026-10-02', -100), pt('2026-10-03', 840)];
     const s = drawdownSeries(points, { pnl: 238, peak: 500 });
     expect(s.values).toEqual([-262, 0, -400, 0]);
     expect(maxDrawdownIndex(s.values)).toBe(2);
   });
+});
 
-  it('objectif du plan tracé à solde de départ + objectif (53 000), quelle que soit la période', () => {
-    const acc = account({ progress: planProgress(3_000, 1_078) });
-    const line = planObjectiveLine(acc, points)!;
-    expect(startBalance + line.pnl).toBe(53_000);
-    expect(equitySeries(points, startBalance).values.at(-1)).toBe(51_078);
+describe('objectif sur la courbe d’équité', () => {
+  const evalAcc = (over: Record<string, unknown> = {}) =>
+    account({ startingBalance: 50_000, currentBalance: 51_078, progress: planProgress(3_000, 1_078), ...over });
+
+  it('évaluation : solde de départ + objectif du plan, quelle que soit la période', () => {
+    expect(planObjectiveLine(evalAcc(), [pt('2026-10-01', 840)], 'USD')).toEqual({
+      value: 53_000, label: 'Objectif du plan +$3,000', pending: [],
+    });
+    expect(planObjectiveLine(evalAcc(), [pt('2026-10-01', 1_078)], 'USD')?.value).toBe(53_000);
+  });
+
+  it('évaluation : jours de trading minimum restants en légende', () => {
+    const progress = { kind: 'objective', requirements: [
+      { key: 'profit', met: false, current: 1_078, required: 3_000, unit: 'usd' },
+      { key: 'trading_days', met: false, current: 4, required: 7, unit: 'days' },
+    ] };
+    expect(planObjectiveLine(evalAcc({ progress }), [pt('2026-10-01', 100)], 'USD')?.pending).toEqual(['Jours tradés 4 / 7']);
+  });
+
+  it('sans plan : objectif saisi sur le compte', () => {
+    const acc = account({ startingBalance: 50_000, objective: { current: 500, target: 2_000, pct: 0.25 } }, null);
+    expect(planObjectiveLine(acc, [pt('2025-01-06', 500)], 'USD')).toEqual({ value: 52_000, label: 'Objectif +$2,000', pending: [] });
+  });
+
+  it('aucun objectif : « Tous les comptes », pas de données, aucun objectif', () => {
+    expect(planObjectiveLine(null, [pt('2025-01-06', 100)])).toBeNull();
+    expect(planObjectiveLine(evalAcc(), [])).toBeNull();
+    expect(planObjectiveLine(account({ progress: null, objective: null }), [pt('2025-01-06', 1)])).toBeNull();
+  });
+});
+
+describe('compte Funded : prochain payout (même progression que le suivi du compte)', () => {
+  const funded = (requirements: unknown[], currentBalance = 49_985.24) =>
+    account({ startingBalance: 50_000, currentBalance, progress: { kind: 'payout', requirements } }, 'tradeify-select-flex-50k');
+
+  it('profit du cycle : solde actuel + ce qui manque', () => {
+    const line = planObjectiveLine(funded([{ key: 'cycle_profit', met: false, current: 400, required: 1_000, unit: 'usd' }], 50_400), [pt('2026-10-01', 400)], 'USD');
+    expect(line).toEqual({ value: 51_000, label: 'Prochain payout $51,000', pending: [] });
+  });
+
+  it('solde de retrait : seuil absolu, le plus exigeant des seuils en $ l’emporte', () => {
+    const line = planObjectiveLine(funded([
+      { key: 'cycle_profit', met: true, current: 1_200, required: 1_000, unit: 'usd' },
+      { key: 'safety_net', met: false, current: 51_200, required: 52_100, unit: 'usd' },
+    ], 51_200), [pt('2026-10-01', 1_200)], 'USD');
+    expect(line?.value).toBe(52_100);
+  });
+
+  it('seuil uniquement en jours gagnants (Tradeify) : légende sans ligne', () => {
+    const line = planObjectiveLine(funded([{ key: 'winning_days', met: false, current: 0, required: 5, unit: 'days', threshold: 150 }]), [pt('2026-10-01', 41.3)], 'USD');
+    expect(line).toEqual({ value: null, label: 'Prochain payout', pending: ['Jours ≥ $150 : 0 / 5'] });
+  });
+});
+
+describe('Tradeify 50K Funded : P&L total, période, solde et départ cohérents', () => {
+  // 15/09 +105.12 et 17/09 -161.18 AVANT la fenêtre de 30 jours, puis +40.60, -8.96, +9.66.
+  const period = [pt('2026-09-29', 40.6), pt('2026-10-02', 31.64), pt('2026-10-06', 41.3)];
+  const all = [pt('2026-09-15', 105.12), pt('2026-09-17', -56.06), ...period.map((p) => pt(p.date, +(p.cumulativePnl - 56.06).toFixed(2)))];
+
+  it('30 jours : départ = 50 000 − 56.06, fin = solde du compte', () => {
+    const start = periodStartBalance(50_000, 49_985.24, 41.3, { pnl: -56.06, peak: 105.12, count: 6 });
+    expect(start).toBeCloseTo(49_943.94);
+    expect(equitySeries(period, start).values.at(-1)).toBeCloseTo(49_985.24);
+  });
+
+  it('« Tout » ou période couvrant le début du compte : départ à la taille du compte', () => {
+    expect(periodStartBalance(50_000, 49_985.24, -14.76, { pnl: 0, peak: 0, count: 0 })).toBe(50_000);
+    expect(equitySeries(all, 50_000).values.at(-1)).toBeCloseTo(49_985.24);
+  });
+
+  it('solde du broker ≠ trades : une période couvrant le début part quand même de la taille du compte', () => {
+    expect(periodStartBalance(50_000, 49_900, -14.76, { pnl: 0, peak: 0, count: 0 })).toBe(50_000);
+  });
+
+  it('API sans historique (ancienne) : repli sur solde actuel − P&L de la période', () => {
+    expect(periodStartBalance(50_000, 49_985.24, 41.3, undefined)).toBeCloseTo(49_943.94);
+  });
+
+  it('axe : amplitude minimale de 2 % du solde (quelques dollars restent plats)', () => {
+    const r = spanRange([49_943.94, 49_985.24, 49_984.54], 49_943.94);
+    expect(r.suggestedMax - r.suggestedMin).toBeCloseTo(998.88, 1);
+    expect(r.suggestedMin).toBeLessThan(49_943.94);
+    expect(spanRange([48_000, 53_000], 50_000)).toEqual({ suggestedMin: 48_000, suggestedMax: 53_000 });
   });
 });
 
