@@ -1,8 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as Sentry from '@sentry/nestjs';
 import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 import { StripeWebhookService } from './stripe-webhook.service';
+
+vi.mock('@sentry/nestjs', () => ({ captureMessage: vi.fn(), captureException: vi.fn() }));
 
 // Test d'intégration du handler de webhook Stripe (cœur du tunnel argent) :
 // montée de plan (checkout.session.completed → syncSubscription) et descente
@@ -227,5 +230,69 @@ describe('StripeWebhookService — invoice.payment_succeeded (reçu de renouvell
     await expect(
       svc.processWebhookEvent({ type: 'invoice.payment_succeeded', data: { object: invoice() } } as any),
     ).resolves.toBeUndefined();
+  });
+});
+
+// Compte MTC supprimé (abonnement résilié juste avant) : Stripe envoie ensuite, ou rejoue, des
+// événements pour un customer qui n'a plus d'utilisateur. Aucun ne doit lever (un throw = 5
+// tentatives BullMQ puis Sentry), alerter Sentry, écrire un e-mail ou recréer quoi que ce soit.
+// Le double Prisma n'a ni `create` ni `upsert` : une tentative de recréation ferait échouer le test.
+describe('StripeWebhookService — événements après suppression du compte', () => {
+  const deletedCases: Array<[string, Record<string, unknown>]> = [
+    ['customer.subscription.updated', subscription({ status: 'canceled' })],
+    ['customer.subscription.updated', subscription({ status: 'past_due' })],
+    ['customer.subscription.updated', subscription({ status: 'unpaid' })],
+    ['customer.subscription.deleted', subscription({ status: 'canceled' })],
+    ['invoice.payment_failed', { id: 'in_1', customer: 'cus_1', attempt_count: 2 }],
+    ['invoice.payment_succeeded', {
+      id: 'in_1', customer: 'cus_1', amount_paid: 4900, currency: 'eur', billing_reason: 'subscription_cycle',
+      parent: { subscription_details: { subscription: 'sub_1' } },
+    }],
+    ['invoice.upcoming', { id: 'in_2', customer: 'cus_1', amount_due: 49000, currency: 'eur', period_end: 1_893_456_000 }],
+    ['charge.refunded', { id: 'ch_1', customer: 'cus_1', refunded: true }],
+    ['customer.deleted', { id: 'cus_1' }],
+    ['checkout.session.completed', { mode: 'subscription', subscription: 'sub_1', client_reference_id: 'user_gone' }],
+  ];
+
+  it.each(deletedCases)('%s → ne lève pas, rien d’écrit, aucun e-mail ni Sentry', async (type, object) => {
+    process.env['SENTRY_DSN'] = 'https://public@sentry.invalid/1';
+    vi.mocked(Sentry.captureMessage).mockClear();
+    const { svc, prisma, resend, discord, retrieve } = makeSvc();
+    retrieve.mockResolvedValue(type.startsWith('customer.subscription') ? object : subscription({ status: 'canceled' }));
+    // Aucun utilisateur : ni par customer, ni par abonnement.
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.findFirst.mockResolvedValue(null);
+    prisma.user.updateMany.mockResolvedValue({ count: 0 });
+
+    try {
+      await expect(svc.processWebhookEvent({ id: 'evt_replay', type, data: { object } } as any)).resolves.toBeUndefined();
+    } finally {
+      delete process.env['SENTRY_DSN'];
+    }
+
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    for (const send of Object.values(resend)) expect(send).not.toHaveBeenCalled();
+    expect(discord.syncDiscordRole).not.toHaveBeenCalled();
+  });
+
+  it('past_due d’un utilisateur EXISTANT → toujours signalé à Sentry', async () => {
+    process.env['SENTRY_DSN'] = 'https://public@sentry.invalid/1';
+    vi.mocked(Sentry.captureMessage).mockClear();
+    const { svc, prisma, retrieve } = makeSvc();
+    retrieve.mockResolvedValue(subscription({ status: 'past_due' }));
+    prisma.user.findUnique.mockResolvedValue({ id: 'user_1', email: 'u@t.com', name: 'U', trialUsed: true });
+
+    try {
+      await svc.processWebhookEvent({
+        type: 'customer.subscription.updated',
+        data: { object: subscription({ status: 'past_due' }) },
+      } as any);
+    } finally {
+      delete process.env['SENTRY_DSN'];
+    }
+
+    expect(Sentry.captureMessage).toHaveBeenCalledOnce();
   });
 });

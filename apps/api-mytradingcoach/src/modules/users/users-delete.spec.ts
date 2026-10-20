@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { ForbiddenException, ServiceUnavailableException } from '@nestjs/common';
+import { BILLING_CLOSURE_FAILED_MESSAGE, UsersService } from './users.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
+import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 
 const baseUser = {
   role: 'USER',
@@ -13,6 +14,7 @@ const baseUser = {
   plan: 'FREE',
   createdAt: new Date(Date.now() - 4 * 86_400_000), // 4 jours
   referredBy: 'VAL',
+  stripeCustomerId: null as string | null,
   _count: { trades: 0 },
 };
 
@@ -24,6 +26,8 @@ const mockPrisma = {
 
 const mockRedis = { client: { get: vi.fn(), set: vi.fn(), del: vi.fn() } };
 
+const billingClosure = { cancelAllSubscriptions: vi.fn() };
+
 describe('UsersService — suppression + trace DeletedAccount', () => {
   let service: UsersService;
 
@@ -33,6 +37,7 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     mockPrisma.deletedAccount.create.mockReturnValue({ __op: 'create' });
     mockPrisma.user.delete.mockReturnValue({ __op: 'delete' });
     mockPrisma.$transaction.mockResolvedValue([{}, {}]);
+    billingClosure.cancelAllSubscriptions.mockResolvedValue([]);
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -42,6 +47,7 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
         // setRole délègue à AmbassadorService pour garantir le referralCode
         // d'un AMBASSADOR ; non sollicité par ces tests.
         { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
+        { provide: StripeAccountClosureService, useValue: billingClosure },
       ],
     }).compile();
     service = moduleRef.get(UsersService);
@@ -89,5 +95,55 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     await expect(service.adminDelete('admin-1')).rejects.toBeInstanceOf(ForbiddenException);
     expect(mockPrisma.deletedAccount.create).not.toHaveBeenCalled();
     expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  describe('résiliation Stripe avant suppression', () => {
+    it('sans client Stripe : aucun appel Stripe, suppression normale', async () => {
+      await service.deleteMe('user-1');
+      expect(billingClosure.cancelAllSubscriptions).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['active', 'trialing', 'past_due'])(
+      'abonnement %s : résilié AVANT la suppression du User',
+      async (status) => {
+        mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, plan: 'PREMIUM', stripeCustomerId: 'cus_1' });
+        billingClosure.cancelAllSubscriptions.mockResolvedValue([`sub_${status}`]);
+
+        await service.deleteMe('user-1');
+
+        expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledWith('cus_1');
+        expect(billingClosure.cancelAllSubscriptions.mock.invocationCallOrder[0]).toBeLessThan(
+          mockPrisma.$transaction.mock.invocationCallOrder[0],
+        );
+        expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('client Stripe sans abonnement en cours : suppression normale', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, stripeCustomerId: 'cus_1' });
+      await service.deleteMe('user-1');
+      expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledWith('cus_1');
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('Stripe échoue : 503 au message clair, aucune trace ni suppression', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, plan: 'PREMIUM', stripeCustomerId: 'cus_1' });
+      billingClosure.cancelAllSubscriptions.mockRejectedValue(new Error('Stripe API indisponible'));
+
+      const err = await service.deleteMe('user-1').catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(ServiceUnavailableException);
+      expect((err as ServiceUnavailableException).message).toBe(BILLING_CLOSURE_FAILED_MESSAGE);
+      expect(mockPrisma.deletedAccount.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('adminDelete résilie aussi : même flux', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, plan: 'PREMIUM', stripeCustomerId: 'cus_9' });
+      await service.adminDelete('user-1');
+      expect(billingClosure.cancelAllSubscriptions).toHaveBeenCalledWith('cus_9');
+    });
   });
 });

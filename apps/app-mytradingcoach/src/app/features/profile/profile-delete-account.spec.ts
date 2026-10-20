@@ -25,6 +25,7 @@ import { UsersApi } from '../../core/api/users.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
+import { OffersStore } from '../../core/stores/offers.store';
 
 function mount(deleteMeImpl: () => unknown) {
   const auth = { currentUser: signal(null), setCurrentUser: vi.fn(), logout: vi.fn() };
@@ -124,5 +125,33 @@ describe('Profil — un échec de suppression de compte est désormais expliqué
 
     expect(usersApi.deleteMe).not.toHaveBeenCalled();
     expect(cmp.deleteError()).toBeNull();
+  });
+});
+
+// L'écran de suppression annonce la résiliation immédiate seulement s'il y a un abonnement Stripe
+// en cours : jamais à un compte sans abonnement (Premium offert, bêta), jamais pour un résilié.
+describe('Profil — mention de la résiliation à la suppression', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  function withSubscription(status: string | null) {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status, interval: status ? 'month' : null },
+      founder: { refundUntil: null },
+    } as any);
+    return cmp;
+  }
+
+  it.each(['active', 'trialing', 'past_due', 'unpaid'])('abonnement %s → mention affichée', (status) => {
+    expect(withSubscription(status).hasStripeSubscription()).toBe(true);
+  });
+
+  it.each([null, 'canceled', 'incomplete_expired'])('statut %s → aucune mention', (status) => {
+    expect(withSubscription(status).hasStripeSubscription()).toBe(false);
+  });
+
+  it('offres non chargées → aucune mention (rien d’affirmé sans savoir)', () => {
+    const { cmp } = mount(() => of(undefined));
+    expect(cmp.hasStripeSubscription()).toBe(false);
   });
 });

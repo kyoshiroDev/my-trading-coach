@@ -143,6 +143,14 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > vrai — un sabotage de `processReferral` est resté invisible tant qu'une API tournait.
 > En CI il n'y a qu'un process, le problème ne se pose pas.
 
+> **Vrais appels Stripe en mode test : `delete-me-stripe.int-spec.ts`.** Crée de vrais customers
+> et abonnements (actif, essai, impayé via une horloge de test `testHelpers.testClocks` avancée de
+> 32 jours avec `pm_card_chargeCustomerFail`), supprime le compte par HTTP et vérifie
+> l'abonnement `canceled` chez Stripe ; échec simulé par une seconde app dont le `STRIPE_CLIENT`
+> porte une clé invalide (vrai 401 Stripe). Il faut la vraie clé `sk_test_` du job CI : avec la
+> clé factice de la recette locale, `balance.retrieve()` échoue au démarrage et ses tests sont
+> **sautés** (pas en échec). Nettoyage : horloges, customers et produit de test en `afterAll`.
+
 ---
 
 ## Config Vitest NestJS

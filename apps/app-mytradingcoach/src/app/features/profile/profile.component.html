@@ -374,6 +374,16 @@
                   <p class="delete-confirm-hint">
                     Tape <strong>SUPPRIMER</strong> pour confirmer. Cette action est irréversible.
                   </p>
+                  @if (hasStripeSubscription()) {
+                    <p class="delete-confirm-hint" data-testid="delete-subscription-note">
+                      Ton abonnement est résilié immédiatement.
+                      @if (refundMailto(); as mailto) {
+                        Satisfait ou remboursé fondateur : ton premier paiement reste remboursable sur demande
+                        jusqu'au {{ offersStore.offers()?.founder?.refundUntil | date:'dd/MM/yyyy' }}
+                        (<a [href]="mailto">demander le remboursement</a>).
+                      }
+                    </p>
+                  }
                   <label class="delete-reason-label" for="delete-reason">Pourquoi pars-tu ? (optionnel)</label>
                   <select id="delete-reason" class="delete-input" [value]="deleteReason()"
                     (change)="deleteReason.set($any($event.target).value)">

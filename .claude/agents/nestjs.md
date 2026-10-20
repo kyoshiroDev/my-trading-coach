@@ -245,6 +245,21 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   sans doublon, avoir) · `StripeCouponService` (coupons filleul). Nouvel événement webhook
   = un `case` + un handler privé dans `StripeWebhookService`. Dans les specs, passer un
   mock Stripe au constructeur ; ne pas réassigner un champ privé.
+- **Suppression d'un compte MTC (`DELETE /api/users/me`, `DELETE /api/admin/users/:id`)** :
+  `archiveAndDelete` résilie d'abord, **immédiatement**, tous les abonnements non terminés du
+  customer Stripe (actif, essai, impayé, incomplet : pas seulement `stripeSubscriptionId`) via
+  `StripeAccountClosureService` (`modules/stripe/stripe-account-closure.service.ts`), sans prorata
+  ni remboursement. Stripe en échec → **503** `BILLING_CLOSURE_FAILED_MESSAGE`, rien supprimé ni
+  tracé (l'utilisateur réessaie). Customer inconnu de Stripe → rien à résilier, suppression
+  normale. Le service est fourni par `UsersModule` avec son propre `stripeClientProvider`
+  (importer `StripeModule` ferait un cycle Users → Stripe → Discord → Users). Les webhooks qui
+  arrivent ensuite pour ce customer ne trouvent plus d'utilisateur : ils ne lèvent pas, n'écrivent
+  rien, et l'alerte Sentry `past_due` / `unpaid` est sautée quand le customer n'a plus de compte.
+  Rattrapage des suppressions antérieures : `scripts/list-orphan-stripe-subscriptions.ts`
+  (lecture seule). Tests : `users-delete.spec.ts`, `stripe-account-closure.service.spec.ts`,
+  `stripe-webhook.service.spec.ts`, `delete-me-stripe.int-spec.ts` (mode test Stripe).
+  ⚠️ Commissions ambassadeur `pending` : emportées par la cascade à la suppression de
+  l'ambassadeur (aucune trace côté admin).
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
