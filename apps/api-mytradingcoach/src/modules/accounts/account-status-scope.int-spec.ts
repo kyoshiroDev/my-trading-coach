@@ -207,6 +207,28 @@ describe('changement de statut : visible tout de suite (cache invalidé)', () =>
   });
 });
 
+describe('journal : chiffres du haut filtrés, liste complète', () => {
+  it('par défaut : échoué et archivé hors des chiffres, nombre de comptes exclus exposé', async () => {
+    const st = await trades.computeJournalStats(fx.userId, {} as never);
+    expect(st).toMatchObject({ totalTrades: 3, pnlNet: 160, excludedAccounts: { failed: 1, archived: 1 } });
+  });
+
+  it('includeInactive : tout réinclus, aucun compte exclu', async () => {
+    const st = await trades.computeJournalStats(fx.userId, { includeInactive: true } as never);
+    expect(st).toMatchObject({ totalTrades: 5, pnlNet: -340, excludedAccounts: { failed: 0, archived: 0 } });
+  });
+
+  it('compte échoué choisi : ses chiffres, aucun compte exclu', async () => {
+    const st = await trades.computeJournalStats(fx.userId, { accountId: fx.ids.failed } as never);
+    expect(st).toMatchObject({ totalTrades: 1, pnlNet: -300, excludedAccounts: { failed: 0, archived: 0 } });
+  });
+
+  it('autres filtres conservés (résultat perdant) en plus du filtre des comptes perdus', async () => {
+    const st = await trades.computeJournalStats(fx.userId, { result: 'LOSS' } as never);
+    expect(st.totalTrades).toBe(0); // seuls perdants : échoué et archivé, exclus
+  });
+});
+
 describe('journal : garde tous les trades, avec le statut du compte', () => {
   it('trades des comptes échoués et archivés présents, statut exposé pour le badge', async () => {
     const page = await trades.findAll(fx.userId, { limit: 50 } as never);

@@ -1,4 +1,5 @@
-import { Prisma } from '@prisma/client';
+import { AccountStatus, Prisma } from '@prisma/client';
+import { excludesInactiveAccounts, inactiveAccountsTradeSql } from '../accounts/account-status-scope';
 import { computeTradeStats } from '@mtc/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
 
@@ -90,4 +91,35 @@ export async function journalStatsSql(
     bestTrade: r.best ?? 0,
     worstTrade: r.worst ?? 0,
   };
+}
+
+/**
+ * KPIs du journal pour l'en-tête (GET /trades/stats) : `journalStatsSql` sur le filtre de la
+ * liste, PLUS le filtre des comptes perdus (échoués et archivés exclus de « tous les comptes »,
+ * sauf `includeInactive` ou compte précis), et le nombre de comptes ainsi exclus pour la ligne
+ * « n comptes exclus ». La liste des trades, elle, n'applique pas ce filtre.
+ */
+export async function journalStatsForFilters(
+  prisma: PrismaService,
+  userId: string,
+  base: Prisma.Sql,
+  filters: { accountId?: string; includeInactive?: boolean },
+): Promise<JournalStats & { excludedAccounts: { failed: number; archived: number } }> {
+  const scope = {
+    accountId: filters.accountId && filters.accountId !== 'all' ? filters.accountId : undefined,
+    includeInactive: filters.includeInactive === true,
+  };
+  const excluding = excludesInactiveAccounts(scope);
+  const [stats, inactive] = await Promise.all([
+    journalStatsSql(prisma, excluding ? Prisma.sql`${base} AND ${inactiveAccountsTradeSql(scope)}` : base),
+    excluding
+      ? prisma.tradingAccount.groupBy({
+        by: ['status'],
+        where: { userId, status: { in: [AccountStatus.FAILED, AccountStatus.ARCHIVED] } },
+        _count: { _all: true },
+      })
+      : Promise.resolve([]),
+  ]);
+  const count = (s: AccountStatus) => inactive.find((g) => g.status === s)?._count._all ?? 0;
+  return { ...stats, excludedAccounts: { failed: count(AccountStatus.FAILED), archived: count(AccountStatus.ARCHIVED) } };
 }

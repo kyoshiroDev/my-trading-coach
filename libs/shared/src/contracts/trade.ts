@@ -84,6 +84,8 @@ export interface TradeFilters {
   dateFrom?: string;
   dateTo?: string;
   accountId?: string;
+  /** GET /trades/stats seulement : réinclut les comptes échoués et archivés (exclus par défaut). */
+  includeInactive?: boolean | string;
 }
 
 /** Page de GET /trades (pagination par curseur). */
@@ -102,6 +104,11 @@ export interface JournalStats {
   pnlNet: number;
   bestTrade: number;
   worstTrade: number;
+  /**
+   * Compte perdu : comptes échoués et archivés exclus de CES chiffres (ligne « n comptes exclus »).
+   * Zéros quand un compte précis est choisi ou avec `includeInactive`.
+   */
+  excludedAccounts: { failed: number; archived: number };
 }
 
 /** Résultat de `GET /instruments/search` (fournisseur de marché, liste statique ou crypto). */
