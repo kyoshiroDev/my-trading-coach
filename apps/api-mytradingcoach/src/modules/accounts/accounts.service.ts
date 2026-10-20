@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
-import { drawdownFloor } from '@mtc/shared';
+import { drawdownFloor, drawdownPeakProfit, planDrawdownRule } from '@mtc/shared';
 import {
   AccountStatus,
   AccountType,
@@ -399,40 +399,27 @@ export class AccountsService {
     let drawdown: AccountRuleMetrics['drawdown'] = null;
     let drawdownUnconfirmed = false;
     if (phase && plan) {
-      // Verrouillage propre à la plateforme (ex. Apex : figé sur Rithmic, jamais sur Tradovate).
-      // Plateforme connue (connexion, sinon saisie) → sa règle ; inconnue → règle par défaut.
+      // Plateforme connue (connexion, sinon saisie) → son verrouillage ; inconnue → règle par défaut.
       const platform = connectedPlatform ?? account.platform ?? null;
-      const overrides = phase.max_drawdown.platform_overrides ?? null;
-      const override = platform && overrides ? overrides[platform] ?? null : null;
-      const md = override
-        ? { ...phase.max_drawdown, locks_at: override.locks_at, locked_floor: override.locked_floor }
-        : phase.max_drawdown;
-      if (md.amount == null || !(md.amount > 0)) {
+      const resolved = planDrawdownRule(phase, { startingBalance, accountSize: plan.accountSize, platform });
+      if (!resolved) {
         drawdownUnconfirmed = true;
       } else {
-        // Seuils du catalogue exprimés depuis le solde de départ de la phase : on les décale sur
-        // celui du compte (reprise du suivi en cours de route, solde saisi différent).
-        const shift = startingBalance - (phase.starting_balance ?? plan.accountSize);
+        const { rule: floorRule, md } = resolved;
         // EOD : plus haut des clôtures OFFICIELLES quand elles couvrent la séance précédente (et que
         // le solde du broker est dans le référentiel du compte) ; sinon le plus prudent des deux.
         // Intraday : un nouveau plus haut en direct (equity du broker) fait monter le seuil.
         const usable = md.type === 'trailing_eod' && official && broker && !broker.referenceMismatch ? official : null;
-        const officialProfit = usable ? usable.peakClose - startingBalance : null;
         const fresh = !!usable && usable.lastTradeDate >= previousSession(tradingDay(now));
-        const peakProfit =
-          md.type === 'trailing_eod'
-            ? fresh
-              ? Math.max(0, officialProfit!)
-              : Math.max(0, agg.maxEodCumulative, officialProfit ?? 0)
-          : md.type === 'trailing_intraday' ? Math.max(0, agg.maxCumulative, equity - startingBalance)
-          : 0;
-        const locksAt = md.locks_at != null ? md.locks_at + shift : null;
-        const lockedFloor = md.locked_floor != null ? md.locked_floor + shift : null;
-        // Même fonction que la courbe de drawdown des Statistiques (plancher jour par jour).
-        const { floor, locked } = drawdownFloor(
-          { kind: md.type, amount: md.amount, startingBalance, locksAt, lockedFloor },
-          peakProfit,
+        const peakProfit = drawdownPeakProfit(
+          md.type,
+          agg,
+          equity - startingBalance,
+          usable ? { profit: usable.peakClose - startingBalance, fresh } : null,
         );
+        const { locksAt, lockedFloor } = floorRule;
+        // Mêmes fonctions que la courbe de drawdown des Statistiques (plancher jour par jour).
+        const { floor, locked } = drawdownFloor(floorRule, peakProfit);
         const margin = equity - floor;
         drawdown = {
           type: md.type === 'static' ? DrawdownType.STATIC : DrawdownType.TRAILING,
@@ -454,8 +441,8 @@ export class AccountsService {
             peakSource: md.type === 'trailing_eod' ? (fresh ? 'broker' : 'trades') : null,
             peakBalance: md.type === 'trailing_eod' ? startingBalance + peakProfit : null,
             officialThrough: usable?.lastTradeDate ?? null,
-            platform: override ? platform : null,
-            platformChoices: !override && overrides ? Object.keys(overrides).sort() : [],
+            platform: resolved.overridden ? platform : null,
+            platformChoices: resolved.platformChoices,
           },
         };
       }
