@@ -111,6 +111,12 @@ export function tickDate(iso: string | null, span: number): string {
     : d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
+/** Date courte d'un repère : `14/10`. */
+export function shortDate(iso: string | null): string {
+  if (!iso) return START_LABEL;
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
 /** Date complète d'une infobulle : `6 janv. 2025`. */
 export function tooltipDate(iso: string | null): string {
   if (!iso) return START_LABEL;
@@ -203,6 +209,8 @@ export interface PlanFloor {
   breached: boolean;
   /** Plus haut gain retenu par le suivi du compte (borne des plus hauts recalculés) ; null si figé. */
   peakProfit: number | null;
+  /** Solde actuel du compte (en-tête « Solde $51,078 · plancher actuel $49,275 »). */
+  balance: number;
 }
 
 export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
@@ -225,25 +233,40 @@ export function planFloorOf(account: TradingAccount | null): PlanFloor | null {
       : dd.rule.peakBalance != null
         ? dd.rule.peakBalance - startingBalance
         : dd.floor - startingBalance + dd.maxDrawdown;
-  return { rule, floor: dd.floor, margin: dd.margin, pct: dd.pct, breached: dd.breached, peakProfit };
+  return {
+    rule, floor: dd.floor, margin: dd.margin, pct: dd.pct, breached: dd.breached, peakProfit,
+    balance: account.metrics.currentBalance,
+  };
 }
 
 export interface FloorSeries {
   dates: (string | null)[];
   /** Solde du compte à chaque clôture (départ de la période compris). */
   balance: number[];
-  /** Plancher de drawdown après chaque clôture. */
+  /** Plancher de drawdown après chaque clôture (`drawdownFloor`, la fonction du suivi du compte). */
   floor: number[];
+  /** Marge restante = solde − plancher ; dernier point = marge du suivi du compte. */
+  margin: number[];
+  /**
+   * Valeur tracée : limite du plan + marge, plafonnée au solde initial. Elle touche la limite
+   * exactement quand le compte touche son vrai plancher. JAMAIS affichée comme un « solde ».
+   */
+  values: number[];
+  /** Limite du plan = solde initial − drawdown maximal (ligne rouge fixe). */
+  limit: number;
+  /** Solde initial du compte (haut de l'axe). */
+  top: number;
   dayPnl: (number | null)[];
-  /** Point où la marge (solde − plancher) a été la plus faible. */
+  /** Point où la marge a été la plus faible. */
   minMarginIdx: number;
 }
 
 /**
- * Solde et plancher jour par jour sur la période. Le plus haut part de celui d'avant la période
- * (`before`), suit les clôtures (plan suiveur), reste à 0 pour un plan statique, et le plancher se
- * fige selon la règle (`drawdownFloor`). Le dernier point reprend le plancher du suivi du compte :
- * l'en-tête et la séance affichent exactement la même valeur.
+ * Marge avant la limite jour par jour sur la période. Le plancher part du plus haut d'avant la
+ * période (`before`), suit les clôtures (suiveur), reste fixe (statique) et se fige selon le plan
+ * (`drawdownFloor`). Valeur tracée = limite + marge : un plan statique retrouve le solde (plafonné au
+ * solde initial), un plan suiveur la baisse depuis le plus haut, reportée sous le solde initial.
+ * Dernier point = marge du suivi du compte : en-tête, courbe et séance affichent le même chiffre.
  */
 export function floorSeries(
   points: EquityPoint[],
@@ -262,9 +285,17 @@ export function floorSeries(
     return drawdownFloor(rule, cap(peak)).floor;
   });
   floor[floor.length - 1] = plan.floor;
+  const margin = balance.map((b, i) => b - floor[i]);
+  margin[margin.length - 1] = plan.margin;
+  const top = rule.startingBalance;
+  const limit = top - rule.amount;
+  const values = margin.map((m) => Math.min(top, limit + m));
   let minMarginIdx = 0;
-  balance.forEach((b, i) => {
-    if (b - floor[i] < balance[minMarginIdx] - floor[minMarginIdx]) minMarginIdx = i;
+  margin.forEach((m, i) => {
+    if (m < margin[minMarginIdx]) minMarginIdx = i;
   });
-  return { dates: [null, ...points.map((p) => p.date)], balance, floor, dayPnl: dayPnlOf(points), minMarginIdx };
+  return {
+    dates: [null, ...points.map((p) => p.date)], balance, floor, margin, values, limit, top,
+    dayPnl: dayPnlOf(points), minMarginIdx,
+  };
 }

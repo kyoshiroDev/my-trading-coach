@@ -6,9 +6,8 @@
   </div>
   @if (floorHead(); as fh) {
     <span class="pc-value pc-floor" [class.wide]="narrow()" [class.warn]="fh.tone === 'yellow'" [class.neg]="fh.tone === 'red'" data-testid="perf-chart-value">
-      <span class="pc-vlab">Marge avant le plancher</span>
-      <span>{{ fh.margin }}</span>
-      <span class="pc-floor-sub" data-testid="perf-chart-floor">Plancher {{ fh.floor }}</span>
+      <span class="pc-floor-main"><span class="pc-vlab">Marge avant la limite</span> {{ fh.margin }}</span>
+      <span class="pc-floor-sub" data-testid="perf-chart-floor">Solde {{ fh.balance }} · plancher actuel {{ fh.floor }}</span>
     </span>
   } @else if (keyValue(); as kv) {
     <span class="pc-value" [class.pos]="kv.tone === 'pos'" [class.neg]="kv.tone === 'neg'" data-testid="perf-chart-value">

@@ -26,6 +26,7 @@ import {
   ObjectiveLine,
   PlanFloor,
   spanDays,
+  shortDate,
   spanRange,
   tickDate,
   tooltipDate,
@@ -129,10 +130,10 @@ export class ChartService {
     if (points.length < 1) return null;
     if (opts.floor) {
       const f = floorSeries(points, opts.floor.periodStart, opts.floor.plan, opts.before ?? undefined);
-      const series: ChartSeries = { dates: f.dates, values: f.balance, dayPnl: f.dayPnl };
-      // L'axe inclut toujours le plancher (marge de 7 %), en montants du compte.
-      const yRange = { grace: '7%', ...spanRange([...f.floor, ...f.balance], opts.floor.periodStart) };
-      return this.build(canvas, series, opts, (p) => p.text2, yRange, { mode: 'floor', floor: f });
+      const series: ChartSeries = { dates: f.dates, values: f.values, dayPnl: f.dayPnl };
+      // Axe du solde initial (en haut) jusqu'un peu sous la limite (15 % du drawdown du plan).
+      const low = Math.min(f.limit, ...f.values) - opts.floor.plan.rule.amount * 0.15;
+      return this.build(canvas, series, opts, (p) => p.red, { max: f.top, suggestedMin: low }, { mode: 'floor', floor: f });
     }
     const series = drawdownSeries(points, opts.before ?? undefined);
     const deepest = Math.min(...series.values);
@@ -221,7 +222,7 @@ export class ChartService {
       },
     };
 
-    // Objectif (équité), plancher (plan relié), pastille du max ou de la marge la plus faible.
+    // Objectif (équité), limite du plan (plan relié), pastille du max ou de la marge la plus faible.
     const marks: Plugin<'line'> = {
       id: 'mtcMarks',
       afterDatasetsDraw: (chart) => {
@@ -242,13 +243,14 @@ export class ChartService {
           });
         }
         if (floor) {
-          const last = floor.floor[floor.floor.length - 1];
-          drawLevel(ctx, area, y.getPixelForValue(last), { color: p.yellow, fontSize, below: true, label: `Plancher ${this.money(last)}` });
+          drawLevel(ctx, area, y.getPixelForValue(floor.limit), {
+            stroke: p.red, dashed: false, color: p.red, fontSize, label: `Limite du plan ${this.money(floor.limit)}`,
+          });
           const i = floor.minMarginIdx;
           if (pts[i]) {
             drawPin(ctx, area, pts[i], {
-              fill: p.yellow, ring: p.bg, color: p.text2, fontSize, below: true,
-              label: `marge min ${this.money(floor.balance[i] - floor.floor[i])} · ${tickDate(series.dates[i], 0)}`,
+              fill: p.red, ring: p.bg, color: p.text2, fontSize, below: true,
+              label: `marge min ${this.money(floor.margin[i])} · ${shortDate(series.dates[i])}`,
             });
           }
         }
@@ -294,18 +296,16 @@ export class ChartService {
               return g;
             },
           },
-          // Plancher du plan : escalier ambre (il ne bouge qu'aux clôtures), zone dessous en rouge léger.
+          // Limite du plan : niveau fixe (la ligne est dessinée par `marks`), zone rouge pâle dessous.
           ...(floor
             ? [{
-                data: floor.floor,
-                borderColor: p.yellow,
-                borderWidth: 1.5,
-                stepped: 'after' as const,
+                data: floor.values.map(() => floor.limit),
+                borderWidth: 0,
                 pointRadius: 0,
                 pointHitRadius: 0,
                 pointHoverRadius: 0,
                 fill: 'start' as const,
-                backgroundColor: alpha(p.red, 0.06),
+                backgroundColor: alpha(p.red, 0.08),
               }]
             : []),
         ],
@@ -334,18 +334,17 @@ export class ChartService {
             footerColor: p.text2,
             footerFont: { family: MONO, size: 10, weight: 'normal' },
             footerMarginTop: 4,
-            // Une seule ligne de valeur : le solde (le plancher passe dans le pied).
             filter: (item) => item.datasetIndex === 0,
             callbacks: {
               title: (items) => tooltipDate(series.dates[items[0]?.dataIndex ?? 0]),
-              label: (item) => this.money(item.parsed.y ?? 0),
+              // Plan relié : la valeur tracée n'est PAS un solde, on n'affiche que la marge restante.
+              label: (item) =>
+                floor ? `Marge ${this.money(floor.margin[item.dataIndex])}` : this.money(item.parsed.y ?? 0),
               labelTextColor: () => color,
               footer: (items) => {
                 const i = items[0]?.dataIndex ?? 0;
                 const d = series.dayPnl[i];
-                const lines = d === null || d === undefined ? [] : [`Jour ${this.money(d, true)}`];
-                if (floor) lines.push(`Marge ${this.money(floor.balance[i] - floor.floor[i])} · plancher ${this.money(floor.floor[i])}`);
-                return lines;
+                return floor || d === null || d === undefined ? [] : [`Jour ${this.money(d, true)}`];
               },
             },
           },

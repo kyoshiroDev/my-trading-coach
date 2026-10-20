@@ -94,7 +94,7 @@ export class PerfChartComponent {
     if (!plan) return null;
     const fmt = (v: number) => this.money.format(v, { decimals: 0, sign: false });
     const tone = drawdownTone(plan);
-    return { margin: fmt(plan.margin), floor: fmt(plan.floor), tone: tone === 'green' ? '' : tone };
+    return { margin: fmt(plan.margin), floor: fmt(plan.floor), balance: fmt(plan.balance), tone: tone === 'green' ? '' : tone };
   });
 
   /** Valeur de l'en-tête : P&L de la période (équité) ou drawdown actuel + max (drawdown). */
@@ -118,7 +118,9 @@ export class PerfChartComponent {
   protected readonly ariaLabel = computed(() => {
     const head = this.floorHead();
     const base = chartAriaLabel(this.kind(), this.series(), this.money.currency());
-    return head ? `${base} Marge avant le plancher ${head.margin}, plancher ${head.floor}.` : base;
+    return head
+      ? `Drawdown du compte : marge avant la limite du plan ${head.margin}, solde ${head.balance}, plancher actuel ${head.floor}.`
+      : base;
   });
 
   constructor() {
