@@ -11,6 +11,7 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
+import { LOST_DEMO_ACCOUNTS, buildLostDemoTrades } from './demo-data/lost-accounts';
 
 
 /**
@@ -34,6 +35,8 @@ export interface DemoSeedResult {
   email: string; trades: number; winRate: number; pnl: number;
   grossPnl: number; fees: number; redDays: number; tradingDays: number;
   sessions: number; recaps: number; debriefs: number; accounts: number;
+  /** Comptes échoué, validé et archivé (hors du capital des comptes actifs). */
+  lostAccounts: number;
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
 
@@ -176,6 +179,38 @@ export async function seedTradingData(
         },
       });
     }
+  }
+
+  // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative), un VALIDÉ et un
+  // ARCHIVÉ, avec leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
+  // des chiffres » et l'interrupteur des statistiques, sans toucher au capital des comptes actifs.
+  const lostIdByKey = new Map<string, string>();
+  const lostPlans = new Set(
+    (await prisma.propFirmPlan.findMany({
+      where: { id: { in: LOST_DEMO_ACCOUNTS.map((a) => a.propFirmPlanId) }, active: true },
+      select: { id: true },
+    })).map((p) => p.id),
+  );
+  for (const a of LOST_DEMO_ACCOUNTS) {
+    const created = await prisma.tradingAccount.create({
+      data: {
+        userId: user.id, label: a.label, broker: a.broker, type: a.type, status: a.status,
+        accountSize: a.accountSize, startingBalance: a.startingBalance, profitTarget: a.profitTarget,
+        maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+        propFirmPlanId: lostPlans.has(a.propFirmPlanId) ? a.propFirmPlanId : null,
+      },
+    });
+    lostIdByKey.set(a.key, created.id);
+  }
+  for (const t of buildLostDemoTrades(now)) {
+    await prisma.trade.create({
+      data: {
+        userId: user.id, accountId: lostIdByKey.get(t.account)!,
+        asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, quantity: t.quantity,
+        pnl: t.pnl, commission: t.commission, setupId: setupIdFor('Breakout'),
+        session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
+      },
+    });
   }
 
   // Journal de risque du compte Apex connecté (#373) : ce que le suivi en direct aurait relevé
@@ -376,6 +411,7 @@ export async function seedTradingData(
     email: user.email, trades: stats.trades, winRate: Math.round(stats.winRateNet), pnl: stats.netPnl,
     grossPnl: stats.grossPnl, fees: stats.fees, redDays: stats.redDays, tradingDays: stats.tradingDays,
     sessions: days.filter((d) => d.trades.length).length, recaps, debriefs, accounts: DEMO_ACCOUNTS.length,
+    lostAccounts: LOST_DEMO_ACCOUNTS.length,
     bySetup: stats.bySetup, byAccount: stats.byAccount,
   };
 }
