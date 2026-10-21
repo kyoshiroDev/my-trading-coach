@@ -344,19 +344,32 @@ export class ProfileComponent implements OnInit {
   });
   protected readonly changingInterval = signal(false);
 
-  /** Satisfait ou remboursé : demande par e-mail à hello@ (remboursement fait dans Stripe). */
+  /** Satisfait ou remboursé : demande par e-mail au support (remboursement fait dans Stripe). */
   protected readonly refundMailto = computed(() => {
     const f = this.offersStore.offers()?.founder;
     if (!f?.refundUntil) return null;
     const subject = `Remboursement fondateur n° ${f.number}`;
     const body = `Bonjour,\n\nJe demande le remboursement de mon premier paiement fondateur (satisfait ou remboursé ${PRICING.founder.refundDays} jours).\nCompte : ${this.userStore.user()?.email ?? ''}\n\nMerci.`;
-    return `mailto:hello@mytradingcoach.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return `mailto:support@mytradingcoach.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   });
 
   /** Abonnement Stripe en cours (actif, essai, impayé…) : l'API le résilie avant de supprimer le compte. */
   protected readonly hasStripeSubscription = computed(() => {
     const status = this.offersStore.offers()?.subscription.status;
     return !!status && status !== 'canceled' && status !== 'incomplete_expired';
+  });
+
+  /**
+   * Rappel du satisfait ou remboursé fondateur sur l'écran de suppression : même demande que
+   * `refundMailto`. Fin de fenêtre = `refundUntil` de l'API
+   * (prise de place + FOUNDER_REFUND_DAYS, null une fois passée) ; revérifiée ici pour une page
+   * restée ouverte au-delà de l'échéance.
+   */
+  protected readonly deleteRefund = computed(() => {
+    const until = this.offersStore.offers()?.founder?.refundUntil;
+    const mailto = this.refundMailto();
+    if (!until || !mailto || new Date(until).getTime() <= Date.now()) return null;
+    return { until, mailto };
   });
 
   protected async changeInterval() {

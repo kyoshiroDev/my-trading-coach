@@ -390,6 +390,13 @@ envoyées à l'API sont des horodatages ISO complets.
   clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
   renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
   Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
+- **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
+  les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
+  courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
+  Capital (`payoutSeries`). Elles finissent ainsi sur le Capital, et la marge baisse le jour du
+  payout au lieu de sauter au dernier point. Le P&L (KPIs, « Jour », drawdown « sous l'eau ») ne les
+  voit jamais : un retrait n'est pas une perte. Le plus haut d'avant la période n'est pas abaissé par
+  un payout (plancher inchangé). Comptes manuels : aucun payout (pas de saisie à ce jour).
 
 ---
 
@@ -1134,7 +1141,7 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
   dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
 - **Profil > Abonnement** : badge « Fondateur n° X », tarif bloqué et perte en cas de résiliation,
-  « Satisfait ou remboursé : demander le remboursement » (mailto hello@, jusqu'à `refundUntil` : le
+  « Satisfait ou remboursé : demander le remboursement » (mailto support@, jusqu'à `refundUntil` : le
   remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
   CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
   neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.

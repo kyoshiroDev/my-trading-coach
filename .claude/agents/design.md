@@ -255,7 +255,9 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   restent une ligne presque plate, pas une montagne.
 - **Départ de la courbe** (`periodStartBalance`) : solde de départ du compte + P&L d'avant la
   période (`before` de l'API) ; exactement la taille du compte quand la période couvre son début
-  (« Tout », aucun trade avant). Carte étroite (< 560 px) : onglets de période sous le titre.
+  (« Tout », aucun trade avant), moins les payouts reçus avant la période. Payouts de la période
+  déduits de la courbe (fin = Capital) ; infobulle du jour : « Payout −$x » (plus « Jour ±$x » s'il
+  y a eu des trades). Carte étroite (< 560 px) : onglets de période sous le titre.
 - **Survol / toucher** : crosshair vertical fin + pastille + infobulle `--bg-3` (date, valeur,
   « Jour ±$x ») dessinée dans le canvas → ne sort jamais de l'écran ; `touch-action: pan-y`.
 - **Animation** : découverte gauche → droite 380 ms quand les données changent, aucune si

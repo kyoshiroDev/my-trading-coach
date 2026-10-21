@@ -119,7 +119,7 @@ describe('Profil > Abonnement', () => {
     expect(text).toContain('29 €/mois bloqué tant que ton abonnement reste actif. Si tu résilies, tu perds ce tarif.');
     const refund = el.querySelector<HTMLAnchorElement>('.plan-refund a');
     expect(refund?.textContent).toContain('Satisfait ou remboursé : demander le remboursement');
-    expect(refund?.href).toMatch(/^mailto:hello@mytradingcoach\.app\?subject=Remboursement%20fondateur%20n%C2%B0%2012/);
+    expect(refund?.href).toMatch(/^mailto:support@mytradingcoach\.app\?subject=Remboursement%20fondateur%20n%C2%B0%2012/);
     expect(text).toContain("Passer à l'annuel (290 €/an)");
     expect(text).toContain('met fin à ton tarif fondateur');
     expect(text).toContain('Gérer mon abonnement →');

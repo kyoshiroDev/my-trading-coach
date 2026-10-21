@@ -13,7 +13,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate, periodBefore } from './analytics.service';
+import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate, periodBefore, splitPayouts } from './analytics.service';
 
 const mockPrisma = {
   setup: {
@@ -21,6 +21,9 @@ const mockPrisma = {
   },
   user: {
     findUnique: vi.fn().mockResolvedValue({ startingCapital: null }),
+  },
+  brokerPayout: {
+    findMany: vi.fn().mockResolvedValue([]),
   },
 };
 
@@ -295,6 +298,47 @@ describe('AnalyticsService', () => {
       const eq = await svc()['computeEquityCurveDaily']({ userId: 'u1', accountId: 'acc-1' }, from, undefined);
       expect(eq.before).toEqual({ pnl: 238, peak: 500, count: 2 });
       expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ accountId: 'acc-1', before: from });
+    });
+
+    it('payouts : ceux de la période, et le total retiré avant', () => {
+      const from = new Date('2026-09-30T22:00:00.000Z'); // 1er octobre, minuit à Paris
+      const rows = [
+        { tradeDate: new Date('2026-09-15T00:00:00.000Z'), amount: 1_000 },
+        { tradeDate: new Date('2026-09-30T00:00:00.000Z'), amount: 500.004 },
+        { tradeDate: new Date('2026-10-01T00:00:00.000Z'), amount: 2_000 },
+      ];
+      expect(splitPayouts(rows, from)).toEqual({ before: 1_500, payouts: [{ date: rows[2].tradeDate, amount: 2_000 }] });
+      expect(splitPayouts(rows).before).toBe(0);
+      expect(splitPayouts(rows).payouts).toHaveLength(3);
+    });
+
+    it('équité journalière : payouts du compte lus hors cache, écartés exclus, bornés à « to »', async () => {
+      const from = new Date('2026-10-01T00:00:00.000Z');
+      const to = new Date('2026-10-20T21:59:59.999Z');
+      mockPrisma.brokerPayout.findMany.mockResolvedValueOnce([
+        { tradeDate: new Date('2026-09-20T00:00:00.000Z'), amount: 800 },
+        { tradeDate: new Date('2026-10-10T00:00:00.000Z'), amount: 1_200 },
+      ]);
+      const eq = await service.getEquityCurveDaily('u1', from, to, 'acc-1');
+      expect(eq.payouts).toEqual([{ date: new Date('2026-10-10T00:00:00.000Z'), amount: 1_200 }]);
+      expect(eq.before.payouts).toBe(800);
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0]).toMatchObject({
+        where: { dismissedAt: null, account: { userId: 'u1' }, accountId: 'acc-1', tradeDate: { lte: to } },
+      });
+    });
+
+    // Compte perdu : comme leurs trades, les payouts des comptes échoués et archivés sortent de la
+    // courbe « tous les comptes » ; includeInactive les remet, un compte précis lit les siens.
+    it('équité journalière « tous les comptes » : payouts des comptes perdus exclus par défaut', async () => {
+      mockPrisma.brokerPayout.findMany.mockResolvedValue([]);
+      await service.getEquityCurveDaily('u1');
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where.account).toEqual({
+        userId: 'u1', status: { notIn: ['FAILED', 'ARCHIVED'] },
+      });
+      await service.getEquityCurveDaily('u1', undefined, undefined, undefined, true);
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where.account).toEqual({ userId: 'u1' });
+      await service.getEquityCurveDaily('u1', undefined, undefined, 'acc-failed');
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where).toMatchObject({ account: { userId: 'u1' }, accountId: 'acc-failed' });
     });
 
     it('historique toujours négatif : sommet au solde de départ (0)', () => {

@@ -1,4 +1,4 @@
-import { EquityPoint, PeriodBefore } from '../api/analytics.api';
+import { EquityPayout, EquityPoint, PeriodBefore } from '../api/analytics.api';
 
 /**
  * Ancrage d'une courbe sur la période affichée (fonctions pures, testées dans
@@ -34,7 +34,36 @@ export function periodStartBalance(
   before: PeriodBefore | null | undefined,
 ): number {
   if (!before) return currentBalance - pnlOfPeriod;
-  return before.count === 0 ? startingBalance : startingBalance + before.pnl;
+  // Payouts reçus avant la période : le solde les a perdus, la courbe part donc plus bas.
+  return (before.count === 0 ? startingBalance : startingBalance + before.pnl) - (before.payouts ?? 0);
+}
+
+/**
+ * Payouts de la période insérés dans la courbe : le point du jour porte le montant retiré ; un jour
+ * de payout sans trade devient un point au même P&L cumulé. Le P&L des points ne change jamais
+ * (statistiques, drawdown « sous l'eau ») : seules les courbes de SOLDE déduisent les payouts, qui
+ * finissent ainsi sur le Capital du compte.
+ */
+export function withPayouts(points: EquityPoint[], payouts: EquityPayout[] | null | undefined): EquityPoint[] {
+  if (!payouts?.length) return points;
+  const byDay = new Map<string, number>();
+  for (const p of payouts) byDay.set(p.date.slice(0, 10), (byDay.get(p.date.slice(0, 10)) ?? 0) + p.amount);
+  const byPoint = new Map(points.map((p) => [p.date.slice(0, 10), p]));
+  const days = [...new Set([...byPoint.keys(), ...byDay.keys()])].sort();
+  let cumulativePnl = 0;
+  return days.map((day) => {
+    const point = byPoint.get(day);
+    if (point) cumulativePnl = point.cumulativePnl;
+    const payout = byDay.get(day);
+    const base = point ?? { date: `${day}T00:00:00.000Z`, cumulativePnl };
+    return payout ? { ...base, payout } : base;
+  });
+}
+
+/** Payouts cumulés à chaque point (0 sans payout). */
+export function cumulativePayouts(points: EquityPoint[]): number[] {
+  let paid = 0;
+  return points.map((p) => (paid += p.payout ?? 0));
 }
 
 /**

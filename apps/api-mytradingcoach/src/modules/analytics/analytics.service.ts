@@ -5,6 +5,7 @@ import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { roundCents } from '@mtc/shared';
 import { cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
 import { analyticsVersionKey, bumpAnalyticsVersion } from './analytics-cache';
+import { activeAccountsWhere } from '../accounts/account-status-scope';
 
 // P&L NET (frais déduits) partout : les agrégats sont calculés en SQL (analytics.sql.ts), avec la
 // même règle que netPnl (libs/shared/trade-stats.ts).
@@ -24,6 +25,8 @@ export interface PeriodBefore {
   peak: number;
   /** Trades avant la période : 0 → la période couvre le début du compte (courbe au solde de départ). */
   count: number;
+  /** Total des payouts reçus avant la période (ajouté par `getEquityCurveDaily`, hors cache). */
+  payouts?: number;
 }
 
 export function periodBefore(days: { key: string; pnl: number; count?: number }[]): PeriodBefore {
@@ -36,6 +39,28 @@ export function periodBefore(days: { key: string; pnl: number; count?: number }[
     if (pnl > peak) peak = pnl;
   }
   return { pnl: roundCents(pnl), peak: roundCents(peak), count };
+}
+
+/** Payout reçu (retrait détecté chez le broker, non écarté par l'utilisateur). */
+export interface EquityPayout {
+  /** Journée de trading du retrait (minuit UTC, comme les points de la courbe). */
+  date: Date;
+  amount: number;
+}
+
+/**
+ * Payouts d'une courbe : ceux de la période, et le total retiré avant (`from`). Le solde du compte
+ * les a déjà perdus : sans eux, la courbe finissait au-dessus du Capital et la marge de drawdown
+ * sautait au dernier point.
+ */
+export function splitPayouts(rows: { tradeDate: Date; amount: number }[], from?: Date): { payouts: EquityPayout[]; before: number } {
+  let before = 0;
+  const payouts: EquityPayout[] = [];
+  for (const r of rows) {
+    if (from && r.tradeDate < from) before += r.amount;
+    else payouts.push({ date: r.tradeDate, amount: r.amount });
+  }
+  return { payouts, before: roundCents(before) };
 }
 
 /** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
@@ -171,7 +196,25 @@ export class AnalyticsService {
   }
   async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string, includeInactive = false) {
     const key = `equity:daily${this.rangeKey(from, to)}${this.accKey(accountId, includeInactive)}`;
-    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily({ userId, accountId, includeInactive }, from, to));
+    // Payouts lus hors cache : une détection (synchro broker) ou un « ce n'était pas un payout »
+    // se voit tout de suite, sans invalider les agrégats des trades. Quelques lignes par compte.
+    // Compte perdu : comme leurs trades, les payouts des comptes échoués et archivés sortent de la
+    // courbe « tous les comptes » (sauf includeInactive).
+    const [curve, rows] = await Promise.all([
+      this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily({ userId, accountId, includeInactive }, from, to)),
+      this.prisma.brokerPayout.findMany({
+        where: {
+          dismissedAt: null,
+          account: { userId, ...activeAccountsWhere({ accountId, includeInactive }) },
+          ...(accountId ? { accountId } : {}),
+          ...(to ? { tradeDate: { lte: to } } : {}),
+        },
+        orderBy: { tradeDate: 'asc' },
+        select: { tradeDate: true, amount: true },
+      }),
+    ]);
+    const { payouts, before } = splitPayouts(rows, from);
+    return { ...curve, payouts, before: { ...curve.before, payouts: before } };
   }
 
   /** Win rate en % : gains / (gains + pertes), break-even exclus ; `empty` si aucun décisif. */

@@ -28,7 +28,7 @@ import { PlanModalComponent } from '../../shared/components/plan-modal/plan-moda
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
 import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
-import { periodPnl, periodStartBalance, viewBalance } from '../../core/services/equity-period.util';
+import { periodPnl, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
 import { MoneyService } from '../../core/services/money.service';
 import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
@@ -123,8 +123,9 @@ export class AnalyticsComponent {
   protected readonly summary = computed(
     () => this.summaryResource.value()?.data ?? null,
   );
-  protected readonly equityCurve = computed(
-    () => this.equityData()?.points ?? [],
+  /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
+  protected readonly equityCurve = computed(() =>
+    withPayouts(this.equityData()?.points ?? [], this.equityData()?.payouts),
   );
   /**
    * Solde au début de la période : solde de départ du compte + P&L d'avant la période (la taille du
@@ -138,7 +139,7 @@ export class AnalyticsComponent {
       loaded ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key) : null;
     const start = view('startingBalance') ?? this.userStore.startingCapital();
     const current = view('currentBalance');
-    if (current === null) return start + (before?.pnl ?? 0);
+    if (current === null) return start + (before?.pnl ?? 0) - (before?.payouts ?? 0);
     return periodStartBalance(start, current, periodPnl(this.equityCurve()), before);
   });
   /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */

@@ -333,7 +333,11 @@ export class ChartService {
               footer: (items) => {
                 const i = items[0]?.dataIndex ?? 0;
                 const d = series.dayPnl[i];
-                return floor || d === null || d === undefined ? [] : [`Jour ${this.money(d, true)}`];
+                const payout = series.payout?.[i];
+                if (floor || d === null || d === undefined) return [];
+                // Jour de payout sans trade : le retrait seul, pas un « Jour +$0 ».
+                if (payout) return [...(d ? [`Jour ${this.money(d, true)}`] : []), `Payout ${this.money(-payout, true)}`];
+                return [`Jour ${this.money(d, true)}`];
               },
             },
           },
