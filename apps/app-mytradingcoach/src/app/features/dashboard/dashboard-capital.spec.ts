@@ -14,6 +14,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
  
 function acc(startingBalance: number, status = 'ACTIVE', currentBalance = startingBalance): any {
@@ -44,6 +45,7 @@ function setup(cfg: Cfg) {
   };
   const sessionStore = { hasActiveSession: () => false, todayStats: () => null };
   const selectedAccount = {
+    ...statsScopeStub(),
     accountParam: () => undefined, load: vi.fn(),
     loaded: signal(cfg.loaded ?? true), isLoading: signal(false),
     selected: signal(cfg.selected ?? null),
@@ -109,4 +111,18 @@ describe('DashboardComponent — card capital scopée au compte', () => {
     const cmp = setup({ loaded: false, startingCapital: 10000 });
     expect(cmp.currentCapital()).toBe(10000);
   });
+
+  it('« Tous les comptes » : un compte échoué sort du capital, comme des statistiques ; l\'interrupteur le réintègre', () => {
+    const cmp = setup({
+      selected: null,
+      accounts: [acc(50000, 'ACTIVE', 51000), acc(25000, 'PASSED', 26000), acc(100000, 'FAILED', 97000)],
+    });
+    expect(cmp.baseCapital()).toBe(75000);
+    expect(cmp.currentCapital()).toBe(77000);
+    const store = TestBed.inject(SelectedAccountStore) as unknown as { includeInactive: { set: (v: boolean) => void } };
+    store.includeInactive.set(true);
+    expect(cmp.baseCapital()).toBe(175000);
+    expect(cmp.currentCapital()).toBe(174000);
+  });
 });
+

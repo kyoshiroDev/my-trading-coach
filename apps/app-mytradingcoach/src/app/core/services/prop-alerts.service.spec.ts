@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { PropAlertsService, TILT_TOAST_MS, propAlertMessage, tiltMessage, type PropAlertEvent, type TiltAlertEvent } from './prop-alerts.service';
 import { ToastService } from './toast.service';
 import { AlertSoundService } from './alert-sound.service';
+import { LostAccountFlowService } from './lost-account-flow.service';
 
 const ev = (p: Partial<PropAlertEvent> = {}): PropAlertEvent => ({
   accountId: 'a', accountLabel: 'Apex 50k', currency: 'USD', kind: 'drawdown', level: 'warning',
@@ -72,10 +73,15 @@ describe('PropAlertsService.handle', () => {
   function setup() {
     const toast = { warning: vi.fn(), error: vi.fn(), success: vi.fn() };
     const sound = { play: vi.fn() };
+    const lostAccount = { openChoice: vi.fn() };
     TestBed.configureTestingModule({
-      providers: [{ provide: ToastService, useValue: toast }, { provide: AlertSoundService, useValue: sound }],
+      providers: [
+        { provide: ToastService, useValue: toast },
+        { provide: AlertSoundService, useValue: sound },
+        { provide: LostAccountFlowService, useValue: lostAccount },
+      ],
     });
-    return { svc: TestBed.inject(PropAlertsService), toast, sound };
+    return { svc: TestBed.inject(PropAlertsService), toast, sound, lostAccount };
   }
 
   beforeEach(() => {
@@ -121,6 +127,23 @@ describe('PropAlertsService.handle', () => {
     svc.handle(ev({ kind: 'payout', level: 'reached' }));
     svc.handleTilt(tilt());
     expect(sound.play.mock.calls.map((c) => c[0])).toEqual(['warning', 'critical', 'critical', 'reached', 'tilt']);
+  });
+
+  it('plancher de drawdown atteint : action « Marquer comme échoué » qui ouvre la feuille du compte perdu', () => {
+    const { svc, toast, lostAccount } = setup();
+    svc.handle(ev({ level: 'breached' }));
+    const opts = toast.error.mock.calls[0][1] as { duration: null; action: { label: string; run: () => void } };
+    expect(opts.duration).toBeNull();
+    expect(opts.action.label).toBe('Marquer comme échoué');
+    opts.action.run();
+    expect(lostAccount.openChoice).toHaveBeenCalledWith('a');
+  });
+
+  it('autres alertes critiques (perte du jour, drawdown critique) : pas d\'action', () => {
+    const { svc, toast } = setup();
+    svc.handle(ev({ kind: 'daily_loss', level: 'breached', breach: 'account_failed' }));
+    svc.handle(ev({ level: 'critical' }));
+    expect(toast.error.mock.calls.map((c) => (c[1] as { action?: unknown }).action)).toEqual([undefined, undefined]);
   });
 
   it('notifications non autorisées : toast seulement', () => {

@@ -1,0 +1,211 @@
+/* Feuilles du compte perdu (maquette compte perdu, écrans 2 et 4). Téléphone : feuille collée en
+   bas d'écran ; ordinateur : boîte centrée. Couleurs : jetons de theme.css. */
+.la-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 7, 13, 0.72);
+}
+
+.la-sheet {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-3);
+  border: 1px solid color-mix(in srgb, var(--cyan) 25%, transparent);
+  border-radius: 16px;
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+.la-grab {
+  display: none;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 4px;
+  border-radius: 9px;
+  background: var(--border-hover);
+}
+
+.la-title {
+  margin: 0;
+  font: 700 18px var(--font-display);
+  overflow-wrap: anywhere;
+}
+
+.la-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.la-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.la-opt {
+  position: relative;
+  display: block;
+  min-height: 44px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-2);
+  cursor: pointer;
+}
+
+/* Le vrai bouton radio reste dans le flux d'accessibilité (clavier, lecteur d'écran), invisible. */
+.la-opt input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.la-opt-t {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Pastille du radio : vide, puis pleine une fois cochée. Le texte « Recommandé » et l'ordre
+   portent aussi l'information : rien ne tient que par la couleur. */
+.la-opt-t i {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--text-3);
+}
+
+.la-opt-d {
+  display: block;
+  margin: 4px 0 0 24px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.la-opt.is-checked {
+  border-color: var(--cyan);
+  background: color-mix(in srgb, var(--cyan) 6%, transparent);
+}
+
+.la-opt.is-checked .la-opt-t i {
+  border-color: var(--cyan);
+  background: radial-gradient(var(--cyan) 45%, transparent 50%);
+}
+
+.la-opt.is-danger.is-checked {
+  border-color: var(--red);
+  background: var(--red-dim);
+}
+
+.la-opt.is-danger.is-checked .la-opt-t i {
+  border-color: var(--red);
+  background: radial-gradient(var(--red) 45%, transparent 50%);
+}
+
+.la-opt:has(input:focus-visible) {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.la-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+
+.la-lbl {
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.la-name {
+  margin-top: 6px;
+  font-weight: 600;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.la-meta {
+  margin-top: 4px;
+  font: 12px var(--font-mono);
+  color: var(--text-3);
+}
+
+.la-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-2);
+  color: var(--text);
+  font: 600 14px var(--font-body);
+  cursor: pointer;
+}
+
+.la-btn.pri {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: var(--bg);
+}
+
+.la-btn.ghost {
+  background: transparent;
+  font-weight: 500;
+}
+
+.la-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.la-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@media (max-width: 768px) {
+  .la-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .la-sheet {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    border-width: 1px 0 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  }
+
+  .la-grab {
+    display: block;
+  }
+}

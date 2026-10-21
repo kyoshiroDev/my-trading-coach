@@ -556,3 +556,8 @@
   .period-tab { position: relative; }
   .period-tab::before { content: ''; position: absolute; inset: -11px 0; }
 }
+
+/* Compte perdu : ligne des comptes exclus + interrupteur (masquée quand vide). */
+mtc-inactive-accounts-toggle {
+  margin-bottom: 16px;
+}

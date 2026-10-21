@@ -22,11 +22,20 @@ export interface Toast {
    * zéro, et la barre de compte à rebours du conteneur est recréée pour repartir avec lui.
    */
   version: number;
+  /** Bouton d'action facultatif (ex. « Marquer comme échoué » sur l'alerte de plancher atteint). */
+  action?: ToastAction;
+}
+
+export interface ToastAction {
+  label: string;
+  /** Appelée au clic ; le toast se ferme ensuite. */
+  run: () => void;
 }
 
 export interface ToastOptions {
   /** ms ; `null` = fermeture manuelle uniquement. Défaut selon le type. */
   duration?: number | null;
+  action?: ToastAction;
 }
 
 /** Succès / info : lus d'un coup d'œil. Erreur / alerte : le temps de lire et d'agir. */
@@ -87,10 +96,17 @@ export class ToastService {
       return twin.id;
     }
     const duration = opts.duration === undefined ? TOAST_DURATIONS[type] : opts.duration;
-    const toast: Toast = { id: this.nextId++, type, message, duration, version: 0 };
+    const toast: Toast = { id: this.nextId++, type, message, duration, version: 0, ...(opts.action ? { action: opts.action } : {}) };
     this.all.update((list) => [...list, toast]);
     this.syncTimers();
     return toast.id;
+  }
+
+  /** Clic sur le bouton d'action : l'action d'abord, puis le toast se ferme. */
+  runAction(id: number): void {
+    const t = this.all().find((x) => x.id === id);
+    t?.action?.run();
+    this.dismiss(id);
   }
 
   dismiss(id: number): void {

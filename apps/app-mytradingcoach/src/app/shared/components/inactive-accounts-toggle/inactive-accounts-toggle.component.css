@@ -1,0 +1,100 @@
+/* Ligne des comptes exclus + interrupteur (maquette compte perdu, écran 5). */
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
+}
+
+:host(.is-empty) {
+  display: none;
+}
+
+.ia-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text-3) 10%, transparent);
+  font: 13px/1.45 var(--font-body);
+  color: var(--text);
+}
+
+.ia-count {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text-3) 14%, transparent);
+  color: var(--text-2);
+  font: 600 11px/1.6 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ia-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ia-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.ia-track {
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  border-radius: 99px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-hover);
+  transition: background 0.15s;
+}
+
+.ia-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition: left 0.15s;
+}
+
+.ia-switch input:checked + .ia-track {
+  background: var(--cyan);
+  border-color: var(--cyan);
+}
+
+.ia-switch input:checked + .ia-track::after {
+  left: 20px;
+  background: var(--bg);
+}
+
+.ia-switch input:focus-visible + .ia-track {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.ia-label {
+  font-size: 14px;
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ia-track,
+  .ia-track::after {
+    transition: none;
+  }
+}

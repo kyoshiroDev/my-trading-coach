@@ -132,13 +132,15 @@ export class AnalyticsApi {
   }
 
   /** Courbe d'équité jour par jour, bornée (`from`/`to`) et scopée compte (`accountId`). */
-  getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null }): Observable<{
+  getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null; includeInactive?: boolean }): Observable<{
     data: DailyEquityCurve;
   }> {
     const params: Record<string, string> = {};
     if (query.from) params['from'] = query.from;
     if (query.to) params['to'] = query.to;
     if (query.accountId) params['accountId'] = query.accountId;
+    // « Tous les comptes » avec les comptes échoués et archivés (interrupteur des statistiques).
+    else if (query.includeInactive) params['includeInactive'] = 'true';
     return this.http.get<{ data: DailyEquityCurve }>(
       `${this.base}/equity-curve/daily`,
       { params },
@@ -154,8 +156,10 @@ export class AnalyticsApi {
     return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/current-month${q}`);
   }
 
-  getMonthActivity(year: number, month: number, accountId?: string): Observable<{ data: MonthlyActivitySummary }> {
-    const q = accountId ? `?accountId=${encodeURIComponent(accountId)}` : '';
+  getMonthActivity(year: number, month: number, accountId?: string, includeInactive = false): Observable<{ data: MonthlyActivitySummary }> {
+    const q = accountId
+      ? `?accountId=${encodeURIComponent(accountId)}`
+      : includeInactive ? '?includeInactive=true' : '';
     return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/${year}/${month}${q}`);
   }
 }

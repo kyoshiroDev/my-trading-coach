@@ -23,6 +23,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 /**
  * @param tradesInStore trades vus par le store (chargés SANS borne de date)
@@ -56,6 +57,7 @@ function setup(tradesInStore: number, summaryTotal: number | null) {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal([]), activeAccounts: signal([]), accountParam: () => undefined,
           selected: () => null, load: vi.fn(), loaded: signal(true), isLoading: signal(false),
         },

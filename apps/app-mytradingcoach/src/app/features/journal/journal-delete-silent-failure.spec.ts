@@ -35,6 +35,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
 import { ToastService } from '../../core/services/toast.service';
 import { environment } from '@app/environments/environment';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 const JOUR = '2026-07-10T16:41:00.000Z';
 
@@ -89,6 +90,7 @@ function mount(trades: Trade[], reassignImpl: () => unknown = () => of({ data: {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal([]), activeAccounts: signal([]), accountParam: () => undefined,
           selected: () => null, selectedAccountId: signal('all'),
           load: vi.fn(), loaded: signal(true), isLoading: signal(false),
