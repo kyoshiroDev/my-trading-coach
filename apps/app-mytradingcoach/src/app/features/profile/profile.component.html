@@ -377,10 +377,10 @@
                   @if (hasStripeSubscription()) {
                     <p class="delete-confirm-hint" data-testid="delete-subscription-note">
                       Ton abonnement est résilié immédiatement.
-                      @if (refundMailto(); as mailto) {
+                      @if (deleteRefund(); as refund) {
                         Satisfait ou remboursé fondateur : ton premier paiement reste remboursable sur demande
-                        jusqu'au {{ offersStore.offers()?.founder?.refundUntil | date:'dd/MM/yyyy' }}
-                        (<a [href]="mailto">demander le remboursement</a>).
+                        jusqu'au {{ refund.until | date:'dd/MM/yyyy' }}
+                        (<a [href]="refund.mailto" data-testid="delete-refund-link">demander le remboursement</a>).
                       }
                     </p>
                   }

@@ -155,3 +155,44 @@ describe('Profil — mention de la résiliation à la suppression', () => {
     expect(cmp.hasStripeSubscription()).toBe(false);
   });
 });
+
+// Rappel du satisfait ou remboursé fondateur : date = `refundUntil` de l'API (prise de place + 14 j,
+// null une fois passée), lien vers l'adresse publique du support, jamais l'adresse interne.
+describe('Profil — rappel du remboursement fondateur à la suppression', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  function founder(refundUntil: string | null) {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status: 'active', interval: 'month' },
+      founder: { isFounder: true, number: 12, refundUntil },
+    } as any);
+    return cmp;
+  }
+
+  it('fenêtre en cours → date de l’API et lien vers support@, jamais hello@', () => {
+    const until = new Date(Date.now() + 5 * 86_400_000).toISOString();
+    const refund = founder(until).deleteRefund();
+    expect(refund?.until).toBe(until);
+    expect(refund?.mailto.startsWith('mailto:support@mytradingcoach.app?')).toBe(true);
+    expect(refund?.mailto).not.toContain('hello@');
+    expect(decodeURIComponent(refund!.mailto)).toContain('Remboursement fondateur n° 12');
+  });
+
+  it('fenêtre dépassée (refundUntil null côté API) → aucun rappel', () => {
+    expect(founder(null).deleteRefund()).toBeNull();
+  });
+
+  it('date déjà passée (page restée ouverte) → aucun rappel', () => {
+    expect(founder(new Date(Date.now() - 60_000).toISOString()).deleteRefund()).toBeNull();
+  });
+
+  it('pas fondateur → aucun rappel', () => {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status: 'active', interval: 'month' },
+      founder: { isFounder: false, number: null, refundUntil: null },
+    } as any);
+    expect(cmp.deleteRefund()).toBeNull();
+  });
+});

@@ -1141,7 +1141,7 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
   dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
 - **Profil > Abonnement** : badge « Fondateur n° X », tarif bloqué et perte en cas de résiliation,
-  « Satisfait ou remboursé : demander le remboursement » (mailto hello@, jusqu'à `refundUntil` : le
+  « Satisfait ou remboursé : demander le remboursement » (mailto support@, jusqu'à `refundUntil` : le
   remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
   CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
   neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.
