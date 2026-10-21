@@ -11,6 +11,7 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
+import { LOST_DEMO_ACCOUNTS, buildLostDemoTrades } from './demo-data/lost-accounts';
 
 
 /**
@@ -34,6 +35,8 @@ export interface DemoSeedResult {
   email: string; trades: number; winRate: number; pnl: number;
   grossPnl: number; fees: number; redDays: number; tradingDays: number;
   sessions: number; recaps: number; debriefs: number; accounts: number;
+  /** Comptes échoué et archivé (hors des chiffres et du capital des comptes actifs). */
+  lostAccounts: number;
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
 
@@ -126,7 +129,7 @@ export async function seedTradingData(
     const green = dayStats.totalPnl >= 0;
     const reflection =
       d.kind === 'revenge' ? REFLECTION_REVENGE
-        : d.kind === 'today' ? null
+        : d.kind === 'today' || d.kind === 'secondary' ? null
           : d.kind === 'yesterday' || reflectionToggle++ % 2 === 0
             ? (green ? REFLECTIONS_GREEN : REFLECTIONS_RED)[d.daysAgo % 3]
             : null;
@@ -178,6 +181,38 @@ export async function seedTradingData(
     }
   }
 
+  // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
+  // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
+  // des chiffres » et l'interrupteur des statistiques, sans toucher au capital des comptes actifs.
+  const lostIdByKey = new Map<string, string>();
+  const lostPlans = new Set(
+    (await prisma.propFirmPlan.findMany({
+      where: { id: { in: LOST_DEMO_ACCOUNTS.map((a) => a.propFirmPlanId) }, active: true },
+      select: { id: true },
+    })).map((p) => p.id),
+  );
+  for (const a of LOST_DEMO_ACCOUNTS) {
+    const created = await prisma.tradingAccount.create({
+      data: {
+        userId: user.id, label: a.label, broker: a.broker, type: a.type, status: a.status,
+        accountSize: a.accountSize, startingBalance: a.startingBalance, profitTarget: a.profitTarget,
+        maxDrawdown: a.maxDrawdown, drawdownType: a.drawdownType, currency: 'USD',
+        propFirmPlanId: lostPlans.has(a.propFirmPlanId) ? a.propFirmPlanId : null,
+      },
+    });
+    lostIdByKey.set(a.key, created.id);
+  }
+  for (const t of buildLostDemoTrades(now)) {
+    await prisma.trade.create({
+      data: {
+        userId: user.id, accountId: lostIdByKey.get(t.account)!,
+        asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, quantity: t.quantity,
+        pnl: t.pnl, commission: t.commission, setupId: setupIdFor('Breakout'),
+        session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
+      },
+    });
+  }
+
   // Journal de risque du compte Apex connecté (#373) : ce que le suivi en direct aurait relevé
   // (marges, alertes, tilt). Seul un compte synchronisé est suivi en direct, d'où la vitrine.
   const apex = DEMO_ACCOUNTS.find((x) => x.key === 'apex')!;
@@ -191,7 +226,8 @@ export async function seedTradingData(
   // Récaps quotidiens (J-1 → J-42) : chiffres NETS du jour, phrase selon le type de journée.
   let recaps = 0;
   for (const d of days) {
-    if (d.kind === 'today' || !d.trades.length) continue;
+    // Compte au tirage séparé : son jour est déjà couvert par le récap du compte principal.
+    if (d.kind === 'today' || d.kind === 'secondary' || !d.trades.length) continue;
     const s = computeTradeStats(d.trades);
     const gross = d.trades.reduce((a, t) => a + t.pnl, 0);
     // Journée avec alerte ou tilt : le récap Premium en parle d'abord (#374).
@@ -307,8 +343,8 @@ export async function seedTradingData(
   });
 
   // Comptes prop firm « Connectés » à Tradovate (vitrine de la connexion broker) : aucun vrai token,
-  // le compte démo ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST). LES
-  // DEUX comptes : quel que soit le compte de la séance, la session live montre le suivi prop firm
+  // le compte démo ne peut ni synchroniser ni connecter (DemoReadOnlyGuard bloque les POST). TOUS
+  // les comptes : quel que soit le compte de la séance, la session live montre le suivi prop firm
   // (il exige un compte connecté), et « Mes comptes » n'affiche plus de bouton « Connecter ».
   const apexId = accountIdByKey.get('apex')!;
   // Jamais sur un vrai compte : le cron de renouvellement tenterait ce faux jeton en boucle.
@@ -375,6 +411,7 @@ export async function seedTradingData(
     email: user.email, trades: stats.trades, winRate: Math.round(stats.winRateNet), pnl: stats.netPnl,
     grossPnl: stats.grossPnl, fees: stats.fees, redDays: stats.redDays, tradingDays: stats.tradingDays,
     sessions: days.filter((d) => d.trades.length).length, recaps, debriefs, accounts: DEMO_ACCOUNTS.length,
+    lostAccounts: LOST_DEMO_ACCOUNTS.length,
     bySetup: stats.bySetup, byAccount: stats.byAccount,
   };
 }

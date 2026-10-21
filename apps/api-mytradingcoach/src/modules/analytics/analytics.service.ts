@@ -4,6 +4,8 @@ import { RedisService } from '../infra/redis.service';
 import { CACHE_TTL } from '../../common/constants/cache-ttl.const';
 import { roundCents } from '@mtc/shared';
 import { cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from './analytics.sql';
+import { analyticsVersionKey, bumpAnalyticsVersion } from './analytics-cache';
+import { activeAccountsWhere } from '../accounts/account-status-scope';
 
 // P&L NET (frais déduits) partout : les agrégats sont calculés en SQL (analytics.sql.ts), avec la
 // même règle que netPnl (libs/shared/trade-stats.ts).
@@ -11,6 +13,54 @@ import { cumulativeByTrade, groupTrades, summaryTotals, type TradeFilter } from 
 export interface EquityPoint {
   date: Date;
   cumulativePnl: number;
+}
+
+/**
+ * Historique AVANT la période d'une courbe : P&L net cumulé et son plus haut en clôture de journée
+ * (≥ 0, le solde de départ compte comme premier sommet). Le drawdown de la période part de ce
+ * sommet, comme la règle EOD des prop firms, au lieu de repartir de 0 au début de la période.
+ */
+export interface PeriodBefore {
+  pnl: number;
+  peak: number;
+  /** Trades avant la période : 0 → la période couvre le début du compte (courbe au solde de départ). */
+  count: number;
+  /** Total des payouts reçus avant la période (ajouté par `getEquityCurveDaily`, hors cache). */
+  payouts?: number;
+}
+
+export function periodBefore(days: { key: string; pnl: number; count?: number }[]): PeriodBefore {
+  let pnl = 0;
+  let peak = 0;
+  let count = 0;
+  for (const d of [...days].sort((a, b) => a.key.localeCompare(b.key))) {
+    pnl += d.pnl;
+    count += d.count ?? 0;
+    if (pnl > peak) peak = pnl;
+  }
+  return { pnl: roundCents(pnl), peak: roundCents(peak), count };
+}
+
+/** Payout reçu (retrait détecté chez le broker, non écarté par l'utilisateur). */
+export interface EquityPayout {
+  /** Journée de trading du retrait (minuit UTC, comme les points de la courbe). */
+  date: Date;
+  amount: number;
+}
+
+/**
+ * Payouts d'une courbe : ceux de la période, et le total retiré avant (`from`). Le solde du compte
+ * les a déjà perdus : sans eux, la courbe finissait au-dessus du Capital et la marge de drawdown
+ * sautait au dernier point.
+ */
+export function splitPayouts(rows: { tradeDate: Date; amount: number }[], from?: Date): { payouts: EquityPayout[]; before: number } {
+  let before = 0;
+  const payouts: EquityPayout[] = [];
+  for (const r of rows) {
+    if (from && r.tradeDate < from) before += r.amount;
+    else payouts.push({ date: r.tradeDate, amount: r.amount });
+  }
+  return { payouts, before: roundCents(before) };
 }
 
 /** `2026-10-01T20:14:37.512Z` → `2026-10-01T20:14` (UTC) ; absent → ''. */
@@ -60,13 +110,6 @@ export function bestByWinRate(groups: { key: string; wins: number; losses: numbe
   return top;
 }
 
-/** Compteur de version du cache analytics d'un utilisateur (SCA-B1-03). */
-function versionKey(userId: string): string {
-  return `analytics:v:${userId}`;
-}
-// Plus long que tout TTL de cache analytics (300 s) : un compteur expiré qui repart de 0 ne peut
-// plus retomber sur une clé encore vivante écrite sous une ancienne version 0.
-const VERSION_TTL_S = 7 * 24 * 3600;
 
 @Injectable()
 export class AnalyticsService {
@@ -84,7 +127,7 @@ export class AnalyticsService {
   private async withCache<T>(userId: string, part: string, ttl: number, compute: () => Promise<T>): Promise<T> {
     let key: string | null = null;
     try {
-      const version = (await this.redisService.client.get(versionKey(userId))) ?? '0';
+      const version = (await this.redisService.client.get(analyticsVersionKey(userId))) ?? '0';
       key = `analytics:${userId}:v${version}:${part}`;
       const cached = await this.redisService.client.get(key);
       if (cached) return JSON.parse(cached) as T;
@@ -97,17 +140,15 @@ export class AnalyticsService {
   }
 
   async invalidateUserCache(userId: string): Promise<void> {
-    try {
-      await this.redisService.client
-        .multi()
-        .incr(versionKey(userId))
-        .expire(versionKey(userId), VERSION_TTL_S)
-        .exec();
-    } catch { /* Redis indisponible */ }
+    await bumpAnalyticsVersion(this.redisService.client, userId);
   }
 
-  // Suffixe de clé de cache par compte (multi-comptes). Absent → agrégé.
-  private accKey(accountId?: string): string { return accountId ? `:acc:${accountId}` : ''; }
+  // Suffixe de clé de cache par compte (multi-comptes). Absent → agrégé hors comptes échoués et
+  // archivés ; `:inactive` → agrégé avec eux (includeInactive).
+  private accKey(accountId?: string, includeInactive = false): string {
+    if (accountId) return `:acc:${accountId}`;
+    return includeInactive ? ':inactive' : '';
+  }
 
   /**
    * Bornes de période dans la clé de cache, **arrondies à la minute**. Le dashboard envoie
@@ -120,42 +161,60 @@ export class AnalyticsService {
     return from || to ? `:range:${minuteKey(from)}:${minuteKey(to)}` : '';
   }
 
-  async getSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
-    const key = `summary${this.accKey(accountId)}${this.rangeKey(from, to)}`;
-    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeSummary(userId, accountId, from, to));
+  async getSummary(userId: string, accountId?: string, from?: Date, to?: Date, includeInactive = false) {
+    const key = `summary${this.accKey(accountId, includeInactive)}${this.rangeKey(from, to)}`;
+    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeSummary({ userId, accountId, from, to, includeInactive }));
   }
-  async getBySetup(userId: string, accountId?: string) {
-    return this.withCache(userId, `setup${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup(userId, accountId));
+  async getBySetup(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `setup${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeBySetup({ userId, accountId, includeInactive }));
   }
-  async getByEmotion(userId: string, accountId?: string) {
-    return this.withCache(userId, `emotion${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion(userId, accountId));
+  async getByEmotion(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `emotion${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeByEmotion({ userId, accountId, includeInactive }));
   }
-  async getByHour(userId: string, accountId?: string) {
-    return this.withCache(userId, `hour${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour(userId, accountId));
+  async getByHour(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `hour${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeByHour({ userId, accountId, includeInactive }));
   }
-  async getEquityCurve(userId: string, accountId?: string) {
-    return this.withCache(userId, `equity${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve(userId, accountId));
+  async getEquityCurve(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `equity${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurve({ userId, accountId, includeInactive }));
   }
-  async getEquityCurveCurrentMonth(userId: string, accountId?: string) {
-    return this.withCache(userId, `equity:month${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth(userId, accountId));
+  async getEquityCurveCurrentMonth(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `equity:month${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveCurrentMonth({ userId, accountId, includeInactive }));
   }
-  async getTopAssets(userId: string, accountId?: string) {
-    return this.withCache(userId, `topassets${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets(userId, accountId));
+  async getTopAssets(userId: string, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `topassets${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeTopAssets({ userId, accountId, includeInactive }));
   }
-  async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
-    return this.withCache(userId, `activity:${year}:${month}${this.accKey(accountId)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity(userId, year, month, accountId));
+  async getMonthlyActivity(userId: string, year: number, month: number, accountId?: string, includeInactive = false) {
+    return this.withCache(userId, `activity:${year}:${month}${this.accKey(accountId, includeInactive)}`, CACHE_TTL.ANALYTICS, () => this.computeMonthlyActivity({ userId, accountId, includeInactive }, year, month));
   }
   // Activité journalière (P&L par jour) sur une plage glissante : l'agrégation jour/semaine/mois
   // est faite côté front. Réutilise le même bucketing par jour (fuseau Paris) que l'activité mensuelle.
-  async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `activity:range${this.rangeKey(from, to)}${this.accKey(accountId)}`;
+  async getActivityRange(userId: string, from?: Date, to?: Date, accountId?: string, includeInactive = false) {
+    const key = `activity:range${this.rangeKey(from, to)}${this.accKey(accountId, includeInactive)}`;
     return this.withCache(userId, key, CACHE_TTL.ANALYTICS, async () => ({
-      days: await this.computeDailyActivity(userId, { from, to }, accountId),
+      days: await this.computeDailyActivity({ userId, accountId, includeInactive, from, to }),
     }));
   }
-  async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string) {
-    const key = `equity:daily${this.rangeKey(from, to)}${this.accKey(accountId)}`;
-    return this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily(userId, from, to, accountId));
+  async getEquityCurveDaily(userId: string, from?: Date, to?: Date, accountId?: string, includeInactive = false) {
+    const key = `equity:daily${this.rangeKey(from, to)}${this.accKey(accountId, includeInactive)}`;
+    // Payouts lus hors cache : une détection (synchro broker) ou un « ce n'était pas un payout »
+    // se voit tout de suite, sans invalider les agrégats des trades. Quelques lignes par compte.
+    // Compte perdu : comme leurs trades, les payouts des comptes échoués et archivés sortent de la
+    // courbe « tous les comptes » (sauf includeInactive).
+    const [curve, rows] = await Promise.all([
+      this.withCache(userId, key, CACHE_TTL.ANALYTICS, () => this.computeEquityCurveDaily({ userId, accountId, includeInactive }, from, to)),
+      this.prisma.brokerPayout.findMany({
+        where: {
+          dismissedAt: null,
+          account: { userId, ...activeAccountsWhere({ accountId, includeInactive }) },
+          ...(accountId ? { accountId } : {}),
+          ...(to ? { tradeDate: { lte: to } } : {}),
+        },
+        orderBy: { tradeDate: 'asc' },
+        select: { tradeDate: true, amount: true },
+      }),
+    ]);
+    const { payouts, before } = splitPayouts(rows, from);
+    return { ...curve, payouts, before: { ...curve.before, payouts: before } };
   }
 
   /** Win rate en % : gains / (gains + pertes), break-even exclus ; `empty` si aucun décisif. */
@@ -163,8 +222,7 @@ export class AnalyticsService {
     return g.wins + g.losses > 0 ? (g.wins / (g.wins + g.losses)) * 100 : empty;
   }
 
-  private async computeSummary(userId: string, accountId?: string, from?: Date, to?: Date) {
-    const f: TradeFilter = { userId, accountId, from, to };
+  private async computeSummary(f: TradeFilter) {
     const [totals, sessions, hours] = await Promise.all([
       summaryTotals(this.prisma, f),
       groupTrades(this.prisma, f, 'session'),
@@ -205,7 +263,8 @@ export class AnalyticsService {
     };
   }
 
-  private async computeBySetup(userId: string, accountId?: string) {
+  private async computeBySetup(sc: TradeFilter) {
+    const { userId } = sc;
     // Setups actifs (inclus même à 0 trade) + agrégats de trades par setupId.
     // Les setups archivés n'apparaissent que s'ils ont des trades (historique préservé).
     const [activeSetups, groups] = await Promise.all([
@@ -214,7 +273,7 @@ export class AnalyticsService {
         orderBy: { sortOrder: 'asc' },
         select: { id: true, title: true, color: true },
       }),
-      groupTrades(this.prisma, { userId, accountId }, 'setup'),
+      groupTrades(this.prisma, sc, 'setup'),
     ]);
 
     const byId = new Map(groups.map((g) => [g.key, g]));
@@ -244,9 +303,9 @@ export class AnalyticsService {
     ];
   }
 
-  private async computeByEmotion(userId: string, accountId?: string) {
+  private async computeByEmotion(sc: TradeFilter) {
     // Émotion effective : override du trade, sinon humeur de la session ; non renseignée → exclue.
-    const groups = await groupTrades(this.prisma, { userId, accountId }, 'emotion');
+    const groups = await groupTrades(this.prisma, sc, 'emotion');
     return groups.map((g) => ({
       emotion: g.key,
       winRate: AnalyticsService.winRate(g) as number,
@@ -255,9 +314,9 @@ export class AnalyticsService {
     }));
   }
 
-  private async computeByHour(userId: string, accountId?: string) {
+  private async computeByHour(sc: TradeFilter) {
     const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const groups = await groupTrades(this.prisma, { userId, accountId }, 'dayHour');
+    const groups = await groupTrades(this.prisma, sc, 'dayHour');
     return groups.map((g) => {
       const [dow, hour] = g.key.split(':').map(Number);
       return { day: DAY_LABELS[dow], hour, winRate: AnalyticsService.winRate(g) as number, count: g.count };
@@ -269,10 +328,10 @@ export class AnalyticsService {
     return user?.startingCapital && user.startingCapital > 0 ? user.startingCapital : null;
   }
 
-  private async computeEquityCurve(userId: string, accountId?: string) {
+  private async computeEquityCurve(sc: TradeFilter) {
     const [points, startingCapital] = await Promise.all([
-      cumulativeByTrade(this.prisma, { userId, accountId }),
-      this.startingCapital(userId),
+      cumulativeByTrade(this.prisma, sc),
+      this.startingCapital(sc.userId),
     ]);
     // Un point par trade : 50 000 trades = 3,5 Mo de réponse et de cache (test B9). Aucun écran
     // n'appelle cette route (le front utilise /equity-curve/daily) : garde-fou contre un appel lourd.
@@ -280,14 +339,14 @@ export class AnalyticsService {
   }
 
   private async computeEquityCurveDaily(
-    userId: string,
+    sc: TradeFilter,
     from?: Date,
     to?: Date,
-    accountId?: string,
-  ): Promise<{ points: EquityPoint[]; startingCapital: number | null }> {
-    const [days, startingCapital] = await Promise.all([
-      groupTrades(this.prisma, { userId, accountId, from, to }, 'parisDate'),
-      this.startingCapital(userId),
+  ): Promise<{ points: EquityPoint[]; startingCapital: number | null; before: PeriodBefore }> {
+    const [days, startingCapital, earlier] = await Promise.all([
+      groupTrades(this.prisma, { ...sc, from, to }, 'parisDate'),
+      this.startingCapital(sc.userId),
+      from ? groupTrades(this.prisma, { ...sc, before: from }, 'parisDate') : Promise.resolve([]),
     ]);
     // Jours du fuseau de Paris, triés ; P&L net cumulé jour après jour.
     let cumPnl = 0;
@@ -297,10 +356,10 @@ export class AnalyticsService {
         cumPnl += d.pnl;
         return { date: new Date(d.key), cumulativePnl: cumPnl };
       });
-    return { points, startingCapital };
+    return { points, startingCapital, before: periodBefore(earlier) };
   }
 
-  private async computeEquityCurveCurrentMonth(userId: string, accountId?: string) {
+  private async computeEquityCurveCurrentMonth(sc: TradeFilter) {
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1);
     const to = new Date(
@@ -311,7 +370,7 @@ export class AnalyticsService {
       59,
       59,
     );
-    return this.computeEquityCurveDaily(userId, from, to, accountId);
+    return this.computeEquityCurveDaily(sc, from, to);
   }
 
   /**
@@ -319,12 +378,8 @@ export class AnalyticsService {
    * pour une plage arbitraire. SOURCE UNIQUE partagée par l'activité mensuelle et la plage
    * glissante : le win rate exclut les BE (wins / (wins + losses)), P&L net = Σ pnl.
    */
-  private async computeDailyActivity(
-    userId: string,
-    range: { from?: Date; to?: Date; before?: Date },
-    accountId?: string,
-  ) {
-    const days = await groupTrades(this.prisma, { userId, accountId, ...range }, 'parisDate');
+  private async computeDailyActivity(f: TradeFilter) {
+    const days = await groupTrades(this.prisma, f, 'parisDate');
     return [...days]
       .sort((a, b) => a.key.localeCompare(b.key))
       .map((d) => ({
@@ -335,10 +390,10 @@ export class AnalyticsService {
       }));
   }
 
-  private async computeMonthlyActivity(userId: string, year: number, month: number, accountId?: string) {
+  private async computeMonthlyActivity(sc: TradeFilter, year: number, month: number) {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 1);
-    const days = await this.computeDailyActivity(userId, { from: start, before: end }, accountId);
+    const days = await this.computeDailyActivity({ ...sc, from: start, before: end });
 
     return {
       year,
@@ -350,9 +405,9 @@ export class AnalyticsService {
     };
   }
 
-  private async computeTopAssets(userId: string, accountId?: string) {
+  private async computeTopAssets(sc: TradeFilter) {
     // P&L NET par instrument, classé gagnant/perdant sur ce même net.
-    const groups = await groupTrades(this.prisma, { userId, accountId }, 'asset');
+    const groups = await groupTrades(this.prisma, sc, 'asset');
     return groups
       .map((g) => ({ asset: g.key, winRate: AnalyticsService.winRate(g) as number, pnl: g.pnl, count: g.count }))
       .sort((a, b) => b.pnl - a.pnl)

@@ -27,6 +27,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi, Trade } from '../../core/api/trades.api';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 // Le template rendu est le VRAI fichier du journal, lu sur disque.
 const JOURNAL_HTML = readFileSync(join(__dirname, 'journal.component.html'), 'utf8');
@@ -67,6 +68,7 @@ async function render(trades: Trade[]): Promise<HTMLElement> {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal([]), activeAccounts: signal([]), accountParam: () => undefined,
           selected: () => null, selectedAccountId: signal('all'), displayCurrency: signal('USD'),
           currencyOf: () => 'USD', load: vi.fn(), loaded: signal(true), isLoading: signal(false),

@@ -2,9 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  ViewChild,
-  afterRenderEffect,
   computed,
   effect,
   inject,
@@ -21,7 +18,7 @@ import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import {
   AnalyticsApi,
   AnalyticsSummary,
-  EquityPoint,
+  DailyEquityCurve,
   HeatmapCell,
   MonthlyActivitySummary,
   SetupStat,
@@ -30,11 +27,14 @@ import {
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { ActivityCalendarComponent } from '../../shared/components/activity-calendar/activity-calendar.component';
 import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-tooltip.component';
+import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
+import { periodPnl, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
 import { environment } from '@app/environments/environment';
-import { ChartService } from '../../core/services/chart.service';
 import { MoneyService } from '../../core/services/money.service';
+import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -53,31 +53,28 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PlanModalComponent,
     ActivityCalendarComponent,
     InfoTooltipComponent,
+    PerfChartComponent,
     MixedCurrencyNoticeComponent,
     ErrorStateComponent,
+    InactiveAccountsToggleComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsComponent {
-  @ViewChild('equityCanvas') equityCanvasRef?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('drawdownCanvas')
-  drawdownCanvasRef?: ElementRef<HTMLCanvasElement>;
-
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly chartService = inject(ChartService);
   private readonly selectedAccount = inject(SelectedAccountStore);
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
-  // URL des resources → refetch auto au changement de compte (pattern dashboard).
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
+  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → refetch auto au
+  // changement de compte ou d'interrupteur (pattern dashboard).
   private accQuery(): string {
-    const id = this.selectedAccount.accountParam();
-    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+    return this.selectedAccount.statsQuery();
   }
 
   protected readonly showPlanModal = signal(false);
@@ -100,7 +97,7 @@ export class AnalyticsComponent {
     // jour même (courbe vide pour un compte qui n'avait tradé qu'aujourd'hui).
     return { from: from.toISOString(), to: now.toISOString() };
   });
-  protected readonly equityData = signal<{ points: EquityPoint[]; startingCapital: number | null } | null>(null);
+  protected readonly equityData = signal<DailyEquityCurve | null>(null);
   protected readonly equityLoading = signal(false);
 
   // ── httpResource : pattern déclaratif, cancel auto, loading state natif ──
@@ -128,11 +125,33 @@ export class AnalyticsComponent {
   protected readonly summary = computed(
     () => this.summaryResource.value()?.data ?? null,
   );
-  protected readonly equityCurve = computed(
-    () => this.equityData()?.points ?? [],
+  /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
+  protected readonly equityCurve = computed(() =>
+    withPayouts(this.equityData()?.points ?? [], this.equityData()?.payouts),
   );
-  private readonly equityStartingCapital = computed(
-    () => this.equityData()?.startingCapital ?? null,
+  /**
+   * Solde au début de la période : solde de départ du compte + P&L d'avant la période (la taille du
+   * compte quand la période couvre son début). Jamais `startingCapital` de l'API (capital du profil :
+   * un compte de 50K partait de 100K).
+   */
+  protected readonly equityStartCapital = computed(() => {
+    const before = this.equityData()?.before;
+    const loaded = this.selectedAccount.loaded();
+    const view = (key: 'startingBalance' | 'currentBalance') =>
+      loaded
+        ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key, this.selectedAccount.includeInactive())
+        : null;
+    const start = view('startingBalance') ?? this.userStore.startingCapital();
+    const current = view('currentBalance');
+    if (current === null) return start + (before?.pnl ?? 0) - (before?.payouts ?? 0);
+    return periodStartBalance(start, current, periodPnl(this.equityCurve()), before);
+  });
+  /** Repères du plan relié au compte sélectionné : plancher de drawdown, objectif de gain. */
+  protected readonly planFloor = computed(() => planFloorOf(this.selectedAccount.selected()));
+  /** « ? » de la carte drawdown : règle du plan relié (statique, suiveur, gel, intraday). */
+  protected readonly drawdownHelp = computed(() => drawdownHelp(this.planFloor(), this.money.currency()));
+  protected readonly planObjective = computed(() =>
+    planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   protected readonly heatmapData = computed(
     () => this.heatmapResource.value()?.data ?? [],
@@ -205,27 +224,26 @@ export class AnalyticsComponent {
     return m;
   });
 
+  /** Comptes exclus au dernier passage (`échoués:archivés`), null avant le premier chargement. */
+  private knownExcluded: string | null = null;
+
   constructor() {
-    afterRenderEffect(() => {
-      const curve = this.equityCurve();
-      // Un seul jour tradé suffit : les graphes partent d'un point « Départ » à 0.
-      if (curve.length >= 1) {
-        const equityCanvas = this.equityCanvasRef?.nativeElement;
-        const drawdownCanvas = this.drawdownCanvasRef?.nativeElement;
-        if (equityCanvas) {
-          this.chartService.buildEquityChart(equityCanvas, curve, this.equityStartingCapital());
-        }
-        if (drawdownCanvas) {
-          this.chartService.buildDrawdownChart(drawdownCanvas, curve);
-        }
-      }
+    // Compte marqué échoué, archivé ou supprimé : les chiffres « tous les comptes » changent sans
+    // que les URL changent (l'API a vidé son cache) → tout recharger. Pas au premier chargement.
+    effect(() => {
+      if (!this.selectedAccount.loaded()) return;
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${e.failed}:${e.archived}`;
+      if (this.knownExcluded !== null && key !== this.knownExcluded) untracked(() => this.reload());
+      this.knownExcluded = key;
     });
 
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
     if (this.userStore.isPremium()) {
       effect(() => {
-        this.selectedAccount.accountParam(); // seule dépendance réactive (selectedAccountId)
+        this.selectedAccount.accountParam(); // dépendances réactives : compte sélectionné,
+        this.selectedAccount.inactiveIncluded(); // interrupteur des comptes perdus
         untracked(() => {
           this.loadEquityCurve();
           this.loadCalendar(this.calYear(), this.calMonth());
@@ -240,8 +258,9 @@ export class AnalyticsComponent {
     this.equityError.set(false);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
+    const includeInactive = this.selectedAccount.inactiveIncluded();
     this.analyticsApi
-      .getDailyEquityCurve({ from, to, accountId })
+      .getDailyEquityCurve({ from, to, accountId, includeInactive })
       .pipe(
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -265,7 +284,7 @@ export class AnalyticsComponent {
 
   private loadCalendar(year: number, month: number): void {
     this.calLoading.set(true);
-    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam())
+    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam(), this.selectedAccount.inactiveIncluded())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {

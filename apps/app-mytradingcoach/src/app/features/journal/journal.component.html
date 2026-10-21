@@ -87,7 +87,8 @@
       }
 
       @if (tradesStore.stats(); as st) {
-        <span class="filter-count">{{ st.totalTrades }} trade{{ st.totalTrades > 1 ? 's' : '' }}</span>
+        <!-- Comptes perdus exclus : ce nombre est celui des chiffres, pas celui des lignes (la liste garde tout). -->
+        <span class="filter-count" data-testid="journal-filter-count">{{ st.totalTrades }} trade{{ st.totalTrades > 1 ? 's' : '' }}{{ statsExcludeInactive() ? ' dans les chiffres' : '' }}</span>
       }
     </div>
 
@@ -119,6 +120,9 @@
       </button>
     </div>
   </div>
+
+  <!-- Comptes échoués et archivés hors des chiffres du haut ; la liste garde tous les trades. -->
+  <mtc-inactive-accounts-toggle />
 
   <!-- ── Résumé période ── (devises mêlées : pas de total) -->
   @if (money.mixed()) {
@@ -298,7 +302,13 @@
               @for (trade of day.trades; track trade.id) {
                 <div class="trade-row" data-testid="trade-row">
                   <span class="td-time">{{ trade.tradedAt | date:'HH:mm' }}</span>
-                  <span class="td-asset">{{ trade.asset }}</span>
+                  <span class="td-asset">{{ trade.asset }}
+                    @if (trade.account && isInactiveStatus(trade.account.status)) {
+                      <span class="status-badge {{ statusBadgeClass(trade.account.status) }}"
+                            [attr.title]="trade.account.label + ' : hors statistiques'"
+                            data-testid="trade-account-badge">{{ statusLabel(trade.account.status) }}</span>
+                    }
+                  </span>
                   <span class="td-side">
                     <span class="trade-side" [class]="trade.side === 'LONG' ? 'long' : 'short'">{{ trade.side }}</span>
                   </span>

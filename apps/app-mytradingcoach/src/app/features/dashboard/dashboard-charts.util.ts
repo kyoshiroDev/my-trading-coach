@@ -1,3 +1,4 @@
+import { classifyTrade, netPnl, TradeOutcome } from '@mtc/shared';
 import { AnalyticsSummary, EmotionStat, SetupStat, TopAsset } from '../../core/api/analytics.api';
 import { Trade } from '../../core/stores/trades.store';
 import { EMOTION_COLORS } from '../../shared/pipes/emotion-color.pipe';
@@ -8,7 +9,7 @@ import { emotionLabel } from '../../shared/pipes/emotion-label.pipe';
  * les appelle depuis ses `computed`, les panneaux ne font qu'afficher le résultat.
  */
 
-// ── Sparklines & courbe d'équité ──────────────────────────────────────────────
+// ── Sparklines ──────────────────────────────────────────────
 
 export interface SparkPath { line: string; area: string; cx: number; cy: number }
 
@@ -21,25 +22,6 @@ export function sparkPath(series: number[], w = 72, h = 42): SparkPath {
   const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
   const last = pts[pts.length - 1];
   return { line, area: `${line} L${w},${h} L0,${h} Z`, cx: last[0], cy: last[1] };
-}
-
-export interface EquityGlow {
-  line: string; area: string; trend: string;
-  lastX: number; lastY: number; W: number; H: number; color: string;
-}
-
-/** Courbe d'équité « glow » : line + area + point final, viewBox 660×230. */
-export function buildEquityGlow(series: number[], positive: boolean): EquityGlow | null {
-  const W = 660, H = 230;
-  if (series.length < 2) return null;
-  const min = Math.min(...series), max = Math.max(...series), rng = max - min || 1;
-  const step = W / (series.length - 1);
-  const xy = series.map((v, i) => [i * step, H - 16 - ((v - min) / rng) * (H - 34)] as const);
-  const line = xy.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-  const last = xy[xy.length - 1];
-  // Ligne de tendance pointillée (bas-gauche → point final), comme la maquette.
-  const trend = `M0,${(H - 16).toFixed(1)} L${W},${last[1].toFixed(1)}`;
-  return { line, area: `${line} L${W},${H} L0,${H} Z`, trend, lastX: last[0], lastY: last[1], W, H, color: positive ? 'var(--green)' : 'var(--red)' };
 }
 
 // ── Donuts (conic-gradient + légende + valeur centrale) ──────────────────────
@@ -342,5 +324,24 @@ export function buildCoachInsights(
 
 // ── Historique des trades ────────────────────────────────────────────────────
 
-/** Ligne du tableau « historique » : P&L % sur le capital de base, `null` si capital inconnu. */
-export type DashboardTradeRow = Trade & { win: boolean; pct: number | null };
+/** Issue d'une ligne : classement partagé sur le net, `open` tant que le trade n'est pas clôturé. */
+export type TradeRowOutcome = TradeOutcome | 'open';
+
+/** Ligne du tableau « historique » : P&L % sur le capital de base, `null` si capital inconnu ou trade ouvert. */
+export type DashboardTradeRow = Trade & { outcome: TradeRowOutcome; pct: number | null };
+
+/**
+ * Lignes de l'historique sur le P&L NET (frais déduits), comme les KPIs et le calendrier. Un trade
+ * ouvert (pnl absent) n'est ni gagnant ni perdant : `open`, sans P&L % (#655).
+ */
+export function buildTradeRows(trades: readonly Trade[], baseCapital: number): DashboardTradeRow[] {
+  return trades.map((t) => {
+    const net = netPnl(t);
+    return {
+      ...t,
+      pnl: net,
+      outcome: net === null ? 'open' : classifyTrade(net),
+      pct: net !== null && baseCapital > 0 ? (net / baseCapital) * 100 : null,
+    };
+  });
+}

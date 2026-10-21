@@ -9,8 +9,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
@@ -81,6 +81,9 @@ import { findPlan, platformLabel, rulesFromPlan } from './prop-firm-plan-picker/
 import { AccountPlanWizardComponent } from './account-plan-wizard/account-plan-wizard.component';
 import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
+import { FloorReachedBannerComponent } from './lost-account/floor-reached-banner.component';
+import { LostAccountFlowService } from '../../core/services/lost-account-flow.service';
+import { countsInAggregate, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 
 interface AccountFormState {
   label: string;
@@ -126,9 +129,9 @@ function emptyForm(): AccountFormState {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DialogDirective,
-    DecimalPipe, FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
+    FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
-    PropFirmRulesComponent, AccountPlanWizardComponent,
+    PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -143,6 +146,8 @@ export class AccountsComponent implements OnInit {
   private readonly tradesStore = inject(TradesStore);
   private readonly confirm = inject(ConfirmService);
   private readonly toast = inject(ToastService);
+  /** Compte perdu : nouvelle tentative et archivage d'un compte échoué (feuilles dans la coque). */
+  protected readonly lostAccount = inject(LostAccountFlowService);
 
   // ── Connexion Tradovate par compte ──────────────────────────
   protected readonly tv = inject(TradovateStore);
@@ -197,18 +202,23 @@ export class AccountsComponent implements OnInit {
   protected readonly planRules = signal<Record<string, PropFirmPlanDetail | 'loading' | 'error'>>({});
 
   // ── Vue agrégée (source des KPI), scopée par la sélection du topbar ──────
-  // null = « Tous les comptes » → tous (non archivés) ; sinon le seul compte choisi.
+  // « Tous les comptes » → ceux qui entrent dans les chiffres (ni échoués ni archivés, comme les
+  // statistiques) ; sinon le seul compte choisi, quel que soit son statut.
   protected readonly visibleAccounts = computed(() => {
     const sel = this.store.selectedAccountId();
-    const base = this.store.accounts().filter((a) => a.status !== 'ARCHIVED');
-    return sel === 'all' ? base : base.filter((a) => a.id === sel);
+    const all = this.store.accounts();
+    return sel === 'all' ? all.filter((a) => countsInAggregate(a.status)) : all.filter((a) => a.id === sel);
   });
-  // Cartes affichées dans la grille : toutes, ou la seule sélectionnée.
+  // Lignes du tableau : tous les comptes sauf les archivés (repliés à part), ou le seul sélectionné.
   protected readonly displayedAccounts = computed(() => {
     const sel = this.store.selectedAccountId();
     const all = this.store.accounts();
-    return sel === 'all' ? all : all.filter((a) => a.id === sel);
+    return sel === 'all' ? all.filter((a) => a.status !== 'ARCHIVED') : all.filter((a) => a.id === sel);
   });
+  /** Section repliée « n comptes archivés » (vue « Tous les comptes » seulement). */
+  protected readonly archivedAccounts = computed(() =>
+    this.store.selectedAccountId() === 'all' ? this.store.accounts().filter((a) => a.status === 'ARCHIVED') : [],
+  );
   // Nom du compte sélectionné (sous-libellé KPI P&L), null en vue « Tous les comptes ».
   protected readonly selectedAccountName = computed(() => {
     const sel = this.store.selectedAccountId();
@@ -406,7 +416,17 @@ export class AccountsComponent implements OnInit {
     });
   }
 
+  /**
+   * Connexion (et reconnexion) Tradovate proposée aux seuls comptes ACTIVE. Un compte échoué, validé
+   * ou archivé ne trade plus : le connecter n'aurait pas de sens (même règle que l'import CSV, qui ne
+   * cible que les comptes actifs). Une connexion déjà établie n'est pas touchée ici.
+   */
+  protected canConnect(a: TradingAccount): boolean {
+    return a.status === 'ACTIVE';
+  }
+
   protected openTradovateConnect(a: TradingAccount): void {
+    if (!this.canConnect(a)) return;
     this.connectTarget.set({ id: a.id, label: a.label });
   }
 
@@ -513,20 +533,8 @@ export class AccountsComponent implements OnInit {
       default: return 'perso';
     }
   }
-  protected statusLabel(s: AccountStatus): string {
-    switch (s) {
-      case 'PASSED': return 'Validé';
-      case 'FAILED': return 'Échoué';
-      case 'ARCHIVED': return 'Archivé';
-      default: return 'Actif';
-    }
-  }
-  protected dotColor(a: TradingAccount): string {
-    if (a.status === 'ARCHIVED') return 'var(--text-3)';
-    if (a.status === 'FAILED') return 'var(--red)';
-    if (a.status === 'PASSED') return 'var(--green)';
-    return a.type === 'EVALUATION' ? 'var(--yellow)' : 'var(--green)';
-  }
+  protected readonly statusLabel = statusLabel;
+  protected readonly statusBadgeClass = statusBadgeClass;
 
   // Largeur de barre bornée à [0,100] (un objectif dépassé donne pct > 1 côté funded).
   private barWidth(pct: number | undefined): number {
@@ -567,6 +575,8 @@ export class AccountsComponent implements OnInit {
   // pastille de sa prop firm : une firm a UNE couleur partout, quel que soit le compte. Perso → vert ;
   // compte prop firm sans firm saisie → même palette, dérivée du libellé (stable au reorder).
   protected accentVar(a: TradingAccount): string {
+    // Compte échoué : liseré rouge, quelle que soit la firm (le badge « Échoué » porte le texte).
+    if (a.status === 'FAILED') return 'var(--red)';
     if (a.type === 'PERSONAL') return 'var(--green)';
     return brokerBadge(a.broker || a.label, this.brokerTones())?.color ?? 'var(--blue)';
   }

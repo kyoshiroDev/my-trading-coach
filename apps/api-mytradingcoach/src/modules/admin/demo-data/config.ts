@@ -8,8 +8,8 @@ export const DEMO_NAME = 'Lucas Mercier';
 export const DEMO_WINDOW_DAYS = 42;
 
 /**
- * Deux comptes prop firm en USD. Contrat de cohérence, à ne pas casser :
- *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL (50 000 + 50 000)
+ * Trois comptes prop firm en USD. Contrat de cohérence, à ne pas casser :
+ *   Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL (50 000 + 50 000 + 25 000)
  * (`dashboard.baseCapital` et `accounts.trackedCapital` somment les `startingBalance`).
  *
  * Chaque compte est relié à un plan du catalogue prop firm (`propFirmPlanId`) : la marge de
@@ -19,7 +19,8 @@ export const DEMO_WINDOW_DAYS = 42;
 export const DEMO_ACCOUNTS = [
   {
     key: 'apex' as const,
-    label: 'Apex 50k · Éval',
+    // « #2 » : nouvelle tentative du compte échoué « Apex 50k · Éval #1 » (lost-accounts.ts).
+    label: 'Apex 50k · Éval #2',
     broker: 'Apex Trader Funding',
     type: AccountType.EVALUATION,
     accountSize: 50_000,
@@ -44,7 +45,24 @@ export const DEMO_ACCOUNTS = [
     propFirmPlanId: 'tradeify-select-flex-50k',
     tradovateAccount: { id: '1', name: 'TDFY-DEMO-01' },
   },
+  // Plan STATIQUE d'une autre firme et d'une autre taille : la carte drawdown montre un plancher
+  // fixe (pas de suivi du plus haut). Ses journées sont tirées à part (`generateSecondary`) pour ne
+  // rien changer aux comptes Apex et Tradeify.
+  {
+    key: 'elite' as const,
+    label: 'Elite 25k · Static',
+    broker: 'Elite Trader Funding',
+    type: AccountType.EVALUATION,
+    accountSize: 25_000,
+    startingBalance: 25_000,
+    profitTarget: 2_000,
+    maxDrawdown: 1_000,
+    drawdownType: DrawdownType.STATIC,
+    propFirmPlanId: 'elitetraderfunding-static-25k',
+    tradovateAccount: { id: '2', name: 'ETF-DEMO-01' },
+  },
 ];
+
 export type AccountKey = (typeof DEMO_ACCOUNTS)[number]['key'];
 /** Perte journalière du plan `apex-eod-50k` (catalogue) : rejouée par le journal de risque démo. */
 export const APEX_DAILY_LOSS_LIMIT = 1_000;

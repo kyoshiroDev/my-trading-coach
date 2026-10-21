@@ -122,6 +122,9 @@
    mono minuscule, lignes en grille alignée). Pas d'`overflow: hidden` sur le
    wrapper, sinon le menu « … » de la dernière ligne serait coupé. */
 .acct-table {
+  /* La bascule en repli suit la largeur du TABLEAU, pas celle de la fenêtre : la barre latérale
+     (ouverte ou repliée) prend 70 à 216 px, et à 1100 px de fenêtre les colonnes se chevauchaient. */
+  container: acct-table / inline-size;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -132,7 +135,7 @@
 .acct-line {
   display: grid;
   grid-template-columns:
-    minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(115px, 1fr)
+    minmax(190px, 1.65fr) 0.75fr 0.75fr 0.45fr minmax(140px, 1fr)
     minmax(115px, 1fr) minmax(190px, 1.7fr) 38px;
   gap: 0 14px;
   align-items: center;
@@ -265,7 +268,7 @@
    colonnes à une ligne (Solde, P&L, Trades). Un retrait égal à barre + écart (4 + 4 px)
    recentre le TEXTE sur la ligne, la barre pendant dessous. Sans barre (« — »), rien.
    Desktop seulement : en mobile la jauge est une ligne pleine largeur, sous son libellé. */
-@media (min-width: 1081px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
+@container acct-table (min-width: 981px) { .cell-gauge:has(> .bar-track) { padding-top: 8px; } }
 /* Valeur et suffixe COLLÉS : repoussé à droite de la cellule, le « 30 % » ou le
    « restants » se lisait comme appartenant à la colonne voisine. */
 .gauge-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 5px; min-width: 0; }
@@ -459,9 +462,10 @@
 }
 
 /* ── Repli tablette : 8 colonnes ne tiennent plus, les jauges passent au dépli ── */
-/* 1080 et non 1024 : de 1025 à ~1060 px, les 8 colonnes (≈ 850 px mini) dépassaient et le contenu
-   défilait de côté (#642). */
-@media (max-width: 1080px) {
+/* Sous 980 px de TABLEAU, les 8 colonnes ne tiennent plus : Solde et P&L tombaient à 18-38 px pour
+   56 px de texte et se chevauchaient, l'Objectif (« 1 078 / $3,000 36 % ») débordait. Mesuré sur la
+   largeur de la fenêtre, le seuil (1024 puis 1080 px, #642) ignorait la barre latérale. */
+@container acct-table (max-width: 980px) {
   .acct-thead { display: none; }
   /* En repli, chaque ligne cache des colonnes : le chevron redevient utile partout. */
   .acct-expand { visibility: visible; }
@@ -517,7 +521,9 @@
   .acct-name { font-size: 13px; }
   /* Trades passe au dépli : sur un écran étroit, solde et P&L suffisent à décider. */
   .cell-trades { display: none; }
-  .acct-block.is-open .cell-trades { display: block; grid-column: 1; grid-row: 6; }
+  /* 5 classes : doit battre `.acct-line .cell.num.right` (4 classes, grid-row: 2 du repli),
+     sinon Trades restait en ligne 2 et se superposait au Solde une fois la ligne dépliée. */
+  .acct-block.is-open .acct-line .cell.cell-trades { display: block; grid-column: 1; grid-row: 6; }
   /* Colonne pleine largeur : l'en-tête doit s'étirer pour que le bouton suive. */
   .cell-sync, .sync-head { width: 100%; }
   .cell-sync .tv-btn { flex: 1 1 auto; justify-content: center; }
@@ -605,4 +611,58 @@
   .acct-menu { position: relative; }
   .acct-expand::before,
   .acct-menu::before { content: ''; position: absolute; inset: -12px; }
+}
+
+/* ── Compte perdu (maquette compte perdu, écran 3) ─────────────────────────── */
+mtc-floor-reached-banner { margin-bottom: 16px; }
+
+.acct-meta .status-badge { margin-left: 2px; }
+
+.acct-failed { justify-content: space-between; }
+.acct-failed-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.lost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* cible tactile minimale, aussi sur ordinateur (maquette : 36 px) */
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-3);
+  color: var(--text);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.lost-btn.pri { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+.lost-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.lost-btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* Section repliée des comptes archivés, en bas du tableau. */
+.acct-archived { border-top: 1px solid var(--border); }
+.acct-archived-sum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  list-style: none;
+  cursor: pointer;
+  font: 600 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+.acct-archived-sum::-webkit-details-marker { display: none; }
+.acct-archived-sum:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; border-radius: 8px; }
+.acct-archived-sum svg.lucide { transform: rotate(-90deg); transition: transform 0.15s; }
+.acct-archived[open] .acct-archived-sum svg.lucide { transform: none; }
+.acct-archived .acct-block:first-of-type { border-top: 1px solid var(--border); }
+
+@media (max-width: 767px) {
+  .acct-failed-actions { width: 100%; }
+  .acct-failed-actions .lost-btn.pri { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acct-archived-sum svg.lucide { transition: none; }
 }

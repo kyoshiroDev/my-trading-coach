@@ -8,12 +8,12 @@ vi.mock('./analytics.sql', () => ({
   summaryTotals: vi.fn().mockResolvedValue({ count: 0, wins: 0, losses: 0, pnl: 0, grossProfit: 0, grossLoss: 0, maxDrawdown: 0, streak: 0 }),
   cumulativeByTrade: vi.fn().mockResolvedValue([]),
 }));
-import { groupTrades, cumulativeByTrade } from './analytics.sql';
+import { groupTrades, cumulativeByTrade, summaryTotals } from './analytics.sql';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
-import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate } from './analytics.service';
+import { minuteKey, downsampleEquity, EQUITY_MAX_POINTS, bestByWinRate, periodBefore, splitPayouts } from './analytics.service';
 
 const mockPrisma = {
   setup: {
@@ -21,6 +21,9 @@ const mockPrisma = {
   },
   user: {
     findUnique: vi.fn().mockResolvedValue({ startingCapital: null }),
+  },
+  brokerPayout: {
+    findMany: vi.fn().mockResolvedValue([]),
   },
 };
 
@@ -125,6 +128,61 @@ describe('AnalyticsService', () => {
     });
   });
 
+  // Compte perdu : chaque statistique transmet `includeInactive` au filtre SQL et a sa propre clé de
+  // cache (sinon la vue « tout inclure » servirait les chiffres sans les inactifs, ou l'inverse).
+  describe('comptes échoués et archivés : includeInactive de bout en bout', () => {
+    const from = new Date('2026-09-01T00:00:00.000Z');
+    const to = new Date('2026-10-01T00:00:00.000Z');
+    const getters: [string, (inc: boolean) => Promise<unknown>][] = [
+      ['getSummary', (inc) => service.getSummary('u1', undefined, from, to, inc)],
+      ['getBySetup', (inc) => service.getBySetup('u1', undefined, inc)],
+      ['getByEmotion', (inc) => service.getByEmotion('u1', undefined, inc)],
+      ['getByHour', (inc) => service.getByHour('u1', undefined, inc)],
+      ['getEquityCurve', (inc) => service.getEquityCurve('u1', undefined, inc)],
+      ['getEquityCurveCurrentMonth', (inc) => service.getEquityCurveCurrentMonth('u1', undefined, inc)],
+      ['getEquityCurveDaily', (inc) => service.getEquityCurveDaily('u1', from, to, undefined, inc)],
+      ['getTopAssets', (inc) => service.getTopAssets('u1', undefined, inc)],
+      ['getMonthlyActivity', (inc) => service.getMonthlyActivity('u1', 2026, 9, undefined, inc)],
+      ['getActivityRange', (inc) => service.getActivityRange('u1', from, to, undefined, inc)],
+    ];
+    const filters = () => [
+      ...vi.mocked(groupTrades).mock.calls.map((c) => c[1]),
+      ...vi.mocked(summaryTotals).mock.calls.map((c) => c[1]),
+      ...vi.mocked(cumulativeByTrade).mock.calls.map((c) => c[1]),
+    ];
+    beforeEach(() => {
+      mockRedisService.client.get.mockReset().mockResolvedValue(null);
+      mockRedisService.client.setex.mockClear();
+      vi.mocked(groupTrades).mockClear();
+      vi.mocked(summaryTotals).mockClear();
+      vi.mocked(cumulativeByTrade).mockClear();
+    });
+
+    it.each(getters)('%s : par défaut, filtre sans includeInactive (inactifs exclus)', async (_n, run) => {
+      await run(false);
+      expect(filters().length).toBeGreaterThan(0);
+      expect(filters().every((f) => !f.includeInactive && !f.accountId)).toBe(true);
+    });
+
+    it.each(getters)('%s : includeInactive transmis, clé de cache distincte', async (_n, run) => {
+      await run(false);
+      await run(true);
+      expect(filters().some((f) => f.includeInactive === true)).toBe(true);
+      const keys = mockRedisService.client.setex.mock.calls.map((c) => c[0] as string);
+      expect(keys).toHaveLength(2);
+      expect(keys[0]).not.toContain(':inactive');
+      expect(keys[1]).toContain(':inactive');
+    });
+
+    it('compte précis : transmis tel quel, même clé quel que soit includeInactive', async () => {
+      await service.getBySetup('u1', 'acc-failed', false);
+      await service.getBySetup('u1', 'acc-failed', true);
+      expect(vi.mocked(groupTrades).mock.calls[0][1]).toMatchObject({ userId: 'u1', accountId: 'acc-failed' });
+      const keys = mockRedisService.client.setex.mock.calls.map((c) => c[0] as string);
+      expect(keys).toEqual(['analytics:u1:v0:setup:acc:acc-failed', 'analytics:u1:v0:setup:acc:acc-failed']);
+    });
+  });
+
   describe('downsampleEquity (courbe par trade, garde-fou B9)', () => {
     const curve = (n: number) => {
       let cum = 0;
@@ -191,7 +249,7 @@ describe('AnalyticsService', () => {
       vi.mocked(groupTrades)
         .mockResolvedValueOnce([agg('LONDON', { wins: 1, losses: 1 }), agg('ASIAN', { wins: 2 })])
         .mockResolvedValueOnce([agg('9', { wins: 3 })]);
-      const r = await svc()['computeSummary']('u1');
+      const r = await svc()['computeSummary']({ userId: 'u1' });
       expect(r).toMatchObject({ profitFactor: null, totalPnl: 300, topSession: 'ASIAN', topSessionWinRate: 100, topHour: '09:00', streak: 3, winRate: 100 });
     });
 
@@ -200,7 +258,7 @@ describe('AnalyticsService', () => {
         .mockResolvedValueOnce([{ id: 'a', title: 'A', color: '#1' }, { id: 'b', title: 'B', color: '#2' }])
         .mockResolvedValueOnce([{ id: 'z', title: 'Z', color: '#9' }]);
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('z', { count: 1, losses: 1, pnl: -5 }), agg('b', { count: 2, wins: 1, losses: 1, pnl: 10, rrSum: 3, rrCount: 2 })]);
-      const r = await svc()['computeBySetup']('u1');
+      const r = await svc()['computeBySetup']({ userId: 'u1' });
       expect(r.map((x: { setupId: string }) => x.setupId)).toEqual(['a', 'b', 'z']);
       expect(r[0]).toMatchObject({ count: 0, pnl: 0, avgRR: null, winRate: null });
       expect(r[1]).toMatchObject({ count: 2, avgRR: 1.5, winRate: 50 });
@@ -209,26 +267,82 @@ describe('AnalyticsService', () => {
 
     it('par heure : jour et heure décodés ; top actifs : tri par P&L, 10 au plus', async () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('0:9', { count: 2, wins: 1, losses: 1 })]);
-      expect(await svc()['computeByHour']('u1')).toEqual([{ day: 'Dim', hour: 9, winRate: 50, count: 2 }]);
+      expect(await svc()['computeByHour']({ userId: 'u1' })).toEqual([{ day: 'Dim', hour: 9, winRate: 50, count: 2 }]);
       vi.mocked(groupTrades).mockResolvedValueOnce(Array.from({ length: 12 }, (_, i) => agg(`A${i}`, { pnl: i })));
-      const top = await svc()['computeTopAssets']('u1');
+      const top = await svc()['computeTopAssets']({ userId: 'u1' });
       expect(top).toHaveLength(10);
       expect(top[0].asset).toBe('A11');
     });
 
     it('par émotion : R:R moyen à 0 (et non null) sans R:R, comme avant', async () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('FOCUSED', { count: 1, wins: 1 })]);
-      expect(await svc()['computeByEmotion']('u1')).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: 0, count: 1 }]);
+      expect(await svc()['computeByEmotion']({ userId: 'u1' })).toEqual([{ emotion: 'FOCUSED', winRate: 100, avgRR: 0, count: 1 }]);
     });
 
     it('équité journalière et activité : jours triés, P&L cumulé, totaux du mois', async () => {
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-05', { pnl: -50 }), agg('2026-05-04', { pnl: 100 })]);
-      const eq = await svc()['computeEquityCurveDaily']('u1');
+      const eq = await svc()['computeEquityCurveDaily']({ userId: 'u1' });
       expect(eq.points.map((p: { cumulativePnl: number }) => p.cumulativePnl)).toEqual([100, 50]);
+      expect(eq.before).toEqual({ pnl: 0, peak: 0, count: 0 }); // sans « from » : rien avant
       vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-05-04', { count: 2, wins: 1, losses: 1, pnl: 30 }), agg('2026-05-06', { count: 1, pnl: -10, losses: 1 })]);
-      const m = await svc()['computeMonthlyActivity']('u1', 2026, 5);
+      const m = await svc()['computeMonthlyActivity']({ userId: 'u1' }, 2026, 5);
       expect(m).toMatchObject({ totalPnl: 20, totalTrades: 3, tradingDays: 2 });
       expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ before: new Date(2026, 5, 1) });
+    });
+
+    it('équité journalière bornée : historique avant la période (P&L cumulé, plus haut en clôture)', async () => {
+      const from = new Date('2026-09-19T00:00:00.000Z');
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-09-25', { pnl: 840 })]);
+      // Avant la période : +500, puis -262 → cumul 238, sommet 500.
+      vi.mocked(groupTrades).mockResolvedValueOnce([agg('2026-09-02', { pnl: -262, count: 1 }), agg('2026-09-01', { pnl: 500, count: 1 })]);
+      const eq = await svc()['computeEquityCurveDaily']({ userId: 'u1', accountId: 'acc-1' }, from, undefined);
+      expect(eq.before).toEqual({ pnl: 238, peak: 500, count: 2 });
+      expect(vi.mocked(groupTrades).mock.calls.at(-1)?.[1]).toMatchObject({ accountId: 'acc-1', before: from });
+    });
+
+    it('payouts : ceux de la période, et le total retiré avant', () => {
+      const from = new Date('2026-09-30T22:00:00.000Z'); // 1er octobre, minuit à Paris
+      const rows = [
+        { tradeDate: new Date('2026-09-15T00:00:00.000Z'), amount: 1_000 },
+        { tradeDate: new Date('2026-09-30T00:00:00.000Z'), amount: 500.004 },
+        { tradeDate: new Date('2026-10-01T00:00:00.000Z'), amount: 2_000 },
+      ];
+      expect(splitPayouts(rows, from)).toEqual({ before: 1_500, payouts: [{ date: rows[2].tradeDate, amount: 2_000 }] });
+      expect(splitPayouts(rows).before).toBe(0);
+      expect(splitPayouts(rows).payouts).toHaveLength(3);
+    });
+
+    it('équité journalière : payouts du compte lus hors cache, écartés exclus, bornés à « to »', async () => {
+      const from = new Date('2026-10-01T00:00:00.000Z');
+      const to = new Date('2026-10-20T21:59:59.999Z');
+      mockPrisma.brokerPayout.findMany.mockResolvedValueOnce([
+        { tradeDate: new Date('2026-09-20T00:00:00.000Z'), amount: 800 },
+        { tradeDate: new Date('2026-10-10T00:00:00.000Z'), amount: 1_200 },
+      ]);
+      const eq = await service.getEquityCurveDaily('u1', from, to, 'acc-1');
+      expect(eq.payouts).toEqual([{ date: new Date('2026-10-10T00:00:00.000Z'), amount: 1_200 }]);
+      expect(eq.before.payouts).toBe(800);
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0]).toMatchObject({
+        where: { dismissedAt: null, account: { userId: 'u1' }, accountId: 'acc-1', tradeDate: { lte: to } },
+      });
+    });
+
+    // Compte perdu : comme leurs trades, les payouts des comptes échoués et archivés sortent de la
+    // courbe « tous les comptes » ; includeInactive les remet, un compte précis lit les siens.
+    it('équité journalière « tous les comptes » : payouts des comptes perdus exclus par défaut', async () => {
+      mockPrisma.brokerPayout.findMany.mockResolvedValue([]);
+      await service.getEquityCurveDaily('u1');
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where.account).toEqual({
+        userId: 'u1', status: { notIn: ['FAILED', 'ARCHIVED'] },
+      });
+      await service.getEquityCurveDaily('u1', undefined, undefined, undefined, true);
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where.account).toEqual({ userId: 'u1' });
+      await service.getEquityCurveDaily('u1', undefined, undefined, 'acc-failed');
+      expect(mockPrisma.brokerPayout.findMany.mock.calls.at(-1)?.[0].where).toMatchObject({ account: { userId: 'u1' }, accountId: 'acc-failed' });
+    });
+
+    it('historique toujours négatif : sommet au solde de départ (0)', () => {
+      expect(periodBefore([agg('2026-09-01', { pnl: -100, count: 1 }), agg('2026-09-02', { pnl: -50, count: 1 })])).toEqual({ pnl: -150, peak: 0, count: 2 });
     });
   });
 });

@@ -4,6 +4,8 @@
   @if (loadError()) {
     <mtc-error-state (retry)="reload()" />
   }
+  <!-- Comptes échoués et archivés hors des chiffres, avec l'interrupteur pour les réinclure. -->
+  <mtc-inactive-accounts-toggle />
   <!-- Devises mêlées en « Tous les comptes » : totaux sans objet. -->
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
@@ -81,59 +83,35 @@
   @if (userStore.isPremium()) {
     <!-- Equity Curve + Drawdown côte à côte -->
     <div class="grid-2 mb-16">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Equity Curve</div>
-          <div class="equity-controls">
-            <div class="period-tabs">
-              @for (p of periods; track p.key) {
-                <button
-                  class="period-tab"
-                  [class.active]="equityPeriod() === p.key"
-                  (click)="selectPeriod(p.key)"
-                >{{ p.label }}</button>
-              }
-            </div>
-            @if (equityData()?.points?.length) {
-              <span class="equity-pnl-total"
-                    [class.pos]="(equityData()!.points.at(-1)!.cumulativePnl) >= 0"
-                    [class.neg]="(equityData()!.points.at(-1)!.cumulativePnl) < 0">
-                {{ equityData()!.points.at(-1)!.cumulativePnl | pnlFormat }}
-              </span>
-            }
-          </div>
-        </div>
-        <div class="chart-container">
-          <canvas
-            #equityCanvas
-            class="chart-canvas"
-            data-testid="equity-curve"
-          ></canvas>
-          @if (equityCurve().length === 0 && !equityLoading()) {
-            <div class="empty-chart">Aucun trade sur cette période</div>
+      <mtc-perf-chart
+        kind="equity"
+        [points]="equityCurve()"
+        [startingCapital]="equityStartCapital()"
+        [objective]="planObjective()"
+        [loading]="equityLoading()"
+      >
+        <div chartControls class="period-tabs">
+          @for (p of periods; track p.key) {
+            <button
+              type="button"
+              class="period-tab"
+              [class.active]="equityPeriod() === p.key"
+              (click)="selectPeriod(p.key)"
+            >{{ p.label }}</button>
           }
         </div>
-      </div>
+      </mtc-perf-chart>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Courbe de Drawdown
-            <mtc-info-tooltip label="Ce que représente le drawdown"
-              text="Écart entre ton P&L cumulé et son plus haut niveau atteint. Mesure la baisse depuis un pic, pas une perte définitive." />
-          </div>
-          @if (summary()) {
-            <span class="card-meta text-red">
-              {{ -summary()!.maxDrawdown | pnlFormat }} max
-            </span>
-          }
-        </div>
-        <div class="chart-container">
-          <canvas #drawdownCanvas class="chart-canvas"></canvas>
-          @if (equityCurve().length === 0 && !equityLoading()) {
-            <div class="empty-chart">Aucun trade sur cette période</div>
-          }
-        </div>
-      </div>
+      <mtc-perf-chart
+        kind="drawdown"
+        [points]="equityCurve()"
+        [before]="equityData()?.before ?? null"
+        [startingCapital]="equityStartCapital()"
+        [planFloor]="planFloor()"
+        [loading]="equityLoading()"
+      >
+        <mtc-info-tooltip chartInfo label="Ce que représente le drawdown" [text]="drawdownHelp()" />
+      </mtc-perf-chart>
     </div>
 
     <!-- Heatmap + Calendrier côte à côte : même hauteur -->

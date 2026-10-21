@@ -9,7 +9,7 @@ import type { AmbassadorService } from '../ambassador/ambassador.service';
 
 /** Liste admin filtrée par UTM d'inscription (#625) : retrouver les inscrits d'une campagne. */
 const prisma = { user: { findMany: vi.fn(), count: vi.fn() } };
-const service = new UsersService(prisma as unknown as PrismaService, {} as AmbassadorService);
+const service = new UsersService(prisma as unknown as PrismaService, {} as AmbassadorService, {} as never);
 const where = () => prisma.user.findMany.mock.calls[0][0].where;
 
 beforeEach(() => {
@@ -25,9 +25,9 @@ describe('UsersService.adminFindAll — filtre par campagne', () => {
   });
 
   it('triplet complet : égalité exacte sur les 3 champs, même filtre pour le total', async () => {
-    await service.adminFindAll(1, 20, undefined, { source: 'instagram', medium: 'dm', campaign: 'louis' });
+    await service.adminFindAll(1, 20, undefined, { source: 'instagram', medium: 'dm', campaign: 'exemple' });
     const expected = {
-      isDemo: false, acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'louis',
+      isDemo: false, acquisitionSource: 'instagram', acquisitionMedium: 'dm', acquisitionCampaign: 'exemple',
     };
     expect(where()).toEqual(expected);
     expect(prisma.user.count).toHaveBeenCalledWith({ where: expected });
@@ -39,8 +39,8 @@ describe('UsersService.adminFindAll — filtre par campagne', () => {
   });
 
   it('se combine avec la recherche e-mail / nom', async () => {
-    await service.adminFindAll(1, 20, 'gmail', { campaign: 'louis' });
-    expect(where()).toMatchObject({ acquisitionCampaign: 'louis', OR: expect.any(Array) });
+    await service.adminFindAll(1, 20, 'gmail', { campaign: 'exemple' });
+    expect(where()).toMatchObject({ acquisitionCampaign: 'exemple', OR: expect.any(Array) });
   });
 });
 

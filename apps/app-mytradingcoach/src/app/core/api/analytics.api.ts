@@ -43,6 +43,37 @@ export interface HeatmapCell {
 export interface EquityPoint {
   date: string;
   cumulativePnl: number;
+  /** Payout reçu ce jour-là (ajouté par `withPayouts`, jamais renvoyé par l'API dans les points). */
+  payout?: number;
+}
+
+/** Payout reçu (retrait détecté chez le broker, non écarté). */
+export interface EquityPayout {
+  date: string;
+  amount: number;
+}
+
+/**
+ * Historique avant la période d'une courbe (`/equity-curve/daily` avec `from`) : P&L net cumulé et
+ * son plus haut en clôture de journée (≥ 0). Sans `from` : 0 / 0.
+ */
+export interface PeriodBefore {
+  pnl: number;
+  peak: number;
+  /** Trades avant la période ; 0 → la période couvre le début du compte. */
+  count?: number;
+  /** Total des payouts reçus avant la période. */
+  payouts?: number;
+}
+
+/** Réponse de `/equity-curve/daily`. `startingCapital` = capital du PROFIL, pas celui du compte :
+ *  ne pas s'en servir pour placer la courbe (cf. `periodStartCapital`). */
+export interface DailyEquityCurve {
+  points: EquityPoint[];
+  startingCapital: number | null;
+  before?: PeriodBefore;
+  /** Payouts reçus pendant la période (le solde du compte les a déjà perdus). */
+  payouts?: EquityPayout[];
 }
 
 export interface EquityCurveResponse {
@@ -101,14 +132,16 @@ export class AnalyticsApi {
   }
 
   /** Courbe d'équité jour par jour, bornée (`from`/`to`) et scopée compte (`accountId`). */
-  getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null }): Observable<{
-    data: { points: EquityPoint[]; startingCapital: number | null };
+  getDailyEquityCurve(query: { from?: string | null; to?: string | null; accountId?: string | null; includeInactive?: boolean }): Observable<{
+    data: DailyEquityCurve;
   }> {
     const params: Record<string, string> = {};
     if (query.from) params['from'] = query.from;
     if (query.to) params['to'] = query.to;
     if (query.accountId) params['accountId'] = query.accountId;
-    return this.http.get<{ data: { points: EquityPoint[]; startingCapital: number | null } }>(
+    // « Tous les comptes » avec les comptes échoués et archivés (interrupteur des statistiques).
+    else if (query.includeInactive) params['includeInactive'] = 'true';
+    return this.http.get<{ data: DailyEquityCurve }>(
       `${this.base}/equity-curve/daily`,
       { params },
     );
@@ -123,8 +156,10 @@ export class AnalyticsApi {
     return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/current-month${q}`);
   }
 
-  getMonthActivity(year: number, month: number, accountId?: string): Observable<{ data: MonthlyActivitySummary }> {
-    const q = accountId ? `?accountId=${encodeURIComponent(accountId)}` : '';
+  getMonthActivity(year: number, month: number, accountId?: string, includeInactive = false): Observable<{ data: MonthlyActivitySummary }> {
+    const q = accountId
+      ? `?accountId=${encodeURIComponent(accountId)}`
+      : includeInactive ? '?includeInactive=true' : '';
     return this.http.get<{ data: MonthlyActivitySummary }>(`${this.base}/activity/${year}/${month}${q}`);
   }
 }

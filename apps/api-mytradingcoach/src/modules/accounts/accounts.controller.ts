@@ -58,6 +58,24 @@ export class AccountsController {
     });
   }
 
+  /**
+   * Compte perdu : nouvelle tentative depuis un compte ÉCHOUÉ (même firme, plan, taille et règles).
+   * Route dédiée plutôt que POST /accounts : le serveur garde le contrôle du statut d'origine, de
+   * la copie des règles et du libellé incrémenté (« Apex 50K #2 »), et applique le quota du plan.
+   */
+  @Post(':id/retry')
+  retry(
+    @CurrentUser()
+    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
+    @Param('id') id: string,
+  ) {
+    return this.accounts.retry(user.id, id, {
+      plan: user.plan,
+      role: user.role,
+      trialEndsAt: user.trialEndsAt,
+    });
+  }
+
   /** Indices stockés pour deviner le plan du compte connecté (« Quel est ce compte ? », #612). */
   @Get(':id/plan-hint')
   planHint(@CurrentUser() user: { id: string }, @Param('id') id: string) {
@@ -77,5 +95,18 @@ export class AccountsController {
   @Delete(':id')
   remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.accounts.remove(user.id, id);
+  }
+
+  /**
+   * Suppression DÉFINITIVE (compte perdu) : le compte ET ses trades. Corps obligatoire
+   * `{ "confirm": true }`, sinon 400. Réponse `{ deleted: true, tradesDeleted }`.
+   */
+  @Delete(':id/permanent')
+  purge(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() body?: { confirm?: unknown },
+  ) {
+    return this.accounts.purge(user.id, id, body?.confirm);
   }
 }

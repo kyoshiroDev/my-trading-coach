@@ -157,49 +157,12 @@
   gap: 12px;
 }
 
-/* Périodes + total : passent sous le titre quand la carte est étroite (le total sortait de la carte, #636). */
-.equity-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
 .card-title {
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.2px;
   color: var(--text);
-}
-
-.card-meta {
-  font-size: 11px;
-  font-family: var(--font-mono);
-}
-
-/* ── Chart canvas ── */
-.chart-container {
-  position: relative;
-  height: 140px;
-  width: 100%;
-  overflow: hidden;
-}
-
-.chart-canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.empty-chart {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-3);
-  font-size: 13px;
 }
 
 /* ── Heatmap ── */
@@ -588,17 +551,13 @@
   box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
 
-.equity-pnl-total {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-.equity-pnl-total.pos { color: var(--green); }
-.equity-pnl-total.neg { color: var(--red); }
-
 /* Écran tactile : zone de clic portée vers 44 px sans changer le visuel (#638). */
 @media (pointer: coarse) {
   .period-tab { position: relative; }
   .period-tab::before { content: ''; position: absolute; inset: -11px 0; }
+}
+
+/* Compte perdu : ligne des comptes exclus + interrupteur (masquée quand vide). */
+mtc-inactive-accounts-toggle {
+  margin-bottom: 16px;
 }

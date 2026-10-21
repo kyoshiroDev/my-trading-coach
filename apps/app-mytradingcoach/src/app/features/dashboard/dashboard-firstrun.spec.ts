@@ -14,6 +14,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 // Mount minimal (template overridé au seul @if du hero, verbatim) : le dashboard complet
 // rend des composants enfants (topbar, charts…) hors sujet ici. On valide la condition
@@ -41,7 +42,7 @@ function setup(totalTrades: number) {
       { provide: ChartService, useValue: { buildEquityChart: vi.fn() } },
       { provide: BillingApi, useValue: {} },
       { provide: TradesApi, useValue: {} },
-      { provide: SelectedAccountStore, useValue: { accounts: signal([]), accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
+      { provide: SelectedAccountStore, useValue: { ...statsScopeStub(), accounts: signal([]), accountParam: () => undefined, load: vi.fn(), loaded: signal(true), isLoading: signal(false) } },
     ],
   });
   TestBed.overrideComponent(DashboardComponent, {

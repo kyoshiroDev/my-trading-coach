@@ -82,10 +82,11 @@ src/
 - **Clics CTA → GA4** (`Analytics.astro`) : tout lien avec `data-ga-event` (`cta_signup`, `cta_demo`,
   `cta_trial`) et `data-ga-place` envoie un événement GA4, SEULEMENT si GA est chargé (après consentement).
   Nouveau CTA d'inscription → ajouter les deux attributs.
-- **Tarifs (`Pricing.astro`)** : ce que Premium ajoute = UNE liste `premiumPlus` rendue deux fois,
-  bloc « Ce que Premium ajoute au Gratuit » au-dessus des prix (entrées `key`, ancres réelles de
-  `plans.md`) et carte Premium (« Tout le Gratuit, plus : »). Ajouter un droit Premium = une ligne
-  dans `premiumPlus`. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
+- **Tarifs (`Pricing.astro`, `PfPricing.astro`)** : les cartes Gratuit / Fondateur / Premium lisent
+  `PLAN_BENEFITS` (`@mtc/shared`, liste partagée avec l'app et les e-mails, cf. plans.md « Avantages
+  affichés ») ; jamais de liste d'avantages écrite dans la carte. Le bloc « Ce que Premium ajoute au
+  Gratuit » de la home garde un détail propre (`premiumDetails`) : chaque ligne = fonction livrée ET
+  réservée au Premium. `#pricing` a `scroll-margin-top` = barre fixe (60 px) : le menu « Tarifs »
   arrive sur le titre, le bloc et les prix ensemble (retour de Val, 2026-10-06).
 
 - **Offre fondateur (#525)** : état lu côté navigateur sur `GET {API_URL}/pricing/founder`
@@ -122,7 +123,7 @@ src/
     passe son ancre (`/prop-firm` → `#tarifs`), sinon le bandeau ferait sortir le visiteur de la page.
   - `Pricing.astro` : carte Fondateur au centre (`.is-founder`), `.has-founder` sur la section
     → 3 colonnes, Premium perd sa mise en avant ; ≤ 1024 px empilées, Fondateur en premier, et dans
-    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `premiumPlus` que la
+    la carte **prix, bouton, PUIS fonctionnalités** (`order` CSS). Même liste `PLAN_BENEFITS.premium` que la
     carte Premium (« Tout Premium inclus »). Prix : « ou 290 €/an · au lieu de 49 €/mois ».
   - **Arrivée depuis la pub** (`/?utm_…#pricing`, campagne Instagram du 2026-10) : en mobile
     (≤ 1024 px), offre ouverte au build, `#pricing` ou `#fondateur` → la page s'arrête sur la carte
@@ -182,7 +183,8 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   l'offre (composant partagé) et la ligne de confiance sous les boutons du haut (`.pf-trustline`,
   « 🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans
   l'écosystème NinjaTrader », sans logo) ; aucun logo de prop firm (noms en texte) ; logo
-  NinjaTrader au seul footer, « Référencé dans l'écosystème NinjaTrader » en texte (clause 17).
+  NinjaTrader dans le bloc `NinjaTraderTrust` sous la carte d'exemple (cf. « Wordmark NinjaTrader »)
+  et au footer, formulation factuelle (clause 17).
   « Crypto » / « forex » seulement dans « Et aussi » et la FAQ, jamais en haut ni dans la description.
 - Sélecteur firm → plan → phase : même catalogue (`buildPropFirmCatalog`) et même logique que la home
   via `src/lib/prop-firm-picker.ts` (pur, sans DOM : sélection initiale Apex 50K EOD, 50K par défaut à
@@ -242,6 +244,16 @@ Règles :
 
 - Assets : `public/ninjatrader/` — wordmark `NinjaTrader_Wordmark_color_RGB.png` (2376×300, `#FF4200`
   sur transparent) + 5 bannières publicitaires (`ninjatrader-banner-*.png`).
+- **Bloc de confiance sur `/` et `/prop-firm` (demande NinjaTrader du 21/10/2026, revue Compliance
+  de la newsletter)** : leur équipe ne trouvait pas le logo, seul au footer. Composant
+  `NinjaTraderTrust.astro` : tout le bloc est le lien affilié (`NINJATRADER_AFFILIATE_URL`,
+  `target="_blank"`, `rel="noopener sponsored nofollow"`), texte « Référencé dans l'écosystème » +
+  wordmark tel quel (26 px, 22 px < 768 px) + « Lien affilié ». Emplacements : home, `.hero-eco` juste
+  sous la ligne `.hero-trust` (premier écran à 1440×900, y ≈ 750) ; /prop-firm, `.pf-hero-side` sous la
+  carte d'exemple (premier écran à 1440×900, y ≈ 630 ; juste après en mobile). Formulation imposée :
+  « Référencé dans l'écosystème NinjaTrader », **jamais** « partenaire », « officiel », « approuvé »
+  ni « recommandé par NinjaTrader », **aucun autre nom de courtier** dans ou à côté du bloc. Ce sont
+  les **seuls** emplacements autorisés hors footer ; le wordmark reste aussi au footer.
 - Affiché dans `Footer.astro` (`.footer-eco`) : **ligne dédiée centrée** sous la barre légale,
   hauteur **18 px** (`width:auto`, `aspect-ratio:2376/300` pour zéro CLS, `object-fit:contain`).
   **Ne pas recolorer, déformer ni rogner** — le seul levier de discrétion est la taille : le
@@ -250,11 +262,19 @@ Règles :
 - Les bannières ne sont **pas utilisées** : ce sont des créatives publicitaires avec CTA « Learn More »,
   elles supposent un lien d'affiliation actif.
 - Le wordmark est un **lien d'affiliation** (PROMPT-204) : `NINJATRADER_AFFILIATE_URL` dans
-  `Footer.astro`, `rel="noopener sponsored nofollow"` + `target="_blank"`. L'ID vendeur `7724604`
-  est dans l'URL — la modifier casse le tracking.
-- **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté du
-  logo *et* paragraphe « Divulgation d'affiliation » en section 7 de `disclaimer.astro`. Ne jamais
+  `src/config.ts` (partagé par `Footer.astro` et `NinjaTraderTrust.astro`), `rel="noopener sponsored
+  nofollow"` + `target="_blank"`. URL = **lien d'affiliation
+  unique** fourni par NinjaTrader, `https://ninjatraderdomesticvendor.sjv.io/DWZgnd` (remplace depuis le
+  2026-10-20 l'ancien `…/c/7724604/3069488/37581`, demande NinjaTrader avant la revue Compliance de la
+  newsletter). Il porte le tracking vendeur : ne jamais le modifier ni en utiliser un autre.
+- **Lien affilié = divulgation obligatoire**, aux deux endroits : mention « Lien affilié » à côté de
+  chaque logo (footer et bloc de confiance) *et* paragraphe « Divulgation d'affiliation » en section 7
+  de `disclaimer.astro` (qui cite le footer et le bloc de / et /prop-firm). Ne jamais
   retirer l'un sans l'autre, ni le lien sans les deux.
+- **Plateforme uniquement, jamais le courtage** (Affiliate Success Playbook NinjaTrader) : l'affiliation
+  porte sur l'inscription à la **plateforme** NinjaTrader. Jamais « ouvrir un compte » (de courtage),
+  frais de courtage, commissions de trading ni marges en lien avec NinjaTrader (corrigé le 2026-10-19
+  dans la divulgation d'affiliation de `disclaimer.astro`).
 
 ### Annonce de la synchro Tradovate (PROMPT-211)
 
@@ -269,8 +289,8 @@ Règles :
   Pricing (Gratuit + ligne Premium « Import IA »), Compare (« brokers reconnus » / « + import IA »), FAQ,
   Features, `/prop-firm` et `/journal-trading-prop-firm` disent la même chose.
 - **Formulation factuelle uniquement (clause 17)** : jamais « Partenaire officiel de NinjaTrader »,
-  « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader reste **au seul
-  footer**. Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
+  « Recommandé / Approuvé par NinjaTrader » ni aucune caution. Le logo NinjaTrader n'apparaît
+  qu'au footer et dans le bloc `NinjaTraderTrust` de `/` et `/prop-firm` (21/10). Aucune promesse de gain (AMF) : on décrit ce que fait la synchro, pas un résultat.
 - `Compare.astro` **inchangé volontairement** : TraderSync et TradesViz proposent une synchro
   broker ; une ligne « Synchro broker directe » les montrerait à tort sans (cf. règle ci-dessous).
 
@@ -291,6 +311,11 @@ Règles :
 - Mobile (< 768 px) : bandeau compact (~ 89 px au lieu de 138) — texte à gauche, Refuser et Accepter
   empilés à droite, mêmes dimensions. Il ne doit jamais couvrir le bouton de la carte Fondateur à
   l'arrivée depuis la pub.
+- **Le bandeau ne masque jamais le contenu** (21/10, le wordmark du footer était caché tant que le
+  visiteur n'avait pas choisi) : tant qu'il est affiché, `.cc-spacer` (fin de `<body>`) réserve en bas
+  de page sa hauteur **mesurée** (`offsetHeight`, ResizeObserver → recalculée au redimensionnement ;
+  68 px à 1440/1920, 88 px à 768, 89 px à 390, 105 px à 320), remise à 0 au choix. Ne jamais la
+  coder en dur. Vérifié : bas du footer = haut du bandeau à 390, 768, 1440 et 1920 px.
 - **Source d'acquisition** (script UTM de `Base.astro`) : `utm_*` du lien, sinon **site d'origine**
   (`document.referrer` externe → `utm_source=<hôte sans www>`, `utm_medium=referral`), gardée en
   sessionStorage `mtc_utm` et ajoutée à tous les liens `/register`. L'app applique le même plan B
@@ -309,6 +334,18 @@ Règles :
   keepalive. `detail` = `data-cta` du lien (`founder` / `free` / `premium`, posé sur les 3 cartes de
   `Pricing.astro`), sinon `plan` du lien (`founder` / `premium`), sinon `free`. Nouveau CTA
   d'inscription : rien à faire s'il est gratuit ; poser `data-cta` si c'est une offre.
+- **Engagement de `/` et `/prop-firm`** (19/10/2026, pour comparer les deux pages) : module
+  `src/lib/engagement.ts` (script bundlé de `Base.astro`, différé, ~2 ko) → `POST /public/funnel` par la
+  fonction d'envoi du script d'acquisition, exposée en `window.mtcFunnel` (même origine UTM, `inApp`,
+  sendBeacon text/plain). Absente en mode interne et pendant la redirection de la pub → rien envoyé.
+  Étapes `scroll_depth` (detail 25/50/75/100, `scrollDepthPercent` de `@mtc/shared`, à < 4 px du bas = 100),
+  `time_on_page` (10/30/60 s **onglet visible**, minuteur suspendu sur `visibilitychange`), `rules_use`
+  (1re utilisation du sélecteur : `click` sur un `button` ou `change` d'un `select` dans un conteneur
+  **`[data-track-rules]`** : carte de `PropFirmLive`, carrousel `PropFirmMarquee`, `PfRules`), avec
+  `path`. **Un envoi par seuil et par chargement de page** (pas par session : un rechargement recompte).
+  Écouteur de défilement passif, calcul une fois par image, retiré après 100 %. Nouvelle page à mesurer
+  → `LANDING_ENGAGEMENT_PAGES` (shared) + filtre `path IN (…)` de `LandingEngagementService`. Nouveau
+  sélecteur → poser `data-track-rules`. Résultat : carte « Engagement landing » de l'admin `/acquisition`.
 - **Un appui = un clic** (oct. 2026) : l'app met ~1 s à s'afficher en 4G lente et le bouton ne
   réagissait pas → les visiteurs réappuyaient (2 `cta_click`, 2 navigations). Un 2e écouteur, enregistré
   AVANT celui du comptage (et même en mode interne), passe le lien à « Ouverture… » (classe
@@ -326,7 +363,8 @@ Règles :
   `?internal=0` annule. Propre au domaine : l'app a le sien (`app.mytradingcoach.app/?internal=1`).
   GA4 n'est pas concerné (il dépend du consentement).
 - Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
-  aussi les étapes de l'inscription et le booléen navigateur intégré. Toute nouvelle mesure → l'y ajouter.
+  aussi les étapes de l'inscription, le booléen navigateur intégré et l'engagement de l'accueil et de
+  /prop-firm (défilement, temps, sélecteur). Toute nouvelle mesure → l'y ajouter.
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 

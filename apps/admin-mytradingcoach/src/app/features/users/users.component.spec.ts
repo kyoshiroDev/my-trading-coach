@@ -62,23 +62,23 @@ describe('UsersComponent — inscrits d’une campagne', () => {
   });
 
   it('?source=&medium=&campaign= → relayés à l’API, bandeau avec le nombre d’inscrits', async () => {
-    query.next(convertToParamMap({ source: 'instagram', medium: 'dm', campaign: 'Louis' }));
+    query.next(convertToParamMap({ source: 'instagram', medium: 'dm', campaign: 'Exemple' }));
     const { fixture, http } = setup();
     const params = await flushList(fixture, http, [user(), user({ id: 'u2', email: 'b@test.local' })]);
     expect(params.get('source')).toBe('instagram');
     expect(params.get('medium')).toBe('dm');
-    expect(params.get('campaign')).toBe('louis');
+    expect(params.get('campaign')).toBe('exemple');
     const banner = fixture.nativeElement.querySelector('[data-testid="utm-filter"]') as HTMLElement;
-    expect(banner.textContent).toContain('instagram · dm · louis');
+    expect(banner.textContent).toContain('instagram · dm · exemple');
     expect(banner.textContent).toContain('2 inscrits');
   });
 
   it('changement de filtre dans l’URL → liste rechargée', async () => {
     const { fixture, http } = setup();
     await flushList(fixture, http, []);
-    query.next(convertToParamMap({ campaign: 'louis' }));
+    query.next(convertToParamMap({ campaign: 'exemple' }));
     const params = await flushList(fixture, http, [user()]);
-    expect(params.get('campaign')).toBe('louis');
+    expect(params.get('campaign')).toBe('exemple');
     expect(params.has('source')).toBe(false);
   });
 

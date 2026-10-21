@@ -1,0 +1,84 @@
+/* Bandeau « Plancher atteint » (maquette compte perdu, écran 1). */
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+:host(.is-empty) {
+  display: none;
+}
+
+.fr-alert {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--yellow) 7%, transparent);
+  font-family: var(--font-body);
+}
+
+.fr-lbl {
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--yellow);
+}
+
+.fr-text {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.fr-text b {
+  color: var(--yellow);
+}
+
+.fr-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text);
+  font: 500 14px var(--font-body);
+  cursor: pointer;
+}
+
+.fr-btn.pri {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.fr-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.fr-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* Ordinateur : les deux boutons côte à côte, à leur largeur. */
+@media (min-width: 769px) {
+  .fr-actions {
+    flex-direction: row;
+  }
+}

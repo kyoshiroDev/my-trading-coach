@@ -329,10 +329,19 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
 - **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
   `PropFirmPlan.firmId` en `onDelete: Restrict`.
 - `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.
-- `TradingAccount.propFirmPlanId` : FK **nullable**, `onDelete: SetNull`, indexée. Aucune UI ni
-  logique ne la lit encore : les règles saisies par l'utilisateur sur `TradingAccount`
-  (`profitTarget`, `maxDrawdown`, `drawdownType`) restent la référence. Le seed démo ne la remplit
-  pas (ses règles Apex 50k datent de l'ancienne gamme : drawdown 2 500 contre 2 000 au catalogue).
+- `TradingAccount.propFirmPlanId` : FK **nullable**, `onDelete: SetNull`, indexée. Plan relié →
+  ses règles priment sur la saisie manuelle (`profitTarget`, `maxDrawdown`, `drawdownType`, qui
+  restent le repli) : suivi du compte (`nestjs.md`, « Drawdown selon le plan prop firm relié »),
+  séance, Mes comptes et cartes Courbe d'équité / Drawdown (`design.md`). Le seed démo relie ses
+  3 comptes : `apex-eod-50k` (suiveur EOD), `tradeify-select-flex-50k` (funded, payout en jours),
+  `elitetraderfunding-static-25k` (statique, 25K).
+- **Règles présentes seulement dans les notes du catalogue** (`basis_notes`), sans champ structuré,
+  donc NON appliquées par `drawdownFloor` (audit du 2026-10-20, 538 phases) : **gel du plancher au
+  premier payout** (124 phases funded : Tradeify, Top One, Topstep, MyFundedFutures Pro, Lucid Flex,
+  Funded Futures Family, TradeDay) et **suivi sur le profit brut payouts compris** (TradeDay Quick
+  Pay). Pour les appliquer : ajouter un champ au schéma (ex. `max_drawdown.locks_on_first_payout`)
+  et le lire dans `drawdownFloor` avec les payouts du compte (`progress.payoutsReceived`). Les
+  suiveurs intraday sont approchés (trades clôturés, pas le plus haut latent).
 - `TradingAccount.planLinkChoice` (enum `PlanLinkChoice` : `LATER` · `PERSONAL` · `UNLISTED`) +
   `unlistedFirm` (migration `20261018140000_account_plan_link_choice`, additive, #612) : réponse à
   « Quel est ce compte ? » quand **aucun** plan n'est relié. Null = jamais demandé. Pas de valeur
@@ -354,6 +363,13 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   les vraies règles (`detectTilt`, `alertLevel`, plancher trailing EOD), cf.
   `admin/demo-data/prop-risk.ts`. Rien ne les affiche tels quels : ils nourrissent les textes
   fixes du compte démo (PREMIUM, aucun appel IA), récap du jour de tilt et `propNote` Apex du débrief.
+
+## E-mails de service (oct. 2026)
+
+`User.serviceEmailsOptOutAt` (migration `20261019120000_service_emails_opt_out`, additive, nullable) :
+désinscription des e-mails d'aide à la prise en main (type `service`, sans consentement). Null =
+reçus. Rempli par « Ne plus recevoir ces conseils », la désinscription marketing ou la coupure du
+consentement dans le profil. Détails : nestjs.md, « Suite d'e-mails d'onboarding ».
 
 ## Migrations — bonnes pratiques
 
@@ -457,6 +473,11 @@ du code** :
 >   d'erreur `email_taken|validation|network|server|other`), sinon `''`.
 > - **Aucune donnée personnelle** : ni UA brut (seul le booléen `inApp`), ni e-mail, ni IP, ni
 >   identifiant de session, ni lien `User`. Ne jamais y ajouter de colonne identifiante (exemption CNIL).
+> - **Engagement landing** (migration `20261019120000_funnel_event_path`, additive) : colonne `path`
+>   (`/` | `/prop-firm` pour `scroll_depth` / `time_on_page` / `rules_use`, `''` pour les étapes
+>   d'inscription et les lignes antérieures), ajoutée à l'unique
+>   `(date, step, source, medium, campaign, inApp, detail, path)`. Le nom d'index, tronqué à 63
+>   caractères par Prisma, ne change pas. `detail` porte le seuil (`25|50|75|100` ou `10|30|60`).
 
 ## Index des requêtes chaudes (SCA-B2-05, 2026-10-03)
 

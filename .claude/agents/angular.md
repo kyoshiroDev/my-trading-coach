@@ -45,7 +45,7 @@ src/app/
 ├── features/
 │   ├── dashboard/          dashboard.component.ts + .html + .css (état, cadre, états vides)
 │   │   ├── dashboard-charts.util.ts   ← calculs purs des viz (sparklines, donuts, P&L, coach)
-│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis · equity-chart ·
+│   │   ├── panels/                    ← viz présentationnelles : dashboard-kpis ·
 │   │   │                                top-assets · pl-bars · coach-feedback · donut-chart ·
 │   │   │                                recent-trades-table
 │   │   └── components/
@@ -372,9 +372,31 @@ de l'onboarding et de la page Comptes, validation API), `formatMoney(value, curr
 l'API sont déjà nets. Le formulaire de trade envoie le **brut** (`form().pnl ?? autoPnl()`) et la
 commission à part : envoyer `pnlNet` faisait déduire les frais deux fois.
 
-**Courbe d'équité / drawdown** : `ChartService` préfixe un point « Départ » (capital de base,
-drawdown 0) : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
+**Courbe d'équité / drawdown** : composant partagé `mtc-perf-chart` (dashboard + analytics, style
+dans `design.md`) → `ChartService` ; séries dans `chart-series.util.ts`, qui préfixe un point
+« Départ » : un seul jour tradé trace déjà la courbe (`curve.length >= 1`). Les bornes de période
 envoyées à l'API sont des horodatages ISO complets.
+
+**Capital, courbe et drawdown : une seule définition** (`core/services/equity-period.util.ts`) :
+- **Capital** (KPI du dashboard) = solde actuel de la vue (`viewBalance(…, 'currentBalance')`) : le
+  même que le sélecteur de compte et Mes comptes (solde du broker pour un compte connecté). Jamais
+  « capital de départ + P&L de la période ». Le % compare au solde du début de la période.
+- **Courbe d'équité** : part de `periodStartBalance` = solde de départ + P&L d'avant la période
+  (`before.pnl`), soit la taille du compte quand la période couvre son début (`before.count === 0`).
+  Repli sans `before` (API ancienne) : solde actuel − P&L de la période. Un écart entre P&L 30 jours
+  et P&L total = des trades avant la fenêtre, pas une erreur. **Jamais `startingCapital` de `/equity-curve/daily`** : c'est le capital du
+  PROFIL (un compte de 50K partait de 100K dans Statistiques).
+- **Drawdown** (KPI « Drawdown max », courbe et en-tête des Statistiques) = `anchoredDrawdown` :
+  clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
+  renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
+  Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
+- **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
+  les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
+  courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
+  Capital (`payoutSeries`). Elles finissent ainsi sur le Capital, et la marge baisse le jour du
+  payout au lieu de sauter au dernier point. Le P&L (KPIs, « Jour », drawdown « sous l'eau ») ne les
+  voit jamais : un retrait n'est pas une perte. Le plus haut d'avant la période n'est pas abaissé par
+  un payout (plancher inchangé). Comptes manuels : aucun payout (pas de saisie à ce jour).
 
 ---
 
@@ -425,7 +447,10 @@ et `accounts.component.css` :
 - repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
   chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une
-  ligne ouverte à la fois), jamais derrière un scroll horizontal.
+  ligne ouverte à la fois), jamais derrière un scroll horizontal ;
+- la bascule en repli suit la largeur du **tableau** (`container: acct-table / inline-size` +
+  `@container acct-table (max-width: 980px)`), pas celle de la fenêtre : la barre latérale prend
+  70 à 216 px, et un seuil en `@media` laissait les colonnes se chevaucher (Mes comptes à 1100 px).
 
 ⚠️ **Deux pièges de sélecteurs**, tous deux rencontrés en vrai sur « Mes comptes » :
 - `:nth-of-type()` compte les **éléments** (tous les `div`), pas les classes : `.cell.num:nth-of-type(2)`
@@ -759,6 +784,69 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 
 ---
 
+## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
+
+Miroir front de la règle API (`nestjs.md`, « Compte perdu ») : **aucun chiffre « tous les comptes »
+sans filtre de statut**. `FAILED` et `ARCHIVED` sont exclus par défaut, `PASSED` compté, un compte
+choisi dans le sélecteur s'affiche toujours (même échoué ou archivé).
+
+**Règle partagée : `core/utils/account-status.util.ts`** (`countsInAggregate`, `isInactiveStatus`,
+`statusLabel`, `statusBadgeClass`, `excludedAccountsLine`). Jamais de `status !== 'ARCHIVED'` recopié
+dans un composant.
+
+**`SelectedAccountStore`** porte l'état :
+- `includeInactive` (interrupteur, **non persisté**, remis à faux par `reset()`), `setIncludeInactive()` ;
+- `inactiveIncluded` (l'interrupteur ne joue qu'en « Tous les comptes ») ;
+- `aggregateAccounts` : comptes qui entrent dans le capital et les soldes agrégés ;
+- `excludedAccounts` `{ failed, archived }` pour la ligne « n comptes exclus des chiffres » ;
+- `statsParams()` / `statsQuery()` : `accountId` d'un compte précis, sinon `includeInactive=true`
+  quand l'interrupteur est actif, sinon rien.
+- Un compte archivé ou échoué **reste sélectionnable** : `load()` ne renvoie sur « Tous » que si le
+  compte a disparu.
+
+Toute ressource de statistiques passe par `statsQuery()` / `statsParams()` (dashboard, analytics,
+courbe journalière, calendrier). Le capital agrégé lit `aggregateAccounts()`
+(`viewBalance(…, includeInactive)` en 4e paramètre). Les URL ne changent pas quand un compte change
+de statut : dashboard, analytics et journal ont un `effect` sur `excludedAccounts()` qui recharge
+les chiffres (jamais au premier passage).
+
+**Écrans** (maquette `maquettes/mockup-compte-perdu.html`) :
+- `features/accounts/lost-account/floor-reached-banner` (`mtc-floor-reached-banner`) : un bandeau
+  par compte `floorReached`, en haut du dashboard et de Mes comptes. « Pas maintenant » masque CE
+  compte 24 h (`floor-snooze.util.ts`, clé `mtc.floorSnooze`). Hôte en `is-empty` (display none)
+  sans bandeau.
+- `core/services/lost-account-flow.service.ts` (`LostAccountFlowService`, root) : feuille de choix et
+  feuille « nouvelle tentative » (états par **id**). **Rien n'est enregistré avant « Confirmer »**.
+  Archiver et « garder comme échoué » = `PATCH status` (**jamais `DELETE /accounts/:id`**, qui
+  supprimerait un compte sans trade) ; supprimer = `ConfirmService` (danger, rappel compte MTC et
+  abonnement) puis `DELETE /accounts/:id/permanent` ; un 404 vaut succès ; puis `store.load()` et
+  `tradesStore.reset()`. Ouvert depuis l'alerte live, il charge la liste des comptes si besoin.
+- `features/accounts/lost-account/lost-account-sheets` (`mtc-lost-account-sheets`) : monté UNE fois
+  dans la coque (`sidebar.component.html`). Feuille en bas d'écran < 768 px, boîte centrée au-delà,
+  `mtcDialog`, vrais boutons radio (« Archiver » coché à chaque ouverture).
+- `shared/components/inactive-accounts-toggle` (`mtc-inactive-accounts-toggle`) : ligne + interrupteur
+  (`role="switch"`), sur le dashboard, les statistiques et le journal ; visible seulement en « Tous les
+  comptes » s'il existe un compte échoué ou archivé.
+- Alerte live : `PropAlertsService` ajoute l'action « Marquer comme échoué » au toast
+  `drawdown` / `breached` (et à lui seul). `ToastOptions.action` / `ToastService.runAction()` : le
+  bouton `.toast-action` est exclu de la capture du pointeur (glisser pour fermer), comme la croix.
+- Mes comptes : badge `.status-badge` (Actif, Validé, Échoué, Archivé), liseré rouge d'un compte échoué
+  (`accentVar`, car le style en ligne `--ac` bat une classe), sous-ligne « Hors statistiques » avec
+  « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
+  `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
+- Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+- **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
+  « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
+  un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
+  synchro continue côté API (décision en attente, issue #683).
+- Journal : la liste garde tout, badge sur les trades d'un compte échoué ou archivé (la cellule de
+  l'actif passe à la ligne au lieu de couper le badge). Les KPIs utilisent `statsFilters`
+  (`includeInactive` en plus) ; la liste garde `journalFilters` (l'interrupteur ne la recharge pas).
+  Compteur des filtres : « n trades dans les chiffres » quand des comptes sont exclus.
+
+⚠️ `src/styles/global.css` n'est importé nulle part : un style global va dans `src/styles.css`
+(c'est là qu'est `.status-badge`).
+
 ## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
 
 **Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)
@@ -1064,6 +1152,13 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   erreurs fusionnées par source + code avec libellé (`errorLabel`). Colonnes : Visites → Clics CTA →
   Page inscription → Envois → Inscrits → Checkout. Valeur + taux dans un même `span` (cartes mobiles).
 
+- **Carte « Engagement landing »** (19/10/2026, sous le parcours d'inscription) :
+  `GET /admin/landing-engagement?days=7|30` (`AdminApi.landingEngagement`), onglets période propres.
+  Logique pure testée dans `features/acquisition/landing-engagement.util.ts` : une section par page
+  (Accueil `/`, Prop firm `/prop-firm`, même vide) avec ligne Total puis lignes source · medium ·
+  campagne. Colonnes `ENGAGEMENT_COLUMNS` : Vues · 25/50/75/100 % · 10/30/60 s · Règles, taux = valeur
+  / vues de la ligne (pas l'étape précédente). Mêmes classes que le parcours (`signup-*`).
+
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
 - **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
@@ -1109,7 +1204,7 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   `OfferIntentService.open('cadenas')` : la modale est rendue par l'hôte du shell (un `position: fixed`
   dans une carte floutée serait mal placé). Libellé « dès 29 €/mois (offre fondateur) » si accessible.
 - **Profil > Abonnement** : badge « Fondateur n° X », tarif bloqué et perte en cas de résiliation,
-  « Satisfait ou remboursé : demander le remboursement » (mailto hello@, jusqu'à `refundUntil` : le
+  « Satisfait ou remboursé : demander le remboursement » (mailto support@, jusqu'à `refundUntil` : le
   remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
   CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
   neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.

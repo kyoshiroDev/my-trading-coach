@@ -10,7 +10,7 @@ import { ResendService } from '../resend/resend.service';
 import { PublicAmbassadorApplyDto } from './dto/ambassador-apply.dto';
 import { LandingVisitDto } from './dto/landing-visit.dto';
 import { FunnelEventDto } from './dto/funnel-event.dto';
-import { signupFunnelDetail, todayParis } from '@mtc/shared';
+import { isLandingEngagementStep, landingEngagementPage, signupFunnelDetail, todayParis } from '@mtc/shared';
 
 // Dev et prod partagent le Redis db0 du VPS sans préfixe : sans suffixe
 // d'environnement, la première API qui remplit la clé impose son chiffre à
@@ -119,20 +119,27 @@ export class PublicService {
   }
 
   /**
-   * Étape du parcours d'inscription : +1 sur (jour Paris, étape, source, medium, campagne,
-   * navigateur intégré, detail). `detail` ramené à sa liste blanche. Mêmes garanties que les
-   * visites : robots ignorés, aucune donnée personnelle, erreur avalée (best-effort).
+   * Étape du parcours d'inscription ou engagement landing : +1 sur (jour Paris, étape, source,
+   * medium, campagne, navigateur intégré, detail, page). `detail` ramené à sa liste blanche. Engagement
+   * hors page mesurée ou sans seuil reconnu : ignoré. Mêmes garanties que les visites : robots
+   * ignorés, aucune donnée personnelle, erreur avalée (best-effort).
    */
   async recordFunnelEvent(dto: FunnelEventDto, userAgent?: string): Promise<void> {
     if (!userAgent || BOT_UA.test(userAgent)) return;
-    const date = new Date(`${todayParis()}T00:00:00Z`);
     const detail = signupFunnelDetail(dto.step, dto.detail);
+    let path = '';
+    if (isLandingEngagementStep(dto.step)) {
+      const page = landingEngagementPage(dto.path);
+      if (!page || (dto.step !== 'rules_use' && !detail)) return;
+      path = page;
+    }
+    const date = new Date(`${todayParis()}T00:00:00Z`);
     try {
       await this.prisma.$executeRaw`
-        INSERT INTO "FunnelEventDaily" ("id", "date", "step", "source", "medium", "campaign", "inApp", "detail", "count")
+        INSERT INTO "FunnelEventDaily" ("id", "date", "step", "source", "medium", "campaign", "inApp", "detail", "path", "count")
         VALUES (gen_random_uuid()::text, ${date}::date, ${dto.step}, ${dto.source ?? ''},
-          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, ${dto.inApp ?? false}, ${detail}, 1)
-        ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail") DO UPDATE SET
+          ${dto.medium ?? ''}, ${dto.campaign ?? ''}, ${dto.inApp ?? false}, ${detail}, ${path}, 1)
+        ON CONFLICT ("date", "step", "source", "medium", "campaign", "inApp", "detail", "path") DO UPDATE SET
           "count" = "FunnelEventDaily"."count" + 1
       `;
     } catch (err) {

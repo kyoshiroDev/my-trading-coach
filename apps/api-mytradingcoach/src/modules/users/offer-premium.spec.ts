@@ -18,6 +18,7 @@ const cache = { invalidate: vi.fn() };
 const service = new UsersService(
   prisma as unknown as PrismaService,
   {} as AmbassadorService,
+  {} as never, // résiliation Stripe : non sollicitée
   cache as never,
 );
 

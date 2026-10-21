@@ -9,6 +9,9 @@
 
 <div class="content">
 
+    <!-- Compte perdu : plancher estimé atteint (aucun statut changé sans l'utilisateur). -->
+    <mtc-floor-reached-banner />
+
     <!-- ── Vue agrégée ── -->
     <div class="stats-row">
       <div class="stat-card" style="--c:var(--blue)">
@@ -84,6 +87,24 @@
       </div>
 
       @for (a of displayedAccounts(); track a.id) {
+        <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
+      }
+
+      <!-- Comptes archivés (vue « Tous les comptes ») : repliés, hors statistiques, toujours consultables. -->
+      @if (archivedAccounts().length) {
+        <details class="acct-archived" data-testid="archived-accounts">
+          <summary class="acct-archived-sum">
+            <svg [lucideIcon]="ChevronDownIcon" [size]="14" class="acct-archived-chev"></svg>
+            {{ archivedAccounts().length }} {{ archivedAccounts().length > 1 ? 'COMPTES ARCHIVÉS' : 'COMPTE ARCHIVÉ' }}
+          </summary>
+          @for (a of archivedAccounts(); track a.id) {
+            <ng-container *ngTemplateOutlet="acctRow; context: { $implicit: a }" />
+          }
+        </details>
+      }
+    </div>
+
+    <ng-template #acctRow let-a>
         <!-- ── Connexion Tradovate de CE compte (un compte = une connexion) ── -->
         @let conn = tv.byAccount().get(a.id);
         @let busy = tv.busy()[a.id];
@@ -96,6 +117,7 @@
              activité, synchro) héritent du même liseré que la ligne. -->
         <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
+             [class.is-failed]="a.status === 'FAILED'"
              [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
@@ -130,9 +152,7 @@
                   <!-- Type + statut : un seul bloc insécable, le statut ne se retrouve jamais seul. -->
                   <span class="meta-pair">
                     <span class="tag {{ typeTagClass(a.type) }}">{{ typeLabel(a.type) }}</span>
-                    <span class="acct-status" [attr.data-testid]="'account-status-' + a.id">
-                      <span class="dot" [style.background]="dotColor(a)"></span> {{ statusLabel(a.status) }}
-                    </span>
+                    <span class="status-badge {{ statusBadgeClass(a.status) }}" [attr.data-testid]="'account-status-' + a.id">{{ statusLabel(a.status) }}</span>
                   </span>
                 </div>
               </div>
@@ -164,7 +184,7 @@
                   @if (objReached(a)) {
                     <span class="gauge-val text-green">atteint</span>
                   } @else {
-                    <span class="gauge-val">{{ obj.current | number:'1.0-0' }} / {{ money(obj.target, a.currency) }}</span>
+                    <span class="gauge-val">{{ money(obj.current, a.currency) }} / {{ money(obj.target, a.currency) }}</span>
                     <span class="gauge-pct">{{ objPct(a) }} %</span>
                   }
                 </div>
@@ -205,7 +225,9 @@
               <div class="sync-head">
               @if (!conn) {
                 <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
-                @if (a.status !== 'ARCHIVED') {
+                <!-- Connexion proposée aux seuls comptes ACTIVE : un compte échoué, validé ou archivé n'a
+                     plus de trades à synchroniser. -->
+                @if (canConnect(a)) {
                   <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
                           [attr.data-testid]="'tradovate-connect-' + a.id">
                     <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Connecter <span class="nt-word">Tradovate</span>
@@ -213,10 +235,12 @@
                 }
               } @else if (conn.status === 'NEEDS_RECONNECT') {
                 <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">À reconnecter</span>
-                <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
-                        [attr.data-testid]="'tradovate-reconnect-' + a.id">
-                  <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Reconnecter
-                </button>
+                @if (canConnect(a)) {
+                  <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
+                          [attr.data-testid]="'tradovate-reconnect-' + a.id">
+                    <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Reconnecter
+                  </button>
+                }
               } @else if (confirmDisconnectId() === a.id) {
                 <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
                 <!-- Des trades importés : le choix garder / supprimer s'affiche en sous-ligne. -->
@@ -278,6 +302,23 @@
               </div>
             </div>
           </div>
+
+          <!-- Compte échoué : hors statistiques ; repartir sur une nouvelle tentative ou archiver. -->
+          @if (a.status === 'FAILED') {
+            <div class="acct-sub acct-failed" [attr.data-testid]="'account-failed-' + a.id">
+              <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
+              <div class="acct-failed-actions">
+                <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
+                        [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
+                <button type="button" class="lost-btn" (click)="lostAccount.archive(a)"
+                        [disabled]="lostAccount.busy()" [attr.data-testid]="'account-archive-' + a.id">Archiver</button>
+              </div>
+            </div>
+          } @else if (a.status === 'ARCHIVED') {
+            <div class="acct-sub acct-failed" [attr.data-testid]="'account-archived-' + a.id">
+              <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
+            </div>
+          }
 
           <!-- Plan à renseigner (#612) : compte prop firm sans plan, ou laissé à « Plus tard ». -->
           @if (needsPlan(a)) {
@@ -465,8 +506,7 @@
             </div>
           }
         </div>
-      }
-    </div>
+    </ng-template>
 
     <!-- Quota atteint : visible dans TOUTES les vues. C'est le seul chemin vers la
          modale Premium depuis cette page, et un FREE au quota n'a qu'UN compte : le

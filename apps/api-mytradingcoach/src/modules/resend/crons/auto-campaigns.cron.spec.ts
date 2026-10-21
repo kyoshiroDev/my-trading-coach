@@ -3,8 +3,14 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { EmailDispatchService } from '../email-dispatch.service';
+import { FounderOfferService } from '../../founder-offer/founder-offer.service';
 
-// Registre mocké : 2 campagnes automatisées ciblant le même user.
+// Registre mocké : 2 campagnes automatisées ciblant le même user (+ une à données, désactivée
+// par défaut, que les tests activent).
+const { withContext, startDate } = vi.hoisted(() => ({
+  withContext: { enabled: false, load: (() => Promise.resolve(new Map())) as (...a: unknown[]) => Promise<Map<string, unknown>> },
+  startDate: { value: new Date('2026-11-01') as Date | null },
+}));
 vi.mock('../campaigns/campaign-registry', () => {
   const make = (key: string, priority: number) => ({
     key,
@@ -17,7 +23,12 @@ vi.mock('../campaigns/campaign-registry', () => {
     segment: () => ({}),
     build: () => ({ subject: 's', html: '<p>h</p>' }),
   });
-  return { CAMPAIGNS: [make('low', 50), make('high', 100)] };
+  const ctx = {
+    ...make('ctx', 200),
+    get automated() { return withContext.enabled; },
+    loadContext: (...a: unknown[]) => withContext.load(...a),
+  };
+  return { CAMPAIGNS: [make('low', 50), make('high', 100), ctx], onboardingStart: () => startDate.value };
 });
 
 import { AutoCampaignsCron } from './auto-campaigns.cron';
@@ -35,6 +46,8 @@ describe('AutoCampaignsCron', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     nodeEnv = 'production';
+    withContext.enabled = false;
+    startDate.value = new Date('2026-11-01');
     mockPrisma.user.findMany.mockResolvedValue([
       { id: 'u1', email: 'a@test.com', name: 'Alice', marketingConsent: true, unsubToken: 't' },
     ]);
@@ -45,6 +58,7 @@ describe('AutoCampaignsCron', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EmailDispatchService, useValue: mockDispatch },
         { provide: ConfigService, useValue: { get: vi.fn((k: string) => (k === 'NODE_ENV' ? nodeEnv : undefined)) } },
+        { provide: FounderOfferService, useValue: { publicState: vi.fn().mockResolvedValue({ open: true, seatsLeft: 150, seatsTotal: 200 }) } },
       ],
     }).compile();
 
@@ -96,5 +110,32 @@ describe('AutoCampaignsCron', () => {
     await cron.run();
 
     expect(mockDispatch.dispatch.mock.calls.map((c) => c[1].id)).toEqual(['ok']);
+  });
+
+  it('loadContext : une lecture pour la page autorisée, données passées à l’e-mail, absent = pas d’envoi', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([
+      { id: 'avec', email: 'a@test.com', name: null, marketingConsent: true, unsubToken: 't' },
+      { id: 'sans', email: 'b@test.com', name: null, marketingConsent: true, unsubToken: 't' },
+    ]);
+    mockDispatch.allowedUsers.mockImplementation(async (_c: unknown, users: { id: string }[]) => new Set(users.map((u) => u.id)));
+    const load = vi.fn(async (..._args: unknown[]) => new Map([['avec', { propFirmCount: 16 }]]));
+    withContext.load = load;
+    withContext.enabled = true;
+
+    await cron.run();
+
+    expect(load).toHaveBeenCalledOnce();
+    expect(load.mock.calls[0][1]).toEqual(['avec', 'sans']);
+    const ctxCalls = mockDispatch.dispatch.mock.calls.filter((c) => c[0].key === 'ctx');
+    expect(ctxCalls.map((c) => [c[1].id, c[3]])).toEqual([['avec', { propFirmCount: 16 }]]);
+    // « sans » n'a pas reçu ctx : il reste disponible pour la campagne suivante du même passage
+    expect(mockDispatch.dispatch.mock.calls.find((c) => c[1].id === 'sans')?.[0].key).toBe('high');
+  });
+
+  it('signale une date de démarrage absente (la suite ne cible alors personne)', async () => {
+    startDate.value = null;
+    const warn = vi.spyOn((cron as unknown as { logger: { warn: () => void } }).logger, 'warn');
+    await cron.run();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('ONBOARDING_SEQUENCE_START'));
   });
 });

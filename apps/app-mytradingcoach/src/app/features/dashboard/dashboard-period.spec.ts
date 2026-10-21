@@ -14,6 +14,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 // Valide la source de période UNIQUE du dashboard (Bug 3) : la granularité des
 // barres « P&L par jour » est pilotée par le nombre de barres (~31 max), pas par le nom de la
@@ -39,6 +40,7 @@ function setup() {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal([]), accountParam: () => undefined, selected: signal(null),
           load: vi.fn(), loaded: signal(true), isLoading: signal(false),
         },

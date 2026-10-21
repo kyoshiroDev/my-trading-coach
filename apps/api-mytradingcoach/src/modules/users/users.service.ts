@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { Plan, Role, Prisma } from '@prisma/client';
 import { UTM_NONE, type AcquisitionUtm } from '@mtc/shared';
@@ -17,6 +18,12 @@ import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
+import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
+
+/** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
+export const BILLING_CLOSURE_FAILED_MESSAGE =
+  "La résiliation de ton abonnement a échoué : ton compte n'a pas été supprimé. " +
+  'Réessaie dans quelques minutes ; si ça persiste, écris à support@mytradingcoach.app.';
 
 const USER_SELECT = {
   id: true,
@@ -78,6 +85,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ambassador: AmbassadorService,
+    private readonly billingClosure: StripeAccountClosureService,
     @Optional() private readonly userCache?: AuthUserCacheService,
   ) {}
 
@@ -212,6 +220,10 @@ export class UsersService {
    * Archive une trace analytique (DeletedAccount) PUIS supprime le User, le tout
    * dans une transaction : on ne perd jamais la trace et on ne laisse pas d'orphelin.
    * L'identité (name/email) est anonymisée par cron après 90 j.
+   *
+   * Avant tout : résiliation immédiate des abonnements Stripe. Si Stripe échoue, on s'arrête
+   * (503, rien supprimé) : un compte supprimé dont l'abonnement court encore serait prélevé
+   * sans plus pouvoir se connecter pour résilier.
    */
   private async archiveAndDelete(
     userId: string,
@@ -226,10 +238,22 @@ export class UsersService {
         plan: true,
         createdAt: true,
         referredBy: true,
+        stripeCustomerId: true,
         _count: { select: { trades: true } },
       },
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    if (user.stripeCustomerId) {
+      try {
+        await this.billingClosure.cancelAllSubscriptions(user.stripeCustomerId);
+      } catch (err: unknown) {
+        this.logger.error(
+          `Suppression du user ${userId} annulée : résiliation Stripe impossible (${err instanceof Error ? err.message : String(err)})`,
+        );
+        throw new ServiceUnavailableException(BILLING_CLOSURE_FAILED_MESSAGE);
+      }
+    }
 
     const tradesCount = user._count.trades;
     const lifetimeDays = Math.max(
@@ -518,11 +542,21 @@ export class UsersService {
     // Plus de devise globale ni de taux : `currency` est ignoré s'il arrive encore.
     const prefs = { ...dto };
     delete prefs.currency;
-    // Horodate le consentement marketing quand il change (preuve RGPD).
-    const consentAt =
-      dto.marketingConsent === undefined
-        ? {}
-        : { marketingConsentAt: dto.marketingConsent ? new Date() : null };
+    // Consentement marketing : horodaté quand il CHANGE seulement (preuve RGPD ; le profil le renvoie
+    // à chaque enregistrement). Le réglage (« Conseils, nouveautés et offres ») couvre aussi les
+    // conseils de prise en main : l'activer les rétablit, le couper les arrête.
+    let consentAt = {};
+    if (dto.marketingConsent !== undefined) {
+      const current = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { marketingConsent: true },
+      });
+      if (current?.marketingConsent !== dto.marketingConsent) {
+        consentAt = dto.marketingConsent
+          ? { marketingConsentAt: new Date(), serviceEmailsOptOutAt: null }
+          : { marketingConsentAt: null, serviceEmailsOptOutAt: new Date() };
+      }
+    }
     return this.prisma.user.update({
       where: { id: userId },
       data: { ...prefs, ...consentAt },

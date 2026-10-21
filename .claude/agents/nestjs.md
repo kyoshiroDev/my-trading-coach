@@ -80,8 +80,9 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
                                        `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
-POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription { step, source?, medium?, campaign?, inApp?, detail? }
+POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
+GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
 GET    /api/pricing/founder           PUBLIC (60/min, Cache-Control max-age=60) → { open, seatsTotal, seatsLeft, priceMonthlyEur, priceAnnualEur }
 GET    /api/admin/founders            ADMIN → fondateurs paginés (?status, ?page) + totaux (pris, actifs, perdus, remboursés, restants, par cta)
 PATCH  /api/admin/founder-offer       ADMIN → { open?, endsAt? } (interrupteur « Ouvrir l'offre »)
@@ -244,6 +245,21 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   sans doublon, avoir) · `StripeCouponService` (coupons filleul). Nouvel événement webhook
   = un `case` + un handler privé dans `StripeWebhookService`. Dans les specs, passer un
   mock Stripe au constructeur ; ne pas réassigner un champ privé.
+- **Suppression d'un compte MTC (`DELETE /api/users/me`, `DELETE /api/admin/users/:id`)** :
+  `archiveAndDelete` résilie d'abord, **immédiatement**, tous les abonnements non terminés du
+  customer Stripe (actif, essai, impayé, incomplet : pas seulement `stripeSubscriptionId`) via
+  `StripeAccountClosureService` (`modules/stripe/stripe-account-closure.service.ts`), sans prorata
+  ni remboursement. Stripe en échec → **503** `BILLING_CLOSURE_FAILED_MESSAGE`, rien supprimé ni
+  tracé (l'utilisateur réessaie). Customer inconnu de Stripe → rien à résilier, suppression
+  normale. Le service est fourni par `UsersModule` avec son propre `stripeClientProvider`
+  (importer `StripeModule` ferait un cycle Users → Stripe → Discord → Users). Les webhooks qui
+  arrivent ensuite pour ce customer ne trouvent plus d'utilisateur : ils ne lèvent pas, n'écrivent
+  rien, et l'alerte Sentry `past_due` / `unpaid` est sautée quand le customer n'a plus de compte.
+  Rattrapage des suppressions antérieures : `scripts/list-orphan-stripe-subscriptions.ts`
+  (lecture seule). Tests : `users-delete.spec.ts`, `stripe-account-closure.service.spec.ts`,
+  `stripe-webhook.service.spec.ts`, `delete-me-stripe.int-spec.ts` (mode test Stripe).
+  ⚠️ Commissions ambassadeur `pending` : emportées par la cascade à la suppression de
+  l'ambassadeur (aucune trace côté admin).
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
@@ -744,11 +760,23 @@ Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants 
 pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
-`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval`
+`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval #2`
 (EVALUATION) et `Tradeify 50k · Funded` (FUNDED), **futures d'indices US uniquement**
 (MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
 démo s'adresse à des traders de futures prop firm. Deux comptes plutôt qu'un : le
 multi-comptes est l'une des ancres Premium (`plans.md`).
+
+**Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
+`Apex 50k · Éval #1` (FAILED, plancher dépassé), dont l'Apex actif `#2` est la nouvelle tentative,
+et `Lucid 25k · Flex` (ARCHIVED). La démo montre ainsi la ligne « 2 comptes exclus des chiffres » et
+l'interrupteur des statistiques. **Pas de compte PASSED dans la démo** (décision du 2026-10-21) : il
+serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à +4 357 $ et le capital
+de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
+comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
+AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
+bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
+la seule barrière des mutations (« Nouvelle tentative », « Archiver », suppression : 403 et invite
+« Crée ton compte » côté front).
 
 **Un trader réaliste, pas un gagnant parfait (PROMPT-215, validé par Greg).** `buildDemoDataset(now)`
 (pur, sans base) génère ~6 semaines de jours ouvrés, 2 à 4 trades par jour, frais réels
@@ -1462,7 +1490,7 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   absent = ignoré, `-` (`UTM_NONE`, `@mtc/shared` acquisition-filter) = non renseigné (null).
   `ADMIN_USER_SELECT` renvoie les 3 champs ; la fiche (`identity.acquisition`) aussi. Le récap
   quotidien des inscriptions (`signup-digest.cron.ts`) ajoute la provenance à chaque ligne
-  (`instagram · dm · louis`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
+  (`instagram · dm · exemple`, sinon `direct`). La liste admin n'exclut pas les ADMIN (l'agrégat si).
 - La réponse inclut aussi les **visites landing** (`visits7d/30d` par source, `daily` sur 30 j,
   `topPages`) lues dans `LandingVisitDaily`, et `campaigns` : le même détail par source + medium +
   campagne (50 lignes). Les deux niveaux sortent des mêmes requêtes groupées par (source, medium,
@@ -1490,6 +1518,17 @@ l'ancien front après le déploiement est refusé jusqu'au rechargement : il gar
   Ailleurs, un `text/plain` n'est pas lu. Ne pas étendre ce parseur à d'autres routes. Depuis oct. 2026,
   l'app envoie aussi TOUTES ses étapes ainsi (`register_view` dès l'arrivée par un script inline
   d'`index.html`, puis `SignupFunnelService`) : plus aucun appel JSON sur cette route.
+- **Engagement landing** (19/10/2026) : la même route accepte `FUNNEL_BEACON_STEPS` = étapes
+  d'inscription + `LANDING_ENGAGEMENT_STEPS` (`scroll_depth` detail `25|50|75|100`, `time_on_page`
+  detail `10|30|60`, `rules_use` sans detail) et `path?` (64 car. max). Le service ramène `path` à
+  `LANDING_ENGAGEMENT_PAGES` (`/`, `/prop-firm`, `/` final retiré) : engagement hors page mesurée ou
+  sans seuil reconnu → rien écrit ; étape d'inscription → `path = ''` quel que soit le corps. Le
+  `ON CONFLICT` liste les 8 colonnes de l'unique, `path` compris.
+- `GET /admin/landing-engagement` (`LandingEngagementService`, fusion pure `landing-engagement.util.ts`,
+  contrat `AdminLandingEngagementData`) : pages vues (`LandingVisitDaily.pageviews`, base des taux)
+  + événements d'engagement par (page, source, medium, campagne), navigateurs confondus ; `scroll` /
+  `time` = tableaux dans l'ordre des seuils partagés. Tri page puis vues, 100 lignes max. Le
+  parcours d'inscription (`buildSignupFunnelRows`) ignore ces étapes (hors `SIGNUP_FUNNEL_STEPS`).
 - CORS (`main.ts`) : `maxAge: 600` (`Access-Control-Max-Age`) : le navigateur garde 10 min la réponse
   à la requête préalable au lieu d'en refaire une avant chaque appel JSON de l'app (un aller-retour en
   4G lente). Les origines autorisées restent `CORS_ORIGINS`.
@@ -1547,6 +1586,70 @@ redéployer : rien à lancer sur le VPS.
   `libs/shared/src/prop-firm-rules/*.json` dans `include` (sinon TS6307). Le catalogue est exporté
   par l'index de `@mtc/shared` mais absent des bundles front tant qu'ils ne l'importent pas
   (vérifié : 0 occurrence dans app, admin, landing).
+
+## Compte perdu : comptes échoués et archivés hors des agrégats (#677, #681, 2026-10-21)
+
+**Règle : aucune agrégation « tous les comptes » sans filtre de statut.** Les comptes `FAILED`
+(Échoué) et `ARCHIVED` (Archivé) sortent PAR DÉFAUT de toute statistique ou agrégation qui porte
+sur l'ensemble des comptes de l'utilisateur. `PASSED` (Validé) reste compté. Les trades sans compte
+restent comptés. Un compte précis (`accountId`) reste lisible quel que soit son statut, et le
+paramètre `includeInactive=true` réintègre tout.
+
+**Source unique : `accounts/account-status-scope.ts`**, jamais une copie locale du filtre :
+
+| Fonction | Usage |
+|---|---|
+| `inactiveAccountsTradeWhere(scope)` | filtre Prisma des trades (`where`) |
+| `inactiveAccountsTradeSql(scope)` | même filtre en SQL brut, table `"Trade"` aliasée `t` |
+| `activeAccountsWhere(scope)` | filtre des COMPTES d'un contexte global (débrief, IA) |
+| `excludesInactiveAccounts(scope)` | vrai = « tous les comptes » sans les inactifs |
+| `parseIncludeInactive(value)` | lit `includeInactive` d'une query (`true` / `1`) |
+
+- Le filtre Prisma renvoie une clé `OR` : dans un `where` qui a déjà un `OR`, combiner par
+  `AND: [a, b]`, jamais par deux spreads (le second écraserait le premier).
+- Les versions Prisma et SQL sont prouvées équivalentes sur vraie base par
+  `account-status-scope.int-spec.ts` (et `analytics-sql-equivalence.int-spec.ts`).
+- Appliquée à : les 10 routes `/analytics/*` (+ `includeInactive`, clé de cache distincte
+  `:inactive` dans `analytics.service`), débrief hebdo, récap quotidien (combinée par `AND` avec
+  l'exclusion des comptes d'entraînement), chat du coach (`accountId` facultatif, propriété vérifiée),
+  insights IA et orchestrateur, KPIs du journal (`GET /trades/stats`, qui renvoie aussi
+  `excludedAccounts { failed, archived }` pour la ligne « n comptes exclus »).
+- **La liste des trades n'est PAS filtrée** : le journal garde tout (badge côté front).
+- Changement de statut, archivage, suppression : `invalidateStats(userId)`, sinon le cache
+  servirait les anciens chiffres.
+
+**Volontairement NON filtrés (ne pas « corriger »)** :
+- **Base de comportement et alertes de tilt** (`behavior-baseline.service.ts`,
+  `tilt-alerts.service.ts`) : elles comptent TOUS les comptes, échoués et archivés compris.
+  C'est le comportement habituel du trader qui sert de référence. Retirer les comptes perdus
+  fausserait cette référence juste après un compte perdu, précisément quand le risque de tilt est
+  le plus haut. Un commentaire le rappelle dans le code.
+- Les chiffres propres d'un compte (`account-rules.ts`, versions SQL et JS) : ils décrivent CE compte.
+- Fiches et statistiques admin, et le contexte prop firm de l'IA (déjà limité aux comptes ACTIVE).
+
+**Avant toute nouvelle agrégation sur les trades ou les comptes** : passer par
+`account-status-scope.ts` (ou justifier par écrit, dans le code, pourquoi la base doit compter les
+comptes perdus, comme la base de comportement), accepter `includeInactive` si la route est une
+statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inclus avec
+`includeInactive`, compte précis lisible ».
+
+**Routes du compte perdu (`accounts.controller.ts`)** :
+- `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
+  compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
+  de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+- `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
+  404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
+  n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
+  `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
+  « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+- `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
+  Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
+  (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
+  plus recréer les trades), puis le compte (cascades : clôtures, payouts, journal de risque,
+  événements prop firm, alertes de comportement). Réponse `{ deleted: true, tradesDeleted }`.
+  Compte MyTradingCoach et Stripe intacts. Couvert par `account-purge.int-spec.ts`.
+- `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
+  compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
 
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
@@ -1671,6 +1774,16 @@ prend montant, type, verrouillage et solde de départ dans la phase, **pas** la 
 - `drawdown.source` (`plan` | `manual`) + `drawdown.rule` ; `disclaimer` propre au plan
   (positions ouvertes non incluses si `enforced_on = equity_realtime`, payouts non suivis).
 - Autres types de compte ou sans plan : calcul manuel inchangé (jours UTC, STATIC / TRAILING).
+- **Fonctions partagées** (`libs/shared/src/prop-firm-rules/drawdown-floor.ts`), source unique du
+  suivi du compte ET de la carte Drawdown des Statistiques : `planDrawdownRule(phase, compte)`
+  (override plateforme, décalage du solde de départ), `drawdownPeakProfit(type, agg, equity, officiel)`
+  (plus haut retenu), `drawdownFloor(règle, plus haut)` (statique, suiveur, gel). Ne jamais
+  recalculer un plancher ailleurs : changer la règle dans ces fonctions seulement.
+- **Test sur tout le catalogue** : `apps/app-mytradingcoach/src/app/core/services/chart-floor.catalog.spec.ts`
+  rejoue un scénario générique sur chaque phase et chaque variante de plateforme (580 cas au
+  2026-10-20) : marge de l'en-tête = écart courbe / limite au dernier point = suivi du compte, et la
+  courbe touche la limite exactement quand le solde touche le plancher. Un plan ajouté au catalogue
+  est testé sans rien écrire.
 ### Stats du journal en SQL (SCA-B2-02, 2026-10-02)
 
 `GET /trades/stats` → `journalStatsSql` (journal-stats.util.ts), plus de chargement des trades.
@@ -1856,6 +1969,56 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
 
+## Suite d'e-mails d'onboarding (oct. 2026, NinjaTrader mi-novembre)
+
+Moteur unique : registre `resend/campaigns/campaign-registry.ts`, `EmailDispatchService` (seul point de
+décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `EmailSend`.
+- **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
+  (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
+  propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
+  (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
+  le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Plafond** : 1 e-mail marketing OU service / `MARKETING_COOLDOWN_DAYS` (4) par personne, à
+  **1 h près** (`CAP_TOLERANCE_MS`) : le cron examine les campagnes par priorité, un e-mail plus
+  prioritaire que le précédent est vu quelques secondes avant 4 j pile et glissait d'un jour. Une
+  seule campagne par personne et par passage.
+- **Suite** (priorité · type · fenêtre d'âge) : `connect_tradovate` 100 · service · J1-J14 (aucune
+  connexion broker CONNECTED ni trade) ; `prop_firm_rules` 90 · service · J4-J21 (compte ACTIVE
+  EVALUATION/FUNDED sans plan, `planLinkChoice` null ou LATER) ; `first_week_recap` 80 · marketing ·
+  J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
+  (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
+  vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
+  transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
+- **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET
+  haute) : jamais d'envoi en masse vers d'anciens inscrits. Les 4 nouvelles exigent en plus
+  `createdAt >= ONBOARDING_SEQUENCE_START` (date ISO, env de l'API) ; absente ou invalide → elles ne
+  ciblent personne et le cron l'écrit en `warn` à chaque passage.
+- **Données à l'envoi** : `loadContext(deps, userIds, now)` sur la campagne, appelé UNE fois par page
+  de 500 autorisés (cron et envoi admin) ; un id absent de la Map = pas d'envoi (pas de trade J0-J7,
+  offre fermée). `loadFirstWeek` = une requête SQL groupée (trades clôturés, jours de Paris, P&L net
+  arrondi comme les stats, devises mélangées → montant sans symbole). Le cron est dans
+  `AutoCampaignsModule` (importe `FounderOfferModule`, qui importe déjà `ResendModule`).
+- **Liens** : `onboardingLink(appUrl, path, clé)` → `utm_source=email&utm_medium=onboarding&utm_campaign=<clé>`
+  (bienvenue = `welcome`). Connexion Tradovate et firme → `/accounts` ; CSV → `/journal` ; Premium →
+  `/dashboard?plan=premium&cta=email` ; fondateur → `/dashboard?plan=founder&cta=email` (les
+  destinataires ont un compte : pas `/register` comme la landing). Prix, essai, places, délai de
+  remboursement : `@mtc/shared` uniquement (un test lit le source et refuse tout montant littéral).
+- **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
+  `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
+  requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
+- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
+  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
+  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+  `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
+  route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
+- Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
+  `onboarding-templates.spec.ts` (règles d'écriture), `onboarding-sequence.simulation.spec.ts` (VRAI
+  cron + dispatch sur 21 jours, 6 profils : modifier une priorité ou une fenêtre = mettre à jour le
+  calendrier attendu).
+
 ## Offre fondateur (#525, 2026-10-07)
 
 `modules/founder-offer/` : `FounderOfferService` (config, `seatsLeft` caché 30 s, `eligibility`,
@@ -1995,3 +2158,21 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
+
+## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
+
+- Avec `from` : renvoie aussi `before = { pnl, peak }` (P&L net cumulé avant la période et son plus
+  haut en clôture de journée, ≥ 0, fonction `periodBefore`). Le front ancre le drawdown sur ce sommet.
+- `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
+  plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
+  la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
+- `payouts` (payouts `BrokerPayout` non écartés de la période, `{ date, amount }`) et
+  `before.payouts` (total retiré avant `from`), fonction `splitPayouts`. Lus **hors cache** dans
+  `getEquityCurveDaily` : une détection ou un « ce n'était pas un payout » se voit tout de suite, sans
+  invalider le cache des trades. Le front les déduit des courbes de solde, jamais du P&L.
+
+## Plancher de drawdown d'un plan (`drawdownFloor`, `@mtc/shared`)
+
+Source unique du plancher : `accounts.service` (suivi du compte → Mes comptes, séance) et la courbe
+de drawdown des Statistiques appellent `drawdownFloor(rule, peakProfit)`. Ne jamais recalculer un
+plancher à la main ailleurs : modifier la règle (verrouillage, statique) dans cette fonction seulement.

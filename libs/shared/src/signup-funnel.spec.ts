@@ -27,6 +27,14 @@ describe('signupFunnelDetail (liste blanche de detail)', () => {
     expect(signupFunnelDetail('register_view', 'founder')).toBe('');
     expect(signupFunnelDetail('register_submit', 'x')).toBe('');
     expect(signupFunnelDetail('register_success', 'founder')).toBe('');
+    expect(signupFunnelDetail('rules_use', 'x')).toBe('');
+  });
+
+  it('garde un seuil d’engagement connu, vide le reste', () => {
+    expect(signupFunnelDetail('scroll_depth', '75')).toBe('75');
+    expect(signupFunnelDetail('scroll_depth', '60')).toBe('');
+    expect(signupFunnelDetail('time_on_page', '30')).toBe('30');
+    expect(signupFunnelDetail('time_on_page', '25')).toBe('');
   });
 });
 

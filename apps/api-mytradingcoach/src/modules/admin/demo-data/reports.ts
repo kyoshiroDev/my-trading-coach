@@ -28,7 +28,7 @@ export const PROFILE = {
   onboardingCompleted: true, startingCapital: STARTING_CAPITAL,
   tradingStyle: 'Day trading', tradingStrategy: ['Price Action', 'ICT', 'Order Flow'],
   tradingSessions: ['LONDON', 'NEW_YORK'], tradesPerDayMin: 2, tradesPerDayMax: 4,
-  strategyDescription: "Je trade les futures d'indices US (MNQ, MES, parfois NQ/ES) sur deux comptes prop firm. Breakouts et pullbacks sur l'ouverture de Londres et de New York. Règles : 4 trades max par jour, stop systématique, R:R minimum 1.5.",
+  strategyDescription: "Je trade les futures d'indices US (MNQ, MES, parfois NQ/ES) sur trois comptes prop firm. Breakouts et pullbacks sur l'ouverture de Londres et de New York. Règles : 4 trades max par jour, stop systématique, R:R minimum 1.5.",
   tradingAssets: ['MNQ', 'MES', 'NQ', 'ES'], favoriteAsset: 'MNQ',
   market: 'Futures', goal: 'Passer mon éval Apex sans casser mes règles',
   notificationsEmail: false, debriefAutomatic: false,

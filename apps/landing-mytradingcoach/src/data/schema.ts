@@ -28,7 +28,7 @@ export const WEBSITE = {
   name: 'MyTradingCoach',
   url: SITE,
   inLanguage: 'fr',
-  description: 'Journal de trading intelligent avec coach IA pour traders crypto et forex',
+  description: 'Journal de trading pour traders de futures en prop firm, avec synchro Tradovate et import CSV (crypto, forex, actions)',
 };
 
 export const DEFAULT_SCHEMA = [ORGANIZATION, WEBSITE];

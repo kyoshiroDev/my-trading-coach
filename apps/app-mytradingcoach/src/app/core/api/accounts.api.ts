@@ -149,6 +149,12 @@ export interface TradingAccount {
   createdAt: string;
   updatedAt: string;
   metrics: AccountRuleMetrics;
+  /**
+   * Compte ACTIF dont la marge estimée avant le plancher est épuisée (plan du catalogue ou drawdown
+   * saisi). Signal pour le bandeau « Plancher atteint » : aucun statut n'est changé, l'utilisateur
+   * confirme. Absent des réponses qui ne le calculent pas (création, mise à jour).
+   */
+  floorReached?: boolean;
 }
 
 export interface CreateAccountPayload {
@@ -203,5 +209,20 @@ export class AccountsApi {
 
   remove(id: string): Observable<{ data: { deleted?: boolean; archived?: boolean } }> {
     return this.http.delete<{ data: { deleted?: boolean; archived?: boolean } }>(`${this.base}/${id}`);
+  }
+
+  /** Nouvelle tentative d'un compte ÉCHOUÉ : même firme, plan, taille et règles, libellé incrémenté par le serveur. */
+  retry(id: string): Observable<{ data: TradingAccount }> {
+    return this.http.post<{ data: TradingAccount }>(`${this.base}/${id}/retry`, {});
+  }
+
+  /**
+   * Suppression DÉFINITIVE d'un compte de trading et de ses trades (compte perdu). Le compte
+   * MyTradingCoach et l'abonnement ne changent pas. `confirm: true` exigé par l'API (400 sinon).
+   */
+  purge(id: string): Observable<{ data: { deleted: true; tradesDeleted: number } }> {
+    return this.http.delete<{ data: { deleted: true; tradesDeleted: number } }>(`${this.base}/${id}/permanent`, {
+      body: { confirm: true },
+    });
   }
 }

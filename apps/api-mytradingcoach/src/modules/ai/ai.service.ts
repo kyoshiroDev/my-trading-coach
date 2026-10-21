@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
@@ -21,6 +22,7 @@ import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import type { EcoResultAnalysis } from '../eco-calendar/eco-calendar.service';
 import { AnthropicClientService, responseText } from '../infra/anthropic-client.service';
 import { buildUserTradingContext, UserTradingProfile } from './user-context.builder';
+import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import type { EcoAnalysis } from '@mtc/shared';
@@ -74,12 +76,17 @@ export class AiService {
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     isDemo = false,
+    accountId?: string,
   ) {
     if (isDemo) return { response: DEMO_CHAT_REPLY }; // réponse figée, zéro appel modèle
-    if (userRole === Role.ADMIN) return this.chatCall(userId, message, history);
+    if (accountId) {
+      const owned = await this.prisma.tradingAccount.count({ where: { id: accountId, userId } });
+      if (!owned) throw new NotFoundException('Compte introuvable.');
+    }
+    if (userRole === Role.ADMIN) return this.chatCall(userId, message, history, accountId);
     return this.metered(userId, async () => {
       await this.checkDailyLimit(userId, 'chat', 50);
-      return this.chatCall(userId, message, history);
+      return this.chatCall(userId, message, history, accountId);
     });
   }
 
@@ -87,10 +94,13 @@ export class AiService {
     userId: string,
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    accountId?: string,
   ) {
 
+    // Compte choisi → ses trades (même échoué ou archivé) ; sinon tous les comptes hors
+    // échoués et archivés (compte perdu : contexte global).
     const recentTrades = await this.prisma.trade.findMany({
-      where: { userId },
+      where: accountId ? { userId, accountId } : { userId, ...inactiveAccountsTradeWhere() },
       orderBy: { tradedAt: 'desc' },
       take: 30,
       select: {

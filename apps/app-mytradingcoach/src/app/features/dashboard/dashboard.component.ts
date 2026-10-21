@@ -12,7 +12,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
-  LucideTrendingUp as TrendingUp,
   LucideCoins as Coins,
   LucideBarChart3 as BarChart3,
   LucideSparkles as Sparkles,
@@ -23,6 +22,8 @@ import {
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
 import { MoneyService } from '../../core/services/money.service';
+import { anchoredDrawdown, cumulativePayouts, periodStartBalance, viewBalance, withPayouts } from '../../core/services/equity-period.util';
+import { planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { TradesStore } from '../../core/stores/trades.store';
 import { SessionStore } from '../../core/stores/session.store';
@@ -35,7 +36,7 @@ import { InfoTooltipComponent } from '../../shared/components/info-tooltip/info-
 import { CreateTradeDto, TradesApi } from '../../core/api/trades.api';
 import {
   AnalyticsSummary,
-  EquityPoint,
+  DailyEquityCurve,
   SetupStat,
   EmotionStat,
   TopAsset,
@@ -49,8 +50,8 @@ import {
   DashboardTradeRow,
   buildCoachInsights,
   buildEmotionsDonut,
-  buildEquityGlow,
   buildPlBuckets,
+  buildTradeRows,
   emotionShares,
   plGranularityFor,
   plTitleFor,
@@ -60,15 +61,16 @@ import {
   topAssetBars,
 } from './dashboard-charts.util';
 import { DashboardKpisComponent } from './panels/dashboard-kpis/dashboard-kpis.component';
-import { EquityChartComponent } from './panels/equity-chart/equity-chart.component';
+import { PerfChartComponent } from '../../shared/components/perf-chart/perf-chart.component';
 import { TopAssetsComponent } from './panels/top-assets/top-assets.component';
 import { PlBarsComponent } from './panels/pl-bars/pl-bars.component';
 import { CoachFeedbackComponent } from './panels/coach-feedback/coach-feedback.component';
 import { DonutChartComponent } from './panels/donut-chart/donut-chart.component';
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
 import { MoneyPipe } from '../../shared/pipes';
-import { netPnl } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reached-banner.component';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -87,7 +89,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
     LucideDynamicIcon,
     InfoTooltipComponent,
     DashboardKpisComponent,
-    EquityChartComponent,
+    PerfChartComponent,
     TopAssetsComponent,
     PlBarsComponent,
     CoachFeedbackComponent,
@@ -95,6 +97,8 @@ import { ErrorStateComponent } from '@mtc/front-ui';
     RecentTradesTableComponent,
     MoneyPipe,
     MixedCurrencyNoticeComponent,
+    FloorReachedBannerComponent,
+    InactiveAccountsToggleComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -120,7 +124,6 @@ export class DashboardComponent {
   protected readonly PRICING = PRICING;
 
   // Icônes d'en-tête de panel (Lucide) : fidélité design.
-  protected readonly EquityIcon   = TrendingUp;
   protected readonly AssetsIcon   = Coins;
   protected readonly PlDayIcon     = BarChart3;
   protected readonly CoachIcon    = Sparkles;
@@ -178,11 +181,11 @@ export class DashboardComponent {
     }
   });
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
-  // URL des resources → tout se refetch automatiquement au changement de compte.
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
+  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → tout se refetch
+  // automatiquement au changement de compte ou d'interrupteur.
   private accQuery(): string {
-    const id = this.selectedAccount.accountParam();
-    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+    return this.selectedAccount.statsQuery();
   }
 
   // Query compte + bornes de période (KPIs / équité / P&L par jour). Lu dans les URL des
@@ -190,8 +193,7 @@ export class DashboardComponent {
   private rangeQuery(): string {
     const { from, to } = this.periodRange();
     const parts: string[] = [];
-    const id = this.selectedAccount.accountParam();
-    if (id) parts.push(`accountId=${encodeURIComponent(id)}`);
+    for (const [k, v] of Object.entries(this.selectedAccount.statsParams())) parts.push(`${k}=${encodeURIComponent(v)}`);
     if (from) parts.push(`from=${from.toISOString()}`);
     parts.push(`to=${to.toISOString()}`);
     return `?${parts.join('&')}`;
@@ -204,7 +206,7 @@ export class DashboardComponent {
   // Courbe d'équité simple = vue de base FREE (on ne verrouille pas la vue de ses données).
   // Scopée à la même période que les KPIs.
   private readonly equityCurveResource = httpResource<{
-    data: { points: EquityPoint[]; startingCapital: number | null };
+    data: DailyEquityCurve;
   }>(() => `${environment.apiUrl}/analytics/equity-curve/daily${this.rangeQuery()}`);
   // Activité journalière (P&L par jour) sur la même période : agrégée jour/semaine/mois côté front.
   private readonly activityResource = httpResource<{
@@ -259,8 +261,8 @@ export class DashboardComponent {
    * Capital de base, source unique scopée au compte sélectionné : miroir EXACT
    * de la page Mes comptes :
    * - compte sélectionné → son `metrics.startingBalance` ;
-   * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
-   *   (cf. `trackedCapital` dans accounts.component) ;
+   * - « Tous les comptes » → somme des `startingBalance` des comptes qui entrent dans les
+   *   chiffres (ni échoués ni archivés, sauf interrupteur ; cf. `trackedCapital` de Mes comptes) ;
    * - comptes non chargés → fallback sur le capital du profil user.
    */
   protected readonly baseCapital = computed(() => {
@@ -269,7 +271,7 @@ export class DashboardComponent {
     }
     const account = this.selectedAccount.selected();
     if (account) return account.metrics.startingBalance ?? 0;
-    const active = this.selectedAccount.accounts().filter((a) => a.status !== 'ARCHIVED');
+    const active = this.selectedAccount.aggregateAccounts();
     // AUCUN compte (l'utilisateur a passé l'ajout de trade : le compte n'est créé
     // qu'au premier trade) → le capital déclaré à l'onboarding faisait place à
     // « $0.00 », comme si sa saisie avait été perdue. On retombe donc sur le profil,
@@ -278,16 +280,37 @@ export class DashboardComponent {
     if (active.length === 0) return this.userStore.startingCapital();
     return active.reduce((s, a) => s + (a.metrics.startingBalance ?? 0), 0);
   });
-  protected readonly currentCapital = computed(() =>
-    this.baseCapital() + (this.summary()?.totalPnl ?? 0),
-  );
-  /** Sous-titre courbe d'équité : « +$X sur 3 mois · base $Y » (période courante). */
-  protected readonly equitySub = computed(() => {
-    const base   = this.baseCapital();
-    const period = this.summary()?.totalPnl ?? 0;
-    const fmt    = (n: number, sign: boolean) => this.money.format(n, { decimals: 0, sign });
-    return `${fmt(period, true)} ${this.periodShort()} · base ${fmt(base, false)}`;
+  /**
+   * Capital affiché = solde actuel du compte (ou des comptes non archivés), le MÊME que le
+   * sélecteur et Mes comptes (celui du broker pour un compte connecté). Avant : capital de départ
+   * + P&L de la PÉRIODE, donc faux dès que des trades précédaient la période.
+   * Sans compte chargé → capital de départ + P&L, comme avant.
+   */
+  protected readonly currentCapital = computed(() => {
+    const current = this.selectedAccount.loaded()
+      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance', this.selectedAccount.includeInactive())
+      : null;
+    return current ?? this.baseCapital() + (this.summary()?.totalPnl ?? 0);
   });
+  /**
+   * Solde au début de la période (base du %, de la sparkline et de la courbe) : solde de départ +
+   * P&L d'avant la période ; la taille du compte quand la période couvre son début.
+   */
+  protected readonly periodStartCapital = computed(() =>
+    periodStartBalance(
+      this.baseCapital(),
+      this.currentCapital(),
+      this.summary()?.totalPnl ?? 0,
+      this.equityCurveResource.value()?.data?.before,
+    ),
+  );
+  /**
+   * Drawdown jour par jour sur la période, depuis le plus haut atteint depuis l'ouverture du
+   * compte (règle EOD) : même calcul que la courbe de drawdown des Statistiques.
+   */
+  protected readonly drawdownSeries = computed(() =>
+    anchoredDrawdown(this.equityCurve(), this.equityCurveResource.value()?.data?.before),
+  );
   /**
    * Message quand la courbe ne se trace pas : ne JAMAIS dire « aucun trade » si les KPIs en
    * comptent (critère d'acceptation de la courbe). Une courbe a besoin d'au moins 2 jours tradés ;
@@ -298,11 +321,18 @@ export class DashboardComponent {
       ? 'Pas assez de jours tradés pour tracer la courbe'
       : 'Aucun trade sur la période',
   );
-  protected readonly equityCurve = computed(
-    () => this.equityCurveResource.value()?.data?.points ?? [],
+  /** Points de la période, payouts reçus insérés (déduits des courbes de solde, pas du P&L). */
+  protected readonly equityCurve = computed(() => {
+    const data = this.equityCurveResource.value()?.data;
+    return withPayouts(data?.points ?? [], data?.payouts);
+  });
+  /** Objectif de gain du compte sélectionné, tracé sur la courbe d'équité. */
+  protected readonly equityObjective = computed(() =>
+    planObjectiveLine(this.selectedAccount.selected(), this.equityCurve()),
   );
   /** P&L cumulé le long de la courbe : source de la courbe d'équité et des sparklines. */
   protected readonly eqSeries = computed(() => this.equityCurve().map((p) => p.cumulativePnl));
+  protected readonly payoutSeries = computed(() => cumulativePayouts(this.equityCurve()));
   protected readonly bySetup = computed(() => this.bySetupResource.value()?.data ?? []);
   /** Stats par émotion (R moyen / win rate) : source du feedback coach. */
   protected readonly byEmotion = computed(() => this.byEmotionResource.value()?.data ?? []);
@@ -341,6 +371,8 @@ export class DashboardComponent {
 
   private readonly knownTradesCount = signal(-1);
   private readonly knownAccountsCount = signal(-1);
+  /** Comptes exclus au dernier passage (`échoués:archivés`), null avant le premier chargement. */
+  private knownExcluded: string | null = null;
 
   constructor() {
     // Trades Tradovate poussés en direct : mêmes rechargements qu'après un import.
@@ -380,6 +412,17 @@ export class DashboardComponent {
       this.knownAccountsCount.set(n);
     });
 
+    // Compte marqué échoué, archivé ou supprimé : la liste a la même taille mais les chiffres
+    // « tous les comptes » changent (l'API a vidé son cache). Même garde que ci-dessus.
+    effect(() => {
+      if (!this.selectedAccount.loaded()) return;
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${e.failed}:${e.archived}`;
+      const known = this.knownExcluded;
+      if (known !== null && key !== known) this.reloadAnalytics();
+      this.knownExcluded = key;
+    });
+
     // Fenêtre par défaut CONSCIENTE DES DONNÉES.
     // Un historique importé date presque toujours de plus de 30 jours : la fenêtre 1M
     // par défaut affichait alors « Aucune donnée / 0 trade » juste après un import
@@ -415,11 +458,6 @@ export class DashboardComponent {
 
   // ── Viz (calculs dans dashboard-charts.util.ts) ────────────────────────────
 
-  /** Courbe d'équité « glow », verte ou rouge selon le P&L de la période. */
-  protected readonly equityGlow = computed(() =>
-    buildEquityGlow(this.eqSeries(), (this.summary()?.totalPnl ?? 0) >= 0),
-  );
-
   /** Vue donut setups selon le plan : profondeur (win rate) en Premium, répartition % en FREE. */
   protected readonly setupsDonutView = computed(() =>
     this.userStore.isPremium()
@@ -454,19 +492,9 @@ export class DashboardComponent {
    * P&L % = rendement sur le capital de base ; `null` si ce capital est
    * inconnu/0 (sinon la division /1 produit des pourcentages absurdes → « - »).
    */
-  protected readonly tradeRows = computed<DashboardTradeRow[]>(() => {
-    const base = this.baseCapital();
-    return this.tradesStore.trades().slice(0, 8).map((t) => {
-      // P&L NET (frais déduits), comme les KPIs et le calendrier.
-      const net = netPnl(t);
-      return {
-        ...t,
-        pnl: net,
-        win: (net ?? 0) >= 0,
-        pct: base > 0 ? ((net ?? 0) / base) * 100 : null,
-      };
-    });
-  });
+  protected readonly tradeRows = computed<DashboardTradeRow[]>(() =>
+    buildTradeRows(this.tradesStore.trades().slice(0, 8), this.baseCapital()),
+  );
 
   goToJournal() { this.showTradeForm.set(true); }
 

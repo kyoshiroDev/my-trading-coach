@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   buildCoachInsights,
   buildEmotionsDonut,
-  buildEquityGlow,
   buildPlBuckets,
+  buildTradeRows,
   emotionShares,
   plGranularityFor,
   setupsDonutFromTrades,
@@ -11,15 +11,15 @@ import {
   topAssetBars,
 } from './dashboard-charts.util';
 import { AnalyticsSummary } from '../../core/api/analytics.api';
+import { Trade } from '../../core/stores/trades.store';
 
 const summary = (over: Partial<AnalyticsSummary> = {}): AnalyticsSummary =>
   ({ winRate: 60, totalPnl: 100, totalTrades: 10, maxDrawdown: 0, profitFactor: 2, streak: 0,
      topSession: '', topSessionWinRate: 0, topHour: '', ...over }) as AnalyticsSummary;
 
-describe('sparkPath / buildEquityGlow', () => {
+describe('sparkPath', () => {
   it('moins de 2 points → rien à tracer', () => {
     expect(sparkPath([5]).line).toBe('');
-    expect(buildEquityGlow([5], true)).toBeNull();
   });
 
   it('2 points → trait du bas-gauche au haut-droite, point final au bout', () => {
@@ -28,10 +28,6 @@ describe('sparkPath / buildEquityGlow', () => {
     expect([p.cx, p.cy]).toEqual([72, 2]);
   });
 
-  it('couleur de la courbe selon le signe du P&L', () => {
-    expect(buildEquityGlow([0, 1], true)?.color).toBe('var(--green)');
-    expect(buildEquityGlow([0, 1], false)?.color).toBe('var(--red)');
-  });
 });
 
 describe('P&L par période', () => {
@@ -100,5 +96,42 @@ describe('buildCoachInsights', () => {
     );
     expect(out.map((i) => i.tone)).toEqual(['warn', 'bad', 'bad', 'good', 'bad']);
     expect(out).toHaveLength(5);
+  });
+});
+
+describe('buildTradeRows (historique des trades, #655)', () => {
+  const trade = (pnl: number | null, commission: number | null = null): Trade =>
+    ({ id: String(pnl), pnl, commission, exit: pnl === null ? null : 1 }) as Trade;
+
+  it('trade ouvert : ni WIN ni LOSS, pas de P&L %', () => {
+    const [row] = buildTradeRows([trade(null)], 50_000);
+    expect(row.outcome).toBe('open');
+    expect(row.pnl).toBeNull();
+    expect(row.pct).toBeNull();
+  });
+
+  it('break-even : net exactement nul', () => {
+    const [row] = buildTradeRows([trade(2, 2)], 50_000);
+    expect(row.outcome).toBe('breakeven');
+    expect(row.pct).toBe(0);
+  });
+
+  it('gagnant : classé sur le net, P&L % sur le capital', () => {
+    const [row] = buildTradeRows([trade(100, 0)], 50_000);
+    expect(row.outcome).toBe('win');
+    expect(row.pnl).toBe(100);
+    expect(row.pct).toBeCloseTo(0.2);
+  });
+
+  it('perdant : un brut positif mangé par les frais est une perte', () => {
+    const [row] = buildTradeRows([trade(1, 1.9)], 50_000);
+    expect(row.outcome).toBe('loss');
+    expect(row.pnl).toBe(-0.9);
+  });
+
+  it('capital inconnu : pas de P&L %, le classement reste', () => {
+    const [row] = buildTradeRows([trade(100)], 0);
+    expect(row.outcome).toBe('win');
+    expect(row.pct).toBeNull();
   });
 });

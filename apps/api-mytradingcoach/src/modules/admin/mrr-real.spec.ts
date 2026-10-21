@@ -28,7 +28,7 @@ function usersService() {
     user: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue(PAYING) },
     deletedAccount: { count: vi.fn().mockResolvedValue(0) },
   };
-  return new UsersService(prisma as never, {} as never);
+  return new UsersService(prisma as never, {} as never, {} as never);
 }
 
 describe('MRR base : montant réellement payé', () => {

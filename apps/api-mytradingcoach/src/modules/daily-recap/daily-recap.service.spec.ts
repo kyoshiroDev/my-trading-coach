@@ -356,9 +356,27 @@ describe('DailyRecapService', () => {
 
       await service.generateRecap('user-1', TODAY);
 
-      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toMatchObject({
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where.AND).toContainEqual({
         OR: [{ accountId: null }, { accountId: { notIn: ['acc-demo', 'acc-sim'] } }],
       });
+    });
+  });
+
+  // Compte perdu : le récap est un contexte global → comptes échoués et archivés exclus, EN PLUS
+  // des comptes de démo (les deux filtres en OR sont combinés par AND : aucun n'écrase l'autre).
+  describe('comptes échoués et archivés', () => {
+    it('exclus du récap du jour et des patterns 7 j, sans perdre l’exclusion des démos', async () => {
+      mockPrisma.tradingAccount.findMany.mockResolvedValueOnce([{ id: 'acc-sim', type: 'DEMO', brokerConnections: [] }]);
+      mockPrisma.trade.findMany.mockResolvedValue([]);
+
+      await service.generateRecap('user-1', TODAY);
+
+      const inactive = { OR: [{ accountId: null }, { account: { status: { notIn: ['FAILED', 'ARCHIVED'] } } }] };
+      const demo = { OR: [{ accountId: null }, { accountId: { notIn: ['acc-sim'] } }] };
+      for (const call of mockPrisma.trade.findMany.mock.calls) {
+        expect(call[0].where.AND).toEqual([demo, inactive]);
+        expect(call[0].where).not.toHaveProperty('OR');
+      }
     });
   });
 });

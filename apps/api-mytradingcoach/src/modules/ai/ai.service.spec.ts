@@ -82,7 +82,7 @@ const mockPrisma = {
   trade: { findMany: vi.fn().mockResolvedValue(mockTrades) },
   user: { findUnique: vi.fn().mockResolvedValue(null) },
   // Devise des montants du prompt = celle des comptes.
-  tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]) },
+  tradingAccount: { findMany: vi.fn().mockResolvedValue([{ currency: 'USD' }]), count: vi.fn().mockResolvedValue(1) },
 };
 
 const mockOrchestrator = {
@@ -216,6 +216,32 @@ describe('AiService', () => {
 
       expect(result).toHaveProperty('response');
       expect(typeof result.response).toBe('string');
+    });
+
+    // Compte perdu : sans compte choisi, le coach ne lit pas les comptes échoués et archivés ; avec
+    // un compte choisi (même échoué), il lit ses trades, après vérification d'appartenance.
+    it('sans compte choisi : contexte hors comptes échoués et archivés', async () => {
+      mockPrisma.trade.findMany.mockClear();
+      await service.chat('user-123', Role.USER, 'Analyse', []);
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toEqual({
+        userId: 'user-123',
+        OR: [{ accountId: null }, { account: { status: { notIn: ['FAILED', 'ARCHIVED'] } } }],
+      });
+    });
+
+    it('compte choisi : ses trades seulement, même s’il est échoué', async () => {
+      mockPrisma.trade.findMany.mockClear();
+      mockPrisma.tradingAccount.count.mockResolvedValueOnce(1);
+      await service.chat('user-123', Role.USER, 'Analyse', [], false, 'acc-failed');
+      expect(mockPrisma.tradingAccount.count).toHaveBeenCalledWith({ where: { id: 'acc-failed', userId: 'user-123' } });
+      expect(mockPrisma.trade.findMany.mock.calls[0][0].where).toEqual({ userId: 'user-123', accountId: 'acc-failed' });
+    });
+
+    it('compte d’un autre utilisateur : 404, aucun trade lu', async () => {
+      mockPrisma.trade.findMany.mockClear();
+      mockPrisma.tradingAccount.count.mockResolvedValueOnce(0);
+      await expect(service.chat('user-123', Role.USER, 'Analyse', [], false, 'acc-autre')).rejects.toThrow('Compte introuvable.');
+      expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
     });
   });
 

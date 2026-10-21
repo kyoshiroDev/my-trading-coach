@@ -73,7 +73,8 @@ export class ToastsComponent {
 
   protected onPointerDown(e: PointerEvent, id: number): void {
     if (e.button > 0) return; // clic droit / milieu : pas un geste de fermeture
-    if ((e.target as HTMLElement | null)?.closest('.toast-x')) return; // la croix garde son clic
+    // La croix et le bouton d'action gardent leur clic (la capture du pointeur l'avalerait).
+    if ((e.target as HTMLElement | null)?.closest('.toast-x, .toast-action')) return;
     const el = e.currentTarget as HTMLElement;
     this.drag.set({ id, startX: e.clientX, dx: 0, width: el.getBoundingClientRect().width });
     this.toasts.pause(id);

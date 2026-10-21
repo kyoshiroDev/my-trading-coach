@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { formatMoney } from '@mtc/shared';
+import { PLAN_BENEFITS, formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -16,6 +16,18 @@ export function marketingFooter(unsubUrl: string): string {
     <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Me désinscrire des emails</a>.
   </p>`;
 }
+
+// Pied des e-mails de service (aide à la prise en main, intérêt légitime) : lien qui n'arrête QUE
+// ces conseils (`scope=service`, construit par EmailDispatchService).
+export function serviceFooter(unsubUrl: string): string {
+  return `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">
+    Tu reçois cet email pour t'aider à démarrer avec ton compte MyTradingCoach.
+    <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Ne plus recevoir ces conseils</a>.
+  </p>`;
+}
+
+// Mention légale des e-mails qui parlent d'une offre payante.
+export const RISK_NOTICE = `<p style="${FONT}font-size:12px;color:#8fa3bf;font-style:italic;line-height:1.6;margin:16px 0 0 0;text-align:center;">Le trading comporte un risque de perte en capital.</p>`;
 
 // Barres d'accent pleine largeur (haut de l'email) : la couleur annonce la nature du message.
 export const ACCENT = {
@@ -47,7 +59,20 @@ function logo(): string {
 </table>`;
 }
 
-export function emailWrapper(content: string, preheader = '', accentGradient: string = ACCENT.brand): string {
+/**
+ * `unsubUrl` : lien de désinscription en un clic de l'e-mail (campagnes marketing / service). Sans lui
+ * (e-mails liés au compte), le pied mène aux préférences e-mail du profil.
+ */
+export function emailWrapper(
+  content: string,
+  preheader = '',
+  accentGradient: string = ACCENT.brand,
+  unsubUrl?: string,
+): string {
+  const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
+  const footerLink = unsubUrl
+    ? `<a href="${unsubUrl}" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>`
+    : `<a href="${appUrl}/profil?tab=params" style="color:#9db4ce;text-decoration:none;">Gérer mes e-mails</a>`;
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -102,7 +127,7 @@ export function emailWrapper(content: string, preheader = '', accentGradient: st
                 Fait en France 🇫🇷<br>
                 SIRET 512 926 460 00027<br>
                 <a href="https://www.mytradingcoach.app" style="color:#9db4ce;text-decoration:none;">mytradingcoach.app</a><br>
-                <a href="https://app.mytradingcoach.app/parametres" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>
+                ${footerLink}
               </p>
             </td>
           </tr>
@@ -269,64 +294,79 @@ export function dailyRecapTemplate(params: {
 
 // ── Bienvenue FREE ────────────────────────────────────────────────────────────
 
+const DISCORD_INVITE_URL = 'https://discord.gg/TDK2npvkSN';
+
+/**
+ * Lien de l'app depuis un e-mail de la suite d'onboarding : UTM `email / onboarding / <clé>`,
+ * pour que l'admin Acquisition distingue chaque e-mail.
+ */
+export function onboardingLink(appUrl: string, path: string, campaign: string, query: Record<string, string> = {}): string {
+  const params = new URLSearchParams({ ...query, utm_source: 'email', utm_medium: 'onboarding', utm_campaign: campaign });
+  return `${appUrl.replace(/\/+$/, '')}${path}?${params.toString()}`;
+}
+
+/** Prénom : `name` est libre (« Greg Tahir ») → premier mot ; vide → chaîne vide. */
+export function firstNameOf(userName: string): string {
+  return userName.trim().split(/\s+/)[0] ?? '';
+}
+
+/** Lien texte dans un paragraphe (un seul BOUTON par e-mail : le reste en liens). */
+export function textLink(label: string, url: string): string {
+  return `<a href="${url}" style="color:#60a5fa;text-decoration:underline;">${label}</a>`;
+}
+
+function welcomeStep(n: number, title: string, text: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 14px 0;">
+      <tr>
+        <td width="28" valign="top" style="width:28px;${MONO}font-size:13px;font-weight:700;color:#60a5fa;padding-top:1px;">${n}.</td>
+        <td valign="top" style="${FONT}font-size:14px;color:#9db4ce;line-height:1.6;"><strong style="color:#e2eaf5;">${title}</strong> : ${text}</td>
+      </tr>
+    </table>`;
+}
+
 export function welcomeFreeTemplate(params: {
   userName: string;
   appUrl: string;
 }): { subject: string; html: string } {
   const { userName, appUrl } = params;
+  const firstName = firstNameOf(userName);
+  const link = (path: string) => onboardingLink(appUrl, path, 'welcome');
 
   const content = `
     ${card(`
       <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Bienvenue</p>
       <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
-        Ton compagnon de trading est prêt 👋
+        Ton compte est prêt
       </h1>
 
       <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
-        Bonjour ${userName || 'Trader'}, ton compte MyTradingCoach est créé.
-        Tu peux maintenant enregistrer tes trades, suivre tes émotions et analyser tes performances.
+        ${firstName ? `Bonjour ${firstName}` : 'Bonjour'}, ton compte est prêt. Pour que MyTradingCoach te serve
+        pendant ta séance, trois étapes suffisent :
       </p>
 
-      <div style="margin:16px 0;">
-        <div style="margin-bottom:10px;">
-          <span style="color:#10b981;">✓</span>
-          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Trades illimités · Journal complet · Stats de base</span>
-        </div>
-        <div style="margin-bottom:10px;">
-          <span style="color:#10b981;">✓</span>
-          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Mood check matin · Session live · Calendrier d'activité</span>
-        </div>
-        <div>
-          <span style="color:#10b981;">✓</span>
-          <span style="${FONT}font-size:13px;color:#9db4ce;margin-left:8px;">Multi-marché : Futures, Crypto, Forex, Indices</span>
-        </div>
-      </div>
+      ${welcomeStep(1, 'Connecte ton compte Tradovate', 'tes trades arrivent tout seuls, en lecture seule. Aucun ordre n\'est jamais passé.')}
+      ${welcomeStep(2, 'Choisis ta prop firm et ton plan', 'la marge restante avant ta limite se calcule avec les vraies règles de ta firme.')}
+      ${welcomeStep(3, 'Ouvre ta séance', 'tu vois en direct ce qu\'il te reste avant la limite.')}
 
-      ${divider}
+      ${cta('Connecter mon compte →', link('/accounts'))}
 
-      ${cta('Accéder à mon journal →', appUrl)}
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:16px 0 0 0;line-height:1.6;">
+        Tu ne trades pas sur Tradovate ? Tu peux ${textLink('importer un fichier CSV ou noter tes trades à la main', link('/journal'))}.
+      </p>
     `)}
 
-    <div style="background:#0f1824;border:1px solid #5865f2;border-radius:12px;padding:24px;margin-bottom:16px;">
-      <p style="${FONT}font-size:15px;font-weight:700;color:#e2eaf5;margin:0 0 8px 0;">💬 Rejoins la communauté Discord</p>
-      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 16px 0;line-height:1.6;">
-        Traders ICT · SMC · Price Action · Crypto · Futures.
-        Partage tes setups, pose tes questions, reçois un support direct.
-      </p>
-      ${cta('Rejoindre le Discord →', 'https://discord.gg/TDK2npvkSN', 'secondary')}
-    </div>
-
-    <div style="background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.12);border-radius:8px;padding:16px;text-align:center;">
-      <p style="${FONT}font-size:12px;color:#6b8299;margin:0;">
-        Tu veux la couche IA ? <a href="${appUrl}/parametres" style="color:#60a5fa;text-decoration:none;font-weight:600;">Essaie Premium 1 mois offert</a> :
-        analytics avancés, IA Coach et Weekly Debrief automatique.
+    <div style="background:#0f1824;border:1px solid rgba(88,101,242,.5);border-radius:12px;padding:20px 24px;margin-bottom:16px;">
+      <p style="${FONT}font-size:14px;font-weight:700;color:#e2eaf5;margin:0 0 6px 0;">Discord MyTradingCoach</p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;line-height:1.6;">
+        La communauté des utilisateurs : questions, retours, entraide.
+        ${textLink('Rejoindre le Discord', DISCORD_INVITE_URL)}
       </p>
     </div>
   `;
 
   return {
-    subject: '👋 Bienvenue sur MyTradingCoach, ton compagnon de trading',
-    html: emailWrapper(content, 'Ton journal de trading intelligent est prêt.'),
+    subject: 'Bienvenue sur MyTradingCoach : 3 étapes pour démarrer',
+    html: emailWrapper(content, 'Connecte Tradovate, choisis ta firme, ouvre ta séance.'),
   };
 }
 
@@ -339,14 +379,8 @@ export function welcomePremiumTemplate(params: {
 }): { subject: string; html: string } {
   const { userName, isTrial, appUrl } = params;
 
-  const features = [
-    'Trades illimités',
-    'Analytics avancés : heatmap, equity curve, drawdown',
-    'Analyse IA de chaque session + phrase coaching',
-    'Calendrier économique filtré pour tes actifs',
-    'Weekly Debrief IA automatique chaque dimanche',
-    'Score trader /100 · Export PDF',
-  ];
+  // Ce que Premium ajoute : liste partagée avec l'app et la landing (PLAN_BENEFITS, @mtc/shared).
+  const features = PLAN_BENEFITS.premium.map((b) => b.text);
 
   const content = `
     ${card(`

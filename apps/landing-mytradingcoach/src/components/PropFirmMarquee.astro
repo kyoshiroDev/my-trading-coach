@@ -4,13 +4,14 @@
 // normal, son logo laisserait croire à un partenariat. Liste lue AU BUILD dans le catalogue de
 // l'app : une firm ajoutée apparaît seule. Défilement en CSS, pause au survol, liste fixe si
 // « réduire les animations ». Un clic sur un nom choisit la firm : géré par le script de
-// PropFirmLive (attribut data-pf-pick).
+// PropFirmLive (attribut data-pf-pick). `data-track-rules` : un clic compte comme utilisation du
+// sélecteur de règles (lib/engagement.ts).
 import { buildPropFirmCatalog } from '../data/prop-firm-catalog';
 
 const catalog = buildPropFirmCatalog();
 ---
 
-<div class="pfm reveal">
+<div class="pfm reveal" data-track-rules>
   <p class="pfm-title">Choisis ta firm</p>
   <div class="pfm-viewport">
     <div class="pfm-track">
