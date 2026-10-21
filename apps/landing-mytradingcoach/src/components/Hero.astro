@@ -1,5 +1,6 @@
 ---
 import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
+import NinjaTraderTrust from './NinjaTraderTrust.astro';
 import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 // Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
 // dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
@@ -110,14 +111,16 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   </div>
   <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
   {/*
-    Preuve factuelle (audit 2026-10-06 : aucune preuve sociale sur la home). Texte seul : le
-    logo NinjaTrader reste au footer et jamais de « partenaire officiel » (clause 17, astro.md).
+    Preuve factuelle (audit 2026-10-06 : aucune preuve sociale sur la home). Jamais de
+    « partenaire officiel » (clause 17, astro.md) ; le logo est dans le bloc `.hero-eco` dessous.
   */}
   <ul class="hero-trust">
     <li>Référencé dans l'Ecosystem NinjaTrader</li>
     <li>Synchro en lecture seule : aucun ordre n'est jamais passé</li>
     <li>Règles prop firm sourcées et datées</li>
   </ul>
+  {/* Wordmark NinjaTrader cliquable, juste sous la ligne de confiance (demande NinjaTrader 21/10). */}
+  <div class="hero-eco"><NinjaTraderTrust /></div>
 </section>
 
 <style>
@@ -435,6 +438,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
     .hero-actions { order: 3; }
     .hero-cta-sub { order: 4; }
     .hero-trust { order: 4; }
+    .hero-eco { order: 4; }
     .hero-shot { order: 5; margin-top: 28px; }
   }
 
@@ -494,4 +498,5 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
   }
   .hero-trust li { font-size: 12px; color: var(--txt2); font-family: var(--mono); display: flex; gap: 6px; }
   .hero-trust li::before { content: '✓'; color: var(--green); }
+  .hero-eco { display: flex; justify-content: center; margin-top: 18px; position: relative; z-index: 1; }
 </style>

@@ -30,3 +30,9 @@ export const FEATURES = {
 // ID de la propriété GA4 (ex. G-XXXXXXXXXX), injecté au build. Absent → ni bandeau
 // cookies ni GA4 : sans traceur, aucun consentement à demander.
 export const GA_ID: string = import.meta.env.PUBLIC_GA_ID ?? '';
+
+// Lien d'affiliation NinjaTrader, porté par le wordmark (footer + bloc de confiance de / et
+// /prop-firm). Lien unique fourni par NinjaTrader (porte le tracking vendeur) : ne pas le
+// modifier. Toujours avec rel="noopener sponsored nofollow", target="_blank" et la mention
+// « Lien affilié » visible à côté du logo (divulgation complète sur /disclaimer).
+export const NINJATRADER_AFFILIATE_URL = 'https://ninjatraderdomesticvendor.sjv.io/DWZgnd';

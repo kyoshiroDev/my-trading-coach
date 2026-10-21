@@ -23,6 +23,9 @@ import { GA_ID } from '../config';
     </div>
   </div>
 )}
+{/* Réserve en bas de page la hauteur du bandeau tant qu'il est affiché : il ne masque jamais
+    le contenu, le pied de page (et le wordmark NinjaTrader) reste lisible en entier. */}
+{GA_ID && <div id="cookie-consent-spacer" class="cc-spacer" aria-hidden="true" hidden></div>}
 
 <script>
   // RGPD : ce bandeau ne fait que recueillir le choix. Le chargement de GA4 vit dans
@@ -31,9 +34,20 @@ import { GA_ID } from '../config';
   import { readConsent, saveConsent, type Consent } from '../lib/consent';
 
   const banner = document.getElementById('cookie-consent');
+  const spacer = document.getElementById('cookie-consent-spacer');
 
-  function show() { banner?.removeAttribute('hidden'); }
-  function hide() { banner?.setAttribute('hidden', ''); }
+  // Hauteur mesurée (pas en dur) : elle change avec la largeur (texte sur 1 à 3 lignes,
+  // bandeau compact en mobile) ; le ResizeObserver la recalcule au redimensionnement.
+  function syncSpacer() {
+    if (!banner || !spacer) return;
+    const visible = !banner.hidden;
+    spacer.hidden = !visible;
+    spacer.style.setProperty('--cc-h', visible ? `${banner.offsetHeight}px` : '0px');
+  }
+  if (banner) new ResizeObserver(syncSpacer).observe(banner);
+
+  function show() { banner?.removeAttribute('hidden'); syncSpacer(); }
+  function hide() { banner?.setAttribute('hidden', ''); syncSpacer(); }
 
   if (banner) {
     if (readConsent() === null) show();
@@ -73,6 +87,9 @@ import { GA_ID } from '../config';
     font-family: var(--body);
   }
   .cc[hidden] { display: none; }
+
+  .cc-spacer { height: var(--cc-h, 0px); }
+  .cc-spacer[hidden] { display: none; }
 
   .cc-txt {
     font-size: 13px;
