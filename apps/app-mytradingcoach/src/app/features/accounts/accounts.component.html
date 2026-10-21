@@ -118,7 +118,7 @@
         <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
              [class.is-failed]="a.status === 'FAILED'"
-             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker || a.type === 'FUNDED'"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
@@ -473,6 +473,8 @@
                       } @else if (pg.cycleSource === 'broker') {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, détecté chez le broker
                         @if (pg.payoutsReceived) { ({{ pg.payoutsReceived }} payout{{ pg.payoutsReceived > 1 ? 's' : '' }} reçu{{ pg.payoutsReceived > 1 ? 's' : '' }}) }.
+                      } @else if (pg.cycleSource === 'manual') {
+                        Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, saisi dans la liste des payouts.
                       } @else if (pg.cycleAfter) {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}.
                       } @else {
@@ -492,6 +494,13 @@
               } @else {
                 <span class="tv-text">Chargement des règles du plan…</span>
               }
+            </div>
+          }
+
+          <!-- Payouts d'un compte funded (au dépli) : détectés chez le broker, ou saisis s'il n'est pas connecté. -->
+          @if (a.type === 'FUNDED' && expandedId() === a.id) {
+            <div class="acct-sub acct-payouts" [attr.data-testid]="'account-payouts-' + a.id">
+              <mtc-account-payouts [accountId]="a.id" [currency]="a.currency" [connected]="!!conn" (changed)="onPayoutsChanged()" />
             </div>
           }
 

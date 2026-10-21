@@ -160,3 +160,34 @@ describe('Mes comptes · compte perdu', () => {
   });
 });
 
+describe('Mes comptes · payouts d\'un compte funded', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('bloc des payouts au dépli d\'un compte funded seulement, saisie si non connecté', () => {
+    const { q, cmp, fixture } = setup([
+      acct('f1', 'Lucid Flex 50K', { type: 'FUNDED' }),
+      acct('e1', 'Apex 50K', { type: 'EVALUATION' }),
+    ]);
+    expect(q('account-payouts-f1')).toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    const block = q('account-payouts-f1')!;
+    expect(block.querySelector('mtc-account-payouts')).not.toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('e1');
+    fixture.detectChanges();
+    expect(q('account-payouts-e1')).toBeNull();
+  });
+
+  it('cycle démarré par un payout saisi : note « saisi dans la liste des payouts »', () => {
+    const funded = acct('f1', 'Lucid Flex 50K', { type: 'FUNDED', propFirmPlanId: 'lucid-flex-50k' });
+    funded.metrics = { ...funded.metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, requirements: [], cycleAfter: '2026-10-05', cycleSource: 'manual',
+      payoutsReceived: 1, lastPayout: null, unconfirmed: false,
+    } };
+    const { q, cmp, fixture } = setup([funded]);
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    expect(q('account-progress-f1')!.textContent).toContain('Cycle compté depuis ton payout du 05/10, saisi dans la liste des payouts.');
+  });
+});
+

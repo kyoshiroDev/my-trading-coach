@@ -551,7 +551,8 @@ describe('AccountsService', () => {
       prisma.brokerPayout.updateMany.mockResolvedValue({ count: 1 });
       await expect(svc.dismissPayout('u1', 'a1', 'p1')).resolves.toEqual({ dismissed: true });
       expect(prisma.brokerPayout.updateMany).toHaveBeenCalledWith({
-        where: { id: 'p1', accountId: 'a1', dismissedAt: null }, data: { dismissedAt: expect.any(Date) },
+        // Un payout saisi à la main se supprime, il ne s'écarte pas.
+        where: { id: 'p1', accountId: 'a1', dismissedAt: null, changeType: { not: 'manual' } }, data: { dismissedAt: expect.any(Date) },
       });
     });
 

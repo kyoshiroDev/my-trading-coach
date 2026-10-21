@@ -14,6 +14,7 @@ import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { CreatePayoutDto } from './dto/create-payout.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
 
 // Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
@@ -83,6 +84,24 @@ export class AccountsController {
   }
 
   /** « Ce n'était pas un payout » : écarte un payout détecté chez le broker du cycle de payout. */
+  /** Payouts du compte (détectés chez le broker et saisis à la main), du plus récent au plus ancien. */
+  @Get(':id/payouts')
+  payouts(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.accounts.listPayouts(user.id, id);
+  }
+
+  /** Payout saisi à la main : compte funded sans connexion broker (409 si connecté). */
+  @Post(':id/payouts')
+  addPayout(@CurrentUser() user: { id: string }, @Param('id') id: string, @Body() dto: CreatePayoutDto) {
+    return this.accounts.addManualPayout(user.id, id, dto);
+  }
+
+  /** Supprime un payout saisi à la main (un payout détecté chez le broker s'écarte avec `dismiss`). */
+  @Delete(':id/payouts/:payoutId')
+  removePayout(@CurrentUser() user: { id: string }, @Param('id') id: string, @Param('payoutId') payoutId: string) {
+    return this.accounts.removeManualPayout(user.id, id, payoutId);
+  }
+
   @Post(':id/payouts/:payoutId/dismiss')
   dismissPayout(
     @CurrentUser() user: { id: string },
