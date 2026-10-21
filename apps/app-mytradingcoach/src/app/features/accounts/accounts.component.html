@@ -225,7 +225,9 @@
               <div class="sync-head">
               @if (!conn) {
                 <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">Non connecté</span>
-                @if (a.status !== 'ARCHIVED') {
+                <!-- Connexion proposée aux seuls comptes ACTIVE : un compte échoué, validé ou archivé n'a
+                     plus de trades à synchroniser. -->
+                @if (canConnect(a)) {
                   <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
                           [attr.data-testid]="'tradovate-connect-' + a.id">
                     <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Connecter <span class="nt-word">Tradovate</span>
@@ -233,10 +235,12 @@
                 }
               } @else if (conn.status === 'NEEDS_RECONNECT') {
                 <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">À reconnecter</span>
-                <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
-                        [attr.data-testid]="'tradovate-reconnect-' + a.id">
-                  <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Reconnecter
-                </button>
+                @if (canConnect(a)) {
+                  <button class="tv-btn connect sm" type="button" (click)="openTradovateConnect(a)"
+                          [attr.data-testid]="'tradovate-reconnect-' + a.id">
+                    <svg [lucideIcon]="LinkIcon" [size]="12"></svg> Reconnecter
+                  </button>
+                }
               } @else if (confirmDisconnectId() === a.id) {
                 <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
                 <!-- Des trades importés : le choix garder / supprimer s'affiche en sous-ligne. -->
