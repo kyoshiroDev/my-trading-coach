@@ -76,6 +76,7 @@ const mockPrisma = {
   },
   // Compte cible pour la note d'exécution (capital) — null par défaut (critère risque ignoré).
   tradingAccount: {
+    groupBy: vi.fn().mockResolvedValue([]),
     findUnique: vi.fn().mockResolvedValue(null),
   },
   // Inscription ancienne par défaut → les trades de test (datés récemment) sont post-inscription.
@@ -812,7 +813,10 @@ describe('TradesService', () => {
 
       const r = await service.computeJournalStats('user-123', {});
 
-      expect(r).toEqual({ totalTrades: 3, winRate: (2 / 3) * 100, pnlBrut: 250, fees: 7, pnlNet: 243, bestTrade: 200, worstTrade: -52 });
+      expect(r).toEqual({
+        totalTrades: 3, winRate: (2 / 3) * 100, pnlBrut: 250, fees: 7, pnlNet: 243, bestTrade: 200, worstTrade: -52,
+        excludedAccounts: { failed: 0, archived: 0 },
+      });
     });
 
     it('ensemble vide → tout à 0 (pas de best/worst aberrant)', async () => {
@@ -820,7 +824,10 @@ describe('TradesService', () => {
 
       const r = await service.computeJournalStats('user-123', {});
 
-      expect(r).toEqual({ totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0 });
+      expect(r).toEqual({
+        totalTrades: 0, winRate: 0, pnlBrut: 0, fees: 0, pnlNet: 0, bestTrade: 0, worstTrade: 0,
+        excludedAccounts: { failed: 0, archived: 0 },
+      });
     });
 
     it('répercute les filtres (date/side/setup) en paramètres liés, et ne charge plus les trades', async () => {
@@ -841,6 +848,30 @@ describe('TradesService', () => {
       expect(text).toContain('t."tradedAt" >= $');
       expect(values).toEqual(expect.arrayContaining(['user-123', TradeSide.LONG, 'setup-1', new Date('2026-06-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.000Z')]));
       expect(mockPrisma.trade.findMany).not.toHaveBeenCalled();
+    });
+
+    // Compte perdu : en-tête du journal hors comptes échoués et archivés, avec leur nombre.
+    it('par défaut : comptes échoués et archivés exclus, et comptés', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ total: 0 }]);
+      mockPrisma.tradingAccount.groupBy.mockResolvedValueOnce([
+        { status: 'FAILED', _count: { _all: 2 } }, { status: 'ARCHIVED', _count: { _all: 1 } },
+      ]);
+      const r = await service.computeJournalStats('user-123', {});
+      expect(sqlOf().text).toContain('NOT EXISTS ( SELECT 1 FROM "TradingAccount" ia');
+      expect(sqlOf().values).toEqual(expect.arrayContaining(['FAILED', 'ARCHIVED']));
+      expect(r.excludedAccounts).toEqual({ failed: 2, archived: 1 });
+    });
+
+    it.each([
+      ['includeInactive', { includeInactive: true }],
+      ['compte précis', { accountId: 'acc-failed' }],
+    ])('%s : aucun filtre de statut, aucun compte exclu', async (_l, filters) => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ total: 0 }]);
+      mockPrisma.tradingAccount.groupBy.mockClear();
+      const r = await service.computeJournalStats('user-123', filters as never);
+      expect(sqlOf().text).not.toContain('"TradingAccount"');
+      expect(mockPrisma.tradingAccount.groupBy).not.toHaveBeenCalled();
+      expect(r.excludedAccounts).toEqual({ failed: 0, archived: 0 });
     });
 
     it('l’étalon summarizeJournal garde ses règles (ouverts comptés, frais en valeur absolue)', () => {

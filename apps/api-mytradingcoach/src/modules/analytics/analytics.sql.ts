@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { roundCents } from '@mtc/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
+import { excludesInactiveAccounts, inactiveAccountsTradeSql } from '../accounts/account-status-scope';
 
 /**
  * Agrégats des statistiques calculés EN SQL (SCA-B2-01). Avant, chaque calcul chargeait TOUS les
@@ -32,6 +33,8 @@ export interface TradeFilter {
   from?: Date; // tradedAt >= from
   to?: Date; // tradedAt <= to
   before?: Date; // tradedAt < before
+  /** « Tous les comptes » : réinclut les comptes échoués et archivés (exclus par défaut). */
+  includeInactive?: boolean;
 }
 
 function where(f: TradeFilter): Prisma.Sql {
@@ -40,6 +43,8 @@ function where(f: TradeFilter): Prisma.Sql {
   if (f.from) parts.push(Prisma.sql`t."tradedAt" >= ${f.from}`);
   if (f.to) parts.push(Prisma.sql`t."tradedAt" <= ${f.to}`);
   if (f.before) parts.push(Prisma.sql`t."tradedAt" < ${f.before}`);
+  // Compte perdu : échoués et archivés hors des agrégats « tous les comptes » (account-status-scope).
+  if (excludesInactiveAccounts(f)) parts.push(inactiveAccountsTradeSql(f));
   return Prisma.join(parts, ' AND ');
 }
 
@@ -169,7 +174,8 @@ export async function cumulativeByTrade(
  * P&L total et win rate des trades clôturés d'un utilisateur, EN BASE (SCA-B2-04), aux règles de
  * `computeTradeStats` : net arrondi au centime, gagnant si net > 0, perdant si < 0, BE exclus du
  * win rate, total arrondi au centime. Pour les fiches utilisateur de l'admin, qui chargeaient
- * tous les trades pour ces deux chiffres. Équivalence : `closed-trade-stats.int-spec.ts`.
+ * tous les trades pour ces deux chiffres. Équivalence : `closed-trade-stats.int-spec.ts`. Vue admin de
+ * l'activité : TOUS les comptes, échoués et archivés compris.
  */
 export async function closedTradeStats(
   prisma: PrismaService,
@@ -180,7 +186,7 @@ export async function closedTradeStats(
            count(*) FILTER (WHERE ${NET} > 0)::int AS "wins",
            count(*) FILTER (WHERE ${NET} < 0)::int AS "losses",
            coalesce(sum(${NET}), 0)::float8 AS "pnl"
-    FROM "Trade" t WHERE ${where({ userId })}`;
+    FROM "Trade" t WHERE ${where({ userId, includeInactive: true })}`;
   const decisive = r.wins + r.losses;
   return {
     closed: r.closed,

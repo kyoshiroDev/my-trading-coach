@@ -70,6 +70,8 @@ export class TiltAlertsService implements OnModuleDestroy {
     });
     if (!account) return;
 
+    // Historique du compte synchronisé lui-même, quel que soit son statut : le tilt se mesure sur ce
+    // compte, pas sur les statistiques « tous les comptes » (pas de filtre compte perdu ici).
     const rows = await this.prisma.trade.findMany({
       where: { userId, accountId, pnl: { not: null } },
       orderBy: { tradedAt: 'desc' },
