@@ -18,6 +18,12 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - **Prix affichés** : `apps/app-mytradingcoach/src/app/core/constants/pricing.const.ts` (`PRICING`, `ACCOUNT_LIMITS`) **+** landing `apps/landing-mytradingcoach/src/components/Pricing.astro`. Les VALEURS viennent de `libs/shared/src/pricing.ts` (`@mtc/shared`) ; les `pricing.const.ts` de l'API (`PRICING_EUR`, `TRIAL_PERIOD_DAYS`, MRR) et de l'admin en dérivent. La lib + la landing + le JSON-LD (`Base.astro`) + les CGU DOIVENT afficher les mêmes montants.
 - **Facturation** : price IDs Stripe en env — `STRIPE_PREMIUM_PRICE_MONTHLY_V2` / `_YEARLY_V2` (les vars `STRIPE_STARTER_*` ont été supprimées). ⚠️ Les **montants réels vivent dans Stripe** (pas en dur backend) → vérifier que `_V2` = **49€ / 490€**.
 - **Quotas comptes** : `apps/api-mytradingcoach/src/modules/accounts/accounts.service.ts` (`FREE_ACCOUNT_LIMIT` 1 · Premium `null` = illimité). Miroir front `ACCOUNT_LIMITS` (`free: 1`, `premium: null`).
+  Seuls les comptes **ACTIVE** consomment le quota : Validé, Échoué et Archivé libèrent la place.
+  **Compte perdu (#677, #681)** : fonctionnalité **non gatée** (tous plans). La nouvelle tentative
+  (`POST /accounts/:id/retry`) applique le même quota qu'une création : un FREE qui a marqué son seul
+  compte comme échoué peut repartir, puisque l'échoué a libéré la place. Les comptes échoués et
+  archivés sortent des statistiques « tous les comptes » quel que soit le plan (`includeInactive`
+  pour les réinclure) ; la règle ne change rien au gating des analytics Premium.
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
 - **Essai** : `TRIAL_PERIOD_DAYS = 30` (api pricing.const). Accordé **uniquement** sur le prix **mensuel** ET si `!user.trialUsed`. L'annuel est facturé immédiatement, sans essai.
 
