@@ -1,0 +1,19 @@
+@for (a of accounts(); track a.id) {
+  <section class="fr-alert" role="alert" [attr.aria-labelledby]="'fr-lbl-' + a.id" [attr.data-testid]="'floor-banner-' + a.id">
+    <div class="fr-lbl" [id]="'fr-lbl-' + a.id">PLANCHER ATTEINT</div>
+    <p class="fr-text">
+      <b>{{ a.label }}</b> : d'après tes trades enregistrés, le plancher estimé est atteint. Vérifie chez ta firm.
+      {{ endedLabel(a) }}, marque le compte comme échoué : il sortira de tes statistiques.
+    </p>
+    <div class="fr-actions">
+      <button class="fr-btn pri" type="button" (click)="flow.openChoice(a.id)" [attr.data-testid]="'floor-mark-failed-' + a.id">
+        Marquer comme échoué
+      </button>
+      <button class="fr-btn ghost" type="button" (click)="snooze(a)" [attr.data-testid]="'floor-snooze-' + a.id">
+        Pas maintenant
+      </button>
+    </div>
+    <p class="fr-note">Estimation MyTradingCoach, pas le calcul officiel de ta firm.
+      Tant que le compte n'est pas marqué comme échoué, ses trades restent dans les chiffres.</p>
+  </section>
+}

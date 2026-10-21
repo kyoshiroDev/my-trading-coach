@@ -69,6 +69,8 @@ import { DonutChartComponent } from './panels/donut-chart/donut-chart.component'
 import { RecentTradesTableComponent } from './panels/recent-trades-table/recent-trades-table.component';
 import { MoneyPipe } from '../../shared/pipes';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reached-banner.component';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -95,6 +97,8 @@ import { ErrorStateComponent } from '@mtc/front-ui';
     RecentTradesTableComponent,
     MoneyPipe,
     MixedCurrencyNoticeComponent,
+    FloorReachedBannerComponent,
+    InactiveAccountsToggleComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.component.css',
@@ -177,11 +181,11 @@ export class DashboardComponent {
     }
   });
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
-  // URL des resources → tout se refetch automatiquement au changement de compte.
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
+  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → tout se refetch
+  // automatiquement au changement de compte ou d'interrupteur.
   private accQuery(): string {
-    const id = this.selectedAccount.accountParam();
-    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+    return this.selectedAccount.statsQuery();
   }
 
   // Query compte + bornes de période (KPIs / équité / P&L par jour). Lu dans les URL des
@@ -189,8 +193,7 @@ export class DashboardComponent {
   private rangeQuery(): string {
     const { from, to } = this.periodRange();
     const parts: string[] = [];
-    const id = this.selectedAccount.accountParam();
-    if (id) parts.push(`accountId=${encodeURIComponent(id)}`);
+    for (const [k, v] of Object.entries(this.selectedAccount.statsParams())) parts.push(`${k}=${encodeURIComponent(v)}`);
     if (from) parts.push(`from=${from.toISOString()}`);
     parts.push(`to=${to.toISOString()}`);
     return `?${parts.join('&')}`;
@@ -258,8 +261,8 @@ export class DashboardComponent {
    * Capital de base, source unique scopée au compte sélectionné : miroir EXACT
    * de la page Mes comptes :
    * - compte sélectionné → son `metrics.startingBalance` ;
-   * - « Tous les comptes » → somme des `startingBalance` des comptes non archivés
-   *   (cf. `trackedCapital` dans accounts.component) ;
+   * - « Tous les comptes » → somme des `startingBalance` des comptes qui entrent dans les
+   *   chiffres (ni échoués ni archivés, sauf interrupteur ; cf. `trackedCapital` de Mes comptes) ;
    * - comptes non chargés → fallback sur le capital du profil user.
    */
   protected readonly baseCapital = computed(() => {
@@ -268,7 +271,7 @@ export class DashboardComponent {
     }
     const account = this.selectedAccount.selected();
     if (account) return account.metrics.startingBalance ?? 0;
-    const active = this.selectedAccount.accounts().filter((a) => a.status !== 'ARCHIVED');
+    const active = this.selectedAccount.aggregateAccounts();
     // AUCUN compte (l'utilisateur a passé l'ajout de trade : le compte n'est créé
     // qu'au premier trade) → le capital déclaré à l'onboarding faisait place à
     // « $0.00 », comme si sa saisie avait été perdue. On retombe donc sur le profil,
@@ -285,7 +288,7 @@ export class DashboardComponent {
    */
   protected readonly currentCapital = computed(() => {
     const current = this.selectedAccount.loaded()
-      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance')
+      ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), 'currentBalance', this.selectedAccount.includeInactive())
       : null;
     return current ?? this.baseCapital() + (this.summary()?.totalPnl ?? 0);
   });
@@ -368,6 +371,8 @@ export class DashboardComponent {
 
   private readonly knownTradesCount = signal(-1);
   private readonly knownAccountsCount = signal(-1);
+  /** Comptes exclus au dernier passage (`échoués:archivés`), null avant le premier chargement. */
+  private knownExcluded: string | null = null;
 
   constructor() {
     // Trades Tradovate poussés en direct : mêmes rechargements qu'après un import.
@@ -405,6 +410,17 @@ export class DashboardComponent {
       const known = untracked(() => this.knownAccountsCount());
       if (known !== -1 && n !== known) this.reloadAnalytics();
       this.knownAccountsCount.set(n);
+    });
+
+    // Compte marqué échoué, archivé ou supprimé : la liste a la même taille mais les chiffres
+    // « tous les comptes » changent (l'API a vidé son cache). Même garde que ci-dessus.
+    effect(() => {
+      if (!this.selectedAccount.loaded()) return;
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${e.failed}:${e.archived}`;
+      const known = this.knownExcluded;
+      if (known !== null && key !== known) this.reloadAnalytics();
+      this.knownExcluded = key;
     });
 
     // Fenêtre par défaut CONSCIENTE DES DONNÉES.

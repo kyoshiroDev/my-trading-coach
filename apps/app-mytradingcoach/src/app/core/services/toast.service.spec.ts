@@ -137,4 +137,18 @@ describe('ToastService — file, durées, pause', () => {
       expect(svc.visible()).toHaveLength(1);
     });
   });
+
+  it('action : le bouton lance l\'action puis ferme le toast', () => {
+    const run = vi.fn();
+    const id = toast.error('Plancher atteint', { duration: null, action: { label: 'Marquer comme échoué', run } });
+    expect(toast.visible()[0].action?.label).toBe('Marquer comme échoué');
+    toast.runAction(id);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(toast.visible()).toHaveLength(0);
+  });
+
+  it('sans action : pas de bouton', () => {
+    toast.info('Lien copié');
+    expect(toast.visible()[0].action).toBeUndefined();
+  });
 });

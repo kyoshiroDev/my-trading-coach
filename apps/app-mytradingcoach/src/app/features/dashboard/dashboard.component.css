@@ -283,3 +283,9 @@
   .mtc-eq-tabs button { position: relative; }
   .mtc-eq-tabs button::before { content: ''; position: absolute; inset: -11px 0; }
 }
+
+/* Compte perdu : bandeau « Plancher atteint » et ligne des comptes exclus (masqués quand vides). */
+mtc-floor-reached-banner,
+mtc-inactive-accounts-toggle {
+  margin-bottom: 16px;
+}

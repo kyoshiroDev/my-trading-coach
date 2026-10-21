@@ -1,4 +1,5 @@
 import { EquityPayout, EquityPoint, PeriodBefore } from '../api/analytics.api';
+import { countsInAggregate } from '../utils/account-status.util';
 
 /**
  * Ancrage d'une courbe sur la période affichée (fonctions pures, testées dans
@@ -98,15 +99,17 @@ interface BalanceAccount {
 
 /**
  * Solde de la vue courante, miroir du sélecteur de compte et de Mes comptes : le compte
- * sélectionné, sinon la somme des comptes non archivés. `null` sans compte → l'appelant décide
- * du repli (capital du profil). `currentBalance` = celui du broker pour un compte connecté.
+ * sélectionné, sinon la somme des comptes qui entrent dans les chiffres (ni échoués ni archivés,
+ * sauf `includeInactive`). `null` sans compte → l'appelant décide du repli (capital du profil).
+ * `currentBalance` = celui du broker pour un compte connecté.
  */
 export function viewBalance(
   selected: BalanceAccount | null,
   accounts: BalanceAccount[],
   key: 'startingBalance' | 'currentBalance',
+  includeInactive = false,
 ): number | null {
   if (selected) return selected.metrics[key] ?? 0;
-  const active = accounts.filter((a) => a.status !== 'ARCHIVED');
+  const active = accounts.filter((a) => countsInAggregate(a.status, includeInactive));
   return active.length ? active.reduce((s, a) => s + (a.metrics[key] ?? 0), 0) : null;
 }

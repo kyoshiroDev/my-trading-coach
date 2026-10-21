@@ -20,7 +20,11 @@
         <span class="acct-dot" [style.background]="dotColor(sel)" [style.boxShadow]="'0 0 8px ' + dotColor(sel)"></span>
         <span class="acct-txt">
           <span class="acct-name">{{ sel.label }}</span>
-          <span class="acct-tag">{{ tagFor(sel) }}</span>
+          <span class="acct-tag">{{ tagFor(sel) }}
+            @if (isInactive(sel.status)) {
+              <span class="status-badge {{ statusBadgeClass(sel.status) }}">{{ statusLabel(sel.status) }}</span>
+            }
+          </span>
         </span>
         <span class="acct-bal">{{ balanceFor(sel) }}</span>
       }
@@ -51,7 +55,7 @@
       <div class="menu-sep"></div>
       <div class="menu-lbl">Comptes</div>
 
-      @for (a of store.accounts(); track a.id) {
+      @for (a of countedAccounts(); track a.id) {
         <button
           type="button"
           class="opt"
@@ -69,6 +73,30 @@
           <span class="opt-bal">{{ balanceFor(a) }}</span>
           <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
         </button>
+      }
+
+      @if (inactiveAccounts().length) {
+        <div class="menu-sep"></div>
+        <div class="menu-lbl">Hors statistiques</div>
+        @for (a of inactiveAccounts(); track a.id) {
+          <button
+            type="button"
+            class="opt"
+            role="option"
+            [attr.data-testid]="'account-option-' + a.id"
+            [class.active]="store.selectedAccountId() === a.id"
+            [attr.aria-selected]="store.selectedAccountId() === a.id"
+            (click)="pick(a.id)"
+          >
+            <span class="acct-dot" [style.background]="dotColor(a)"></span>
+            <span class="opt-txt">
+              <span class="opt-name">{{ a.label }}</span>
+              <span class="opt-tag">{{ tagFor(a) }} <span class="status-badge {{ statusBadgeClass(a.status) }}">{{ statusLabel(a.status) }}</span></span>
+            </span>
+            <span class="opt-bal">{{ balanceFor(a) }}</span>
+            <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
+          </button>
+        }
       }
     </div>
   </div>

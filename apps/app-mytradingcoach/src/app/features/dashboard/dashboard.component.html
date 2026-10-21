@@ -21,6 +21,8 @@
   @if (loadError()) {
     <mtc-error-state (retry)="reload()" />
   }
+  <!-- Compte perdu : plancher estimé atteint (aucun statut changé sans l'utilisateur). -->
+  <mtc-floor-reached-banner />
   @if (accountReallyEmpty()) {
     <div class="firstrun-hero">
       <div class="firstrun-text">
@@ -69,6 +71,8 @@
   }
 
   <!-- Devises mêlées en « Tous les comptes » : pas de totaux, l'historique reste. -->
+  <!-- Comptes échoués et archivés hors des chiffres, avec l'interrupteur pour les réinclure. -->
+  <mtc-inactive-accounts-toggle />
   @if (money.mixed()) {
     <mtc-mixed-currency-notice />
   } @else {

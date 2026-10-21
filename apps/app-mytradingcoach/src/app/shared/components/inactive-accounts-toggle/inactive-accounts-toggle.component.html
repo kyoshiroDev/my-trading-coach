@@ -1,0 +1,14 @@
+@if (visible()) {
+  <div class="ia-line" data-testid="excluded-accounts-line" aria-live="polite">
+    @if (!store.includeInactive()) {
+      <span class="ia-count" aria-hidden="true">{{ excludedTotal() }}</span>
+    }
+    <span>{{ line() }}</span>
+  </div>
+  <label class="ia-switch">
+    <input type="checkbox" role="switch" [checked]="store.includeInactive()" (change)="onToggle($event)"
+           data-testid="include-inactive-toggle" />
+    <span class="ia-track" aria-hidden="true"></span>
+    <span class="ia-label">Inclure les comptes échoués et archivés</span>
+  </label>
+}

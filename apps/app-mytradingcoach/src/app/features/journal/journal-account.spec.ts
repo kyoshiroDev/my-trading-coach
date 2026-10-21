@@ -7,6 +7,7 @@ import { JournalComponent } from './journal.component';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { CreateTradeDto } from '../../core/api/trades.api';
 import { environment } from '@app/environments/environment';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 const DTO: CreateTradeDto = {
   asset: 'BTC/USDT', side: 'LONG', emotion: 'NEUTRAL',
@@ -19,7 +20,7 @@ function setup(accountParam: string | undefined) {
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
-      { provide: SelectedAccountStore, useValue: { accountParam: () => accountParam } },
+      { provide: SelectedAccountStore, useValue: { ...statsScopeStub(), accountParam: () => accountParam } },
     ],
   });
   TestBed.overrideComponent(JournalComponent, {

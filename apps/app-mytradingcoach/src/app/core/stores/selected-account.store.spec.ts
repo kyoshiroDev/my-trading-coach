@@ -65,12 +65,65 @@ describe('SelectedAccountStore', () => {
     expect(store.selectedAccountId()).toBe('all');
   });
 
-  it('si le compte sélectionné est archivé → retour à « all » (plus de filtre fantôme)', () => {
+  it('un compte archivé ou échoué reste sélectionnable : ses chiffres restent lisibles', () => {
     localStorage.setItem('mtc.selectedAccount', 'a1');
-    const { store } = setup({ accounts: [acc('a1', { status: 'ARCHIVED' }), acc('a2')] });
+    const { store } = setup({ accounts: [acc('a1', { status: 'ARCHIVED' }), acc('a2', { status: 'FAILED' })] });
     store.load();
-    expect(store.selectedAccountId()).toBe('all');
-    expect(store.accountParam()).toBeUndefined();
+    expect(store.selectedAccountId()).toBe('a1');
+    expect(store.accountParam()).toBe('a1');
+    store.select('a2');
+    store.load();
+    expect(store.accountParam()).toBe('a2');
+  });
+
+  describe('comptes perdus (échoués et archivés hors des chiffres « tous les comptes »)', () => {
+    const list = () => [
+      acc('act', { status: 'ACTIVE' }),
+      acc('ok', { status: 'PASSED' }),
+      acc('ko', { status: 'FAILED' }),
+      acc('arc', { status: 'ARCHIVED' }),
+    ];
+
+    it('compte les comptes exclus par statut', () => {
+      const { store } = setup({ accounts: list() });
+      store.load();
+      expect(store.excludedAccounts()).toEqual({ failed: 1, archived: 1 });
+    });
+
+    it('agrégé : actifs et validés seulement, tous avec l\'interrupteur', () => {
+      const { store } = setup({ accounts: list() });
+      store.load();
+      expect(store.aggregateAccounts().map((a) => a.id)).toEqual(['act', 'ok']);
+      store.setIncludeInactive(true);
+      expect(store.aggregateAccounts().map((a) => a.id)).toEqual(['act', 'ok', 'ko', 'arc']);
+    });
+
+    it('paramètres des statistiques : rien par défaut, includeInactive avec l\'interrupteur', () => {
+      const { store } = setup({ accounts: list() });
+      store.load();
+      expect(store.statsParams()).toEqual({});
+      expect(store.statsQuery()).toBe('');
+      store.setIncludeInactive(true);
+      expect(store.statsParams()).toEqual({ includeInactive: 'true' });
+      expect(store.statsQuery()).toBe('?includeInactive=true');
+    });
+
+    it('compte précis : son id seul, l\'interrupteur ne joue pas (même échoué)', () => {
+      const { store } = setup({ accounts: list() });
+      store.load();
+      store.setIncludeInactive(true);
+      store.select('ko');
+      expect(store.inactiveIncluded()).toBe(false);
+      expect(store.statsParams()).toEqual({ accountId: 'ko' });
+      expect(store.statsQuery()).toBe('?accountId=ko');
+    });
+
+    it('reset() remet l\'interrupteur à zéro (déconnexion)', () => {
+      const { store } = setup({ accounts: list() });
+      store.setIncludeInactive(true);
+      store.reset();
+      expect(store.includeInactive()).toBe(false);
+    });
   });
 
 });

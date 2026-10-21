@@ -23,6 +23,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 interface TestAccount {
   id: string;
@@ -57,6 +58,7 @@ function setup(opts: { startingCapital: number; accounts: TestAccount[]; loaded?
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal(opts.accounts),
           activeAccounts: signal(opts.accounts.filter((a) => a.status === 'ACTIVE')),
           accountParam: () => undefined,

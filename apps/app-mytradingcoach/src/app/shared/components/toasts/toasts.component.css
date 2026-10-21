@@ -76,8 +76,26 @@
 .toast-bar.paused { animation-play-state: paused; }
 
 .toast-ic { color: var(--tc); flex: 0 0 auto; margin-top: 1px; }
-.toast-msg {
+.toast-body {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.toast-action {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--cyan);
+  background: var(--cyan);
+  color: var(--bg);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.toast-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.toast-msg {
   min-width: 0;
   margin: 0;
   font-size: 13px;

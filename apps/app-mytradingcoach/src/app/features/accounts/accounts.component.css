@@ -612,3 +612,57 @@
   .acct-expand::before,
   .acct-menu::before { content: ''; position: absolute; inset: -12px; }
 }
+
+/* ── Compte perdu (maquette compte perdu, écran 3) ─────────────────────────── */
+mtc-floor-reached-banner { margin-bottom: 16px; }
+
+.acct-meta .status-badge { margin-left: 2px; }
+
+.acct-failed { justify-content: space-between; }
+.acct-failed-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.lost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* cible tactile minimale, aussi sur ordinateur (maquette : 36 px) */
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-3);
+  color: var(--text);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.lost-btn.pri { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+.lost-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.lost-btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* Section repliée des comptes archivés, en bas du tableau. */
+.acct-archived { border-top: 1px solid var(--border); }
+.acct-archived-sum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  list-style: none;
+  cursor: pointer;
+  font: 600 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+.acct-archived-sum::-webkit-details-marker { display: none; }
+.acct-archived-sum:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; border-radius: 8px; }
+.acct-archived-sum svg.lucide { transform: rotate(-90deg); transition: transform 0.15s; }
+.acct-archived[open] .acct-archived-sum svg.lucide { transform: none; }
+.acct-archived .acct-block:first-of-type { border-top: 1px solid var(--border); }
+
+@media (max-width: 767px) {
+  .acct-failed-actions { width: 100%; }
+  .acct-failed-actions .lost-btn.pri { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acct-archived-sum svg.lucide { transition: none; }
+}

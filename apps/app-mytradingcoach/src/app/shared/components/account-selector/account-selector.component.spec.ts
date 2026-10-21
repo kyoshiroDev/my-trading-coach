@@ -4,6 +4,8 @@ import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { AccountSelectorComponent } from './account-selector.component';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradingAccount } from '@app/core/api/accounts.api';
+import { statsScopeStub } from '@app/core/stores/selected-account.store.stub';
+import TEMPLATE from './account-selector.component.html?raw';
 
 const acc = (over: Partial<TradingAccount>): TradingAccount => over as TradingAccount;
 
@@ -100,5 +102,55 @@ describe('AccountSelectorComponent', () => {
     // Cible externe (le body, qui n'est pas contenu dans le host) → ferme.
     cmp.onDocClick({ target: document.body } as unknown as MouseEvent);
     expect(cmp.open()).toBe(false);
+  });
+});
+
+describe('AccountSelectorComponent · comptes perdus (vrai template)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  const full = (id: string, status: TradingAccount['status'], balance: number): TradingAccount =>
+    ({ id, label: id.toUpperCase(), status, type: 'EVALUATION', broker: null, currency: 'USD', metrics: { currentBalance: balance } }) as TradingAccount;
+
+  function render(accounts: TradingAccount[], selectedId: string | 'all' = 'all') {
+    const store = {
+      ...statsScopeStub(),
+      accounts: signal(accounts),
+      selectedAccountId: signal<string | 'all'>(selectedId),
+      selected: signal<TradingAccount | null>(accounts.find((a) => a.id === selectedId) ?? null),
+      displayCurrency: signal('USD'),
+      isLoading: signal(false),
+      loaded: signal(true),
+      select: vi.fn(),
+      load: vi.fn(),
+    };
+    TestBed.configureTestingModule({ providers: [{ provide: SelectedAccountStore, useValue: store }] });
+    TestBed.overrideComponent(AccountSelectorComponent, {
+      set: { template: TEMPLATE, imports: [], styleUrls: [], styleUrl: undefined as unknown as string, schemas: [NO_ERRORS_SCHEMA] },
+    });
+    const fixture = TestBed.createComponent(AccountSelectorComponent);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement, cmp: fixture.componentInstance as any, store };
+  }
+
+  it('comptes échoués et archivés regroupés sous « Hors statistiques », avec leur badge, toujours choisissables', () => {
+    const { el } = render([full('a', 'ACTIVE', 50_000), full('f', 'FAILED', 47_000), full('x', 'ARCHIVED', 24_000)]);
+    const labels = [...el.querySelectorAll('.menu-lbl')].map((n) => n.textContent?.trim());
+    expect(labels).toEqual(['Vue', 'Comptes', 'Hors statistiques']);
+    const failed = el.querySelector('[data-testid="account-option-f"]')!;
+    expect(failed.querySelector('.status-badge')!.textContent).toContain('Échoué');
+    expect(el.querySelector('[data-testid="account-option-x"] .status-badge')!.textContent).toContain('Archivé');
+    expect(el.querySelector('[data-testid="account-option-a"] .status-badge')).toBeNull();
+  });
+
+  it('solde de « Tous les comptes » : sans les comptes perdus, sauf interrupteur', () => {
+    const { cmp, store } = render([full('a', 'ACTIVE', 50_000), full('p', 'PASSED', 10_000), full('f', 'FAILED', 47_000)]);
+    expect(cmp.totalBalance()).toBe(60_000);
+    store.includeInactive.set(true);
+    expect(cmp.totalBalance()).toBe(107_000);
+  });
+
+  it('compte échoué sélectionné : badge « Échoué » sur le déclencheur', () => {
+    const { el } = render([full('a', 'ACTIVE', 50_000), full('f', 'FAILED', 47_000)], 'f');
+    expect(el.querySelector('[data-testid="acct-trigger"] .status-badge')!.textContent).toContain('Échoué');
   });
 });

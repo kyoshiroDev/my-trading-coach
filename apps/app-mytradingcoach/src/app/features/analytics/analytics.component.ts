@@ -34,6 +34,7 @@ import { MoneyService } from '../../core/services/money.service';
 import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/services/chart-series.util';
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -55,6 +56,7 @@ const MOCK_SETUP_BARS = [88, 72, 65, 54, 38] as const;
     PerfChartComponent,
     MixedCurrencyNoticeComponent,
     ErrorStateComponent,
+    InactiveAccountsToggleComponent,
   ],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
@@ -68,11 +70,11 @@ export class AnalyticsComponent {
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
 
-  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé). Lu dans les
-  // URL des resources → refetch auto au changement de compte (pattern dashboard).
+  // Suffixe query du compte sélectionné (multi-comptes). « Tous » → '' (agrégé, sans les comptes
+  // échoués et archivés, sauf interrupteur). Lu dans les URL des resources → refetch auto au
+  // changement de compte ou d'interrupteur (pattern dashboard).
   private accQuery(): string {
-    const id = this.selectedAccount.accountParam();
-    return id ? `?accountId=${encodeURIComponent(id)}` : '';
+    return this.selectedAccount.statsQuery();
   }
 
   protected readonly showPlanModal = signal(false);
@@ -136,7 +138,9 @@ export class AnalyticsComponent {
     const before = this.equityData()?.before;
     const loaded = this.selectedAccount.loaded();
     const view = (key: 'startingBalance' | 'currentBalance') =>
-      loaded ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key) : null;
+      loaded
+        ? viewBalance(this.selectedAccount.selected(), this.selectedAccount.accounts(), key, this.selectedAccount.includeInactive())
+        : null;
     const start = view('startingBalance') ?? this.userStore.startingCapital();
     const current = view('currentBalance');
     if (current === null) return start + (before?.pnl ?? 0) - (before?.payouts ?? 0);
@@ -220,12 +224,26 @@ export class AnalyticsComponent {
     return m;
   });
 
+  /** Comptes exclus au dernier passage (`échoués:archivés`), null avant le premier chargement. */
+  private knownExcluded: string | null = null;
+
   constructor() {
+    // Compte marqué échoué, archivé ou supprimé : les chiffres « tous les comptes » changent sans
+    // que les URL changent (l'API a vidé son cache) → tout recharger. Pas au premier chargement.
+    effect(() => {
+      if (!this.selectedAccount.loaded()) return;
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${e.failed}:${e.archived}`;
+      if (this.knownExcluded !== null && key !== this.knownExcluded) untracked(() => this.reload());
+      this.knownExcluded = key;
+    });
+
     // Recharge les données impératives (courbe equity + calendrier) au changement de
     // compte sélectionné. Les httpResources se refetchent seules via accQuery().
     if (this.userStore.isPremium()) {
       effect(() => {
-        this.selectedAccount.accountParam(); // seule dépendance réactive (selectedAccountId)
+        this.selectedAccount.accountParam(); // dépendances réactives : compte sélectionné,
+        this.selectedAccount.inactiveIncluded(); // interrupteur des comptes perdus
         untracked(() => {
           this.loadEquityCurve();
           this.loadCalendar(this.calYear(), this.calMonth());
@@ -240,8 +258,9 @@ export class AnalyticsComponent {
     this.equityError.set(false);
     const { from, to } = this.equityDateRange();
     const accountId = this.selectedAccount.accountParam();
+    const includeInactive = this.selectedAccount.inactiveIncluded();
     this.analyticsApi
-      .getDailyEquityCurve({ from, to, accountId })
+      .getDailyEquityCurve({ from, to, accountId, includeInactive })
       .pipe(
         finalize(() => this.equityLoading.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -265,7 +284,7 @@ export class AnalyticsComponent {
 
   private loadCalendar(year: number, month: number): void {
     this.calLoading.set(true);
-    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam())
+    this.analyticsApi.getMonthActivity(year, month, this.selectedAccount.accountParam(), this.selectedAccount.inactiveIncluded())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
