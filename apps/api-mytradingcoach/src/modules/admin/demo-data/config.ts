@@ -19,7 +19,8 @@ export const DEMO_WINDOW_DAYS = 42;
 export const DEMO_ACCOUNTS = [
   {
     key: 'apex' as const,
-    label: 'Apex 50k · Éval',
+    // « #2 » : nouvelle tentative du compte échoué « Apex 50k · Éval #1 » (lost-accounts.ts).
+    label: 'Apex 50k · Éval #2',
     broker: 'Apex Trader Funding',
     type: AccountType.EVALUATION,
     accountSize: 50_000,

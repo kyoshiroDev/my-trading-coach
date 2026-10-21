@@ -302,6 +302,30 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
     → analyzeEcoEvents parse le JSON de réponse               ← V2
 ```
 
+## Compte perdu : tests à maintenir (#677, #681)
+
+- **API, règle de statut** : un test par point d'agrégation (compte FAILED ou ARCHIVED exclu par
+  défaut, inclus avec `includeInactive`, compte précis lisible, PASSED compté, cas « tous les comptes
+  échoués » et « sans compte »). Équivalence Prisma ↔ SQL sur vraie base :
+  `accounts/account-status-scope.int-spec.ts`. Suppression définitive : `accounts/account-purge.int-spec.ts`
+  (aucun orphelin, autre utilisateur intact, rollback, statistiques exactes juste après, 400 sans
+  confirmation, 404, démo 403). Toute nouvelle agrégation ajoute son cas à ces tests.
+- **Seed démo** (`demo-seed-idempotence.spec.ts`) : les tests de réalisme (fenêtre de 42 jours, win
+  rate, journées rouges) portent sur `activeTrades(created)`, le jeu de données principal ; les comptes
+  perdus (échoué + sa tentative active, archivé ; volontairement aucun validé) ont leurs propres tests
+  (trades antérieurs à la fenêtre, jours ouvrés, plancher dépassé, aucun PASSED, aucune connexion broker).
+- **App, faux `SelectedAccountStore`** : un composant qui lit `statsQuery()`, `excludedAccounts()`,
+  `aggregateAccounts()`… plante sur un faux store partiel (« is not a function »). Étaler
+  `...statsScopeStub()` (`core/stores/selected-account.store.stub.ts`, tests uniquement) EN PREMIER
+  dans le faux store ; ses propres champs (`accounts`, `accountParam`…) priment.
+- **Vrai template de Mes comptes** (`accounts.component.html?raw`) : la ligne est un `ng-template`
+  rendu par `NgTemplateOutlet`. Une surcharge `imports: [...]` qui l'oublie ne rend AUCUNE ligne,
+  sans erreur (NO_ERRORS_SCHEMA) : ajouter `NgTemplateOutlet` aux imports de la surcharge.
+- Specs de référence : `lost-account-flow.service.spec.ts`, `lost-account-ui.spec.ts` (bandeau et
+  feuilles, vrais templates), `inactive-accounts-toggle.component.spec.ts` (vrai store),
+  `accounts-lost-account.spec.ts`, `journal-lost-account.spec.ts` (template lu par `?raw`, pas
+  `node:fs`), `account-status.util.spec.ts`, `floor-snooze.util.spec.ts`.
+
 ## Tests critiques Angular à maintenir
 
 ```

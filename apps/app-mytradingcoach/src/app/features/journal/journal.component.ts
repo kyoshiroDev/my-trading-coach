@@ -33,6 +33,8 @@ import { ToastService } from '../../core/services/toast.service';
 import { TradovateLiveSocketService } from '../../core/services/tradovate-live-socket.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { DialogDirective } from '@mtc/front-ui';
+import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
+import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
   DatePreset, DayGroup, FilterEmotion, FilterExecution, FilterResult, FilterSide,
   gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange,
@@ -46,7 +48,7 @@ import {
     DatePipe, DecimalPipe, TitleCasePipe, LucideDynamicIcon,
     TopbarComponent, TradeFormComponent, CsvImportComponent,
     PnlColorPipe, PnlFormatPipe, MoneyPipe, EmotionEmojiPipe, InfoTooltipComponent,
-    MixedCurrencyNoticeComponent,
+    MixedCurrencyNoticeComponent, InactiveAccountsToggleComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './journal.component.css',
@@ -71,6 +73,15 @@ export class JournalComponent {
     // (compte, preset/dates, side, setup). Les KPIs viennent de l'agrégat backend
     // → stables, indépendants de « Charger plus ».
     effect(() => this.refreshJournal());
+
+    // Interrupteur « inclure les comptes échoués et archivés », ou compte marqué échoué /
+    // archivé / supprimé : seuls les KPIs changent. Pas au premier passage (déjà chargés).
+    effect(() => {
+      const e = this.selectedAccount.excludedAccounts();
+      const key = `${this.selectedAccount.inactiveIncluded()}:${e.failed}:${e.archived}`;
+      if (this.knownInactiveScope !== null && key !== this.knownInactiveScope) untracked(() => this.refreshStats());
+      this.knownInactiveScope = key;
+    });
 
     // Trades Tradovate poussés en direct : le journal ouvert se met à jour.
     this.tradovateLive.imported$
@@ -143,18 +154,43 @@ export class JournalComponent {
     presetRange(this.datePreset(), this.dateFrom(), this.dateTo()),
   );
 
+  /**
+   * Filtres des KPIs : ceux de la liste, plus l'interrupteur des comptes perdus. Les chiffres du
+   * haut excluent les comptes échoués et archivés (comme les statistiques) ; la liste garde tout.
+   */
+  private readonly statsFilters = computed<Record<string, string>>(() =>
+    this.selectedAccount.inactiveIncluded()
+      ? { ...this.journalFilters(), includeInactive: 'true' }
+      : this.journalFilters(),
+  );
+
   /** Reset + recharge liste et KPIs avec les filtres courants. */
   private refreshJournal(): void {
     const filters = this.journalFilters();
     this.tradesStore.reset();
     this.tradesStore.loadTrades(filters);
-    this.tradesStore.loadStats(filters);
+    // Lu hors suivi : l'interrupteur ne recharge que les KPIs (effet dédié), pas la liste.
+    this.tradesStore.loadStats(untracked(() => this.statsFilters()));
   }
 
   /** Recharge seulement les KPIs (la liste est déjà mise à jour de façon optimiste). */
   private refreshStats(): void {
-    this.tradesStore.loadStats(this.journalFilters());
+    this.tradesStore.loadStats(this.statsFilters());
   }
+
+  /** Interrupteur et comptes exclus au dernier passage, null avant le premier. */
+  private knownInactiveScope: string | null = null;
+
+  /** Les chiffres du haut laissent de côté des comptes échoués ou archivés (la liste, elle, garde tout). */
+  protected readonly statsExcludeInactive = computed(() => {
+    const e = this.selectedAccount.excludedAccounts();
+    return this.selectedAccount.selectedAccountId() === 'all' && !this.selectedAccount.inactiveIncluded() && e.failed + e.archived > 0;
+  });
+
+  /** Badge « Échoué » / « Archivé » d'un trade dont le compte est hors statistiques. */
+  protected readonly isInactiveStatus = isInactiveStatus;
+  protected readonly statusLabel = statusLabel;
+  protected readonly statusBadgeClass = statusBadgeClass;
 
   protected readonly XIcon            = X;
   protected readonly PencilIcon       = Pencil;

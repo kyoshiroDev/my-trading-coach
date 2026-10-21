@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { formatMoney } from '@mtc/shared';
 import { ToastService } from './toast.service';
 import { AlertSoundService } from './alert-sound.service';
+import { LostAccountFlowService } from './lost-account-flow.service';
 
 /** Événement `prop:alert` du canal `/tradovate-live` (cf. API `PropAlertsService`, #370). */
 export interface PropAlertEvent {
@@ -101,6 +102,7 @@ export function propAlertMessage(e: PropAlertEvent): string {
 export class PropAlertsService {
   private readonly toast = inject(ToastService);
   private readonly sound = inject(AlertSoundService);
+  private readonly lostAccount = inject(LostAccountFlowService);
 
   readonly permission = signal<Permission>(this.readPermission());
 
@@ -110,9 +112,18 @@ export class PropAlertsService {
     // Bonne nouvelle (objectif, payout) : reste aussi, c'est une info à ne pas rater.
     if (e.level === 'reached') this.toast.success(message, { duration: null });
     else if (e.level === 'warning') this.toast.warning(message);
-    else this.toast.error(message, { duration: null });
+    else this.toast.error(message, { duration: null, action: this.floorAction(e) });
     this.sound.play(e.level === 'reached' ? 'reached' : e.level === 'warning' ? 'warning' : 'critical');
     this.notify(e, message);
+  }
+
+  /**
+   * Plancher de drawdown atteint : « Marquer comme échoué » ouvre la feuille de choix du compte
+   * perdu (rien n'est enregistré sans « Confirmer »). Aucune action pour les autres alertes.
+   */
+  private floorAction(e: PropAlertEvent): { label: string; run: () => void } | undefined {
+    if (e.kind !== 'drawdown' || e.level !== 'breached') return undefined;
+    return { label: 'Marquer comme échoué', run: () => this.lostAccount.openChoice(e.accountId) };
   }
 
   /** Nudge anti-tilt : avertissement non bloquant + notification « pause ? ». */

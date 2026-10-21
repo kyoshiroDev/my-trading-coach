@@ -511,3 +511,15 @@
   .date-preset { position: relative; }
   .date-preset::before { content: ''; position: absolute; inset: -11px 0; }
 }
+
+/* Compte perdu : badge du compte hors statistiques à côté de l'actif. La cellule passe à la ligne
+   au lieu de couper le badge par l'ellipse (colonne étroite, surtout sur téléphone). */
+.td-asset:has(.status-badge) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  white-space: normal;
+  overflow: visible;
+}
+.td-asset .status-badge { font-size: 10px; padding: 1px 6px; }

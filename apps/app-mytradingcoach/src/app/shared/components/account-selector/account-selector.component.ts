@@ -19,6 +19,7 @@ import {
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { AccountType, TradingAccount } from '@app/core/api/accounts.api';
 import { formatMoney } from '@mtc/shared';
+import { isInactiveStatus, statusBadgeClass, statusLabel } from '@app/core/utils/account-status.util';
 
 // Sélecteur de compte réutilisable (dashboard, etc.) : trigger compact affichant le compte
 // courant (ou « Tous les comptes ») + menu déroulant listant tous les comptes. Largeur fixe,
@@ -68,13 +69,20 @@ export class AccountSelectorComponent implements OnInit {
     this.close();
   }
 
-  /** Solde agrégé (comptes non archivés) : affiché sur l'option « Tous les comptes ». */
+  /**
+   * Solde agrégé affiché sur « Tous les comptes » : les comptes qui entrent dans les chiffres (ni
+   * échoués ni archivés, sauf interrupteur des statistiques), comme le tableau de bord.
+   */
   protected readonly totalBalance = computed(() =>
-    this.store
-      .accounts()
-      .filter((a) => a.status !== 'ARCHIVED')
-      .reduce((s, a) => s + (a.metrics.currentBalance ?? 0), 0),
+    this.store.aggregateAccounts().reduce((s, a) => s + (a.metrics.currentBalance ?? 0), 0),
   );
+
+  /** Comptes en cours (actifs, validés), puis à part ceux hors statistiques, toujours choisissables. */
+  protected readonly countedAccounts = computed(() => this.store.accounts().filter((a) => !isInactiveStatus(a.status)));
+  protected readonly inactiveAccounts = computed(() => this.store.accounts().filter((a) => isInactiveStatus(a.status)));
+  protected readonly statusLabel = statusLabel;
+  protected readonly statusBadgeClass = statusBadgeClass;
+  protected readonly isInactive = isInactiveStatus;
 
   ngOnInit(): void {
     if (!this.store.loaded() && !this.store.isLoading()) {

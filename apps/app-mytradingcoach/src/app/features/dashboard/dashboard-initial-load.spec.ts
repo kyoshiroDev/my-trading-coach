@@ -19,6 +19,7 @@ import { ChartService } from '../../core/services/chart.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 interface Ctx {
   fixture: ReturnType<typeof TestBed.createComponent<DashboardComponent>>;
@@ -66,6 +67,7 @@ function setup(startTotal: number, startLoaded: boolean): Ctx {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts, activeAccounts: signal([]), accountParam: () => undefined,
           selected: () => null, load: vi.fn(), loaded: accountsLoaded, isLoading: signal(false),
         },

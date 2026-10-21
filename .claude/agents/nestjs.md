@@ -760,11 +760,23 @@ Le seed créait 56 trades mais **aucun `TradingAccount`** : trades « flottants 
 pendant que « Mes comptes » et le sélecteur agrégé, qui passent par les comptes,
 affichaient **0 $ / 0 trade / 0 compte**. Deux pages qui se contredisent.
 
-`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval`
+`DEMO_ACCOUNTS` crée 2 comptes prop firm ACTIVE en USD (PROMPT-215) : `Apex 50k · Éval #2`
 (EVALUATION) et `Tradeify 50k · Funded` (FUNDED), **futures d'indices US uniquement**
 (MES / MNQ, quelques ES / NQ). Le compte perso Forex & Crypto et l'or ont été retirés : la
 démo s'adresse à des traders de futures prop firm. Deux comptes plutôt qu'un : le
 multi-comptes est l'une des ancres Premium (`plans.md`).
+
+**Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
+`Apex 50k · Éval #1` (FAILED, plancher dépassé), dont l'Apex actif `#2` est la nouvelle tentative,
+et `Lucid 25k · Flex` (ARCHIVED). La démo montre ainsi la ligne « 2 comptes exclus des chiffres » et
+l'interrupteur des statistiques. **Pas de compte PASSED dans la démo** (décision du 2026-10-21) : il
+serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à +4 357 $ et le capital
+de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
+comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
+AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
+bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
+la seule barrière des mutations (« Nouvelle tentative », « Archiver », suppression : 403 et invite
+« Crée ton compte » côté front).
 
 **Un trader réaliste, pas un gagnant parfait (PROMPT-215, validé par Greg).** `buildDemoDataset(now)`
 (pur, sans base) génère ~6 semaines de jours ouvrés, 2 à 4 trades par jour, frais réels
@@ -1574,6 +1586,70 @@ redéployer : rien à lancer sur le VPS.
   `libs/shared/src/prop-firm-rules/*.json` dans `include` (sinon TS6307). Le catalogue est exporté
   par l'index de `@mtc/shared` mais absent des bundles front tant qu'ils ne l'importent pas
   (vérifié : 0 occurrence dans app, admin, landing).
+
+## Compte perdu : comptes échoués et archivés hors des agrégats (#677, #681, 2026-10-21)
+
+**Règle : aucune agrégation « tous les comptes » sans filtre de statut.** Les comptes `FAILED`
+(Échoué) et `ARCHIVED` (Archivé) sortent PAR DÉFAUT de toute statistique ou agrégation qui porte
+sur l'ensemble des comptes de l'utilisateur. `PASSED` (Validé) reste compté. Les trades sans compte
+restent comptés. Un compte précis (`accountId`) reste lisible quel que soit son statut, et le
+paramètre `includeInactive=true` réintègre tout.
+
+**Source unique : `accounts/account-status-scope.ts`**, jamais une copie locale du filtre :
+
+| Fonction | Usage |
+|---|---|
+| `inactiveAccountsTradeWhere(scope)` | filtre Prisma des trades (`where`) |
+| `inactiveAccountsTradeSql(scope)` | même filtre en SQL brut, table `"Trade"` aliasée `t` |
+| `activeAccountsWhere(scope)` | filtre des COMPTES d'un contexte global (débrief, IA) |
+| `excludesInactiveAccounts(scope)` | vrai = « tous les comptes » sans les inactifs |
+| `parseIncludeInactive(value)` | lit `includeInactive` d'une query (`true` / `1`) |
+
+- Le filtre Prisma renvoie une clé `OR` : dans un `where` qui a déjà un `OR`, combiner par
+  `AND: [a, b]`, jamais par deux spreads (le second écraserait le premier).
+- Les versions Prisma et SQL sont prouvées équivalentes sur vraie base par
+  `account-status-scope.int-spec.ts` (et `analytics-sql-equivalence.int-spec.ts`).
+- Appliquée à : les 10 routes `/analytics/*` (+ `includeInactive`, clé de cache distincte
+  `:inactive` dans `analytics.service`), débrief hebdo, récap quotidien (combinée par `AND` avec
+  l'exclusion des comptes d'entraînement), chat du coach (`accountId` facultatif, propriété vérifiée),
+  insights IA et orchestrateur, KPIs du journal (`GET /trades/stats`, qui renvoie aussi
+  `excludedAccounts { failed, archived }` pour la ligne « n comptes exclus »).
+- **La liste des trades n'est PAS filtrée** : le journal garde tout (badge côté front).
+- Changement de statut, archivage, suppression : `invalidateStats(userId)`, sinon le cache
+  servirait les anciens chiffres.
+
+**Volontairement NON filtrés (ne pas « corriger »)** :
+- **Base de comportement et alertes de tilt** (`behavior-baseline.service.ts`,
+  `tilt-alerts.service.ts`) : elles comptent TOUS les comptes, échoués et archivés compris.
+  C'est le comportement habituel du trader qui sert de référence. Retirer les comptes perdus
+  fausserait cette référence juste après un compte perdu, précisément quand le risque de tilt est
+  le plus haut. Un commentaire le rappelle dans le code.
+- Les chiffres propres d'un compte (`account-rules.ts`, versions SQL et JS) : ils décrivent CE compte.
+- Fiches et statistiques admin, et le contexte prop firm de l'IA (déjà limité aux comptes ACTIVE).
+
+**Avant toute nouvelle agrégation sur les trades ou les comptes** : passer par
+`account-status-scope.ts` (ou justifier par écrit, dans le code, pourquoi la base doit compter les
+comptes perdus, comme la base de comportement), accepter `includeInactive` si la route est une
+statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inclus avec
+`includeInactive`, compte précis lisible ».
+
+**Routes du compte perdu (`accounts.controller.ts`)** :
+- `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
+  compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
+  de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+- `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
+  404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
+  n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
+  `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
+  « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+- `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
+  Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
+  (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
+  plus recréer les trades), puis le compte (cascades : clôtures, payouts, journal de risque,
+  événements prop firm, alertes de comportement). Réponse `{ deleted: true, tradesDeleted }`.
+  Compte MyTradingCoach et Stripe intacts. Couvert par `account-purge.int-spec.ts`.
+- `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
+  compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
 
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 

@@ -784,6 +784,69 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 
 ---
 
+## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
+
+Miroir front de la règle API (`nestjs.md`, « Compte perdu ») : **aucun chiffre « tous les comptes »
+sans filtre de statut**. `FAILED` et `ARCHIVED` sont exclus par défaut, `PASSED` compté, un compte
+choisi dans le sélecteur s'affiche toujours (même échoué ou archivé).
+
+**Règle partagée : `core/utils/account-status.util.ts`** (`countsInAggregate`, `isInactiveStatus`,
+`statusLabel`, `statusBadgeClass`, `excludedAccountsLine`). Jamais de `status !== 'ARCHIVED'` recopié
+dans un composant.
+
+**`SelectedAccountStore`** porte l'état :
+- `includeInactive` (interrupteur, **non persisté**, remis à faux par `reset()`), `setIncludeInactive()` ;
+- `inactiveIncluded` (l'interrupteur ne joue qu'en « Tous les comptes ») ;
+- `aggregateAccounts` : comptes qui entrent dans le capital et les soldes agrégés ;
+- `excludedAccounts` `{ failed, archived }` pour la ligne « n comptes exclus des chiffres » ;
+- `statsParams()` / `statsQuery()` : `accountId` d'un compte précis, sinon `includeInactive=true`
+  quand l'interrupteur est actif, sinon rien.
+- Un compte archivé ou échoué **reste sélectionnable** : `load()` ne renvoie sur « Tous » que si le
+  compte a disparu.
+
+Toute ressource de statistiques passe par `statsQuery()` / `statsParams()` (dashboard, analytics,
+courbe journalière, calendrier). Le capital agrégé lit `aggregateAccounts()`
+(`viewBalance(…, includeInactive)` en 4e paramètre). Les URL ne changent pas quand un compte change
+de statut : dashboard, analytics et journal ont un `effect` sur `excludedAccounts()` qui recharge
+les chiffres (jamais au premier passage).
+
+**Écrans** (maquette `maquettes/mockup-compte-perdu.html`) :
+- `features/accounts/lost-account/floor-reached-banner` (`mtc-floor-reached-banner`) : un bandeau
+  par compte `floorReached`, en haut du dashboard et de Mes comptes. « Pas maintenant » masque CE
+  compte 24 h (`floor-snooze.util.ts`, clé `mtc.floorSnooze`). Hôte en `is-empty` (display none)
+  sans bandeau.
+- `core/services/lost-account-flow.service.ts` (`LostAccountFlowService`, root) : feuille de choix et
+  feuille « nouvelle tentative » (états par **id**). **Rien n'est enregistré avant « Confirmer »**.
+  Archiver et « garder comme échoué » = `PATCH status` (**jamais `DELETE /accounts/:id`**, qui
+  supprimerait un compte sans trade) ; supprimer = `ConfirmService` (danger, rappel compte MTC et
+  abonnement) puis `DELETE /accounts/:id/permanent` ; un 404 vaut succès ; puis `store.load()` et
+  `tradesStore.reset()`. Ouvert depuis l'alerte live, il charge la liste des comptes si besoin.
+- `features/accounts/lost-account/lost-account-sheets` (`mtc-lost-account-sheets`) : monté UNE fois
+  dans la coque (`sidebar.component.html`). Feuille en bas d'écran < 768 px, boîte centrée au-delà,
+  `mtcDialog`, vrais boutons radio (« Archiver » coché à chaque ouverture).
+- `shared/components/inactive-accounts-toggle` (`mtc-inactive-accounts-toggle`) : ligne + interrupteur
+  (`role="switch"`), sur le dashboard, les statistiques et le journal ; visible seulement en « Tous les
+  comptes » s'il existe un compte échoué ou archivé.
+- Alerte live : `PropAlertsService` ajoute l'action « Marquer comme échoué » au toast
+  `drawdown` / `breached` (et à lui seul). `ToastOptions.action` / `ToastService.runAction()` : le
+  bouton `.toast-action` est exclu de la capture du pointeur (glisser pour fermer), comme la croix.
+- Mes comptes : badge `.status-badge` (Actif, Validé, Échoué, Archivé), liseré rouge d'un compte échoué
+  (`accentVar`, car le style en ligne `--ac` bat une classe), sous-ligne « Hors statistiques » avec
+  « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
+  `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
+- Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+- **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
+  « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
+  un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
+  synchro continue côté API (décision en attente, issue #683).
+- Journal : la liste garde tout, badge sur les trades d'un compte échoué ou archivé (la cellule de
+  l'actif passe à la ligne au lieu de couper le badge). Les KPIs utilisent `statsFilters`
+  (`includeInactive` en plus) ; la liste garde `journalFilters` (l'interrupteur ne la recharge pas).
+  Compteur des filtres : « n trades dans les chiffres » quand des comptes sont exclus.
+
+⚠️ `src/styles/global.css` n'est importé nulle part : un style global va dans `src/styles.css`
+(c'est là qu'est `.status-badge`).
+
 ## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
 
 **Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)

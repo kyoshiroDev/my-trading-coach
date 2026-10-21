@@ -115,6 +115,68 @@ function fakePrisma(calls: Call[]) {
   return { prisma: prisma as unknown as PrismaClient, created };
 }
 
+/** Trades des comptes ACTIFS (jeu de données principal), sans ceux des comptes perdus. */
+function activeTrades(created: Record<string, Record<string, unknown>[]>) {
+  const ids = new Set(
+    created['tradingAccount']
+      .map((a, i) => (a['status'] === 'ACTIVE' ? `tradingAccount-${i + 1}` : null))
+      .filter((x): x is string => x !== null),
+  );
+  return created['trade'].filter((t) => ids.has(t['accountId'] as string));
+}
+
+describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () => {
+  it('un compte échoué, sa nouvelle tentative active et un archivé ; aucun compte validé', async () => {
+    const { prisma, created } = fakePrisma([]);
+    const res = await seedDemo(prisma);
+    const byLabel = new Map(created['tradingAccount'].map((a) => [a['label'] as string, a]));
+    expect(byLabel.get('Apex 50k · Éval #1')).toMatchObject({ status: 'FAILED', broker: 'Apex Trader Funding', accountSize: 50_000 });
+    expect(byLabel.get('Apex 50k · Éval #2')).toMatchObject({ status: 'ACTIVE', broker: 'Apex Trader Funding', accountSize: 50_000 });
+    expect(byLabel.get('Lucid 25k · Flex')).toMatchObject({ status: 'ARCHIVED' });
+    // Un compte validé serait compté dans les chiffres et changerait ceux de la vitrine.
+    expect(created['tradingAccount'].some((a) => a['status'] === 'PASSED')).toBe(false);
+    expect(res.lostAccounts).toBe(2);
+  });
+
+  it('chaque compte perdu a des trades, tous antérieurs à la fenêtre, en jour ouvré', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+    const lostIds = created['tradingAccount']
+      .map((a, i) => (a['status'] !== 'ACTIVE' ? `tradingAccount-${i + 1}` : null))
+      .filter((x): x is string => x !== null);
+    expect(lostIds).toHaveLength(2);
+    const now = Date.now();
+    for (const id of lostIds) {
+      const trades = created['trade'].filter((t) => t['accountId'] === id);
+      expect(trades.length, id).toBeGreaterThan(0);
+      for (const t of trades) {
+        const at = t['tradedAt'] as Date;
+        expect((now - at.getTime()) / 86_400_000).toBeGreaterThan(DEMO_WINDOW_DAYS);
+        expect([0, 6]).not.toContain(at.getUTCDay());
+      }
+    }
+  });
+
+  it('l\'échoué a dépassé son plancher (en net, frais déduits)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+    const netTrade = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
+    const netOf = (label: string) => {
+      const i = created['tradingAccount'].findIndex((a) => a['label'] === label);
+      return created['trade']
+        .filter((t) => t['accountId'] === `tradingAccount-${i + 1}`)
+        .reduce((s, t) => s + netTrade(t), 0);
+    };
+    expect(netOf('Apex 50k · Éval #1')).toBeLessThan(-2_000);
+  });
+
+  it('aucune connexion broker sur les comptes perdus (vitrine limitée aux comptes actifs)', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+    expect(created['brokerConnection']).toHaveLength(3);
+  });
+});
+
 describe('seedDemo — re-seed idempotent (le cron quotidien ne doit pas empiler)', () => {
   it('purge les données démo AVANT d\'en recréer, pour chaque modèle seedé', async () => {
     const calls: Call[] = [];
@@ -178,10 +240,10 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     const { prisma, created } = fakePrisma([]);
     const res = await seedDemo(prisma);
 
-    const accounts = created['tradingAccount'];
+    // Les comptes perdus (échoué, validé, archivé) sont testés à part, plus bas.
+    const accounts = created['tradingAccount'].filter((a) => a['status'] === 'ACTIVE');
     expect(accounts).toHaveLength(3);
     expect(res.accounts).toBe(3);
-    expect(accounts.every((a) => a['status'] === 'ACTIVE')).toBe(true);
     expect(accounts.every((a) => a['currency'] === 'USD')).toBe(true);
     expect(accounts.map((a) => a['type']).sort()).toEqual(['EVALUATION', 'EVALUATION', 'FUNDED']);
     expect(accounts.map((a) => a['broker']).sort()).toEqual(['Apex Trader Funding', 'Elite Trader Funding', 'Tradeify']);
@@ -238,10 +300,11 @@ describe('seedDemo — comptes de trading (cohérence dashboard / Mes comptes)',
     const upsert = calls.find((c) => c.model === 'user' && c.op === 'upsert');
     const profileCapital = (upsert?.args['create'] as { startingCapital: number })
       .startingCapital;
-    const sumBalances = created['tradingAccount'].reduce(
-      (s, a) => s + (a['startingBalance'] as number),
-      0,
-    );
+    // Contrat de `config.ts` : comptes ACTIFS seulement. Le compte validé de la démo est compté de
+    // la même façon par les deux pages (règle `countsInAggregate` du front), il ne les fait pas diverger.
+    const sumBalances = created['tradingAccount']
+      .filter((a) => a['status'] === 'ACTIVE')
+      .reduce((s, a) => s + (a['startingBalance'] as number), 0);
 
     expect(
       sumBalances,
@@ -362,7 +425,8 @@ describe('seedDemo — fraîcheur des données (visible sans changer de filtre)'
     await seedDemo(prisma);
 
     const now = Date.now();
-    const ages = created['trade'].map((t) => (now - (t['tradedAt'] as Date).getTime()) / 86_400_000);
+    // Trades des comptes actifs : ceux des comptes perdus sont volontairement antérieurs à la fenêtre.
+    const ages = activeTrades(created).map((t) => (now - (t['tradedAt'] as Date).getTime()) / 86_400_000);
     const oldest = Math.max(...ages);
     // Fenêtre CALENDAIRE : le jour le plus ancien est J-42, posé à une heure de séance. Son âge
     // en heures dépasse donc 42 j dès que le test tourne plus tard dans la journée que la séance
@@ -417,8 +481,9 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
-    // P&L NET (frais déduits), comme partout dans l'app.
-    const pnl = created['trade'].reduce(
+    // P&L NET (frais déduits), comme partout dans l'app, sur les comptes actifs : c'est le P&L
+    // affiché (les comptes échoué et archivé de la démo sont hors des chiffres).
+    const pnl = activeTrades(created).reduce(
       (s, t) => s + (t['pnl'] as number) - (t['commission'] as number),
       0,
     );
@@ -526,14 +591,15 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
 
-    const wins = created['trade'].filter((t) => net(t) > 0).length;
-    const losses = created['trade'].filter((t) => net(t) < 0).length;
+    const trades = activeTrades(created); // jeu de données principal, sans les comptes perdus
+    const wins = trades.filter((t) => net(t) > 0).length;
+    const losses = trades.filter((t) => net(t) < 0).length;
     const wr = (wins / (wins + losses)) * 100;
     expect(wr).toBeGreaterThanOrEqual(52);
     expect(wr).toBeLessThanOrEqual(57);
 
     const byDay = new Map<string, number>();
-    for (const t of created['trade']) byDay.set(dayKey(t), (byDay.get(dayKey(t)) ?? 0) + net(t));
+    for (const t of trades) byDay.set(dayKey(t), (byDay.get(dayKey(t)) ?? 0) + net(t));
     const red = [...byDay.values()].filter((v) => v < 0).length / byDay.size;
     expect(red).toBeGreaterThanOrEqual(0.35);
     expect(red).toBeLessThanOrEqual(0.45);

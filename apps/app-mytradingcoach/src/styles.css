@@ -183,3 +183,19 @@ select:-webkit-autofill {
   background-clip: padding-box !important;
   transition: background-color 9999s ease-out 0s;
 }
+
+/* ── Badge d'état d'un compte de trading (compte perdu) : Actif · Validé · Échoué · Archivé.
+   Le texte porte toujours le statut : la couleur ne fait que le doubler. ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font: 600 11px/1.4 var(--font-body);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.status-badge.is-active   { color: var(--cyan);   background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+.status-badge.is-passed   { color: var(--green);  background: var(--green-dim); }
+.status-badge.is-failed   { color: var(--red);    background: var(--red-dim); }
+.status-badge.is-archived { color: var(--text-2); background: color-mix(in srgb, var(--text-3) 14%, transparent); }

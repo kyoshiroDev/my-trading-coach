@@ -29,6 +29,7 @@ import { UserStore } from '../../core/stores/user.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { TradesApi } from '../../core/api/trades.api';
+import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 
 function mount() {
   TestBed.configureTestingModule({
@@ -60,6 +61,7 @@ function mount() {
       {
         provide: SelectedAccountStore,
         useValue: {
+          ...statsScopeStub(),
           accounts: signal([]), activeAccounts: signal([]), accountParam: () => undefined,
           selected: () => null, selectedAccountId: signal('all'),
           load: vi.fn(), loaded: signal(true), isLoading: signal(false),

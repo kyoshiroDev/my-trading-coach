@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AccountsApi, TradingAccount } from '../api/accounts.api';
 import { commonCurrency } from '@mtc/shared';
+import { countsInAggregate, type ExcludedAccounts } from '../utils/account-status.util';
 
 const STORAGE_KEY = 'mtc.selectedAccount';
 
@@ -47,6 +48,46 @@ export class SelectedAccountStore {
     return a ? (commonCurrency([a.currency]) ?? undefined) : undefined;
   }
 
+  /**
+   * Interrupteur « Inclure les comptes échoués et archivés » (statistiques, journal, dashboard).
+   * Désactivé par défaut et non persisté : chaque visite repart sur les seuls comptes en cours.
+   */
+  readonly includeInactive = signal(false);
+
+  setIncludeInactive(on: boolean): void {
+    this.includeInactive.set(on);
+  }
+
+  /** L'interrupteur ne change rien sur un compte précis : il ne joue que sur « Tous les comptes ». */
+  readonly inactiveIncluded = computed(() => this.includeInactive() && this.selectedAccountId() === 'all');
+
+  /** Comptes qui entrent dans les chiffres « tous les comptes » (capital, soldes agrégés). */
+  readonly aggregateAccounts = computed(() =>
+    this.accounts().filter((a) => countsInAggregate(a.status, this.includeInactive())),
+  );
+
+  /** Comptes hors statistiques par défaut, pour la ligne « n comptes exclus des chiffres ». */
+  readonly excludedAccounts = computed<ExcludedAccounts>(() => ({
+    failed: this.accounts().filter((a) => a.status === 'FAILED').length,
+    archived: this.accounts().filter((a) => a.status === 'ARCHIVED').length,
+  }));
+
+  /**
+   * Paramètres des appels de statistiques : `accountId` d'un compte précis, sinon `includeInactive`
+   * quand l'interrupteur est actif. Vide = « Tous les comptes » sans les comptes perdus.
+   */
+  statsParams(): Record<string, string> {
+    const id = this.accountParam();
+    if (id) return { accountId: id };
+    return this.inactiveIncluded() ? { includeInactive: 'true' } : {};
+  }
+
+  /** `statsParams()` en suffixe d'URL (`?accountId=…`, `?includeInactive=true` ou ''). */
+  statsQuery(): string {
+    const q = new URLSearchParams(this.statsParams()).toString();
+    return q ? `?${q}` : '';
+  }
+
   /** Comptes actifs (pour le choix de session : 1 session = 1 compte actif). */
   readonly activeAccounts = computed(() =>
     this.accounts().filter((a) => a.status === 'ACTIVE'),
@@ -63,14 +104,10 @@ export class SelectedAccountStore {
           const list = res.data ?? [];
           this.accounts.set(list);
           this.loaded.set(true);
-          // Si le compte sélectionné a disparu OU a été archivé → retour à l'agrégé.
-          // (les comptes archivés sont masqués de la vue : ils ne doivent pas rester
-          // le filtre actif des stats du dashboard / de la session.)
+          // Compte sélectionné disparu → retour à l'agrégé. Un compte échoué ou archivé reste
+          // sélectionnable : choisi dans le sélecteur, ses chiffres s'affichent normalement.
           const id = this.selectedAccountId();
-          const stillSelectable = list.some(
-            (a) => a.id === id && a.status !== 'ARCHIVED',
-          );
-          if (id !== 'all' && !stillSelectable) this.select('all');
+          if (id !== 'all' && !list.some((a) => a.id === id)) this.select('all');
         },
         error: () => {
           this.accounts.set([]);
@@ -109,6 +146,7 @@ export class SelectedAccountStore {
     this.loaded.set(false);
     this.isLoading.set(false);
     this.selectedAccountId.set('all');
+    this.includeInactive.set(false);
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* stockage indispo */ }
   }
 
