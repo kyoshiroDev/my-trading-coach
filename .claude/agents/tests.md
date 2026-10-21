@@ -312,8 +312,8 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
   confirmation, 404, démo 403). Toute nouvelle agrégation ajoute son cas à ces tests.
 - **Seed démo** (`demo-seed-idempotence.spec.ts`) : les tests de réalisme (fenêtre de 42 jours, win
   rate, journées rouges) portent sur `activeTrades(created)`, le jeu de données principal ; les comptes
-  perdus (échoué + sa tentative active, validé, archivé) ont leurs propres tests (trades antérieurs à la
-  fenêtre, jours ouvrés, plancher dépassé, objectif atteint, aucune connexion broker).
+  perdus (échoué + sa tentative active, archivé ; volontairement aucun validé) ont leurs propres tests
+  (trades antérieurs à la fenêtre, jours ouvrés, plancher dépassé, aucun PASSED, aucune connexion broker).
 - **App, faux `SelectedAccountStore`** : un composant qui lit `statsQuery()`, `excludedAccounts()`,
   `aggregateAccounts()`… plante sur un faux store partiel (« is not a function »). Étaler
   `...statsScopeStub()` (`core/stores/selected-account.store.stub.ts`, tests uniquement) EN PREMIER

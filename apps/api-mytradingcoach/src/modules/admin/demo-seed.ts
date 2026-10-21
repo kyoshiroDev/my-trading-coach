@@ -35,7 +35,7 @@ export interface DemoSeedResult {
   email: string; trades: number; winRate: number; pnl: number;
   grossPnl: number; fees: number; redDays: number; tradingDays: number;
   sessions: number; recaps: number; debriefs: number; accounts: number;
-  /** Comptes échoué, validé et archivé (hors du capital des comptes actifs). */
+  /** Comptes échoué et archivé (hors des chiffres et du capital des comptes actifs). */
   lostAccounts: number;
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
@@ -181,8 +181,8 @@ export async function seedTradingData(
     }
   }
 
-  // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative), un VALIDÉ et un
-  // ARCHIVÉ, avec leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
+  // Compte perdu : un compte ÉCHOUÉ (dont l'Apex actif est la nouvelle tentative) et un ARCHIVÉ, avec
+  // leurs trades d'avant la fenêtre. La démo montre ainsi la ligne « n comptes exclus
   // des chiffres » et l'interrupteur des statistiques, sans toucher au capital des comptes actifs.
   const lostIdByKey = new Map<string, string>();
   const lostPlans = new Set(

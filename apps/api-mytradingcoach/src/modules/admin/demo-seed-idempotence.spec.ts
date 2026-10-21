@@ -126,15 +126,16 @@ function activeTrades(created: Record<string, Record<string, unknown>[]>) {
 }
 
 describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () => {
-  it('un compte échoué, sa nouvelle tentative active, un validé et un archivé', async () => {
+  it('un compte échoué, sa nouvelle tentative active et un archivé ; aucun compte validé', async () => {
     const { prisma, created } = fakePrisma([]);
     const res = await seedDemo(prisma);
     const byLabel = new Map(created['tradingAccount'].map((a) => [a['label'] as string, a]));
     expect(byLabel.get('Apex 50k · Éval #1')).toMatchObject({ status: 'FAILED', broker: 'Apex Trader Funding', accountSize: 50_000 });
     expect(byLabel.get('Apex 50k · Éval #2')).toMatchObject({ status: 'ACTIVE', broker: 'Apex Trader Funding', accountSize: 50_000 });
-    expect(byLabel.get('Topstep 50k · Éval')).toMatchObject({ status: 'PASSED' });
     expect(byLabel.get('Lucid 25k · Flex')).toMatchObject({ status: 'ARCHIVED' });
-    expect(res.lostAccounts).toBe(3);
+    // Un compte validé serait compté dans les chiffres et changerait ceux de la vitrine.
+    expect(created['tradingAccount'].some((a) => a['status'] === 'PASSED')).toBe(false);
+    expect(res.lostAccounts).toBe(2);
   });
 
   it('chaque compte perdu a des trades, tous antérieurs à la fenêtre, en jour ouvré', async () => {
@@ -143,7 +144,7 @@ describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () =>
     const lostIds = created['tradingAccount']
       .map((a, i) => (a['status'] !== 'ACTIVE' ? `tradingAccount-${i + 1}` : null))
       .filter((x): x is string => x !== null);
-    expect(lostIds).toHaveLength(3);
+    expect(lostIds).toHaveLength(2);
     const now = Date.now();
     for (const id of lostIds) {
       const trades = created['trade'].filter((t) => t['accountId'] === id);
@@ -156,7 +157,7 @@ describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () =>
     }
   });
 
-  it('l\'échoué a dépassé son plancher, le validé a atteint son objectif (en net, frais déduits)', async () => {
+  it('l\'échoué a dépassé son plancher (en net, frais déduits)', async () => {
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
     const netTrade = (t: Record<string, unknown>) => (t['pnl'] as number) - (t['commission'] as number);
@@ -167,7 +168,6 @@ describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () =>
         .reduce((s, t) => s + netTrade(t), 0);
     };
     expect(netOf('Apex 50k · Éval #1')).toBeLessThan(-2_000);
-    expect(netOf('Topstep 50k · Éval')).toBeGreaterThanOrEqual(3_000);
   });
 
   it('aucune connexion broker sur les comptes perdus (vitrine limitée aux comptes actifs)', async () => {
@@ -481,8 +481,9 @@ describe('seedDemo — sobriété AMF (montrer la fonctionnalité, pas une perfo
     const { prisma, created } = fakePrisma(calls);
     await seedDemo(prisma);
 
-    // P&L NET (frais déduits), comme partout dans l'app.
-    const pnl = created['trade'].reduce(
+    // P&L NET (frais déduits), comme partout dans l'app, sur les comptes actifs : c'est le P&L
+    // affiché (les comptes échoué et archivé de la démo sont hors des chiffres).
+    const pnl = activeTrades(created).reduce(
       (s, t) => s + (t['pnl'] as number) - (t['commission'] as number),
       0,
     );

@@ -768,9 +768,10 @@ multi-comptes est l'une des ancres Premium (`plans.md`).
 
 **Comptes perdus de la démo (compte perdu, phase 3)** : `demo-data/lost-accounts.ts` ajoute
 `Apex 50k · Éval #1` (FAILED, plancher dépassé), dont l'Apex actif `#2` est la nouvelle tentative,
-`Topstep 50k · Éval` (PASSED, objectif atteint, compté dans les chiffres) et `Lucid 25k · Flex`
-(ARCHIVED). La démo montre ainsi la ligne « n comptes exclus des chiffres » et l'interrupteur des
-statistiques. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
+et `Lucid 25k · Flex` (ARCHIVED). La démo montre ainsi la ligne « 2 comptes exclus des chiffres » et
+l'interrupteur des statistiques. **Pas de compte PASSED dans la démo** (décision du 2026-10-21) : il
+serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à +4 357 $ et le capital
+de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
 comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
 AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
 bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
