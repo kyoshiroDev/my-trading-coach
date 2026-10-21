@@ -9,6 +9,7 @@ import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { APP_URL } from '../config';
 import Base from '../layouts/Base.astro';
 import Footer from '../components/Footer.astro';
+import NinjaTraderTrust from '../components/NinjaTraderTrust.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
@@ -72,26 +73,31 @@ const faq = [
         </div>
         <p class="pf-reassure">Gratuit, sans carte bancaire · Lecture seule, aucun ordre passé</p>
         {/* Seul emoji de la page hors footer (demande du 18/10). NinjaTrader : formulation factuelle
-            de la clause 17, sans logo (le logo reste au seul footer). */}
+            de la clause 17 ; le logo est dans le bloc NinjaTraderTrust de `.pf-hero-side`. */}
         <p class="pf-trustline">🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans l'écosystème NinjaTrader</p>
       </div>
 
-      <figure class="pf-example">
-        <div class="pf-ex-card">
-          <div class="pf-ex-top"><span class="pf-ex-name">Éval Apex 50K</span><span class="pf-ex-live">En séance</span></div>
-          <div class="pf-ex-left">
-            <span class="pf-ex-label">Il te reste avant la limite</span>
-            <span class="pf-ex-amt">480 $</span>
+      <div class="pf-hero-side">
+        <figure class="pf-example">
+          <div class="pf-ex-card">
+            <div class="pf-ex-top"><span class="pf-ex-name">Éval Apex 50K</span><span class="pf-ex-live">En séance</span></div>
+            <div class="pf-ex-left">
+              <span class="pf-ex-label">Il te reste avant la limite</span>
+              <span class="pf-ex-amt">480 $</span>
+            </div>
+            <div class="pf-ex-bar" aria-hidden="true"><span></span></div>
+            <dl class="pf-ex-tiles">
+              <div><dt>Objectif restant</dt><dd>1 240 $</dd></div>
+              <div class="pf-ex-loss"><dt>Perte du jour</dt><dd>−520 $</dd></div>
+              <div><dt>Trades du jour</dt><dd>4</dd></div>
+            </dl>
           </div>
-          <div class="pf-ex-bar" aria-hidden="true"><span></span></div>
-          <dl class="pf-ex-tiles">
-            <div><dt>Objectif restant</dt><dd>1 240 $</dd></div>
-            <div class="pf-ex-loss"><dt>Perte du jour</dt><dd>−520 $</dd></div>
-            <div><dt>Trades du jour</dt><dd>4</dd></div>
-          </dl>
-        </div>
-        <figcaption>Exemple avec des données de démonstration</figcaption>
-      </figure>
+          <figcaption>Exemple avec des données de démonstration</figcaption>
+        </figure>
+        {/* Wordmark NinjaTrader cliquable dans le premier écran sur ordinateur (sous la carte), juste
+            après lui en mobile (demande NinjaTrader 21/10). */}
+        <NinjaTraderTrust />
+      </div>
     </section>
 
     {/* 4. Prêt en 2 minutes */}
@@ -303,6 +309,9 @@ const faq = [
   .pf-trustline { font-size: 12.5px; line-height: 1.5; color: var(--txt3); margin-top: -12px; }
 
   /* Carte d'exemple : marge restante en jaune (alerte), perte en rouge (perte), cf. design.md. */
+  /* Carte d'exemple + bloc NinjaTrader : sur ordinateur, le logo reste dans le premier écran. */
+  .pf-hero-side { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+  .pf-hero-side :global(.nt-trust) { align-self: center; }
   .pf-example { margin: 0; display: flex; flex-direction: column; gap: 12px; }
   .pf-ex-card {
     background: var(--card);

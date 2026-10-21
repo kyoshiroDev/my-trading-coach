@@ -1,4 +1,4 @@
-import type { EmotionState, ExecutionGrade, ExecutionMethod, TradeSide, TradingSession } from './enums';
+import type { AccountStatus, EmotionState, ExecutionGrade, ExecutionMethod, TradeSide, TradingSession } from './enums';
 
 /** Setup tel que renvoyé par l'API sur un trade (relation). */
 export interface TradeSetup {
@@ -35,6 +35,8 @@ export interface Trade {
   setup: TradeSetup;
   /** Compte du trade : sa devise est celle de ce compte. */
   accountId?: string | null;
+  /** Compte du trade dans le journal (GET /trades) : badge « Échoué » / « Archivé » (compte perdu). */
+  account?: { id: string; label: string; status: AccountStatus } | null;
   session: TradingSession;
   timeframe: string;
   notes: string | null;
@@ -82,6 +84,8 @@ export interface TradeFilters {
   dateFrom?: string;
   dateTo?: string;
   accountId?: string;
+  /** GET /trades/stats seulement : réinclut les comptes échoués et archivés (exclus par défaut). */
+  includeInactive?: boolean | string;
 }
 
 /** Page de GET /trades (pagination par curseur). */
@@ -100,6 +104,11 @@ export interface JournalStats {
   pnlNet: number;
   bestTrade: number;
   worstTrade: number;
+  /**
+   * Compte perdu : comptes échoués et archivés exclus de CES chiffres (ligne « n comptes exclus »).
+   * Zéros quand un compte précis est choisi ou avec `includeInactive`.
+   */
+  excludedAccounts: { failed: number; archived: number };
 }
 
 /** Résultat de `GET /instruments/search` (fournisseur de marché, liste statique ou crypto). */

@@ -25,6 +25,7 @@ import { UsersApi } from '../../core/api/users.api';
 import { TradesApi } from '../../core/api/trades.api';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
+import { OffersStore } from '../../core/stores/offers.store';
 
 function mount(deleteMeImpl: () => unknown) {
   const auth = { currentUser: signal(null), setCurrentUser: vi.fn(), logout: vi.fn() };
@@ -124,5 +125,74 @@ describe('Profil — un échec de suppression de compte est désormais expliqué
 
     expect(usersApi.deleteMe).not.toHaveBeenCalled();
     expect(cmp.deleteError()).toBeNull();
+  });
+});
+
+// L'écran de suppression annonce la résiliation immédiate seulement s'il y a un abonnement Stripe
+// en cours : jamais à un compte sans abonnement (Premium offert, bêta), jamais pour un résilié.
+describe('Profil — mention de la résiliation à la suppression', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  function withSubscription(status: string | null) {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status, interval: status ? 'month' : null },
+      founder: { refundUntil: null },
+    } as any);
+    return cmp;
+  }
+
+  it.each(['active', 'trialing', 'past_due', 'unpaid'])('abonnement %s → mention affichée', (status) => {
+    expect(withSubscription(status).hasStripeSubscription()).toBe(true);
+  });
+
+  it.each([null, 'canceled', 'incomplete_expired'])('statut %s → aucune mention', (status) => {
+    expect(withSubscription(status).hasStripeSubscription()).toBe(false);
+  });
+
+  it('offres non chargées → aucune mention (rien d’affirmé sans savoir)', () => {
+    const { cmp } = mount(() => of(undefined));
+    expect(cmp.hasStripeSubscription()).toBe(false);
+  });
+});
+
+// Rappel du satisfait ou remboursé fondateur : date = `refundUntil` de l'API (prise de place + 14 j,
+// null une fois passée), lien vers l'adresse publique du support, jamais l'adresse interne.
+describe('Profil — rappel du remboursement fondateur à la suppression', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  function founder(refundUntil: string | null) {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status: 'active', interval: 'month' },
+      founder: { isFounder: true, number: 12, refundUntil },
+    } as any);
+    return cmp;
+  }
+
+  it('fenêtre en cours → date de l’API et lien vers support@, jamais hello@', () => {
+    const until = new Date(Date.now() + 5 * 86_400_000).toISOString();
+    const refund = founder(until).deleteRefund();
+    expect(refund?.until).toBe(until);
+    expect(refund?.mailto.startsWith('mailto:support@mytradingcoach.app?')).toBe(true);
+    expect(refund?.mailto).not.toContain('hello@');
+    expect(decodeURIComponent(refund!.mailto)).toContain('Remboursement fondateur n° 12');
+  });
+
+  it('fenêtre dépassée (refundUntil null côté API) → aucun rappel', () => {
+    expect(founder(null).deleteRefund()).toBeNull();
+  });
+
+  it('date déjà passée (page restée ouverte) → aucun rappel', () => {
+    expect(founder(new Date(Date.now() - 60_000).toISOString()).deleteRefund()).toBeNull();
+  });
+
+  it('pas fondateur → aucun rappel', () => {
+    const { cmp } = mount(() => of(undefined));
+    TestBed.inject(OffersStore).offers.set({
+      subscription: { status: 'active', interval: 'month' },
+      founder: { isFounder: false, number: null, refundUntil: null },
+    } as any);
+    expect(cmp.deleteRefund()).toBeNull();
   });
 });

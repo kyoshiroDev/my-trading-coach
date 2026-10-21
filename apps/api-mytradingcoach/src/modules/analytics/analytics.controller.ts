@@ -6,6 +6,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AnalyticsService } from './analytics.service';
 import { DailyRecapService } from '../daily-recap/daily-recap.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { parseIncludeInactive } from '../accounts/account-status-scope';
 
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
@@ -16,7 +17,8 @@ export class AnalyticsController {
     private accounts: AccountsService,
   ) {}
 
-  // Résout (et vérifie l'appartenance) le filtre compte. absent/'all' → undefined (agrégé).
+  // Résout (et vérifie l'appartenance) le filtre compte. absent/'all' → undefined (agrégé, hors
+  // comptes échoués et archivés sauf `includeInactive=true` ; un compte précis reste lisible).
   private async accountId(userId: string, accountId?: string): Promise<string | undefined> {
     return (await this.accounts.accountWhere(userId, accountId)).accountId;
   }
@@ -28,44 +30,66 @@ export class AnalyticsController {
     @Query('accountId') accountId?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     return this.analyticsService.getSummary(
       user.id,
       await this.accountId(user.id, accountId),
       from ? new Date(from) : undefined,
       to ? this.endBound(to) : undefined,
+      parseIncludeInactive(includeInactive),
     );
   }
 
   @UseGuards(PremiumGuard)
   @Get('by-setup')
-  async getBySetup(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId));
+  async getBySetup(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getBySetup(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   // Vue de base (États émotionnels) = socle FREE.
   @Get('by-emotion')
-  async getByEmotion(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId));
+  async getByEmotion(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getByEmotion(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   @UseGuards(PremiumGuard)
   @Get('by-hour')
-  async getByHour(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId));
+  async getByHour(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getByHour(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   // Courbe d'équité simple = vue de base FREE (la profondeur : drawdown détaillé,
   // comparaisons de périodes : vit dans la page /analytics gardée Premium).
   @Get('equity-curve')
-  async getEquityCurve(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId));
+  async getEquityCurve(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getEquityCurve(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   // Courbe d'équité du mois courant = alimente la carte Equity du dashboard (FREE).
   @Get('equity-curve/current-month')
-  async getEquityCurrentMonth(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getEquityCurveCurrentMonth(user.id, await this.accountId(user.id, accountId));
+  async getEquityCurrentMonth(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getEquityCurveCurrentMonth(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   /**
@@ -85,29 +109,40 @@ export class AnalyticsController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     return this.analyticsService.getEquityCurveDaily(
       user.id,
       from ? new Date(from) : undefined,
       to ? this.endBound(to) : undefined,
       await this.accountId(user.id, accountId),
+      parseIncludeInactive(includeInactive),
     );
   }
 
   // Top actifs (P&L par instrument) vue simple = vue de base FREE.
   @Get('top-assets')
-  async getTopAssets(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
-    return this.analyticsService.getTopAssets(user.id, await this.accountId(user.id, accountId));
+  async getTopAssets(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    return this.analyticsService.getTopAssets(user.id, await this.accountId(user.id, accountId), parseIncludeInactive(includeInactive));
   }
 
   @Get('activity/current-month')
-  async getCurrentMonthActivity(@CurrentUser() user: { id: string }, @Query('accountId') accountId?: string) {
+  async getCurrentMonthActivity(
+    @CurrentUser() user: { id: string },
+    @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
     const now = new Date();
     return this.analyticsService.getMonthlyActivity(
       user.id,
       now.getFullYear(),
       now.getMonth() + 1,
       await this.accountId(user.id, accountId),
+      parseIncludeInactive(includeInactive),
     );
   }
 
@@ -120,12 +155,14 @@ export class AnalyticsController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     return this.analyticsService.getActivityRange(
       user.id,
       from ? new Date(from) : undefined,
       to ? this.endBound(to) : undefined,
       await this.accountId(user.id, accountId),
+      parseIncludeInactive(includeInactive),
     );
   }
 
@@ -140,12 +177,14 @@ export class AnalyticsController {
     @Param('year', ParseIntPipe) year: number,
     @Param('month', ParseIntPipe) month: number,
     @Query('accountId') accountId?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     return this.analyticsService.getMonthlyActivity(
       user.id,
       year,
       month,
       await this.accountId(user.id, accountId),
+      parseIncludeInactive(includeInactive),
     );
   }
 

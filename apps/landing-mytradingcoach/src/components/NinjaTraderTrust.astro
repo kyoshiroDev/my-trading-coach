@@ -1,0 +1,73 @@
+---
+// Bloc de confiance « Référencé dans l'écosystème NinjaTrader » (/ et /prop-firm), demandé par
+// NinjaTrader le 21/10 : leur équipe ne trouvait pas le logo, seul au footer. Règles (astro.md,
+// clause 17) : formulation factuelle uniquement (jamais partenaire / officiel / approuvé /
+// recommandé), aucun autre courtier à côté, wordmark du media kit tel quel (jamais recoloré,
+// déformé ni rogné), mention « Lien affilié » visible. Le wordmark reste aussi au footer.
+import { NINJATRADER_AFFILIATE_URL } from '../config';
+
+interface Props { class?: string }
+const { class: className } = Astro.props;
+---
+
+<a
+  class:list={['nt-trust', className]}
+  href={NINJATRADER_AFFILIATE_URL}
+  target="_blank"
+  rel="noopener sponsored nofollow"
+  aria-label="Référencé dans l'écosystème NinjaTrader — lien affilié, ouvre un nouvel onglet"
+>
+  <span class="nt-trust-label">Référencé dans l'écosystème</span>
+  <img class="nt-trust-mark" src="/ninjatrader/NinjaTrader_Wordmark_color_RGB.png" alt="NinjaTrader" width="2376" height="300" decoding="async" />
+  <span class="nt-trust-aff">Lien affilié</span>
+</a>
+
+<style>
+  /* Neutre (bordure et texte de la palette) : la seule couleur vive est celle du wordmark,
+     fourni par NinjaTrader. Hauteur du logo plus grande qu'au footer (18 px) : ici il doit se
+     voir sans chercher, tout en restant sous le poids du titre de la page. */
+  .nt-trust {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 12px 20px;
+    border: 1px solid var(--b);
+    border-radius: 10px;
+    background: var(--card);
+    text-decoration: none;
+    transition: border-color .2s;
+  }
+  .nt-trust:hover { border-color: var(--b2); }
+  .nt-trust:focus-visible { outline: 2px solid var(--blue2); outline-offset: 2px; }
+
+  .nt-trust-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--txt2);
+    letter-spacing: .02em;
+  }
+
+  /* Wordmark 2376x300 : hauteur fixée, largeur déduite, aspect-ratio = zéro CLS. */
+  .nt-trust-mark {
+    display: block;
+    height: 26px;
+    width: auto;
+    aspect-ratio: 2376 / 300;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .nt-trust-aff {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--txt3);
+    letter-spacing: .02em;
+  }
+
+  @media (max-width: 767px) {
+    .nt-trust { padding: 10px 16px; gap: 6px 10px; }
+    .nt-trust-mark { height: 22px; }
+  }
+</style>

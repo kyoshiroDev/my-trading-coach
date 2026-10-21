@@ -6,6 +6,7 @@ import { computeTradeStats, netPnl } from '@mtc/shared';
 import { userAmountsCurrency } from '../../common/utils/user-currency.util';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
 import { demoAccountIds, excludeAccountsWhere } from '../accounts/demo-accounts';
+import { inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import { IMPORT_SETUP_TITLE } from '../setups/setups.service';
 import { isPremiumAccess } from '../discord/discord-access.util';
 
@@ -33,7 +34,8 @@ export class DailyRecapService {
         userId,
         tradedAt: { gte: startOfDay, lte: endOfDay },
         pnl: { not: null },
-        ...excludeAccountsWhere(demoIds),
+        // Deux filtres en OR : combinés par AND (un spread écraserait le premier `OR`).
+        AND: [excludeAccountsWhere(demoIds), inactiveAccountsTradeWhere()],
       },
       select: {
         asset: true,
@@ -102,7 +104,8 @@ export class DailyRecapService {
           userId,
           tradedAt: { gte: sevenDaysAgo, lt: startOfDay },
           pnl: { not: null },
-          ...excludeAccountsWhere(demoIds),
+          // Deux filtres en OR : combinés par AND (un spread écraserait le premier `OR`).
+          AND: [excludeAccountsWhere(demoIds), inactiveAccountsTradeWhere()],
         },
         select: { asset: true, side: true, pnl: true, commission: true, session: true },
       });

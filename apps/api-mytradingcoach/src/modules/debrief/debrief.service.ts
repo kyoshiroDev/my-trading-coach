@@ -28,6 +28,7 @@ import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
+import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
 @Injectable()
@@ -116,7 +117,7 @@ export class DebriefService {
 
     const trades = (
       await this.prisma.trade.findMany({
-        where: { userId, tradedAt: { gte: startDate, lte: endDate } },
+        where: { userId, tradedAt: { gte: startDate, lte: endDate }, ...inactiveAccountsTradeWhere() }, // hors comptes perdus
         select: {
           asset: true,
           side: true,
@@ -133,9 +134,9 @@ export class DebriefService {
       // Émotion effective (override sinon humeur de session ; null = non renseignée).
     ).map((t) => ({ ...t, setup: t.setup?.title ?? null, emotion: effectiveEmotion(t) }));
 
-    // Comptes non archivés (avec leurs règles prop firm) pour l'analyse par compte.
+    // Comptes actifs et validés (avec leurs règles prop firm) pour l'analyse par compte.
     const accounts = await this.prisma.tradingAccount.findMany({
-      where: { userId, status: { not: 'ARCHIVED' } },
+      where: { userId, ...activeAccountsWhere() },
       select: {
         id: true, label: true, type: true, status: true, currency: true,
         startingBalance: true, profitTarget: true, maxDrawdown: true, drawdownType: true,
@@ -389,7 +390,7 @@ export class DebriefService {
     const trades = await this.prisma.trade.findMany({
       where: {
         userId,
-        tradedAt: { gte: debrief.startDate, lte: debrief.endDate },
+        tradedAt: { gte: debrief.startDate, lte: debrief.endDate }, ...inactiveAccountsTradeWhere(),
       },
       orderBy: { pnl: 'desc' },
     });

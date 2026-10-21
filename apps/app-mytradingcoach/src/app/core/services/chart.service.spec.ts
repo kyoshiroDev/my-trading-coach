@@ -149,4 +149,17 @@ describe('ChartService — style des courbes', () => {
     expect(cb.footer([{ dataIndex: 2 }])).toEqual(['Jour -$50']);
     expect(cb.footer([{ dataIndex: 0 }])).toEqual([]);
   });
+
+  it('infobulle d’un jour de payout : le retrait, avec le P&L du jour s’il y a eu des trades', () => {
+    const { service, configs, canvas } = setup();
+    service.buildEquityChart(
+      canvas,
+      [pt('2025-01-06', 300), { ...pt('2025-01-07', 300), payout: 1_000 }, { ...pt('2025-01-08', 250), payout: 200 }],
+      10_000,
+    );
+    expect(configs[0].data.datasets[0].data).toEqual([10_000, 10_300, 9_300, 9_050]);
+    const cb = configs[0].options?.plugins?.tooltip?.callbacks as unknown as { footer: (i: { dataIndex: number }[]) => string[] };
+    expect(cb.footer([{ dataIndex: 2 }])).toEqual(['Payout -$1,000']);
+    expect(cb.footer([{ dataIndex: 3 }])).toEqual(['Jour -$50', 'Payout -$200']);
+  });
 });

@@ -245,6 +245,21 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
   sans doublon, avoir) · `StripeCouponService` (coupons filleul). Nouvel événement webhook
   = un `case` + un handler privé dans `StripeWebhookService`. Dans les specs, passer un
   mock Stripe au constructeur ; ne pas réassigner un champ privé.
+- **Suppression d'un compte MTC (`DELETE /api/users/me`, `DELETE /api/admin/users/:id`)** :
+  `archiveAndDelete` résilie d'abord, **immédiatement**, tous les abonnements non terminés du
+  customer Stripe (actif, essai, impayé, incomplet : pas seulement `stripeSubscriptionId`) via
+  `StripeAccountClosureService` (`modules/stripe/stripe-account-closure.service.ts`), sans prorata
+  ni remboursement. Stripe en échec → **503** `BILLING_CLOSURE_FAILED_MESSAGE`, rien supprimé ni
+  tracé (l'utilisateur réessaie). Customer inconnu de Stripe → rien à résilier, suppression
+  normale. Le service est fourni par `UsersModule` avec son propre `stripeClientProvider`
+  (importer `StripeModule` ferait un cycle Users → Stripe → Discord → Users). Les webhooks qui
+  arrivent ensuite pour ce customer ne trouvent plus d'utilisateur : ils ne lèvent pas, n'écrivent
+  rien, et l'alerte Sentry `past_due` / `unpaid` est sautée quand le customer n'a plus de compte.
+  Rattrapage des suppressions antérieures : `scripts/list-orphan-stripe-subscriptions.ts`
+  (lecture seule). Tests : `users-delete.spec.ts`, `stripe-account-closure.service.spec.ts`,
+  `stripe-webhook.service.spec.ts`, `delete-me-stripe.int-spec.ts` (mode test Stripe).
+  ⚠️ Commissions ambassadeur `pending` : emportées par la cascade à la suppression de
+  l'ambassadeur (aucune trace côté admin).
 - `@UseGuards(JwtAuthGuard)` sur toutes les routes protégées
 - `@UseGuards(PremiumGuard)` sur routes IA et analytics avancés
 - `@UseGuards(JwtAuthGuard, AdminGuard)` sur TOUTES les routes `/vps/*`, `/docker/*`, `/admin/*`
@@ -2075,6 +2090,10 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - `startingCapital` = `User.startingCapital` (profil), PAS le solde du compte : le front ne s'en sert
   plus pour placer la courbe. `summary.maxDrawdown` reste trade par trade (pic remis à 0 au début de
   la période) pour l'IA et les débriefs ; il n'est plus affiché comme « Drawdown max ».
+- `payouts` (payouts `BrokerPayout` non écartés de la période, `{ date, amount }`) et
+  `before.payouts` (total retiré avant `from`), fonction `splitPayouts`. Lus **hors cache** dans
+  `getEquityCurveDaily` : une détection ou un « ce n'était pas un payout » se voit tout de suite, sans
+  invalider le cache des trades. Le front les déduit des courbes de solde, jamais du P&L.
 
 ## Plancher de drawdown d'un plan (`drawdownFloor`, `@mtc/shared`)
 

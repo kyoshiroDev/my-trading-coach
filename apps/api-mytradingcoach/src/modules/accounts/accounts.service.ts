@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import type { AccountPlanHint, PropFirmDrawdownKind, PropFirmPhaseRules } from '@mtc/shared';
 import { drawdownFloor, drawdownPeakProfit, planDrawdownRule } from '@mtc/shared';
@@ -25,6 +27,9 @@ import {
 } from './account-rules';
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
+import { isFloorReached, nextAttemptLabel, retryAccountData } from './account-retry';
+import { RedisService } from '../infra/redis.service';
+import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
 
 type RuleAccount = Pick<
   TradingAccount,
@@ -223,7 +228,16 @@ export interface AccountRuleMetrics {
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    /** Cache analytics : un changement de statut fait entrer ou sortir les trades des agrégats. */
+    @Optional() private readonly redis?: RedisService,
+  ) {}
+
+  /** Statistiques « tous les comptes » à recalculer (statut changé : compte perdu, archivé…). */
+  private async invalidateStats(userId: string): Promise<void> {
+    if (this.redis) await bumpAnalyticsVersion(this.redis.client, userId);
+  }
 
   /**
    * Liste des comptes du user (actifs d'abord, archivés ensuite), chacun enrichi de ses
@@ -232,7 +246,7 @@ export class AccountsService {
   async list(
     userId: string,
     options: RuleMetricsOptions = {},
-  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics })[]> {
+  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics; floorReached: boolean })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
     const rows = await this.prisma.tradingAccount.findMany({
       where: { userId },
@@ -303,13 +317,14 @@ export class AccountsService {
       sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
     ]);
 
-    return accounts.map(({ account, plan, broker, connectedPlatform, official, payouts }) => ({
-      ...account,
-      metrics: this.ruleMetricsFromAgg(
+    return accounts.map(({ account, plan, broker, connectedPlatform, official, payouts }) => {
+      const metrics = this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
         sessions.get(account.id) ?? [], payouts, options,
-      ),
-    }));
+      );
+      // Compte perdu : plancher estimé atteint → bandeau côté front, statut inchangé (l'utilisateur confirme).
+      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown) };
+    });
   }
 
   private clamp01(x: number): number {
@@ -590,7 +605,30 @@ export class AccountsService {
     if (dto.propFirmPlanId && dto.propFirmPlanId !== account.propFirmPlanId) {
       await this.assertCatalogPlan(dto.propFirmPlanId);
     }
-    return this.prisma.tradingAccount.update({ where: { id }, data: withPlanLink(withDates(dto)) });
+    const updated = await this.prisma.tradingAccount.update({ where: { id }, data: withPlanLink(withDates(dto)) });
+    if (dto.status !== undefined && dto.status !== account.status) await this.invalidateStats(userId);
+    return updated;
+  }
+
+  /**
+   * Nouvelle tentative d'un compte ÉCHOUÉ (compte perdu) : nouveau compte ACTIVE avec la même
+   * firme, le même plan, la même taille et les mêmes règles (`retryAccountData`), libellé
+   * incrémenté côté serveur (`nextAttemptLabel`). Rien n'est copié depuis l'ancien compte (ni
+   * trades, ni connexion broker). Quota du plan vérifié comme à la création (le compte échoué a
+   * déjà libéré sa place). 404 si le compte n'est pas à l'utilisateur, 409 s'il n'est pas FAILED.
+   */
+  async retry(userId: string, id: string, ctx?: PlanContext): Promise<TradingAccount> {
+    const account = await this.assertOwner(userId, id);
+    if (account.status !== AccountStatus.FAILED) {
+      throw new ConflictException({
+        code: 'ACCOUNT_NOT_FAILED',
+        message: 'Une nouvelle tentative ne se crée que depuis un compte marqué comme échoué.',
+      });
+    }
+    await this.assertActiveSlotAvailable(userId, ctx);
+    const labels = await this.prisma.tradingAccount.findMany({ where: { userId }, select: { label: true } });
+    const label = nextAttemptLabel(account.label, labels.map((l) => l.label));
+    return this.prisma.tradingAccount.create({ data: retryAccountData(account, label) });
   }
 
   /**
@@ -672,7 +710,36 @@ export class AccountsService {
       where: { id },
       data: { status: AccountStatus.ARCHIVED },
     });
+    if (account.status !== AccountStatus.ARCHIVED) await this.invalidateStats(userId);
     return { archived: true };
+  }
+
+  /**
+   * Suppression DÉFINITIVE d'un compte de trading (compte perdu, « Supprimer ce compte de
+   * trading »), distincte de `remove` qui archive dès qu'il y a de l'historique. Exige
+   * `confirm === true` (400 sinon) : efface ses trades et ses séances, sa connexion broker
+   * (la synchro ne peut plus les recréer, comme une déconnexion Tradovate), puis le compte, dont
+   * les lignes dépendantes partent en cascade (clôtures, payouts, journal de risque, alertes de
+   * comportement). Une seule transaction. Ne touche ni au compte MyTradingCoach ni à Stripe.
+   * Démo : bloquée en amont par DemoReadOnlyGuard (DELETE).
+   */
+  async purge(userId: string, id: string, confirm: unknown): Promise<{ deleted: true; tradesDeleted: number }> {
+    if (confirm !== true) {
+      throw new BadRequestException({
+        code: 'CONFIRMATION_REQUIRED',
+        message: 'Confirme la suppression définitive : le compte et tous ses trades seront effacés.',
+      });
+    }
+    await this.assertOwner(userId, id);
+    const tradesDeleted = await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.trade.deleteMany({ where: { userId, accountId: id } });
+      await tx.tradeSession.deleteMany({ where: { userId, accountId: id } });
+      await tx.brokerConnection.deleteMany({ where: { userId, accountId: id } });
+      await tx.tradingAccount.delete({ where: { id } });
+      return count;
+    });
+    await this.invalidateStats(userId);
+    return { deleted: true, tradesDeleted };
   }
 
   /**

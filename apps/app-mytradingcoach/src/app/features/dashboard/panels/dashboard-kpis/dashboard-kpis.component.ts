@@ -27,6 +27,8 @@ export class DashboardKpisComponent {
   readonly drawdownSeries = input<number[]>([]);
   /** P&L cumulé jour par jour sur la période (source des sparklines). */
   readonly equitySeries = input<number[]>([]);
+  /** Payouts cumulés aux mêmes points : la sparkline du Capital les déduit (fin = Capital). */
+  readonly payoutSeries = input<number[]>([]);
   readonly periodShort = input('');
   /** Trades chargés : repli du compteur tant que les KPIs n'en donnent pas. */
   readonly fallbackTradesCount = input(0);
@@ -71,7 +73,8 @@ export class DashboardKpisComponent {
 
   protected readonly capitalSeries = computed(() => {
     const b = this.periodStartCapital();
-    return this.equitySeries().map((v) => b + v);
+    const paid = this.payoutSeries();
+    return this.equitySeries().map((v, i) => b + v - (paid[i] ?? 0));
   });
   /** Série rouge du KPI drawdown (sans le point de départ, comme les autres sparklines). */
   protected readonly ddSeries = computed(() => this.drawdownSeries().slice(1));

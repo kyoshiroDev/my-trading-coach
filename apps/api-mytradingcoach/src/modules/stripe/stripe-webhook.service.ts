@@ -191,6 +191,17 @@ export class StripeWebhookService {
       subscription.status === 'unpaid'
     ) {
       const customerId = extractId(subscription.customer);
+      // Client sans compte MTC (supprimé, ou event rejoué après la suppression) : rien à
+      // surveiller côté app, pas de bruit Sentry. Le script de rattrapage liste ces cas.
+      const known = customerId
+        ? await this.prisma.user.findUnique({ where: { stripeCustomerId: customerId }, select: { id: true } })
+        : null;
+      if (!known) {
+        this.logger.warn(
+          `Subscription ${subscription.id} ${subscription.status} sans utilisateur MTC (customer: ${customerId ?? 'unknown'}) : ignorée`,
+        );
+        return;
+      }
       this.logger.error(
         `[MONITORING] Subscription ${subscription.id} | status: ${subscription.status}, customer: ${customerId ?? 'unknown'}`,
       );

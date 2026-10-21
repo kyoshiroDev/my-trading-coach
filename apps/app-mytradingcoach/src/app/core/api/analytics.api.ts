@@ -43,6 +43,14 @@ export interface HeatmapCell {
 export interface EquityPoint {
   date: string;
   cumulativePnl: number;
+  /** Payout reçu ce jour-là (ajouté par `withPayouts`, jamais renvoyé par l'API dans les points). */
+  payout?: number;
+}
+
+/** Payout reçu (retrait détecté chez le broker, non écarté). */
+export interface EquityPayout {
+  date: string;
+  amount: number;
 }
 
 /**
@@ -54,6 +62,8 @@ export interface PeriodBefore {
   peak: number;
   /** Trades avant la période ; 0 → la période couvre le début du compte. */
   count?: number;
+  /** Total des payouts reçus avant la période. */
+  payouts?: number;
 }
 
 /** Réponse de `/equity-curve/daily`. `startingCapital` = capital du PROFIL, pas celui du compte :
@@ -62,6 +72,8 @@ export interface DailyEquityCurve {
   points: EquityPoint[];
   startingCapital: number | null;
   before?: PeriodBefore;
+  /** Payouts reçus pendant la période (le solde du compte les a déjà perdus). */
+  payouts?: EquityPayout[];
 }
 
 export interface EquityCurveResponse {

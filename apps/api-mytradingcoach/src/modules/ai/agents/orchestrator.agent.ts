@@ -7,6 +7,7 @@ import { Pattern } from './pattern.agent';
 import { buildUserTradingContext } from '../user-context.builder';
 import { effectiveEmotion } from '@api/common/utils/effective-emotion.util';
 import { userAmountsCurrency } from '@api/common/utils/user-currency.util';
+import { inactiveAccountsTradeWhere } from '@api/modules/accounts/account-status-scope';
 
 export interface InsightItem {
   type: 'strength' | 'weakness' | 'pattern';
@@ -39,7 +40,8 @@ export class OrchestratorAgent {
     // Step 1 : Data (0 Anthropic tokens)
     const [trades, userProfile] = await Promise.all([
       this.prisma.trade.findMany({
-        where: { userId },
+        // Compte perdu : comptes échoués et archivés hors du contexte global des insights.
+        where: { userId, ...inactiveAccountsTradeWhere() },
         orderBy: { tradedAt: 'desc' },
         take: 50,
         select: { asset: true, side: true, pnl: true, commission: true, emotion: true,

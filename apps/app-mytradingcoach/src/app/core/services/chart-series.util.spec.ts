@@ -15,7 +15,7 @@ import {
   tickDate,
 } from './chart-series.util';
 import type { TradingAccount } from '../api/accounts.api';
-import { periodStartBalance } from './equity-period.util';
+import { periodStartBalance, withPayouts } from './equity-period.util';
 
 const pt = (date: string, cumulativePnl: number) => ({ date, cumulativePnl });
 
@@ -283,6 +283,51 @@ describe('drawdown d’un compte relié à un plan : limite du plan + marge', ()
     expect(f.margin[0]).toBeCloseTo(1_838.82); // début de la fenêtre, déjà sous le plus haut du 15/09
     expect(lastGap(f)).toBeCloseTo(1_880.12);
     expect(f.minMarginIdx).toBe(0);
+  });
+});
+
+describe('payout reçu (Apex 50K Funded, plancher gelé à 50 100) : courbes sur le solde réel', () => {
+  // +1 500, +1 500 (plus haut 53 000 → plancher gelé), payout de 2 000 le 05/10 sans trade, +200.
+  // Suivi du compte (solde du broker) : solde 51 200, marge 51 200 − 50 100 = 1 100.
+  const plan = () =>
+    planFloorOf(planAccount({ locksAt: 52_100, lockedFloor: 50_100, locked: true }, { floor: 50_100, margin: 1_100 }))!;
+  const trades = [pt('2026-10-01T00:00:00.000Z', 1_500), pt('2026-10-02T00:00:00.000Z', 3_000), pt('2026-10-06T00:00:00.000Z', 3_200)];
+  const payouts = [{ date: '2026-10-05T00:00:00.000Z', amount: 2_000 }];
+
+  it('le jour du payout sans trade devient un point au même P&L', () => {
+    const pts = withPayouts(trades, payouts);
+    expect(pts.map((p) => [p.date.slice(0, 10), p.cumulativePnl, p.payout ?? 0])).toEqual([
+      ['2026-10-01', 1_500, 0], ['2026-10-02', 3_000, 0], ['2026-10-05', 3_000, 2_000], ['2026-10-06', 3_200, 0],
+    ]);
+    expect(withPayouts(trades, [])).toBe(trades);
+  });
+
+  it('équité : la courbe finit sur le Capital (solde du broker), le P&L du jour reste le P&L', () => {
+    const s = equitySeries(withPayouts(trades, payouts), 50_000);
+    expect(s.values).toEqual([50_000, 51_500, 53_000, 51_000, 51_200]);
+    expect(s.dayPnl).toEqual([null, 1_500, 1_500, 0, 200]);
+    expect(s.payout).toEqual([null, null, null, 2_000, null]);
+  });
+
+  it('marge : le payout la réduit le jour même, sans saut au dernier point', () => {
+    const f = floorSeries(withPayouts(trades, payouts), 50_000, plan());
+    expect(f.balance).toEqual([50_000, 51_500, 53_000, 51_000, 51_200]);
+    expect(f.floor).toEqual([48_000, 49_500, 50_100, 50_100, 50_100]);
+    expect(f.margin).toEqual([2_000, 2_000, 2_900, 900, 1_100]);
+    // Avant correctif : solde des trades 53 200 → marge 3 100 ramenée d'un coup à 1 100.
+    expect(f.balance[4] - f.floor[4]).toBe(plan().margin);
+    expect(f.minMarginIdx).toBe(3);
+  });
+
+  it('période ouverte après le payout : départ au solde réel, plus haut d’avant conservé', () => {
+    const before = { pnl: 3_000, peak: 3_000, count: 2, payouts: 2_000 };
+    const period = [pt('2026-10-06T00:00:00.000Z', 200)];
+    const start = periodStartBalance(50_000, 51_200, 200, before);
+    expect(start).toBe(51_000);
+    expect(equitySeries(period, start).values).toEqual([51_000, 51_200]);
+    const f = floorSeries(period, start, plan(), before);
+    expect(f.floor).toEqual([50_100, 50_100]); // le payout ne fait pas redescendre le plancher gelé
+    expect(f.margin).toEqual([900, 1_100]);
   });
 });
 

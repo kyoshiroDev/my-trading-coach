@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { TradeSide } from '@prisma/client';
+import { parseIncludeInactive } from '../../accounts/account-status-scope';
 import type { TradeFilters } from '@mtc/shared';
 
 /**
@@ -76,4 +77,10 @@ export class TradeFiltersDto implements TradeFilters {
   @IsString()
   @IsOptional()
   accountId?: string;
+
+  // Compte perdu : chiffres du journal (GET /trades/stats) avec les comptes échoués et archivés.
+  // Sans effet sur la liste, qui garde toujours tous les trades.
+  @IsOptional()
+  @Transform(({ value }) => parseIncludeInactive(value))
+  includeInactive?: boolean;
 }

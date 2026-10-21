@@ -68,9 +68,25 @@ function expectClose(actual: unknown, expected: unknown, path = '$'): void {
   expect(actual, path).toEqual(expected);
 }
 
+/**
+ * Arguments de l'étalon JavaScript (userId, compte, bornes…) → signature des calculs SQL, qui
+ * prennent un filtre `{ userId, accountId }` (compte perdu : le filtre porte aussi includeInactive).
+ * Les comptes de ce jeu sont tous ACTIFS : l'exclusion des comptes échoués et archivés ne change
+ * aucun chiffre ici (elle est couverte par `account-status-scope.int-spec.ts`).
+ */
+function nextArgs(m: string, a: unknown[]): unknown[] {
+  const [userId, x, y, z] = a as [string, unknown, unknown, unknown];
+  switch (m) {
+    case 'computeSummary': return [{ userId, accountId: x, from: y, to: z }];
+    case 'computeEquityCurveDaily': return [{ userId, accountId: z }, x, y];
+    case 'computeMonthlyActivity': return [{ userId, accountId: z }, x, y];
+    default: return [{ userId, accountId: x }];
+  }
+}
+
 /** Les deux versions, pour un même calcul. */
 async function both(m: string, ...a: unknown[]) {
-  const [n, l] = await Promise.all([call(next, m, ...a), call(legacy, m, ...a)]);
+  const [n, l] = await Promise.all([call(next, m, ...nextArgs(m, a)), call(legacy, m, ...a)]);
   return { n, l };
 }
 const byKey = <T,>(rows: T[], key: (r: T) => string) => [...rows].sort((a, b) => key(a).localeCompare(key(b)));
@@ -214,7 +230,7 @@ describe('B2-01 — statistiques SQL ≡ calculs JavaScript d’avant (5 000 tra
     // Calculs appelés directement : les méthodes get* passent par le cache Redis, que les deux
     // versions partageraient (le test serait vrai par construction).
     const [n, l] = await Promise.all([
-      call(next, 'computeDailyActivity', userId, { from: RANGE_FROM, to: RANGE_TO }, accB),
+      call(next, 'computeDailyActivity', { userId, accountId: accB, from: RANGE_FROM, to: RANGE_TO }),
       call(legacy, 'computeDailyActivity', userId, { tradedAt: { gte: RANGE_FROM, lte: RANGE_TO } }, accB),
     ]);
     expectClose(n, l);

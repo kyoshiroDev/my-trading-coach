@@ -1,6 +1,6 @@
 import { DrawdownFloorRule, drawdownFloor, formatMoney } from '@mtc/shared';
 import { EquityPoint, PeriodBefore } from '../api/analytics.api';
-import { anchoredDrawdown, NO_HISTORY } from './equity-period.util';
+import { anchoredDrawdown, cumulativePayouts, NO_HISTORY } from './equity-period.util';
 import { TradingAccount } from '../api/accounts.api';
 import { requirementLabel } from '../../features/accounts/account-progress.util';
 
@@ -19,19 +19,27 @@ export interface ChartSeries {
   values: number[];
   /** P&L du jour (variation par rapport au point précédent) ; `null` pour « Départ ». */
   dayPnl: (number | null)[];
+  /** Payout reçu ce jour-là ; `null` sans payout (et pour « Départ »). */
+  payout?: (number | null)[];
 }
 
 function dayPnlOf(points: EquityPoint[]): (number | null)[] {
   return [null, ...points.map((p, i) => p.cumulativePnl - (i ? points[i - 1].cumulativePnl : 0))];
 }
 
-/** Capital le long de la période : base + P&L cumulé. */
+function payoutOf(points: EquityPoint[]): (number | null)[] {
+  return [null, ...points.map((p) => p.payout ?? null)];
+}
+
+/** Capital le long de la période : base + P&L cumulé − payouts reçus (fin = Capital du compte). */
 export function equitySeries(points: EquityPoint[], startingCapital: number | null): ChartSeries {
   const base = startingCapital ?? 0;
+  const paid = cumulativePayouts(points);
   return {
     dates: [null, ...points.map((p) => p.date)],
-    values: [base, ...points.map((p) => base + p.cumulativePnl)],
+    values: [base, ...points.map((p, i) => base + p.cumulativePnl - paid[i])],
     dayPnl: dayPnlOf(points),
+    payout: payoutOf(points),
   };
 }
 
@@ -285,6 +293,7 @@ export interface FloorSeries {
   /** Solde initial du compte (haut de l'axe). */
   top: number;
   dayPnl: (number | null)[];
+  payout: (number | null)[];
   /** Point où la marge a été la plus faible. */
   minMarginIdx: number;
 }
@@ -303,9 +312,12 @@ export function floorSeries(
   before: PeriodBefore = NO_HISTORY,
 ): FloorSeries {
   const { rule } = plan;
-  const balance = [periodStart, ...points.map((p) => periodStart + p.cumulativePnl)];
-  // Plus haut d'avant la période, recalé sur le solde réel (broker) du début de période.
-  const offset = periodStart - rule.startingBalance - before.pnl;
+  // Solde réel : un payout le fait baisser sans faire baisser le plancher (marge réduite d'autant).
+  const paid = cumulativePayouts(points);
+  const balance = [periodStart, ...points.map((p, i) => periodStart + p.cumulativePnl - paid[i])];
+  // Plus haut d'avant la période, recalé sur le solde réel (broker) du début de période. Un payout
+  // d'avant la période n'est pas un écart de référentiel : il ne fait pas baisser le plus haut.
+  const offset = periodStart - rule.startingBalance - before.pnl + (before.payouts ?? 0);
   let peak = Math.max(0, before.peak + offset);
   const cap = (v: number) => (plan.peakProfit === null ? v : Math.min(v, plan.peakProfit));
   const floor = balance.map((b) => {
@@ -324,6 +336,6 @@ export function floorSeries(
   });
   return {
     dates: [null, ...points.map((p) => p.date)], balance, floor, margin, values, limit, top,
-    dayPnl: dayPnlOf(points), minMarginIdx,
+    dayPnl: dayPnlOf(points), payout: payoutOf(points), minMarginIdx,
   };
 }

@@ -28,7 +28,7 @@ import { TradeFiltersDto } from './dto/trade-filters.dto';
 import { buildTradeFilterSql, buildTradeWhere } from './trade-filters.util';
 import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
-import { journalStatsSql, type JournalStats } from './journal-stats.util';
+import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
 
 // Réexports : les appelants existants importent ces types depuis le service.
@@ -324,10 +324,11 @@ export class TradesService {
   async computeJournalStats(
     userId: string,
     filters: TradeFiltersDto,
-  ): Promise<JournalStats> {
+  ): Promise<JournalStats & { excludedAccounts: { failed: number; archived: number } }> {
     // Ownership du compte validé au niveau contrôleur (accountWhere), comme findAll. Calcul en
-    // base (SCA-B2-02) avec le même filtre que la liste (buildTradeFilterSql ≡ buildTradeWhere).
-    return journalStatsSql(this.prisma, buildTradeFilterSql(userId, filters));
+    // base (SCA-B2-02) avec le même filtre que la liste (buildTradeFilterSql ≡ buildTradeWhere),
+    // plus le filtre des comptes perdus (la liste, elle, garde tous les trades).
+    return journalStatsForFilters(this.prisma, userId, buildTradeFilterSql(userId, filters), filters);
   }
 
   async findAll(userId: string, filters: TradeFiltersDto) {
@@ -344,6 +345,8 @@ export class TradesService {
         setup: { select: { id: true, title: true, color: true } },
         // Humeur de la journée → émotion effective côté front (affichage + «, » si null).
         tradeSession: { select: { moodStart: true } },
+        // Compte perdu : le journal garde tous les trades, badge « Échoué » / « Archivé » côté front.
+        account: { select: { id: true, label: true, status: true } },
       },
     });
 
