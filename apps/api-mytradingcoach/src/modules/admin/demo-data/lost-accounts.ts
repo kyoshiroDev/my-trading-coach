@@ -1,6 +1,8 @@
 // Comptes « perdus » du compte démo (fonctionnalité compte perdu) : un compte ÉCHOUÉ dont le compte
-// Apex actif est la nouvelle tentative, un compte VALIDÉ et un compte ARCHIVÉ. Ils montrent la ligne
-// « n comptes exclus des chiffres » et l'interrupteur des statistiques.
+// Apex actif est la nouvelle tentative, et un compte ARCHIVÉ. Ils montrent la ligne « 2 comptes exclus
+// des chiffres » et l'interrupteur des statistiques. Pas de compte VALIDÉ : il serait compté dans les
+// chiffres et changerait ceux de la vitrine (décision du 2026-10-21 ; le statut Validé est couvert par
+// les tests unitaires et d'intégration).
 //
 // Contrat de cohérence de `config.ts` préservé : aucun de ces comptes n'est ACTIVE, donc
 // Σ startingBalance des comptes ACTIVE === STARTING_CAPITAL. Leurs trades tombent AVANT la fenêtre
@@ -10,7 +12,7 @@ import { AccountStatus, AccountType, DrawdownType, TradeSide, TradingSession } f
 import { DEMO_WINDOW_DAYS, INSTRUMENTS, round2 } from './config';
 
 export interface LostDemoAccount {
-  key: 'apexFailed' | 'topstepPassed' | 'lucidArchived';
+  key: 'apexFailed' | 'lucidArchived';
   label: string;
   broker: string;
   type: AccountType;
@@ -41,21 +43,6 @@ export const LOST_DEMO_ACCOUNTS: LostDemoAccount[] = [
     drawdownType: DrawdownType.TRAILING,
     propFirmPlanId: 'apex-eod-50k',
     pnls: [320, -260, 410, -540, -180, 260, -620, -390, 150, -480, -330, -550],
-  },
-  {
-    // Évaluation réussie (+3 120 $ pour un objectif de 3 000 $) : VALIDÉ reste compté dans les chiffres.
-    key: 'topstepPassed',
-    label: 'Topstep 50k · Éval',
-    broker: 'Topstep',
-    type: AccountType.EVALUATION,
-    status: AccountStatus.PASSED,
-    accountSize: 50_000,
-    startingBalance: 50_000,
-    profitTarget: 3_000,
-    maxDrawdown: 2_000,
-    drawdownType: DrawdownType.TRAILING,
-    propFirmPlanId: 'topstep-standard-50k',
-    pnls: [450, -210, 620, 380, -150, 540, 290, -180, 710, 670],
   },
   {
     // Ancien compte rangé : archivé, hors statistiques, historique consultable à part.
@@ -109,8 +96,8 @@ export function buildLostDemoTrades(now: Date): LostDemoTrade[] {
   const { base, ptVal, fee } = INSTRUMENTS.MNQ;
   const quantity = 2;
   const trades: LostDemoTrade[] = [];
-  // Comptes successifs, du plus ancien au plus récent : Lucid, puis Topstep, puis Apex #1.
-  const order: LostDemoAccount['key'][] = ['lucidArchived', 'topstepPassed', 'apexFailed'];
+  // Comptes successifs, du plus ancien au plus récent : Lucid, puis Apex #1.
+  const order: LostDemoAccount['key'][] = ['lucidArchived', 'apexFailed'];
   const total = LOST_DEMO_ACCOUNTS.reduce((n, a) => n + a.pnls.length, 0);
   const start = new Date(now);
   start.setUTCDate(start.getUTCDate() - (DEMO_WINDOW_DAYS + 7));

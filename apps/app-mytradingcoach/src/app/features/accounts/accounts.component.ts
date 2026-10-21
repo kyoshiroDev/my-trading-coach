@@ -416,7 +416,17 @@ export class AccountsComponent implements OnInit {
     });
   }
 
+  /**
+   * Connexion (et reconnexion) Tradovate proposée aux seuls comptes ACTIVE. Un compte échoué, validé
+   * ou archivé ne trade plus : le connecter n'aurait pas de sens (même règle que l'import CSV, qui ne
+   * cible que les comptes actifs). Une connexion déjà établie n'est pas touchée ici.
+   */
+  protected canConnect(a: TradingAccount): boolean {
+    return a.status === 'ACTIVE';
+  }
+
   protected openTradovateConnect(a: TradingAccount): void {
+    if (!this.canConnect(a)) return;
     this.connectTarget.set({ id: a.id, label: a.label });
   }
 

@@ -32,10 +32,10 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}, pnl = 
   };
 }
 
-function setup(accounts: TradingAccount[], selected: string | 'all' = 'all') {
+function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', connections: { accountId: string; status: string }[] = []) {
   const tv = {
-    connections: signal([]),
-    byAccount: computed(() => new Map()),
+    connections: signal(connections),
+    byAccount: computed(() => new Map(connections.map((c) => [c.accountId, { brokerTradesCount: 0, needsAccountSelection: false, ...c }] as const))),
     busy: signal({}), feedback: signal({}), loaded: signal(true),
     load: vi.fn(), sync: vi.fn(), selectThenSync: vi.fn(), disconnect: vi.fn(), setFeedback: vi.fn(),
   };
@@ -130,4 +130,33 @@ describe('Mes comptes · compte perdu', () => {
     const { q } = setup(LIST().filter((a) => a.status !== 'ARCHIVED'));
     expect(q('archived-accounts')).toBeNull();
   });
+
+  it('« Connecter Tradovate » : seulement sur un compte ACTIVE (pas échoué, validé ni archivé)', () => {
+    const { q } = setup(LIST());
+    expect(q('tradovate-connect-a2')).not.toBeNull();
+    expect(q('tradovate-connect-a1')).toBeNull();
+    expect(q('tradovate-connect-t')).toBeNull();
+    expect(q('tradovate-connect-l')).toBeNull();
+    // L'état reste affiché : seul le bouton disparaît.
+    expect(q('tradovate-status-a1')!.textContent).toContain('Non connecté');
+  });
+
+  it('« Reconnecter » suit la même règle : proposé à un compte ACTIVE, pas à un compte échoué', () => {
+    const { q } = setup(LIST(), 'all', [
+      { accountId: 'a2', status: 'NEEDS_RECONNECT' },
+      { accountId: 'a1', status: 'NEEDS_RECONNECT' },
+    ]);
+    expect(q('tradovate-reconnect-a2')).not.toBeNull();
+    expect(q('tradovate-reconnect-a1')).toBeNull();
+    expect(q('tradovate-status-a1')!.textContent).toContain('À reconnecter');
+  });
+
+  it('canConnect : vrai pour ACTIVE uniquement', () => {
+    const { cmp } = setup(LIST());
+    const can = (cmp as unknown as { canConnect: (a: TradingAccount) => boolean }).canConnect.bind(cmp);
+    expect(LIST().map((a) => [a.status, can(a)])).toEqual([
+      ['ACTIVE', true], ['PASSED', false], ['FAILED', false], ['ARCHIVED', false],
+    ]);
+  });
 });
+

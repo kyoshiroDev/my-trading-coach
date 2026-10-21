@@ -835,6 +835,10 @@ les chiffres (jamais au premier passage).
   « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
   `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
 - Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+- **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
+  « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
+  un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
+  synchro continue côté API (décision en attente, issue #683).
 - Journal : la liste garde tout, badge sur les trades d'un compte échoué ou archivé (la cellule de
   l'actif passe à la ligne au lieu de couper le badge). Les KPIs utilisent `statsFilters`
   (`includeInactive` en plus) ; la liste garde `journalFilters` (l'interrupteur ne la recharge pas).
