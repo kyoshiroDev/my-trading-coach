@@ -505,3 +505,17 @@ Points ouverts :
 | LucidDirect Daily Loss Limit | DLL 1 200 / 2 100 / 3 000 $ (25K sans DLL), puis DLL LucidScale à 60 % du plus haut profit de fin de journée au-dessus de l'Initial Trail Balance : conforme. | Aucun |
 
 Une évaluation Flex achetée avant ce changement relevait de l'ancienne règle à 50 % : les notes des plans standard renvoient vers la variante « option consistency 50 % » de même taille pour ces comptes. Relevé de veille mis à jour pour ces 5 articles.
+
+## Relecture navigateur Apex et MyFundedFutures du 2026-10-22 (#653)
+
+Pages signalées « illisibles hors navigateur » par la veille du 2026-10-19, relues dans Chrome. Apex : `help-center-sitemap.xml` (dates de modification) puis lecture des pages sans date (accueil, `/legacy-products/`). Aucun article du centre d'aide source du catalogue n'a été modifié depuis la relecture du 2026-10-18 ; seuls « Hedging and Correlated Instruments Rule » (2026-10-21, conforme à « pas de hedging » des notes) et un guide Bookmap ont bougé.
+
+| Firm | Page | Constat | Effet |
+|---|---|---|---|
+| Apex | Accueil (sélecteur de prix) | Prix des évaluations inchangés (Intraday 167 / 249 / 790 / 1190 $, EOD 490 / 590 / 1190 / 2190 $, coupon -90 %). Frais d'activation du PA en hausse : Intraday 89 / 99 / 129 / 149 $, EOD 109 / 129 / 139 / 159 $. « No Activation Fee » EOD 100K / 150K désormais affichés : 1590 / 2490 $. Mêmes valeurs sur Tradovate, Rithmic et WealthCharts. Règles (objectif, drawdown, contrats, DLL max du PA, safety net, 6 payouts, 50 %) conformes. | `activation_fee` des 8 plans, notes de prix |
+| Apex | `/legacy-products/` | Règles conformes (contrats, objectif, drawdown, pas de DLL). Abonnement 100K / 250K / 300K à 210 $/mois (397 / 697 / 797 $ au relevé précédent), 25K / 50K / 150K inchangés. Frais de PA : 99 / 125 / 149 / 179 / 189 / 199 $. Identique sur les trois plateformes. | `price.amount` de 3 plans, `activation_fee` de 5 plans |
+| MyFundedFutures | `/plans/rapid`, `/plans/rapid-eod` | Prix (145 / 209 / 356 / 463 $ ; 145 / 225 $), règles, contrats, buffers et payouts conformes. | Aucun |
+| MyFundedFutures | `/plans/pro` | Prix conformes (265 / 401 / 557 $). Contrats : évaluation 3/30, 6/60, 9/90, Sim Funded « 3 / 3, 6 / 6, 9 / 9 » (5/5, 10/10, 15/15 au relevé précédent). Reste conforme. | `max_contracts` des 3 plans Pro |
+| MyFundedFutures | `/plans/builder` | Prix conformes (105 / 153 / 282 / 398 $). Plafond par cycle du 150K : 3 500 $ sur la page (le support annonçait 4 500 $ le 2026-10-06 ; la page prime). Une 2e Builder 25K par utilisateur autorisée (non modélisé). | `max_amount` de `myfundedfutures-builder-150k` |
+
+Restent à relire dans un navigateur pour clore #653 : Tradeify (13 articles), Phidias (7 pages), OneUp (1 article) et l'accueil Lucid.
