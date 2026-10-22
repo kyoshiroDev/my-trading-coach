@@ -755,14 +755,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-pro-100k",
@@ -861,14 +861,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-pro-150k",
@@ -967,14 +967,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-builder-25k",
@@ -1573,11 +1573,11 @@
             "min_cycle_profit_schedule": null,
             "split_pct": 0.8,
             "min_amount": 1500,
-            "max_amount": 3500,
+            "max_amount": 4500,
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 4600,
-            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 3 500 $ par cycle selon la page du plan relue le 2026-10-22 (le support MyFundedFutures, Ellis, indiquait 4 500 $ le 2026-10-06 ; la page, plus récente, prime)."
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (article « Builder Plan 150k - Comprehensive Guide » relu le 2026-10-22, et support MyFundedFutures, Ellis, 2026-10-06) ; la page du plan affiche 3 500 $ (contradiction notée, deux sources contre une)."
           }
         }
       ],
@@ -1586,7 +1586,8 @@
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
-        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade",
+        "https://help.myfundedfutures.com/en/articles/17035331-builder-plan-150k-comprehensive-guide"
       ],
       "needs_review": false,
       "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."
