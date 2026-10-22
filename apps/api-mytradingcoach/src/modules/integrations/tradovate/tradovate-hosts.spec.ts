@@ -142,7 +142,7 @@ describe('TradovateTokenManager — relecture de apiHosts', () => {
       refreshTokenEnc: encryptToken('RT-1', key),
       accessTokenExpiresAt: new Date(Date.now() + 120 * 60_000),
       refreshTokenExpiresAt: null,
-      externalUserId: '5751613',
+      externalUserId: '9100001',
       apiHosts: MESURE,
       apiHostsAt: null,
       ...overrides,
@@ -184,7 +184,7 @@ describe('TradovateTokenManager — relecture de apiHosts', () => {
     expect(data.apiHostsAt).toBeInstanceOf(Date);
     expect(prisma.brokerConnection.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ externalUserId: '5751613', id: { not: 'c1' } }),
+        where: expect.objectContaining({ externalUserId: '9100001', id: { not: 'c1' } }),
         data: expect.objectContaining({ apiHosts: PROP_FIRM }),
       }),
     );

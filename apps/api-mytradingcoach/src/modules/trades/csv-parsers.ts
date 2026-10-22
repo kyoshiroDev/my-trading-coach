@@ -24,7 +24,37 @@ export type ImportDto = Partial<CreateTradeDto> & {
   _sellFillId?: string;
 };
 
-export function preprocessCsv(raw: string): { broker: BrokerType; csv: string } {
+/**
+ * Colonnes de l'export Performance Tradovate que `parseTradovate` lit PAR POSITION, avec le nom
+ * attendu à cette position (en-tête de `__fixtures__/tradovate-performance.csv`, en minuscules).
+ */
+export const TRADOVATE_POSITIONAL_COLUMNS: ReadonlyArray<readonly [number, string]> = [
+  [0, 'symbol'],
+  [6, 'qty'],
+  [7, 'buyprice'],
+  [8, 'sellprice'],
+  [9, 'pnl'],
+  [10, 'boughttimestamp'],
+  [11, 'soldtimestamp'],
+];
+
+/**
+ * Écarts entre l'en-tête Performance et les positions lues par `parseTradovate` (vide = aligné).
+ * Une colonne ajoutée APRÈS la 12ᵉ ne décale rien : elle passe.
+ */
+export function tradovateColumnMismatches(headerLine: string): string[] {
+  const header = splitCsvLine(headerLine).map((h) => h.trim().toLowerCase());
+  return TRADOVATE_POSITIONAL_COLUMNS.filter(([i, name]) => header[i] !== name).map(
+    ([i, name]) => `colonne ${i + 1} : « ${name} » attendu, « ${header[i] ?? '(absente)'} » trouvé`,
+  );
+}
+
+export function preprocessCsv(raw: string): {
+  broker: BrokerType;
+  csv: string;
+  /** Export Tradovate reconnu (fill ids) mais colonnes déplacées : rien n'a été lu par position. */
+  formatChanged?: string[];
+} {
   // BOM UTF-8 (exports Windows) + normalisation des fins de ligne CRLF/CR → \n
   const cleaned = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw)
     .replace(/\r\n/g, '\n')
@@ -49,8 +79,13 @@ export function preprocessCsv(raw: string): { broker: BrokerType; csv: string } 
     .filter((l) => l.trim());
 
   switch (broker) {
-    case 'tradovate':
+    case 'tradovate': {
+      // Lecture par position : un en-tête décalé importerait des prix et des P&L faux sans
+      // erreur. Rendu « inconnu » (le registre des brokers peut alors prendre le relais).
+      const mismatches = tradovateColumnMismatches(nlines[0]);
+      if (mismatches.length) return { broker: 'unknown', csv: normalized, formatChanged: mismatches };
       return { broker, csv: parseTradovate(nlines) };
+    }
     case 'binance_futures':
       return { broker, csv: parseBinanceFutures(nlines) };
     case 'binance_spot':

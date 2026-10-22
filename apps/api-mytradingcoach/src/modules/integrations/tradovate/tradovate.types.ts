@@ -158,7 +158,7 @@ export interface ExternalAccountRef {
   /**
    * `userId` de l'entité compte = son **propriétaire chez le broker**, et surtout PAS le trader
    * connecté. Sur un compte prop firm c'est l'identifiant de la FIRME : mesuré le 2026-09-27,
-   * deux traders Apex sans aucun lien (`APEX_13679` et `APEX_428047`) portent tous les deux
+   * deux traders Apex sans aucun lien (`APEX_10000` et `APEX_200000`) portent tous les deux
    * `userId: 699523`, et `/user/item?id=699523` répond 404 — ce n'est pas un trader.
    *
    * Conservé pour le diagnostic seulement. Le login, c'est `/user/list` (cf. `TradovateUser`).

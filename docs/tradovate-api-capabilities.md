@@ -490,7 +490,7 @@ POST https://rpt-{demo|live}.tradovateapi.com/v1/reports/requestReport
   "params": [
     { "name": "startDate", "value": "9/1/2026" },
     { "name": "endDate",   "value": "9/26/2026" },
-    { "name": "account",   "value": "APEX4280470000012" }
+    { "name": "account",   "value": "APEX2000000000012" }
   ]
 }
 ```
@@ -657,8 +657,8 @@ pour le login. C'est le **propriétaire du compte chez le broker**, et sur un co
 la **firme** :
 
 ```
-jeton du trader A → /user/list : {id: 5751613, name: "APEX_13679",  organizationId: 20}
-jeton du trader B → /user/list : {id: 5976756, name: "APEX_428047", organizationId: 20}
+jeton du trader A → /user/list : {id: 9100001, name: "APEX_10000",  organizationId: 20}
+jeton du trader B → /user/list : {id: 9200002, name: "APEX_200000", organizationId: 20}
 comptes des deux → account.userId = 699523      (le même)
 /user/item?id=699523 → 404                       (ce n'est pas un trader)
 ```
