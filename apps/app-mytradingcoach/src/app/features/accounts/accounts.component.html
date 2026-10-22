@@ -122,8 +122,10 @@
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
+          <!-- `account-row` : ligne d'un compte pour les tests (e2e) ; l'id du compte dans data-account-id. -->
           <div class="acct-line"
-               [attr.data-testid]="'account-card-' + a.id">
+               data-testid="account-row"
+               [attr.data-account-id]="a.id">
 
             <!-- 1 · Compte : icône, nom, badges, statut -->
             <div class="cell cell-acct">
