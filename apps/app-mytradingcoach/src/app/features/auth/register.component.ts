@@ -18,6 +18,7 @@ import { SignupFunnelService, registerErrorCode } from '../../core/services/sign
 import { PostSignupService } from '../../core/auth/post-signup.service';
 import { REFERRAL_STORAGE_KEY, UTM_STORAGE_KEY } from '../../core/auth/signup-context';
 import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
+import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
 
 /** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
 export function referrerHost(referrer: string): string {
@@ -31,9 +32,9 @@ export function referrerHost(referrer: string): string {
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent],
+  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './register.component.css',
+  styleUrls: ['./auth-layout/auth-form.css', './register.component.css'],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {

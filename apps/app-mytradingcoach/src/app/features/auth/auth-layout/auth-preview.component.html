@@ -1,0 +1,47 @@
+<figure class="preview" aria-label="Aperçu du suivi d'un compte, données de démonstration">
+  <div class="head">
+    <div>
+      <div class="title">Éval Apex 50K</div>
+      <div class="sub">EOD Trail · limite du plan −$2,000</div>
+    </div>
+    <span class="live">En séance</span>
+  </div>
+
+  <dl class="kpis">
+    <div class="kpi">
+      <dt>Marge avant la limite</dt>
+      <dd>$1,803</dd>
+    </div>
+    <div class="kpi">
+      <dt>Plancher actuel</dt>
+      <dd class="muted">$49,275</dd>
+    </div>
+    <div class="kpi">
+      <dt>Objectif</dt>
+      <dd class="muted">$53,000</dd>
+    </div>
+  </dl>
+
+  <div class="chart-wrap">
+    <span class="cl cl-start">Départ $50,000</span>
+    <span class="cl cl-min">marge min $1,175 · 14/10</span>
+    <span class="cl cl-limit">Limite du plan $48,000</span>
+    <svg class="chart" viewBox="0 0 480 130" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="auth-preview-dd" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" class="fade-top" />
+          <stop offset="1" class="fade-bottom" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="104" width="480" height="26" fill="url(#auth-preview-dd)" />
+      <line class="limit" x1="0" y1="104" x2="480" y2="104" />
+      <path
+        class="curve"
+        d="M0,14 C30,14 50,14 70,16 C90,22 110,24 130,22 C150,20 170,22 190,14 C210,13 230,14 250,22 C270,32 290,40 310,28 C330,14 350,12 370,24 C385,40 395,52 405,48 C420,30 440,24 455,26 C465,25 472,22 480,18"
+      />
+      <circle class="dot" cx="405" cy="48" r="3.2" />
+    </svg>
+  </div>
+
+  <figcaption class="foot">Données de démonstration</figcaption>
+</figure>

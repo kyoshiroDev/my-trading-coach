@@ -18,7 +18,7 @@ const landing = environment.landingUrl.replace(/\/$/, '');
   selector: 'mtc-google-finalize',
   imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrls: ['./register.component.css', './google-finalize.component.css'],
+  styleUrls: ['./auth-layout/card-page-signup.css', './google-finalize.component.css'],
   templateUrl: './google-finalize.component.html',
 })
 export class GoogleFinalizeComponent {

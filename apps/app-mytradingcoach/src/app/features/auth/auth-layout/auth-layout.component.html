@@ -1,0 +1,18 @@
+<main class="auth">
+  <section class="pitch" aria-label="Pourquoi MyTradingCoach">
+    <!-- Contenu importé à la demande à partir de 1024 px (cf. AuthLayoutComponent). -->
+    <ng-container #pitch />
+  </section>
+
+  <section class="form-side">
+    <div class="auth-card">
+      <img class="card-logo" src="icon/logo-horizontal.svg" alt="MyTradingCoach" width="220" height="40" />
+      <ng-content />
+      <p class="trust">
+        <span>Lecture seule, aucun ordre passé</span><span class="dot" aria-hidden="true">·</span
+        ><span>Hébergé en France</span>
+        <span class="nt-line">Référencé dans l'écosystème NinjaTrader</span>
+      </p>
+    </div>
+  </section>
+</main>
