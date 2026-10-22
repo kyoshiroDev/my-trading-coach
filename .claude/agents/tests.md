@@ -27,6 +27,11 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
 - Une spec qui remplace un module avec **`vi.mock`** doit être ajoutée à `NEEDS_ISOLATION` dans ce
   fichier (projet Vitest `app-isolated`) : sinon le mock ne s'applique pas si un autre fichier a déjà
   chargé le module, et la spec casse selon l'ordre d'exécution.
+- **Délai par test : 20 s** (`testTimeout`) dans les configs Vitest de l'app ET de l'API, au lieu
+  des 5 s par défaut. Une spec qui compile un gros template réel (Mes comptes, journal, onboarding,
+  profil) prend 1,5 à 4,3 s en suite complète, jusqu'à 14 s machine chargée ; idem côté API pour le
+  câblage des modules Nest et la lecture Excel. Un échec « STACK_TRACE_ERROR » dans le rapport JSON
+  avec une durée proche du délai = délai dépassé, pas une assertion fausse (#689). Ne pas baisser.
 - Cibles Nx inférées (`@nx/vitest`, `@nx/eslint/plugin`) : pas de `test` ni de `lint` à déclarer
   dans `project.json`.
 
