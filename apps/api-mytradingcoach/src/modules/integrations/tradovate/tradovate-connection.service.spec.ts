@@ -200,7 +200,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
   describe('portée login', () => {
     it('le renouvellement propage les nouveaux tokens aux connexions sœurs et les ressuscite', async () => {
       const { service, prisma, api, conn } = setup({
-        externalUserId: '5751613',
+        externalUserId: '9100001',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
@@ -209,7 +209,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
       await expect(service.getAccessToken(conn)).resolves.toBe('AT-2');
 
       const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
-      expect(args.where).toMatchObject({ externalUserId: '5751613', userId: 'u1', id: { not: 'c1' } });
+      expect(args.where).toMatchObject({ externalUserId: '9100001', userId: 'u1', id: { not: 'c1' } });
       // Une sœur condamnée par une rotation concurrente l'avait été à tort : le login répond.
       expect(args.data.status).toBe('CONNECTED');
       expect(args.data.lastSyncError).toBeNull();
@@ -229,7 +229,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('verrou pris par une sœur → on attend son token au lieu de rejouer le refresh', async () => {
       const { service, prisma, api, conn, key } = setup({
-        externalUserId: '5751613',
+        externalUserId: '9100001',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
@@ -247,7 +247,7 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('verrou pris mais la sœur n’a rien donné → on tente quand même, jamais bloqué', async () => {
       const { service, prisma, api, conn } = setup({
-        externalUserId: '5751613',
+        externalUserId: '9100001',
         accessTokenExpiresAt: new Date(Date.now() - 1000),
       });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
@@ -262,34 +262,34 @@ describe('TradovateConnectionService.getAccessToken', () => {
     it('rattrapage : atteint AUSSI les connexions sœurs déjà mortes', async () => {
       // Elles ne se synchronisent plus (le cron ignore NEEDS_RECONNECT) : sans ce rattrapage par
       // liste de comptes du login, elles resteraient orphelines et jamais ressuscitées.
-      const { service, prisma, conn } = setup({ externalUserId: null, externalAccountId: '40517838' });
+      const { service, prisma, conn } = setup({ externalUserId: null, externalAccountId: '90000010' });
       prisma.brokerConnection.updateMany.mockResolvedValue({ count: 2 });
 
-      await service.rememberLogin(conn, 5751613, ['40517838', '40570856']);
+      await service.rememberLogin(conn, 9100001, ['90000010', '90000011']);
 
       const [args] = prisma.brokerConnection.updateMany.mock.calls[0];
       expect(args.where).toMatchObject({
         userId: 'u1',
         externalUserId: null,
-        externalAccountId: { in: ['40517838', '40570856'] },
+        externalAccountId: { in: ['90000010', '90000011'] },
       });
-      expect(args.data).toEqual({ externalUserId: '5751613' });
+      expect(args.data).toEqual({ externalUserId: '9100001' });
     });
 
     it('rattrapage : ne touche que les connexions sans login (les autres gardent le leur)', async () => {
-      const { service, prisma, conn } = setup({ externalUserId: '5751613' });
-      await service.rememberLogin(conn, 5751613, ['40517838']);
+      const { service, prisma, conn } = setup({ externalUserId: '9100001' });
+      await service.rememberLogin(conn, 9100001, ['90000010']);
       // Le filtre `externalUserId: null` protège les connexions déjà rattachées.
       expect(prisma.brokerConnection.updateMany.mock.calls[0][0].where.externalUserId).toBeNull();
     });
 
     it('le verrou porte sur le LOGIN, pas sur la connexion', async () => {
-      const { service, api, conn } = setup({ externalUserId: '5751613', accessTokenExpiresAt: new Date(Date.now() - 1000) });
+      const { service, api, conn } = setup({ externalUserId: '9100001', accessTokenExpiresAt: new Date(Date.now() - 1000) });
       const redis = (service as unknown as { redis: { client: { set: ReturnType<typeof vi.fn> } } }).redis;
       api.refresh.mockResolvedValue({ access_token: 'AT-2', expires_in: 4800 });
 
       await service.getAccessToken(conn);
-      expect(redis.client.set).toHaveBeenCalledWith('tradovate:login:5751613', '1', 'EX', 30, 'NX');
+      expect(redis.client.set).toHaveBeenCalledWith('tradovate:login:9100001', '1', 'EX', 30, 'NX');
     });
   });
 
@@ -533,8 +533,8 @@ describe('TradovateConnectionService.getAccessToken', () => {
     }
 
     it('compte passé sur l’autre hôte → externalEnv corrigé, pas d’erreur', async () => {
-      const { service, api, prisma, conn } = setup({ externalAccountId: '66948823', externalEnv: 'demo' });
-      listes(api, [compte(66948823, 'FTD')], []);
+      const { service, api, prisma, conn } = setup({ externalAccountId: '90000024', externalEnv: 'demo' });
+      listes(api, [compte(90000024, 'FTD')], []);
       prisma.brokerConnection.update.mockResolvedValue(makeConn({ externalEnv: 'live' }));
 
       await expect(service.handleMissingAccount(conn, 'AT')).resolves.toMatchObject({ externalEnv: 'live' });
@@ -543,11 +543,11 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('absent depuis peu → trou passager, rien de détaché', async () => {
       const { service, api, prisma, conn } = setup({
-        externalAccountId: '66948823',
+        externalAccountId: '90000024',
         externalEnv: 'demo',
         lastSyncAt: new Date(Date.now() - 30 * 60_000),
       });
-      listes(api, [], [compte(66430016, 'PTLOP')]);
+      listes(api, [], [compte(90000023, 'PTLOP')]);
 
       await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
         code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
@@ -557,19 +557,19 @@ describe('TradovateConnectionService.getAccessToken', () => {
 
     it('absent durablement → détaché, comptes du login relus, statut CONNECTED conservé', async () => {
       const { service, api, prisma, conn } = setup({
-        externalAccountId: '66948823',
+        externalAccountId: '90000024',
         externalAccountName: 'FTD',
         externalEnv: 'demo',
         lastSyncAt: new Date(Date.now() - ACCOUNT_GONE_GRACE_MS - 60_000),
       });
-      listes(api, [], [compte(66430016, 'PTLOP')]);
+      listes(api, [], [compte(90000023, 'PTLOP')]);
 
       await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
         code: 'TRADOVATE_ACCOUNT_NOT_FOUND',
       });
       const data = prisma.brokerConnection.update.mock.calls[0][0].data;
       expect(data).toMatchObject({ externalAccountId: null, externalEnv: null });
-      expect(data.availableAccounts).toEqual([{ id: '66430016', name: 'PTLOP', env: 'demo', userId: '42' }]);
+      expect(data.availableAccounts).toEqual([{ id: '90000023', name: 'PTLOP', env: 'demo', userId: '42' }]);
       expect(data.status).toBeUndefined(); // jamais « à reconnecter » : le token marche
     });
 
