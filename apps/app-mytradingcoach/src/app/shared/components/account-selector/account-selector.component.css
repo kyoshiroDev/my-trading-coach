@@ -246,3 +246,11 @@
     width: max(280px, 100%);
   }
 }
+
+/* Compte échoué ou archivé choisi : note discrète, sans couleur d'alerte (même ton que les notes). */
+.acct-inactive-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
