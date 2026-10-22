@@ -1325,8 +1325,9 @@ sont en direct.
   qty 7, buyPrice 8, sellPrice 9, pnl 10, boughtTimestamp 11, soldTimestamp 12).
   `tradovateColumnMismatches` compare l'en-tête à `TRADOVATE_POSITIONAL_COLUMNS` ; au moindre
   écart, `preprocessCsv` rend `broker: 'unknown'` + `formatChanged` (rien n'est lu par position).
-  Import manuel : fiche du registre si elle existe, sinon 400 « Le format de ce fichier a changé… »
-  (jamais l'IA en douce). Historique par l'API : erreur « rapport Performance au format modifié ».
+  Import manuel : fiche du registre si elle existe, sinon 400 « Le format de ce fichier a changé.
+  Contacte support@mytradingcoach.app. » : aucune mention de l'import IA, que l'utilisateur ne peut
+  pas choisir, et jamais l'IA en douce. Historique par l'API : erreur « rapport Performance au format modifié ».
   Une colonne ajoutée après la 12ᵉ passe.
 - **Export vide** (0 octet, 2 octets CRLF / BOM UTF-16 / `""`, en-tête seul) : toujours
   `emptyMessage()` (« Aucun trade fermé détecté… Vérifie aussi la période et le compte… »), plus de

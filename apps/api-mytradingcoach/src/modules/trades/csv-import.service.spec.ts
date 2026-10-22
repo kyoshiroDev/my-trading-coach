@@ -476,13 +476,18 @@ describe('CsvImportService — garde-fou des colonnes Tradovate Performance', ()
     expect(persistance).not.toHaveBeenCalled();
   });
 
-  it('le message renvoie vers l\'import IA ou support@, sans IA déclenchée en douce', async () => {
+  it('le message renvoie vers support@ seulement : ni mention ni appel de l\'IA, même en Premium', async () => {
     const svc = makeService();
     const create = (svc as unknown as { anthropicClient: { create: ReturnType<typeof vi.fn> } })
       .anthropicClient.create;
-    await expect(
-      svc.parseCSV(variante((c) => [...c.slice(0, 3), ...c.slice(4)]), 'Performance.csv', 'user-1', PREMIUM_ACCESS),
-    ).rejects.toThrow(/import IA.*support@mytradingcoach\.app/);
+    const msg = await svc
+      .parseCSV(variante((c) => [...c.slice(0, 3), ...c.slice(4)]), 'Performance.csv', 'user-1', PREMIUM_ACCESS)
+      .then(
+        () => '',
+        (e: Error) => e.message,
+      );
+    expect(msg).toBe('Le format de ce fichier a changé. Contacte support@mytradingcoach.app.');
+    expect(msg).not.toMatch(/\bIA\b/);
     expect(create).not.toHaveBeenCalled();
   });
 });

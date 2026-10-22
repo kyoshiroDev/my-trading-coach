@@ -171,11 +171,12 @@ export class CsvImportService {
       // suite reprend exactement le parcours d'un broker inconnu.
 
       // Export Tradovate Performance aux colonnes déplacées : refus explicite plutôt que des
-      // prix et des P&L lus dans les mauvaises colonnes.
+      // prix et des P&L lus dans les mauvaises colonnes. Pas de bascule vers l'IA : l'utilisateur
+      // ne choisit pas ce mode, le message ne le propose donc pas.
       if (formatChanged) {
         this.logger.warn(`CSV "${filename}" Tradovate au format modifié : ${formatChanged.join(' ; ')}`);
         throw new BadRequestException(
-          'Le format de ce fichier a changé, importe-le avec l\'import IA ou contacte support@mytradingcoach.app.',
+          'Le format de ce fichier a changé. Contacte support@mytradingcoach.app.',
         );
       }
 
