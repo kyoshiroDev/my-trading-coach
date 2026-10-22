@@ -520,3 +520,16 @@ Pages signalées « illisibles hors navigateur » par la veille du 2026-10-19, r
 | MyFundedFutures | Article `11802674` devenu « Legacy Pro Plan », remplacé par `17573707` « Comprehensive Look into Redesigned Pro Plan » | Pro refondu : Sim Funded « 3 mini / 3 micro », « 6 mini / 6 micro », « 9 mini / 9 micro » (même notation que l'ancien « 5 mini / 5 micro »). Nouvelle variante « Pro 50k - One Day » (objectif 4 000 $, sans consistency, 1 jour) non couverte. Live : solde 0 $, MLL EOD, sans DLL, Reserve. « Accounts on the old Pro products keep every old rule. » | Source remplacée sur les 3 plans Pro, note sur les comptes d'avant la refonte |
 
 Restent à relire dans un navigateur pour clore #653 : Tradeify (13 articles), Phidias (7 pages), OneUp (1 article) et l'accueil Lucid.
+
+## Lucid : accueil et articles modifiés depuis la veille du 2026-10-19 (#653)
+
+Accueil `lucidtrading.com` relu dans Chrome le 2026-10-22 (sélecteur Pro / Flex / Daily / Direct), plus les articles du centre d'aide modifiés depuis le 2026-10-19 (dates `dateModified` des pages).
+
+| Source | Trouvé | Effet |
+|---|---|---|
+| Accueil, sélecteur | Pro, Flex, Daily : objectifs 1 250 / 3 000 / 6 000 / 9 000 $, MLL 1 000 / 2 000 / 3 000 / 4 500 $, DLL 600 / 1 200 / 1 800 / 2 700 $, 2 / 4 / 6 / 10 minis (« 2 Mini OR 20 Micro ») : conformes. Direct : 329 / 515 / 700 / 836 $, MLL 1 000 / 2 000 / 3 500 / 5 000 $, 5 jours avant payout : conformes. Prix Pro / Flex / Daily affichés, mais dépendants des options (DLL, On Demand Payouts, consistency) et du coupon : laissés à `null` comme avant. | Aucun |
+| Accueil + LucidDaily Customization (2026-10-20) | « Consistency: 40% or 50% » ; « 40% (standard) [...] Lowest price. 50% (add-on) [...] Added at checkout for a small fee. » Huit configurations (DLL × drawdown d'évaluation × consistency). L'article LucidDaily Consistency (2026-07-27) et LucidDaily Evaluation (2026-07-31) disent encore 50 % : contradiction notée, l'article de personnalisation (plus récent) et le sélecteur priment. Jours minimum non publiés pour le 40 % (laissés à `null`, comme avant). | 16 plans `lucid-daily-*` à 40 % ; 16 plans ajoutés `lucid-daily-c50-*` et `lucid-daily-dll-c50-*` (`configuration.addon: "consistency 50 %"`). Catalogue à 306 plans |
+| LucidFlex Customization (2026-10-20), LucidPro Customization (2026-10-19, après-midi) | Options inchangées. Ajout des « On Demand Payouts » : avec la DLL activée, payout possible pendant la séance sur le profit du jour, compte en pause jusqu'à la fin de la journée ensuite. | Aucun (pas de règle modélisée, pas de nouveau plan) |
+| LucidPro Payouts (2026-10-21) | 90/10, objectif de cycle 250 / 500 / 750 / 1 000 $, consistency 40 %, buffer = MLL + 100 $, plafonds 1 000 / 2 000 / 2 500 / 3 000 $ puis 1 500 / 2 500 / 3 000 / 3 500 $ : conforme. | Aucun |
+
+Relevé de veille mis à jour pour ces 4 articles.

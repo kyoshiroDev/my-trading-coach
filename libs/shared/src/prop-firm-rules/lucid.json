@@ -19,7 +19,7 @@
       "multicharts"
     ]
   },
-  "verified_at": "2026-10-19",
+  "verified_at": "2026-10-22",
   "plans": [
     {
       "id": "lucid-flex-25k",
@@ -3373,9 +3373,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -3453,7 +3453,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-eod-50k",
@@ -3487,9 +3487,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -3567,7 +3567,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-eod-100k",
@@ -3601,9 +3601,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -3681,7 +3681,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-eod-150k",
@@ -3715,9 +3715,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -3795,7 +3795,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-intraday-25k",
@@ -3829,9 +3829,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -3909,7 +3909,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-intraday-50k",
@@ -3943,9 +3943,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4023,7 +4023,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-intraday-100k",
@@ -4057,9 +4057,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4137,7 +4137,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-intraday-150k",
@@ -4171,9 +4171,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4251,7 +4251,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-eod-25k",
@@ -4293,9 +4293,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4381,7 +4381,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-eod-50k",
@@ -4423,9 +4423,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4511,7 +4511,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-eod-100k",
@@ -4553,9 +4553,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4641,7 +4641,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-eod-150k",
@@ -4683,9 +4683,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4771,7 +4771,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-intraday-25k",
@@ -4813,9 +4813,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -4901,7 +4901,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-intraday-50k",
@@ -4943,9 +4943,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -5031,7 +5031,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-intraday-100k",
@@ -5073,9 +5073,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -5161,7 +5161,7 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
     },
     {
       "id": "lucid-daily-dll-intraday-150k",
@@ -5203,9 +5203,9 @@
             "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
           },
           "consistency": {
-            "max_single_day_pct": 0.5,
+            "max_single_day_pct": 0.4,
             "applies_to": "profit_target",
-            "notes": "Plus gros jour / profit total <= 50 % pour passer en funded, avec une petite marge (« cushion ») non chiffrée de façon fixe."
+            "notes": "Plus gros jour / profit total <= 40 % pour passer en funded (standard depuis le 2026-10-20 ; 50 % en option payante, voir les plans « option consistency 50 % »). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -5291,7 +5291,1975 @@
         "https://lucidtrading.com/"
       ],
       "needs_review": false,
-      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday."
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Consistency standard de 40 % en évaluation (article LucidDaily Customization du 2026-10-20 et sélecteur de lucidtrading.com relu le 2026-10-22 ; l'article LucidDaily Consistency, daté du 2026-07-27, dit encore 50 %). Une évaluation achetée avant ce changement relevait de l'ancienne règle à 50 % : la relier au plan « option consistency 50 % » de même taille et même configuration."
+    },
+    {
+      "id": "lucid-daily-c50-eod-25k",
+      "plan_name": "LucidDaily",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-eod-50k",
+      "plan_name": "LucidDaily",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-eod-100k",
+      "plan_name": "LucidDaily",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-eod-150k",
+      "plan_name": "LucidDaily",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-intraday-25k",
+      "plan_name": "LucidDaily",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-intraday-50k",
+      "plan_name": "LucidDaily",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-intraday-100k",
+      "plan_name": "LucidDaily",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-c50-intraday-150k",
+      "plan_name": "LucidDaily",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": false,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL OFF, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-eod-25k",
+      "plan_name": "LucidDaily",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-eod-50k",
+      "plan_name": "LucidDaily",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-eod-100k",
+      "plan_name": "LucidDaily",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-eod-150k",
+      "plan_name": "LucidDaily",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "eod",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : le MLL suit le plus haut solde de clôture de session, puis se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé. À confirmer avant de s'en servir pour une alerte de liquidation. Contrôlé en temps réel, P&L latent compris : passer sous le MLL liquide la position ouverte et fait échouer le compte (support Lucid, Discord, 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation EOD ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-intraday-25k",
+      "plan_name": "LucidDaily",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 1250,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 600,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 26100,
+            "locked_floor": 25100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (26100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 2,
+            "micros": 20,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 6000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-intraday-50k",
+      "plan_name": "LucidDaily",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1200,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (52100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 4,
+            "micros": 40,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 8000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-intraday-100k",
+      "plan_name": "LucidDaily",
+      "account_size": 100000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 6000,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1800,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 3000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 103100,
+            "locked_floor": 100100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (103100) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 6,
+            "micros": 60,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 103100,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 10000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
+    },
+    {
+      "id": "lucid-daily-dll-c50-intraday-150k",
+      "plan_name": "LucidDaily",
+      "account_size": 150000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": {
+        "daily_loss_limit": true,
+        "eval_drawdown": "intraday",
+        "addon": "consistency 50 %"
+      },
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 9000,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. La DLL est fixe et ne suit pas le MLL : si le MLL remonte au-dessus, le MLL devient la limite la plus stricte. Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.5,
+            "applies_to": "profit_target",
+            "notes": "Option payante du checkout : plus gros jour / profit total <= 50 % pour passer en funded (40 % sans l'option). Lucid annonce une petite marge (« cushion ») calculée sur le profit du jour, non chiffrée de façon fixe."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 2700,
+            "basis": "equity",
+            "resets_at": "17:30 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Soft breach : trading bloqué jusqu'à la session suivante, le compte reste actif. Mêmes montants fixes que l'évaluation (article LucidDaily Daily Loss Limit). Mesurée comme le MLL, P&L latent compris (la position est liquidée en l'atteignant), remise à zéro en fin de journée à 17:30 heure de New York (support Lucid, Discord, 2026-10-04)."
+          },
+          "max_drawdown": {
+            "amount": 4500,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": 154600,
+            "locked_floor": 150100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Source (LucidDaily Drawdown / Funded Account : le funded est toujours en intraday) : en drawdown intraday, le MLL monte avec le P&L en temps réel, P&L latent inclus, et se fige à capital initial + 100 $ une fois l'Initial Trail Balance (154600) dépassé."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 10,
+            "micros": 100,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Overnight interdit (support Lucid, Discord, 2026-10-04). Clôture à 16:45 ET comme sur tous les comptes Lucid (support Lucid, Discord, 2026-10-04 : « same for all accounts »). LucidDaily : trading des news USD à fort impact (« red folder ») interdit, hard breach. Être flat de 1 minute avant à 1 minute après l'annonce."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 154600,
+            "notes": "Payouts quotidiens possibles : profit au-dessus du buffer et net positif depuis le dernier payout. Maximum = profit simulé au-dessus du buffer. Profit journalier maximum 12000 $ : l'atteindre déclenche le passage en live."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://support.lucidtrading.com/en/articles/15996664-luciddaily-evaluation",
+        "https://support.lucidtrading.com/en/articles/15997244-luciddaily-funded-account",
+        "https://support.lucidtrading.com/en/articles/15998425-luciddaily-drawdown",
+        "https://support.lucidtrading.com/en/articles/16085900-luciddaily-daily-loss-limit",
+        "https://support.lucidtrading.com/en/articles/15998336-luciddaily-consistency",
+        "https://support.lucidtrading.com/en/articles/15997266-luciddaily-payouts",
+        "https://support.lucidtrading.com/en/articles/16033858-luciddaily-customization",
+        "https://support.lucidtrading.com/en/articles/11404728-other-trading-activities",
+        "https://support.lucidtrading.com/en/articles/11404729-allowed-trading-times",
+        "https://support.lucidtrading.com/en/articles/11404614-lucid-trading-supported-platforms",
+        "https://lucidtrading.com/"
+      ],
+      "needs_review": false,
+      "notes": "Variante DLL ON, drawdown d'évaluation intraday ; le funded est toujours en intraday. Option consistency 50 % (payante au checkout, article LucidDaily Customization du 2026-10-20). Prix plus élevé que la version à 40 %, non relevé."
     },
     {
       "id": "lucid-direct-25k",
