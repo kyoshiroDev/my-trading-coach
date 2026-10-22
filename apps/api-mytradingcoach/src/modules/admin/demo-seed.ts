@@ -207,7 +207,7 @@ export async function seedTradingData(
       data: {
         userId: user.id, accountId: lostIdByKey.get(t.account)!,
         asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, quantity: t.quantity,
-        pnl: t.pnl, commission: t.commission, setupId: setupIdFor('Breakout'),
+        pnl: t.pnl, commission: t.commission, setupId: setupIdFor(t.setup),
         session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
       },
     });

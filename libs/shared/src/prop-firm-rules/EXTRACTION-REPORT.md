@@ -505,3 +505,31 @@ Points ouverts :
 | LucidDirect Daily Loss Limit | DLL 1 200 / 2 100 / 3 000 $ (25K sans DLL), puis DLL LucidScale à 60 % du plus haut profit de fin de journée au-dessus de l'Initial Trail Balance : conforme. | Aucun |
 
 Une évaluation Flex achetée avant ce changement relevait de l'ancienne règle à 50 % : les notes des plans standard renvoient vers la variante « option consistency 50 % » de même taille pour ces comptes. Relevé de veille mis à jour pour ces 5 articles.
+
+## Relecture navigateur Apex et MyFundedFutures du 2026-10-22 (#653)
+
+Pages signalées « illisibles hors navigateur » par la veille du 2026-10-19, relues dans Chrome. Apex : `help-center-sitemap.xml` (dates de modification) puis lecture des pages sans date (accueil, `/legacy-products/`). Aucun article du centre d'aide source du catalogue n'a été modifié depuis la relecture du 2026-10-18 ; seuls « Hedging and Correlated Instruments Rule » (2026-10-21, conforme à « pas de hedging » des notes) et un guide Bookmap ont bougé.
+
+| Firm | Page | Constat | Effet |
+|---|---|---|---|
+| Apex | Accueil (sélecteur de prix) | Prix des évaluations inchangés (Intraday 167 / 249 / 790 / 1190 $, EOD 490 / 590 / 1190 / 2190 $, coupon -90 %). Frais d'activation du PA en hausse : Intraday 89 / 99 / 129 / 149 $, EOD 109 / 129 / 139 / 159 $. « No Activation Fee » EOD 100K / 150K désormais affichés : 1590 / 2490 $. Mêmes valeurs sur Tradovate, Rithmic et WealthCharts. Règles (objectif, drawdown, contrats, DLL max du PA, safety net, 6 payouts, 50 %) conformes. | `activation_fee` des 8 plans, notes de prix |
+| Apex | `/legacy-products/` | Règles conformes (contrats, objectif, drawdown, pas de DLL). Abonnement 100K / 250K / 300K à 210 $/mois (397 / 697 / 797 $ au relevé précédent), 25K / 50K / 150K inchangés. Frais de PA : 99 / 125 / 149 / 179 / 189 / 199 $. Identique sur les trois plateformes. | `price.amount` de 3 plans, `activation_fee` de 5 plans |
+| MyFundedFutures | `/plans/rapid`, `/plans/rapid-eod` | Prix (145 / 209 / 356 / 463 $ ; 145 / 225 $), règles, contrats, buffers et payouts conformes. | Aucun |
+| MyFundedFutures | `/plans/pro` | Prix conformes (265 / 401 / 557 $). Contrats : évaluation 3/30, 6/60, 9/90, Sim Funded « 3 / 3, 6 / 6, 9 / 9 » (5/5, 10/10, 15/15 au relevé précédent). Reste conforme. | `max_contracts` des 3 plans Pro |
+| MyFundedFutures | `/plans/builder` | Prix conformes (105 / 153 / 282 / 398 $). Plafond par cycle du 150K : 3 500 $ sur la page, mais 4 500 $ dans l'article « Builder Plan 150k - Comprehensive Guide » (« Maximum payout per cycle is $4,500 ») et selon le support (2026-10-06). Une 2e Builder 25K par utilisateur autorisée (non modélisé). | Passé à 3 500 $ puis remis à 4 500 $ le même jour (deux sources contre une), contradiction notée |
+| MyFundedFutures | Article `11802674` devenu « Legacy Pro Plan », remplacé par `17573707` « Comprehensive Look into Redesigned Pro Plan » | Pro refondu : Sim Funded « 3 mini / 3 micro », « 6 mini / 6 micro », « 9 mini / 9 micro » (même notation que l'ancien « 5 mini / 5 micro »). Nouvelle variante « Pro 50k - One Day » (objectif 4 000 $, sans consistency, 1 jour) non couverte. Live : solde 0 $, MLL EOD, sans DLL, Reserve. « Accounts on the old Pro products keep every old rule. » | Source remplacée sur les 3 plans Pro, note sur les comptes d'avant la refonte |
+
+Restent à relire dans un navigateur pour clore #653 : Tradeify (13 articles), Phidias (7 pages), OneUp (1 article) et l'accueil Lucid.
+
+## Lucid : accueil et articles modifiés depuis la veille du 2026-10-19 (#653)
+
+Accueil `lucidtrading.com` relu dans Chrome le 2026-10-22 (sélecteur Pro / Flex / Daily / Direct), plus les articles du centre d'aide modifiés depuis le 2026-10-19 (dates `dateModified` des pages).
+
+| Source | Trouvé | Effet |
+|---|---|---|
+| Accueil, sélecteur | Pro, Flex, Daily : objectifs 1 250 / 3 000 / 6 000 / 9 000 $, MLL 1 000 / 2 000 / 3 000 / 4 500 $, DLL 600 / 1 200 / 1 800 / 2 700 $, 2 / 4 / 6 / 10 minis (« 2 Mini OR 20 Micro ») : conformes. Direct : 329 / 515 / 700 / 836 $, MLL 1 000 / 2 000 / 3 500 / 5 000 $, 5 jours avant payout : conformes. Prix Pro / Flex / Daily affichés, mais dépendants des options (DLL, On Demand Payouts, consistency) et du coupon : laissés à `null` comme avant. | Aucun |
+| Accueil + LucidDaily Customization (2026-10-20) | « Consistency: 40% or 50% » ; « 40% (standard) [...] Lowest price. 50% (add-on) [...] Added at checkout for a small fee. » Huit configurations (DLL × drawdown d'évaluation × consistency). L'article LucidDaily Consistency (2026-07-27) et LucidDaily Evaluation (2026-07-31) disent encore 50 % : contradiction notée, l'article de personnalisation (plus récent) et le sélecteur priment. Jours minimum non publiés pour le 40 % (laissés à `null`, comme avant). | 16 plans `lucid-daily-*` à 40 % ; 16 plans ajoutés `lucid-daily-c50-*` et `lucid-daily-dll-c50-*` (`configuration.addon: "consistency 50 %"`). Catalogue à 306 plans |
+| LucidFlex Customization (2026-10-20), LucidPro Customization (2026-10-19, après-midi) | Options inchangées. Ajout des « On Demand Payouts » : avec la DLL activée, payout possible pendant la séance sur le profit du jour, compte en pause jusqu'à la fin de la journée ensuite. | Aucun (pas de règle modélisée, pas de nouveau plan) |
+| LucidPro Payouts (2026-10-21) | 90/10, objectif de cycle 250 / 500 / 750 / 1 000 $, consistency 40 %, buffer = MLL + 100 $, plafonds 1 000 / 2 000 / 2 500 / 3 000 $ puis 1 500 / 2 500 / 3 000 / 3 500 $ : conforme. | Aucun |
+
+Relevé de veille mis à jour pour ces 4 articles.

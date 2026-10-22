@@ -9,7 +9,7 @@
 // de génération (`DEMO_WINDOW_DAYS`) : récaps, débriefs, journal de risque et vue « 1M » du tableau
 // de bord ne bougent pas. Module pur (aucun service Nest) : chargé tel quel par `seed:demo` sous tsx.
 import { AccountStatus, AccountType, DrawdownType, TradeSide, TradingSession } from '@prisma/client';
-import { DEMO_WINDOW_DAYS, INSTRUMENTS, round2 } from './config';
+import { DEMO_WINDOW_DAYS, INSTRUMENTS, SETUP_PROFILES, type SetupTitle, type Sym, round2 } from './config';
 
 export interface LostDemoAccount {
   key: 'apexFailed' | 'lucidArchived';
@@ -63,7 +63,7 @@ export const LOST_DEMO_ACCOUNTS: LostDemoAccount[] = [
 
 export interface LostDemoTrade {
   account: LostDemoAccount['key'];
-  asset: 'MNQ';
+  asset: Sym;
   side: TradeSide;
   entry: number;
   exit: number;
@@ -73,7 +73,33 @@ export interface LostDemoTrade {
   session: TradingSession;
   timeframe: string;
   tradedAt: Date;
+  setup: SetupTitle;
 }
+
+/**
+ * Répartition réaliste des trades des comptes perdus, en rotations de longueurs différentes (les
+ * combinaisons varient d'un trade à l'autre). Un compte perdu touche tous les setups, comme un vrai
+ * trader : tout mettre sur Breakout le faisait chuter quand l'interrupteur « Inclure les comptes
+ * échoués et archivés » est activé.
+ * - setups : proches des parts du profil (`SETUP_PROFILES`) : Scalping 3/10, Pullback et Breakout
+ *   2/10, Range, Reversal et News 1/10 ;
+ * - actifs : micros surtout (MNQ 4/10, MES 3/10), quelques minis (NQ 2/10, ES 1/10) ;
+ * - heures (UTC) : séance de New York à différents moments, et un trade de séance de Londres.
+ */
+const LOST_SETUPS: readonly SetupTitle[] = [
+  'Scalping', 'Pullback', 'Breakout', 'Range', 'Scalping', 'Reversal', 'Pullback', 'News', 'Breakout', 'Scalping',
+];
+const LOST_ASSETS: readonly Sym[] = ['MNQ', 'MES', 'MNQ', 'NQ', 'MES', 'MNQ', 'ES', 'MES', 'MNQ', 'NQ'];
+const LOST_TIMES: readonly { h: number; m: number; session: TradingSession }[] = [
+  { h: 13, m: 42, session: TradingSession.NEW_YORK },
+  { h: 14, m: 15, session: TradingSession.NEW_YORK },
+  { h: 15, m: 3, session: TradingSession.NEW_YORK },
+  { h: 17, m: 47, session: TradingSession.NEW_YORK },
+  { h: 8, m: 35, session: TradingSession.LONDON },
+  { h: 18, m: 20, session: TradingSession.NEW_YORK },
+  { h: 14, m: 37, session: TradingSession.NEW_YORK },
+  { h: 19, m: 12, session: TradingSession.NEW_YORK },
+];
 
 /** Jours ouvrés (lundi → vendredi) en remontant le temps à partir de `from`. */
 function weekdaysBefore(from: Date, count: number): Date[] {
@@ -88,33 +114,37 @@ function weekdaysBefore(from: Date, count: number): Date[] {
 }
 
 /**
- * Trades des comptes perdus : un par jour ouvré, à 15:30 UTC (séance de New York), tous avant la
- * fenêtre de génération. Prix cohérents avec le P&L (MNQ, 2 contrats, frais réels). Déterministe :
- * même `now` → mêmes trades.
+ * Trades des comptes perdus : un par jour ouvré, tous avant la fenêtre de génération. Prix cohérents
+ * avec le P&L (2 micros ou 1 mini, frais réels de l'instrument). Déterministe : même `now` → mêmes trades.
  */
 export function buildLostDemoTrades(now: Date): LostDemoTrade[] {
-  const { base, ptVal, fee } = INSTRUMENTS.MNQ;
-  const quantity = 2;
   const trades: LostDemoTrade[] = [];
   // Comptes successifs, du plus ancien au plus récent : Lucid, puis Apex #1.
   const order: LostDemoAccount['key'][] = ['lucidArchived', 'apexFailed'];
   const total = LOST_DEMO_ACCOUNTS.reduce((n, a) => n + a.pnls.length, 0);
   const start = new Date(now);
   start.setUTCDate(start.getUTCDate() - (DEMO_WINDOW_DAYS + 7));
-  start.setUTCHours(15, 30, 0, 0);
+  start.setUTCHours(12, 0, 0, 0);
   const days = weekdaysBefore(start, total);
   let i = 0;
   for (const key of order) {
     const acct = LOST_DEMO_ACCOUNTS.find((a) => a.key === key)!;
     for (const pnl of acct.pnls) {
-      const side = i % 2 === 0 ? TradeSide.LONG : TradeSide.SHORT;
+      const asset = LOST_ASSETS[i % LOST_ASSETS.length];
+      const setup = LOST_SETUPS[i % LOST_SETUPS.length];
+      const time = LOST_TIMES[i % LOST_TIMES.length];
+      const { base, ptVal, fee } = INSTRUMENTS[asset];
+      const quantity = asset === 'MNQ' || asset === 'MES' ? 2 : 1;
+      const side = i % 3 === 1 ? TradeSide.SHORT : TradeSide.LONG;
       const points = pnl / (ptVal * quantity);
       const entry = base + (i % 7) * 12.5;
       const exit = round2(side === TradeSide.LONG ? entry + points : entry - points);
+      const tradedAt = new Date(days[i]);
+      tradedAt.setUTCHours(time.h, time.m, 0, 0);
       trades.push({
-        account: key, asset: 'MNQ', side, entry, exit, quantity, pnl,
-        commission: round2(fee * quantity), session: TradingSession.NEW_YORK, timeframe: '5m',
-        tradedAt: days[i],
+        account: key, asset, side, entry, exit, quantity, pnl,
+        commission: round2(fee * quantity), session: time.session, timeframe: SETUP_PROFILES[setup].tf,
+        tradedAt, setup,
       });
       i++;
     }

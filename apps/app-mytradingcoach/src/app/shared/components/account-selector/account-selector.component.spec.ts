@@ -149,6 +149,20 @@ describe('AccountSelectorComponent · comptes perdus (vrai template)', () => {
     expect(cmp.totalBalance()).toBe(107_000);
   });
 
+  it('compte échoué ou archivé choisi : ligne discrète « il ne compte pas dans Tous les comptes »', () => {
+    const failed = render([full('a', 'ACTIVE', 50_000), full('f', 'FAILED', 47_000)], 'f');
+    expect(failed.el.querySelector('[data-testid="selected-inactive-note"]')!.textContent!.replace(/\s+/g, ' ').trim())
+      .toBe('Ce compte est échoué : il ne compte pas dans « Tous les comptes ».');
+    TestBed.resetTestingModule();
+    const archived = render([full('x', 'ARCHIVED', 24_000)], 'x');
+    expect(archived.el.querySelector('[data-testid="selected-inactive-note"]')!.textContent).toContain('Ce compte est archivé');
+    TestBed.resetTestingModule();
+    const active = render([full('a', 'ACTIVE', 50_000)], 'a');
+    expect(active.el.querySelector('[data-testid="selected-inactive-note"]')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(render([full('f', 'FAILED', 47_000)], 'all').el.querySelector('[data-testid="selected-inactive-note"]')).toBeNull();
+  });
+
   it('compte échoué sélectionné : badge « Échoué » sur le déclencheur', () => {
     const { el } = render([full('a', 'ACTIVE', 50_000), full('f', 'FAILED', 47_000)], 'f');
     expect(el.querySelector('[data-testid="acct-trigger"] .status-badge')!.textContent).toContain('Échoué');

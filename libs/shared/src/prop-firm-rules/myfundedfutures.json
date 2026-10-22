@@ -14,7 +14,7 @@
       "quantower"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-10-22",
   "plans": [
     {
       "id": "myfundedfutures-rapid-25k",
@@ -694,11 +694,11 @@
           "min_trading_days": 2,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 5,
-            "micros": 5,
+            "minis": 3,
+            "micros": 30,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "Relevé du 2026-10-22 sur la page du plan : 3/30, 6/60, 9/90 (minis/micros) en évaluation. Avant : 5/5, 10/10, 15/15."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -726,11 +726,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 5,
-            "micros": 5,
+            "minis": 3,
+            "micros": 3,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "« 3 / 3 » (resp. 6 / 6, 9 / 9) tel que publié en Sim Funded le 2026-10-22 (5/5, 10/10, 15/15 auparavant). Micros identiques aux minis sur la page : chiffre publié repris tel quel."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -755,14 +755,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-pro-100k",
@@ -800,11 +800,11 @@
           "min_trading_days": 2,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 10,
-            "micros": 10,
+            "minis": 6,
+            "micros": 60,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "Relevé du 2026-10-22 sur la page du plan : 3/30, 6/60, 9/90 (minis/micros) en évaluation. Avant : 5/5, 10/10, 15/15."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -832,11 +832,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 10,
-            "micros": 10,
+            "minis": 6,
+            "micros": 6,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "« 3 / 3 » (resp. 6 / 6, 9 / 9) tel que publié en Sim Funded le 2026-10-22 (5/5, 10/10, 15/15 auparavant). Micros identiques aux minis sur la page : chiffre publié repris tel quel."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -861,14 +861,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-pro-150k",
@@ -906,11 +906,11 @@
           "min_trading_days": 2,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 15,
-            "micros": 15,
+            "minis": 9,
+            "micros": 90,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "Relevé du 2026-10-22 sur la page du plan : 3/30, 6/60, 9/90 (minis/micros) en évaluation. Avant : 5/5, 10/10, 15/15."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -938,11 +938,11 @@
           "min_trading_days": null,
           "max_duration_days": null,
           "max_contracts": {
-            "minis": 15,
-            "micros": 15,
+            "minis": 9,
+            "micros": 9,
             "scaling": false,
             "tiers": null,
-            "notes": "« 5 mini / 5 micro » (resp. 10 / 10, 15 / 15) tel que publié."
+            "notes": "« 3 / 3 » (resp. 6 / 6, 9 / 9) tel que publié en Sim Funded le 2026-10-22 (5/5, 10/10, 15/15 auparavant). Micros identiques aux minis sur la page : chiffre publié repris tel quel."
           },
           "time_rules": {
             "must_close_by": "16:10 America/New_York",
@@ -967,14 +967,14 @@
       ],
       "source_urls": [
         "https://myfundedfutures.com/plans/pro",
-        "https://help.myfundedfutures.com/en/articles/11802674-pro-plan-sim-funded-and-live-account-highlights",
+        "https://help.myfundedfutures.com/en/articles/17573707-comprehensive-look-into-redesigned-pro-plan",
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
         "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
       ],
       "needs_review": false,
-      "notes": "Activité : au moins un trade tous les 7 jours calendaires."
+      "notes": "Activité : au moins un trade tous les 7 jours calendaires. Plan Pro refondu (article « Comprehensive Look into Redesigned Pro Plan », relu le 2026-10-22) : les comptes Pro achetés avant la refonte gardent les anciennes règles (« Accounts on the old Pro products keep every old rule »), dont 5 / 10 / 15 contrats en Sim Funded."
     },
     {
       "id": "myfundedfutures-builder-25k",
@@ -1577,7 +1577,7 @@
             "max_amount_schedule": null,
             "max_payouts": 5,
             "safety_net_balance": 4600,
-            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (support MyFundedFutures, Ellis, 2026-10-06)."
+            "notes": "2 jours qualifiants minimum par cycle. Premier payout : 1500 $ au-dessus du buffer (4600 $) ; ensuite 1500 $ de profit net depuis le dernier payout. Payout toutes les 48 h. 5 payouts sim maximum, puis passage en live. Plafond 4 500 $ par cycle (article « Builder Plan 150k - Comprehensive Guide » relu le 2026-10-22, et support MyFundedFutures, Ellis, 2026-10-06) ; la page du plan affiche 3 500 $ (contradiction notée, deux sources contre une)."
           }
         }
       ],
@@ -1586,7 +1586,8 @@
         "https://help.myfundedfutures.com/en/articles/8348565-end-of-day-eod-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/12802721-intraday-drawdown-explained",
         "https://help.myfundedfutures.com/en/articles/8230009-news-trading-policy",
-        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade"
+        "https://help.myfundedfutures.com/en/articles/9558251-permitted-times-to-trade",
+        "https://help.myfundedfutures.com/en/articles/17035331-builder-plan-150k-comprehensive-guide"
       ],
       "needs_review": false,
       "notes": "Un seul compte Builder par utilisateur (deux en 25K). Tailles 25K à 150K confirmées ; détenir un Sim Funded 100K ou 150K réduit à 3 le nombre total de Sim Funded autorisés (support MyFundedFutures, Ellis, 2026-10-06)."

@@ -835,6 +835,14 @@ les chiffres (jamais au premier passage).
   « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
   `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
 - Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+  Compte échoué ou archivé choisi : ligne discrète sous le sélecteur (`selected-inactive-note`,
+  « Ce compte est échoué : il ne compte pas dans « Tous les comptes ». », ton des notes, sans couleur d'alerte).
+- **Période par défaut d'un compte échoué ou archivé** (`core/utils/inactive-period.util.ts`) : ses
+  trades sont souvent plus vieux que « 1 mois ». Tableau de bord et Statistiques passent sur « Tout »
+  quand on le choisit ; le calendrier des Statistiques s'ouvre sur le mois de son dernier trade
+  (`TradesApi.getAll({ accountId, limit: '1' })`). Retour sur un compte actif : période et mois d'avant
+  reviennent. Un choix de l'utilisateur (`setPeriod`, `selectPeriod`, `onMonthChange`) prime et
+  désarme le retour automatique. Comptes actifs : inchangés.
 - **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
   « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
   un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la

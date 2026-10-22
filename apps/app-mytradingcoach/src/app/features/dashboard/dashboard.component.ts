@@ -71,6 +71,7 @@ import { MoneyPipe } from '../../shared/pipes';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { FloorReachedBannerComponent } from '../accounts/lost-account/floor-reached-banner.component';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
+import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 
 /**
  * Dashboard : état (période, compte, resources analytics), cadre des panneaux et états
@@ -145,8 +146,14 @@ export class DashboardComponent {
   /** L'élargissement auto (fenêtre vide + historique existant) n'a lieu qu'une fois,
    *  et jamais après un choix explicite : sinon on écraserait la volonté de l'utilisateur. */
   private periodAutoAdjusted = false;
+  /** Période posée sur « Tout » pour un compte échoué ou archivé (cf. `inactive-period.util.ts`). */
+  private inactivePeriod: AutoPeriodState<'1M' | '3M' | '6M' | 'ALL'> = NO_AUTO_PERIOD;
+  /** Compte sélectionné au dernier passage (`id:statut` ou `all`), null avant le premier. */
+  private lastSelectionKey: string | null = null;
   protected setPeriod(p: '1M' | '3M' | '6M' | 'ALL'): void {
     this.periodAutoAdjusted = true;
+    // Choix de l'utilisateur : il prime sur la période posée pour un compte échoué ou archivé.
+    this.inactivePeriod = periodChosenByUser();
     this.dashboardPeriod.set(p);
   }
 
@@ -421,6 +428,23 @@ export class DashboardComponent {
       const known = this.knownExcluded;
       if (known !== null && key !== known) this.reloadAnalytics();
       this.knownExcluded = key;
+    });
+
+    // Compte échoué ou archivé choisi : ses trades sont souvent plus vieux que la fenêtre « 1M ».
+    // La période passe sur « Tout », et la précédente revient avec un compte actif.
+    effect(() => {
+      const sel = this.selectedAccount.selected();
+      const key = sel ? `${sel.id}:${sel.status}` : 'all';
+      if (key === this.lastSelectionKey) return;
+      this.lastSelectionKey = key;
+      untracked(() => {
+        const r = periodOnSelection(this.inactivePeriod, sel, this.dashboardPeriod(), 'ALL');
+        this.inactivePeriod = r.state;
+        if (r.period) {
+          this.periodAutoAdjusted = true;
+          this.dashboardPeriod.set(r.period);
+        }
+      });
     });
 
     // Fenêtre par défaut CONSCIENTE DES DONNÉES.

@@ -2,7 +2,34 @@ import { describe, it, expect } from 'vitest';
 import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { contentHash, isNoop, parseCatalog, planCatalogSync, toRows } from './prop-firm-catalog.sync';
 
+/*
+ * Aucun prix, date de relevé ni règle d'un plan précis n'est figé ici : la veille modifie le
+ * catalogue chaque semaine. On vérifie la synchro (logique pure) et la cohérence du catalogue.
+ */
+
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+type RawContracts = { minis: number | null; micros: number | null; tiers?: { minis: number | null; micros: number | null }[] | null } | null;
+type RawFile = {
+  firm: { id: string };
+  verified_at: string;
+  plans: { id: string; account_size: number; source_urls: string[]; phases: { phase: string; max_contracts: RawContracts }[] }[];
+};
+const RAW = PROP_FIRM_CATALOG_FILES as unknown as RawFile[];
+const FIRM_IDS = RAW.map((f) => f.firm.id);
+const PLAN_COUNT = RAW.reduce((n, f) => n + f.plans.length, 0);
+
+/**
+ * Plans dont les micros ne valent pas 10 × les minis, avec la raison. Le détecteur A1 lit
+ * `micros` tel quel quand la position n'est faite que de micros : toute nouvelle notation doit
+ * être relue (micro compté comme un contrat, ou coquille de la firm ?) avant d'entrer ici.
+ */
+const CONTRACT_NOTATION_EXCEPTIONS: { match: RegExp; phase: string | null; reason: string }[] = [
+  { match: /^oneuptrader-/, phase: null, reason: 'un micro compte comme un contrat (support OneUp, 2026-10-06)' },
+  { match: /^elitetraderfunding-dtf-/, phase: 'direct', reason: 'Direct to Funded : 1 mini = 1 micro' },
+  { match: /^myfundedfutures-pro-/, phase: 'funded', reason: '« 3 mini / 3 micro » publié en Sim Funded (page du plan, article 17573707)' },
+  { match: /^tradeday-(fp|qp)-.*-(100k|150k)$/, phase: null, reason: 'micros plafonnés à 50 (« 10 Contracts (50 Micros) »)' },
+];
 
 /** État en base équivalent à un catalogue déjà synchronisé. */
 function syncedState(files: readonly unknown[]) {
@@ -14,13 +41,10 @@ function syncedState(files: readonly unknown[]) {
 }
 
 describe('parseCatalog', () => {
-  it('accepte le catalogue livré (16 firms) : le Zod suit schema.json', () => {
+  it('accepte le catalogue livré : le Zod suit schema.json', () => {
     const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
-    expect(catalog.map((f) => f.firm.id)).toEqual([
-      'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
-      'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
-    ]);
-    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(290);
+    expect(catalog.map((f) => f.firm.id)).toEqual(FIRM_IDS);
+    expect(catalog.reduce((n, f) => n + f.plans.length, 0)).toBe(PLAN_COUNT);
   });
 
   it('refuse un champ inconnu (objets stricts, comme additionalProperties: false)', () => {
@@ -45,93 +69,93 @@ describe('parseCatalog', () => {
     const files = clone(PROP_FIRM_CATALOG_FILES) as { firm: { id: string }; plans: { id: string }[] }[];
     const twin = clone(files[1]);
     twin.plans = twin.plans.map((p) => ({ ...p, id: `${p.id}-bis` }));
-    expect(() => parseCatalog([...files, twin])).toThrow('firm en double : apex');
+    expect(() => parseCatalog([...files, twin])).toThrow(`firm en double : ${files[1].firm.id}`);
+  });
+});
+
+describe('cohérence du catalogue', () => {
+  it('chaque firm a une date de relevé valide, pas dans le futur', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    for (const f of RAW) {
+      expect(f.verified_at, f.firm.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(Date.parse(f.verified_at)), f.firm.id).toBe(false);
+      expect(f.verified_at <= today, f.firm.id).toBe(true);
+    }
+  });
+
+  it('chaque plan cite au moins une source https et est préfixé par sa firm', () => {
+    for (const f of RAW) {
+      for (const p of f.plans) {
+        expect(p.id.startsWith(`${f.firm.id}-`), p.id).toBe(true);
+        expect(p.source_urls.length, p.id).toBeGreaterThan(0);
+        for (const url of p.source_urls) expect(url, p.id).toMatch(/^https:\/\//);
+      }
+    }
+  });
+
+  it('champs obligatoires : taille, au moins une phase, max contrats renseigné', () => {
+    for (const f of RAW) {
+      for (const p of f.plans) {
+        expect(p.account_size, p.id).toBeGreaterThan(0);
+        expect(p.phases.length, p.id).toBeGreaterThan(0);
+        for (const ph of p.phases) expect(ph.max_contracts, `${p.id} ${ph.phase}`).not.toBeUndefined();
+      }
+    }
+  });
+
+  it('notation des contrats : micros = 10 × minis, sauf exceptions listées et justifiées', () => {
+    const offenders: string[] = [];
+    const used = new Set<number>();
+    for (const f of RAW) {
+      for (const p of f.plans) {
+        for (const ph of p.phases) {
+          const mc = ph.max_contracts;
+          if (!mc) continue;
+          for (const { minis, micros } of [mc, ...(mc.tiers ?? [])]) {
+            for (const n of [minis, micros]) if (n != null) expect(Number.isInteger(n) && n > 0, `${p.id} ${ph.phase}`).toBe(true);
+            if (minis == null || micros == null || micros === minis * 10) continue;
+            const i = CONTRACT_NOTATION_EXCEPTIONS.findIndex((e) => e.match.test(p.id) && (e.phase == null || e.phase === ph.phase));
+            if (i === -1) offenders.push(`${p.id} ${ph.phase} : ${minis} minis / ${micros} micros`);
+            else used.add(i);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+    // Une exception devenue inutile est retirée de la liste plutôt que gardée « au cas où ».
+    expect([...used].sort()).toEqual(CONTRACT_NOTATION_EXCEPTIONS.map((_, i) => i));
   });
 });
 
 describe('toRows', () => {
   const { firms, plans } = toRows(parseCatalog(PROP_FIRM_CATALOG_FILES));
 
-  it('une ligne par firm et par plan, avec la date du relevé', () => {
-    expect(firms.map((f) => f.id)).toEqual([
-      'lucid', 'apex', 'topstep', 'tradeify', 'myfundedfutures', 'tradeday', 'takeprofittrader', 'phidias',
-      'earn2trade', 'toponefutures', 'blusky', 'fundedfuturesfamily', 'oneuptrader', 'uprofit', 'bulenox', 'elitetraderfunding',
-    ]);
-    expect(plans).toHaveLength(290);
-    expect(firms[1].verifiedAt).toEqual(new Date('2026-10-18T00:00:00Z'));
+  it('une ligne par firm et par plan, date du relevé reprise du fichier', () => {
+    expect(firms.map((f) => f.id)).toEqual(FIRM_IDS);
+    expect(plans).toHaveLength(PLAN_COUNT);
+    for (const [i, f] of RAW.entries()) expect(firms[i].verifiedAt).toEqual(new Date(`${f.verified_at}T00:00:00Z`));
   });
 
   it('mappe les colonnes de requête et garde les règles au format du catalogue', () => {
-    const plan = plans.find((p) => p.id === 'apex-eod-50k')!;
-    expect(plan).toMatchObject({ firmId: 'apex', accountSize: 50_000, currency: 'USD', availability: 'public', active: true });
-    expect(plan.phases).toEqual(expect.arrayContaining([expect.objectContaining({ phase: 'evaluation', profit_target: 3000 })]));
-  });
-
-  it('Apex Legacy : abonnement mensuel, plafond libre à partir du 6e payout', () => {
-    const legacy = plans.find((p) => p.id === 'apex-legacy-50k')!;
-    expect(legacy).toMatchObject({ planName: 'Legacy Full', accountSize: 50_000, needsReview: false });
-    expect(legacy.price).toMatchObject({ amount: 197, billing: 'monthly', activation_fee: 99 });
-    const pa = (legacy.phases as { phase: string; payout: { max_amount_schedule: (number | null)[] } | null }[]).find((p) => p.phase === 'funded')!;
-    expect(pa.payout?.max_amount_schedule).toEqual([2000, 2000, 2000, 2000, 2000, null]);
-    // Scaling Legacy en PA (support Apex, 2026-10-05) : moitié arrondie à l'inférieur jusqu'au safety net.
-    const pa150 = (plans.find((p) => p.id === 'apex-legacy-150k')!.phases as { phase: string; max_contracts: { tiers: unknown } }[]).find((p) => p.phase === 'funded')!;
-    expect(pa150.max_contracts.tiers).toEqual([
-      { min_profit: 0, max_profit: 5100, minis: 8, micros: 80 },
-      { min_profit: 5101, max_profit: null, minis: 17, micros: 170 },
-    ]);
-  });
-
-  it('relevé du 2026-10-03 : valeurs clés des 4 nouvelles firms', () => {
-    type Ph = { phase: string; starting_balance?: number; max_drawdown: { amount: number; type: string; locks_at: number | null; locked_floor?: number | null };
-      consistency: { max_single_day_pct: number; max_single_day_pct_schedule?: number[] } | null;
-      payout: { split_pct: number | null; split_by_profit?: { profit_over: number; split_pct: number } } | null };
-    const phases = (id: string) => plans.find((p) => p.id === id)!.phases as Ph[];
-    const funded = (id: string) => phases(id).find((p) => p.phase !== 'evaluation')!;
-
-    // Topstep XFA : solde de départ 0, MLL -2 000 verrouillé à 0 quand le solde atteint 2 000.
-    expect(funded('topstep-standard-50k')).toMatchObject({ starting_balance: 0, max_drawdown: { amount: 2000, locks_at: 2000, locked_floor: 0 } });
-    expect(phases('topstep-standard-50k')[0].max_drawdown).toMatchObject({ amount: 2000, type: 'trailing_eod', locks_at: 52000, locked_floor: 50000 });
-    // TradeDay : seuil figé au solde de départ exact (pas + 100 $).
-    expect(phases('tradeday-qp-intraday-100k')[0].max_drawdown).toMatchObject({ amount: 3000, type: 'trailing_intraday', locks_at: 103000, locked_floor: 100000 });
-    expect(funded('tradeday-qp-eod-50k').max_drawdown.type).toBe('trailing_intraday'); // Quick Pay funded toujours intraday
-    expect(funded('tradeday-fp-eod-50k').max_drawdown.type).toBe('trailing_eod'); // Fast Pass funded toujours EOD
-    expect(funded('tradeday-qp-eod-50k').payout).toMatchObject({ split_pct: 0.5, split_by_profit: { profit_over: 4000, split_pct: 0.8 } });
-    // Tradeify : Growth 1 000 / 2 000 / 3 500 / 5 000 ; Lightning consistency par palier ; lock funded seulement.
-    expect([25, 50, 100, 150].map((k) => phases(`tradeify-growth-${k}k`)[0].max_drawdown.amount)).toEqual([1000, 2000, 3500, 5000]);
-    expect(phases('tradeify-growth-50k')[0].max_drawdown.locks_at).toBeNull();
-    expect(funded('tradeify-growth-50k').max_drawdown).toMatchObject({ locks_at: 52100, locked_floor: 50100 });
-    expect(funded('tradeify-lightning-50k').consistency).toMatchObject({ max_single_day_pct: 0.2, max_single_day_pct_schedule: [0.2, 0.25, 0.3] });
-    // MyFundedFutures : Rapid funded intraday depuis 0 $, verrouillé à 100 $ ; Pro verrouillé après le 1er payout.
-    expect(funded('myfundedfutures-rapid-50k')).toMatchObject({ starting_balance: 0, max_drawdown: { type: 'trailing_intraday', locks_at: 2100, locked_floor: 100 } });
-    expect(funded('myfundedfutures-pro-50k').max_drawdown).toMatchObject({ locks_at: null, locked_floor: 50100 });
-  });
-
-  it('LucidMaxx reste invite_only ; à revoir pour les jours min non publiés, prix unique confirmé le 2026-10-19', () => {
-    const maxx = plans.find((p) => p.id === 'lucid-maxx-50k')!;
-    expect(maxx.availability).toBe('invite_only');
-    expect(maxx.needsReview).toBe(true);
-    expect(maxx.price).toMatchObject({ amount: 300, billing: 'one_time', activation_fee: 0 });
-    const ev = (maxx.phases as { min_trading_days: number | null; max_contracts: { minis: number }; max_drawdown: { locks_at: number; locked_floor: number } }[])[0];
-    expect(ev.min_trading_days).toBeNull();
-    expect(ev.max_contracts.minis).toBe(4);
-    expect(ev.max_drawdown).toMatchObject({ locks_at: 52_100, locked_floor: 50_100 });
-  });
-
-  it('LucidFlex : consistency 40 % et 3 jours en standard, option 50 % et 2 jours (2026-10-19)', () => {
-    type Ev = { consistency: { max_single_day_pct: number }; min_trading_days: number | null };
-    const ev = (id: string) => (plans.find((p) => p.id === id)!.phases as Ev[])[0];
-    expect(ev('lucid-flex-dll-50k')).toMatchObject({ consistency: { max_single_day_pct: 0.4 }, min_trading_days: 3 });
-    expect(ev('lucid-flex-dll-c50-50k')).toMatchObject({ consistency: { max_single_day_pct: 0.5 }, min_trading_days: 2 });
-    expect(plans.find((p) => p.id === 'lucid-flex-c50-150k')!.configuration).toMatchObject({ daily_loss_limit: false, addon: 'consistency 50 %' });
+    const byId = new Map(plans.map((p) => [p.id, p]));
+    for (const f of RAW) {
+      for (const p of f.plans) {
+        const row = byId.get(p.id)!;
+        expect(row).toMatchObject({ firmId: f.firm.id, accountSize: p.account_size, active: true });
+        expect(row.phases).toEqual(p.phases);
+      }
+    }
   });
 
   it('empreinte stable entre deux lectures, sensible au moindre changement de règle', () => {
     const again = toRows(parseCatalog(clone(PROP_FIRM_CATALOG_FILES))).plans;
     expect(again.map((p) => p.contentHash)).toEqual(plans.map((p) => p.contentHash));
 
-    const files = clone(PROP_FIRM_CATALOG_FILES) as { plans: { phases: { max_drawdown: { amount: number } }[] }[] }[];
-    files[1].plans[0].phases[0].max_drawdown.amount += 1;
-    expect(toRows(parseCatalog(files)).plans[48].contentHash).not.toBe(plans[48].contentHash);
+    const files = clone(PROP_FIRM_CATALOG_FILES) as { plans: { id: string; phases: { max_drawdown: { amount: number } }[] }[] }[];
+    const target = files[1].plans[0];
+    target.phases[0].max_drawdown.amount += 1;
+    const changed = toRows(parseCatalog(files)).plans.find((p) => p.id === target.id)!;
+    expect(changed.contentHash).not.toBe(plans.find((p) => p.id === target.id)!.contentHash);
   });
 
   it('contentHash dépend du contenu, pas de l’instance', () => {
@@ -142,11 +166,12 @@ describe('toRows', () => {
 
 describe('planCatalogSync', () => {
   const catalog = parseCatalog(PROP_FIRM_CATALOG_FILES);
+  const firstPlanId = RAW[1].plans[0].id;
 
-  it('base vide : crée les 16 firms et les 290 plans', () => {
+  it('base vide : crée toutes les firms et tous les plans', () => {
     const plan = planCatalogSync(catalog, { firms: [], plans: [] });
-    expect(plan.firmsToCreate).toHaveLength(16);
-    expect(plan.plansToCreate).toHaveLength(290);
+    expect(plan.firmsToCreate).toHaveLength(FIRM_IDS.length);
+    expect(plan.plansToCreate).toHaveLength(PLAN_COUNT);
     expect(plan.firmsToUpdate).toEqual([]);
     expect(plan.plansToUpdate).toEqual([]);
     expect(plan.planIdsToDeactivate).toEqual([]);
@@ -158,35 +183,35 @@ describe('planCatalogSync', () => {
 
   it('règle modifiée : met à jour ce plan seulement', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.find((p) => p.id === 'apex-eod-50k')!.contentHash = 'ancienne';
+    state.plans.find((p) => p.id === firstPlanId)!.contentHash = 'ancienne';
     const plan = planCatalogSync(catalog, state);
-    expect(plan.plansToUpdate.map((p) => p.id)).toEqual(['apex-eod-50k']);
+    expect(plan.plansToUpdate.map((p) => p.id)).toEqual([firstPlanId]);
     expect(plan.plansToCreate).toEqual([]);
   });
 
   it('relevé d’une firm modifié : met à jour la firm', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
     state.firms[0].contentHash = 'ancienne';
-    expect(planCatalogSync(catalog, state).firmsToUpdate.map((f) => f.id)).toEqual(['lucid']);
+    expect(planCatalogSync(catalog, state).firmsToUpdate.map((f) => f.id)).toEqual([FIRM_IDS[0]]);
   });
 
   it('plan retiré du catalogue : désactivé, jamais supprimé', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.push({ id: 'apex-retire-50k', contentHash: 'x', active: true });
+    state.plans.push({ id: 'test-retire-50k', contentHash: 'x', active: true });
     const plan = planCatalogSync(catalog, state);
-    expect(plan.planIdsToDeactivate).toEqual(['apex-retire-50k']);
+    expect(plan.planIdsToDeactivate).toEqual(['test-retire-50k']);
   });
 
   it('plan déjà désactivé et toujours absent : rien à faire', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.push({ id: 'apex-retire-50k', contentHash: 'x', active: false });
+    state.plans.push({ id: 'test-retire-50k', contentHash: 'x', active: false });
     expect(isNoop(planCatalogSync(catalog, state))).toBe(true);
   });
 
   it('plan revenu dans le catalogue après un retrait : réactivé même à contenu égal', () => {
     const state = syncedState(PROP_FIRM_CATALOG_FILES);
-    state.plans.find((p) => p.id === 'lucid-flex-50k')!.active = false;
+    state.plans.find((p) => p.id === firstPlanId)!.active = false;
     const plan = planCatalogSync(catalog, state);
-    expect(plan.plansToUpdate.map((p) => [p.id, p.active])).toEqual([['lucid-flex-50k', true]]);
+    expect(plan.plansToUpdate.map((p) => [p.id, p.active])).toEqual([[firstPlanId, true]]);
   });
 });

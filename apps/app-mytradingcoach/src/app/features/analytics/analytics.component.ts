@@ -35,6 +35,9 @@ import { drawdownHelp, planFloorOf, planObjectiveLine } from '../../core/service
 import { MixedCurrencyNoticeComponent } from '../../shared/components/mixed-currency-notice/mixed-currency-notice.component';
 import { ErrorStateComponent } from '@mtc/front-ui';
 import { InactiveAccountsToggleComponent } from '../../shared/components/inactive-accounts-toggle/inactive-accounts-toggle.component';
+import { TradesApi } from '../../core/api/trades.api';
+import { isInactiveStatus } from '../../core/utils/account-status.util';
+import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodState } from '../../core/utils/inactive-period.util';
 
 const MOCK_HEATMAP_CELLS = [
   0.75, 0.45, 0.8, 0.3, 0.65, 0.55, 0.2, 0.6, 0.7, 0.35, 0.85, 0.5, 0.4, 0.72,
@@ -66,6 +69,11 @@ export class AnalyticsComponent {
   protected readonly userStore = inject(UserStore);
   private readonly analyticsApi = inject(AnalyticsApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly tradesApi = inject(TradesApi);
+  /** Période de la courbe posée sur « Tout » pour un compte échoué ou archivé. */
+  private inactivePeriod: AutoPeriodState<'1m' | '3m' | '6m' | 'all'> = NO_AUTO_PERIOD;
+  /** Calendrier ouvert sur le mois du dernier trade d'un compte échoué ou archivé, et le mois remplacé. */
+  private calendarAuto: { accountId: string; previous: { year: number; month: number } } | null = null;
   private readonly selectedAccount = inject(SelectedAccountStore);
   /** Devises mêlées en « Tous les comptes » → pas de totaux. */
   protected readonly money = inject(MoneyService);
@@ -244,7 +252,9 @@ export class AnalyticsComponent {
       effect(() => {
         this.selectedAccount.accountParam(); // dépendances réactives : compte sélectionné,
         this.selectedAccount.inactiveIncluded(); // interrupteur des comptes perdus
+        const selected = this.selectedAccount.selected();
         untracked(() => {
+          this.applyInactiveDefaults(selected);
           this.loadEquityCurve();
           this.loadCalendar(this.calYear(), this.calMonth());
         });
@@ -271,12 +281,51 @@ export class AnalyticsComponent {
       });
   }
 
+  /**
+   * Compte échoué ou archivé choisi : courbe sur « Tout » et calendrier sur le mois de son dernier
+   * trade (ses trades sont souvent plus vieux que le mois en cours). Retour à un compte actif : la
+   * période et le mois d'avant reviennent, sauf si l'utilisateur les a changés entre-temps.
+   */
+  private applyInactiveDefaults(selected: { id: string; status: string } | null): void {
+    const r = periodOnSelection(this.inactivePeriod, selected, this.equityPeriod(), 'all');
+    this.inactivePeriod = r.state;
+    if (r.period) this.equityPeriod.set(r.period);
+
+    if (selected && isInactiveStatus(selected.status)) {
+      if (this.calendarAuto?.accountId === selected.id) return;
+      const previous = this.calendarAuto?.previous ?? { year: this.calYear(), month: this.calMonth() };
+      this.calendarAuto = { accountId: selected.id, previous };
+      this.tradesApi
+        .getAll({ accountId: selected.id, limit: '1' })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            const last = res.data?.data?.[0]?.tradedAt;
+            // L'utilisateur a pu changer de compte ou de mois entre-temps : on ne touche à rien.
+            if (!last || this.calendarAuto?.accountId !== selected.id) return;
+            const d = new Date(last);
+            this.calYear.set(d.getFullYear());
+            this.calMonth.set(d.getMonth() + 1);
+            this.loadCalendar(d.getFullYear(), d.getMonth() + 1);
+          },
+          error: () => undefined, // le calendrier reste sur le mois en cours
+        });
+    } else if (this.calendarAuto) {
+      this.calYear.set(this.calendarAuto.previous.year);
+      this.calMonth.set(this.calendarAuto.previous.month);
+      this.calendarAuto = null;
+    }
+  }
+
   protected selectPeriod(period: '1m' | '3m' | '6m' | 'all'): void {
+    // Choix de l'utilisateur : il prime sur la période posée pour un compte échoué ou archivé.
+    this.inactivePeriod = periodChosenByUser();
     this.equityPeriod.set(period);
     this.loadEquityCurve();
   }
 
   protected onMonthChange(e: { year: number; month: number }): void {
+    this.calendarAuto = null; // mois choisi par l'utilisateur : il prime
     this.calYear.set(e.year);
     this.calMonth.set(e.month);
     this.loadCalendar(e.year, e.month);

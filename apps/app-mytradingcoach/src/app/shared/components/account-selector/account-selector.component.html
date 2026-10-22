@@ -106,3 +106,12 @@
     Compte
   </a>
 </div>
+
+<!-- Compte échoué ou archivé choisi : rappel discret qu'il est hors des chiffres « tous les comptes ». -->
+@if (store.selected(); as sel) {
+  @if (isInactive(sel.status)) {
+    <p class="acct-inactive-note" data-testid="selected-inactive-note">
+      Ce compte est {{ sel.status === 'FAILED' ? 'échoué' : 'archivé' }} : il ne compte pas dans « Tous les comptes ».
+    </p>
+  }
+}
