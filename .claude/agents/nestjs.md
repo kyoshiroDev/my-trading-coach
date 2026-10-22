@@ -2165,6 +2165,28 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
 
+## Payouts saisis à la main (feature payouts, partie 1, 2026-10-21)
+
+Un compte FUNDED **sans connexion broker** n'a aucune trace de ses retraits : l'utilisateur les saisit
+(date + montant). Ils vivent dans `BrokerPayout`, comme les payouts détectés chez Tradovate, avec
+`changeType = 'manual'` et `transactionId = 'manual:<uuid>'` (**pas de migration**). Logique pure :
+`accounts/account-payouts.ts` (`MANUAL_PAYOUT_TYPE`, `summarizePayouts`, `manualPayoutError`).
+
+- Routes : `GET /accounts/:id/payouts` (détectés et saisis, `manual` pour les seconds),
+  `POST /accounts/:id/payouts` (`CreatePayoutDto` : `tradeDate` `AAAA-MM-JJ` ≤ aujourd'hui, `amount` > 0 ;
+  compte FUNDED seulement, 400 sinon ; **409 `PAYOUTS_FROM_BROKER` si le compte a une connexion**,
+  sinon le retrait compterait deux fois), `DELETE /accounts/:id/payouts/:payoutId` (payout SAISI
+  seulement, 404 sinon). `dismiss` (« ce n'était pas un payout ») ne s'applique qu'aux payouts détectés.
+- Solde : `tradesBalance = solde de départ + P&L des trades − Σ payouts saisis` (`RulePayouts.manualTotal`).
+  Les payouts détectés n'en sont pas retirés : le solde lu chez le broker les a déjà perdus. Le plancher
+  ne bouge pas (le plus haut vient des trades), donc la marge baisse du montant retiré.
+- Cycle du prochain payout : le plus récent entre le dernier payout enregistré (détecté ou saisi) et la
+  date du formulaire ; `cycleSource = 'manual'` quand c'est un payout saisi (pas de `lastPayout` à écarter).
+- Courbe d'équité journalière : les payouts saisis sont lus avec les autres (même table, non mis en cache).
+- La synchro Tradovate ne supprime que ses lignes `balancedrop`, et tient compte des dates de payouts
+  connues (saisies comprises) pour ne pas détecter deux fois le même retrait.
+- Tests : `account-payouts.spec.ts`, `account-payouts.int-spec.ts` (solde, marge, courbe, 409, 404, 400).
+
 ## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
 
 - Avec `from` : renvoie aussi `before = { pnl, peak }` (P&L net cumulé avant la période et son plus

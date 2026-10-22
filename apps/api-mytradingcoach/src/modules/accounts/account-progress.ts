@@ -46,7 +46,8 @@ export interface AccountProgress {
   /** Payout : dernière séance déjà payée (le cycle commence après), null = depuis le début. */
   cycleAfter: string | null;
   /** D'où vient `cycleAfter` : payout détecté chez le broker, ou date saisie par l'utilisateur. */
-  cycleSource: 'broker' | 'user' | null;
+  /** `manual` : payout saisi à la main dans Mes comptes. */
+  cycleSource: 'broker' | 'manual' | 'user' | null;
   /** Payouts déjà reçus d'après le broker (rang du prochain), null si inconnu. */
   payoutsReceived: number | null;
   /** Payout qui fixe le cycle, s'il vient du broker : à confirmer s'il n'est que « probable ». */
@@ -64,7 +65,7 @@ export interface ProgressInput {
   sessions: SessionPnl[];
   /** `AAAA-MM-JJ` de la séance du dernier payout (le plus récent, détecté ou saisi). */
   lastPayoutDay: string | null;
-  cycleSource?: 'broker' | 'user' | null;
+  cycleSource?: 'broker' | 'manual' | 'user' | null;
   /** Payouts détectés chez le broker : choisit le palier exact ; null → 1er si aucun payout connu, sinon le suivant. */
   payoutsReceived?: number | null;
   lastPayout?: { id: string; amount: number; confidence: 'certain' | 'probable' } | null;

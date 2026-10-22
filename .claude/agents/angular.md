@@ -784,6 +784,19 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 
 ---
 
+## Payouts d'un compte funded (feature payouts, partie 1, 2026-10-21)
+
+`features/accounts/account-payouts` (`mtc-account-payouts`, entrées `accountId`, `currency`, `connected`,
+sortie `changed`) : au dépli d'un compte FUNDED dans Mes comptes (la ligne a alors `has-detail`). Liste
+des payouts (`AccountsApi.listPayouts`) : « saisi » (supprimable, `ConfirmService`, 404 = succès) ou
+« détecté chez le broker ». Compte sans connexion : formulaire date (max aujourd'hui) + montant →
+`addPayout` ; compte connecté : pas de saisie (l'API répondrait 409). `changed` → `store.load()` : solde,
+marge et cycle repartent du serveur. Note du cycle : `cycleSource === 'manual'` → « saisi dans la liste
+des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance (`setInput` échoue).
+Au moins un payout (saisi ou détecté) : note `payouts-floor-lock-note` (« Le plancher gelé après un
+payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm. ») tant que la règle
+« plancher gelé au premier payout » n'est pas modélisée au catalogue. À retirer quand elle le sera.
+
 ## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
 
 Miroir front de la règle API (`nestjs.md`, « Compte perdu ») : **aucun chiffre « tous les comptes »
