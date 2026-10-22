@@ -139,7 +139,7 @@ test.describe('Activation : déclaration prop firm à l\'étape 4', () => {
 
       // Et l'utilisateur le retrouve bien dans son espace.
       await page.goto('/accounts');
-      const carte = page.locator('.acct-card', { hasText: 'Apex #1' });
+      const carte = page.getByTestId('account-row').filter({ hasText: 'Apex #1' });
       await expect(carte).toBeVisible({ timeout: 15_000 });
       await expect(carte).toContainText('Apex');
     } finally {

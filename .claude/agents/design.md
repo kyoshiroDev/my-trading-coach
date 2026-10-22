@@ -264,6 +264,26 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   `prefers-reduced-motion` ou simple redimensionnement.
 - **Accessibilité** : canvas `role="img"` + `aria-label` (départ, actuel, max pour le drawdown, période).
 
+### Inscription / connexion en deux colonnes (`/register`, `/login`)
+
+Maquette : `maquettes/maquette-register-split.html`. Seuils : **< 1024 px** formulaire seul (aucune
+colonne de présentation ; téléphone : carte en haut, logo au-dessus du titre, titres centrés ;
+600–1023 px : carte centrée verticalement) · **1024–1279 px** deux colonnes compactes (titre 38 px,
+aperçu 90 px de haut, marges réduites) · **≥ 1280 px** version complète (titre 50 px).
+- Grille `1.1fr 1fr` : présentation à gauche (`--bg` + deux halos bleu/violet en `color-mix` et
+  quadrillage `--border` estompé), formulaire à droite sur `--bg-2`, séparés par `1px --border`.
+- Présentation : logo, pastille mono majuscules `--blue-bright` sur `--blue-glow` (point cyan), titre
+  Space Grotesk 700 (« prop firm. » en `--blue-bright`), phrase `--text-2`, six points à coche
+  `--blue-bright`, étiquette **PREMIUM** violette (`--purple-bright` sur `--purple-dim`), aperçu
+  « Éval Apex 50K · En séance » (3 indicateurs mono, courbe drawdown rouge, limite en pointillé
+  rouge, mention « Données de démonstration » `--text-faint`), pied mono « LECTURE SEULE · HÉBERGÉ EN
+  FRANCE · SANS PUBLICITÉ ».
+- Carte : `--bg-card`, radius 16, titres alignés à gauche à partir de 1024 px ; champs sur `--bg`,
+  44 px, radius 10 ; bouton principal 48 px, `--primary` + texte blanc (5,2:1 ; `--text` y fait 4,3:1).
+  Séparateurs à libellé mono 10 px `--text-faint` (« ou », « Pas encore sûr ? »). Ligne de confiance
+  mono 9,5 px `--text-faint` / `--text-3` (≥ 5:1 sur `--bg-card`), un élément par ligne quand la
+  carte est trop étroite.
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css

@@ -1,0 +1,129 @@
+/* Inscription / connexion (maquette-register-split.html). Sous 1024 px : formulaire seul. */
+:host {
+  display: block;
+  background: var(--bg);
+}
+
+.auth {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ─── Colonne de présentation (≥ 1024 px seulement) ─── */
+.pitch {
+  display: none;
+}
+
+/* ─── Côté formulaire ─── */
+.form-side {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: start center;
+  padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+  padding-top: calc(20px + env(safe-area-inset-top));
+  background:
+    radial-gradient(700px 400px at 50% 0%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 60%),
+    var(--bg);
+}
+
+.auth-card {
+  container: auth-card / inline-size;
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 18px 18px;
+}
+
+.card-logo {
+  display: block;
+  height: 34px;
+  width: auto;
+  margin: 0 auto 18px;
+}
+
+/* ─── Ligne de confiance (bas de carte) ─── */
+.trust {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+/* Première ligne trop longue pour la carte (téléphone) : un élément par ligne, sans « · » orphelin. */
+@container auth-card (max-width: 339px) {
+  .trust span {
+    flex-basis: 100%;
+  }
+
+  .trust .dot {
+    display: none;
+  }
+}
+
+.trust .nt-line {
+  flex-basis: 100%;
+  color: var(--text-3);
+}
+
+/* Tablette en portrait : carte centrée verticalement. */
+@media (min-width: 600px) {
+  .form-side {
+    place-items: center;
+    padding: 40px 24px;
+  }
+
+  .auth-card {
+    padding: 30px 28px 22px;
+    box-shadow: 0 24px 70px color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+}
+
+/* ─── Deux colonnes ─── */
+@media (min-width: 1024px) {
+  .auth {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .pitch {
+    display: block;
+    border-right: 1px solid var(--border);
+  }
+
+  .form-side {
+    padding: 28px 24px;
+    background: var(--bg-2);
+  }
+
+  .auth-card {
+    padding: 26px 24px 20px;
+  }
+
+  .card-logo {
+    display: none;
+  }
+}
+
+/* Version complète. */
+@media (min-width: 1280px) {
+  .form-side {
+    padding: 40px 32px;
+  }
+
+  .auth-card {
+    padding: 32px 30px 24px;
+  }
+}

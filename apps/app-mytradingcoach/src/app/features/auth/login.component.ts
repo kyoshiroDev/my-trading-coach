@@ -15,12 +15,13 @@ import { PostSignupService } from '../../core/auth/post-signup.service';
 import { GoogleIdentityService } from '../../core/auth/google-identity.service';
 import { GoogleSignInService, googleAuthErrorMessage } from '../../core/auth/google-sign-in.service';
 import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
+import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
 
 @Component({
   selector: 'mtc-login',
-  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent],
+  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './login.component.css',
+  styleUrls: ['./auth-layout/auth-form.css', './login.component.css'],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
@@ -105,3 +106,10 @@ export class LoginComponent {
       });
   }
 }
+
+/**
+ * Colonne de présentation de mtc-auth-layout, servie par CE module : son `import()` réutilise le
+ * morceau de la route /login au lieu d'en créer un nouveau, qui scindait le chunk partagé
+ * d'Angular (+2,7 Ko au bundle initial).
+ */
+export { AuthPitchComponent } from './auth-layout/auth-pitch.component';

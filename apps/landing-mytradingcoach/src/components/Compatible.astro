@@ -1,0 +1,102 @@
+---
+// « Compatible avec » : section courte, sur /prop-firm (après « Prêt en 2 minutes ») et sur l'accueil
+// (après PropFirmLive). Texte seul : pas de logo Tradovate (aucune autorisation de l'utiliser).
+// Jamais NinjaTrader Desktop / Web ici tant que NinjaTrader ne l'a pas confirmé, et aucun autre nom
+// de courtier ou de plateforme. Saisie manuelle et import CSV : gratuits (cf. plans.md) ; l'import
+// CSV ne lit d'office que les plateformes reconnues, d'où « quand ta plateforme est reconnue ».
+interface Props {
+  /** Largeur du contenu, alignée sur la page : 1100 px sur l'accueil (.wrap), 1200 px sur /prop-firm. */
+  width?: number;
+  /** Marge latérale sous 768 px : 16 px sur l'accueil, 20 px sur /prop-firm. */
+  gutter?: number;
+}
+const { width = 1100, gutter = 16 } = Astro.props;
+const entries = [
+  { title: 'Tradovate', text: "Connexion automatique par l'API, en lecture seule. Aucun ordre passé." },
+  {
+    title: 'Saisie manuelle',
+    text: 'Pour toutes les autres plateformes : tu ajoutes tes trades à la main, ou tu importes ton export CSV quand ta plateforme est reconnue.',
+  },
+];
+---
+
+<section class="compat" aria-labelledby="compat-title" style={`--compat-w: ${width}px; --compat-px: ${gutter}px`}>
+  <div class="compat-in">
+    <h2 id="compat-title" class="compat-title">Compatible avec</h2>
+    <ul class="compat-list">
+      {entries.map((e) => (
+        <li class="compat-item">
+          <h3>{e.title}</h3>
+          <p>{e.text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .compat {
+    padding: 56px 5%;
+  }
+  .compat-in {
+    max-width: var(--compat-w);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .compat-title {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--txt2);
+  }
+  .compat-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .compat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 22px;
+    background: var(--card);
+    border: 1px solid var(--b);
+    border-radius: 12px;
+  }
+  .compat-item h3 {
+    margin: 0;
+    font-family: var(--disp);
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--txt);
+  }
+  .compat-item p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--txt2);
+  }
+  @media (max-width: 767px) {
+    .compat {
+      padding: 40px var(--compat-px);
+    }
+    .compat-list {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .compat-item {
+      padding: 16px 18px;
+    }
+    .compat-item h3 {
+      font-size: 17px;
+    }
+  }
+</style>

@@ -12,6 +12,11 @@ if (!process.env['CI']) {
 
 const baseURL = process.env['BASE_URL'] ?? 'http://localhost:4200';
 const isCI = !!process.env['CI'];
+// Délai PAR TEST selon l'environnement (seul ce délai change, pas ceux des expect, actions et
+// navigations). CI : 45 s, inchangé. Local : 60 s, le build de dev non optimisé étant plus lent
+// (parcours d'inscription + onboarding de 12-activation mesurés de 18 à 42 s). Surcharge
+// ponctuelle : E2E_TEST_TIMEOUT_MS=90000.
+const testTimeout = Number(process.env['E2E_TEST_TIMEOUT_MS']) || (isCI ? 45000 : 60000);
 
 export default defineConfig({
   testDir: './src',
@@ -21,8 +26,7 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: 1,
   workers: isCI ? 1 : 2,
-  // En CI : Angular bootstrap sur Vercel + réseau GitHub = plus lent
-  timeout: isCI ? 45000 : 15000,
+  timeout: testTimeout,
   expect: {
     timeout: isCI ? 15000 : 8000,
   },

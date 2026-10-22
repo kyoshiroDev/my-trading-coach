@@ -20,7 +20,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
   selector: 'mtc-reset-password',
   imports: [FormsModule, RouterLink, LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './login.component.css',
+  styleUrl: './auth-layout/card-page.css',
   templateUrl: './reset-password.component.html',
 })
 export class ResetPasswordComponent {
