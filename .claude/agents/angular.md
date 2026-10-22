@@ -784,6 +784,19 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 
 ---
 
+## Payouts d'un compte funded (feature payouts, partie 1, 2026-10-21)
+
+`features/accounts/account-payouts` (`mtc-account-payouts`, entrées `accountId`, `currency`, `connected`,
+sortie `changed`) : au dépli d'un compte FUNDED dans Mes comptes (la ligne a alors `has-detail`). Liste
+des payouts (`AccountsApi.listPayouts`) : « saisi » (supprimable, `ConfirmService`, 404 = succès) ou
+« détecté chez le broker ». Compte sans connexion : formulaire date (max aujourd'hui) + montant →
+`addPayout` ; compte connecté : pas de saisie (l'API répondrait 409). `changed` → `store.load()` : solde,
+marge et cycle repartent du serveur. Note du cycle : `cycleSource === 'manual'` → « saisi dans la liste
+des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance (`setInput` échoue).
+Au moins un payout (saisi ou détecté) : note `payouts-floor-lock-note` (« Le plancher gelé après un
+payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm. ») tant que la règle
+« plancher gelé au premier payout » n'est pas modélisée au catalogue. À retirer quand elle le sera.
+
 ## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
 
 Miroir front de la règle API (`nestjs.md`, « Compte perdu ») : **aucun chiffre « tous les comptes »
@@ -835,6 +848,14 @@ les chiffres (jamais au premier passage).
   « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
   `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
 - Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+  Compte échoué ou archivé choisi : ligne discrète sous le sélecteur (`selected-inactive-note`,
+  « Ce compte est échoué : il ne compte pas dans « Tous les comptes ». », ton des notes, sans couleur d'alerte).
+- **Période par défaut d'un compte échoué ou archivé** (`core/utils/inactive-period.util.ts`) : ses
+  trades sont souvent plus vieux que « 1 mois ». Tableau de bord et Statistiques passent sur « Tout »
+  quand on le choisit ; le calendrier des Statistiques s'ouvre sur le mois de son dernier trade
+  (`TradesApi.getAll({ accountId, limit: '1' })`). Retour sur un compte actif : période et mois d'avant
+  reviennent. Un choix de l'utilisateur (`setPeriod`, `selectPeriod`, `onMonthChange`) prime et
+  désarme le retour automatique. Comptes actifs : inchangés.
 - **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
   « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
   un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
@@ -1038,6 +1059,29 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   direct ne coûterait que +0,6 Ko gz mais 9 kB bruts de marge sur le budget. Ce qui est importé par
   l'inscription arrive au démarrage : **pas de `@lucide/angular`** dedans (œil du mot de passe :
   `mtc-eye-icon`, SVG en ligne, partagé avec la connexion).
+- **Mise en page de `/register` et `/login`** (oct. 2026, maquette `maquettes/maquette-register-split.html`) :
+  `features/auth/auth-layout/`. `mtc-auth-layout` porte la page ; la page projette le contenu de la
+  carte (titres, Google, formulaire), le layout ajoute le logo (< 1024 px seulement) et la ligne de
+  confiance en bas de carte (« Lecture seule, aucun ordre passé · Hébergé en France » puis
+  « Référencé dans l'écosystème NinjaTrader », texte seul, sans lien). Styles communs de la carte :
+  `auth-form.css` (dans les `styleUrls` des deux pages). < 1024 px : carte seule (en haut sur
+  téléphone, centrée de 600 à 1023 px). ≥ 1024 px : deux colonnes, présentation à gauche, formulaire
+  sur `--bg-2` ; version compacte jusqu'à 1279 px.
+  - **Colonne de présentation `mtc-auth-pitch`** (+ aperçu `mtc-auth-preview`, statique, données de
+    démonstration, aucun appel API) : importée à la demande seulement quand `(min-width: 1024px)`
+    est vraie (jamais sur téléphone), par `import('../login.component')` : `login.component.ts`
+    réexporte `AuthPitchComponent` pour que la colonne voyage dans le morceau déjà paresseux de
+    `/login`. Un morceau à part (ou `@defer`) scindait le chunk partagé d'Angular : +2,7 kB au bundle
+    initial, qui n'a que ~2,5 kB de marge (497,6 kB sur 500, oct. 2026). Ne pas importer la colonne
+    en statique.
+  - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
+    entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
+    à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
+  - Mot de passe et confirmation côte à côte via `@container auth-card (min-width: 300px)` (= carte de
+    340 px). Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
+    seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
+  - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
+    seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
   intégré (tokens de `theme.css` avec valeurs de repli), visibles dès le HTML. Texte en police
   monospace **système** : JetBrains Mono y ferait télécharger une police en concurrence avec le JS. Retiré par `App`

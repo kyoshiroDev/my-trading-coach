@@ -10,7 +10,7 @@
  *  2. la purge reste scopée au user démo (aucun deleteMany sans userId) ;
  *  3. tous les trades générés tiennent dans la fenêtre « 1M » par défaut du dashboard.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 
 // Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
 // charge de la suite complète, deux runs dépassent les 5 s par défaut.
@@ -24,6 +24,17 @@ vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
 import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 import { generate } from './demo-data/generate';
+
+// Date simulée, pour vérifier la robustesse du tirage (il dépend de la date du run) :
+// DEMO_SEED_DATE=2026-11-03T03:20:00 pnpm exec vitest run … demo-seed-idempotence.spec.ts
+const SEED_DATE = process.env['DEMO_SEED_DATE'];
+if (SEED_DATE) {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(SEED_DATE));
+  });
+  afterAll(() => vi.useRealTimers());
+}
 
 /** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
 function weekdayAt(hour: number, minute = 0): Date {
@@ -168,6 +179,21 @@ describe('seedDemo — compte perdu (statistiques exclues dans la démo)', () =>
         .reduce((s, t) => s + netTrade(t), 0);
     };
     expect(netOf('Apex 50k · Éval #1')).toBeLessThan(-2_000);
+  });
+
+  it('trades des comptes perdus réalistes : plusieurs setups, actifs et heures de la journée', async () => {
+    const { prisma, created } = fakePrisma([]);
+    await seedDemo(prisma);
+    const lostIds = new Set(created['tradingAccount']
+      .map((a, i) => (a['status'] !== 'ACTIVE' ? `tradingAccount-${i + 1}` : null))
+      .filter((x): x is string => x !== null));
+    const lost = created['trade'].filter((t) => lostIds.has(t['accountId'] as string));
+    expect(new Set(lost.map((t) => t['setupId'])).size).toBeGreaterThanOrEqual(5);
+    expect(new Set(lost.map((t) => t['asset'])).size).toBeGreaterThanOrEqual(3);
+    expect(new Set(lost.map((t) => (t['tradedAt'] as Date).getUTCHours())).size).toBeGreaterThanOrEqual(5);
+    // Aucun setup ne domine : Breakout n'a plus tous les trades perdus.
+    const breakout = lost.filter((t) => t['setupId'] === 'setup-Breakout').length;
+    expect(breakout / lost.length).toBeLessThanOrEqual(0.25);
   });
 
   it('aucune connexion broker sur les comptes perdus (vitrine limitée aux comptes actifs)', async () => {
@@ -648,7 +674,8 @@ describe('seedDemo — réalisme validé : un trader crédible, pas un gagnant p
     const { prisma, created } = fakePrisma([]);
     await seedDemo(prisma);
 
-    const of = (title: string) => created['trade'].filter((t) => t['setupId'] === `setup-${title}`);
+    // Comptes actifs : c'est la vue par défaut (les comptes échoué et archivé sont hors des chiffres).
+    const of = (title: string) => activeTrades(created).filter((t) => t['setupId'] === `setup-${title}`);
     const wr = (ts: Record<string, unknown>[]) => ts.filter((t) => net(t) > 0).length / ts.length;
     const titles = ['Breakout', 'Pullback', 'Range', 'Reversal', 'News', 'Scalping'];
     const rates = Object.fromEntries(titles.map((x) => [x, wr(of(x))]));

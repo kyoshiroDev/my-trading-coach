@@ -23,6 +23,13 @@ export function statsScopeStub() {
     setIncludeInactive(this: { includeInactive: { set: (v: boolean) => void } }, on: boolean): void {
       this.includeInactive.set(on);
     },
+    /** Compte choisi (null = « Tous les comptes »), comme `SelectedAccountStore.selected`. */
+    selected(this: StubHost): { id: string; status: string } | null {
+      const id = this.selectedAccountId();
+      if (id === 'all') return null;
+      const list = this.accounts() as { id?: string; status: string }[];
+      return (list.find((a) => a.id === id) as { id: string; status: string } | undefined) ?? null;
+    },
     inactiveIncluded(this: StubHost): boolean {
       return this.includeInactive() && this.selectedAccountId() === 'all';
     },

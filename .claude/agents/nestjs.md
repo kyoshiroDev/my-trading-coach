@@ -774,7 +774,13 @@ serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à
 de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
 comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
 AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
-bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
+bougent pas. Aucune connexion broker sur ces comptes. Trades réalistes : setups en rotation proche des parts du
+profil (Scalping, Pullback, Breakout, Range, Reversal, News), actifs MNQ / MES / NQ / ES (2 micros ou
+1 mini, frais de l'instrument), plusieurs heures dont une séance de Londres. Module pur (tsx).
+**Contraste des setups** (`setupsContrasted`, `model.ts`) : vérifié sur le tirage principal ET après
+l'ajout du compte statique `elite` (`secondaryMeetsTargets`) ; sans ça, ses trades à résultat forcé
+faisaient passer Pullback ou Range devant Breakout certains jours (4 samedis sur 30 avant correction).
+Robustesse : `DEMO_SEED_DATE=AAAA-MM-JJTHH:MM:SS` rejoue `demo-seed-idempotence.spec.ts` à une date simulée. `DemoReadOnlyGuard` reste
 la seule barrière des mutations (« Nouvelle tentative », « Archiver », suppression : 403 et invite
 « Crée ton compte » côté front).
 
@@ -2158,6 +2164,28 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
+
+## Payouts saisis à la main (feature payouts, partie 1, 2026-10-21)
+
+Un compte FUNDED **sans connexion broker** n'a aucune trace de ses retraits : l'utilisateur les saisit
+(date + montant). Ils vivent dans `BrokerPayout`, comme les payouts détectés chez Tradovate, avec
+`changeType = 'manual'` et `transactionId = 'manual:<uuid>'` (**pas de migration**). Logique pure :
+`accounts/account-payouts.ts` (`MANUAL_PAYOUT_TYPE`, `summarizePayouts`, `manualPayoutError`).
+
+- Routes : `GET /accounts/:id/payouts` (détectés et saisis, `manual` pour les seconds),
+  `POST /accounts/:id/payouts` (`CreatePayoutDto` : `tradeDate` `AAAA-MM-JJ` ≤ aujourd'hui, `amount` > 0 ;
+  compte FUNDED seulement, 400 sinon ; **409 `PAYOUTS_FROM_BROKER` si le compte a une connexion**,
+  sinon le retrait compterait deux fois), `DELETE /accounts/:id/payouts/:payoutId` (payout SAISI
+  seulement, 404 sinon). `dismiss` (« ce n'était pas un payout ») ne s'applique qu'aux payouts détectés.
+- Solde : `tradesBalance = solde de départ + P&L des trades − Σ payouts saisis` (`RulePayouts.manualTotal`).
+  Les payouts détectés n'en sont pas retirés : le solde lu chez le broker les a déjà perdus. Le plancher
+  ne bouge pas (le plus haut vient des trades), donc la marge baisse du montant retiré.
+- Cycle du prochain payout : le plus récent entre le dernier payout enregistré (détecté ou saisi) et la
+  date du formulaire ; `cycleSource = 'manual'` quand c'est un payout saisi (pas de `lastPayout` à écarter).
+- Courbe d'équité journalière : les payouts saisis sont lus avec les autres (même table, non mis en cache).
+- La synchro Tradovate ne supprime que ses lignes `balancedrop`, et tient compte des dates de payouts
+  connues (saisies comprises) pour ne pas détecter deux fois le même retrait.
+- Tests : `account-payouts.spec.ts`, `account-payouts.int-spec.ts` (solde, marge, courbe, 409, 404, 400).
 
 ## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
 

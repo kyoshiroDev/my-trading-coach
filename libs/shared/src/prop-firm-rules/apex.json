@@ -10,7 +10,7 @@
       "wealthcharts"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-10-22",
   "plans": [
     {
       "id": "apex-intraday-25k",
@@ -22,8 +22,8 @@
       "price": {
         "amount": 167,
         "billing": "one_time",
-        "activation_fee": 79,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 690 $."
+        "activation_fee": 89,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 690 $."
       },
       "phases": [
         {
@@ -203,8 +203,8 @@
       "price": {
         "amount": 249,
         "billing": "one_time",
-        "activation_fee": 89,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 490 $."
+        "activation_fee": 99,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 490 $."
       },
       "phases": [
         {
@@ -395,8 +395,8 @@
       "price": {
         "amount": 790,
         "billing": "one_time",
-        "activation_fee": 109,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 590 $."
+        "activation_fee": 129,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 590 $."
       },
       "phases": [
         {
@@ -598,8 +598,8 @@
       "price": {
         "amount": 1190,
         "billing": "one_time",
-        "activation_fee": 139,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1890 $."
+        "activation_fee": 149,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1890 $."
       },
       "phases": [
         {
@@ -801,8 +801,8 @@
       "price": {
         "amount": 490,
         "billing": "one_time",
-        "activation_fee": 99,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1090 $."
+        "activation_fee": 109,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1090 $."
       },
       "phases": [
         {
@@ -990,8 +990,8 @@
       "price": {
         "amount": 590,
         "billing": "one_time",
-        "activation_fee": 119,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1190 $."
+        "activation_fee": 129,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1190 $."
       },
       "phases": [
         {
@@ -1190,8 +1190,8 @@
       "price": {
         "amount": 1190,
         "billing": "one_time",
-        "activation_fee": 129,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : pas de carte affichée pour cette taille sur le sélecteur."
+        "activation_fee": 139,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 1590 $ (affichée sur le sélecteur depuis le relevé du 2026-10-22)."
       },
       "phases": [
         {
@@ -1401,8 +1401,8 @@
       "price": {
         "amount": 2190,
         "billing": "one_time",
-        "activation_fee": 149,
-        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA. Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : pas de carte affichée pour cette taille sur le sélecteur."
+        "activation_fee": 159,
+        "notes": "Prix catalogue de l'évaluation Standard (paiement unique, 30 jours, sans reset) relevé le 2026-10-02, inchangé le 2026-10-22 ; coupon temporaire jusqu'à -90 % en cours. activation_fee = frais d'activation du PA (relevés le 2026-10-22, en hausse depuis le 2026-10-02). Variante « No Activation Fee » (mêmes règles, PA activé à 0 $) : 2490 $ (affichée sur le sélecteur depuis le relevé du 2026-10-22)."
       },
       "phases": [
         {
@@ -1612,8 +1612,8 @@
       "price": {
         "amount": 177,
         "billing": "monthly",
-        "activation_fee": 89,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "activation_fee": 99,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -1765,8 +1765,8 @@
       "price": {
         "amount": 197,
         "billing": "monthly",
-        "activation_fee": 99,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "activation_fee": 125,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -1916,10 +1916,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 397,
+        "amount": 210,
         "billing": "monthly",
-        "activation_fee": 129,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "activation_fee": 149,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
       },
       "phases": [
         {
@@ -2071,8 +2071,8 @@
       "price": {
         "amount": 597,
         "billing": "monthly",
-        "activation_fee": 169,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "activation_fee": 179,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -2222,10 +2222,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 697,
+        "amount": 210,
         "billing": "monthly",
-        "activation_fee": 179,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "activation_fee": 189,
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
       },
       "phases": [
         {
@@ -2375,10 +2375,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 797,
+        "amount": 210,
         "billing": "monthly",
         "activation_fee": 199,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
       },
       "phases": [
         {

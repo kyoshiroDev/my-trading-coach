@@ -1,106 +1,104 @@
-<div class="auth-page">
-  <div class="bg-glow"></div>
+<mtc-auth-layout>
+  <h1 class="auth-title">Content de te revoir</h1>
+  <p class="auth-subtitle">
+    Connecte-toi pour retrouver tes comptes et ta séance
+  </p>
 
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
+  <mtc-google-auth-button
+    text="continue_with"
+    [busy]="googleLoading()"
+    (credential)="onGoogleCredential($event)"
+  />
+  @if (googleError()) {
+    <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
+  }
+
+  <form (ngSubmit)="onLogin()">
+    <div class="form-group" [class.input-error]="emailError()">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        [attr.aria-invalid]="!!emailError()"
+        [attr.aria-describedby]="emailError() ? 'email-error' : null"
+        type="email"
+        data-testid="login-email"
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+        name="email"
+        placeholder="trader@email.com"
+        autocomplete="email"
+        (blur)="emailTouched.set(true)"
+      />
+      @if (emailError()) {
+        <span class="field-error" id="email-error">{{ emailError() }}</span>
+      }
     </div>
 
-    <h1 class="auth-title">Bon retour 👋</h1>
-    <p class="auth-subtitle">
-      Connecte-toi pour accéder à ton journal de trading
-    </p>
-
-    <mtc-google-auth-button
-      text="continue_with"
-      [busy]="googleLoading()"
-      (credential)="onGoogleCredential($event)"
-    />
-    @if (googleError()) {
-      <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
-    }
-
-    <form (ngSubmit)="onLogin()">
-      <div class="form-group" [class.input-error]="emailError()">
-        <label for="email">Email</label>
+    <div class="form-group" [class.input-error]="passwordError()">
+      <label for="password">Mot de passe</label>
+      <div class="input-wrapper">
         <input
-          id="email"
-          [attr.aria-invalid]="!!emailError()"
-          [attr.aria-describedby]="emailError() ? 'email-error' : null"
-          type="email"
-          data-testid="login-email"
-          [ngModel]="email()"
-          (ngModelChange)="email.set($event)"
-          name="email"
-          placeholder="trader@email.com"
-          autocomplete="email"
-          (blur)="emailTouched.set(true)"
+          id="password"
+          [attr.aria-invalid]="!!passwordError()"
+          [attr.aria-describedby]="passwordError() ? 'password-error' : null"
+          data-testid="login-password"
+          [type]="showPassword() ? 'text' : 'password'"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          (blur)="passwordTouched.set(true)"
         />
-        @if (emailError()) {
-          <span class="field-error" id="email-error">{{ emailError() }}</span>
-        }
-      </div>
-
-      <div class="form-group" [class.input-error]="passwordError()">
-        <label for="password">Mot de passe</label>
-        <div class="input-wrapper">
-          <input
-            id="password"
-            [attr.aria-invalid]="!!passwordError()"
-            [attr.aria-describedby]="passwordError() ? 'password-error' : null"
-            data-testid="login-password"
-            [type]="showPassword() ? 'text' : 'password'"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            name="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            (blur)="passwordTouched.set(true)"
-          />
-          <button
-            type="button"
-            class="eye-btn"
-            [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-            [attr.aria-pressed]="showPassword()"
-            (click)="showPassword.set(!showPassword())"
-          >
-            <mtc-eye-icon [off]="showPassword()" />
-          </button>
-        </div>
-        @if (passwordError()) {
-          <span class="field-error" id="password-error">{{ passwordError() }}</span>
-        }
-      </div>
-
-      <div class="forgot-link-row">
-        <a routerLink="/forgot-password" class="forgot-link"
-          >Mot de passe oublié ?</a
+        <button
+          type="button"
+          class="eye-btn"
+          [attr.aria-label]="
+            showPassword()
+              ? 'Masquer le mot de passe'
+              : 'Afficher le mot de passe'
+          "
+          [attr.aria-pressed]="showPassword()"
+          (click)="showPassword.set(!showPassword())"
         >
+          <mtc-eye-icon [off]="showPassword()" />
+        </button>
       </div>
-
-      <button
-        type="submit"
-        data-testid="login-submit"
-        [disabled]="isLoading()"
-        class="btn-submit"
-      >
-        @if (isLoading()) {
-          <span class="spinner"></span> Connexion...
-        } @else {
-          Se connecter
-        }
-      </button>
-
-      @if (apiError()) {
-        <div class="error-msg" role="alert" data-testid="error-message">
-          {{ apiError() }}
-        </div>
+      @if (passwordError()) {
+        <span class="field-error" id="password-error">{{
+          passwordError()
+        }}</span>
       }
-    </form>
+    </div>
 
-    <p class="auth-link">
-      Pas encore de compte ?
-      <a routerLink="/register">S'inscrire gratuitement</a>
-    </p>
-  </div>
-</div>
+    <div class="forgot-link-row">
+      <a routerLink="/forgot-password" class="forgot-link"
+        >Mot de passe oublié ?</a
+      >
+    </div>
+
+    <button
+      type="submit"
+      data-testid="login-submit"
+      [disabled]="isLoading()"
+      class="btn-submit"
+    >
+      @if (isLoading()) {
+        <span class="spinner"></span> Connexion...
+      } @else {
+        Se connecter
+      }
+    </button>
+
+    @if (apiError()) {
+      <div class="error-msg" role="alert" data-testid="error-message">
+        {{ apiError() }}
+      </div>
+    }
+  </form>
+
+  <p class="auth-link">
+    Pas encore de compte ?
+    <a routerLink="/register">S'inscrire gratuitement</a>
+  </p>
+</mtc-auth-layout>

@@ -1,89 +1,81 @@
-<div class="auth-page">
-  <div class="bg-glow"></div>
+<mtc-auth-layout>
+  <h1 class="auth-title">
+    @if (offerFlow()) {
+      Crée ton compte
+    } @else if (isPremiumFlow()) {
+      Créer ton compte Premium
+    } @else {
+      Commence gratuitement
+    }
+  </h1>
+  <p class="auth-subtitle">
+    @if (offerFlow(); as o) {
+      @if (o.promo) {
+        Tu verras les conditions du code {{ o.promo }} juste après l'inscription
+      } @else {
+        Tu choisis ton offre (fondateur ou Premium) juste après l'inscription
+      }
+    } @else if (isPremiumFlow()) {
+      Tu seras redirigé vers le paiement après l'inscription
+    } @else {
+      Protège ton compte prop firm de tes propres erreurs
+    }
+  </p>
 
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="icon/logo-navbar.svg" alt="MyTradingCoach" />
+  @if (referralCode()) {
+    <div class="referral-notice">
+      🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai
+      Premium offert
+    </div>
+  }
+
+  <mtc-google-auth-button
+    text="continue_with"
+    [busy]="googleLoading()"
+    (credential)="onGoogleCredential($event)"
+  />
+  @if (googleError()) {
+    <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
+  }
+
+  <form (ngSubmit)="onRegister()">
+    <div class="form-group">
+      <label for="name">Prénom <span class="optional">(optionnel)</span></label>
+      <input
+        id="name"
+        type="text"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+        name="name"
+        placeholder="Alex"
+        autocomplete="given-name"
+      />
     </div>
 
-    <h1 class="auth-title">
-      @if (offerFlow()) {
-        Crée ton compte
-      } @else if (isPremiumFlow()) {
-        Créer ton compte Premium
-      } @else {
-        Commence gratuitement
+    <div class="form-group" [class.input-error]="emailError()">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        [attr.aria-invalid]="!!emailError()"
+        [attr.aria-describedby]="emailError() ? 'email-error' : null"
+        data-testid="register-email"
+        type="email"
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+        name="email"
+        placeholder="trader@email.com"
+        autocomplete="email"
+        (blur)="emailTouched.set(true)"
+      />
+      @if (emailError()) {
+        <span class="field-error" id="email-error">{{ emailError() }}</span>
       }
-    </h1>
-    <p class="auth-subtitle">
-      @if (offerFlow(); as o) {
-        @if (o.promo) {
-          Tu verras les conditions du code {{ o.promo }} juste après l'inscription
-        } @else {
-          Tu choisis ton offre (fondateur ou Premium) juste après l'inscription
-        }
-      } @else if (isPremiumFlow()) {
-        Tu seras redirigé vers le paiement après l'inscription
-      } @else {
-        Protège ton compte prop firm de tes propres erreurs
-      }
-    </p>
+    </div>
 
-    @if (referralCode()) {
-      <div class="referral-notice">
-        🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai Premium offert
-      </div>
-    }
-
-    <mtc-google-auth-button
-      text="continue_with"
-      [busy]="googleLoading()"
-      (credential)="onGoogleCredential($event)"
-    />
-    @if (googleError()) {
-      <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
-    }
-
-    <form (ngSubmit)="onRegister()">
-      <div class="form-group">
-        <label for="name"
-          >Prénom <span class="optional">(optionnel)</span></label
-        >
-        <input
-          id="name"
-          type="text"
-          [ngModel]="name()"
-          (ngModelChange)="name.set($event)"
-          name="name"
-          placeholder="Alex"
-          autocomplete="given-name"
-        />
-      </div>
-
-      <div class="form-group" [class.input-error]="emailError()">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          [attr.aria-invalid]="!!emailError()"
-          [attr.aria-describedby]="emailError() ? 'email-error' : null"
-          data-testid="register-email"
-          type="email"
-          [ngModel]="email()"
-          (ngModelChange)="email.set($event)"
-          name="email"
-          placeholder="trader@email.com"
-          autocomplete="email"
-          (blur)="emailTouched.set(true)"
-        />
-        @if (emailError()) {
-          <span class="field-error" id="email-error">{{ emailError() }}</span>
-        }
-      </div>
-
+    <div class="pw-row">
       <div class="form-group" [class.input-error]="passwordError()">
         <label for="password"
-          >Mot de passe
-          <span class="optional">(8 caractères min)</span></label
+          >Mot de passe <span class="optional">(8 min)</span></label
         >
         <div class="input-wrapper">
           <input
@@ -102,7 +94,11 @@
           <button
             type="button"
             class="eye-btn"
-            [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            [attr.aria-label]="
+              showPassword()
+                ? 'Masquer le mot de passe'
+                : 'Afficher le mot de passe'
+            "
             [attr.aria-pressed]="showPassword()"
             (click)="showPassword.set(!showPassword())"
           >
@@ -110,17 +106,21 @@
           </button>
         </div>
         @if (passwordError()) {
-          <span class="field-error" id="password-error">{{ passwordError() }}</span>
+          <span class="field-error" id="password-error">{{
+            passwordError()
+          }}</span>
         }
       </div>
 
       <div class="form-group" [class.input-error]="confirmError()">
-        <label for="confirm-password">Confirmer le mot de passe</label>
+        <label for="confirm-password">Confirmer</label>
         <div class="input-wrapper">
           <input
             id="confirm-password"
             [attr.aria-invalid]="!!confirmError()"
-            [attr.aria-describedby]="confirmError() ? 'confirm-password-error' : null"
+            [attr.aria-describedby]="
+              confirmError() ? 'confirm-password-error' : null
+            "
             data-testid="register-confirm"
             [type]="showConfirm() ? 'text' : 'password'"
             [ngModel]="confirmPassword()"
@@ -133,7 +133,11 @@
           <button
             type="button"
             class="eye-btn"
-            [attr.aria-label]="showConfirm() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+            [attr.aria-label]="
+              showConfirm()
+                ? 'Masquer le mot de passe'
+                : 'Afficher le mot de passe'
+            "
             [attr.aria-pressed]="showConfirm()"
             (click)="showConfirm.set(!showConfirm())"
           >
@@ -141,66 +145,86 @@
           </button>
         </div>
         @if (confirmError()) {
-          <span class="field-error" id="confirm-password-error">{{ confirmError() }}</span>
+          <span class="field-error" id="confirm-password-error">{{
+            confirmError()
+          }}</span>
         }
       </div>
+    </div>
 
-      <label class="consent-check">
-        <input
-          type="checkbox"
-          name="marketingConsent"
-          [ngModel]="marketingConsent()"
-          (ngModelChange)="marketingConsent.set($event)"
-        />
-        <span>
-          <strong class="consent-title">Recevoir les conseils pour bien démarrer et les offres MyTradingCoach</strong>
-          <span class="consent-hint">Désinscription en un clic dans chaque e-mail.</span>
-        </span>
-      </label>
+    <label class="consent-check">
+      <input
+        type="checkbox"
+        name="marketingConsent"
+        [ngModel]="marketingConsent()"
+        (ngModelChange)="marketingConsent.set($event)"
+      />
+      <span>
+        <strong class="consent-title"
+          >Recevoir les conseils pour bien démarrer et les offres
+          MyTradingCoach</strong
+        >
+        <span class="consent-hint"
+          >Désinscription en un clic dans chaque e-mail.</span
+        >
+      </span>
+    </label>
 
-      <button
-        type="submit"
-        data-testid="register-submit"
-        [disabled]="isLoading()"
-        class="btn-submit"
-      >
-        @if (isLoading()) {
-          <span class="spinner"></span>
-          @if (isPremiumFlow()) {
-            Création et redirection...
-          } @else {
-            Création...
-          }
+    <button
+      type="submit"
+      data-testid="register-submit"
+      [disabled]="isLoading()"
+      class="btn-submit"
+    >
+      @if (isLoading()) {
+        <span class="spinner"></span>
+        @if (isPremiumFlow()) {
+          Création et redirection...
         } @else {
-          @if (offerFlow()) {
-            Créer mon compte et choisir mon offre →
-          } @else if (isPremiumFlow()) {
-            Créer mon compte et continuer vers le paiement →
-          } @else {
-            Créer mon compte gratuit
-          }
+          Création...
         }
-      </button>
-
-      @if (apiError()) {
-        <div class="error-msg" role="alert" data-testid="error-message">
-          {{ apiError() }}
-        </div>
-      }
-    </form>
-
-    <p class="free-note">
-      @if (offerFlow()) {
-        Rien n'est prélevé avant que tu confirmes ton offre
-      } @else if (isPremiumFlow()) {
-        1 mois offert · carte requise · annulable en un clic
       } @else {
-        Gratuit · trades illimités · sans carte
+        @if (offerFlow()) {
+          Créer mon compte et choisir mon offre →
+        } @else if (isPremiumFlow()) {
+          Créer mon compte et continuer vers le paiement →
+        } @else {
+          Créer mon compte gratuit
+        }
       }
-    </p>
+    </button>
 
-    <p class="auth-link">
-      Déjà un compte ? <a routerLink="/login">Se connecter</a>
-    </p>
-  </div>
-</div>
+    @if (apiError()) {
+      <div class="error-msg" role="alert" data-testid="error-message">
+        {{ apiError() }}
+      </div>
+    }
+  </form>
+
+  <p class="free-note">
+    @if (offerFlow()) {
+      Rien n'est prélevé avant que tu confirmes ton offre
+    } @else if (isPremiumFlow()) {
+      1 mois offert · carte requise · annulable en un clic
+    } @else {
+      Gratuit · trades illimités · sans carte
+    }
+  </p>
+
+  <!-- Parcours gratuit seulement : un lien d'offre ou Premium garde un seul chemin, vers le paiement. -->
+  @if (!offerFlow() && !isPremiumFlow()) {
+    <div class="sep"><span>Pas encore sûr ?</span></div>
+    <!-- Compte démo partagé, en lecture seule (même route que le bouton démo de la landing) : aucun compte créé. -->
+    <a class="btn-demo" routerLink="/demo" data-testid="register-demo">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      Explorer la démo, sans compte
+    </a>
+  }
+
+  <p class="auth-link">
+    Déjà un compte ? <a routerLink="/login">Se connecter</a>
+  </p>
+</mtc-auth-layout>

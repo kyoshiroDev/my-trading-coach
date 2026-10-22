@@ -18,6 +18,7 @@ import {
   Role,
   TradingAccount,
 } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -28,6 +29,7 @@ import {
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
 import { isFloorReached, nextAttemptLabel, retryAccountData } from './account-retry';
+import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
 import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
 
@@ -46,19 +48,13 @@ export interface RulePlan {
   needsReview?: boolean;
 }
 
-/** Payouts détectés chez le broker pour le compte : dernière séance et nombre. */
-export interface RulePayouts {
-  last: string;
-  count: number;
-  /** Dernier payout : identifiant (pour l'écarter), montant, certitude de la détection. */
-  lastId?: string;
-  lastAmount?: number;
-  lastConfidence?: 'certain' | 'probable';
-}
+export type { RulePayouts } from './account-payouts';
 
 /**
- * Début du cycle de payout : le plus récent entre le payout détecté chez le broker et la date
- * saisie. Le nombre détecté n'est un rang fiable que si c'est lui qui fixe le cycle.
+ * Début du cycle de payout : le plus récent entre le dernier payout enregistré (détecté chez le
+ * broker ou saisi à la main) et la date saisie dans le formulaire du compte. Le nombre n'est un
+ * rang fiable que si c'est lui qui fixe le cycle. Un payout saisi n'est jamais « à écarter » : il
+ * se supprime depuis la liste des payouts.
  */
 function lastPayout(
   userDate: Date | null | undefined,
@@ -67,8 +63,8 @@ function lastPayout(
   const user = userDate ? userDate.toISOString().slice(0, 10) : null;
   if (broker && (!user || broker.last >= user)) {
     return {
-      lastPayoutDay: broker.last, cycleSource: 'broker', payoutsReceived: broker.count,
-      lastPayout: broker.lastId
+      lastPayoutDay: broker.last, cycleSource: broker.lastManual ? 'manual' : 'broker', payoutsReceived: broker.count,
+      lastPayout: broker.lastId && !broker.lastManual
         ? { id: broker.lastId, amount: broker.lastAmount ?? 0, confidence: broker.lastConfidence ?? 'certain' }
         : null,
     };
@@ -282,21 +278,23 @@ export class AccountsService {
           lastClose: lastCloseByAccount.get(c.accountId) ?? null,
         } satisfies RuleOfficialCloses]),
     );
-    // Payouts détectés (hors écartés par l'utilisateur), du plus récent au plus ancien : quelques
-    // lignes par compte au plus.
+    // Payouts détectés ou saisis (hors écartés par l'utilisateur), du plus récent au plus ancien :
+    // quelques lignes par compte au plus.
     const payoutRows = await this.prisma.brokerPayout.findMany({
       where: { accountId: { in: rows.map((r) => r.id) }, dismissedAt: null },
       orderBy: [{ tradeDate: 'desc' }, { createdAt: 'desc' }],
-      select: { id: true, accountId: true, tradeDate: true, amount: true, confidence: true },
+      select: { id: true, accountId: true, tradeDate: true, amount: true, confidence: true, changeType: true },
     });
-    const payoutsByAccount = new Map<string, RulePayouts>();
+    const rowsByAccount = new Map<string, PayoutRow[]>();
     for (const p of payoutRows) {
-      const known = payoutsByAccount.get(p.accountId);
-      if (known) known.count++;
-      else payoutsByAccount.set(p.accountId, {
-        last: p.tradeDate.toISOString().slice(0, 10), count: 1,
-        lastId: p.id, lastAmount: p.amount, lastConfidence: p.confidence === 'probable' ? 'probable' : 'certain',
-      });
+      const list = rowsByAccount.get(p.accountId) ?? [];
+      list.push(p);
+      rowsByAccount.set(p.accountId, list);
+    }
+    const payoutsByAccount = new Map<string, RulePayouts>();
+    for (const [accountId, list] of rowsByAccount) {
+      const summary = summarizePayouts(list);
+      if (summary) payoutsByAccount.set(accountId, summary);
     }
     const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
       account: a,
@@ -368,7 +366,9 @@ export class AccountsService {
     const phase = plan ? phaseFor(plan, account.type) : null;
     const startingBalance =
       account.startingBalance ?? account.accountSize ?? (phase && plan ? phase.starting_balance ?? plan.accountSize : 0);
-    const tradesBalance = startingBalance + agg.realized;
+    // Solde d'après les trades, moins les payouts SAISIS à la main (un compte sans broker n'a pas
+    // d'autre trace du retrait). Les payouts détectés chez le broker sont déjà dans son solde.
+    const tradesBalance = startingBalance + agg.realized - (payouts?.manualTotal ?? 0);
 
     // Solde du broker : il fait foi (trades ou frais manquants côté MTC), sauf référentiel
     // incompatible avec le solde de départ saisi. L'equity ajoute le latent du dernier instantané
@@ -806,11 +806,85 @@ export class AccountsService {
   async dismissPayout(userId: string, accountId: string, payoutId: string): Promise<{ dismissed: true }> {
     await this.assertOwner(userId, accountId);
     const { count } = await this.prisma.brokerPayout.updateMany({
-      where: { id: payoutId, accountId, dismissedAt: null },
+      // Un payout saisi à la main se supprime (`removeManualPayout`), il ne s'écarte pas.
+      where: { id: payoutId, accountId, dismissedAt: null, changeType: { not: MANUAL_PAYOUT_TYPE } },
       data: { dismissedAt: new Date() },
     });
     if (count === 0) throw new NotFoundException('Payout introuvable.');
     return { dismissed: true };
+  }
+
+  /**
+   * Payouts du compte (détectés et saisis, hors écartés), du plus récent au plus ancien, pour la
+   * liste de Mes comptes. `manual` : saisi par l'utilisateur, supprimable.
+   */
+  async listPayouts(
+    userId: string,
+    accountId: string,
+  ): Promise<{ id: string; tradeDate: string; amount: number; manual: boolean; confidence: 'certain' | 'probable' }[]> {
+    await this.assertOwner(userId, accountId);
+    const rows = await this.prisma.brokerPayout.findMany({
+      where: { accountId, dismissedAt: null },
+      orderBy: [{ tradeDate: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true, tradeDate: true, amount: true, changeType: true, confidence: true },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      tradeDate: r.tradeDate.toISOString().slice(0, 10),
+      amount: r.amount,
+      manual: isManualPayout(r.changeType),
+      confidence: r.confidence === 'probable' ? 'probable' : 'certain',
+    }));
+  }
+
+  /**
+   * Payout saisi à la main (compte FUNDED sans connexion broker) : date et montant. Il est retiré du
+   * solde, des courbes et de la marge, et démarre le cycle du prochain payout s'il est le plus récent.
+   * Compte connecté → 409 : ses payouts sont détectés chez le broker (sinon ils compteraient deux fois).
+   */
+  async addManualPayout(
+    userId: string,
+    accountId: string,
+    input: { tradeDate: string; amount: number },
+    today = new Date().toISOString().slice(0, 10),
+  ): Promise<{ id: string; tradeDate: string; amount: number; manual: true }> {
+    const account = await this.assertOwner(userId, accountId);
+    if (account.type !== AccountType.FUNDED) {
+      throw new BadRequestException('Un payout ne se saisit que sur un compte funded.');
+    }
+    const connected = await this.prisma.brokerConnection.count({ where: { accountId } });
+    if (connected > 0) {
+      throw new ConflictException({
+        code: 'PAYOUTS_FROM_BROKER',
+        message: 'Ce compte est connecté à ton broker : ses payouts sont détectés automatiquement.',
+      });
+    }
+    const error = manualPayoutError(input, today);
+    if (error) throw new BadRequestException(error);
+    const id = randomUUID();
+    const created = await this.prisma.brokerPayout.create({
+      data: {
+        accountId,
+        transactionId: `${MANUAL_PAYOUT_TYPE}:${id}`,
+        tradeDate: new Date(`${input.tradeDate}T00:00:00.000Z`),
+        amount: Math.round(input.amount * 100) / 100,
+        changeType: MANUAL_PAYOUT_TYPE,
+        confidence: 'certain',
+      },
+    });
+    await this.invalidateStats(userId);
+    return { id: created.id, tradeDate: input.tradeDate, amount: created.amount, manual: true };
+  }
+
+  /** Supprime un payout SAISI à la main (404 pour un payout détecté chez le broker : il s'écarte). */
+  async removeManualPayout(userId: string, accountId: string, payoutId: string): Promise<{ deleted: true }> {
+    await this.assertOwner(userId, accountId);
+    const { count } = await this.prisma.brokerPayout.deleteMany({
+      where: { id: payoutId, accountId, changeType: MANUAL_PAYOUT_TYPE },
+    });
+    if (count === 0) throw new NotFoundException('Payout introuvable.');
+    await this.invalidateStats(userId);
+    return { deleted: true };
   }
 
   private async assertOwner(

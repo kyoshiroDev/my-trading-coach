@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { ACCOUNT_LIMITS } from './pricing';
 import { PLAN_BENEFITS } from './plan-benefits';
+import { SIGNUP_PITCH_POINTS } from './signup-pitch';
+import { PROP_FIRM_COUNT } from './prop-firm-rules/catalog-count';
 
 describe('PLAN_BENEFITS', () => {
   const all = [...PLAN_BENEFITS.free, ...PLAN_BENEFITS.premium];
@@ -31,5 +33,26 @@ describe('PLAN_BENEFITS', () => {
 
   it('le nombre de comptes gratuits vient de ACCOUNT_LIMITS', () => {
     expect(PLAN_BENEFITS.free.find((b) => b.id === 'prop_firm_live')!.text).toMatch(new RegExp(`^${ACCOUNT_LIMITS.free} compte`));
+  });
+});
+
+describe('SIGNUP_PITCH_POINTS', () => {
+  it('une ligne Premium = une ligne de PLAN_BENEFITS.premium, et rien d’autre n’est marqué Premium', () => {
+    const premiumIds = PLAN_BENEFITS.premium.map((b) => b.id);
+    for (const p of SIGNUP_PITCH_POINTS) {
+      if (p.premium) expect(premiumIds, p.text).toContain(p.benefitId);
+      else expect(p.benefitId, p.text).toBeUndefined();
+    }
+    expect(SIGNUP_PITCH_POINTS.filter((p) => p.premium).map((p) => p.benefitId)).toEqual(['anti_tilt', 'weekly_debrief']);
+  });
+
+  it('l’alerte après une perte dit sa condition réelle, comme PLAN_BENEFITS', () => {
+    const text = SIGNUP_PITCH_POINTS.find((p) => p.benefitId === 'anti_tilt')!.text;
+    expect(text).toContain('app ouverte');
+    expect(text).toContain('Tradovate connecté');
+  });
+
+  it('le nombre de prop firms vient du catalogue', () => {
+    expect(SIGNUP_PITCH_POINTS.some((p) => p.text.includes(`${PROP_FIRM_COUNT} prop firms`))).toBe(true);
   });
 });

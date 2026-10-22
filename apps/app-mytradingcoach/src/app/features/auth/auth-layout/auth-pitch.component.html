@@ -1,0 +1,31 @@
+<img class="brand" src="icon/logo-horizontal.svg" alt="MyTradingCoach" width="220" height="40" />
+
+<div class="pitch-body">
+  <span class="eyebrow">Pour les traders futures en prop firm</span>
+  <h2 class="pitch-title">Ne grille plus ton compte <em>prop firm.</em></h2>
+  <p class="lead">
+    Connecte ton compte Tradovate : tu vois en direct combien il te reste avant la limite de ton plan.
+  </p>
+
+  <ul class="points">
+    @for (point of points; track point.text) {
+      <li>
+        <svg class="check" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span>
+          {{ point.text }}
+          @if (point.premium) {
+            <em class="tag">Premium</em>
+          }
+        </span>
+      </li>
+    }
+  </ul>
+
+  <mtc-auth-preview />
+</div>
+
+<div class="pitch-foot">
+  <span>Lecture seule</span><span>Hébergé en France</span><span>Sans publicité</span>
+</div>

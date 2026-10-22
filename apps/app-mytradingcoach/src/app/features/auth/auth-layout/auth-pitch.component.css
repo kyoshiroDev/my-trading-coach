@@ -1,0 +1,170 @@
+/* Colonne de présentation (importée seulement à partir de 1024 px, cf. auth-layout) : ses styles
+   restent hors du bundle initial. */
+:host {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 28px 36px;
+  background:
+    radial-gradient(900px 500px at 15% 0%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 60%),
+    radial-gradient(700px 500px at 90% 100%, color-mix(in srgb, var(--purple) 7%, transparent), transparent 60%),
+    var(--bg);
+}
+
+/* Quadrillage discret, estompé vers les bords. */
+:host::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 40% 50%, var(--bg) 20%, transparent 75%);
+  opacity: 0.55;
+}
+
+.brand {
+  position: relative;
+  height: 34px;
+  width: auto;
+  align-self: flex-start;
+}
+
+.pitch-body {
+  position: relative;
+  margin: auto 0;
+  max-width: 560px;
+  padding: 20px 0 16px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue-bright);
+  border: 1px solid var(--border-hover);
+  background: var(--blue-glow);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.pitch-title {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin: 16px 0 12px;
+}
+
+.pitch-title em {
+  font-style: normal;
+  color: var(--blue-bright);
+}
+
+.lead {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-2);
+  max-width: 470px;
+}
+
+.points {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.points li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.check {
+  flex: none;
+  fill: none;
+  stroke: var(--blue-bright);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple-bright);
+  border: 1px solid color-mix(in srgb, var(--purple) 35%, transparent);
+  background: var(--purple-dim);
+  border-radius: 999px;
+  padding: 2px 7px;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+.pitch-foot {
+  position: relative;
+  display: flex;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.pitch-foot span + span {
+  padding-left: 18px;
+  border-left: 1px solid var(--border-hover);
+}
+
+@media (min-width: 1280px) {
+  :host {
+    padding: 40px 64px;
+  }
+
+  .pitch-body {
+    padding: 32px 0 24px;
+  }
+
+  .pitch-title {
+    font-size: 50px;
+    margin: 22px 0 18px;
+  }
+
+  .lead {
+    font-size: 17px;
+  }
+
+  .points li {
+    font-size: 15px;
+  }
+}

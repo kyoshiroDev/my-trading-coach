@@ -108,8 +108,8 @@ describe('Mes comptes · compte perdu', () => {
     expect(section.tagName).toBe('DETAILS');
     expect(section.open).toBe(false);
     expect(section.querySelector('summary')!.textContent).toContain('1 COMPTE ARCHIVÉ');
-    expect(section.querySelector('[data-testid="account-card-l"]')).not.toBeNull();
-    expect(section.querySelector('[data-testid="account-card-a1"]')).toBeNull();
+    expect(section.querySelector('[data-testid="account-row"][data-account-id="l"]')).not.toBeNull();
+    expect(section.querySelector('[data-testid="account-row"][data-account-id="a1"]')).toBeNull();
   });
 
   it('chiffres du haut : ni l\'échoué ni l\'archivé (validé compté)', () => {
@@ -120,8 +120,8 @@ describe('Mes comptes · compte perdu', () => {
   });
 
   it('compte archivé choisi dans le sélecteur : affiché seul, ses chiffres lisibles', () => {
-    const { q, cmp } = setup(LIST(), 'l');
-    expect(q('account-card-l')).not.toBeNull();
+    const { el, q, cmp } = setup(LIST(), 'l');
+    expect(el.querySelector('[data-testid="account-row"][data-account-id="l"]')).not.toBeNull();
     expect(q('archived-accounts')).toBeNull();
     expect(cmp['totalPnl']()).toBe(-1100);
   });
@@ -157,6 +157,37 @@ describe('Mes comptes · compte perdu', () => {
     expect(LIST().map((a) => [a.status, can(a)])).toEqual([
       ['ACTIVE', true], ['PASSED', false], ['FAILED', false], ['ARCHIVED', false],
     ]);
+  });
+});
+
+describe('Mes comptes · payouts d\'un compte funded', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('bloc des payouts au dépli d\'un compte funded seulement, saisie si non connecté', () => {
+    const { q, cmp, fixture } = setup([
+      acct('f1', 'Lucid Flex 50K', { type: 'FUNDED' }),
+      acct('e1', 'Apex 50K', { type: 'EVALUATION' }),
+    ]);
+    expect(q('account-payouts-f1')).toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    const block = q('account-payouts-f1')!;
+    expect(block.querySelector('mtc-account-payouts')).not.toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('e1');
+    fixture.detectChanges();
+    expect(q('account-payouts-e1')).toBeNull();
+  });
+
+  it('cycle démarré par un payout saisi : note « saisi dans la liste des payouts »', () => {
+    const funded = acct('f1', 'Lucid Flex 50K', { type: 'FUNDED', propFirmPlanId: 'lucid-flex-50k' });
+    funded.metrics = { ...funded.metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, requirements: [], cycleAfter: '2026-10-05', cycleSource: 'manual',
+      payoutsReceived: 1, lastPayout: null, unconfirmed: false,
+    } };
+    const { q, cmp, fixture } = setup([funded]);
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    expect(q('account-progress-f1')!.textContent).toContain('Cycle compté depuis ton payout du 05/10, saisi dans la liste des payouts.');
   });
 });
 

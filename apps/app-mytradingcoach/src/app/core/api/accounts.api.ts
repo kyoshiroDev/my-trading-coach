@@ -53,7 +53,8 @@ export interface AccountProgress {
   /** Séance du dernier payout (le cycle commence après), null = depuis le début. */
   cycleAfter: string | null;
   /** Payout détecté chez le broker, ou date saisie par l'utilisateur. */
-  cycleSource: 'broker' | 'user' | null;
+  /** `manual` : payout saisi dans Mes comptes ; `user` : date saisie dans le formulaire du compte. */
+  cycleSource: 'broker' | 'manual' | 'user' | null;
   /** Payouts déjà reçus d'après le broker, null si inconnu. */
   payoutsReceived: number | null;
   /** Payout détecté qui fixe le cycle : `probable` = ajustement du broker, à confirmer ou écarter. */
@@ -157,6 +158,16 @@ export interface TradingAccount {
   floorReached?: boolean;
 }
 
+/** Payout d'un compte : détecté chez le broker, ou saisi à la main (`manual`, supprimable). */
+export interface AccountPayout {
+  id: string;
+  /** Séance du payout, `AAAA-MM-JJ`. */
+  tradeDate: string;
+  amount: number;
+  manual: boolean;
+  confidence: 'certain' | 'probable';
+}
+
 export interface CreateAccountPayload {
   label: string;
   broker?: string | null;
@@ -205,6 +216,21 @@ export class AccountsApi {
   /** « Ce n'était pas un payout » : écarte un payout détecté du cycle de payout. */
   dismissPayout(accountId: string, payoutId: string): Observable<{ data: { dismissed: true } }> {
     return this.http.post<{ data: { dismissed: true } }>(`${this.base}/${accountId}/payouts/${payoutId}/dismiss`, {});
+  }
+
+  /** Payouts du compte (détectés et saisis), du plus récent au plus ancien. */
+  listPayouts(id: string): Observable<{ data: AccountPayout[] }> {
+    return this.http.get<{ data: AccountPayout[] }>(`${this.base}/${id}/payouts`);
+  }
+
+  /** Payout saisi à la main (compte funded sans connexion broker ; 409 si connecté). */
+  addPayout(id: string, payload: { tradeDate: string; amount: number }): Observable<{ data: AccountPayout }> {
+    return this.http.post<{ data: AccountPayout }>(`${this.base}/${id}/payouts`, payload);
+  }
+
+  /** Supprime un payout saisi à la main. */
+  removePayout(id: string, payoutId: string): Observable<{ data: { deleted: true } }> {
+    return this.http.delete<{ data: { deleted: true } }>(`${this.base}/${id}/payouts/${payoutId}`);
   }
 
   remove(id: string): Observable<{ data: { deleted?: boolean; archived?: boolean } }> {
