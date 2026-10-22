@@ -51,6 +51,19 @@ const type = (input: HTMLInputElement, value: string) => {
 describe('AccountPayoutsComponent (payouts d\'un compte funded)', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
+  it('au moins un payout : note discrète sur le plancher gelé, pas encore estimé', () => {
+    const { q } = setup();
+    expect(q('payouts-floor-lock-note')!.textContent!.trim())
+      .toBe('Le plancher gelé après un payout n\'est pas encore pris en compte dans l\'estimation. Vérifie chez ta firm.');
+    expect(q('payouts-floor-lock-note')!.className).toBe('ap-note');
+  });
+
+  it('aucun payout : pas de note sur le plancher gelé', () => {
+    const { q } = setup({ list: [] });
+    expect(q('payouts-empty')).not.toBeNull();
+    expect(q('payouts-floor-lock-note')).toBeNull();
+  });
+
   it('liste les payouts, saisis et détectés ; seul un payout saisi se supprime', () => {
     const { q } = setup();
     expect(q('payout-m1')!.textContent).toContain('05/10/2026');

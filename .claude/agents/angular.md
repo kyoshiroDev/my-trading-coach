@@ -793,6 +793,9 @@ des payouts (`AccountsApi.listPayouts`) : « saisi » (supprimable, `ConfirmServ
 `addPayout` ; compte connecté : pas de saisie (l'API répondrait 409). `changed` → `store.load()` : solde,
 marge et cycle repartent du serveur. Note du cycle : `cycleSource === 'manual'` → « saisi dans la liste
 des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance (`setInput` échoue).
+Au moins un payout (saisi ou détecté) : note `payouts-floor-lock-note` (« Le plancher gelé après un
+payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm. ») tant que la règle
+« plancher gelé au premier payout » n'est pas modélisée au catalogue. À retirer quand elle le sera.
 
 ## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
 
