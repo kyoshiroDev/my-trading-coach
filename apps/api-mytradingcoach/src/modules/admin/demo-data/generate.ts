@@ -3,7 +3,7 @@ import { TradeSide, EmotionState, TradingSession, MoodState, ExecutionMethod } f
 import { BEHAVIORAL_MIN_TRADES, computeBehavioralGrade, computeExecutionGrade, median } from '@api/common/utils/execution-grade.util';
 import { type AccountKey, DEMO_ACCOUNTS, DEMO_WINDOW_DAYS, INSTRUMENTS, type Rand, SETUP_PROFILES, type SetupTitle, type Sym, between, pick, rng, round2, toTick } from './config';
 import { NOTES_LOSS, NOTES_WIN } from './texts';
-import { type DemoDay, type DemoOpenTrade, type DemoStats, type DemoTrade, meetsTargets, net, statsOf } from './model';
+import { type DemoDay, type DemoOpenTrade, type DemoStats, type DemoTrade, meetsTargets, net, setupsContrasted, statsOf } from './model';
 import { isoWeek } from './reports';
 
 // ── Génération ─────────────────────────────────────────────────────────────
@@ -311,7 +311,9 @@ function secondaryMeetsTargets(days: DemoDay[]): boolean {
   const red = all.redDays / all.tradingDays;
   return trades >= 10 && cum > 0 && cum < elite.profitTarget! * 0.5
     && -low >= elite.maxDrawdown * 0.25 && -low < elite.maxDrawdown * 0.7
-    && all.winRateNet >= 52 && all.winRateNet <= 57 && red >= 0.35 && red <= 0.45;
+    && all.winRateNet >= 52 && all.winRateNet <= 57 && red >= 0.35 && red <= 0.45
+    // Ses trades Breakout / Pullback / Range ne doivent pas casser le contraste des setups.
+    && setupsContrasted(all);
 }
 
 /**

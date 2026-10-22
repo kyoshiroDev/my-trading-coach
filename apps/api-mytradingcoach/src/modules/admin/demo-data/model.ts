@@ -102,10 +102,24 @@ export function statsOf(days: DemoDay[]): DemoStats {
 /** Contraintes de crédibilité validées avec Greg. */
 const maxDrawdownOf = (key: AccountKey) => DEMO_ACCOUNTS.find((a) => a.key === key)!.maxDrawdown;
 
-export function meetsTargets(s: DemoStats): boolean {
-  const red = s.redDays / s.tradingDays;
+/**
+ * Setups contrastés : Scalping positif en brut et négatif en net (les frais mangent l'edge),
+ * Breakout meilleur edge, Reversal setup perdant. Vérifié sur le tirage principal ET après l'ajout
+ * du compte au tirage séparé : sinon ses trades pouvaient faire passer un autre setup devant Breakout.
+ */
+export function setupsContrasted(s: DemoStats): boolean {
   const setups = s.bySetup;
   const wr = (k: SetupTitle) => setups[k].winRateNet;
+  return (
+    setups['Scalping'].grossPnl > 0 && setups['Scalping'].netPnl < 0 &&
+    wr('Breakout') >= Math.max(wr('Pullback'), wr('Range'), wr('Reversal'), wr('News')) &&
+    wr('Reversal') <= Math.min(wr('Breakout'), wr('Pullback'), wr('Range'), wr('News')) &&
+    setups['Reversal'].netPnl < 0
+  );
+}
+
+export function meetsTargets(s: DemoStats): boolean {
+  const red = s.redDays / s.tradingDays;
   return (
     s.trades >= 70 && s.trades <= 95 &&
     s.winRateNet >= 52 && s.winRateNet <= 57 &&
@@ -113,12 +127,7 @@ export function meetsTargets(s: DemoStats): boolean {
     s.grossPnl >= 1_200 && s.grossPnl <= 1_800 &&
     s.netPnl >= 650 && s.netPnl <= 1_150 &&
     s.fees >= 470 && s.fees <= 700 &&
-    // Scalping : positif en brut, négatif en net (les frais mangent l'edge).
-    setups['Scalping'].grossPnl > 0 && setups['Scalping'].netPnl < 0 &&
-    // Breakout = meilleur edge, Reversal = setup perdant.
-    wr('Breakout') >= Math.max(wr('Pullback'), wr('Range'), wr('Reversal'), wr('News')) &&
-    wr('Reversal') <= Math.min(wr('Breakout'), wr('Pullback'), wr('Range'), wr('News')) &&
-    setups['Reversal'].netPnl < 0 &&
+    setupsContrasted(s) &&
     // Éval Apex EN COURS : positive, loin de l'objectif ; drawdown visible, loin du seuil.
     s.byAccount['apex'].netPnl > 0 && s.byAccount['apex'].netPnl < 3_000 * 0.8 &&
     s.byAccount['apex'].worstDrawdown >= 350 && s.byAccount['apex'].worstDrawdown < maxDrawdownOf('apex') * 0.5 &&

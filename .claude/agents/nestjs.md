@@ -774,7 +774,13 @@ serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à
 de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
 comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
 AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
-bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
+bougent pas. Aucune connexion broker sur ces comptes. Trades réalistes : setups en rotation proche des parts du
+profil (Scalping, Pullback, Breakout, Range, Reversal, News), actifs MNQ / MES / NQ / ES (2 micros ou
+1 mini, frais de l'instrument), plusieurs heures dont une séance de Londres. Module pur (tsx).
+**Contraste des setups** (`setupsContrasted`, `model.ts`) : vérifié sur le tirage principal ET après
+l'ajout du compte statique `elite` (`secondaryMeetsTargets`) ; sans ça, ses trades à résultat forcé
+faisaient passer Pullback ou Range devant Breakout certains jours (4 samedis sur 30 avant correction).
+Robustesse : `DEMO_SEED_DATE=AAAA-MM-JJTHH:MM:SS` rejoue `demo-seed-idempotence.spec.ts` à une date simulée. `DemoReadOnlyGuard` reste
 la seule barrière des mutations (« Nouvelle tentative », « Archiver », suppression : 403 et invite
 « Crée ton compte » côté front).
 
