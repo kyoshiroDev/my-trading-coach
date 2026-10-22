@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SetupsApi, Setup, CreateSetupDto, UpdateSetupDto } from '../api/setups.api';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 
 /**
  * Setups du user (signaux) + CRUD optimiste avec rollback.
@@ -9,6 +10,10 @@ import { SetupsApi, Setup, CreateSetupDto, UpdateSetupDto } from '../api/setups.
 @Injectable({ providedIn: 'root' })
 export class SetupsStore {
   private readonly api = inject(SetupsApi);
+
+  constructor() {
+    inject(UserScopedReset).register(() => this.reset());
+  }
 
   readonly setups = signal<Setup[]>([]);
   readonly loaded = signal(false);
