@@ -72,6 +72,10 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 Source UNIQUE des listes courtes : fenêtre des offres (app), cartes de tarifs de `/` et `/prop-firm`,
 e-mail de bienvenue Premium. Toute ligne = une fonction livrée ; toute ligne Premium = une fonction
 réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` seulement.
+- **Colonne de présentation de `/register` et `/login`** : `SIGNUP_PITCH_POINTS`
+  (`libs/shared/src/signup-pitch.ts`), même règle ; une ligne marquée Premium porte le `benefitId` de
+  sa ligne `PLAN_BENEFITS.premium` (vérifié par le spec) : aujourd'hui `anti_tilt` et
+  `weekly_debrief`. Compagnon de séance, suivi de la marge et journal : sans étiquette (gratuits).
 - **Gratuit** : Synchro Tradovate automatique, en lecture seule · 1 compte avec les règles de sa prop
   firm, suivi en direct pendant la séance (equity, marge avant le plancher, objectif ou payout) ·
   Journal et trades illimités, historique complet · Préparation et débrief de chaque séance ·

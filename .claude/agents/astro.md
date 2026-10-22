@@ -181,11 +181,18 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   avec le bandeau), haut de page mobile à 44 px pour que le bandeau ne touche pas le libellé.
 - **Pas d'emoji hors footer**, icônes en SVG, sauf deux exceptions voulues : le 🔥 du bandeau de
   l'offre (composant partagé) et la ligne de confiance sous les boutons du haut (`.pf-trustline`,
-  « 🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans
-  l'écosystème NinjaTrader », sans logo) ; aucun logo de prop firm (noms en texte) ; logo
+  « 🇫🇷 Fait en France · Indépendant · Sans publicité · Référencé dans l'écosystème NinjaTrader »,
+  sans logo ; « Sans publicité » a remplacé « Tes données ne sont jamais vendues » le 2026-10-22,
+  les autres occurrences, accueil et FAQ, attendent la validation de Greg) ; aucun logo de prop firm (noms en texte) ; logo
   NinjaTrader dans le bloc `NinjaTraderTrust` sous la carte d'exemple (cf. « Wordmark NinjaTrader »)
   et au footer, formulation factuelle (clause 17).
   « Crypto » / « forex » seulement dans « Et aussi » et la FAQ, jamais en haut ni dans la description.
+- **« Compatible avec »** (`components/Compatible.astro`, oct. 2026) : après « Prêt en 2 minutes »
+  (`width={1200} gutter={20}`) et sur l'accueil après `PropFirmLive`. Deux entrées en texte seul :
+  Tradovate (API, lecture seule, aucun ordre ; **pas de logo Tradovate**, aucune autorisation) et
+  saisie manuelle (+ import CSV « quand ta plateforme est reconnue »). N'y ajouter **ni NinjaTrader
+  Desktop / Web** (en attente de confirmation de NinjaTrader) **ni aucun autre nom** de courtier ou
+  de plateforme.
 - Sélecteur firm → plan → phase : même catalogue (`buildPropFirmCatalog`) et même logique que la home
   via `src/lib/prop-firm-picker.ts` (pur, sans DOM : sélection initiale Apex 50K EOD, 50K par défaut à
   chaque firm, date de relevé `sourceLabel`). `PropFirmLive.astro` l'utilise aussi. Puces = vrais

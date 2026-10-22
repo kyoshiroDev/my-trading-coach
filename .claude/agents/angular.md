@@ -1038,6 +1038,29 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   direct ne coûterait que +0,6 Ko gz mais 9 kB bruts de marge sur le budget. Ce qui est importé par
   l'inscription arrive au démarrage : **pas de `@lucide/angular`** dedans (œil du mot de passe :
   `mtc-eye-icon`, SVG en ligne, partagé avec la connexion).
+- **Mise en page de `/register` et `/login`** (oct. 2026, maquette `maquettes/maquette-register-split.html`) :
+  `features/auth/auth-layout/`. `mtc-auth-layout` porte la page ; la page projette le contenu de la
+  carte (titres, Google, formulaire), le layout ajoute le logo (< 1024 px seulement) et la ligne de
+  confiance en bas de carte (« Lecture seule, aucun ordre passé · Hébergé en France » puis
+  « Référencé dans l'écosystème NinjaTrader », texte seul, sans lien). Styles communs de la carte :
+  `auth-form.css` (dans les `styleUrls` des deux pages). < 1024 px : carte seule (en haut sur
+  téléphone, centrée de 600 à 1023 px). ≥ 1024 px : deux colonnes, présentation à gauche, formulaire
+  sur `--bg-2` ; version compacte jusqu'à 1279 px.
+  - **Colonne de présentation `mtc-auth-pitch`** (+ aperçu `mtc-auth-preview`, statique, données de
+    démonstration, aucun appel API) : importée à la demande seulement quand `(min-width: 1024px)`
+    est vraie (jamais sur téléphone), par `import('../login.component')` : `login.component.ts`
+    réexporte `AuthPitchComponent` pour que la colonne voyage dans le morceau déjà paresseux de
+    `/login`. Un morceau à part (ou `@defer`) scindait le chunk partagé d'Angular : +2,7 kB au bundle
+    initial, qui n'a que ~2,5 kB de marge (497,6 kB sur 500, oct. 2026). Ne pas importer la colonne
+    en statique.
+  - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
+    entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
+    à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
+  - Mot de passe et confirmation côte à côte via `@container auth-card (min-width: 300px)` (= carte de
+    340 px). Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
+    seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
+  - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
+    seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
   intégré (tokens de `theme.css` avec valeurs de repli), visibles dès le HTML. Texte en police
   monospace **système** : JetBrains Mono y ferait télécharger une police en concurrence avec le JS. Retiré par `App`
