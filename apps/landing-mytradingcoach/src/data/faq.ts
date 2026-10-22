@@ -46,7 +46,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Où sont hébergées mes données ?',
     answer:
-      "Tes données sont hébergées en France sur des serveurs OVH (Roubaix). Elles ne sont jamais vendues ni partagées avec des tiers. L'IA utilisée est Claude d'Anthropic : tes données ne sont pas utilisées pour entraîner leurs modèles.",
+      "Ta base de données est hébergée en France chez OVH. Tes données ne sont jamais vendues. Seuls nos prestataires techniques en reçoivent ce qu'il faut pour faire tourner le service : paiement, envoi d'e-mails, analyse par IA, surveillance des erreurs et sauvegardes chiffrées. La liste complète est dans la politique de confidentialité. Pour l'IA, on utilise l'API de Claude (Anthropic) : d'après Anthropic, les données envoyées par son API ne servent pas, par défaut, à entraîner ses modèles.",
   },
   {
     question: "J'ai un code partenaire, comment ça marche ?",
