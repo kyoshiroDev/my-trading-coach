@@ -124,7 +124,7 @@ const PLAN_SELECT = {
 } as const;
 
 /** Contexte plan du user pour le calcul du quota de comptes. */
-type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
+export type PlanContext = { plan: Plan; role: Role; trialEndsAt?: Date | null };
 
 // Quota de comptes par plan : aligné front `ACCOUNT_LIMITS` (pricing.const.ts).
 // Premium / trial / admin / beta = illimité. Seuls les comptes ACTIVE consomment un
