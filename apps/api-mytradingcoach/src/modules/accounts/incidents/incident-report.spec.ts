@@ -1,0 +1,148 @@
+import { describe, it, expect } from 'vitest';
+import { alertLabel, buildIncidentReport, type IncidentReportInput, type IncidentTrade, type PreviousSession } from './incident-report';
+import { INCIDENT_AI_MAX_TOKENS, INCIDENT_AI_SYSTEM, buildIncidentPrompt } from './incident-ai.prompt';
+
+/**
+ * Autopsie (#669) : la séance de la maquette (`maquettes/mockup-autopsie.html`), heures de Paris
+ * (UTC+2 le 14 octobre 2026).
+ */
+const at = (hhmm: string) => new Date(`2026-10-14T${String(+hhmm.slice(0, 2) - 2).padStart(2, '0')}:${hhmm.slice(3)}:00.000Z`);
+const trade = (id: string, hhmm: string, side: string, quantity: number, pnl: number): IncidentTrade => ({
+  id, tradedAt: at(hhmm), asset: 'MNQ', side, quantity, pnl, commission: 0,
+});
+
+const MOCKUP_TRADES = [
+  trade('t1', '09:34', 'LONG', 2, 80),
+  trade('t2', '09:58', 'SHORT', 2, -140),
+  trade('t3', '10:21', 'LONG', 2, -160),
+  trade('t4', '10:49', 'LONG', 4, -420),
+  trade('t5', '11:12', 'SHORT', 4, -410),
+];
+
+function input(over: Partial<IncidentReportInput> = {}): IncidentReportInput {
+  return {
+    kind: 'drawdown',
+    currency: 'USD',
+    snapshot: { limit: 2000, remaining: -50, detectedAt: at('11:13').toISOString() },
+    // Ordre volontairement mélangé : le rapport trie lui-même.
+    trades: [...MOCKUP_TRADES].reverse(),
+    alerts: [{ at: at('10:44'), source: 'behavior', type: 'C1_LOSS_STREAK' }],
+    previous: [],
+    ...over,
+  };
+}
+
+/** Pas de conseil, pas de promesse, pas de prédiction (AMF). */
+const ADVICE = /devrais|aurais dû|conseil|achète|vends|garanti|promet|prévoi|il faut/i;
+
+describe('buildIncidentReport — chronologie', () => {
+  it('distance à la limite reconstruite trade par trade depuis la marge relevée', () => {
+    const r = buildIncidentReport(input());
+    expect(r.kpis).toEqual({ net: -1050, trades: 5, maxQuantity: 4, firstQuantity: 2, startDistance: 1000 });
+    expect(r.series.map((p) => p.distance)).toEqual([1000, 1080, 940, 780, 360, -50]);
+    expect(r.series[0].at).toBeNull();
+  });
+
+  it("intercale l'alerte, marque les trades pris après elle et le délai jusqu'au trade suivant", () => {
+    const r = buildIncidentReport(input());
+    expect(r.timeline.map((e) => (e.type === 'trade' ? e.tradeId : 'alerte'))).toEqual(['t1', 't2', 't3', 'alerte', 't4', 't5']);
+    const alert = r.timeline[3];
+    expect(alert).toMatchObject({ type: 'alert', label: "pertes d'affilée", nextTradeMinutes: 5 });
+    const flags = r.timeline.filter((e) => e.type === 'trade').map((e) => e.type === 'trade' && e.afterAlert);
+    expect(flags).toEqual([false, false, false, true, true]);
+  });
+
+  it('trade sorti APRÈS le relevé (position ouverte au franchissement) : ajouté à la suite, sans fausser le départ', () => {
+    const r = buildIncidentReport(input({ snapshot: { limit: 2000, remaining: 360, detectedAt: at('10:50').toISOString() } }));
+    expect(r.kpis.startDistance).toBe(1000);
+    expect(r.series.at(-1)?.distance).toBe(-50);
+  });
+
+  it('sans relevé (échec marqué à la main) : aucune distance inventée', () => {
+    const r = buildIncidentReport(input({ kind: 'manual', snapshot: null }));
+    expect(r.kpis.startDistance).toBeNull();
+    expect(r.series).toEqual([]);
+    expect(r.timeline.every((e) => e.type === 'alert' || e.distanceAfter === null)).toBe(true);
+  });
+
+  it('frais déduits : la chronologie montre le net', () => {
+    const r = buildIncidentReport(input({ trades: [{ ...MOCKUP_TRADES[0], commission: 4 }], snapshot: null }));
+    expect(r.timeline[0]).toMatchObject({ type: 'trade', net: 76 });
+  });
+});
+
+describe('alertLabel — alertes retenues', () => {
+  it('ignore le franchissement lui-même, les bonnes nouvelles et les types inconnus', () => {
+    expect(alertLabel({ at: at('11:12'), source: 'prop', type: 'drawdown', level: 'breached' })).toBeNull();
+    expect(alertLabel({ at: at('11:12'), source: 'prop', type: 'objective', level: 'reached' })).toBeNull();
+    expect(alertLabel({ at: at('11:12'), source: 'prop', type: 'consistency', level: 'warning' })).toBeNull();
+    expect(alertLabel({ at: at('11:12'), source: 'behavior', type: 'Z_INCONNU' })).toBeNull();
+  });
+
+  it('garde les paliers de marge et le tilt', () => {
+    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'drawdown', level: 'warning' })).toBe('marge drawdown sous 25 %');
+    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'daily_loss', level: 'critical' })).toBe('perte du jour sous 10 %');
+    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'tilt', level: 'revenge' })).toBe('reprise rapide après une perte');
+  });
+
+  it("une alerte non retenue ne marque aucun trade « après l'alerte »", () => {
+    const r = buildIncidentReport(input({ alerts: [{ at: at('09:00'), source: 'prop', type: 'drawdown', level: 'breached' }] }));
+    expect(r.timeline.some((e) => e.type === 'alert' || e.afterAlert)).toBe(false);
+  });
+});
+
+describe('buildIncidentReport — 3 constats', () => {
+  it('séance de la maquette : taille, concentration de la perte, trades après l’alerte', () => {
+    const { findings } = buildIncidentReport(input());
+    expect(findings).toHaveLength(3);
+    expect(findings).toContain("2 trades pris après l'alerte de 10:44 (pertes d'affilée), pour -$830.");
+    expect(findings).toContain('Taille : 2 contrats au premier trade, 4 contrats à partir du 4e, après 2 pertes d\'affilée.');
+    expect(findings).toContain('Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
+  });
+
+  it('séances précédentes : rythme et taille comparés à la médiane du compte', () => {
+    const previous: PreviousSession[] = Array.from({ length: 6 }, (_, i) => ({ day: `2026-10-0${i + 1}`, trades: 2, maxQuantity: 2, net: -100 }));
+    const { findings } = buildIncidentReport(input({ alerts: [], previous }));
+    expect(findings).toContain('5 trades sur la séance, contre 2 en médiane sur tes 6 séances précédentes de ce compte.');
+    expect(findings.join(' ')).toMatch(/Taille/);
+  });
+
+  it('moins de 5 séances précédentes : aucune comparaison', () => {
+    const previous: PreviousSession[] = [{ day: '2026-10-01', trades: 1, maxQuantity: 1, net: 10 }];
+    const { findings } = buildIncidentReport(input({ previous }));
+    expect(findings.join(' ')).not.toMatch(/médiane|précédentes/);
+  });
+
+  it('séance à un seul trade : des repères factuels, toujours sans conseil', () => {
+    const { findings } = buildIncidentReport(input({ trades: [MOCKUP_TRADES[3]], alerts: [], snapshot: { limit: 2000, remaining: -20, detectedAt: at('11:00').toISOString() } }));
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings.join(' ')).toContain('limite estimée franchie à 10:49');
+  });
+
+  it('aucun constat ne conseille, ne promet ni ne prédit', () => {
+    const previous: PreviousSession[] = Array.from({ length: 6 }, (_, i) => ({ day: `2026-10-0${i + 1}`, trades: 2, maxQuantity: 1, net: -10 }));
+    for (const r of [buildIncidentReport(input()), buildIncidentReport(input({ previous }))]) {
+      for (const f of r.findings) expect(f).not.toMatch(ADVICE);
+    }
+  });
+});
+
+describe('analyse IA — prompt', () => {
+  it('plafond de 400 tokens', () => {
+    expect(INCIDENT_AI_MAX_TOKENS).toBe(400);
+  });
+
+  it('le système interdit conseil, prédiction et promesse, et impose la formule factuelle', () => {
+    expect(INCIDENT_AI_SYSTEM).toContain("D'après tes trades enregistrés");
+    expect(INCIDENT_AI_SYSTEM).toMatch(/Aucun conseil d'achat ou de vente/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/aucune prédiction, aucune promesse/);
+  });
+
+  it('le message ne porte que les faits déjà calculés', () => {
+    const prompt = buildIncidentPrompt('drawdown', 'USD', buildIncidentReport(input()));
+    expect(prompt).toContain('Incident : plancher de drawdown estimé franchi.');
+    expect(prompt).toContain('10:49 LONG MNQ x4 : -$420, marge estimée ensuite +$360 (après une alerte)');
+    expect(prompt).toContain("10:44 alerte MyTradingCoach : pertes d'affilée");
+    expect(prompt).toContain('- Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
+  });
+});
