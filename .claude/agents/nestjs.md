@@ -1118,7 +1118,7 @@ sont en direct.
     - ⚠ **Le login, c'est `/user/list`, JAMAIS `account.userId`** (corrigé le 2026-09-27).
       `account.userId` est le **propriétaire du compte chez le broker** : sur un compte prop firm,
       c'est l'identifiant de la **firme**. Mesuré en prod : deux traders Apex sans aucun lien
-      (`APEX_13679` et `APEX_428047`, e-mails différents) portaient tous deux `userId: 699523`, et
+      (`APEX_10000` et `APEX_200000`, e-mails différents) portaient tous deux `userId: 699523`, et
       `/user/item?id=699523` répondait **404** — ce n'est pas un trader. Tant qu'on écrivait cette
       valeur, **tous les traders Apex de la plateforme partageaient le verrou
       `tradovate:login:699523`** (goulot latent), et « sœur » voulait dire « compte chez la même
@@ -1321,6 +1321,18 @@ sont en direct.
   dans `/brokers` (admin), le modèle déduit la fiche, l'admin la corrige et l'enregistre, et
   le broker est reconnu **pour tous les plans** sans build ni déploiement. Les 7 parseurs en
   dur restent en place pour les brokers historiques.
+- **Garde-fou Tradovate Performance (2026-10-22)** : `parseTradovate` lit par POSITION (symbol 1,
+  qty 7, buyPrice 8, sellPrice 9, pnl 10, boughtTimestamp 11, soldTimestamp 12).
+  `tradovateColumnMismatches` compare l'en-tête à `TRADOVATE_POSITIONAL_COLUMNS` ; au moindre
+  écart, `preprocessCsv` rend `broker: 'unknown'` + `formatChanged` (rien n'est lu par position).
+  Import manuel : fiche du registre si elle existe, sinon 400 « Le format de ce fichier a changé… »
+  (jamais l'IA en douce). Historique par l'API : erreur « rapport Performance au format modifié ».
+  Une colonne ajoutée après la 12ᵉ passe.
+- **Export vide** (0 octet, 2 octets CRLF / BOM UTF-16 / `""`, en-tête seul) : toujours
+  `emptyMessage()` (« Aucun trade fermé détecté… Vérifie aussi la période et le compte… »), plus de
+  « Fichier vide » / « Fichier sans données ».
+- **Données d'exemple** : identifiants Tradovate des specs et fixtures FICTIFS (`APEX1000…`,
+  `9000001x`, `9100001`…). Ne jamais y recoller un vrai nom ou id de compte relevé en prod.
 
 ## Registre des brokers (2026-09-28)
 

@@ -213,7 +213,10 @@ export class TradovateHistoryService {
     // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
     if (!performance) return false;
 
-    const { broker, csv } = preprocessCsv(this.horodatagesEnUtc(performance));
+    const { broker, csv, formatChanged } = preprocessCsv(this.horodatagesEnUtc(performance));
+    if (formatChanged) {
+      throw new Error(`rapport Performance au format modifié (${formatChanged.join(' ; ')})`);
+    }
     if (broker !== 'tradovate') {
       throw new Error(`rapport Performance non reconnu (détecté « ${broker} »)`);
     }

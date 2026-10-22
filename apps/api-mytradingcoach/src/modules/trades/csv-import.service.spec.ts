@@ -436,6 +436,57 @@ describe('CsvImportService — defaults du lot (compte / émotion / setup)', () 
   });
 });
 
+describe('CsvImportService — garde-fou des colonnes Tradovate Performance', () => {
+  const lignes = () =>
+    readFileSync(join(__dirname, '__fixtures__', 'tradovate-performance.csv'), 'utf-8')
+      .trim()
+      .split(/\r?\n/)
+      .map((l) => l.split(','));
+  /** Fixture réécrite colonne par colonne (en-tête ET lignes), pour simuler un export modifié. */
+  const variante = (f: (cols: string[]) => string[]) =>
+    Buffer.from(lignes().map((cols) => f([...cols]).join(',')).join('\n'));
+  const FORMAT_CHANGE = 'Le format de ce fichier a changé';
+
+  async function importer(buf: Buffer) {
+    const svc = makeService();
+    return svc.parseCSV(buf, 'Performance.csv', 'user-1', PREMIUM_ACCESS);
+  }
+
+  it('fichier valide → 20 trades, colonnes alignées', async () => {
+    const dtos = await importer(variante((c) => c));
+    expect(dtos).toHaveLength(20);
+    expect(dtos[0]).toMatchObject({ asset: 'MNQ', quantity: 1, pnl: 23 });
+  });
+
+  it('colonne en plus APRÈS la 12ᵉ → rien ne se décale, import accepté', async () => {
+    const dtos = await importer(variante((c) => [...c, c[0] === 'symbol' ? 'nouvelle' : 'x']));
+    expect(dtos).toHaveLength(20);
+  });
+
+  it.each([
+    ['colonne décalée (qty et buyPrice inversées)', (c: string[]) => [...c.slice(0, 6), c[7], c[6], ...c.slice(8)]],
+    ['colonne manquante (_tickSize retirée)', (c: string[]) => [...c.slice(0, 3), ...c.slice(4)]],
+    ['colonne en plus avant les prix', (c: string[]) => [...c.slice(0, 6), c[0] === 'symbol' ? 'side' : 'Buy', ...c.slice(6)]],
+  ])('%s → refus explicite, aucun trade importé', async (_label, f) => {
+    const svc = makeService();
+    const persistance = vi.fn();
+    await expect(
+      svc.parseCSV(variante(f), 'Performance.csv', 'user-1', PREMIUM_ACCESS).then(persistance),
+    ).rejects.toThrow(FORMAT_CHANGE);
+    expect(persistance).not.toHaveBeenCalled();
+  });
+
+  it('le message renvoie vers l\'import IA ou support@, sans IA déclenchée en douce', async () => {
+    const svc = makeService();
+    const create = (svc as unknown as { anthropicClient: { create: ReturnType<typeof vi.fn> } })
+      .anthropicClient.create;
+    await expect(
+      svc.parseCSV(variante((c) => [...c.slice(0, 3), ...c.slice(4)]), 'Performance.csv', 'user-1', PREMIUM_ACCESS),
+    ).rejects.toThrow(/import IA.*support@mytradingcoach\.app/);
+    expect(create).not.toHaveBeenCalled();
+  });
+});
+
 describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', () => {
   const fixture = (name: string) =>
     readFileSync(join(__dirname, '__fixtures__', name));
@@ -608,9 +659,33 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
     ).toContain('Premium');
   });
 
-  it('fichier vide → message dédié (inchangé)', async () => {
-    const msg = await expectMessage('');
-    expect(msg).toContain('Fichier vide');
+  // Exports vides réels (NinjaTrader Web sans trade : 2 octets, sans en-tête) : un seul message,
+  // qui dit quoi vérifier, au lieu de « Fichier vide » / « Fichier sans données ».
+  const PERF_HEADER =
+    'symbol,_priceFormat,_priceFormatType,_tickSize,buyFillId,sellFillId,qty,buyPrice,sellPrice,pnl,boughtTimestamp,soldTimestamp,duration';
+  it.each([
+    ['0 octet', Buffer.alloc(0)],
+    ['2 octets CRLF', Buffer.from('\r\n')],
+    ['2 octets LF LF', Buffer.from('\n\n')],
+    ['2 octets BOM UTF-16 sans données', Buffer.from([0xff, 0xfe])],
+    ['2 octets « "" »', Buffer.from('""')],
+    ['en-tête Performance seul', Buffer.from(PERF_HEADER + '\r\n')],
+  ])('export vide (%s) → « Aucun trade fermé détecté » + période et compte', async (_label, buf) => {
+    const msg = await expectMessage(buf);
+    expect(msg).toContain('Aucun trade fermé détecté dans ce fichier');
+    expect(msg).toContain('Vérifie aussi la période et le compte choisis dans ta plateforme');
+    expect(msg).not.toContain('Fichier vide');
+    expect(msg).not.toContain('Fichier sans données');
+  });
+
+  it('Performance vide + Cash history vide → même message', async () => {
+    const svc = makeService();
+    await expect(
+      svc.parseCSV(Buffer.from('\r\n'), 'Performance.csv', 'user-1', FREE_ACCESS, undefined, undefined, {
+        buffer: Buffer.from('\r\n'),
+        filename: 'Cash_History.csv',
+      }),
+    ).rejects.toThrow('Aucun trade fermé détecté dans ce fichier');
   });
 
   // garde-fou acquisition : le jour où NinjaTrader nous envoie du trafic,
