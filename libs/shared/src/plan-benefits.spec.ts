@@ -46,6 +46,12 @@ describe('SIGNUP_PITCH_POINTS', () => {
     expect(SIGNUP_PITCH_POINTS.filter((p) => p.premium).map((p) => p.benefitId)).toEqual(['anti_tilt', 'weekly_debrief']);
   });
 
+  it('l’alerte après une perte dit sa condition réelle, comme PLAN_BENEFITS', () => {
+    const text = SIGNUP_PITCH_POINTS.find((p) => p.benefitId === 'anti_tilt')!.text;
+    expect(text).toContain('app ouverte');
+    expect(text).toContain('Tradovate connecté');
+  });
+
   it('le nombre de prop firms vient du catalogue', () => {
     expect(SIGNUP_PITCH_POINTS.some((p) => p.text.includes(`${PROP_FIRM_COUNT} prop firms`))).toBe(true);
   });

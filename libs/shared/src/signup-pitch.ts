@@ -18,6 +18,10 @@ export const SIGNUP_PITCH_POINTS: readonly PitchPoint[] = [
   { text: `Ta marge avant la limite, avec les règles de ${PROP_FIRM_COUNT} prop firms` },
   { text: 'Ton journal complet : setups, émotions, notes, statistiques' },
   { text: 'Prépare ta séance, puis débriefe-la juste après' },
-  { text: 'Une alerte quand tu reprends une position juste après une perte', premium: true, benefitId: 'anti_tilt' },
+  {
+    text: 'Une alerte quand tu reprends une position juste après une perte, app ouverte (compte Tradovate connecté)',
+    premium: true,
+    benefitId: 'anti_tilt',
+  },
   { text: 'Le coach IA rédige ton débrief de la semaine', premium: true, benefitId: 'weekly_debrief' },
 ];
