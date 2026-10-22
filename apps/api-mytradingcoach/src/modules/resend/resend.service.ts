@@ -432,12 +432,13 @@ export class ResendService {
 
       this.logger.error(`[RESEND ERROR] "${params.subject}" → ${to} | ${error.name} : ${error.message}`);
       // Un échec d'envoi était silencieux (logs seulement). Sentry, regroupé par type d'erreur :
-      // un quota dépassé = une seule issue, pas une par e-mail.
+      // un quota dépassé = une seule issue, pas une par e-mail. Jamais l'objet ni le destinataire :
+      // l'objet peut contenir un P&L ou un nom d'ambassadeur (il reste dans le log ci-dessus).
       Sentry.captureMessage(`Resend : ${error.name}`, {
         level: QUOTA_ERRORS.has(error.name) ? 'fatal' : 'error',
         fingerprint: ['resend-send-failed', error.name],
         tags: { resend_error: error.name },
-        extra: { subject: params.subject, message: error.message, attempts: attempt + 1, queued: !!queued },
+        extra: { message: error.message, attempts: attempt + 1, queued: !!queued },
       });
       return;
     }
