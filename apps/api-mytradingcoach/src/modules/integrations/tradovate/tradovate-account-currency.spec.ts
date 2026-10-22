@@ -31,7 +31,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
       externalAccountId: null,
       externalAccountName: null,
       externalEnv: null,
-      availableAccounts: [{ id: '64992914', name: 'TDFY-123', env: 'demo' }],
+      availableAccounts: [{ id: '90000020', name: 'TDFY-123', env: 'demo' }],
       // Hôte demo propre à l'organisation : la devise doit être lue LÀ, pas sur l'hôte historique.
       apiHosts: { live: 'live.tradovateapi.com', demo: 'demo-org.tradovateapi.com' },
       apiHostsAt: new Date(),
@@ -48,7 +48,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
         findFirst: vi.fn().mockResolvedValue(conn),
         // Garde-fou « déjà relié ailleurs » : personne d'autre sur ce compte ici.
         findMany: vi.fn().mockResolvedValue([]),
-        update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '64992914', externalEnv: 'demo' }),
+        update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '90000020', externalEnv: 'demo' }),
       },
       tradingAccount: { update: vi.fn().mockResolvedValue({}) },
     };
@@ -67,7 +67,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
   function brokerAnswers(api: { get: ReturnType<typeof vi.fn> }, currencyId: number, name: string) {
     api.get.mockImplementation((_env: string, path: string) => {
       if (path === '/cashBalance/list') {
-        return Promise.resolve([{ id: 1, accountId: 64992914, currencyId }]);
+        return Promise.resolve([{ id: 1, accountId: 90000020, currencyId }]);
       }
       if (path === '/currency/item') return Promise.resolve({ id: currencyId, name });
       throw new Error(`appel inattendu : ${path}`);
@@ -78,7 +78,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     const { service, prisma, api } = setup();
     brokerAnswers(api, 2, 'EUR');
 
-    await service.selectAccount('u1', 'a1', '64992914');
+    await service.selectAccount('u1', 'a1', '90000020');
 
     expect(api.get).toHaveBeenCalledWith('demo', '/currency/item', 'AT-1', { id: '2' }, {
       live: 'live.tradovateapi.com',
@@ -94,7 +94,7 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     const { service, prisma, api } = setup();
     brokerAnswers(api, 1, 'USD');
 
-    await service.selectAccount('u1', 'a1', '64992914');
+    await service.selectAccount('u1', 'a1', '90000020');
 
     expect(prisma.tradingAccount.update.mock.calls[0][0].data).toEqual({ currency: 'USD' });
   });
@@ -103,9 +103,9 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     const { service, prisma, api } = setup();
     brokerAnswers(api, 5, 'CAD');
 
-    const view = await service.selectAccount('u1', 'a1', '64992914');
+    const view = await service.selectAccount('u1', 'a1', '90000020');
 
-    expect(view.externalAccountId).toBe('64992914');
+    expect(view.externalAccountId).toBe('90000020');
     expect(prisma.tradingAccount.update.mock.calls[0][0].data).toEqual({ currency: 'USD' });
   });
 
@@ -113,8 +113,8 @@ describe('TradovateConnectionService — devise lue chez le broker', () => {
     const { service, prisma, api } = setup();
     api.get.mockRejectedValue(new TradovateApiError('unavailable', 503, '/cashBalance/list'));
 
-    await expect(service.selectAccount('u1', 'a1', '64992914')).resolves.toMatchObject({
-      externalAccountId: '64992914',
+    await expect(service.selectAccount('u1', 'a1', '90000020')).resolves.toMatchObject({
+      externalAccountId: '90000020',
     });
     expect(prisma.tradingAccount.update.mock.calls[0][0].data).toEqual({ currency: 'USD' });
   });

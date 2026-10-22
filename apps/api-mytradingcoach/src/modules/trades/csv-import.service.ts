@@ -129,12 +129,13 @@ export class CsvImportService {
   ): Promise<Partial<CreateTradeDto>[]> {
     // 1. Obtenir du texte CSV (Excel converti localement, sinon UTF-8)
     const content = await this.toCsvText(buffer, filename);
-    if (!content) throw new BadRequestException('Fichier vide');
-    if (content.split('\n').length < 2)
-      throw new BadRequestException('Fichier sans données');
+    // Vide, 2 octets (CRLF, BOM UTF-16, `""`) ou en-tête seul : c'est un export sans trade
+    // (mauvaise période, mauvais compte), pas un fichier cassé → même message utile partout.
+    if (!content || content.split('\n').length < 2)
+      throw new BadRequestException(this.emptyMessage());
 
     // 2. Détecter le broker et pré-normaliser
-    const { broker, csv } = preprocessCsv(content);
+    const { broker, csv, formatChanged } = preprocessCsv(content);
     const normalizedLines = csv.split('\n').filter((l) => l.trim());
     if (normalizedLines.length < 2)
       throw new BadRequestException(this.emptyMessage());
@@ -168,6 +169,16 @@ export class CsvImportService {
       } else {
       // Aucune fiche, ou fiche devenue inapplicable (le broker a change son format) : la
       // suite reprend exactement le parcours d'un broker inconnu.
+
+      // Export Tradovate Performance aux colonnes déplacées : refus explicite plutôt que des
+      // prix et des P&L lus dans les mauvaises colonnes. Pas de bascule vers l'IA : l'utilisateur
+      // ne choisit pas ce mode, le message ne le propose donc pas.
+      if (formatChanged) {
+        this.logger.warn(`CSV "${filename}" Tradovate au format modifié : ${formatChanged.join(' ; ')}`);
+        throw new BadRequestException(
+          'Le format de ce fichier a changé. Contacte support@mytradingcoach.app.',
+        );
+      }
 
       // 4a. Le fichier ressemble-t-il seulement à un export de trades ? Un fichier
       //     hors sujet (image renommée .csv, tableur quelconque) renvoyait le message
@@ -834,7 +845,8 @@ ${echantillon}`;
   private emptyMessage(): string {
     return (
       'Aucun trade fermé détecté dans ce fichier. Sur ton broker, exporte ' +
-      "l'historique des positions/trades fermés, pas les ordres en cours."
+      "l'historique des positions/trades fermés, pas les ordres en cours. " +
+      "Vérifie aussi la période et le compte choisis dans ta plateforme avant d'exporter."
     );
   }
 

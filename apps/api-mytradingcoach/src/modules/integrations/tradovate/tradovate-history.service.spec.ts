@@ -36,7 +36,7 @@ function conn(overrides: Partial<BrokerConnection> = {}): BrokerConnection {
     accountId: 'compte-mtc-1',
     provider: BrokerProvider.TRADOVATE,
     status: BrokerConnectionStatus.CONNECTED,
-    externalAccountId: '66880224',
+    externalAccountId: '90000012',
     externalAccountName: 'NOM-PERIME',
     externalEnv: 'demo',
     // Par défaut : connexion dont l'historique complet a DÉJÀ été importé, donc une profondeur
@@ -49,7 +49,7 @@ function conn(overrides: Partial<BrokerConnection> = {}): BrokerConnection {
 function setup(csvByReport: Record<string, string | Error> = {}) {
   const api = {
     // Le nom est RELU ici : celui stocké peut être périmé.
-    get: vi.fn().mockResolvedValue([{ id: 66880224, name: 'APEX4280470000012', userId: 699523 }]),
+    get: vi.fn().mockResolvedValue([{ id: 90000012, name: 'APEX2000000000012', userId: 699523 }]),
   };
   const connections = {
     getAccessToken: vi.fn().mockResolvedValue('AT-1'),
@@ -143,7 +143,7 @@ describe('TradovateHistoryService — import de l’historique', () => {
     await service.importHistory('u1', conn({ externalAccountName: 'NOM-PERIME' }), { months: 1 });
 
     const [, , , window] = reporting.fetchCsv.mock.calls[0];
-    expect(window.accountName).toBe('APEX4280470000012');
+    expect(window.accountName).toBe('APEX2000000000012');
   });
 
   it('les fenêtres sont mensuelles et remontent dans le temps', async () => {
@@ -244,7 +244,7 @@ describe('TradovateHistoryService — profondeur de l’import', () => {
 
   /** Ce que `/account/list` renvoie réellement, `timestamp` compris (relevé le 2026-09-26). */
   const compte = (timestamp?: string) => [
-    { id: 66880224, name: 'APEX4280470000012', userId: 699523, timestamp },
+    { id: 90000012, name: 'APEX2000000000012', userId: 699523, timestamp },
   ];
 
   const moisDemandes = (reporting: { fetchCsv: { mock: { calls: unknown[][] } } }) =>

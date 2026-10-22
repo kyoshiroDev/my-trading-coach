@@ -10,8 +10,8 @@ import { TradovateApiError } from './tradovate.errors';
  *
  * On stockait `account.userId` — le **propriétaire du compte chez le broker**. Sur un compte prop
  * firm, c'est l'identifiant de la FIRME, pas du trader. Mesuré en prod le 2026-09-27 : deux
- * traders Apex sans aucun lien entre eux, `APEX_13679` (compte `PAAPEX136790000010`) et
- * `APEX_428047` (compte `APEX4280470000012`), portaient tous les deux `userId: 699523`, et
+ * traders Apex sans aucun lien entre eux, `APEX_10000` (compte `PAAPEX100000000010`) et
+ * `APEX_200000` (compte `APEX2000000000012`), portaient tous les deux `userId: 699523`, et
  * `/user/item?id=699523` répondait 404 — la preuve que ce n'est pas un trader.
  *
  * Conséquence du bug : le verrou de renouvellement `tradovate:login:699523` était partagé par TOUS
@@ -28,11 +28,11 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
 
   /** Ce que Tradovate renvoie réellement pour un trader Apex (relevé du 2026-09-27). */
   const COMPTES_APEX = [
-    { id: 40517838, name: 'PAAPEX136790000010', userId: 699523 }, // 699523 = Apex, pas le trader
-    { id: 40570856, name: 'PAAPEX136790000011', userId: 699523 },
+    { id: 90000010, name: 'PAAPEX100000000010', userId: 699523 }, // 699523 = Apex, pas le trader
+    { id: 90000011, name: 'PAAPEX100000000011', userId: 699523 },
   ];
   const TRADER = [
-    { id: 5751613, name: 'APEX_13679', email: 'trader@example.com', organizationId: 20 },
+    { id: 9100001, name: 'APEX_10000', email: 'trader@example.com', organizationId: 20 },
   ];
 
   function setup(
@@ -106,8 +106,8 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
 
     await connecter();
 
-    // 5751613 = le trader. 699523 = Apex, et l'écrire remettrait tous ses traders sur un verrou.
-    expect(enregistre[0].externalUserId).toBe('5751613');
+    // 9100001 = le trader. 699523 = Apex, et l'écrire remettrait tous ses traders sur un verrou.
+    expect(enregistre[0].externalUserId).toBe('9100001');
     expect(enregistre[0].externalUserId).not.toBe('699523');
     // Sans `renewAccessToken` exploitable, hôtes historiques (null) : la connexion aboutit quand même.
     expect(api.get).toHaveBeenCalledWith(expect.any(String), '/user/list', 'AT-1', undefined, null);
@@ -136,8 +136,8 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       provider: BrokerProvider.TRADOVATE, status: BrokerConnectionStatus.CONNECTED,
       accessTokenEnc: encryptToken('AT-1', key), refreshTokenEnc: encryptToken('RT-1', key),
       accessTokenExpiresAt: new Date(Date.now() + 60 * 60_000), refreshTokenExpiresAt: null,
-      externalUserId: '5751613',
-      availableAccounts: [{ id: '40570856', name: 'PAAPEX136790000011', env: 'demo', userId: '699523' }],
+      externalUserId: '9100001',
+      availableAccounts: [{ id: '90000011', name: 'PAAPEX100000000011', env: 'demo', userId: '699523' }],
     } as unknown as BrokerConnection;
     const prisma = {
       // Compteur des trades importés renvoyé avec la vue (aucun ici).
@@ -145,7 +145,7 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
         findMany: vi.fn().mockResolvedValue([]), // aucun autre utilisateur sur ce compte
-        update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '40570856' }),
+        update: vi.fn().mockResolvedValue({ ...conn, externalAccountId: '90000011' }),
       },
       tradingAccount: { update: vi.fn().mockResolvedValue({}) },
     };
@@ -155,11 +155,11 @@ describe('Login d’une connexion Tradovate = l’utilisateur authentifié', () 
       prisma as never, api as never, config as never, redis as never,
     );
 
-    await service.selectAccount('u1', 'a1', '40570856');
+    await service.selectAccount('u1', 'a1', '90000011');
 
     const data = prisma.brokerConnection.update.mock.calls[0][0].data as Record<string, unknown>;
     expect(data).not.toHaveProperty('externalUserId');
-    expect(data.externalAccountId).toBe('40570856');
+    expect(data.externalAccountId).toBe('90000011');
   });
 });
 
@@ -202,7 +202,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
       exchangeCode: vi.fn().mockResolvedValue({ access_token: 'AT-1', refresh_token: 'RT-1', expires_in: 3600 }),
       get: vi.fn().mockImplementation((env: string, path: string) => {
         if (path === '/account/list') return Promise.resolve(env === 'demo' ? opts.comptes : []);
-        if (path === '/user/list') return Promise.resolve([{ id: 5751613, name: 'APEX_13679' }]);
+        if (path === '/user/list') return Promise.resolve([{ id: 9100001, name: 'APEX_10000' }]);
         return Promise.resolve([]);
       }),
     };
@@ -217,11 +217,11 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
     };
   }
 
-  const COMPTE = { id: 40517838, name: 'PAAPEX136790000010' };
-  const AUTRE = { id: 40570856, name: 'PAAPEX136790000011' };
+  const COMPTE = { id: 90000010, name: 'PAAPEX100000000010' };
+  const AUTRE = { id: 90000011, name: 'PAAPEX100000000011' };
 
   it('seul compte disponible, déjà relié ailleurs → refus explicite, rien n’est enregistré', async () => {
-    const { connecter, enregistre } = contexte({ comptes: [COMPTE], pris: ['40517838'] });
+    const { connecter, enregistre } = contexte({ comptes: [COMPTE], pris: ['90000010'] });
 
     await expect(connecter()).resolves.toMatchObject({
       status: 'error',
@@ -231,7 +231,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
   });
 
   it('plusieurs comptes, un seul pris → le pris n’est ni choisi ni même proposé', async () => {
-    const { connecter, enregistre } = contexte({ comptes: [COMPTE, AUTRE], pris: ['40517838'] });
+    const { connecter, enregistre } = contexte({ comptes: [COMPTE, AUTRE], pris: ['90000010'] });
 
     const issue = await connecter();
 
@@ -239,7 +239,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
     // qu'un compte de son login a été écarté. La liste stockée ne contient plus l'autre.
     expect(enregistre[0].externalAccountId).toBeNull();
     expect(enregistre[0].availableAccounts).toEqual([
-      expect.objectContaining({ id: '40570856' }),
+      expect.objectContaining({ id: '90000011' }),
     ]);
     expect(issue).toMatchObject({ status: 'select_account', excluded: 1 });
   });
@@ -253,9 +253,9 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
 
   it('reconnexion : le compte déjà choisi est gardé, pas de nouveau sélecteur', async () => {
     const { connecter, enregistre, prisma } = contexte({ comptes: [COMPTE, AUTRE], pris: [] });
-    prisma.brokerConnection.findUnique.mockResolvedValue({ externalAccountId: '40570856', externalEnv: 'demo' });
+    prisma.brokerConnection.findUnique.mockResolvedValue({ externalAccountId: '90000011', externalEnv: 'demo' });
     const issue = await connecter();
-    expect(enregistre[0].externalAccountId).toBe('40570856');
+    expect(enregistre[0].externalAccountId).toBe('90000011');
     expect(issue).toMatchObject({ status: 'connected', excluded: 0 });
   });
 
@@ -268,7 +268,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
       where: {
         provider: 'TRADOVATE',
         userId: { not: 'u1' },
-        externalAccountId: { in: ['40517838'] },
+        externalAccountId: { in: ['90000010'] },
       },
       select: { externalAccountId: true },
     });
@@ -281,12 +281,12 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
       provider: BrokerProvider.TRADOVATE, status: BrokerConnectionStatus.CONNECTED,
       accessTokenEnc: encryptToken('AT-1', key), refreshTokenEnc: encryptToken('RT-1', key),
       accessTokenExpiresAt: new Date(Date.now() + 60 * 60_000), refreshTokenExpiresAt: null,
-      availableAccounts: [{ id: '40517838', name: 'PAAPEX136790000010', env: 'demo' }],
+      availableAccounts: [{ id: '90000010', name: 'PAAPEX100000000010', env: 'demo' }],
     } as unknown as BrokerConnection;
     const prisma = {
       brokerConnection: {
         findFirst: vi.fn().mockResolvedValue(conn),
-        findMany: vi.fn().mockResolvedValue([{ externalAccountId: '40517838' }]),
+        findMany: vi.fn().mockResolvedValue([{ externalAccountId: '90000010' }]),
         update: vi.fn().mockResolvedValue({}),
       },
       tradingAccount: { update: vi.fn().mockResolvedValue({}) },
@@ -298,7 +298,7 @@ describe('Un compte Tradovate ne se relie qu’à un seul compte MTC', () => {
       { client: { set: vi.fn().mockResolvedValue('OK'), del: vi.fn() } } as never,
     );
 
-    await expect(service.selectAccount('u1', 'a1', '40517838')).rejects.toMatchObject({
+    await expect(service.selectAccount('u1', 'a1', '90000010')).rejects.toMatchObject({
       code: 'TRADOVATE_ACCOUNT_ALREADY_LINKED',
     });
     expect(prisma.brokerConnection.update).not.toHaveBeenCalled();

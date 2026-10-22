@@ -39,8 +39,8 @@ function acct(id: string, label: string, p: Partial<TradingAccount> = {}): Tradi
 
 function conn(accountId: string, p: Partial<TradovateConnection> = {}): TradovateConnection {
   return {
-    accountId, status: 'CONNECTED', externalAccountId: '65040981', externalAccountName: 'APEX-1234-01',
-    externalEnv: 'demo', availableAccounts: [{ id: '65040981', name: 'APEX-1234-01', env: 'demo' }],
+    accountId, status: 'CONNECTED', externalAccountId: '90000021', externalAccountName: 'APEX-1234-01',
+    externalEnv: 'demo', availableAccounts: [{ id: '90000021', name: 'APEX-1234-01', env: 'demo' }],
     needsAccountSelection: false, lastSyncAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     lastSyncError: null, tradesImported: 34, brokerTradesCount: 0, connectedAt: '2026-09-01T00:00:00.000Z',
     ...p,
