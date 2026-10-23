@@ -128,6 +128,30 @@ describe("Autopsie — « Ce n'est pas un échec »", () => {
     });
   });
 
+  it("archivage répété : un seul incident, date de confirmation inchangée", async () => {
+    const { user, setupId, accountId } = await seed();
+    await trades.importTrades(user.id, session(setupId, accountId, [-700, -600, -900]), TradeSource.BROKER_SYNC);
+    await incidents.updateAccount(user, accountId, { status: AccountStatus.ARCHIVED }, FREE);
+    const first = await prisma.accountIncident.findMany({ where: { accountId } });
+    await incidents.updateAccount(user, accountId, { status: AccountStatus.ARCHIVED }, FREE);
+    await incidents.updateAccount(user, accountId, { status: AccountStatus.ARCHIVED }, FREE);
+    const after = await prisma.accountIncident.findMany({ where: { accountId } });
+    expect(after).toHaveLength(1);
+    expect(first[0].failedByIncidentAt).not.toBeNull();
+    expect(after[0].failedByIncidentAt).toEqual(first[0].failedByIncidentAt);
+  });
+
+  it('archivage sans limite franchie, même répété : aucun incident, aucun lien', async () => {
+    const { user, setupId, accountId } = await seed();
+    await trades.importTrades(user.id, session(setupId, accountId, [-300, 150]), TradeSource.BROKER_SYNC);
+    await incidents.updateAccount(user, accountId, { status: AccountStatus.ARCHIVED }, FREE);
+    await incidents.updateAccount(user, accountId, { status: AccountStatus.ARCHIVED }, FREE);
+    expect(await prisma.accountIncident.count({ where: { accountId } })).toBe(0);
+    expect((await accounts.list(user.id)).find((a) => a.id === accountId)).toMatchObject({
+      status: AccountStatus.ARCHIVED, openIncidentId: null,
+    });
+  });
+
   it('échec marqué à la main sans limite franchie : autopsie retirée, compte laissé échoué', async () => {
     const { user, setupId, accountId } = await seed();
     await trades.importTrades(user.id, session(setupId, accountId, [-300, 150]), TradeSource.BROKER_SYNC);

@@ -148,6 +148,15 @@ describe('AccountIncidentsService.updateAccount — passage en échoué', () => 
     });
   });
 
+  it("archivage répété : seul le premier (compte encore ACTIF) confirme l'incident", async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.ARCHIVED });
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
+    expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
+  });
+
   it('simple archivage sans limite franchie : aucun incident créé', async () => {
     await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
