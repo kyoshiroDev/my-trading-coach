@@ -50,7 +50,7 @@ function makeDeps() {
     enabled: true,
     create: vi.fn(async () => ({ content: [{ type: 'text', text: "D'après tes trades enregistrés, la séance…" }] })),
   };
-  const redis = { client: { set: vi.fn(async (): Promise<string | null> => 'OK') } };
+  const redis = { client: { set: vi.fn(async (): Promise<string | null> => 'OK'), del: vi.fn(async () => 1) } };
   const svc = new AccountIncidentsService(prisma as never, accounts as never, anthropic as never, redis as never);
   return { prisma, accounts, anthropic, redis, metrics, svc };
 }
@@ -263,11 +263,30 @@ describe('AccountIncidentsService.analysis — IA Premium, une seule fois', () =
     expect(d.anthropic.create).not.toHaveBeenCalled();
   });
 
-  it('appel en échec : rien d’inventé, rien d’écrit', async () => {
+  it('appel en échec : rien d’inventé, rien d’écrit, verrou libéré pour un nouvel essai', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
-    d.anthropic.create.mockRejectedValue(new Error('529'));
+    d.anthropic.create.mockRejectedValueOnce(new Error('529'));
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
     expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
+    expect(d.redis.client.del).toHaveBeenCalledWith('incident-ai:inc');
+    // Nouvelle ouverture : nouvel essai, qui aboutit et s'enregistre.
+    expect(await d.svc.analysis(user(), 'acc', 'inc')).toMatchObject({ status: 'ready' });
+    expect(d.anthropic.create).toHaveBeenCalledTimes(2);
+    expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('réponse vide : verrou libéré aussi, rien d’écrit', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    d.anthropic.create.mockResolvedValueOnce({ content: [] });
+    expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
+    expect(d.redis.client.del).toHaveBeenCalledWith('incident-ai:inc');
+    expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('succès : le verrou n’est pas libéré (l’analyse enregistrée suffit à bloquer un second appel)', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    await d.svc.analysis(user(), 'acc', 'inc');
+    expect(d.redis.client.del).not.toHaveBeenCalled();
   });
 
   it('la page (GET) ne déclenche jamais d’appel', async () => {

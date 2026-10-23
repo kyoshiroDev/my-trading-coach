@@ -28,7 +28,7 @@ const ONCE_PER_ACCOUNT = 'account';
 const PREVIOUS_SESSIONS = 60;
 /** Statuts qu'un incident confirmé a pu poser, et que « Ce n'est pas un échec » peut défaire. */
 const CLOSED_BY_INCIDENT: AccountStatus[] = [AccountStatus.FAILED, AccountStatus.ARCHIVED];
-/** Une tentative d'analyse par incident et par heure au plus, même si l'appel échoue. */
+/** Durée max du verrou d'analyse : couvre un appel bloqué ; un échec le libère tout de suite. */
 const AI_LOCK_TTL_S = 3600;
 
 export type IncidentAiState =
@@ -205,10 +205,12 @@ export class AccountIncidentsService {
     const unavailable: IncidentAiState = { status: 'unavailable' };
     if (user.isDemo || !this.anthropic.enabled) return unavailable;
 
-    // Verrou par incident : deux ouvertures simultanées ne paient pas deux analyses, et une
-    // tentative en échec n'est pas relancée avant une heure.
-    const lock = await this.redis.client.set(`incident-ai:${incident.id}`, '1', 'EX', AI_LOCK_TTL_S, 'NX');
+    // Verrou par incident : deux ouvertures simultanées ne paient pas deux analyses. Un appel en
+    // échec (ou sans texte) le libère : la prochaine ouverture peut réessayer.
+    const lockKey = `incident-ai:${incident.id}`;
+    const lock = await this.redis.client.set(lockKey, '1', 'EX', AI_LOCK_TTL_S, 'NX');
     if (lock !== 'OK') return unavailable;
+    const release = () => this.redis.client.del(lockKey).catch(() => undefined);
     try {
       const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { currency: true } });
       const report = await this.report(incident, account.currency);
@@ -222,7 +224,10 @@ export class AccountIncidentsService {
         { feature: 'incident', userId: user.id },
       );
       const text = responseText(response).trim();
-      if (!text) return unavailable;
+      if (!text) {
+        await release();
+        return unavailable;
+      }
       const generatedAt = new Date();
       // `aiAnalysis: null` dans le filtre : une analyse déjà écrite n'est jamais remplacée.
       const { count } = await this.prisma.accountIncident.updateMany({
@@ -233,6 +238,7 @@ export class AccountIncidentsService {
       return { status: 'ready', text, generatedAt };
     } catch (err) {
       this.logger.warn(`Analyse d'incident non générée (${incident.id}) : ${(err as Error).message}`);
+      await release();
       return unavailable;
     }
   }
