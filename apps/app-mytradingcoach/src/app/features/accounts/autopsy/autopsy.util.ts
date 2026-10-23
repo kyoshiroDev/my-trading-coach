@@ -138,13 +138,19 @@ export interface DistanceChart {
   points: { x: number; y: number; last: boolean }[];
   /** Ligne de la limite estimée (distance 0). */
   zeroY: number;
-  alerts: { x: number; label: string }[];
+  /**
+   * Repère de chaque alerte. Seule la première porte un libellé (plusieurs alertes rapprochées se
+   * chevauchaient) ; il passe à gauche du trait quand il déborderait du tracé.
+   */
+  alerts: { x: number; label: string | null; anchor: 'start' | 'end' }[];
   startLabel: string;
   endLabel: string;
   aria: string;
 }
 
 const CHART_H = 120;
+/** Largeur d'un caractère des libellés du tracé (JetBrains Mono 11 px), pour éviter qu'ils débordent. */
+const LABEL_CHAR_W = 6.7;
 const PAD = 26;
 
 /**
@@ -175,7 +181,11 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
     const before = after - 1;
     const t0 = times[before] ?? times[after]! - 1;
     const ratio = Math.min(1, Math.max(0, (t - t0) / (times[after]! - t0)));
-    return [{ x: round(x(before) + ratio * step), label: `Alerte ${clock(e.at)}` }];
+    return [{ x: round(x(before) + ratio * step), label: `Alerte ${clock(e.at)}`, anchor: 'start' as const }];
+  }).map((a, i) => {
+    if (i > 0) return { ...a, label: null };
+    const overflows = a.x + 5 + (a.label?.length ?? 0) * LABEL_CHAR_W > width;
+    return overflows ? { ...a, anchor: 'end' as const } : a;
   });
 
   const cur = r.account.currency;

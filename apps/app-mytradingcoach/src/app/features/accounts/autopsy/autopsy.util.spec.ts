@@ -60,6 +60,22 @@ describe('autopsy.util — courbe de distance', () => {
     expect(c.aria).toBe('Distance à la limite au fil de la séance : de $1,000 à -$50');
   });
 
+  it('alertes rapprochées : un seul libellé (la première), les autres en simple trait (revue #712)', () => {
+    const r = mockupReport();
+    const alert = (hhmm: string, label: string) => ({ type: 'alert' as const, at: at(hhmm), label, nextTradeMinutes: 1 });
+    const c = distanceChart({ ...r, timeline: [...r.timeline, alert('10:46', 'marge drawdown sous 25 %'), alert('10:50', 'marge drawdown sous 10 %')] }, 358)!;
+    expect(c.alerts).toHaveLength(3);
+    expect(c.alerts.map((a) => a.label)).toEqual(['Alerte 10:44', null, null]);
+  });
+
+  it("libellé près du bord droit : ancré à gauche du trait, jamais coupé", () => {
+    const r = mockupReport();
+    const late = { type: 'alert' as const, at: at('11:10'), label: 'perte du jour sous 10 %', nextTradeMinutes: 2 };
+    const c = distanceChart({ ...r, timeline: r.timeline.filter((e) => e.type === 'trade').concat(late) }, 358)!;
+    expect(c.alerts[0]).toMatchObject({ label: 'Alerte 11:10', anchor: 'end' });
+    expect(distanceChart(r, 358)!.alerts[0].anchor).toBe('start');
+  });
+
   it('moins de deux points : pas de courbe', () => {
     expect(distanceChart(mockupReport({ series: [] }), 358)).toBeNull();
   });
