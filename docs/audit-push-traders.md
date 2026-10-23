@@ -154,10 +154,18 @@ D'après la documentation Chrome :
   le 2023-12-05) indique qu'elle exige **encore** un gestionnaire `fetch`, et que Chrome ignore les
   gestionnaires vides. La page web.dev des critères ne mentionne plus de service worker : les deux
   sources ne disent pas la même chose.
+- **Essai du 2026-10-23, Chrome 154 sur PC (Linux)**, deux pages de test locales identiques (manifest
+  complet, icônes 192 et 512, `display: standalone`) : avec un service worker **sans** `fetch`,
+  `beforeinstallprompt` arrive environ 1 s après l'enregistrement du service worker ; avec un `fetch`
+  qui transmet seulement au réseau (`event.respondWith(fetch(event.request))`, aucun cache), même
+  résultat. Le panneau Application > Manifest des DevTools n'est pas accessible depuis
+  l'extension de pilotage : le constat repose sur l'événement lui-même. Non vérifié sur Android.
 - **Conséquence** : avec notre service worker sans `fetch`, l'app est installable par le menu ; le
-  bouton « Installer » piloté par `beforeinstallprompt` n'est pas garanti. Proposition pour la phase 2 :
-  un texte d'aide (« menu ⋮ puis Installer l'application ») plutôt qu'un bouton, et une vérification
-  sur un vrai Android avant la mise en ligne. iOS ne dépend pas de ce critère (partage, puis « Sur
+  bouton « Installer » piloté par `beforeinstallprompt` marche sur PC, sans garantie sur Android.
+  Phase 2 : service worker sans `fetch` ; bouton « Installer » affiché seulement quand
+  `beforeinstallprompt` est reçu, sinon texte d'aide en repli (« menu ⋮ puis Installer
+  l'application ») ; vérification sur un vrai Android avant la mise en ligne. Si Android ne déclenche
+  pas l'événement, le `fetch` de transmission seule est l'option suivante (aucun cache). iOS ne dépend pas de ce critère (partage, puis « Sur
   l'écran d'accueil »).
 
 ### 7.2 Alertes prop firm depuis la synchro de fond (15 min)
