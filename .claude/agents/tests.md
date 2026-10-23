@@ -351,14 +351,19 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 - API pur : `incident-report.spec.ts` (séance de la maquette, distance, alertes retenues, 3 constats,
   aucun conseil). Service : `account-incidents.service.spec.ts` (démo exclue, unicité, confirmation
   FAILED / ARCHIVED et idempotence, `dismiss` réactivant seulement après confirmation, quota, IA :
-  Gratuit verrouillé, démo et `AI_ENABLED` sans appel, verrou, échec ou réponse vide → verrou libéré
-  et nouvel essai, `max_tokens` 400). Vraie base : `account-incidents.int-spec.ts`.
+  Gratuit verrouillé, démo et `AI_ENABLED` sans appel, `max_tokens` 400). Le Redis du spec est un faux
+  EN MÉMOIRE (`fakeRedis` : `SET NX EX`, `EXPIRE`, `INCR`, horloge `advance`) : il prouve la concurrence
+  (deux ouvertures simultanées = un appel), le délai après échec ou réponse vide, et le plafond de
+  3 essais par jour. `confirmIncident` : seul le corps qui le porte confirme ; formulaire d'édition = rien.
+  `@Throttle` de la route : `analysis-throttle.spec.ts` (métadonnées). Vraie base : `account-incidents.int-spec.ts`.
 - Démo : `admin/demo-incident.spec.ts` (franchissement au dernier trade, 3 constats, incident et texte
   préenregistré sur la vitrine seulement) ; le faux Prisma de `demo-seed-idempotence.spec.ts` déclare
   `behaviorAlert` et `accountIncident`.
 - App : `autopsy.util.spec.ts`, `account-autopsy.component.spec.ts` (vrai template `?raw`, un seul
-  appel d'analyse, démo « Exemple »), cas ajoutés à `lost-account-flow.service.spec.ts` et
-  `accounts-lost-account.spec.ts`.
+  appel d'analyse, badge démo par `autopsy-ai-example-badge`, confirmation du retrait, 404, aucune espace
+  simple devant `: ; ! ?`), `autopsy.styles.spec.ts` (couleurs et KPI : un `.css?raw` est VIDE sous
+  vitest, lire le fichier par `readFileSync`), cas ajoutés à `lost-account-flow.service.spec.ts`,
+  `toast.service.spec.ts` et `accounts-lost-account.spec.ts`.
 - Un `vi.fn` re-mocké avec une autre valeur doit avoir son retour typé (sinon le typecheck des specs
   échoue en CI) ; une méthode `protected` appelée dans un spec passe par un cast.
 

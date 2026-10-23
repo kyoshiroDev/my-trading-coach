@@ -881,7 +881,20 @@ Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
   `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
   Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
 - « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
-  « Ce n'est pas un échec » → `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
+  « Ce n'est pas un échec » → **`ConfirmService.ask` d'abord** (retrait définitif, réactivation annoncée si
+  `canReactivate`), puis `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
+- Feuille de choix (« Garder comme échoué » / « Archiver ») : `update(id, { status, confirmIncident: true })`.
+  Le formulaire d'édition n'envoie JAMAIS `confirmIncident` (son archivage ne confirme aucune autopsie).
+- 404 au chargement → bloc `autopsy-not-found` « Cette autopsie n'existe pas ou n'est plus disponible »
+  (même message retirée / inexistante / autre compte), lien vers Mes comptes ; autre erreur → `mtc-error-state`.
+- Couleurs (revue #712) : action principale sur `--primary` (aussi `lost-btn.pri`, `la-btn.pri`,
+  `.toast-action`), courbe et pastilles des constats en neutre (`--text-2` / `--bg-3`), **aucun cyan**
+  sur la page (réservé à l'IA et au temps réel). Rouge = seul trade qui franchit la limite (point
+  `dot-cross` et ligne `li.last`), jamais un trade gagnant resté sous une limite déjà franchie. Montant
+  des KPI : `white-space: nowrap` + `clamp(13px, 4.2cqi, 18px)`. Courbe : seule la première alerte porte
+  un libellé (ancré à gauche s'il déborde) ; une seule heure sous l'axe si début = fin.
+- Espaces insécables : `frenchSpacing` aussi sur les titres et méta de la chronologie ; `&nbsp;` dans le
+  template ; le test de la page refuse toute espace simple devant `: ; ! ?`.
 - Page bornée à 1180 px (le SVG s'étire avec la colonne) ; deux tracés (358 / 560) selon la largeur
   du conteneur ; une colonne puis deux à partir de 760 px (`@container`).
 - Entrées : Mes comptes (« Voir l'autopsie » si `openIncidentId`, compte FAILED ou ARCHIVED ; sur sa
@@ -889,6 +902,10 @@ Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
   au clic, sinon toast info).
 
 ## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
+
+> Toast qui porte un bouton (`opts.action`) : durée par défaut ≥ `TOAST_ACTION_MIN_DURATION` (10 s),
+> le temps de lire puis d'agir ; une `duration` explicite reste respectée (revue #712).
+
 
 **Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)
 et **un seul conteneur** `mtc-toasts` monté dans `app.ts` (`<router-outlet /><mtc-toasts />`,
