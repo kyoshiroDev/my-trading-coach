@@ -68,7 +68,7 @@
 .chart .alert-txt { fill: var(--yellow); }
 .chart .line { fill: none; stroke: var(--text-2); stroke-width: 2; }
 .chart .dot { fill: var(--text-2); }
-.chart .dot-last { fill: var(--red); }
+.chart .dot-cross { fill: var(--red); }
 
 .tl { list-style: none; margin: 10px 0 0; padding: 0; }
 .tl li {

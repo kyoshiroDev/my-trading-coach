@@ -110,6 +110,9 @@ export interface AutopsyRow {
 /** Lignes de la chronologie, dans l'ordre de l'API. */
 export function autopsyRows(r: AccountIncidentReport): AutopsyRow[] {
   const cur = r.account.currency;
+  // Distance avant le trade : seul un passage d'au-dessus de la limite à zéro ou dessous est un
+  // franchissement (en rouge). Déjà sous la limite avant la séance : aucune ligne marquée.
+  let before = r.kpis.startDistance;
   let crossedDone = false;
   return r.timeline.map((e, i) => {
     if (e.type === 'alert') {
@@ -119,8 +122,9 @@ export function autopsyRows(r: AccountIncidentReport): AutopsyRow[] {
         meta: `Enregistrée par MyTradingCoach, ${next}`, alert: true, afterAlert: false, crossing: false,
       };
     }
-    const crossing = !crossedDone && e.distanceAfter != null && e.distanceAfter <= 0;
+    const crossing = !crossedDone && before != null && before > 0 && e.distanceAfter != null && e.distanceAfter <= 0;
     if (crossing) crossedDone = true;
+    if (e.distanceAfter != null) before = e.distanceAfter;
     return {
       key: e.tradeId, time: clock(e.at),
       title: `${e.side} ${e.asset}${e.quantity != null ? ` · ${qty(e.quantity)} contrat${e.quantity > 1 ? 's' : ''}` : ''}`,
@@ -135,7 +139,8 @@ export interface DistanceChart {
   width: number;
   height: number;
   path: string;
-  points: { x: number; y: number; last: boolean }[];
+  /** `crossing` : point où la distance passe sous la limite (rouge), au plus un. */
+  points: { x: number; y: number; last: boolean; crossing: boolean }[];
   /** Ligne de la limite estimée (distance 0). */
   zeroY: number;
   /**
@@ -168,7 +173,10 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
   const step = (width - PAD * 2) / (pts.length - 1);
   const x = (i: number) => PAD + i * step;
   const y = (v: number) => 10 + ((max - v) * (CHART_H - 20)) / (max - min);
-  const points = pts.map((p, i) => ({ x: round(x(i)), y: round(y(p.distance)), last: i === pts.length - 1 }));
+  const crossAt = pts.findIndex((p, i) => i > 0 && pts[i - 1].distance > 0 && p.distance <= 0);
+  const points = pts.map((p, i) => ({
+    x: round(x(i)), y: round(y(p.distance)), last: i === pts.length - 1, crossing: i === crossAt,
+  }));
   const path = points.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
 
   // Alerte : placée entre le trade d'avant et celui d'après, au prorata de l'heure.

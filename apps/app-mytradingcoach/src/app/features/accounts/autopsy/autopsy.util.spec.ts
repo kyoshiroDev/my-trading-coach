@@ -76,6 +76,16 @@ describe('autopsy.util — courbe de distance', () => {
     expect(distanceChart(r, 358)!.alerts[0].anchor).toBe('start');
   });
 
+  it('rouge réservé au vrai franchissement : point et ligne marqués seulement d’au-dessus à dessous (revue #712)', () => {
+    const c = distanceChart(mockupReport(), 358)!;
+    expect(c.points.map((p) => p.crossing)).toEqual([false, false, false, false, false, true]);
+    expect(autopsyRows(mockupReport()).filter((row) => row.crossing).map((row) => row.key)).toEqual(['t5']);
+    // Déjà sous la limite avant la séance, trade gagnant : rien en rouge.
+    const r = alreadyCrossedReport();
+    expect(distanceChart(r, 358)!.points.some((p) => p.crossing)).toBe(false);
+    expect(autopsyRows(r)[0]).toMatchObject({ tone: 'pos', crossing: false });
+  });
+
   it("séance d'un seul trade : une seule heure sous l'axe (revue #712)", () => {
     const c = distanceChart(alreadyCrossedReport(), 358)!;
     expect([c.startLabel, c.endLabel]).toEqual(['21:12', '']);
