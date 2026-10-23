@@ -40,6 +40,12 @@ beforeAll(async () => {
         res.on('close', () => clearInterval(t));
         return;
       }
+      if (req.url === '/stream') {
+        res.writeHead(201);
+        const t = setInterval(() => res.write(Buffer.alloc(4096, 'b')), 20);
+        res.on('close', () => clearInterval(t));
+        return;
+      }
       if (req.url === '/big') { res.writeHead(201); res.end(Buffer.alloc(5 * 1024 * 1024, 'a')); return; }
       res.writeHead(201);
       res.end();
@@ -80,6 +86,12 @@ describe('postWithLimits', () => {
     const t0 = Date.now();
     expect(await post('/big')).toBe(201);
     expect(Date.now() - t0).toBeLessThan(1500);
+  });
+
+  it('flux sans fin de 4 Ko toutes les 20 ms : coupé au plafond, bien avant l’échéance (revue M14)', async () => {
+    const t0 = Date.now();
+    expect(await post('/stream')).toBe(201);
+    expect(Date.now() - t0).toBeLessThan(400);
   });
 
   it('redirection : rendue telle quelle, jamais suivie', async () => {
