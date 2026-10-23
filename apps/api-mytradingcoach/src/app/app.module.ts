@@ -32,6 +32,7 @@ import { RetentionModule } from '../modules/retention/retention.module';
 import { TradovateModule } from '../modules/integrations/tradovate/tradovate.module';
 import { PropFirmsModule } from '../modules/prop-firms/prop-firms.module';
 import { AdminPushModule } from '../modules/admin-push/admin-push.module';
+import { TraderPushModule } from '../modules/push/trader-push.module';
 import { BehaviorModule } from '../modules/behavior/behavior.module';
 import { AutoCampaignsModule } from '../modules/resend/crons/auto-campaigns.module';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -112,6 +113,7 @@ import { RedisService } from '../modules/infra/redis.service';
     PropFirmsModule,
     RetentionModule,
     AdminPushModule,
+    TraderPushModule,
     BehaviorModule,
     AutoCampaignsModule,
   ],
