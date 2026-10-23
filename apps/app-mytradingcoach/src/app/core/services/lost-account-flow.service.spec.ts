@@ -65,7 +65,7 @@ describe('LostAccountFlowService (compte perdu)', () => {
     expect(store.load).toHaveBeenCalled();
     expect(tradesStore.reset).toHaveBeenCalled();
     expect(flow.choiceId()).toBeNull();
-    expect(toast.visible()[0]).toMatchObject({ type: 'success', message: '« Apex 50K #1 » archivé : il sort de tes statistiques.' });
+    expect(toast.visible()[0]).toMatchObject({ type: 'success', message: '« Apex 50K #1 » archivé\u00a0: il sort de tes statistiques.' });
   });
 
   it("toast de confirmation : « Voir l'autopsie » ouvre la dernière autopsie du compte (#669)", async () => {
@@ -86,7 +86,7 @@ describe('LostAccountFlowService (compte perdu)', () => {
     await flow.confirmChoice('archive');
     toast.visible()[0].action!.run();
     expect(router.navigate).not.toHaveBeenCalled();
-    expect(toast.visible().some((x) => x.message.startsWith("Pas d'autopsie pour ce compte"))).toBe(true);
+    expect(toast.visible().some((x) => x.message.startsWith("Pas d'autopsie pour ce compte\u00a0:"))).toBe(true);
   });
 
   it('Garder comme échoué → PATCH FAILED', async () => {

@@ -34,14 +34,14 @@ describe('autopsy.util — en-tête et KPI de la maquette', () => {
 describe('autopsy.util — chronologie', () => {
   it('lignes de la maquette : trade, alerte, « après l’alerte », trade du franchissement', () => {
     const rows = autopsyRows(mockupReport());
-    expect(rows[0]).toMatchObject({ time: '09:34', title: 'LONG MNQ · 2 contrats', pnl: '+$80', tone: 'pos', meta: 'Distance à la limite : $1,080' });
+    expect(rows[0]).toMatchObject({ time: '09:34', title: 'LONG MNQ · 2 contrats', pnl: '+$80', tone: 'pos', meta: 'Distance à la limite\u00a0: $1,080' });
     expect(rows[3]).toMatchObject({
-      time: '10:44', title: "Alerte : pertes d'affilée", alert: true,
+      time: '10:44', title: "Alerte\u00a0: pertes d'affilée", alert: true,
       meta: 'Enregistrée par MyTradingCoach, trade suivant 5 min plus tard',
     });
     expect(rows.filter((r) => r.afterAlert).map((r) => r.key)).toEqual(['t4', 't5']);
     expect(rows.filter((r) => r.crossing).map((r) => r.key)).toEqual(['t5']);
-    expect(rows[5].meta).toBe('Distance à la limite : -$50');
+    expect(rows[5].meta).toBe('Distance à la limite\u00a0: -$50');
   });
 });
 

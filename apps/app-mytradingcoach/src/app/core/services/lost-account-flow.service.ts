@@ -81,8 +81,8 @@ export class LostAccountFlowService {
     this.run(this.api.update(a.id, { status, confirmIncident: true }), {
       success: () =>
         choice === 'archive'
-          ? `« ${a.label} » archivé : il sort de tes statistiques.`
-          : `« ${a.label} » marqué comme échoué : il sort de tes statistiques.`,
+          ? `« ${a.label} » archivé\u00a0: il sort de tes statistiques.`
+          : `« ${a.label} » marqué comme échoué\u00a0: il sort de tes statistiques.`,
       fallback: "Le statut du compte n'a pas pu être enregistré.",
       done: () => this.choiceId.set(null),
       // Autopsie de la séance (#669), créée ou confirmée par le serveur avec ce statut.
@@ -150,7 +150,7 @@ export class LostAccountFlowService {
       next: (res) => {
         const latest = res.data?.[0];
         if (latest) void this.router.navigate(['/accounts', accountId, 'autopsie', latest.id]);
-        else this.toast.info("Pas d'autopsie pour ce compte : aucune limite franchie n'a été relevée sur ses trades.");
+        else this.toast.info("Pas d'autopsie pour ce compte\u00a0: aucune limite franchie n'a été relevée sur ses trades.");
       },
       error: (err: HttpErrorResponse) => this.toast.error(apiErrorMessage(err, "L'autopsie n'a pas pu être ouverte.")),
     });

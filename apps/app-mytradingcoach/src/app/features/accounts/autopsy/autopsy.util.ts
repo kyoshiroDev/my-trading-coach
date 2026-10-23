@@ -115,7 +115,7 @@ export function autopsyRows(r: AccountIncidentReport): AutopsyRow[] {
     if (e.type === 'alert') {
       const next = e.nextTradeMinutes == null ? 'aucun trade ensuite' : `trade suivant ${e.nextTradeMinutes} min plus tard`;
       return {
-        key: `a${i}`, time: clock(e.at), title: `Alerte : ${e.label}`, pnl: null, tone: null,
+        key: `a${i}`, time: clock(e.at), title: frenchSpacing(`Alerte : ${e.label}`), pnl: null, tone: null,
         meta: `Enregistrée par MyTradingCoach, ${next}`, alert: true, afterAlert: false, crossing: false,
       };
     }
@@ -125,7 +125,7 @@ export function autopsyRows(r: AccountIncidentReport): AutopsyRow[] {
       key: e.tradeId, time: clock(e.at),
       title: `${e.side} ${e.asset}${e.quantity != null ? ` · ${qty(e.quantity)} contrat${e.quantity > 1 ? 's' : ''}` : ''}`,
       pnl: signedMoney(e.net, cur), tone: e.net < 0 ? 'neg' : e.net > 0 ? 'pos' : null,
-      meta: e.distanceAfter != null ? `Distance à la limite : ${distanceMoney(e.distanceAfter, cur)}` : 'Distance non relevée',
+      meta: e.distanceAfter != null ? frenchSpacing(`Distance à la limite : ${distanceMoney(e.distanceAfter, cur)}`) : 'Distance non relevée',
       alert: false, afterAlert: e.afterAlert, crossing,
     };
   });

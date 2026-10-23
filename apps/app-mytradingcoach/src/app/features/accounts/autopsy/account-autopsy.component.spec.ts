@@ -59,7 +59,9 @@ describe('Autopsie — page', () => {
     expect(q('autopsy-timeline')!.querySelectorAll('li')).toHaveLength(6);
     expect(q('autopsy-timeline')!.textContent).toContain("Après l'alerte");
     expect(q('autopsy-findings')!.querySelectorAll('li')).toHaveLength(3);
-    expect(el.textContent).toContain("L'heure d'entrée n'est pas enregistrée : la distance est une estimation calculée sur les trades clôturés.");
+    expect(el.textContent).toContain("L'heure d'entrée n'est pas enregistrée\u00a0: la distance est une estimation calculée sur les trades clôturés.");
+    // Espace insécable devant « : ; ! ? » partout sur la page (revue #712).
+    expect(el.textContent).not.toMatch(/ [:;!?]/);
     expect(q('autopsy-ai-locked')!.textContent).toContain('Essayer Premium · 1 mois offert');
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
   });
