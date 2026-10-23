@@ -10,3 +10,4 @@ export * from './admin';
 export * from './admin-push';
 export * from './debrief';
 export * from './prop-firm';
+export * from './incident';
