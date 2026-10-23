@@ -12,7 +12,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   LucideUser as User,
@@ -133,6 +133,7 @@ function emptyForm(): AccountFormState {
     FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
     PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, AccountPayoutsComponent,
+    RouterLink,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
