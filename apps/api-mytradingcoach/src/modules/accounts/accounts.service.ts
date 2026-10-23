@@ -242,7 +242,7 @@ export class AccountsService {
   async list(
     userId: string,
     options: RuleMetricsOptions = {},
-  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics; floorReached: boolean })[]> {
+  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics; floorReached: boolean; openIncidentId: string | null })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
     const rows = await this.prisma.tradingAccount.findMany({
       where: { userId },
@@ -250,6 +250,8 @@ export class AccountsService {
       include: {
         propFirmPlan: { select: PLAN_SELECT },
         brokerConnections: { select: { provider: true, ...BROKER_SELECT } },
+        // Autopsie ouverte la plus récente (#669) : lien « Voir l'autopsie » de Mes comptes.
+        incidents: { where: { dismissedAt: null }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true } },
       },
     });
     if (rows.length === 0) return [];
@@ -296,8 +298,9 @@ export class AccountsService {
       const summary = summarizePayouts(list);
       if (summary) payoutsByAccount.set(accountId, summary);
     }
-    const accounts = rows.map(({ propFirmPlan, brokerConnections, ...a }) => ({
+    const accounts = rows.map(({ propFirmPlan, brokerConnections, incidents, ...a }) => ({
       account: a,
+      openIncidentId: incidents[0]?.id ?? null,
       plan: toRulePlan(propFirmPlan),
       broker: toRuleBroker(brokerConnections.find((c) => c.brokerCashBalance != null) ?? null),
       // Compte connecté via Tradovate : la plateforme est connue, quoi qu'ait saisi l'utilisateur.
@@ -315,13 +318,13 @@ export class AccountsService {
       sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
     ]);
 
-    return accounts.map(({ account, plan, broker, connectedPlatform, official, payouts }) => {
+    return accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
       const metrics = this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
         sessions.get(account.id) ?? [], payouts, options,
       );
       // Compte perdu : plancher estimé atteint → bandeau côté front, statut inchangé (l'utilisateur confirme).
-      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown) };
+      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown), openIncidentId };
     });
   }
 

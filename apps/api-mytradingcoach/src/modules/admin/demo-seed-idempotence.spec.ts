@@ -120,6 +120,8 @@ function fakePrisma(calls: Call[]) {
     brokerDailyClose: model('brokerDailyClose'),
     accountRiskDay: model('accountRiskDay'),
     propRiskEvent: model('propRiskEvent'),
+    behaviorAlert: model('behaviorAlert'),
+    accountIncident: model('accountIncident'),
     // Catalogue synchronisé : les deux plans des comptes démo existent.
     propFirmPlan: { findMany: vi.fn(async () => [{ id: 'apex-eod-50k' }, { id: 'tradeify-select-flex-50k' }]) },
   };

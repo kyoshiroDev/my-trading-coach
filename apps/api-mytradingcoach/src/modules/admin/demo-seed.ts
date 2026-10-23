@@ -11,7 +11,7 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
-import { LOST_DEMO_ACCOUNTS, buildLostDemoTrades } from './demo-data/lost-accounts';
+import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 
 
 /**
@@ -37,6 +37,8 @@ export interface DemoSeedResult {
   sessions: number; recaps: number; debriefs: number; accounts: number;
   /** Comptes échoué et archivé (hors des chiffres et du capital des comptes actifs). */
   lostAccounts: number;
+  /** Autopsie d'exemple du compte échoué (#669) : 1, ou 0 sans dernière séance. */
+  incidents: number;
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
 
@@ -202,13 +204,44 @@ export async function seedTradingData(
     });
     lostIdByKey.set(a.key, created.id);
   }
-  for (const t of buildLostDemoTrades(now)) {
+  const lostTrades = buildLostDemoTrades(now);
+  for (const t of lostTrades) {
     await prisma.trade.create({
       data: {
         userId: user.id, accountId: lostIdByKey.get(t.account)!,
         asset: t.asset, side: t.side, entry: t.entry, exit: t.exit, quantity: t.quantity,
         pnl: t.pnl, commission: t.commission, setupId: setupIdFor(t.setup),
         session: t.session, timeframe: t.timeframe, tags: ['DEMO'], tradedAt: t.tradedAt,
+      },
+    });
+  }
+
+  // Autopsie d'exemple (#669) sur le compte échoué : séance de casse avec son alerte et ses paliers
+  // de marge, échec confirmé depuis l'autopsie, analyse PRÉENREGISTRÉE (aucun appel IA, la page la
+  // signale comme exemple). Supprimée avec le compte (cascade) et recréée à chaque seed.
+  const incident = buildLostDemoIncident(lostTrades, tradingDay);
+  const failedId = lostIdByKey.get('apexFailed');
+  if (incident && failedId) {
+    const tradeDate = new Date(`${incident.day}T00:00:00.000Z`);
+    await prisma.behaviorAlert.createMany({
+      data: [{
+        userId: user.id, accountId: failedId, tradeDay: tradeDate, type: incident.alert.type, severity: 'high',
+        message: incident.alert.message, createdAt: incident.alert.at,
+      }],
+    });
+    await prisma.propRiskEvent.createMany({
+      data: incident.propEvents.map((e) => ({
+        userId: user.id, accountId: failedId, tradeDate, kind: 'drawdown', level: e.level,
+        data: { remaining: e.remaining, limit: incident.snapshot.limit, breach: null }, createdAt: e.at,
+      })),
+    });
+    await prisma.accountIncident.create({
+      data: {
+        userId: user.id, accountId: failedId, kind: 'drawdown', period: 'account', tradeDate, source: 'live',
+        data: incident.snapshot, failedByIncidentAt: incident.aiGeneratedAt,
+        // Texte d'exemple réservé au compte démo (la page le signale comme tel). Un compte de test
+        // rempli par `seed:user` n'en a pas : son analyse suit le vrai parcours.
+        ...(opts.brokerShowcase ? { aiAnalysis: DEMO_INCIDENT_ANALYSIS, aiGeneratedAt: incident.aiGeneratedAt } : {}),
       },
     });
   }
@@ -412,6 +445,7 @@ export async function seedTradingData(
     grossPnl: stats.grossPnl, fees: stats.fees, redDays: stats.redDays, tradingDays: stats.tradingDays,
     sessions: days.filter((d) => d.trades.length).length, recaps, debriefs, accounts: DEMO_ACCOUNTS.length,
     lostAccounts: LOST_DEMO_ACCOUNTS.length,
+    incidents: incident && failedId ? 1 : 0,
     bySetup: stats.bySetup, byAccount: stats.byAccount,
   };
 }

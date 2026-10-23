@@ -102,6 +102,17 @@ describe('Mes comptes · compte perdu', () => {
     expect(q('account-retry-t')).toBeNull();
   });
 
+  it("« Voir l'autopsie » : sur un compte échoué ou archivé qui en a une (#669), jamais sinon", () => {
+    const list = LIST().map((a) =>
+      a.id === 'a1' ? { ...a, openIncidentId: 'inc-1' } : a.id === 'l' ? { ...a, openIncidentId: 'inc-2' } : a);
+    const { q } = setup(list);
+    expect(q('account-autopsy-a1')!.textContent!.trim()).toBe("Voir l'autopsie");
+    expect(q('account-autopsy-l')).not.toBeNull();
+    expect(q('account-autopsy-a2')).toBeNull();
+    const { q: q2 } = (TestBed.resetTestingModule(), setup(LIST()));
+    expect(q2('account-autopsy-a1')).toBeNull();
+  });
+
   it('archivés : section repliée « 1 COMPTE ARCHIVÉ », hors de la liste principale', () => {
     const { q } = setup(LIST());
     const section = q('archived-accounts') as HTMLDetailsElement;

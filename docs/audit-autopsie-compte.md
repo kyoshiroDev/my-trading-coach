@@ -164,3 +164,21 @@ journée, constats et `aiAnalysis` **écrits en dur** dans le seed (aucun appel 
 - Déclencheurs : alerte `breached` en direct, fin d'import / synchro (`importTrades`), saisie
   d'un trade, `PATCH /accounts/:id` vers ÉCHOUÉ (confirmation, ou incident `manual`).
 - E-mail : **pas dans la phase 1** (texte à valider par Greg avant tout envoi).
+
+## 7. Phase 2 livrée (application, PR #709)
+
+Page `/accounts/:accountId/autopsie/:incidentId` (paresseuse), entrées depuis Mes comptes et le toast
+de la feuille de choix, `openIncidentId` dans `GET /accounts`. **Règle validée par Greg** : « Archiver »
+depuis la feuille de choix confirme l'incident comme « Garder comme échoué » (idempotent). Écarts
+validés : nouvelle tentative sur un compte Échoué seulement, page bornée à 1180 px, espace insécable
+devant `: ; ! ?`, « Voir l'autopsie » sur sa ligne en mobile.
+
+## 8. Phase 3 (démo et documentation)
+
+- Démo : séance de casse sur « Apex 50k · Éval #1 » (5 trades, alerte, paliers de marge), incident
+  confirmé, analyse **préenregistrée** signalée « Exemple » (aucun appel IA). Vitrine démo seulement.
+- Verrou d'analyse libéré quand l'appel IA échoue ou revient vide (nouvel essai possible).
+- Agents mis à jour (nestjs, prisma, angular, plans, tests), note de version
+  `docs/notes-de-version/2026-10-autopsie.md`.
+- Proposés à Greg, non modifiés : paragraphe de la politique de confidentialité (Anthropic), question
+  de FAQ « Qu'est-ce que l'autopsie ? » (à publier quand la feature sera en prod).

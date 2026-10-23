@@ -1,12 +1,13 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ConfirmService } from '@mtc/front-ui';
 import { nextAttemptLabel } from '@mtc/shared';
 import { AccountsApi, TradingAccount } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradesStore } from '@app/core/stores/trades.store';
-import { ToastService } from '@app/core/services/toast.service';
+import { ToastService, type ToastAction } from '@app/core/services/toast.service';
 import { apiErrorMessage } from '@app/core/utils/api-error';
 
 /** Sort d'un compte dont le plancher est atteint (feuille « Apex 50K #1 est échoué »). */
@@ -25,6 +26,7 @@ export class LostAccountFlowService {
   private readonly tradesStore = inject(TradesStore);
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
+  private readonly router = inject(Router);
 
   /** Feuille de choix ouverte pour ce compte. */
   readonly choiceId = signal<string | null>(null);
@@ -82,6 +84,8 @@ export class LostAccountFlowService {
           : `« ${a.label} » marqué comme échoué : il sort de tes statistiques.`,
       fallback: "Le statut du compte n'a pas pu être enregistré.",
       done: () => this.choiceId.set(null),
+      // Autopsie de la séance (#669), créée ou confirmée par le serveur avec ce statut.
+      action: { label: "Voir l'autopsie", run: () => this.openAutopsy(a.id) },
     });
   }
 
@@ -135,10 +139,33 @@ export class LostAccountFlowService {
     });
   }
 
+  /**
+   * Bouton « Voir l'autopsie » du toast de confirmation. La feuille de choix ne s'ouvre que sur
+   * une limite franchie (bandeau, alerte live) : le serveur a créé ou confirmé l'autopsie avec ce
+   * statut. Elle est cherchée au clic ; s'il n'y en a pas, on le dit.
+   */
+  private openAutopsy(accountId: string): void {
+    this.api.incidents(accountId).subscribe({
+      next: (res) => {
+        const latest = res.data?.[0];
+        if (latest) void this.router.navigate(['/accounts', accountId, 'autopsie', latest.id]);
+        else this.toast.info("Pas d'autopsie pour ce compte : aucune limite franchie n'a été relevée sur ses trades.");
+      },
+      error: (err: HttpErrorResponse) => this.toast.error(apiErrorMessage(err, "L'autopsie n'a pas pu être ouverte.")),
+    });
+  }
+
   /** Mutation + rechargement des comptes et des trades (les chiffres changent avec les statuts). */
   private run<T>(
     req$: Observable<T>,
-    opts: { success: (res: T | null) => string; fallback: string; done?: () => void; notFoundIsSuccess?: boolean },
+    opts: {
+      success: (res: T | null) => string;
+      fallback: string;
+      done?: () => void;
+      notFoundIsSuccess?: boolean;
+      /** Bouton facultatif du toast de succès. */
+      action?: ToastAction;
+    },
   ): void {
     this.busy.set(true);
     const ok = (res: T | null) => {
@@ -146,7 +173,7 @@ export class LostAccountFlowService {
       opts.done?.();
       this.store.load();
       this.tradesStore.reset();
-      this.toast.success(opts.success(res));
+      this.toast.success(opts.success(res), opts.action ? { action: opts.action } : undefined);
     };
     req$.subscribe({
       next: (res) => ok(res),
