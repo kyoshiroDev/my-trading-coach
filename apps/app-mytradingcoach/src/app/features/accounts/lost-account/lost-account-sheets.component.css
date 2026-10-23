@@ -171,10 +171,11 @@
 }
 
 .la-btn.pri {
-  background: var(--cyan);
-  border-color: var(--cyan);
-  color: var(--bg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text);
 }
+.la-btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .la-btn.ghost {
   background: transparent;
@@ -182,7 +183,7 @@
 }
 
 .la-btn:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--blue-bright);
   outline-offset: 2px;
 }
 

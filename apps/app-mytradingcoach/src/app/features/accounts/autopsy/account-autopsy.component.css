@@ -54,8 +54,8 @@
 .chart .zero { stroke: var(--red); stroke-dasharray: 4 4; stroke-opacity: .7; }
 .chart .alert-mark { fill: var(--yellow); fill-opacity: .8; }
 .chart .alert-txt { fill: var(--yellow); }
-.chart .line { fill: none; stroke: var(--cyan); stroke-width: 2; }
-.chart .dot { fill: var(--cyan); }
+.chart .line { fill: none; stroke: var(--text-2); stroke-width: 2; }
+.chart .dot { fill: var(--text-2); }
 .chart .dot-last { fill: var(--red); }
 
 .tl { list-style: none; margin: 10px 0 0; padding: 0; }
@@ -92,8 +92,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--cyan) 12%, transparent);
-  color: var(--cyan);
+  background: var(--bg-3);
+  color: var(--text-2);
   font: 600 12px var(--font-mono);
   font-style: normal;
   display: flex;
@@ -139,10 +139,12 @@
   font: 600 14px var(--font-body);
   cursor: pointer;
 }
-/* Même CTA que le parcours « compte perdu » (lost-btn.pri de Mes comptes). */
-.btn.pri { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+/* Action principale en bleu, comme le parcours « compte perdu » (lost-btn.pri de Mes comptes) :
+   le cyan reste réservé à l'IA et au temps réel (design.md). */
+.btn.pri { background: var(--primary); border-color: var(--primary); color: var(--text); }
+.btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .btn.ghost { background: transparent; font-weight: 500; }
-.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .btn:disabled { opacity: .6; cursor: progress; }
 
 @container (min-width: 600px) {
