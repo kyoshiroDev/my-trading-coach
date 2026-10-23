@@ -6,6 +6,8 @@ import { AccountsService } from '../../accounts/accounts.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { PropRiskJournalService } from './prop-risk-journal.service';
+import { TraderNotifier } from '../../push/trader-notifier.service';
+import { TRADER_PUSH_MESSAGES } from '../../push/trader-push-messages';
 import { AccountIncidentsService } from '../../accounts/incidents/account-incidents.service';
 import { ALERT_LEVEL_RANK as RANK, ALERT_REARM_PCT, type PropAlertLevel, alertLevel } from './prop-alert-levels';
 
@@ -107,6 +109,8 @@ export class PropAlertsService implements OnModuleDestroy {
     @Optional() private readonly journal?: PropRiskJournalService,
     /** Autopsie d'un compte grillé (#669) : créée dès qu'une limite est dépassée en direct. */
     @Optional() private readonly incidents?: AccountIncidentsService,
+    /** Push vers les appareils du trader (#666). */
+    @Optional() private readonly notifier?: TraderNotifier,
   ) {}
 
   /** Regroupe la rafale de soldes d'un trade : une évaluation par compte, après le dernier. */
@@ -182,6 +186,14 @@ export class PropAlertsService implements OnModuleDestroy {
         accountId, accountLabel: account.label, currency: account.currency, kind: c.kind, level: c.level, ...c.payload,
       };
       emit('prop:alert', event);
+      // Push (#666) : seuil 10 %, limite franchie, bonnes nouvelles. Une limite franchie part
+      // toujours, même si la même alerte est partie il y a moins de 15 min.
+      const push = TRADER_PUSH_MESSAGES.propAlert(event);
+      if (push) {
+        this.notifier?.notify(userId, 'PROP_RULES', push, {
+          accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached',
+        });
+      }
       await this.journal
         ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
         .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));

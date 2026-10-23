@@ -21,10 +21,11 @@ function setup(opts: { premium?: boolean; demo?: boolean; mood?: string | null }
     trade: { findMany: vi.fn(async () => trades) },
     tradeSession: { findFirst: vi.fn(async () => (opts.mood === undefined ? { moodStart: 'TIRED' } : opts.mood ? { moodStart: opts.mood } : null)) },
   };
-  const svc = new TiltAlertsService(prisma as never, redis as never);
+  const notifier = { notify: vi.fn() };
+  const svc = new TiltAlertsService(prisma as never, redis as never, undefined, notifier as never);
   const events: TiltAlertEvent[] = [];
   const emit = (_e: 'tilt:alert', p: TiltAlertEvent) => events.push(p);
-  return { svc, emit, events, prisma, setTrades: (x: typeof trades) => { trades = x; } };
+  return { svc, emit, events, prisma, notifier, setTrades: (x: typeof trades) => { trades = x; } };
 }
 
 describe('TiltAlertsService.check', () => {
@@ -32,6 +33,14 @@ describe('TiltAlertsService.check', () => {
     const { svc, emit, events } = setup();
     await svc.check('u', 'a', emit, NOW);
     expect(events).toEqual([expect.objectContaining({ signal: 'revenge', ref: '2', accountId: 'a', accountLabel: 'Apex 50k', moodStart: 'TIRED' })]);
+  });
+
+  it('push (#666) : type Comportement, anti-spam par signal et par compte', async () => {
+    const { svc, emit, notifier } = setup();
+    await svc.check('u', 'a', emit, NOW);
+    expect(notifier.notify).toHaveBeenCalledWith(
+      'u', 'BEHAVIOR', expect.objectContaining({ title: 'Apex 50k', url: '/session' }), { accountId: 'a', dedupKey: 'tilt:revenge' },
+    );
   });
 
   it('une seule fois par trade, même réévalué', async () => {

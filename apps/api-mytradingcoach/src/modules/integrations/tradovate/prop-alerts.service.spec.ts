@@ -30,12 +30,13 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
   const accounts = {
     list: vi.fn(async () => [{ id: 'a', label: 'Apex 50k', currency: 'USD', status: opts.status ?? 'ACTIVE', metrics }]),
   };
-  const svc = new PropAlertsService(prisma as never, redis as never, accounts as never);
+  const notifier = { notify: vi.fn() };
+  const svc = new PropAlertsService(prisma as never, redis as never, accounts as never, undefined, undefined, notifier as never);
   const events: PropAlertEvent[] = [];
   const emit = (_e: 'prop:alert', p: PropAlertEvent) => events.push(p);
   const set = (m: Partial<Metrics>) => { metrics = { ...metrics, ...m }; };
   const dd = (pct: number, breached = false) => ({ pct, breached, margin: pct * 2000, maxDrawdown: 2000 });
-  return { svc, emit, events, set, dd, accounts, store };
+  return { svc, emit, events, set, dd, accounts, store, notifier };
 }
 
 const NOW = new Date(Date.UTC(2026, 5, 2, 16));
@@ -177,5 +178,38 @@ describe('PropAlertsService.check — consistency et bonnes nouvelles', () => {
     set({ progress: progress({ kind: 'payout', done: true, cycleAfter: '2026-06-01', requirements: [] }) });
     await svc.check('u', 'a', emit, NOW);
     expect(events.map((e) => e.kind)).toEqual(['payout', 'payout']);
+  });
+});
+
+describe('PropAlertsService → push (#666)', () => {
+  it('25 % : dans l’app seulement ; 10 % : push ; dépassé : push forcé malgré l’anti-spam', async () => {
+    const { svc, emit, set, dd, notifier } = setup();
+    set({ drawdown: dd(0.2) });
+    await svc.check('u', 'a', emit, NOW);
+    expect(notifier.notify).not.toHaveBeenCalled();
+
+    set({ drawdown: dd(0.05) });
+    await svc.check('u', 'a', emit, NOW);
+    expect(notifier.notify).toHaveBeenLastCalledWith(
+      'u', 'PROP_RULES', expect.objectContaining({ title: 'Apex 50k', url: '/session', urgency: 'high' }),
+      { accountId: 'a', dedupKey: 'prop:drawdown:critical', force: false },
+    );
+
+    set({ drawdown: dd(0, true) });
+    await svc.check('u', 'a', emit, NOW);
+    expect(notifier.notify).toHaveBeenLastCalledWith(
+      'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining('Drawdown max dépassé') }),
+      { accountId: 'a', dedupKey: 'prop:drawdown:breached', force: true },
+    );
+    expect(notifier.notify).toHaveBeenCalledTimes(2);
+  });
+
+  it('hors Premium ou compte démo : aucun push', async () => {
+    for (const opts of [{ premium: false }, { demo: true }]) {
+      const { svc, emit, set, dd, notifier } = setup(opts);
+      set({ drawdown: dd(0, true) });
+      await svc.check('u', 'a', emit, NOW);
+      expect(notifier.notify).not.toHaveBeenCalled();
+    }
   });
 });
