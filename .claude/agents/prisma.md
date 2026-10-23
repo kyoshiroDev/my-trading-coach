@@ -553,6 +553,17 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
 `20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).
 
+## Notifications push des traders (#666, 2026-10-23)
+
+`UserPushDevice` : un appareil (navigateur / PWA) d'un trader, même forme que
+`AdminPushSubscription` sans préférence par appareil ; `endpoint` unique (un endpoint déjà connu est
+rattaché au trader qui s'abonne), supprimé sur 404/410. `TraderPushPreference` (clé = `userId`) :
+réglages valables pour tous les appareils, `mutedTypes PushAlertType[]` (défaut `[RECAP]`),
+`quietStart` / `quietEnd` en minutes depuis minuit, heure de Paris (null = aucune). Pas de ligne =
+défauts. Table dédiée plutôt que des colonnes sur `User` (lu à chaque requête). Cascade à la
+suppression du User. Enum `PushAlertType` copié dans le contrat (`contracts-sync.spec.ts`).
+Migration `20261023180000_trader_push` (ajouts seuls, compatible N-1).
+
 ## Détecteurs de comportement (#602, phase 1, 2026-10-18)
 
 - `BehaviorBaseline` (migration `20261018120000_behavior_baseline`, table nouvelle, additive) : une

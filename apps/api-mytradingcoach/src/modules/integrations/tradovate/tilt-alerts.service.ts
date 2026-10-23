@@ -7,6 +7,8 @@ import { activeSessionWhere } from '../../session/active-session';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { detectTilt, type TiltFinding, type TiltTrade } from './tilt-detection';
 import { PropRiskJournalService } from './prop-risk-journal.service';
+import { TraderNotifier } from '../../push/trader-notifier.service';
+import { TRADER_PUSH_MESSAGES } from '../../push/trader-push-messages';
 
 /** Événement `tilt:alert` poussé à l'app (canal `/tradovate-live`). */
 export interface TiltAlertEvent extends TiltFinding {
@@ -42,6 +44,8 @@ export class TiltAlertsService implements OnModuleDestroy {
     private readonly redis: RedisService,
     /** Journal de séance (#373) : optionnel pour garder les tests unitaires légers. */
     @Optional() private readonly journal?: PropRiskJournalService,
+    /** Push vers les appareils du trader (#666). */
+    @Optional() private readonly notifier?: TraderNotifier,
   ) {}
 
   schedule(userId: string, accountId: string, emit: TiltAlertEmit): void {
@@ -103,7 +107,9 @@ export class TiltAlertsService implements OnModuleDestroy {
       // Une fois par trade (ou par journée) : SET NX, le premier worker qui écrit envoie.
       const sent = await this.redis.client.set(`tilt-alert:${accountId}:${f.signal}:${f.ref}`, '1', 'EX', KEY_TTL_S, 'NX');
       if (sent !== 'OK') continue;
-      emit('tilt:alert', { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null });
+      const event: TiltAlertEvent = { ...f, accountId, accountLabel: account.label, moodStart: session?.moodStart ?? null };
+      emit('tilt:alert', event);
+      this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.tilt(event), { accountId, dedupKey: `tilt:${f.signal}` });
       const { signal, ref: _ref, ...details } = f;
       await this.journal
         ?.recordEvent(userId, accountId, day, 'tilt', signal, details)

@@ -2184,6 +2184,44 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
 - **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
   `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.
+- Socle commun avec les traders (#666) : config VAPID et émetteur dans `modules/push/push-core.module.ts`
+  (`PUSH_CONFIG`, `PUSH_SENDER`), boucle d'envoi `deliverPush` (`push-delivery.ts`), DTO d'abonnement
+  `push/dto/push-subscription.dto.ts`. Une seule paire VAPID pour l'admin et l'app.
+
+## Notifications push des traders (#666, phase 1 API, 2026-10-23)
+
+Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-push-traders.md`.
+- Services métier → **`TraderNotifier.notify(userId, type, message, { accountId?, dedupKey, force? })`**
+  uniquement, injecté en `@Optional()` en dernier paramètre. Ne lève jamais, n'attend pas l'envoi.
+- **Filtres côté API, dans l'ordre** (`TraderNotifier.send`, renvoie la raison) : push actif, compte
+  démo, au moins un appareil, plan (`PUSH_PREMIUM_TYPES` : `isPremiumAccess`), type coupé
+  (`TraderPushPreference.mutedTypes`, défaut `[RECAP]`), heures silencieuses (`quiet-hours.ts`, heure de
+  Paris, plage à cheval sur minuit possible ; aucun fuseau par utilisateur en base), anti-spam Redis
+  `push:spam:<user>:<compte>:<dedupKey>` (`SET NX PX 15 min`, Redis indisponible = on envoie).
+  `force: true` (limite prop firm franchie) passe l'anti-spam mais **ni** les types coupés **ni** les
+  heures silencieuses ; la clé est posée quand même.
+- **Branchements** : `PropAlertsService` (`PROP_RULES` : 10 %, franchi, objectif, payout ; le 25 % et
+  l'approche de la consistency restent dans l'app ; `force` sur `breached`), `TiltAlertsService` et
+  `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
+  `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
+  (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
+  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+- **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
+  Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
+  Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),
+  comptes ACTIVE seulement (échoués et archivés exclus), PUSH SEULEMENT : ni événement d'app, ni journal
+  de séance (#373), ni incident `live` (#669). Même clé Redis que le direct ; un niveau sans push (25 %)
+  n'est pas marqué envoyé. Texte suivi de `BACKGROUND_NOTE` (« Relevé de la synchro automatique,
+  jusqu'à 15 min de décalage. »). Anti-tilt et comportement : jamais depuis le fond.
+- **Textes** (`trader-push-messages.ts`) : une phrase factuelle, libellé du compte, **aucun montant**
+  (écran verrouillé), « (estimation MyTradingCoach) » sur toute règle de firm, aucun conseil. Clic →
+  `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.
+  Payload `TraderPushPayload` (`@mtc/shared`), lu par le service worker maison de l'app (phase 2).
+- **Routes `/push/*`** (`JwtAuthGuard`, mutations bloquées en démo par `DemoReadOnlyGuard`) :
+  `GET settings`, `POST device` / `subscribe` / `unsubscribe` (endpoint dans le corps), `DELETE
+  devices/:id`, `PATCH preferences` (`quietHours: null` = désactivées), `POST test` (sans filtre, 3/min).
+  Au plus `MAX_PUSH_DEVICES` = 10 appareils par trader (le plus ancien part). L'endpoint n'est jamais
+  renvoyé ; libellé d'appareil déduit du User-Agent (`device-label.ts`).
 
 ## Détecteurs de comportement (#602, phase 1 : moteur + mode silencieux, 2026-10-18)
 

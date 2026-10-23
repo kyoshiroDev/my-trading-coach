@@ -18,13 +18,16 @@ function setup(before: unknown) {
   };
   const redis = { client: { set: vi.fn(), del: vi.fn(), exists: vi.fn(), get: vi.fn() } };
   const notifier = { notify: vi.fn() };
-  const service = new TradovateConnectionService(prisma as never, {} as never, config as never, redis as never, notifier as never);
-  return { service, prisma, notifier };
+  const trader = { notify: vi.fn() };
+  const service = new TradovateConnectionService(prisma as never, {} as never, config as never, redis as never, notifier as never, trader as never);
+  return { service, prisma, notifier, trader };
 }
 
 describe('markNeedsReconnect → push admin', () => {
   it('CONNECTED → à reconnecter : statut écrit et un push TRADOVATE_RECONNECT', async () => {
-    const { service, prisma, notifier } = setup({ status: BrokerConnectionStatus.CONNECTED, user: { isDemo: false } });
+    const { service, prisma, notifier } = setup({
+      status: BrokerConnectionStatus.CONNECTED, userId: 'u1', accountId: 'acc-1', account: { label: 'Apex 50K' }, user: { isDemo: false },
+    });
     await service.markNeedsReconnect('c1', 'test');
     expect(prisma.brokerConnection.update.mock.calls[0][0].data.status).toBe(BrokerConnectionStatus.NEEDS_RECONNECT);
     expect(notifier.notify).toHaveBeenCalledWith(
@@ -51,5 +54,31 @@ describe('markNeedsReconnect → push admin', () => {
     await service.markNeedsReconnect('c1', 'test');
     expect(prisma.brokerConnection.update).toHaveBeenCalledOnce();
     expect(notifier.notify).not.toHaveBeenCalled();
+  });
+});
+
+describe('markNeedsReconnect → push au trader (#666)', () => {
+  const before = { status: BrokerConnectionStatus.CONNECTED, userId: 'u1', accountId: 'acc-1', account: { label: 'Apex 50K' } };
+
+  it('au passage à « à reconnecter » : type Connexion (gratuit), lien vers Comptes, sans montant', async () => {
+    const { service, trader } = setup({ ...before, user: { isDemo: false } });
+    await service.markNeedsReconnect('c1', 'test');
+    expect(trader.notify).toHaveBeenCalledWith(
+      'u1',
+      'CONNECTION',
+      expect.objectContaining({ title: 'Connexion Tradovate à renouveler', url: '/accounts', body: expect.stringContaining('Apex 50K') }),
+      { accountId: 'acc-1', dedupKey: 'connection:tradovate' },
+    );
+  });
+
+  it('déjà « à reconnecter » ou compte démo : rien', async () => {
+    for (const b of [
+      { ...before, status: BrokerConnectionStatus.NEEDS_RECONNECT, user: { isDemo: false } },
+      { ...before, user: { isDemo: true } },
+    ]) {
+      const { service, trader } = setup(b);
+      await service.markNeedsReconnect('c1', 'test');
+      expect(trader.notify).not.toHaveBeenCalled();
+    }
   });
 });

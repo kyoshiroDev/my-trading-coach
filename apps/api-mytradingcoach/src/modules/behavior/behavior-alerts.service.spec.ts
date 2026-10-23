@@ -45,10 +45,11 @@ function setup(opts: { demo?: boolean; seen?: Record<string, number> | null; pos
   };
   const accounts = { list: vi.fn(async () => [{ id: 'a', propFirmPlanId: null, type: 'FUNDED', metrics: { dailyLoss: null, currentBalance: 0, startingBalance: 0 } }]) };
   const baselines = { get: vi.fn(async () => baseline) };
-  const svc = new BehaviorAlertsService(prisma as never, redis as never, accounts as never, baselines as never);
+  const notifier = { notify: vi.fn() };
+  const svc = new BehaviorAlertsService(prisma as never, redis as never, accounts as never, baselines as never, notifier as never);
   const events: BehaviorAlertEvent[] = [];
   const emit = (_e: 'behavior:alert', p: BehaviorAlertEvent) => events.push(p);
-  return { svc, emit, events, created, store, prisma };
+  return { svc, emit, events, created, store, prisma, notifier };
 }
 
 afterEach(() => {
@@ -57,8 +58,9 @@ afterEach(() => {
 
 describe('BehaviorAlertsService.check', () => {
   it('nouvelle entrée après une perte : alertes ENREGISTRÉES, rien envoyé à l’app (UI désactivée)', async () => {
-    const { svc, emit, events, created } = setup();
+    const { svc, emit, events, created, notifier } = setup();
     expect(await svc.check('u', 'a', emit, NOW)).toBeGreaterThan(0);
+    expect(notifier.notify).not.toHaveBeenCalled();
     expect(created.map((c) => c['type'])).toEqual(expect.arrayContaining(['B_REVENGE', 'C3_MARTINGALE']));
     expect(created[0]).toMatchObject({ userId: 'u', accountId: 'a', tradeDay: new Date('2026-09-01T00:00:00.000Z'), sessionId: null });
     expect(events).toEqual([]);
@@ -66,9 +68,15 @@ describe('BehaviorAlertsService.check', () => {
 
   it('BEHAVIOR_ALERTS_UI=true : l’alerte part aussi vers l’app', async () => {
     process.env['BEHAVIOR_ALERTS_UI'] = 'true';
-    const { svc, emit, events, created } = setup();
+    const { svc, emit, events, created, notifier } = setup();
     await svc.check('u', 'a', emit, NOW);
     expect(events).toHaveLength(created.length);
+    // Push (#666) : un par alerte affichée, type Comportement, anti-spam par type d'alerte.
+    expect(notifier.notify).toHaveBeenCalledTimes(created.length);
+    expect(notifier.notify).toHaveBeenCalledWith(
+      'u', 'BEHAVIOR', expect.objectContaining({ title: 'Signal de comportement', url: '/session' }),
+      { accountId: 'a', dedupKey: `behavior:${created[0]['type'] as string}` },
+    );
   });
 
   it('anti-spam 15 min partagé : une 2e entrée du même type n’enregistre rien', async () => {
