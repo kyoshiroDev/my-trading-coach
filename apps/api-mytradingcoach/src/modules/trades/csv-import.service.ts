@@ -25,6 +25,7 @@ import {
 } from './csv-mapping';
 import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
+import { redactForAi } from './csv-ai-redaction';
 
 
 
@@ -486,11 +487,12 @@ export class CsvImportService {
       }
     }
 
-    const header = normalizedLines[0];
+    // Masquage fait UNE fois sur tout le fichier : les jetons restent stables d'un lot à l'autre.
+    const [header, ...redactedRows] = redactForAi(normalizedLines);
     const allTrades: ClaudeTrade[] = [];
     try {
-      for (let i = 0; i < dataLines.length; i += AI_BATCH) {
-        const chunk = [header, ...dataLines.slice(i, i + AI_BATCH)].join('\n');
+      for (let i = 0; i < redactedRows.length; i += AI_BATCH) {
+        const chunk = [header, ...redactedRows.slice(i, i + AI_BATCH)].join('\n');
         const parsed = await this.callClaudeForChunk(chunk, filename, styleNote, userId);
         allTrades.push(...parsed.trades);
         if (parsed.errors?.length) {
@@ -712,7 +714,8 @@ export class CsvImportService {
     normalizedLines: string[],
     userId?: string,
   ): Promise<CsvMapping | null> {
-    const echantillon = normalizedLines.slice(0, MAPPING_SAMPLE_ROWS + 1).join('\n');
+    // Valeurs d'identification masquées, en-tête intact (csv-ai-redaction.ts).
+    const echantillon = redactForAi(normalizedLines.slice(0, MAPPING_SAMPLE_ROWS + 1)).join('\n');
 
     const prompt = `Voici les premieres lignes d'un export de trades d'un broker inconnu.
 Deduis la correspondance des colonnes pour parser le fichier ENTIER sans le relire.
@@ -782,7 +785,9 @@ ${echantillon}`;
     styleNote: string,
     userId?: string,
   ): Promise<ClaudeResponse> {
-    const prompt = this.buildPrompt(filename, chunk, styleNote);
+    // Le nom du fichier n'est jamais envoyé (il peut contenir un nom ou un numéro de compte) :
+    // il ne sert qu'aux journaux, ici.
+    const prompt = this.buildPrompt(chunk, styleNote);
     const response = await this.anthropicClient.create(
       {
         model: AI_MODELS.analysis,
@@ -852,8 +857,8 @@ ${echantillon}`;
 
   // ── Prétraitement ───────────────────────────────────────────────────────────
 
-  private buildPrompt(filename: string, csv: string, styleNote = ''): string {
-    return `Fichier : ${filename}${styleNote}
+  private buildPrompt(csv: string, styleNote = ''): string {
+    return `Export de trades d'un broker.${styleNote}
 
 Ce CSV a été partiellement normalisé. Certains champs "entry" peuvent être 0
 si le broker n'exporte pas le prix d'entrée exact.

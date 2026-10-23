@@ -721,3 +721,64 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
     expect(msg).toContain('Premium');
   });
 });
+
+/**
+ * Ce que reçoit l'IA d'un fichier de broker inconnu : jamais le nom du fichier, jamais les valeurs
+ * des colonnes d'identification (en-tête gardé pour le mapping), 20 lignes au plus pour le mapping.
+ */
+describe("CsvImportService · données minimales envoyées à l'IA", () => {
+  const header = 'Account,Order ID,Symbol,Side,Qty,Entry,Exit,Close Time,PnL';
+  const rows = Array.from({ length: 40 }, (_, i) =>
+    `ACC-998877,${5000 + i},MNQ,Buy,1,${19800 + i},${19801 + i},2026-01-05 14:${String(i % 60).padStart(2, '0')}:00,2`);
+  const csv = [header, ...rows].join('\n');
+  const FILE = 'Jean Dupont compte 998877.csv';
+
+  const promptsOf = (create: ReturnType<typeof vi.fn>) =>
+    create.mock.calls.map(([p]) => JSON.stringify(p.messages) + JSON.stringify(p.system ?? ''));
+
+  it('mapping : en-tête visible, 20 lignes, valeurs masquées, aucun nom de fichier', async () => {
+    const svc = makeService();
+    const create = vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'pas de mapping' }], usage: { input_tokens: 1, output_tokens: 1 } });
+    (svc as any).anthropicClient.create = create;
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      await svc.parseCSV(Buffer.from(csv), FILE, undefined, PREMIUM_ACCESS).catch(() => undefined);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+    const mapping = create.mock.calls.find(([, meta]) => meta.feature === 'csv_mapping')![0];
+    const text = mapping.messages[0].content as string;
+    expect(text).toContain(header);
+    expect(text.match(/compte-1,id-\d+,MNQ/g)).toHaveLength(20);
+    for (const p of promptsOf(create)) {
+      expect(p).not.toMatch(/998877|Jean Dupont|\b50[0-3]\d\b/);
+    }
+  });
+
+  it('repli ligne par ligne : toutes les lignes masquées, jetons stables entre lots, aucun nom de fichier', async () => {
+    const svc = makeService();
+    const trade = { asset: 'MNQ', side: 'LONG', entry: 1, exit: 2, quantity: 1, pnl: 2, tradedAt: '2026-01-05T14:00:00Z', notes: null };
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify({ broker: 'x', trades: [trade], skipped: 0, errors: [] }) }],
+      usage: { input_tokens: 1, output_tokens: 1 },
+    });
+    (svc as any).anthropicClient.create = create;
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      await svc.parseCSV(Buffer.from(csv), FILE, undefined, PREMIUM_ACCESS);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+    const lots = create.mock.calls.filter(([, meta]) => meta.feature === 'csv_import');
+    expect(lots).toHaveLength(Math.ceil(40 / AI_BATCH));
+    const all = lots.map(([p]) => p.messages[0].content as string).join('\n');
+    expect(all).toContain(header);
+    expect(all.match(/compte-1,/g)).toHaveLength(40); // même compte, même jeton dans tous les lots
+    expect(all).toContain('id-40,');
+    for (const p of promptsOf(create)) {
+      expect(p).not.toMatch(/998877|Jean Dupont|Fichier :/);
+    }
+  });
+});
