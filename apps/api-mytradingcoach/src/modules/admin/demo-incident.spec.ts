@@ -4,6 +4,7 @@ import { seedTradingData } from './demo-seed';
 import { DEMO_INCIDENT_ANALYSIS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 import { tradingDay } from '../accounts/account-rules';
 import { buildIncidentReport } from '../accounts/incidents/incident-report';
+import { formatMoney } from '@mtc/shared';
 
 /**
  * Autopsie d'exemple du compte démo (#669) : une autopsie complète sur le compte échoué, avec un
@@ -86,6 +87,14 @@ describe("Autopsie d'exemple du compte démo", () => {
     await seedTradingData(prisma, user, NOW, { brokerShowcase: false });
     const data = writes.find((w) => w.model === 'accountIncident')!.data as Record<string, unknown>;
     expect(data['aiAnalysis']).toBeUndefined();
+  });
+
+  it("le texte d'exemple cite les montants nets affichés dans la chronologie (revue #712)", () => {
+    const trades = buildLostDemoTrades(NOW);
+    const inc = buildLostDemoIncident(trades, tradingDay)!;
+    const session = trades.filter((t) => t.account === 'apexFailed' && tradingDay(t.tradedAt) === inc.day);
+    const shown = session.slice(0, 3).map((t) => formatMoney(t.pnl - t.commission, 'USD', { decimals: 0 }));
+    expect(DEMO_INCIDENT_ANALYSIS).toContain(`(${shown.join(', ')})`);
   });
 
   it("le texte d'exemple reste factuel : formule imposée, ni conseil ni promesse", () => {
