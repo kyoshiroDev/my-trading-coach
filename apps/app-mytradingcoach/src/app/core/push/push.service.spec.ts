@@ -1,0 +1,204 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import type { TraderPushSettings } from '@mtc/shared';
+import { PushApi } from '../api/push.api';
+import { PUSH_BROWSER, type BrowserEnv, type PushBrowser } from './push-browser';
+import { PushService, browserState } from './push.service';
+
+/** États du push sur cet appareil (#666 phase 2) et règles d'abonnement. */
+
+const CHROME_ANDROID = 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
+const IPHONE_SAFARI = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1';
+const INSTAGRAM = `${IPHONE_SAFARI} Instagram 350.0.0`;
+
+const env = (over: Partial<BrowserEnv> = {}): BrowserEnv => ({
+  userAgent: CHROME_ANDROID, maxTouchPoints: 5, standalone: false, hasServiceWorker: true, hasPushManager: true,
+  notificationPermission: 'default', ...over,
+});
+
+const settings = (over: Partial<TraderPushSettings> = {}): TraderPushSettings => ({
+  enabled: true, publicKey: 'BPub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris', devices: [], ...over,
+});
+
+const fakeSub = (endpoint = 'https://fcm.googleapis.com/fcm/send/x') => ({
+  endpoint,
+  toJSON: () => ({ endpoint, keys: { p256dh: 'k', auth: 'a' } }),
+  unsubscribe: vi.fn(async () => true),
+});
+
+function setup(opts: { env?: BrowserEnv; settings?: TraderPushSettings | Error; sub?: ReturnType<typeof fakeSub> | null; deviceKnown?: boolean } = {}) {
+  let currentEnv = opts.env ?? env();
+  const browser: PushBrowser = {
+    env: () => currentEnv,
+    currentSubscription: vi.fn(async () => (opts.sub ?? null) as unknown as PushSubscription | null),
+    subscribe: vi.fn(async () => fakeSub() as unknown as PushSubscription),
+  };
+  const api = {
+    settings: vi.fn(async () => { if (opts.settings instanceof Error) throw opts.settings; return opts.settings ?? settings(); }),
+    device: vi.fn(async () => ({ subscribed: opts.deviceKnown ?? true, id: opts.deviceKnown === false ? null : 'd1' })),
+    subscribe: vi.fn(async () => ({ subscribed: true, id: 'd-new' })),
+    removeDevice: vi.fn(async () => ({ removed: true })),
+    preferences: vi.fn(async (input: { mutedTypes?: string[] }) => settings({ mutedTypes: (input.mutedTypes ?? ['RECAP']) as TraderPushSettings['mutedTypes'] })),
+    test: vi.fn(async () => ({ subscriptions: 1, delivered: 1, failed: 0, removed: 0 })),
+  };
+  TestBed.configureTestingModule({ providers: [{ provide: PUSH_BROWSER, useValue: browser }, { provide: PushApi, useValue: api }] });
+  return { service: TestBed.inject(PushService), browser, api, setEnv: (e: BrowserEnv) => { currentEnv = e; } };
+}
+
+afterEach(() => TestBed.resetTestingModule());
+
+describe('browserState', () => {
+  it.each([
+    ['navigateur intégré (Instagram)', env({ userAgent: INSTAGRAM }), 'in-app-browser'],
+    ['iPhone hors écran d’accueil', env({ userAgent: IPHONE_SAFARI }), 'ios-not-installed'],
+    ['iPhone installé', env({ userAgent: IPHONE_SAFARI, standalone: true }), 'supported'],
+    ['iPad (se présente comme un Mac tactile)', env({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', maxTouchPoints: 5 }), 'ios-not-installed'],
+    ['sans PushManager', env({ hasPushManager: false }), 'unsupported'],
+    ['sans service worker', env({ hasServiceWorker: false }), 'unsupported'],
+    ['sans API Notification', env({ notificationPermission: null }), 'unsupported'],
+    ['permission refusée', env({ notificationPermission: 'denied' }), 'denied'],
+    ['Chrome Android', env(), 'supported'],
+  ])('%s → %s', (_, e, state) => {
+    expect(browserState(e)).toBe(state);
+  });
+});
+
+describe('PushService.init', () => {
+  it('push coupé côté serveur : server-disabled, aucune lecture de l’appareil', async () => {
+    const { service, browser } = setup({ settings: settings({ enabled: false, publicKey: null }) });
+    await service.init();
+    expect(service.state()).toBe('server-disabled');
+    expect(browser.currentSubscription).not.toHaveBeenCalled();
+  });
+
+  it('réglages illisibles : section masquée (server-disabled), sans erreur affichée', async () => {
+    const { service } = setup({ settings: new Error('500') });
+    await service.init();
+    expect(service.state()).toBe('server-disabled');
+    expect(service.error()).toBeNull();
+  });
+
+  it('jamais de demande de permission au chargement', async () => {
+    const { service, browser } = setup();
+    await service.init();
+    expect(service.state()).toBe('supported');
+    expect(browser.subscribe).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [env({ userAgent: INSTAGRAM }), 'in-app-browser'],
+    [env({ userAgent: IPHONE_SAFARI }), 'ios-not-installed'],
+    [env({ hasPushManager: false }), 'unsupported'],
+    [env({ notificationPermission: 'denied' }), 'denied'],
+  ] as const)('état du navigateur repris tel quel : %#', async (e, state) => {
+    const { service } = setup({ env: e });
+    await service.init();
+    expect(service.state()).toBe(state);
+  });
+
+  it('appareil déjà abonné et connu du serveur : subscribed, appareil courant repéré', async () => {
+    const { service, api } = setup({ sub: fakeSub() });
+    await service.init();
+    expect(service.state()).toBe('subscribed');
+    expect(service.currentDeviceId()).toBe('d1');
+    expect(api.subscribe).not.toHaveBeenCalled();
+  });
+
+  it('abonnement du navigateur inconnu du serveur : resynchronisé', async () => {
+    const { service, api } = setup({ sub: fakeSub(), deviceKnown: false });
+    await service.init();
+    expect(api.subscribe).toHaveBeenCalledOnce();
+    expect(service.state()).toBe('subscribed');
+    expect(service.currentDeviceId()).toBe('d-new');
+  });
+
+  it('compte démo (lecture seule) : réglages lus, appareil jamais consulté', async () => {
+    const { service, api, browser } = setup({ sub: fakeSub() });
+    await service.init({ readOnly: true });
+    expect(service.settings()).not.toBeNull();
+    expect(api.device).not.toHaveBeenCalled();
+    expect(browser.currentSubscription).not.toHaveBeenCalled();
+  });
+});
+
+describe('PushService.enable', () => {
+  it('au clic : permission puis abonnement, appareil courant enregistré', async () => {
+    const { service, browser, api } = setup();
+    await service.init();
+    await service.enable();
+    expect(browser.subscribe).toHaveBeenCalledWith('BPub');
+    expect(api.subscribe).toHaveBeenCalledOnce();
+    expect(service.state()).toBe('subscribed');
+    expect(service.currentDeviceId()).toBe('d-new');
+  });
+
+  it('permission refusée dans la fenêtre du navigateur : état denied', async () => {
+    const { service, browser, setEnv } = setup();
+    await service.init();
+    vi.mocked(browser.subscribe).mockImplementationOnce(async () => {
+      setEnv(env({ notificationPermission: 'denied' }));
+      throw new Error('NotAllowedError');
+    });
+    await service.enable();
+    expect(service.state()).toBe('denied');
+  });
+
+  it('autre échec : message, état inchangé', async () => {
+    const { service, browser } = setup();
+    await service.init();
+    vi.mocked(browser.subscribe).mockRejectedValueOnce(new Error('réseau'));
+    await service.enable();
+    expect(service.state()).toBe('supported');
+    expect(service.error()).toContain('Réessaie');
+  });
+});
+
+describe('PushService réglages et appareils', () => {
+  it('interrupteur : envoi immédiat, retour arrière si l’API refuse', async () => {
+    const { service, api } = setup({ sub: fakeSub() });
+    await service.init();
+    expect(service.isTypeEnabled('RECAP')).toBe(false);
+    expect(await service.setTypeEnabled('RECAP', true)).toBe(true);
+    expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: [] });
+    expect(service.isTypeEnabled('RECAP')).toBe(true);
+
+    api.preferences.mockRejectedValueOnce(new Error('500'));
+    expect(await service.setTypeEnabled('BEHAVIOR', false)).toBe(false);
+    expect(service.isTypeEnabled('BEHAVIOR')).toBe(true);
+  });
+
+  it('heures silencieuses : null les désactive', async () => {
+    const { service, api } = setup({ sub: fakeSub() });
+    await service.init();
+    await service.setQuietHours({ start: 1320, end: 420 });
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 420 } });
+    await service.setQuietHours(null);
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: null });
+  });
+
+  it('retirer CET appareil : désabonné aussi côté navigateur, retour à supported', async () => {
+    const sub = fakeSub();
+    const { service, api } = setup({ sub });
+    await service.init();
+    expect(await service.removeDevice('d1')).toBe(true);
+    expect(api.removeDevice).toHaveBeenCalledWith('d1');
+    expect(sub.unsubscribe).toHaveBeenCalledOnce();
+    expect(service.state()).toBe('supported');
+  });
+
+  it('retirer un AUTRE appareil : cet appareil reste abonné', async () => {
+    const sub = fakeSub();
+    const { service } = setup({ sub });
+    await service.init();
+    await service.removeDevice('d-autre');
+    expect(sub.unsubscribe).not.toHaveBeenCalled();
+    expect(service.state()).toBe('subscribed');
+  });
+
+  it('10 appareils et celui-ci non abonné : limite atteinte', async () => {
+    const devices = Array.from({ length: 10 }, (_, i) => ({ id: `d${i}`, label: 'Chrome · Windows', createdAt: '2026-10-01T00:00:00.000Z', lastSuccessAt: null }));
+    const { service } = setup({ settings: settings({ devices }) });
+    await service.init();
+    expect(service.deviceLimitReached()).toBe(true);
+  });
+});

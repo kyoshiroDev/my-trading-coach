@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException, OnModuleInit, ServiceUna
 import type { PushAlertType } from '@prisma/client';
 import {
   DEFAULT_MUTED_PUSH_TYPES,
+  PUSH_MAX_DEVICES,
   PUSH_TIME_ZONE,
   type AdminPushTestResult,
   type TraderPushDeviceState,
@@ -17,7 +18,7 @@ import { TRADER_PUSH_MESSAGES, traderPushPayload, type TraderPushMessage } from 
 import type { SubscribePushDto } from './dto/push-subscription.dto';
 
 /** Appareils gardés par trader : au-delà, le plus ancien est remplacé (navigateurs réinstallés…). */
-export const MAX_PUSH_DEVICES = 10;
+export const MAX_PUSH_DEVICES = PUSH_MAX_DEVICES;
 
 /**
  * Abonnements Web Push des traders (#666) et livraison vers TOUS les appareils d'un trader.
