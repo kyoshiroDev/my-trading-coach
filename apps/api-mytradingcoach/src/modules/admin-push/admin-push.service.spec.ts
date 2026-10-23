@@ -4,7 +4,7 @@ import { AdminPushEvent, Role } from '@prisma/client';
 import { AdminPushService, hostOf } from './admin-push.service';
 import { AdminNotifier } from './admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from './push-messages';
-import type { PushSender } from './push-sender';
+import type { PushSender } from '../push/push-sender';
 import type { PushConfigResult } from '../../config/push-config';
 import type { PrismaService } from '../../prisma/prisma.service';
 

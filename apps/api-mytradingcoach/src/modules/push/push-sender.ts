@@ -2,6 +2,8 @@ import { WebPushError, sendNotification } from 'web-push';
 import type { PushConfig } from '../../config/push-config';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
+/** Résultat de `resolvePushConfig` (fourni par `PushCoreModule`). */
+export const PUSH_CONFIG = Symbol('PUSH_CONFIG');
 
 export interface PushTarget {
   endpoint: string;
