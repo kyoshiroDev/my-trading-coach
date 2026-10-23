@@ -82,6 +82,12 @@ describe('TraderPushService abonnements et réglages', () => {
     expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['old'] } } });
   });
 
+  it('réabonnement : l’appareil redevient le plus récent, jamais évincé à sa place (revue m3)', async () => {
+    const { service, db } = setup({ devices: [] });
+    await service.subscribe('u1', SUB, null);
+    expect(db.upsert.mock.calls[0][0].update.createdAt).toBeInstanceOf(Date);
+  });
+
   it('subscribe sans clés VAPID : 503', async () => {
     const { service } = setup({ config: { enabled: false, reason: 'off' } });
     await expect(service.subscribe('u1', SUB, null)).rejects.toBeInstanceOf(ServiceUnavailableException);
