@@ -16,10 +16,15 @@ type Metrics = { drawdown?: object | null; dailyLoss?: object | null };
 
 function makeDeps() {
   const prisma = {
-    user: { findUnique: vi.fn(async () => ({ ...PREMIUM, isDemo: false })) },
+    user: {
+      findUnique: vi.fn(async (): Promise<{ plan: Plan; role: Role; trialEndsAt: Date | null; isDemo: boolean }> => ({ ...PREMIUM, isDemo: false })),
+    },
     tradingAccount: {
-      findFirst: vi.fn(async () => ({ status: AccountStatus.ACTIVE })),
-      findUniqueOrThrow: vi.fn(async () => ({ id: 'acc', label: 'Apex 50K #1', currency: 'USD', status: AccountStatus.FAILED })),
+      findFirst: vi.fn(async (): Promise<{ status: AccountStatus }> => ({ status: AccountStatus.ACTIVE })),
+      findUniqueOrThrow: vi.fn(
+        async (): Promise<{ id: string; label: string; currency: string; status: AccountStatus }> =>
+          ({ id: 'acc', label: 'Apex 50K #1', currency: 'USD', status: AccountStatus.FAILED }),
+      ),
       count: vi.fn(async () => 1),
     },
     trade: {
@@ -38,7 +43,7 @@ function makeDeps() {
   };
   const metrics: Metrics = {};
   const accounts = {
-    list: vi.fn(async () => [{ id: 'acc', status: AccountStatus.ACTIVE, metrics }]),
+    list: vi.fn(async (): Promise<{ id: string; status: AccountStatus; metrics: Metrics }[]> => [{ id: 'acc', status: AccountStatus.ACTIVE, metrics }]),
     update: vi.fn(async (_u: string, id: string, dto: { status?: AccountStatus }) => ({ id, status: dto.status })),
   };
   const anthropic = {
