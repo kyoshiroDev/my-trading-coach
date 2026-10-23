@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Plan, Role } from '@prisma/client';
@@ -79,7 +80,11 @@ export class AccountsController {
     return this.incidents.get({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
   }
 
-  /** Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée. */
+  /**
+   * Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée.
+   * Débit borné ici, et côté service (verrou, délai après échec, essais par jour).
+   */
+  @Throttle({ default: { ttl: 60_000, limit: 6 } })
   @Get(':id/incidents/:incidentId/analysis')
   incidentAnalysis(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
     return this.incidents.analysis({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);

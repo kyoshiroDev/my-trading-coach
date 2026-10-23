@@ -28,8 +28,12 @@ const ONCE_PER_ACCOUNT = 'account';
 const PREVIOUS_SESSIONS = 60;
 /** Statuts qu'un incident confirmé a pu poser, et que « Ce n'est pas un échec » peut défaire. */
 const CLOSED_BY_INCIDENT: AccountStatus[] = [AccountStatus.FAILED, AccountStatus.ARCHIVED];
-/** Durée max du verrou d'analyse : couvre un appel bloqué ; un échec le libère tout de suite. */
+/** Durée max du verrou d'analyse : couvre un appel bloqué. Libéré seulement par son expiration. */
 const AI_LOCK_TTL_S = 3600;
+/** Après un échec ou une réponse vide : nouvel essai possible au bout de ce délai, pas avant. */
+export const AI_RETRY_DELAY_S = 120;
+/** Essais d'analyse au plus par incident et par journée, réussis ou non (coût IA borné). */
+export const AI_MAX_TRIES_PER_DAY = 3;
 
 export type IncidentAiState =
   | { status: 'ready'; text: string; generatedAt: Date }
@@ -220,12 +224,20 @@ export class AccountIncidentsService {
     if (user.isDemo || !this.anthropic.enabled) return unavailable;
 
     // Verrou par incident : deux ouvertures simultanées ne paient pas deux analyses. Un appel en
-    // échec (ou sans texte) le libère : la prochaine ouverture peut réessayer.
+    // échec (ou sans texte) ne le libère pas : il expire au bout de `AI_RETRY_DELAY_S`, puis un
+    // nouvel essai est possible, dans la limite de `AI_MAX_TRIES_PER_DAY` par jour.
     const lockKey = `incident-ai:${incident.id}`;
     const lock = await this.redis.client.set(lockKey, '1', 'EX', AI_LOCK_TTL_S, 'NX');
     if (lock !== 'OK') return unavailable;
-    const release = () => this.redis.client.del(lockKey).catch(() => undefined);
+    const retryLater = () => this.redis.client.expire(lockKey, AI_RETRY_DELAY_S).catch(() => undefined);
     try {
+      const triesKey = `incident-ai-tries:${incident.id}:${tradingDay(new Date())}`;
+      const tries = await this.redis.client.incr(triesKey);
+      if (tries === 1) await this.redis.client.expire(triesKey, 86_400);
+      if (tries > AI_MAX_TRIES_PER_DAY) {
+        await retryLater();
+        return unavailable;
+      }
       const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { currency: true } });
       const report = await this.report(incident, account.currency);
       const response = await this.anthropic.create(
@@ -239,7 +251,7 @@ export class AccountIncidentsService {
       );
       const text = responseText(response).trim();
       if (!text) {
-        await release();
+        await retryLater();
         return unavailable;
       }
       const generatedAt = new Date();
@@ -252,7 +264,7 @@ export class AccountIncidentsService {
       return { status: 'ready', text, generatedAt };
     } catch (err) {
       this.logger.warn(`Analyse d'incident non générée (${incident.id}) : ${(err as Error).message}`);
-      await release();
+      await retryLater();
       return unavailable;
     }
   }
