@@ -39,6 +39,12 @@ export interface PropAlertEvent {
 
 export type PropAlertEmit = (event: 'prop:alert', payload: PropAlertEvent) => void;
 
+/**
+ * Relevé par la synchro de fond (#666), app fermée : seulement les limites (drawdown, perte du
+ * jour) et les bonnes nouvelles. La consistency se juge en direct, dans la journée.
+ */
+export const BACKGROUND_ALERT_KINDS: readonly PropAlertKind[] = ['drawdown', 'daily_loss', 'objective', 'payout'];
+
 /** Consistency : avertir à 80 % du gain max du jour, réarmer sous 60 %. */
 export const CONSISTENCY_WARNING_RATIO = 0.8;
 export const CONSISTENCY_REARM_RATIO = 0.6;
@@ -128,7 +134,24 @@ export class PropAlertsService implements OnModuleDestroy {
     );
   }
 
-  async check(userId: string, accountId: string, emit: PropAlertEmit, now = new Date()): Promise<void> {
+  /**
+   * Relevé par la synchro de fond (#666, cron 15 min, app fermée) : mêmes métriques, même clé Redis
+   * que le direct (une alerte partie ne repart pas à l'ouverture de l'app), mais PUSH SEULEMENT :
+   * ni événement d'app, ni journal de séance « vue en direct » (#373), ni incident `live` (#669).
+   * Un niveau qui ne part pas en push (25 %) n'est pas marqué envoyé : l'app l'affichera en direct.
+   */
+  checkFromBackground(userId: string, accountId: string, now = new Date()): Promise<void> {
+    return this.check(userId, accountId, () => undefined, now, 'background');
+  }
+
+  async check(
+    userId: string,
+    accountId: string,
+    emit: PropAlertEmit,
+    now = new Date(),
+    source: 'live' | 'background' = 'live',
+  ): Promise<void> {
+    const background = source === 'background';
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { plan: true, role: true, trialEndsAt: true, isDemo: true },
@@ -140,13 +163,15 @@ export class PropAlertsService implements OnModuleDestroy {
     const m = account.metrics;
     const day = tradingDay(now);
     // Séance vue en direct (#373) : marges les plus basses, plancher. Avant les alertes, sans les bloquer.
-    await this.journal
-      ?.recordReading(accountId, day, {
-        drawdownMargin: m.drawdown?.margin ?? null,
-        dailyLossRemaining: m.dailyLoss?.remaining ?? null,
-        floor: m.drawdown?.floor ?? null,
-      }, now)
-      .catch((err: unknown) => this.logger.warn(`Séance non journalisée (compte ${accountId}) : ${(err as Error).message}`));
+    if (!background) {
+      await this.journal
+        ?.recordReading(accountId, day, {
+          drawdownMargin: m.drawdown?.margin ?? null,
+          dailyLossRemaining: m.dailyLoss?.remaining ?? null,
+          floor: m.drawdown?.floor ?? null,
+        }, now)
+        .catch((err: unknown) => this.logger.warn(`Séance non journalisée (compte ${accountId}) : ${(err as Error).message}`));
+    }
 
     const candidates: Candidate[] = [];
     if (m.drawdown) {
@@ -174,6 +199,7 @@ export class PropAlertsService implements OnModuleDestroy {
     }
 
     for (const c of candidates) {
+      if (background && !BACKGROUND_ALERT_KINDS.includes(c.kind)) continue;
       const key = alertKey(accountId, c.kind, c.period);
       const sent = (await this.redis.client.get(key)) as PropAlertLevel | null;
       if (!c.level) {
@@ -181,19 +207,21 @@ export class PropAlertsService implements OnModuleDestroy {
         continue;
       }
       if (sent && RANK[sent] >= RANK[c.level]) continue;
-      await this.redis.client.set(key, c.level, 'EX', c.ttl);
       const event: PropAlertEvent = {
         accountId, accountLabel: account.label, currency: account.currency, kind: c.kind, level: c.level, ...c.payload,
       };
-      emit('prop:alert', event);
       // Push (#666) : seuil 10 %, limite franchie, bonnes nouvelles. Une limite franchie part
       // toujours, même si la même alerte est partie il y a moins de 15 min.
-      const push = TRADER_PUSH_MESSAGES.propAlert(event);
+      const push = TRADER_PUSH_MESSAGES.propAlert(event, { background });
+      if (background && !push) continue;
+      await this.redis.client.set(key, c.level, 'EX', c.ttl);
       if (push) {
         this.notifier?.notify(userId, 'PROP_RULES', push, {
           accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached',
         });
       }
+      if (background) continue;
+      emit('prop:alert', event);
       await this.journal
         ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
         .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));

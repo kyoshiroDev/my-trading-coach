@@ -23,6 +23,8 @@ export interface TraderPushMessage {
 }
 
 const ESTIMATION = '(estimation MyTradingCoach)';
+/** Alerte relevée par la synchro de fond (app fermée, cron 15 min) : le décalage est dit. */
+export const BACKGROUND_NOTE = 'Relevé de la synchro automatique, jusqu’à 15 min de décalage.';
 const SESSION_URL = '/session';
 export const PUSH_SETTINGS_URL = '/profil#notifications';
 const HOUR = 3600;
@@ -36,7 +38,7 @@ const live = (title: string, body: string, tag: string, urgency: 'high' | 'norma
  * Alerte prop firm relayée en push, ou `null` si elle reste dans l'app seulement : le premier
  * seuil (25 %) et l'approche de la consistency sonneraient trop tôt.
  */
-function propAlert(e: PropAlertEvent): TraderPushMessage | null {
+function propAlert(e: PropAlertEvent, opts: { background?: boolean } = {}): TraderPushMessage | null {
   const tag = `prop-${e.accountId}-${e.kind}`;
   const urgent = e.level === 'critical' || e.level === 'breached';
   const body = (() => {
@@ -58,7 +60,8 @@ function propAlert(e: PropAlertEvent): TraderPushMessage | null {
         return e.level === 'reached' ? `Payout possible selon les règles du plan ${ESTIMATION}.` : null;
     }
   })();
-  return body ? live(e.accountLabel, body, tag, urgent ? 'high' : 'normal') : null;
+  if (!body) return null;
+  return live(e.accountLabel, opts.background ? `${body} ${BACKGROUND_NOTE}` : body, tag, urgent ? 'high' : 'normal');
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;

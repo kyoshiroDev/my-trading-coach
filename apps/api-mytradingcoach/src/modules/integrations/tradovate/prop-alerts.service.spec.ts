@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ALERT_DEBOUNCE_MS, PropAlertsService, alertLevel, consistencyCandidate, type PropAlertEvent } from './prop-alerts.service';
+import { BACKGROUND_NOTE } from '../../push/trader-push-messages';
 
 type Metrics = {
   drawdown: { pct: number; breached: boolean; margin: number; maxDrawdown: number } | null;
@@ -31,12 +32,14 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
     list: vi.fn(async () => [{ id: 'a', label: 'Apex 50k', currency: 'USD', status: opts.status ?? 'ACTIVE', metrics }]),
   };
   const notifier = { notify: vi.fn() };
-  const svc = new PropAlertsService(prisma as never, redis as never, accounts as never, undefined, undefined, notifier as never);
+  const journal = { recordReading: vi.fn(async () => undefined), recordEvent: vi.fn(async () => undefined) };
+  const incidents = { detectQuietly: vi.fn(async () => undefined) };
+  const svc = new PropAlertsService(prisma as never, redis as never, accounts as never, journal as never, incidents as never, notifier as never);
   const events: PropAlertEvent[] = [];
   const emit = (_e: 'prop:alert', p: PropAlertEvent) => events.push(p);
   const set = (m: Partial<Metrics>) => { metrics = { ...metrics, ...m }; };
   const dd = (pct: number, breached = false) => ({ pct, breached, margin: pct * 2000, maxDrawdown: 2000 });
-  return { svc, emit, events, set, dd, accounts, store, notifier };
+  return { svc, emit, events, set, dd, accounts, store, notifier, journal, incidents };
 }
 
 const NOW = new Date(Date.UTC(2026, 5, 2, 16));
@@ -209,6 +212,53 @@ describe('PropAlertsService → push (#666)', () => {
       const { svc, emit, set, dd, notifier } = setup(opts);
       set({ drawdown: dd(0, true) });
       await svc.check('u', 'a', emit, NOW);
+      expect(notifier.notify).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('PropAlertsService.checkFromBackground (#666, synchro de fond, app fermée)', () => {
+  it('25 % : rien, et le niveau n’est pas marqué envoyé (l’app l’affichera en direct)', async () => {
+    const { svc, set, dd, notifier, store } = setup();
+    set({ drawdown: dd(0.2) });
+    await svc.checkFromBackground('u', 'a', NOW);
+    expect(notifier.notify).not.toHaveBeenCalled();
+    expect(store.size).toBe(0);
+  });
+
+  it('10 % : push avec le décalage annoncé, sans événement d’app, ni journal, ni incident', async () => {
+    const { svc, emit, events, set, dd, notifier, journal } = setup();
+    set({ drawdown: dd(0.05) });
+    await svc.checkFromBackground('u', 'a', NOW);
+    expect(notifier.notify).toHaveBeenCalledWith(
+      'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining(BACKGROUND_NOTE) }),
+      { accountId: 'a', dedupKey: 'prop:drawdown:critical', force: false },
+    );
+    expect(journal.recordReading).not.toHaveBeenCalled();
+    expect(journal.recordEvent).not.toHaveBeenCalled();
+    // Même clé que le direct : à l'ouverture de l'app, la même alerte ne repart pas.
+    await svc.check('u', 'a', emit, NOW);
+    expect(events).toHaveLength(0);
+  });
+
+  it('limite franchie, objectif, payout : push ; consistency : jamais depuis le fond', async () => {
+    const { svc, set, dd, notifier, incidents } = setup();
+    set({
+      drawdown: dd(0, true),
+      progress: { kind: 'objective', done: true, cycleAfter: null, requirements: [{ key: 'consistency', required: 0.4, dayCap: 100, todayPnl: 500 }] },
+    });
+    await svc.checkFromBackground('u', 'a', NOW);
+    const keys = notifier.notify.mock.calls.map((c) => (c[3] as { dedupKey: string }).dedupKey);
+    expect(keys).toEqual(['prop:drawdown:breached', 'prop:objective:reached']);
+    expect(notifier.notify.mock.calls[0][3]).toMatchObject({ force: true });
+    expect(incidents.detectQuietly).not.toHaveBeenCalled();
+  });
+
+  it('compte échoué ou archivé : rien', async () => {
+    for (const status of ['FAILED', 'ARCHIVED']) {
+      const { svc, set, dd, notifier } = setup({ status });
+      set({ drawdown: dd(0, true) });
+      await svc.checkFromBackground('u', 'a', NOW);
       expect(notifier.notify).not.toHaveBeenCalled();
     }
   });

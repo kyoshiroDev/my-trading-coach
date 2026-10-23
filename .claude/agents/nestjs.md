@@ -2205,8 +2205,14 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
   `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
   (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
-  si l'app est ouverte (WebSocket Tradovate calé sur la présence) : le push ne couvre pas encore
-  l'app fermée.
+  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+- **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
+  Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
+  Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),
+  comptes ACTIVE seulement (échoués et archivés exclus), PUSH SEULEMENT : ni événement d'app, ni journal
+  de séance (#373), ni incident `live` (#669). Même clé Redis que le direct ; un niveau sans push (25 %)
+  n'est pas marqué envoyé. Texte suivi de `BACKGROUND_NOTE` (« Relevé de la synchro automatique,
+  jusqu'à 15 min de décalage. »). Anti-tilt et comportement : jamais depuis le fond.
 - **Textes** (`trader-push-messages.ts`) : une phrase factuelle, libellé du compte, **aucun montant**
   (écran verrouillé), « (estimation MyTradingCoach) » sur toute règle de firm, aucun conseil. Clic →
   `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.

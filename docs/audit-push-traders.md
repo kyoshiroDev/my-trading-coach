@@ -181,4 +181,5 @@ D'après la documentation Chrome :
   décalage. » ; dans l'app, « app fermée : alertes de règles avec jusqu'à 15 min de décalage ».
 - **Précautions** : ne pas écrire le journal de séance « vue en direct » (#373) ni créer d'incident
   `live` (#669) depuis ce chemin ; garder le relevé seulement pour le push.
-- **Proposition** : l'ajouter en phase 1 bis (petit commit séparé, testé), si Greg valide.
+- **Validé par Greg** (2026-10-23) et codé dans un commit séparé : drawdown, perte du jour, objectif et
+  payout, comptes échoués ou archivés exclus.
