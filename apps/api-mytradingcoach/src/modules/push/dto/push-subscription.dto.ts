@@ -1,6 +1,8 @@
+import { Logger } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, IsUrl, Length, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUrl, Length, Matches, MaxLength, ValidateBy, ValidateNested } from 'class-validator';
 import type { AdminPushSubscriptionInput } from '@mtc/shared';
+import { pushEndpointCheck } from '../push-endpoint';
 
 /** Abonnement Web Push du navigateur : DTO communs à l'admin (`/admin/push`) et aux traders (`/push`). */
 
@@ -17,9 +19,30 @@ class PushKeysDto {
   auth!: string;
 }
 
-/** `PushSubscription.toJSON()` du navigateur : endpoint https du service push + clés. */
+const logger = new Logger('PushEndpoint');
+
+/**
+ * Service push connu seulement (`push-endpoint.ts`). Un refus est journalisé avec l'hôte et la
+ * raison, jamais l'adresse complète (elle contient un jeton).
+ */
+function IsKnownPushService(): PropertyDecorator {
+  return ValidateBy({
+    name: 'isKnownPushService',
+    validator: {
+      validate: (value: unknown) => {
+        if (typeof value !== 'string') return false;
+        const check = pushEndpointCheck(value);
+        if (!check.ok) logger.warn(`Abonnement push refusé : ${check.reason} (${check.host})`);
+        return check.ok;
+      },
+      defaultMessage: () => "Ce navigateur n'utilise pas un service de notifications reconnu.",
+    },
+  });
+}
+
+/** `PushSubscription.toJSON()` du navigateur : endpoint https d'un service push connu + clés. */
 export class SubscribePushDto implements AdminPushSubscriptionInput {
-  @IsUrl(ENDPOINT_RULES) @MaxLength(2048)
+  @IsUrl(ENDPOINT_RULES) @MaxLength(2048) @IsKnownPushService()
   endpoint!: string;
 
   /** Envoyé par certains navigateurs (souvent `null`) : accepté, ignoré. */
