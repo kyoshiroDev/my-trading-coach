@@ -71,7 +71,7 @@ describe('autopsy.util — courbe de distance', () => {
   it("libellé près du bord droit : ancré à gauche du trait, jamais coupé", () => {
     const r = mockupReport();
     const late = { type: 'alert' as const, at: at('11:10'), label: 'perte du jour sous 10 %', nextTradeMinutes: 2 };
-    const c = distanceChart({ ...r, timeline: r.timeline.filter((e) => e.type === 'trade').concat(late) }, 358)!;
+    const c = distanceChart({ ...r, timeline: [...r.timeline.filter((e) => e.type === 'trade'), late] }, 358)!;
     expect(c.alerts[0]).toMatchObject({ label: 'Alerte 11:10', anchor: 'end' });
     expect(distanceChart(r, 358)!.alerts[0].anchor).toBe('start');
   });
