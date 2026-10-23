@@ -1,7 +1,7 @@
 # #666 · Notifications push pour les traders · plan
 
-> Plan court avant code (consigne du ticket). Rien n'est codé tant que Greg n'a pas validé les
-> choix de la section 3. Branche `feat/666-push-traders`, partie de `origin/dev`.
+> Plan court avant code (consigne du ticket), validé par Greg le 2026-10-23 avec les décisions de
+> la section 6. Branche `feat/666-push-traders`, partie de `origin/dev`. Phase 1 (API) codée.
 
 ## 1. Ce qui existe
 
@@ -126,3 +126,59 @@ installée), Android, Chrome, Firefox, Safari.
 
 Annonces, e-mail, autopsie (#669) en push, toute action sur Tradovate (lecture seule, clause 2i),
 tout appel IA.
+
+## 6. Décisions de Greg (2026-10-23)
+
+1. Branche depuis `dev` (le ticket et CLAUDE.md disent `beta` : incohérence signalée à Greg).
+2. Plans inchangés. Ajout validé à proposer : notification « connexion Tradovate à renouveler »
+   (type `CONNECTION`, gratuit), codée en phase 1.
+3. Types comme proposés en 3.3. Une limite franchie part toujours au moins une fois, malgré
+   l'anti-spam (`force`), mais pas pendant les heures silencieuses ni si le type est coupé.
+4. Heures silencieuses dans le fuseau de l'utilisateur s'il existe : **aucun fuseau n'est enregistré
+   en base**, donc heure de Paris (`PUSH_TIME_ZONE`). `inQuietHours` prend déjà le fuseau en paramètre.
+5. Service worker écrit à la main, push seulement, sans cache. Installabilité à confirmer avant la
+   phase 2 (section 7.1).
+6. Synchro de fond de 15 min : à évaluer (section 7.2). Phase 4 (suivi pendant la séance, app
+   fermée) à décider après usage.
+
+## 7. Évaluations
+
+### 7.1 Installabilité Chrome Android avec un service worker sans `fetch`
+
+D'après la documentation Chrome :
+- **Installation par le menu** (« Installer l'application » / « Ajouter à l'écran d'accueil ») : plus
+  besoin d'un service worker avec gestionnaire `fetch` depuis Chrome 108 sur Android (112 sur
+  ordinateur). Il faut HTTPS et un manifest avec `name` ou `short_name`, icônes 192 et 512,
+  `start_url`, `display` standalone (ou fullscreen, minimal-ui), `prefer_related_applications` absent.
+- **Invite automatique** (bannière, `beforeinstallprompt`) : le billet Chrome de référence (mis à jour
+  le 2023-12-05) indique qu'elle exige **encore** un gestionnaire `fetch`, et que Chrome ignore les
+  gestionnaires vides. La page web.dev des critères ne mentionne plus de service worker : les deux
+  sources ne disent pas la même chose.
+- **Conséquence** : avec notre service worker sans `fetch`, l'app est installable par le menu ; le
+  bouton « Installer » piloté par `beforeinstallprompt` n'est pas garanti. Proposition pour la phase 2 :
+  un texte d'aide (« menu ⋮ puis Installer l'application ») plutôt qu'un bouton, et une vérification
+  sur un vrai Android avant la mise en ligne. iOS ne dépend pas de ce critère (partage, puis « Sur
+  l'écran d'accueil »).
+
+### 7.2 Alertes prop firm depuis la synchro de fond (15 min)
+
+- **Possible sans appel Tradovate en plus.** Le cron `TradovateBackgroundRefreshCron` (toutes les
+  15 min, utilisateurs dont l'app est fermée, connexions non synchronisées depuis 12 min) appelle déjà
+  `TradovateSyncService.sync`, qui relit positions, trades et **solde** (`captureSnapshot`). Il suffit
+  d'appeler `PropAlertsService.check` après chaque synchro de fond réussie : il ne lit que la base
+  (`AccountsService.list`). Même clé Redis que le direct : une alerte déjà partie ne repart pas quand
+  l'app s'ouvre.
+- **Coût Tradovate actuel, inchangé** : par connexion et par passage, 4 appels sans nouveau trade
+  (`/account/list`, `/position/list`, `/fillPair/list`, solde) et environ 9 avec des trades (fills,
+  frais, contrats, échéances, produits), soit environ 400 à 860 appels par connexion et par jour.
+  Coût ajouté : 0 appel Tradovate, une lecture `AccountsService.list` par connexion et par passage.
+  Descendre à 5 min triplerait les appels (environ 1 150 à 2 600 par jour et par connexion) :
+  déconseillé.
+- **Ce qui ne suit pas** : l'anti-tilt et les détecteurs de comportement jugent l'ENTRÉE au moment
+  où elle arrive ; vus 15 min après, ils n'ont plus de sens (déjà exclus du rattrapage à l'ouverture).
+  Seules les alertes de règles (`PROP_RULES`) passeraient par la synchro de fond.
+- **Texte honnête** : même phrase, suivie de « Relevé de la synchro automatique, jusqu'à 15 min de
+  décalage. » ; dans l'app, « app fermée : alertes de règles avec jusqu'à 15 min de décalage ».
+- **Précautions** : ne pas écrire le journal de séance « vue en direct » (#373) ni créer d'incident
+  `live` (#669) depuis ce chemin ; garder le relevé seulement pour le push.
+- **Proposition** : l'ajouter en phase 1 bis (petit commit séparé, testé), si Greg valide.
