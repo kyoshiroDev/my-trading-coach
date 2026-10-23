@@ -262,8 +262,10 @@ describe('DebriefService', () => {
       mockAiService.generateDebrief.mockResolvedValueOnce({
         overview: { summary: 'Vue cross-compte.' },
         accounts: [
-          { accountId: 'acc-perso', summary: 'Bon compte.', strengths: [{ badge: 'Force', text: 'risque constant' }], weaknesses: [], objectives: [{ title: 'o', reason: 'r' }], propNote: null },
-          { accountId: 'acc-eval', summary: 'Éval à lancer.', strengths: [], weaknesses: [], objectives: [], propNote: 'Marge estimée OK (estimation depuis tes trades loggés, pas le calcul officiel de la firme)' },
+          // L'IA répond avec les clés reçues (compte-1, compte-2…), jamais les ids internes.
+          { accountId: 'compte-1', summary: 'Bon compte.', strengths: [{ badge: 'Force', text: 'risque constant' }], weaknesses: [], objectives: [{ title: 'o', reason: 'r' }], propNote: null },
+          { accountId: 'compte-2', summary: 'Éval à lancer.', strengths: [], weaknesses: [], objectives: [], propNote: 'Marge estimée OK (estimation depuis tes trades loggés, pas le calcul officiel de la firme)' },
+          { accountId: 'compte-7', summary: 'Clé inventée : ignorée.', strengths: [], weaknesses: [], objectives: [], propNote: null },
         ],
         objectives: [{ title: 'Max 5 trades', reason: 'overtrading', check: { type: 'max_trades', params: { limit: 5 } } }],
       });
@@ -276,7 +278,9 @@ describe('DebriefService', () => {
         accounts: unknown[]; tradesByAccount: Record<string, unknown[]>;
       };
       expect(aiArg.accounts).toHaveLength(2);
-      expect(aiArg.tradesByAccount['acc-perso']).toHaveLength(2);
+      expect(aiArg.tradesByAccount['compte-1']).toHaveLength(2);
+      // Aucun identifiant interne de compte dans ce qui part vers l'IA (comptes ni trades).
+      expect(JSON.stringify({ accounts: aiArg.accounts, tradesByAccount: aiArg.tradesByAccount })).not.toMatch(/acc-perso|acc-eval/);
 
       const stored = (mockPrisma.weeklyDebrief.upsert.mock.calls[0][0] as { create: { insights: {
         overview: { summary: string };
@@ -289,6 +293,8 @@ describe('DebriefService', () => {
       const evalAcc = stored.accounts.find((a) => a.accountId === 'acc-eval')!;
       expect(evalAcc.rules?.maxDrawdown).toBe(2500);
       expect(evalAcc.propNote).toContain('estimation');
+      expect((perso as { summary?: string }).summary).toBe('Bon compte.');
+      expect(stored.accounts.some((a) => (a as { summary?: string }).summary === 'Clé inventée : ignorée.')).toBe(false);
     });
   });
 

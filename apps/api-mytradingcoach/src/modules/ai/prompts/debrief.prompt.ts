@@ -78,7 +78,7 @@ ${data.propContext ? `
 SUIVI PROP FIRM EN DIRECT (estimations MyTradingCoach déjà calculées avec les règles officielles du plan relié : ne recalcule rien) :
 ${data.propContext}
 ` : ''}
-TRADES GROUPÉS PAR COMPTE (clé = accountId, ou "unassigned" pour les trades sans compte) :
+TRADES GROUPÉS PAR COMPTE (clé = accountId du compte : compte-1, compte-2…, ou "unassigned" pour les trades sans compte) :
 ${JSON.stringify(tradesByAccount, null, 2)}
 
 Objectifs fixés la semaine précédente :
@@ -105,7 +105,7 @@ ${JSON.stringify(data.recentSessions.map((s: unknown) => {
 
 RÈGLES D'ANALYSE PAR COMPTE :
 - Une entrée "accounts" par compte ayant des trades cette semaine OU des règles prop firm (même sans trade : explique quoi faire).
-- Reprends EXACTEMENT l'accountId fourni. Si des trades sont sous "unassigned", crée une entrée accountId="unassigned".
+- Reprends EXACTEMENT l'accountId fourni (compte-1, compte-2…). Si des trades sont sous "unassigned", crée une entrée accountId="unassigned".
 - "summary" : 1-2 phrases sur ce compte précis.
 - "propNote" (comptes prop firm EVALUATION/FUNDED avec règles UNIQUEMENT, sinon null) : comportemental, intègre la MARGE estimée avant drawdown et le PACING de l'objectif, et termine par « (estimation depuis tes trades loggés, pas le calcul officiel de la firme) ». Jamais de chiffre officiel ni de promesse de gain.
 - Si le SUIVI PROP FIRM EN DIRECT existe pour ce compte, le "propNote" s'appuie D'ABORD dessus : marge la plus basse touchée et quand, alertes, épisodes de tilt, consistency, ce qui reste avant l'objectif ou le payout. Relie-les aux trades et à l'humeur de la semaine. Utilise ces chiffres tels quels, n'en invente aucun.
@@ -124,7 +124,7 @@ Génère le débrief au format JSON suivant (UNIQUEMENT le JSON, rien d'autre) :
   "overview": { "summary": "string (2-3 phrases, bilan cross-compte)" },
   "accounts": [
     {
-      "accountId": "string (l'id fourni, ou 'unassigned')",
+      "accountId": "string (l'accountId fourni : compte-1, compte-2…, ou 'unassigned')",
       "summary": "string (1-2 phrases sur ce compte)",
       "strengths": [{ "badge": "Force" | "Très bien", "text": "string" }],
       "weaknesses": [{ "badge": "Critique" | "Attention", "text": "string" }],

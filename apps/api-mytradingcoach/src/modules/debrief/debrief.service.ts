@@ -28,6 +28,7 @@ import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
+import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
@@ -177,9 +178,12 @@ export class DebriefService {
 
     const recentSessions = await this.sessionService.getSessionHistory(userId, 5, 0);
 
+    // Comptes désignés à l'IA par une clé courte (compte-1, compte-2…), jamais par leur id interne.
+    const keys = accountKeys(accounts.map((a) => a.id));
+
     // Inputs comptes pour l'IA (avec règles + nb de trades de la semaine).
     const accountInputs: DebriefAccountInput[] = accounts.map((a) => ({
-      accountId: a.id,
+      accountId: keys.toKey(a.id),
       name: a.label,
       type: a.type,
       currency: a.currency,
@@ -206,7 +210,7 @@ export class DebriefService {
       userProfile: userProfile ?? undefined,
       recentSessions,
       accounts: accountInputs,
-      tradesByAccount,
+      tradesByAccount: tradesByKey(tradesByAccount, keys),
     }, userId)) as DebriefAiResult;
 
     const normalizedObjectives = this.normalizeObjectives(aiResult.objectives);
@@ -217,10 +221,7 @@ export class DebriefService {
     const overviewSummary = aiResult.overview?.summary ?? aiResult.summary ?? '';
 
     // Analyse IA indexée par compte pour la fusion.
-    const aiByAccount = new Map<string, DebriefAccountAi>();
-    for (const a of aiResult.accounts ?? []) {
-      if (a?.accountId) aiByAccount.set(a.accountId, a);
-    }
+    const aiByAccount = analysesById<DebriefAccountAi>(aiResult.accounts ?? [], keys);
 
     // Onglets : tous les comptes non archivés + bucket « unassigned » si trades orphelins.
     const accountSections: DebriefAccountSection[] = accounts.map((a) =>
