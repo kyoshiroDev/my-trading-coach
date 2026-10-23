@@ -139,6 +139,21 @@ describe('AccountIncidentsService.updateAccount — passage en échoué', () => 
     expect(arg.data[0]).not.toHaveProperty('failedByIncidentAt');
   });
 
+  it("« Archiver » depuis la feuille de choix, limite détectée : confirme l'incident", async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledWith({
+      where: { id: 'inc', failedByIncidentAt: null },
+      data: { failedByIncidentAt: expect.any(Date) },
+    });
+  });
+
+  it('simple archivage sans limite franchie : aucun incident créé', async () => {
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
+    expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
+  });
+
   it('compte déjà échoué, ou autre changement : aucun incident touché', async () => {
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.FAILED });
     await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
@@ -168,11 +183,18 @@ describe("AccountIncidentsService.dismiss — « Ce n'est pas un échec »", () 
     expect(d.accounts.update).not.toHaveBeenCalled();
   });
 
-  it('compte déjà repassé en actif ou archivé entre-temps : pas de changement de statut', async () => {
+  it('compte déjà repassé en actif entre-temps : pas de changement de statut', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident({ failedByIncidentAt: NOW }));
-    d.prisma.tradingAccount.findUniqueOrThrow.mockResolvedValue({ id: 'acc', label: 'x', currency: 'USD', status: AccountStatus.ARCHIVED });
+    d.prisma.tradingAccount.findUniqueOrThrow.mockResolvedValue({ id: 'acc', label: 'x', currency: 'USD', status: AccountStatus.ACTIVE });
     expect(await d.svc.dismiss(user(), 'acc', 'inc', PREMIUM)).toEqual({ dismissed: true, reactivated: false });
     expect(d.accounts.update).not.toHaveBeenCalled();
+  });
+
+  it('archivé depuis la feuille de choix en confirmant l’incident : remis en actif aussi', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident({ failedByIncidentAt: NOW }));
+    d.prisma.tradingAccount.findUniqueOrThrow.mockResolvedValue({ id: 'acc', label: 'x', currency: 'USD', status: AccountStatus.ARCHIVED });
+    expect(await d.svc.dismiss(user(), 'acc', 'inc', PREMIUM)).toEqual({ dismissed: true, reactivated: true });
+    expect(d.accounts.update).toHaveBeenCalledWith('u1', 'acc', { status: AccountStatus.ACTIVE }, PREMIUM);
   });
 
   it('quota atteint : la réactivation échoue et l’incident reste en place', async () => {

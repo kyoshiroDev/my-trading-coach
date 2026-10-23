@@ -327,6 +327,8 @@ describe('AccountsService', () => {
         // Solde du broker : seulement une connexion qui en a un.
         // Toutes les connexions : solde du broker, et plateforme connue si Tradovate.
         brokerConnections: { select: expect.objectContaining({ provider: true, brokerNetLiq: true }) },
+        // Autopsie ouverte la plus récente (#669), pour le lien « Voir l'autopsie ».
+        incidents: { where: { dismissedAt: null }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true } },
       },
     });
   });
