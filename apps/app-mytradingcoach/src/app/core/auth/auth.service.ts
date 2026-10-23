@@ -7,6 +7,7 @@ import { environment } from '@app/environments/environment';
 import { POLLING_MS } from '../constants/polling.const';
 import { visibleInterval } from '../utils/visible-interval';
 import { UserScopedReset } from './user-scoped-reset';
+import { PushLogout } from '../push/push-logout';
 import type { Plan, Role } from '@mtc/shared';
 
 /** Rôle d'un utilisateur : alias du contrat partagé, gardé pour les importeurs existants. */
@@ -79,6 +80,7 @@ export class AuthService {
   private readonly router = inject(Router);
   // Stores user-scoped à purger au logout : ils s'inscrivent eux-mêmes (cf. UserScopedReset).
   private readonly userScopedReset = inject(UserScopedReset);
+  private readonly pushLogout = inject(PushLogout);
 
   readonly currentUser = signal<AuthUser | null>(null);
   readonly isAuthenticated = signal(false);
@@ -169,6 +171,9 @@ export class AuthService {
   }
 
   logout() {
+    // Notifications push de CET appareil retirées avec le jeton d'avant la déconnexion (#666) :
+    // sur un appareil partagé, la personne suivante ne reçoit pas les alertes de ce compte.
+    void this.pushLogout.run(this.getAccessToken());
     this.http
       .post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
       .subscribe();
