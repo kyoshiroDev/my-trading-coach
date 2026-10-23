@@ -170,3 +170,11 @@ describe('buildIncidentReport — marge déjà sous la limite avant la séance (
     expect(crossingPoint(already().series)).toBeNull();
   });
 });
+
+describe('buildIncidentReport — séance d\'un seul trade (revue #712)', () => {
+  it('« 1 trade à 16:40 », jamais « entre 16:40 et 16:40 »', () => {
+    const r = buildIncidentReport(input({ trades: [trade('x', '16:40', 'LONG', 5, -3000)], alerts: [] }));
+    expect(r.findings).toContain('Séance de 1 trade à 16:40, pour -$3,000.');
+    expect(r.findings.join(' ')).not.toMatch(/entre 16:40 et 16:40/);
+  });
+});

@@ -286,7 +286,10 @@ export function buildIncidentReport(input: IncidentReportInput): IncidentReport 
   if (trades.length) {
     findings.push({
       weight: 0.5,
-      text: `Séance de ${trades.length} trade${trades.length > 1 ? 's' : ''} entre ${time(trades[0].tradedAt)} et ${time(trades[trades.length - 1].tradedAt)}, pour ${money(net)}.`,
+      // Un seul trade (ou tous à la même minute) : « 1 trade à 16:40 », pas « entre 16:40 et 16:40 ».
+      text: time(trades[0].tradedAt) === time(trades[trades.length - 1].tradedAt)
+        ? `Séance de ${trades.length} trade${trades.length > 1 ? 's' : ''} à ${time(trades[0].tradedAt)}, pour ${money(net)}.`
+        : `Séance de ${trades.length} trade${trades.length > 1 ? 's' : ''} entre ${time(trades[0].tradedAt)} et ${time(trades[trades.length - 1].tradedAt)}, pour ${money(net)}.`,
     });
   }
 

@@ -193,7 +193,9 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
   const lastAt = pts[pts.length - 1].at;
   return {
     width, height: CHART_H + 18, path, points, zeroY: round(y(0)), alerts,
-    startLabel: firstAt ? clock(firstAt) : '', endLabel: lastAt ? clock(lastAt) : '',
+    // Séance d'un seul trade (ou à la même minute) : une seule heure sous l'axe, pas « 16:40 … 16:40 ».
+    startLabel: firstAt ? clock(firstAt) : '',
+    endLabel: lastAt && (!firstAt || clock(lastAt) !== clock(firstAt)) ? clock(lastAt) : '',
     aria: `Distance à la limite au fil de la séance : de ${distanceMoney(values[0], cur)} à ${distanceMoney(values[values.length - 1], cur)}`,
   };
 }

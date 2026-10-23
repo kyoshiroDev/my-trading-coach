@@ -76,6 +76,11 @@ describe('autopsy.util — courbe de distance', () => {
     expect(distanceChart(r, 358)!.alerts[0].anchor).toBe('start');
   });
 
+  it("séance d'un seul trade : une seule heure sous l'axe (revue #712)", () => {
+    const c = distanceChart(alreadyCrossedReport(), 358)!;
+    expect([c.startLabel, c.endLabel]).toEqual(['21:12', '']);
+  });
+
   it('moins de deux points : pas de courbe', () => {
     expect(distanceChart(mockupReport({ series: [] }), 358)).toBeNull();
   });
