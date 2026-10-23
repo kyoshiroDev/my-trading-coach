@@ -45,7 +45,8 @@ export class AccountAutopsyComponent implements OnInit {
   private readonly incidentId = this.route.snapshot.paramMap.get('incidentId') ?? '';
 
   protected readonly report = signal<AccountIncidentReport | null>(null);
-  protected readonly loadError = signal(false);
+  /** `notFound` : autopsie retirée, inexistante ou d'un autre compte (404) ; `failed` : autre erreur. */
+  protected readonly loadError = signal<'notFound' | 'failed' | null>(null);
   protected readonly ai = signal<IncidentAiState | null>(null);
   protected readonly aiLoading = signal(false);
   protected readonly dismissing = signal(false);
@@ -72,7 +73,7 @@ export class AccountAutopsyComponent implements OnInit {
   }
 
   protected load(): void {
-    this.loadError.set(false);
+    this.loadError.set(null);
     this.api
       .incident(this.accountId, this.incidentId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -82,7 +83,7 @@ export class AccountAutopsyComponent implements OnInit {
           this.ai.set(res.data.ai);
           if (res.data.ai.status === 'pending') this.loadAnalysis();
         },
-        error: () => this.loadError.set(true),
+        error: (err: unknown) => this.loadError.set(err instanceof HttpErrorResponse && err.status === 404 ? 'notFound' : 'failed'),
       });
   }
 

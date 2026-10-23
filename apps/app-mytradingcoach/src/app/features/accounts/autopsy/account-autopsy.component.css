@@ -23,6 +23,9 @@
 .lbl { font: 500 11px var(--font-mono); letter-spacing: .08em; color: var(--text-3); }
 .note { font-size: 12px; color: var(--text-3); line-height: 1.5; margin: 6px 0 0; }
 .loading { padding: 24px 0; }
+.not-found { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.not-found p { margin: 0; font-size: 14px; color: var(--text); }
+.not-found .btn { text-decoration: none; }
 .pos { color: var(--green); }
 .neg { color: var(--red); }
 

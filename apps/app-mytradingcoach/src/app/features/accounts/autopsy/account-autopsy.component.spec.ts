@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import type { AccountIncidentReport } from '@mtc/shared';
 import { AccountAutopsyComponent } from './account-autopsy.component';
 import { mockupReport } from './autopsy.fixture';
@@ -134,6 +135,16 @@ describe('Autopsie — page', () => {
   it('échec marqué à la main : la note dit que le statut ne change pas', () => {
     const { el } = mount(mockupReport({ canReactivate: false }));
     expect(el.textContent).toContain("« Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.");
+  });
+
+  it('autopsie introuvable ou d’un autre utilisateur (404) : message neutre, pas de « réessaie »', () => {
+    const { el, api, fixture, q } = mount(mockupReport());
+    api.incident.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    (fixture.componentInstance as unknown as { load(): void }).load();
+    fixture.detectChanges();
+    expect(q('autopsy-not-found')!.textContent).toContain("Cette autopsie n'existe pas ou n'est plus disponible.");
+    expect(el.querySelector('mtc-error-state')).toBeNull();
+    expect(el.textContent).not.toMatch(/connexion|réessai/i);
   });
 
   it('chargement en échec : état d’erreur avec réessai', () => {

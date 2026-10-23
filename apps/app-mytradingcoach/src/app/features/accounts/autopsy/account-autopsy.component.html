@@ -3,7 +3,13 @@
 <div class="content autopsy" data-testid="autopsy-page">
   <a routerLink="/accounts" class="back">← Mes comptes</a>
 
-  @if (loadError()) {
+  @if (loadError() === 'notFound') {
+    <!-- Même message qu'elle soit retirée, inexistante ou d'un autre compte : rien n'est révélé. -->
+    <section class="card not-found" data-testid="autopsy-not-found">
+      <p>Cette autopsie n'existe pas ou n'est plus disponible.</p>
+      <a routerLink="/accounts" class="btn ghost">Revenir à Mes comptes</a>
+    </section>
+  } @else if (loadError()) {
     <mtc-error-state (retry)="load()" />
   } @else if (!report()) {
     <p class="note loading">Chargement de l'autopsie…</p>
