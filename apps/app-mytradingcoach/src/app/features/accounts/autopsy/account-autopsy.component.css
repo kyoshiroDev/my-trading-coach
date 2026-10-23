@@ -47,7 +47,16 @@
 
 .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .kpi { padding: 12px; }
-.kpi .v { font: 600 18px var(--font-mono); font-variant-numeric: tabular-nums; margin-top: 6px; color: var(--text); overflow-wrap: anywhere; }
+/* Montant jamais coupé (« -$1,1 / 67 » à 320 px) : une ligne, taille réduite sur les écrans étroits
+   (cqi = largeur de la page, conteneur `.content`). */
+.kpi .v {
+  font: 600 18px var(--font-mono);
+  font-size: clamp(13px, 4.2cqi, 18px);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+  color: var(--text);
+  white-space: nowrap;
+}
 .kpi .s { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.35; }
 
 /* Courbe : un tracé par largeur, pour garder des libellés lisibles. */

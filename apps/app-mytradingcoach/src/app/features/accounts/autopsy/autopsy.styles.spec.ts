@@ -37,4 +37,11 @@ describe("Autopsie : couleurs (revue #712)", () => {
     expect(rule(AUTOPSY_CSS, '.chart .line')).toMatch(/stroke: var\(--text-2\)/);
     expect(rule(AUTOPSY_CSS, '.find i')).not.toMatch(/--cyan/);
   });
+
+  it('montant des KPI jamais coupé sur deux lignes, taille réduite en écran étroit (320 px)', () => {
+    const kpi = rule(AUTOPSY_CSS, '.kpi .v');
+    expect(kpi).toMatch(/white-space: nowrap/);
+    expect(kpi).toMatch(/font-size: clamp\(13px, 4\.2cqi, 18px\)/);
+    expect(kpi).not.toMatch(/overflow-wrap: anywhere/);
+  });
 });
