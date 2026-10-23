@@ -2,7 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@app/environments/environment';
-import type { AccountPlanHint, AccountStatus, AccountType, DrawdownType, PlanLinkChoice } from '@mtc/shared';
+import type {
+  AccountIncidentReport,
+  AccountIncidentSummary,
+  AccountPlanHint,
+  AccountStatus,
+  AccountType,
+  DismissIncidentResult,
+  DrawdownType,
+  IncidentAiState,
+  PlanLinkChoice,
+} from '@mtc/shared';
 
 export type { AccountStatus, AccountType, DrawdownType };
 
@@ -156,6 +166,8 @@ export interface TradingAccount {
    * confirme. Absent des réponses qui ne le calculent pas (création, mise à jour).
    */
   floorReached?: boolean;
+  /** Autopsie ouverte la plus récente (#669), pour « Voir l'autopsie ». Absent hors de la liste. */
+  openIncidentId?: string | null;
 }
 
 /** Payout d'un compte : détecté chez le broker, ou saisi à la main (`manual`, supprimable). */
@@ -235,6 +247,26 @@ export class AccountsApi {
 
   remove(id: string): Observable<{ data: { deleted?: boolean; archived?: boolean } }> {
     return this.http.delete<{ data: { deleted?: boolean; archived?: boolean } }>(`${this.base}/${id}`);
+  }
+
+  /** Autopsies ouvertes du compte (#669), de la plus récente à la plus ancienne. */
+  incidents(id: string): Observable<{ data: AccountIncidentSummary[] }> {
+    return this.http.get<{ data: AccountIncidentSummary[] }>(`${this.base}/${id}/incidents`);
+  }
+
+  /** Autopsie : chronologie, constats, analyse IA déjà générée. Aucun appel IA côté serveur. */
+  incident(id: string, incidentId: string): Observable<{ data: AccountIncidentReport }> {
+    return this.http.get<{ data: AccountIncidentReport }>(`${this.base}/${id}/incidents/${incidentId}`);
+  }
+
+  /** Analyse IA (Premium) : générée une seule fois à la première demande, puis conservée. */
+  incidentAnalysis(id: string, incidentId: string): Observable<{ data: IncidentAiState }> {
+    return this.http.get<{ data: IncidentAiState }>(`${this.base}/${id}/incidents/${incidentId}/analysis`);
+  }
+
+  /** « Ce n'est pas un échec » : retire l'autopsie, réactive le compte s'il a été fermé depuis elle. */
+  dismissIncident(id: string, incidentId: string): Observable<{ data: DismissIncidentResult }> {
+    return this.http.post<{ data: DismissIncidentResult }>(`${this.base}/${id}/incidents/${incidentId}/dismiss`, {});
   }
 
   /** Nouvelle tentative d'un compte ÉCHOUÉ : même firme, plan, taille et règles, libellé incrémenté par le serveur. */

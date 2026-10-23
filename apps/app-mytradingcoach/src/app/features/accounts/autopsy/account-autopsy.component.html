@@ -1,0 +1,135 @@
+<mtc-topbar title="Autopsie" />
+
+<div class="content autopsy" data-testid="autopsy-page">
+  <a routerLink="/accounts" class="back">← Mes comptes</a>
+
+  @if (loadError()) {
+    <mtc-error-state (retry)="load()" />
+  } @else if (!report()) {
+    <p class="note loading">Chargement de l'autopsie…</p>
+  } @else {
+    @let r = report()!;
+    <div class="top">
+      <h2 class="h">Autopsie</h2>
+      <span [class]="'status-badge ' + statusBadgeClass(r.account.status)" data-testid="autopsy-status">
+        {{ statusLabel(r.account.status) }}
+      </span>
+      <span class="acct mono">{{ r.account.label }}</span>
+    </div>
+    <p class="note headline" data-testid="autopsy-headline">{{ headline() }}</p>
+
+    <div class="grid">
+      <div class="col">
+        <div class="kpis">
+          @for (k of kpis(); track k.label) {
+            <div class="card kpi">
+              <div class="lbl">{{ k.label }}</div>
+              <div class="v" [class.pos]="k.tone === 'pos'" [class.neg]="k.tone === 'neg'">{{ k.value }}</div>
+              <div class="s">{{ k.sub }}</div>
+            </div>
+          }
+        </div>
+
+        @if (chartWide(); as wide) {
+          <section class="card" data-testid="autopsy-chart">
+            <div class="lbl">DISTANCE À LA LIMITE</div>
+            @for (c of [chartNarrow()!, wide]; track $index) {
+              <svg [class]="$index === 0 ? 'chart chart-narrow' : 'chart chart-wide'"
+                   [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" width="100%" role="img" [attr.aria-label]="c.aria">
+                <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
+                <text [attr.x]="26" [attr.y]="c.zeroY - 5">Limite estimée</text>
+                @for (al of c.alerts; track $index) {
+                  <rect class="alert-mark" [attr.x]="al.x - 1" y="8" width="2" [attr.height]="c.height - 34" />
+                  <text class="alert-txt" [attr.x]="al.x + 5" y="20">{{ al.label }}</text>
+                }
+                <path class="line" [attr.d]="c.path" />
+                @for (p of c.points; track $index) {
+                  <circle [class]="p.last ? 'dot dot-last' : 'dot'" [attr.cx]="p.x" [attr.cy]="p.y" [attr.r]="p.last ? 5 : 3" />
+                }
+                <text [attr.x]="26" [attr.y]="c.height - 4">{{ c.startLabel }}</text>
+                <text [attr.x]="c.width - 56" [attr.y]="c.height - 4">{{ c.endLabel }}</text>
+              </svg>
+            }
+          </section>
+        }
+
+        <section class="card">
+          <div class="lbl">CHRONOLOGIE DE LA SÉANCE</div>
+          <ul class="tl" data-testid="autopsy-timeline">
+            @for (row of rows(); track row.key) {
+              <li [class.alert]="row.alert" [class.last]="row.crossing">
+                <span class="t">{{ row.time }}</span>
+                <span class="n">{{ row.title }}@if (row.afterAlert) {<span class="tag">Après l'alerte</span>}</span>
+                <span class="p" [class.pos]="row.tone === 'pos'" [class.neg]="row.tone === 'neg'">{{ row.pnl }}</span>
+                <span class="m">{{ row.meta }}</span>
+              </li>
+            } @empty {
+              <li class="empty"><span class="m">Aucun trade enregistré sur cette séance.</span></li>
+            }
+          </ul>
+          <p class="note">L'heure d'entrée n'est pas enregistrée : la distance est une estimation calculée sur les trades clôturés.</p>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="card">
+          <div class="lbl">{{ findings().length }} CONSTAT{{ findings().length > 1 ? 'S' : '' }}</div>
+          <ol class="find" data-testid="autopsy-findings">
+            @for (f of findings(); track $index) {
+              <li><i aria-hidden="true">{{ $index + 1 }}</i><span>{{ f }}</span></li>
+            }
+          </ol>
+        </section>
+
+        @switch (ai()?.status) {
+          @case ('locked') {
+            <section class="card ai lock" data-testid="autopsy-ai-locked">
+              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+              <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
+              <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
+                {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+              </button>
+            </section>
+          }
+          @case ('ready') {
+            <section class="card ai" data-testid="autopsy-ai">
+              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+              @for (p of aiText()!.paragraphs; track $index) {
+                <p>{{ p }}</p>
+              }
+              <p class="note">Cette analyse décrit ce qui s'est passé. Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le {{ aiText()!.when }}.</p>
+            </section>
+          }
+          @default {
+            <section class="card ai" data-testid="autopsy-ai-wait">
+              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+              <p class="note">{{ aiLoading() ? 'Analyse en cours de rédaction…' : 'Analyse indisponible pour le moment. La chronologie et les constats restent à jour.' }}</p>
+            </section>
+          }
+        }
+
+        <div class="actions">
+          @if (r.account.status === 'FAILED') {
+            <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
+              Repartir sur une nouvelle tentative
+            </button>
+          }
+          <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
+            {{ dismissing() ? 'Retrait…' : "Ce n'est pas un échec" }}
+          </button>
+        </div>
+        <p class="note">
+          @if (r.canReactivate) {
+            « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
+          } @else {
+            « Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.
+          }
+        </p>
+      </div>
+    </div>
+  }
+</div>
+
+@if (showPlanModal()) {
+  <mtc-plan-modal cta="autopsie" (closed)="showPlanModal.set(false)" />
+}

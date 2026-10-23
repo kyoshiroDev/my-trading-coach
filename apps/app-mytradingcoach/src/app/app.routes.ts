@@ -106,6 +106,15 @@ export const appRoutes: Routes = [
           ),
       },
       {
+        // Autopsie d'un compte grillé (#669) : chronologie et constats pour tous, IA en Premium.
+        path: 'accounts/:accountId/autopsie/:incidentId',
+        data: { seo: { title: 'Autopsie du compte', noindex: true } },
+        loadComponent: () =>
+          import('./features/accounts/autopsy/account-autopsy.component').then(
+            (m) => m.AccountAutopsyComponent,
+          ),
+      },
+      {
         path: 'journal',
         data: { seo: { title: 'Journal', noindex: true } },
         loadComponent: () =>
