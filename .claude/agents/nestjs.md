@@ -1335,6 +1335,30 @@ sont en direct.
 - **Données d'exemple** : identifiants Tradovate des specs et fixtures FICTIFS (`APEX1000…`,
   `9000001x`, `9100001`…). Ne jamais y recoller un vrai nom ou id de compte relevé en prod.
 
+## Import d'un broker inconnu : données minimales envoyées à l'IA (2026-10-23)
+
+`trades/csv-ai-redaction.ts` (pur) prépare TOUT ce qui part vers l'IA d'un fichier de broker
+inconnu (mapping `csv_mapping`, repli ligne par ligne `csv_import`, analyse d'échantillon admin) :
+- **en-tête gardé tel quel** (le modèle en a besoin pour reconnaître les colonnes) ;
+- **valeurs** des colonnes d'identification, reconnues par l'en-tête (compte, client, login, nom
+  explicite, e-mail, identifiants d'ordre / de trade / ticket / « Order # ») → jetons stables dans le
+  fichier (`compte-1`, `id-3`) : même valeur, même jeton, les lignes restent rapprochables. « Name »
+  seul n'est PAS masqué (souvent l'instrument) ;
+- autres cellules : e-mails et suites de 7 chiffres ou plus dans un texte masqués ; cellules
+  numériques (prix, quantités, horodatages) et dates compactes `AAAAMMJJ…` intactes ; nombre de
+  colonnes conservé (index du mapping justes) ;
+- **nom du fichier jamais envoyé** (journaux seulement) ;
+- masquage fait UNE fois sur tout le fichier dans le repli (jetons stables d'un lot à l'autre).
+Plafonds inchangés : mapping = en-tête + `MAPPING_SAMPLE_ROWS` (20) lignes, puis le CODE applique
+le mapping à tout le fichier ; repli = toutes les lignes par lots de `AI_BATCH` (25), refus explicite
+au-delà de `MAX_AI_ROWS` (2 000), jamais d'import tronqué en silence.
+**Limite du repli** : `CSV_AI_FALLBACK_DAILY_LIMIT` (3) passages par utilisateur et par jour (Paris),
+compteur Redis `csv-ai-fallback:<userId>:<jour>` (INCR puis contrôle, place rendue si le passage
+échoue, Redis indisponible → refus 503) ; au-delà : 429 avec un message clair, aucun appel IA. Le
+mapping (1 appel, 20 lignes) n'est pas compté. **Journal** : une ligne JSON par passage
+(`event: 'csv_ai_fallback'`, `userId`, `rows`, `batches`, `result` = `ok` · `error` · `too_many_rows` ·
+`daily_limit`, `trades`, `durationMs`), jamais le nom ni le contenu du fichier.
+
 ## Registre des brokers (2026-09-28)
 
 Ordre de résolution d'un import, à ne pas réarranger :
