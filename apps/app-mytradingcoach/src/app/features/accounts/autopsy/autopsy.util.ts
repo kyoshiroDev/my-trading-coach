@@ -145,7 +145,8 @@ export interface DistanceChart {
   zeroY: number;
   /**
    * Repère de chaque alerte. Seule la première porte un libellé (plusieurs alertes rapprochées se
-   * chevauchaient) ; il passe à gauche du trait quand il déborderait du tracé.
+   * chevauchaient), placé du côté du trait où il ne déborde pas du tracé et où aucun autre trait
+   * d'alerte ne le traverse ; sans place des deux côtés, pas de libellé (la chronologie le donne).
    */
   alerts: { x: number; label: string | null; anchor: 'start' | 'end' }[];
   startLabel: string;
@@ -190,17 +191,23 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
     const t0 = times[before] ?? times[after]! - 1;
     const ratio = Math.min(1, Math.max(0, (t - t0) / (times[after]! - t0)));
     return [{ x: round(x(before) + ratio * step), label: `Alerte ${clock(e.at)}`, anchor: 'start' as const }];
-  }).map((a, i) => {
-    if (i > 0) return { ...a, label: null };
-    const overflows = a.x + 5 + (a.label?.length ?? 0) * LABEL_CHAR_W > width;
-    return overflows ? { ...a, anchor: 'end' as const } : a;
+  });
+  const labelled = alerts.map((a, i) => {
+    if (i > 0 || !a.label) return { ...a, label: null };
+    const w = a.label.length * LABEL_CHAR_W;
+    const others = alerts.filter((_, j) => j !== i).map((o) => o.x);
+    // Intervalle [from, to] libre : dans le tracé, et sans autre trait (marge de 2 px).
+    const free = (from: number, to: number) => from >= 0 && to <= width && !others.some((x) => x >= from - 2 && x <= to + 2);
+    if (free(a.x + 5, a.x + 5 + w)) return a;
+    if (free(a.x - 5 - w, a.x - 5)) return { ...a, anchor: 'end' as const };
+    return { ...a, label: null };
   });
 
   const cur = r.account.currency;
   const firstAt = pts.find((p) => p.at)?.at ?? null;
   const lastAt = pts[pts.length - 1].at;
   return {
-    width, height: CHART_H + 18, path, points, zeroY: round(y(0)), alerts,
+    width, height: CHART_H + 18, path, points, zeroY: round(y(0)), alerts: labelled,
     // Séance d'un seul trade (ou à la même minute) : une seule heure sous l'axe, pas « 16:40 … 16:40 ».
     startLabel: firstAt ? clock(firstAt) : '',
     endLabel: lastAt && (!firstAt || clock(lastAt) !== clock(firstAt)) ? clock(lastAt) : '',

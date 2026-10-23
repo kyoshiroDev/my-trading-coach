@@ -68,6 +68,33 @@ describe('autopsy.util — courbe de distance', () => {
     expect(c.alerts.map((a) => a.label)).toEqual(['Alerte 10:44', null, null]);
   });
 
+  it('libellé jamais traversé par un autre trait d’alerte (séance démo à 390 px, revue #712)', () => {
+    // Même enchaînement que la démo : alerte juste après le 3e trade, deux autres avant et après le 4e.
+    const r = mockupReport();
+    const alert = (hhmm: string, label: string) => ({ type: 'alert' as const, at: at(hhmm), label, nextTradeMinutes: 1 });
+    const trades = r.timeline.filter((e) => e.type === 'trade');
+    const timeline = [...trades, alert('10:22', 'marge drawdown sous 25 %'), alert('10:44', "pertes d'affilée"), alert('10:50', 'marge drawdown sous 10 %')];
+    for (const width of [358, 560]) {
+      const c = distanceChart({ ...r, timeline }, width)!;
+      const [first, ...rest] = c.alerts;
+      expect(first.label).toBe('Alerte 10:22');
+      const w = first.label!.length * 6.7;
+      const [from, to] = first.anchor === 'start' ? [first.x + 5, first.x + 5 + w] : [first.x - 5 - w, first.x - 5];
+      expect(from).toBeGreaterThanOrEqual(0);
+      expect(to).toBeLessThanOrEqual(width);
+      for (const o of rest) expect(o.x < from - 2 || o.x > to + 2).toBe(true);
+    }
+  });
+
+  it('aucune place libre de part et d’autre : pas de libellé plutôt qu’un chevauchement', () => {
+    const r = mockupReport();
+    const alert = (hhmm: string) => ({ type: 'alert' as const, at: at(hhmm), label: 'x', nextTradeMinutes: 1 });
+    const trades = r.timeline.filter((e) => e.type === 'trade');
+    // Tracé étroit : à gauche le bord, à droite l'alerte de 10:00 dans la place du libellé.
+    const c = distanceChart({ ...r, timeline: [...trades, alert('09:35'), alert('10:00')] }, 160)!;
+    expect(c.alerts[0].label).toBeNull();
+  });
+
   it("libellé près du bord droit : ancré à gauche du trait, jamais coupé", () => {
     const r = mockupReport();
     const late = { type: 'alert' as const, at: at('11:10'), label: 'perte du jour sous 10 %', nextTradeMinutes: 2 };
