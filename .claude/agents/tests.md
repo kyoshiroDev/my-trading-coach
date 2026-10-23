@@ -51,6 +51,21 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
   En local : `playwright test src/smoke.spec.ts` (le filtre `smoke` porte sur le chemin complet :
   dans un dossier dont le nom contient « smoke », il lance TOUTE la suite, inscriptions comprises)
   et `RESEND_API_KEY=re_placeholder` sur l'API, sinon les inscriptions envoient de vrais e-mails.
+- **E2E de nuit** (`.github/workflows/e2e-nightly.yml`, #694) : `12-activation` (inscription +
+  onboarding) chaque nuit à 02:30 UTC sur `dev`, base éphémère, API et app compilée lancées comme le
+  smoke, `RESEND_DRY_RUN=true`. Sauté si aucun commit sur `dev` depuis 24 h (budget Actions) ;
+  `workflow_dispatch` force le run. Actif seulement une fois le fichier sur `main` (planifié = branche
+  par défaut).
+- **Ports et API réglables, sans toucher aux fichiers compilés** : build **`e2e`** de l'app
+  (`environment.e2e.ts`, aussi en `serve --configuration=e2e`) qui lit l'origine de l'API dans le
+  localStorage (`mtc.e2e.apiOrigin`), posée par le `storageState` de `playwright.config.ts` depuis
+  **`E2E_API_URL`** (défaut `http://localhost:3001`). Port de l'app : **`E2E_APP_PORT`** (défaut 4200,
+  `BASE_URL` prioritaire). L'API garde `PORT` et `CORS_ORIGINS`. Exemple validé : API 3101, app 4310.
+- **Limite d'inscription (10/h par IP)** : la suite crée un compte par test. Avec **`LOAD_TEST_KEY`**
+  (même valeur côté API et Playwright, ≥ 32 caractères), `register()` ajoute la clé et un client virtuel
+  propre au test aux seuls appels vers l'API (`page.route`), donc chaque test a son compteur
+  (`load-test-tracker.ts`, ignoré sur la base de prod). Sans la clé : 2 échecs au 2e passage complet
+  (11e et 12e inscriptions en 429). Jamais de purge Redis pour remettre les compteurs à zéro.
 
 ---
 
