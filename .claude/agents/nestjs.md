@@ -1352,6 +1352,12 @@ inconnu (mapping `csv_mapping`, repli ligne par ligne `csv_import`, analyse d'é
 Plafonds inchangés : mapping = en-tête + `MAPPING_SAMPLE_ROWS` (20) lignes, puis le CODE applique
 le mapping à tout le fichier ; repli = toutes les lignes par lots de `AI_BATCH` (25), refus explicite
 au-delà de `MAX_AI_ROWS` (2 000), jamais d'import tronqué en silence.
+**Limite du repli** : `CSV_AI_FALLBACK_DAILY_LIMIT` (3) passages par utilisateur et par jour (Paris),
+compteur Redis `csv-ai-fallback:<userId>:<jour>` (INCR puis contrôle, place rendue si le passage
+échoue, Redis indisponible → refus 503) ; au-delà : 429 avec un message clair, aucun appel IA. Le
+mapping (1 appel, 20 lignes) n'est pas compté. **Journal** : une ligne JSON par passage
+(`event: 'csv_ai_fallback'`, `userId`, `rows`, `batches`, `result` = `ok` · `error` · `too_many_rows` ·
+`daily_limit`, `trades`, `durationMs`), jamais le nom ni le contenu du fichier.
 
 ## Registre des brokers (2026-09-28)
 
