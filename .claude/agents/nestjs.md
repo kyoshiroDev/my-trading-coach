@@ -1670,6 +1670,45 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
   compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
 
+## Autopsie d'un compte grillé (#669, 2026-10-23)
+
+Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : pas de cycle).
+- **Détection** `AccountIncidentsService.detect(userId, accountId, source)` : relit `AccountsService.list`
+  (aucune règle recalculée) ; compte ACTIVE, `drawdown.breached` → incident `drawdown`
+  (`period = 'account'`) ; `dailyLoss.breached` (Premium seulement, métrique non calculée en Gratuit)
+  → `daily_loss` (`period = AAAA-MM-JJ`). `createMany … skipDuplicates` + unicité
+  `accountId + kind + period` = un seul incident, même si plusieurs déclencheurs tirent ensemble.
+  **Jamais pour un compte démo** (son incident vient du seed). `detectQuietly` = best-effort.
+- **Déclencheurs** : `PropAlertsService` (niveau `breached` drawdown / perte du jour, source `live`),
+  `TradesService.importTrades` (fin de lot, par compte touché : import CSV, synchro et historique
+  Tradovate) et `TradesService.create` hors lot (saisie), source `sync`.
+- **Confirmation** : `PATCH /accounts/:id` passe par `AccountIncidentsService.updateAccount`. Un compte
+  ACTIF passé en `FAILED` ou `ARCHIVED` (feuille « … est échoué ») relance la détection puis pose
+  `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre `failedByIncidentAt: null`).
+  Passé en `FAILED` sans limite détectée : incident `manual` (chronologie de la dernière séance, jamais
+  réactivable). Simple archivage sans limite franchie : rien.
+- **Routes** : `GET /accounts/:id/incidents` (ouverts) · `GET …/:incidentId` (chronologie, KPI, série
+  de distance, 3 constats, `ai` stocké, `canReactivate` ; **aucun appel IA**) · `GET …/:incidentId/analysis`
+  · `POST …/:incidentId/dismiss`. `GET /accounts` porte `openIncidentId`.
+- **Chronologie et constats** : `incident-report.ts` (pur), recalculés à chaque lecture depuis
+  `Trade`, `BehaviorAlert`, `PropRiskEvent` de la journée CME et les 60 séances précédentes. Distance
+  = marge relevée à la détection (`data.remaining`) reconstruite trade par trade sur le réalisé
+  (`tradedAt` = première sortie : estimation, `estimatedDistance: true`). Constats : gabarits chiffrés,
+  aucun conseil ni promesse (test dédié).
+- **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
+  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Jamais pour la démo,
+  jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
+  Verrou Redis `incident-ai:<id>` (NX, 1 h) contre la double ouverture ; **libéré si l'appel échoue
+  ou revient vide** (nouvel essai à la prochaine ouverture), conservé après un succès.
+- **« Ce n'est pas un échec »** : `dismissedAt` (jamais recréé) ; remet le compte en ACTIVE seulement si
+  `failedByIncidentAt` et statut encore `FAILED` / `ARCHIVED`, via `AccountsService.update` (quota).
+- **Démo** : `demo-data/lost-accounts.ts` (`lastSession`, `buildLostDemoIncident`,
+  `DEMO_INCIDENT_ANALYSIS`) : séance de casse sur « Apex 50k · Éval #1 », alerte « pertes d'affilée »,
+  paliers 25 % / 10 % / dépassé, échec confirmé, texte d'analyse PRÉENREGISTRÉ (vitrine démo seulement :
+  `seed:user` n'en pose pas). La page le signale comme exemple.
+- E-mail : pas encore branché (texte à valider par Greg ; seulement si `notificationsEmail` déjà actif,
+  formule « d'après tes trades enregistrés, la limite semble franchie », jamais démo).
+
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
 `analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /

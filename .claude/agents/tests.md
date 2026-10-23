@@ -331,6 +331,22 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
   `accounts-lost-account.spec.ts`, `journal-lost-account.spec.ts` (template lu par `?raw`, pas
   `node:fs`), `account-status.util.spec.ts`, `floor-snooze.util.spec.ts`.
 
+## Autopsie : tests à maintenir (#669)
+
+- API pur : `incident-report.spec.ts` (séance de la maquette, distance, alertes retenues, 3 constats,
+  aucun conseil). Service : `account-incidents.service.spec.ts` (démo exclue, unicité, confirmation
+  FAILED / ARCHIVED et idempotence, `dismiss` réactivant seulement après confirmation, quota, IA :
+  Gratuit verrouillé, démo et `AI_ENABLED` sans appel, verrou, échec ou réponse vide → verrou libéré
+  et nouvel essai, `max_tokens` 400). Vraie base : `account-incidents.int-spec.ts`.
+- Démo : `admin/demo-incident.spec.ts` (franchissement au dernier trade, 3 constats, incident et texte
+  préenregistré sur la vitrine seulement) ; le faux Prisma de `demo-seed-idempotence.spec.ts` déclare
+  `behaviorAlert` et `accountIncident`.
+- App : `autopsy.util.spec.ts`, `account-autopsy.component.spec.ts` (vrai template `?raw`, un seul
+  appel d'analyse, démo « Exemple »), cas ajoutés à `lost-account-flow.service.spec.ts` et
+  `accounts-lost-account.spec.ts`.
+- Un `vi.fn` re-mocké avec une autre valeur doit avoir son retour typé (sinon le typecheck des specs
+  échoue en CI) ; une méthode `protected` appelée dans un spec passe par un cast.
+
 ## Tests critiques Angular à maintenir
 
 ```

@@ -24,6 +24,10 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
   compte comme échoué peut repartir, puisque l'échoué a libéré la place. Les comptes échoués et
   archivés sortent des statistiques « tous les comptes » quel que soit le plan (`includeInactive`
   pour les réinclure) ; la règle ne change rien au gating des analytics Premium.
+  **Autopsie d'un compte grillé (#669)** : chronologie, distance à la limite et 3 constats en
+  **Gratuit** (zéro IA) ; **analyse IA en Premium** (une par incident, `max_tokens` 400, persistée,
+  jamais régénérée, jamais hors prod ni pour la démo). Perte du jour : métrique Premium, donc incident
+  `daily_loss` en Premium seulement ; le plancher vaut pour tous.
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
 - **Essai** : `TRIAL_PERIOD_DAYS = 30` (api pricing.const). Accordé **uniquement** sur le prix **mensuel** ET si `!user.trialUsed`. L'annuel est facturé immédiatement, sans essai.
 
