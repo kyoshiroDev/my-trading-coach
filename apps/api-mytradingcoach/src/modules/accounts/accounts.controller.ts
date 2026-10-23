@@ -16,13 +16,19 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreatePayoutDto } from './dto/create-payout.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
+import { AccountIncidentsService } from './incidents/account-incidents.service';
+
+type RequestUser = { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null; isDemo?: boolean };
 
 // Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
 // Le plafond est appliqué dans AccountsService.create (FREE peut gérer son 1 compte).
 @Controller('accounts')
 @UseGuards(JwtAuthGuard)
 export class AccountsController {
-  constructor(private readonly accounts: AccountsService) {}
+  constructor(
+    private readonly accounts: AccountsService,
+    private readonly incidents: AccountIncidentsService,
+  ) {}
 
   // Couche Premium (#370 : perte journalière, gain max du jour) : calculée pour le Premium seulement (mêmes règles que PremiumGuard).
   @Get()
@@ -45,14 +51,43 @@ export class AccountsController {
     });
   }
 
+  // Passage en ÉCHOUÉ : rattaché à l'incident détecté (autopsie, #669), cf. AccountIncidentsService.
   @Patch(':id')
   update(
-    @CurrentUser()
-    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body() dto: UpdateAccountDto,
   ) {
-    return this.accounts.update(user.id, id, dto, {
+    return this.incidents.updateAccount(
+      { ...user, trialEndsAt: user.trialEndsAt ?? null },
+      id,
+      dto,
+      { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
+    );
+  }
+
+  /** Autopsies d'un compte (#669) : incidents non retirés, du plus récent au plus ancien. */
+  @Get(':id/incidents')
+  listIncidents(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.incidents.list(user.id, id);
+  }
+
+  /** Autopsie : chronologie, constats (tous plans) et analyse IA déjà générée (Premium). */
+  @Get(':id/incidents/:incidentId')
+  getIncident(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.get({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
+  }
+
+  /** Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée. */
+  @Get(':id/incidents/:incidentId/analysis')
+  incidentAnalysis(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.analysis({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
+  }
+
+  /** « Ce n'est pas un échec » : retire l'autopsie ; réactive le compte s'il a été échoué depuis elle. */
+  @Post(':id/incidents/:incidentId/dismiss')
+  dismissIncident(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.dismiss({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId, {
       plan: user.plan,
       role: user.role,
       trialEndsAt: user.trialEndsAt,

@@ -384,6 +384,7 @@ model TradingAccount {
   riskDays          AccountRiskDay[]
   riskEvents        PropRiskEvent[]
   behaviorAlerts    BehaviorAlert[]
+  incidents         AccountIncident[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -711,6 +712,38 @@ model BehaviorBaseline {
 /// Alerte de comportement (#602) calculée en direct à chaque nouvelle entrée (position ouverte ou
 /// renforcée) d'un compte Tradovate suivi en temps réel. Phase 1 : enregistrée EN SILENCE, rien
 /// n'est affiché (`BEHAVIOR_ALERTS_UI=false`). Séance du moteur = compte × journée CME (`tradeDay`).
+/// Autopsie d'un compte grillé (#669) : franchissement d'une limite, un seul par compte et par
+/// limite (`period`). La chronologie et les constats se recalculent à l'affichage depuis les
+/// trades et les alertes ; seule l'analyse IA (Premium) est stockée, générée une fois.
+model AccountIncident {
+  id                 String         @id @default(cuid())
+  userId             String
+  accountId          String
+  account            TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  /// `drawdown` (plancher) · `daily_loss` (perte du jour) · `manual` (compte marqué échoué sans casse détectée)
+  kind               String
+  /// Clé d'unicité : `account` pour un plancher ou un échec manuel (le compte est fini), `AAAA-MM-JJ`
+  /// pour une perte du jour (la firm met en pause, le compte continue).
+  period             String
+  /// Journée CME de la séance analysée.
+  tradeDate          DateTime       @db.Date
+  /// `live` (alerte Tradovate) · `sync` (après synchro, import ou saisie) · `manual` (statut Échoué)
+  source             String
+  /// Chiffres au franchissement : limite, marge restante, plancher, solde (estimations MTC).
+  data               Json?
+  /// Compte passé en ÉCHOUÉ en confirmant CET incident : seul cas où « Ce n'est pas un échec »
+  /// remet le compte en actif.
+  failedByIncidentAt DateTime?
+  aiAnalysis         String?
+  aiGeneratedAt      DateTime?
+  /// « Ce n'est pas un échec » : incident retiré, jamais recréé (l'unicité le garde).
+  dismissedAt        DateTime?
+  createdAt          DateTime       @default(now())
+
+  @@unique([accountId, kind, period])
+  @@index([userId, createdAt])
+}
+
 model BehaviorAlert {
   id          String          @id @default(cuid())
   userId      String

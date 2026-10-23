@@ -6,6 +6,7 @@ import { AccountsService } from '../../accounts/accounts.service';
 import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { PropRiskJournalService } from './prop-risk-journal.service';
+import { AccountIncidentsService } from '../../accounts/incidents/account-incidents.service';
 import { ALERT_LEVEL_RANK as RANK, ALERT_REARM_PCT, type PropAlertLevel, alertLevel } from './prop-alert-levels';
 
 export { ALERT_CRITICAL_PCT, ALERT_REARM_PCT, ALERT_WARNING_PCT, alertLevel, type PropAlertLevel } from './prop-alert-levels';
@@ -104,6 +105,8 @@ export class PropAlertsService implements OnModuleDestroy {
     private readonly accounts: AccountsService,
     /** Journal de séance (#373) : optionnel pour garder les tests unitaires légers. */
     @Optional() private readonly journal?: PropRiskJournalService,
+    /** Autopsie d'un compte grillé (#669) : créée dès qu'une limite est dépassée en direct. */
+    @Optional() private readonly incidents?: AccountIncidentsService,
   ) {}
 
   /** Regroupe la rafale de soldes d'un trade : une évaluation par compte, après le dernier. */
@@ -182,6 +185,9 @@ export class PropAlertsService implements OnModuleDestroy {
       await this.journal
         ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
         .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));
+      if (c.level === 'breached' && (c.kind === 'drawdown' || c.kind === 'daily_loss')) {
+        await this.incidents?.detectQuietly(userId, accountId, 'live');
+      }
     }
   }
 
