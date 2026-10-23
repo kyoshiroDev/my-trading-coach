@@ -44,4 +44,12 @@ describe("Autopsie : couleurs (revue #712)", () => {
     expect(kpi).toMatch(/font-size: clamp\(13px, 4\.2cqi, 18px\)/);
     expect(kpi).not.toMatch(/overflow-wrap: anywhere/);
   });
+
+  it('feuille « compte perdu » : sélection et focus en bleu, aucun cyan', () => {
+    const checked = rule(SHEETS_CSS, '.la-opt.is-checked');
+    expect(checked).toMatch(/border-color: var\(--blue\)/);
+    expect(checked).toMatch(/background: var\(--blue-glow\)/);
+    expect(rule(SHEETS_CSS, '.la-opt.is-checked .la-opt-t i')).toMatch(/var\(--blue-bright\)/);
+    expect(SHEETS_CSS).not.toMatch(/--cyan/);
+  });
 });
