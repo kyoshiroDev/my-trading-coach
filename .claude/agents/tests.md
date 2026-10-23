@@ -27,6 +27,11 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
 - Une spec qui remplace un module avec **`vi.mock`** doit être ajoutée à `NEEDS_ISOLATION` dans ce
   fichier (projet Vitest `app-isolated`) : sinon le mock ne s'applique pas si un autre fichier a déjà
   chargé le module, et la spec casse selon l'ordre d'exécution.
+- **Délai par test : 20 s** (`testTimeout`) dans les configs Vitest de l'app ET de l'API, au lieu
+  des 5 s par défaut. Une spec qui compile un gros template réel (Mes comptes, journal, onboarding,
+  profil) prend 1,5 à 4,3 s en suite complète, jusqu'à 14 s machine chargée ; idem côté API pour le
+  câblage des modules Nest et la lecture Excel. Un échec « STACK_TRACE_ERROR » dans le rapport JSON
+  avec une durée proche du délai = délai dépassé, pas une assertion fausse (#689). Ne pas baisser.
 - Cibles Nx inférées (`@nx/vitest`, `@nx/eslint/plugin`) : pas de `test` ni de `lint` à déclarer
   dans `project.json`.
 
@@ -46,6 +51,21 @@ pnpm nx test api-mytradingcoach -c ci  # + couverture et seuils (ce que lance la
   En local : `playwright test src/smoke.spec.ts` (le filtre `smoke` porte sur le chemin complet :
   dans un dossier dont le nom contient « smoke », il lance TOUTE la suite, inscriptions comprises)
   et `RESEND_API_KEY=re_placeholder` sur l'API, sinon les inscriptions envoient de vrais e-mails.
+- **E2E de nuit** (`.github/workflows/e2e-nightly.yml`, #694) : `12-activation` (inscription +
+  onboarding) chaque nuit à 02:30 UTC sur `dev`, base éphémère, API et app compilée lancées comme le
+  smoke, `RESEND_DRY_RUN=true`. Sauté si aucun commit sur `dev` depuis 24 h (budget Actions) ;
+  `workflow_dispatch` force le run. Actif seulement une fois le fichier sur `main` (planifié = branche
+  par défaut).
+- **Ports et API réglables, sans toucher aux fichiers compilés** : build **`e2e`** de l'app
+  (`environment.e2e.ts`, aussi en `serve --configuration=e2e`) qui lit l'origine de l'API dans le
+  localStorage (`mtc.e2e.apiOrigin`), posée par le `storageState` de `playwright.config.ts` depuis
+  **`E2E_API_URL`** (défaut `http://localhost:3001`). Port de l'app : **`E2E_APP_PORT`** (défaut 4200,
+  `BASE_URL` prioritaire). L'API garde `PORT` et `CORS_ORIGINS`. Exemple validé : API 3101, app 4310.
+- **Limite d'inscription (10/h par IP)** : la suite crée un compte par test. Avec **`LOAD_TEST_KEY`**
+  (même valeur côté API et Playwright, ≥ 32 caractères), `register()` ajoute la clé et un client virtuel
+  propre au test aux seuls appels vers l'API (`page.route`), donc chaque test a son compteur
+  (`load-test-tracker.ts`, ignoré sur la base de prod). Sans la clé : 2 échecs au 2e passage complet
+  (11e et 12e inscriptions en 429). Jamais de purge Redis pour remettre les compteurs à zéro.
 
 ---
 

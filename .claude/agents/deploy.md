@@ -216,6 +216,9 @@ exec node main.js
   firm à revérifier (> 30 jours). Lecture seule, aucun secret (`GITHUB_TOKEN`, `issues: write`). Un `schedule` ne
   tourne que depuis la branche par défaut (`main`) : il n'est actif qu'une fois promu en prod. Marche à suivre :
   README de `libs/shared/src/prop-firm-rules/`, section « Veille automatique ».
+- **E2E de nuit** (`e2e-nightly.yml`, 02:30 UTC + manuel, #694) : `12-activation` sur `dev` (checkout
+  `ref: dev`), base éphémère. Un premier job de quelques secondes saute la suite si `dev` n'a pas de
+  commit depuis 24 h. Aucun secret (clés factices, `LOAD_TEST_KEY` de test). Détails : `tests.md`.
 
 ### Secrets GitHub requis
 

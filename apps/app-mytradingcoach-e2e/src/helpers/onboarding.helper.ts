@@ -7,6 +7,7 @@ import { Page, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { E2E_API_URL, LOAD_TEST_KEY } from './e2e-env';
 
 export const TEST_PASSWORD = 'TestPassword123!';
 
@@ -16,6 +17,7 @@ export function uniqueEmail(tag: string): string {
 }
 
 export async function register(page: Page, email: string): Promise<void> {
+  await withRegisterThrottleKey(page, email);
   await page.goto('/register');
   await expect(page.locator('[data-testid="register-email"]')).toBeVisible();
   await page.fill('[data-testid="register-email"]', email);
@@ -24,6 +26,21 @@ export async function register(page: Page, email: string): Promise<void> {
   await page.click('[data-testid="register-submit"]');
   await page.waitForURL('**/dashboard');
   await expect(page.locator('[data-testid="onboarding-wizard"]')).toBeVisible();
+}
+
+/**
+ * Avec `LOAD_TEST_KEY` (CI de nuit, #694) : les appels à l'API de CE test portent la clé et un
+ * client virtuel propre au test, donc la limite d'inscription par IP (10/h) se compte par test et
+ * non pour toute la suite. Ajouté au niveau réseau, seulement vers l'API : jamais vers un tiers.
+ */
+async function withRegisterThrottleKey(page: Page, email: string): Promise<void> {
+  if (!LOAD_TEST_KEY) return;
+  const client = email.replace(/[^a-z0-9-]/gi, '-').slice(0, 64);
+  await page.route(`${E2E_API_URL}/**`, (route) =>
+    route.continue({
+      headers: { ...route.request().headers(), 'x-load-test-key': LOAD_TEST_KEY, 'x-load-client': client },
+    }),
+  );
 }
 
 /**

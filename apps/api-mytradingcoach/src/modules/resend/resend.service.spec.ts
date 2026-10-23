@@ -182,6 +182,22 @@ describe('ResendService', () => {
       );
     });
 
+    it('abandon signalé à Sentry : ni l’objet ni le destinataire de l’e-mail', async () => {
+      mockSend.mockResolvedValue(err('rate_limit_exceeded'));
+      const subject = '📈 Session 22/10 : +1 250 $';
+
+      await service.deliver({ ...params, subject }, { lastAttempt: true, idempotencyKey: 'k' });
+
+      expect(Sentry.captureMessage).toHaveBeenCalledOnce();
+      const sent = JSON.stringify(vi.mocked(Sentry.captureMessage).mock.calls);
+      expect(sent).not.toContain(subject);
+      expect(sent).not.toContain(params.to);
+      expect(vi.mocked(Sentry.captureMessage).mock.calls[0][1]).toMatchObject({
+        tags: { resend_error: 'rate_limit_exceeded' },
+        extra: { message: 'rate_limit_exceeded', attempts: 1, queued: true },
+      });
+    });
+
     it('quota atteint → pas de nouvel essai même avant le dernier, Sentry en fatal', async () => {
       mockSend.mockResolvedValue(err('daily_quota_exceeded'));
 
@@ -225,6 +241,16 @@ describe('ResendService', () => {
         'Resend : rate_limit_exceeded',
         expect.objectContaining({ level: 'error', fingerprint: ['resend-send-failed', 'rate_limit_exceeded'] }),
       );
+    });
+
+    it('envoi direct abandonné : l’objet (nom d’ambassadeur) n’est pas envoyé à Sentry', async () => {
+      mockSend.mockResolvedValue(err('daily_quota_exceeded'));
+      const subject = '🤝 Demande ambassadeur · Camille Exemple';
+
+      await service.deliver({ to: 'a@test.com', subject, html: 'h' });
+
+      expect(Sentry.captureMessage).toHaveBeenCalledOnce();
+      expect(JSON.stringify(vi.mocked(Sentry.captureMessage).mock.calls)).not.toContain('Camille Exemple');
     });
 
     it('quota journalier dépassé → pas de nouvel essai, Sentry en fatal, regroupé', async () => {

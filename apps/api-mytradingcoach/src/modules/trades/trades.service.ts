@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -30,6 +31,7 @@ import { calculatePnl, calculateRiskReward } from './trade-metrics.util';
 import { dedupeKey, duplicateIdentity, occurrenceHash } from './trade-identity.util';
 import { journalStatsForFilters, type JournalStats } from './journal-stats.util';
 import { recomputeBehavioralGrades } from './behavioral-grades';
+import { AccountIncidentsService } from '../accounts/incidents/account-incidents.service';
 
 // Réexports : les appelants existants importent ces types depuis le service.
 export type { JournalStats } from './journal-stats.util';
@@ -56,6 +58,8 @@ export class TradesService {
     private readonly analyticsService: AnalyticsService,
     private readonly accounts: AccountsService,
     private readonly setups: SetupsService,
+    /** Autopsie d'un compte grillé (#669) : optionnel pour garder les tests unitaires légers. */
+    @Optional() private readonly incidents?: AccountIncidentsService,
   ) {}
 
   async create(
@@ -158,6 +162,8 @@ export class TradesService {
         trade.executionMethod = fresh.executionMethod;
       }
     }
+    // Saisie à la main : le trade peut faire franchir une limite (l'import le vérifie, lui, en fin de lot).
+    if (!opts.deferBehavioral && !batch && accountId) await this.incidents?.detectQuietly(userId, accountId, 'sync');
     // Le front remplace l'objet en store par CETTE reponse : sans le champ calcule,
     // un trade fraichement logge affichait « non renseignee » jusqu'au rechargement.
     // Apres le bloc ci-dessus, qui reecrit les champs d'execution.
@@ -258,6 +264,8 @@ export class TradesService {
     // Barème comportemental recalculé une fois par compte, sur l'ensemble de son historique.
     for (const accountId of affectedAccounts) {
       await this.recomputeBehavioralGrades(accountId);
+      // Limite franchie d'après les trades importés ou synchronisés : autopsie (#669), best-effort.
+      await this.incidents?.detectQuietly(userId, accountId, 'sync');
     }
     // Cache analytics invalidé une fois pour tout le lot (SCA-B1-03), pas à chaque ligne.
     if (created > 0) await this.analyticsService.invalidateUserCache(userId);

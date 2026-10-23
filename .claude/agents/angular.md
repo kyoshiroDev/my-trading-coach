@@ -1072,8 +1072,7 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
     est vraie (jamais sur téléphone), par `import('../login.component')` : `login.component.ts`
     réexporte `AuthPitchComponent` pour que la colonne voyage dans le morceau déjà paresseux de
     `/login`. Un morceau à part (ou `@defer`) scindait le chunk partagé d'Angular : +2,7 kB au bundle
-    initial, qui n'a que ~2,5 kB de marge (497,6 kB sur 500, oct. 2026). Ne pas importer la colonne
-    en statique.
+    initial (488,4 kB sur 500 depuis #692, oct. 2026). Ne pas importer la colonne en statique.
   - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
     entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
     à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
@@ -1091,6 +1090,13 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   composant chargé au démarrage (racine, toasts, dialogues globaux, **inscription**) l'importe, TOUTES
   les icônes de l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`,
   `mtc-eye-icon`).
+- **Stores d'un utilisateur vidés au logout par `UserScopedReset`** (`core/auth/user-scoped-reset.ts`,
+  #692) : chaque store s'inscrit dans son constructeur (`inject(UserScopedReset).register(() =>
+  this.reset())`), `AuthService.logout()` appelle `resetAll()`. **`AuthService` (chargé au démarrage)
+  n'importe aucun store ni API métier** : avant, il injectait `SelectedAccountStore`, `TradesStore` et
+  `SetupsStore`, qui partaient au démarrage avec leurs API (−9,4 kB, 497,8 → 488,4 kB). Nouveau store
+  propre à l'utilisateur → s'inscrire là, pas l'injecter dans `AuthService`. Reste au démarrage ~4,5 kB
+  de `@mtc/shared` (règles prop firm, stats) via un morceau partagé d'esbuild, sans import direct.
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
