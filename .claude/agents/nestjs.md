@@ -623,6 +623,12 @@ de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai,
 activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
+**Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
+`compte-1`, `compte-2`… dans l'ordre des comptes, `unassigned` inchangé ; jamais l'identifiant
+interne. Les trades partent regroupés par clé et SANS leur `accountId`. L'IA renvoie la clé dans
+`accounts[].accountId` ; `toId` la retraduit avant la fusion, une clé inconnue est ignorée. Le
+débrief stocké garde les vrais ids (onglets, PDF).
+
 ---
 
 ## Clustering — règles
