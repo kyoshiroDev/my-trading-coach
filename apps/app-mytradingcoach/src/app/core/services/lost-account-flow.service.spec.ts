@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ConfirmService } from '@mtc/front-ui';
 import { LostAccountFlowService } from './lost-account-flow.service';
@@ -18,7 +19,9 @@ function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean } = {}) {
     update: vi.fn(() => of({ data: {} })),
     purge: vi.fn(() => of({ data: { deleted: true, tradesDeleted: 12 } })),
     retry: vi.fn(() => of({ data: { id: 'new', label: 'Apex 50K #2' } })),
+    incidents: vi.fn(() => of({ data: [{ id: 'inc-1' }] as { id: string }[] })),
   };
+  const router = { navigate: vi.fn(async () => true) };
   const store = {
     accounts: signal(opts.accounts ?? [acc('a1', 'Apex 50K #1', { status: 'ACTIVE' })]),
     loaded: signal(true),
@@ -33,12 +36,13 @@ function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean } = {}) {
       { provide: SelectedAccountStore, useValue: store },
       { provide: TradesStore, useValue: tradesStore },
       { provide: ConfirmService, useValue: confirm },
+      { provide: Router, useValue: router },
     ],
   });
   return {
     flow: TestBed.inject(LostAccountFlowService),
     toast: TestBed.inject(ToastService),
-    api, store, tradesStore, confirm,
+    api, store, tradesStore, confirm, router,
   };
 }
 
@@ -61,6 +65,27 @@ describe('LostAccountFlowService (compte perdu)', () => {
     expect(tradesStore.reset).toHaveBeenCalled();
     expect(flow.choiceId()).toBeNull();
     expect(toast.visible()[0]).toMatchObject({ type: 'success', message: '« Apex 50K #1 » archivé : il sort de tes statistiques.' });
+  });
+
+  it("toast de confirmation : « Voir l'autopsie » ouvre la dernière autopsie du compte (#669)", async () => {
+    const { flow, api, toast, router } = setup();
+    flow.openChoice('a1');
+    await flow.confirmChoice('keep');
+    const t = toast.visible()[0];
+    expect(t.action?.label).toBe("Voir l'autopsie");
+    t.action!.run();
+    expect(api.incidents).toHaveBeenCalledWith('a1');
+    expect(router.navigate).toHaveBeenCalledWith(['/accounts', 'a1', 'autopsie', 'inc-1']);
+  });
+
+  it("aucune autopsie côté serveur : on le dit, sans navigation", async () => {
+    const { flow, api, toast, router } = setup();
+    api.incidents.mockReturnValue(of({ data: [] }));
+    flow.openChoice('a1');
+    await flow.confirmChoice('archive');
+    toast.visible()[0].action!.run();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(toast.visible().some((x) => x.message.startsWith("Pas d'autopsie pour ce compte"))).toBe(true);
   });
 
   it('Garder comme échoué → PATCH FAILED', async () => {

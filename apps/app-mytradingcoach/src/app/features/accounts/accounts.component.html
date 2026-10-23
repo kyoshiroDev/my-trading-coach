@@ -310,6 +310,10 @@
             <div class="acct-sub acct-failed" [attr.data-testid]="'account-failed-' + a.id">
               <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
               <div class="acct-failed-actions">
+                @if (a.openIncidentId) {
+                  <a class="lost-btn" [routerLink]="['/accounts', a.id, 'autopsie', a.openIncidentId]"
+                     [attr.data-testid]="'account-autopsy-' + a.id">Voir l'autopsie</a>
+                }
                 <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
                         [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
                 <button type="button" class="lost-btn" (click)="lostAccount.archive(a)"
@@ -319,6 +323,12 @@
           } @else if (a.status === 'ARCHIVED') {
             <div class="acct-sub acct-failed" [attr.data-testid]="'account-archived-' + a.id">
               <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
+              @if (a.openIncidentId) {
+                <div class="acct-failed-actions">
+                  <a class="lost-btn" [routerLink]="['/accounts', a.id, 'autopsie', a.openIncidentId]"
+                     [attr.data-testid]="'account-autopsy-' + a.id">Voir l'autopsie</a>
+                </div>
+              }
             </div>
           }
 

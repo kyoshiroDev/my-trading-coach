@@ -868,6 +868,26 @@ les chiffres (jamais au premier passage).
 ⚠️ `src/styles/global.css` n'est importé nulle part : un style global va dans `src/styles.css`
 (c'est là qu'est `.status-badge`).
 
+## Autopsie d'un compte grillé (#669, 2026-10-23)
+
+Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
+`/accounts/:accountId/autopsie/:incidentId` → `features/accounts/autopsy/account-autopsy.component`.
+- Mise en forme pure dans `autopsy.util.ts` (en-tête, KPI, lignes, courbe SVG `distanceChart`,
+  `frenchSpacing` : espace insécable devant `: ; ! ?` des constats et de l'IA). Fixture de test :
+  `autopsy.fixture.ts` (jamais importer une fixture depuis un `*.spec.ts` : ses tests seraient rejoués).
+- Contrat : `libs/shared/src/contracts/incident.ts`. Client : `AccountsApi.incidents / incident /
+  incidentAnalysis / dismissIncident`.
+- Gratuit : chronologie et constats ; carte IA verrouillée (« Essayer Premium · 1 mois offert » selon
+  `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
+  Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
+- « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
+  « Ce n'est pas un échec » → `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
+- Page bornée à 1180 px (le SVG s'étire avec la colonne) ; deux tracés (358 / 560) selon la largeur
+  du conteneur ; une colonne puis deux à partir de 760 px (`@container`).
+- Entrées : Mes comptes (« Voir l'autopsie » si `openIncidentId`, compte FAILED ou ARCHIVED ; sur sa
+  ligne en mobile) et bouton du toast après « Confirmer » de la feuille de choix (cherche l'autopsie
+  au clic, sinon toast info).
+
 ## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
 
 **Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Plan, Role } from '@prisma/client';
 import * as XLSX from 'xlsx';
-import { AI_BATCH, AI_CHUNK_MAX_TOKENS, CsvImportService, WORST_TOKENS_PER_TRADE, type FeesReport } from './csv-import.service';
+import { AI_BATCH, AI_CHUNK_MAX_TOKENS, CSV_AI_FALLBACK_DAILY_LIMIT, CsvImportService, WORST_TOKENS_PER_TRADE, type FeesReport } from './csv-import.service';
 // Parseurs extraits en fonctions pures (étape 4 de l'audit) : testés directement.
 import { detectBroker, normalizeMexcSymbol, normalizeSeparator, parseMexc } from './csv-parsers';
 // Le vrai calcul du mapping : le test du registre doit exercer le code, pas un faux.
@@ -719,5 +719,143 @@ describe('CsvImportService — fichier non reconnu vs broker inconnu', () => {
       'Un export broker plausible ne doit jamais être rejeté comme un fichier cassé',
     ).not.toContain('ne ressemble pas à un export de trades');
     expect(msg).toContain('Premium');
+  });
+});
+
+/**
+ * Ce que reçoit l'IA d'un fichier de broker inconnu : jamais le nom du fichier, jamais les valeurs
+ * des colonnes d'identification (en-tête gardé pour le mapping), 20 lignes au plus pour le mapping.
+ */
+describe("CsvImportService · données minimales envoyées à l'IA", () => {
+  const header = 'Account,Order ID,Symbol,Side,Qty,Entry,Exit,Close Time,PnL';
+  const rows = Array.from({ length: 40 }, (_, i) =>
+    `ACC-998877,${5000 + i},MNQ,Buy,1,${19800 + i},${19801 + i},2026-01-05 14:${String(i % 60).padStart(2, '0')}:00,2`);
+  const csv = [header, ...rows].join('\n');
+  const FILE = 'Jean Dupont compte 998877.csv';
+
+  const promptsOf = (create: ReturnType<typeof vi.fn>) =>
+    create.mock.calls.map(([p]) => JSON.stringify(p.messages) + JSON.stringify(p.system ?? ''));
+
+  it('mapping : en-tête visible, 20 lignes, valeurs masquées, aucun nom de fichier', async () => {
+    const svc = makeService();
+    const create = vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'pas de mapping' }], usage: { input_tokens: 1, output_tokens: 1 } });
+    (svc as any).anthropicClient.create = create;
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      await svc.parseCSV(Buffer.from(csv), FILE, undefined, PREMIUM_ACCESS).catch(() => undefined);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+    const mapping = create.mock.calls.find(([, meta]) => meta.feature === 'csv_mapping')![0];
+    const text = mapping.messages[0].content as string;
+    expect(text).toContain(header);
+    expect(text.match(/compte-1,id-\d+,MNQ/g)).toHaveLength(20);
+    for (const p of promptsOf(create)) {
+      expect(p).not.toMatch(/998877|Jean Dupont|\b50[0-3]\d\b/);
+    }
+  });
+
+  it('repli ligne par ligne : toutes les lignes masquées, jetons stables entre lots, aucun nom de fichier', async () => {
+    const svc = makeService();
+    const trade = { asset: 'MNQ', side: 'LONG', entry: 1, exit: 2, quantity: 1, pnl: 2, tradedAt: '2026-01-05T14:00:00Z', notes: null };
+    const create = vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: JSON.stringify({ broker: 'x', trades: [trade], skipped: 0, errors: [] }) }],
+      usage: { input_tokens: 1, output_tokens: 1 },
+    });
+    (svc as any).anthropicClient.create = create;
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      await svc.parseCSV(Buffer.from(csv), FILE, undefined, PREMIUM_ACCESS);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+    const lots = create.mock.calls.filter(([, meta]) => meta.feature === 'csv_import');
+    expect(lots).toHaveLength(Math.ceil(40 / AI_BATCH));
+    const all = lots.map(([p]) => p.messages[0].content as string).join('\n');
+    expect(all).toContain(header);
+    expect(all.match(/compte-1,/g)).toHaveLength(40); // même compte, même jeton dans tous les lots
+    expect(all).toContain('id-40,');
+    for (const p of promptsOf(create)) {
+      expect(p).not.toMatch(/998877|Jean Dupont|Fichier :/);
+    }
+  });
+});
+
+/**
+ * Repli ligne par ligne : au plus CSV_AI_FALLBACK_DAILY_LIMIT passages par utilisateur et par jour,
+ * et un journal structuré à chaque passage, sans aucune donnée du fichier.
+ */
+describe('CsvImportService · limite quotidienne et journal du repli', () => {
+  const header = 'Account,Symbol,Side,Qty,Price,Close Time';
+  const csv = [header, ...Array.from({ length: 30 }, (_, i) => `ACC-998877,MNQ,Buy,1,${19800 + i},2026-01-05 14:00:00`)].join('\n');
+  const FILE = 'Jean Dupont 998877.csv';
+  const trade = { asset: 'MNQ', side: 'LONG', entry: 1, exit: 2, quantity: 1, pnl: 2, tradedAt: '2026-01-05T14:00:00Z', notes: null };
+  const ok = { content: [{ type: 'text', text: JSON.stringify({ broker: 'x', trades: [trade], skipped: 0, errors: [] }) }], usage: { input_tokens: 1, output_tokens: 1 } };
+
+  function setup() {
+    const store = new Map<string, number>();
+    const redis = {
+      client: {
+        incr: vi.fn(async (k: string) => { store.set(k, (store.get(k) ?? 0) + 1); return store.get(k)!; }),
+        decr: vi.fn(async (k: string) => { store.set(k, (store.get(k) ?? 0) - 1); return store.get(k)!; }),
+        expire: vi.fn(async () => 1),
+      },
+    };
+    const base = makeService() as any;
+    const svc = new CsvImportService(base.anthropicClient, base.prisma, base.setups, base.brokerMappings, redis as any);
+    const create = vi.fn().mockResolvedValue(ok);
+    (svc as any).anthropicClient.create = create;
+    const logs: string[] = [];
+    vi.spyOn((svc as any).logger, 'log').mockImplementation((m: unknown) => { logs.push(String(m)); });
+    return { svc, create, logs, store };
+  }
+
+  async function run(svc: CsvImportService, userId = 'u1') {
+    const oldEnv = process.env['NODE_ENV'];
+    process.env['NODE_ENV'] = 'production';
+    try {
+      return await svc.parseCSV(Buffer.from(csv), FILE, userId, PREMIUM_ACCESS);
+    } finally {
+      process.env['NODE_ENV'] = oldEnv;
+    }
+  }
+  const fallbackCalls = (create: ReturnType<typeof vi.fn>) => create.mock.calls.filter(([, m]) => m.feature === 'csv_import').length;
+
+  it(`${CSV_AI_FALLBACK_DAILY_LIMIT} passages par jour, le suivant refusé (429) sans aucun appel IA`, async () => {
+    const { svc, create } = setup();
+    for (let i = 0; i < CSV_AI_FALLBACK_DAILY_LIMIT; i++) await run(svc);
+    const before = fallbackCalls(create);
+    await expect(run(svc)).rejects.toMatchObject({ status: 429 });
+    expect(fallbackCalls(create)).toBe(before);
+  });
+
+  it('limite par utilisateur : un autre compte garde ses passages', async () => {
+    const { svc } = setup();
+    for (let i = 0; i < CSV_AI_FALLBACK_DAILY_LIMIT; i++) await run(svc, 'u1');
+    await expect(run(svc, 'u2')).resolves.toBeDefined();
+  });
+
+  it('un passage en échec rend sa place', async () => {
+    const { svc, create, store } = setup();
+    create.mockImplementation(async (_p: unknown, meta: { feature: string }) => {
+      if (meta.feature === 'csv_import') throw new Error('529');
+      return ok;
+    });
+    await expect(run(svc)).rejects.toBeDefined();
+    expect([...store.values()]).toEqual([0]);
+  });
+
+  it('journal structuré : volumes et résultat, aucun nom de fichier ni contenu', async () => {
+    const { svc, create, logs } = setup();
+    await run(svc);
+    for (let i = 1; i < CSV_AI_FALLBACK_DAILY_LIMIT; i++) await run(svc);
+    await run(svc).catch(() => undefined);
+    const events = logs.filter((l) => l.startsWith('{')).map((l) => JSON.parse(l));
+    expect(events.map((e) => e.result)).toEqual([...Array(CSV_AI_FALLBACK_DAILY_LIMIT).fill('ok'), 'daily_limit']);
+    expect(events[0]).toMatchObject({ event: 'csv_ai_fallback', userId: 'u1', rows: 30, batches: 2, trades: 2 });
+    for (const l of logs.filter((x) => x.startsWith('{'))) expect(l).not.toMatch(/998877|Jean|MNQ|ACC/);
+    expect(create).toHaveBeenCalled();
   });
 });
