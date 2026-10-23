@@ -105,7 +105,7 @@
             <section class="card ai" data-testid="autopsy-ai">
               <div class="top">
                 <div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span>
-                @if (userStore.isDemo()) { <span class="badge-example">Exemple</span> }
+                @if (userStore.isDemo()) { <span class="badge-example" data-testid="autopsy-ai-example-badge">Exemple</span> }
               </div>
               @for (p of aiText()!.paragraphs; track $index) {
                 <p>{{ p }}</p>

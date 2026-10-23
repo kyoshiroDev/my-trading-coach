@@ -78,13 +78,16 @@ describe('Autopsie — page', () => {
   it('compte démo : analyse préenregistrée signalée comme exemple, aucun appel', () => {
     const { q, api } = mount(mockupReport({ ai: { status: 'ready', text: "D'après tes trades enregistrés…", generatedAt: '2026-10-14T09:20:00.000Z' } }), { premium: true, demo: true });
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
-    expect(q('autopsy-ai')!.textContent).toContain('Exemple');
+    // Le badge lui-même (la note contient aussi « Exemple » : elle ne suffit pas à le prouver).
+    expect(q('autopsy-ai-example-badge')!.textContent!.trim()).toBe('Exemple');
     expect(q('autopsy-ai-example')!.textContent).toContain("Exemple préenregistré du compte démo, sans appel à l'IA.");
   });
 
   it('analyse déjà conservée : aucun nouvel appel', () => {
     const { q, api } = mount(mockupReport({ ai: { status: 'ready', text: 'Texte conservé.', generatedAt: '2026-10-14T09:20:00.000Z' } }), { premium: true });
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
+    // Hors démo : jamais de badge « Exemple ».
+    expect(q('autopsy-ai-example-badge')).toBeNull();
     expect(q('autopsy-ai')!.textContent).toContain('Texte conservé.');
   });
 
