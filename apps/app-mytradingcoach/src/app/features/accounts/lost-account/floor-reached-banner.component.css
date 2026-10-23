@@ -57,15 +57,17 @@
   cursor: pointer;
 }
 
+/* Action principale en bleu (theme.css) : le cyan est réservé à l'IA et au temps réel. */
 .fr-btn.pri {
-  background: var(--cyan);
-  border-color: var(--cyan);
-  color: var(--bg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text);
   font-weight: 600;
 }
+.fr-btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .fr-btn:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--blue-bright);
   outline-offset: 2px;
 }
 
