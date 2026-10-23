@@ -16,7 +16,7 @@ import TEMPLATE from './account-autopsy.component.html?raw';
 
 /** Page d'autopsie (#669) : VRAI template (`?raw`), API et parcours simulés. */
 
-function mount(report: AccountIncidentReport, opts: { premium?: boolean } = {}) {
+function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: boolean } = {}) {
   const api = {
     incident: vi.fn(() => of({ data: report })),
     incidentAnalysis: vi.fn(() => of({ data: { status: 'ready', text: "D'après tes trades enregistrés, deux phases.", generatedAt: '2026-10-14T09:20:00.000Z' } })),
@@ -32,7 +32,7 @@ function mount(report: AccountIncidentReport, opts: { premium?: boolean } = {}) 
       { provide: Router, useValue: router },
       { provide: SelectedAccountStore, useValue: store },
       { provide: TradesStore, useValue: { reset: vi.fn() } },
-      { provide: UserStore, useValue: { isPremium: signal(!!opts.premium), trialAvailable: signal(true) } },
+      { provide: UserStore, useValue: { isPremium: signal(!!opts.premium), trialAvailable: signal(true), isDemo: signal(!!opts.demo) } },
       { provide: LostAccountFlowService, useValue: flow },
     ],
   });
@@ -67,6 +67,13 @@ describe('Autopsie — page', () => {
     expect(api.incidentAnalysis).toHaveBeenCalledTimes(1);
     expect(q('autopsy-ai')!.textContent).toContain("D'après tes trades enregistrés, deux phases.");
     expect(q('autopsy-ai')!.textContent).toContain('Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le 14 oct. à 11:20.');
+  });
+
+  it('compte démo : analyse préenregistrée signalée comme exemple, aucun appel', () => {
+    const { q, api } = mount(mockupReport({ ai: { status: 'ready', text: "D'après tes trades enregistrés…", generatedAt: '2026-10-14T09:20:00.000Z' } }), { premium: true, demo: true });
+    expect(api.incidentAnalysis).not.toHaveBeenCalled();
+    expect(q('autopsy-ai')!.textContent).toContain('Exemple');
+    expect(q('autopsy-ai-example')!.textContent).toContain("Exemple préenregistré du compte démo, sans appel à l'IA.");
   });
 
   it('analyse déjà conservée : aucun nouvel appel', () => {

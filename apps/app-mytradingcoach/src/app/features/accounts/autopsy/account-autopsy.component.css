@@ -114,6 +114,16 @@
   background: var(--purple-dim);
 }
 
+.badge-example {
+  font: 600 11px var(--font-body);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+}
+
 .actions { display: flex; flex-direction: column; gap: 8px; }
 .btn {
   display: flex;
