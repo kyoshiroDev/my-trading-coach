@@ -32,4 +32,21 @@ export function mockupReport(over: Partial<AccountIncidentReport> = {}): Account
   };
 }
 
+/**
+ * Limite déjà franchie AVANT la séance (casse un jour précédent, synchro tardive) : un trade
+ * gagnant à 21:12 qui laisse la marge estimée sous zéro (revue #712).
+ */
+export function alreadyCrossedReport(): AccountIncidentReport {
+  return mockupReport({
+    tradeDate: '2026-08-20', limit: 1000,
+    account: { id: 'acc', label: 'Lucid 25K · Flex', currency: 'USD', status: 'ARCHIVED' },
+    kpis: { net: 58, trades: 1, maxQuantity: 2, firstQuantity: 2, startDistance: -98 },
+    series: [{ at: null, distance: -98 }, { at: '2026-08-20T19:12:00.000Z', distance: -40 }],
+    timeline: [{
+      type: 'trade', at: '2026-08-20T19:12:00.000Z', tradeId: 'w', asset: 'MES', side: 'SHORT', quantity: 2,
+      net: 58, distanceAfter: -40, afterAlert: false,
+    }],
+  });
+}
+
 export { at as parisAt };

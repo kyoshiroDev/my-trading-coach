@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aiParagraphs, autopsyKpis, autopsyRows, crossedAt, distanceChart, headline } from './autopsy.util';
-import { mockupReport, parisAt as at } from './autopsy.fixture';
+import { alreadyCrossedReport, mockupReport, parisAt as at } from './autopsy.fixture';
 
 describe('autopsy.util — en-tête et KPI de la maquette', () => {
   it('phrase sous le titre : franchissement daté, nombre de trades, estimation', () => {
@@ -72,5 +72,14 @@ describe('autopsy.util — analyse IA', () => {
 
   it("espace insécable devant « : » (la ponctuation ne passe pas seule à la ligne), heures intactes", () => {
     expect(aiParagraphs('deux phases : trois trades à 10:44 ?')).toEqual(['deux phases\u00a0: trois trades à 10:44\u00a0?']);
+  });
+});
+
+describe('autopsy.util — limite déjà franchie avant la séance (revue #712)', () => {
+  it("en-tête sans franchissement daté, marge de départ signée", () => {
+    const r = alreadyCrossedReport();
+    expect(crossedAt(r)).toBeNull();
+    expect(headline(r)).toMatch(/^Plancher estimé déjà franchi avant la séance du 20 août · séance de 1 trade/);
+    expect(autopsyKpis(r)[2]).toMatchObject({ label: 'MARGE AU DÉPART', value: '-$98' });
   });
 });

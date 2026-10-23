@@ -30,19 +30,32 @@ export function distanceMoney(v: number, currency: string): string {
   return formatMoney(v, currency, { decimals: 0, sign: false });
 }
 
-/** Heure à laquelle la distance estimée passe à zéro ou dessous, null sinon. */
+/**
+ * Heure à laquelle la distance estimée passe d'au-dessus de la limite à zéro ou dessous, null si
+ * elle ne la franchit pas pendant la séance (jamais atteinte, ou déjà franchie avant).
+ */
 export function crossedAt(r: AccountIncidentReport): string | null {
-  return r.series.find((p) => p.at && p.distance <= 0)?.at ?? null;
+  const s = r.series;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i].at && s[i - 1].distance > 0 && s[i].distance <= 0) return s[i].at;
+  }
+  return null;
+}
+
+/** Marge estimée déjà à zéro ou dessous avant le premier trade de la séance. */
+export function alreadyCrossed(r: AccountIncidentReport): boolean {
+  return r.kpis.startDistance != null && r.kpis.startDistance <= 0;
 }
 
 /** Phrase sous le titre (maquette : « Plancher estimé franchi le 14 oct. à 11:12 · séance de 5 trades · … »). */
 export function headline(r: AccountIncidentReport): string {
   const day = shortDay(`${r.tradeDate}T12:00:00.000Z`);
   const crossed = crossedAt(r);
-  const when = crossed ? `le ${shortDay(crossed)} à ${clock(crossed)}` : `le ${day}`;
+  const when = alreadyCrossed(r) ? `avant la séance du ${day}`
+    : crossed ? `le ${shortDay(crossed)} à ${clock(crossed)}` : `le ${day}`;
   const what =
-    r.kind === 'drawdown' ? `Plancher estimé franchi ${when}`
-      : r.kind === 'daily_loss' ? `Perte du jour estimée atteinte ${when}`
+    r.kind === 'drawdown' ? `Plancher estimé ${alreadyCrossed(r) ? 'déjà franchi' : 'franchi'} ${when}`
+      : r.kind === 'daily_loss' ? `Perte du jour estimée ${alreadyCrossed(r) ? 'déjà atteinte' : 'atteinte'} ${when}`
         : `Compte marqué comme échoué · dernière séance du ${day}`;
   return `${what} · séance de ${plural(r.kpis.trades, 'trade')} · ${r.disclaimer.charAt(0).toLowerCase()}${r.disclaimer.slice(1)}`;
 }

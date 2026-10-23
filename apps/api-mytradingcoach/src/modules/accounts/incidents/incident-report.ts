@@ -138,9 +138,22 @@ interface Finding {
   text: string;
 }
 
+/**
+ * Point où la distance passe d'au-dessus de la limite à zéro ou dessous, null si elle ne la
+ * franchit pas pendant la séance (jamais atteinte, ou déjà franchie avant le premier trade).
+ */
+export function crossingPoint(series: IncidentReport['series']): IncidentReport['series'][number] | null {
+  for (let i = 1; i < series.length; i++) {
+    if (series[i].at && series[i - 1].distance > 0 && series[i].distance <= 0) return series[i];
+  }
+  return null;
+}
+
 export function buildIncidentReport(input: IncidentReportInput): IncidentReport {
   const money = (v: number) => formatMoney(v, input.currency, { decimals: 0 });
   const amount = (v: number) => formatMoney(Math.abs(v), input.currency, { decimals: 0, sign: false });
+  /** Marge : signe seulement sous zéro (`$2,000`, `-$98`), jamais perdu. */
+  const margin = (v: number) => formatMoney(v, input.currency, { decimals: 0, sign: false });
   const trades = [...input.trades]
     .sort((a, b) => a.tradedAt.getTime() - b.tradedAt.getTime())
     .map((t) => ({ ...t, net: netPnl(t) ?? 0 }));
@@ -259,11 +272,15 @@ export function buildIncidentReport(input: IncidentReportInput): IncidentReport 
 
   // Repères toujours disponibles, en dernier recours.
   if (startDistance != null && series.length > 1) {
-    const crossed = series.find((p) => p.at && p.distance <= 0);
+    const crossed = crossingPoint(series);
     findings.push({
       weight: 1,
-      text: `Marge estimée de ${amount(startDistance)} avant le premier trade`
-        + (crossed?.at ? `, limite estimée franchie à ${time(new Date(crossed.at))}.` : '.'),
+      // Déjà sous la limite avant la séance (casse d'un jour précédent, synchro tardive) : on le dit
+      // au lieu de dater un franchissement qui n'a pas eu lieu pendant la séance.
+      text: startDistance <= 0
+        ? `Limite estimée déjà franchie avant la séance : marge estimée de ${margin(startDistance)} avant le premier trade.`
+        : `Marge estimée de ${margin(startDistance)} avant le premier trade`
+          + (crossed?.at ? `, limite estimée franchie à ${time(new Date(crossed.at))}.` : '.'),
     });
   }
   if (trades.length) {
