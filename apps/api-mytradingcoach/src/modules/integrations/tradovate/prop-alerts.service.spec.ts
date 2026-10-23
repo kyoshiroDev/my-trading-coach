@@ -214,7 +214,7 @@ describe('PropAlertsService → push (#666)', () => {
     await svc.check('u', 'a', emit, NOW);
     await flush();
     expect(notifier.send).toHaveBeenLastCalledWith(
-      'u', 'PROP_RULES', expect.objectContaining({ title: 'Apex 50k', url: '/session', urgency: 'high' }),
+      'u', 'PROP_RULES', expect.objectContaining({ title: '{compte}', url: '/session', urgency: 'high' }),
       { accountId: 'a', dedupKey: 'prop:drawdown:critical', force: false },
     );
 

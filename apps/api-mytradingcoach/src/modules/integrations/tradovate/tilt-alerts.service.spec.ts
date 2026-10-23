@@ -39,7 +39,7 @@ describe('TiltAlertsService.check', () => {
     const { svc, emit, notifier } = setup();
     await svc.check('u', 'a', emit, NOW);
     expect(notifier.notify).toHaveBeenCalledWith(
-      'u', 'BEHAVIOR', expect.objectContaining({ title: 'Apex 50k', url: '/session' }), { accountId: 'a', dedupKey: 'tilt:revenge' },
+      'u', 'BEHAVIOR', expect.objectContaining({ title: '{compte}', url: '/session' }), { accountId: 'a', dedupKey: 'tilt:revenge' },
     );
   });
 

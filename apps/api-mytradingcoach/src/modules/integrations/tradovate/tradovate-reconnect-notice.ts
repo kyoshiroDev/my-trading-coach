@@ -15,7 +15,6 @@ export const RECONNECT_NOTICE_SELECT = {
   status: true,
   userId: true,
   accountId: true,
-  account: { select: { label: true } },
   user: { select: { isDemo: true } },
 } as const;
 
@@ -23,7 +22,6 @@ export interface ReconnectNoticeBefore {
   status: BrokerConnectionStatus;
   userId: string;
   accountId: string;
-  account: { label: string };
   user: { isDemo: boolean } | null;
 }
 
@@ -36,7 +34,7 @@ export function noticeReconnectRequired(
   notifiers.trader?.notify(
     before.userId,
     'CONNECTION',
-    TRADER_PUSH_MESSAGES.tradovateReconnect(before.accountId, before.account.label),
+    TRADER_PUSH_MESSAGES.tradovateReconnect(before.accountId),
     { accountId: before.accountId, dedupKey: 'connection:tradovate' },
   );
 }

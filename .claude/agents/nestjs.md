@@ -2217,15 +2217,22 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   à l'ouverture, sans second push si le push est parti. Le marqueur push est réservé ATOMIQUEMENT
   (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
   appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
-  une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche. Texte suivi de `BACKGROUND_NOTE` (« Relevé de la synchro automatique,
-  jusqu'à 15 min de décalage. »). Anti-tilt et comportement : jamais depuis le fond.
-- **Textes** (`trader-push-messages.ts`) : une phrase factuelle, libellé du compte, **aucun montant**
-  (écran verrouillé), « (estimation MyTradingCoach) » sur toute règle de firm, aucun conseil. Clic →
+  une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+- **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
+  seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
+- **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le
+  libellé saisi par le trader** (écran verrouillé) : repère `{compte}` remplacé dans
+  `TraderNotifier` par le nom de catalogue (`push-account-name.ts` : « Apex 50K », « Apex 50K compte 2 »
+  pour le suivant de même firme et taille, « ton compte » sans plan relié). « (estimation
+  MyTradingCoach) » sur toute règle de firm (détecteurs A compris), aucun conseil. Clic →
   `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.
   Payload `TraderPushPayload` (`@mtc/shared`), lu par le service worker maison de l'app (phase 2).
 - **Routes `/push/*`** (`JwtAuthGuard`, mutations bloquées en démo par `DemoReadOnlyGuard`) :
   `GET settings`, `POST device` / `subscribe` / `unsubscribe` (endpoint dans le corps), `DELETE
   devices/:id`, `PATCH preferences` (`quietHours: null` = désactivées), `POST test` (sans filtre, 3/min).
+  `POST device` (lecture) est `@DemoAllowed`. Adresse d'abonnement : liste blanche des services push
+  (`push-endpoint.ts`, DTO et avant chaque envoi) ; envoi borné (`push-http.ts` : 10 s au total, 16 Ko
+  de réponse au plus, aucune redirection).
   Au plus `MAX_PUSH_DEVICES` = 10 appareils par trader (le plus ancien part). L'endpoint n'est jamais
   renvoyé ; libellé d'appareil déduit du User-Agent (`device-label.ts`).
 

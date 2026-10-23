@@ -189,8 +189,8 @@ D'après la documentation Chrome :
 - **Ce qui ne suit pas** : l'anti-tilt et les détecteurs de comportement jugent l'ENTRÉE au moment
   où elle arrive ; vus 15 min après, ils n'ont plus de sens (déjà exclus du rattrapage à l'ouverture).
   Seules les alertes de règles (`PROP_RULES`) passeraient par la synchro de fond.
-- **Texte honnête** : même phrase, suivie de « Relevé de la synchro automatique, jusqu'à 15 min de
-  décalage. » ; dans l'app, « app fermée : alertes de règles avec jusqu'à 15 min de décalage ».
+- **Texte honnête** : même phrase, suivie de « Relevé automatique, jusqu'à 15 min de décalage. »
+  (décision de Greg : seul cas à deux phrases).
 - **Précautions** : ne pas écrire le journal de séance « vue en direct » (#373) ni créer d'incident
   `live` (#669) depuis ce chemin ; garder le relevé seulement pour le push.
 - **Validé par Greg** (2026-10-23) et codé dans un commit séparé : drawdown, perte du jour, objectif et

@@ -21,7 +21,7 @@ const all = (): TraderPushMessage[] => [
   TRADER_PUSH_MESSAGES.tilt({ signal: 'overtrading', ref: 'd', count: 14, medianCount: 5, accountId: 'acc-1', accountLabel: 'Apex 50K', moodStart: null }),
   TRADER_PUSH_MESSAGES.behavior('acc-1', { type: 'STREAK_ENTRY', message: 'Nouvelle entrée après 3 pertes d’affilée dans la séance.' } as never),
   TRADER_PUSH_MESSAGES.recapReady(),
-  TRADER_PUSH_MESSAGES.tradovateReconnect('acc-1', 'Apex 50K'),
+  TRADER_PUSH_MESSAGES.tradovateReconnect('acc-1'),
   TRADER_PUSH_MESSAGES.test(),
 ];
 
@@ -34,7 +34,7 @@ describe('TRADER_PUSH_MESSAGES', () => {
 
   it('règle de firm : mention « estimation MyTradingCoach », Session live, urgence selon le niveau', () => {
     const critical = TRADER_PUSH_MESSAGES.propAlert(prop({ level: 'critical' }))!;
-    expect(critical).toMatchObject({ title: 'Apex 50K', url: '/session', urgency: 'high', tag: 'prop-acc-1-drawdown' });
+    expect(critical).toMatchObject({ title: '{compte}', url: '/session', urgency: 'high', tag: 'prop-acc-1-drawdown' });
     expect(critical.body).toContain('(estimation MyTradingCoach)');
     expect(TRADER_PUSH_MESSAGES.propAlert(prop({ kind: 'objective', level: 'reached' }))!.urgency).toBe('normal');
   });
@@ -63,6 +63,27 @@ describe('TRADER_PUSH_MESSAGES', () => {
       expect(text).not.toMatch(/[$€£]|\d+[.,]\d{2}\b|180|2500|2 500/);
       expect(text).not.toMatch(/achète|vends|coupe ta position|ferme ta position|gagne/i);
       expect(text).not.toMatch(/[\u2013\u2014]/);
+    }
+  });
+
+  it('une phrase en direct ; deux pour un relevé de fond, la seconde annonce le décalage (décision m5)', () => {
+    const sentences = (t: string) => t.split(/[.!?](?:\s|$)/).filter((x) => x.trim()).length;
+    for (const m of all()) expect(sentences(m.body), m.body).toBe(1);
+    const bg = TRADER_PUSH_MESSAGES.propAlert(prop({ level: 'breached' }), { background: true })!;
+    expect(sentences(bg.body)).toBe(2);
+    expect(bg.body.endsWith('Relevé automatique, jusqu’à 15 min de décalage.')).toBe(true);
+  });
+
+  it('le libellé saisi par le trader n’entre jamais dans un texte : repère {compte} seulement', () => {
+    const typed = 'Jean Dupont 0612345678';
+    const msgs = [
+      TRADER_PUSH_MESSAGES.propAlert(prop({ accountLabel: typed }))!,
+      TRADER_PUSH_MESSAGES.tilt({ signal: 'revenge', ref: 't', accountId: 'a', accountLabel: typed, moodStart: null }),
+      TRADER_PUSH_MESSAGES.tradovateReconnect('a'),
+    ];
+    for (const m of msgs) {
+      expect(`${m.title} ${m.body}`).not.toContain('Jean');
+      expect(`${m.title} ${m.body}`).toContain('{compte}');
     }
   });
 
