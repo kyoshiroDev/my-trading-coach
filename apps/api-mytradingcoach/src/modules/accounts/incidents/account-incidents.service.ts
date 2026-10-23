@@ -7,7 +7,7 @@ import { AI_MODELS } from '../../infra/ai-pricing.const';
 import { isPremiumAccess, type PremiumAccessUser } from '../../discord/discord-access.util';
 import { AccountsService, type PlanContext } from '../accounts.service';
 import { tradingDay } from '../account-rules';
-import type { UpdateAccountDto } from '../dto/update-account.dto';
+import type { UpdateAccountRequestDto } from '../dto/update-account.dto';
 import {
   buildIncidentReport,
   type IncidentKind,
@@ -28,8 +28,12 @@ const ONCE_PER_ACCOUNT = 'account';
 const PREVIOUS_SESSIONS = 60;
 /** Statuts qu'un incident confirmé a pu poser, et que « Ce n'est pas un échec » peut défaire. */
 const CLOSED_BY_INCIDENT: AccountStatus[] = [AccountStatus.FAILED, AccountStatus.ARCHIVED];
-/** Durée max du verrou d'analyse : couvre un appel bloqué ; un échec le libère tout de suite. */
+/** Durée max du verrou d'analyse : couvre un appel bloqué. Libéré seulement par son expiration. */
 const AI_LOCK_TTL_S = 3600;
+/** Après un échec ou une réponse vide : nouvel essai possible au bout de ce délai, pas avant. */
+export const AI_RETRY_DELAY_S = 120;
+/** Essais d'analyse au plus par incident et par journée, réussis ou non (coût IA borné). */
+export const AI_MAX_TRIES_PER_DAY = 3;
 
 export type IncidentAiState =
   | { status: 'ready'; text: string; generatedAt: Date }
@@ -112,44 +116,58 @@ export class AccountIncidentsService {
   }
 
   /**
-   * Mise à jour d'un compte (`PATCH /accounts/:id`). Un compte ACTIF passé en ÉCHOUÉ ou ARCHIVÉ
-   * (feuille « Apex 50K #1 est échoué » : « Garder comme échoué » ou « Archiver ») CONFIRME la
-   * limite franchie détectée : « Ce n'est pas un échec » pourra alors remettre le compte en actif.
+   * Mise à jour d'un compte (`PATCH /accounts/:id`). Seule la feuille « Apex 50K #1 est échoué »
+   * (« Garder comme échoué » ou « Archiver ») envoie `confirmIncident` : un compte ACTIF fermé avec
+   * ce paramètre CONFIRME la limite franchie détectée, et « Ce n'est pas un échec » pourra alors le
+   * remettre en actif. Sans lui (formulaire d'édition), aucun incident n'est jamais confirmé.
    * Passé en ÉCHOUÉ sans limite détectée, l'échec est marqué à la main : un incident `manual` garde
-   * la chronologie de la dernière séance, sans jamais permettre de réactivation. Un simple
-   * archivage sans limite franchie ne crée rien.
+   * la chronologie de la dernière séance, sans jamais permettre de réactivation.
    */
-  async updateAccount(user: IncidentUser, accountId: string, dto: UpdateAccountDto, ctx: PlanContext) {
+  async updateAccount(user: IncidentUser, accountId: string, dto: UpdateAccountRequestDto, ctx: PlanContext) {
+    const { confirmIncident, ...changes } = dto;
     const before = await this.prisma.tradingAccount.findFirst({
       where: { id: accountId, userId: user.id },
       select: { status: true },
     });
     const closing = before?.status === AccountStatus.ACTIVE
-      && (dto.status === AccountStatus.FAILED || dto.status === AccountStatus.ARCHIVED);
+      && (changes.status === AccountStatus.FAILED || changes.status === AccountStatus.ARCHIVED);
     if (closing) await this.detectQuietly(user.id, accountId, 'sync');
-    const updated = await this.accounts.update(user.id, accountId, dto, ctx);
+    const updated = await this.accounts.update(user.id, accountId, changes, ctx);
     if (closing && !user.isDemo) {
-      await this.confirmFailure(user.id, accountId, dto.status === AccountStatus.FAILED).catch((err: unknown) =>
+      await this.closeIncident(user.id, accountId, {
+        confirm: confirmIncident === true,
+        markedFailed: changes.status === AccountStatus.FAILED,
+      }).catch((err: unknown) =>
         this.logger.warn(`Échec non rattaché à un incident (compte ${accountId}) : ${(err as Error).message}`),
       );
     }
     return updated;
   }
 
-  private async confirmFailure(userId: string, accountId: string, markedFailed: boolean, now = new Date()): Promise<void> {
+  /**
+   * Compte fermé : confirme la limite franchie ouverte (seulement si demandé), ou, passé en ÉCHOUÉ
+   * sans limite ouverte, garde un incident `manual` (jamais réactivable).
+   */
+  private async closeIncident(
+    userId: string,
+    accountId: string,
+    opts: { confirm: boolean; markedFailed: boolean },
+    now = new Date(),
+  ): Promise<void> {
     const open = await this.prisma.accountIncident.findFirst({
       where: { accountId, dismissedAt: null, kind: { in: ['drawdown', 'daily_loss'] } },
       orderBy: { createdAt: 'desc' },
       select: { id: true },
     });
     if (open) {
+      if (!opts.confirm) return;
       await this.prisma.accountIncident.updateMany({
         where: { id: open.id, failedByIncidentAt: null },
         data: { failedByIncidentAt: now },
       });
       return;
     }
-    if (!markedFailed) return;
+    if (!opts.markedFailed) return;
     const day = await this.lastTradedDay(accountId, tradingDay(now));
     await this.prisma.accountIncident.createMany({
       data: [{ userId, accountId, kind: 'manual', period: ONCE_PER_ACCOUNT, tradeDate: asDate(day), source: 'manual' }],
@@ -206,12 +224,20 @@ export class AccountIncidentsService {
     if (user.isDemo || !this.anthropic.enabled) return unavailable;
 
     // Verrou par incident : deux ouvertures simultanées ne paient pas deux analyses. Un appel en
-    // échec (ou sans texte) le libère : la prochaine ouverture peut réessayer.
+    // échec (ou sans texte) ne le libère pas : il expire au bout de `AI_RETRY_DELAY_S`, puis un
+    // nouvel essai est possible, dans la limite de `AI_MAX_TRIES_PER_DAY` par jour.
     const lockKey = `incident-ai:${incident.id}`;
     const lock = await this.redis.client.set(lockKey, '1', 'EX', AI_LOCK_TTL_S, 'NX');
     if (lock !== 'OK') return unavailable;
-    const release = () => this.redis.client.del(lockKey).catch(() => undefined);
+    const retryLater = () => this.redis.client.expire(lockKey, AI_RETRY_DELAY_S).catch(() => undefined);
     try {
+      const triesKey = `incident-ai-tries:${incident.id}:${tradingDay(new Date())}`;
+      const tries = await this.redis.client.incr(triesKey);
+      if (tries === 1) await this.redis.client.expire(triesKey, 86_400);
+      if (tries > AI_MAX_TRIES_PER_DAY) {
+        await retryLater();
+        return unavailable;
+      }
       const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { currency: true } });
       const report = await this.report(incident, account.currency);
       const response = await this.anthropic.create(
@@ -225,7 +251,7 @@ export class AccountIncidentsService {
       );
       const text = responseText(response).trim();
       if (!text) {
-        await release();
+        await retryLater();
         return unavailable;
       }
       const generatedAt = new Date();
@@ -238,14 +264,14 @@ export class AccountIncidentsService {
       return { status: 'ready', text, generatedAt };
     } catch (err) {
       this.logger.warn(`Analyse d'incident non générée (${incident.id}) : ${(err as Error).message}`);
-      await release();
+      await retryLater();
       return unavailable;
     }
   }
 
   /**
    * « Ce n'est pas un échec » : retire l'incident (jamais recréé) et remet le compte en actif
-   * SEULEMENT s'il a été passé en échoué (ou archivé depuis la feuille de choix) en confirmant cet
+   * SEULEMENT s'il a été fermé (échoué ou archivé) depuis la feuille de choix en confirmant cet
    * incident, et qu'il l'est encore. Un échec marqué à la main reste tel quel. Réactivation soumise
    * au quota de comptes, comme toute réactivation.
    */

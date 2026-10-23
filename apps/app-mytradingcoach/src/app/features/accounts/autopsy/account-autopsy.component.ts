@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { AccountIncidentReport, IncidentAiState } from '@mtc/shared';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { ConfirmService, ErrorStateComponent } from '@mtc/front-ui';
 import { AccountsApi } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradesStore } from '@app/core/stores/trades.store';
@@ -36,6 +36,7 @@ export class AccountAutopsyComponent implements OnInit {
   private readonly store = inject(SelectedAccountStore);
   private readonly tradesStore = inject(TradesStore);
   private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly userStore = inject(UserStore);
   protected readonly lostAccount = inject(LostAccountFlowService);
@@ -44,7 +45,8 @@ export class AccountAutopsyComponent implements OnInit {
   private readonly incidentId = this.route.snapshot.paramMap.get('incidentId') ?? '';
 
   protected readonly report = signal<AccountIncidentReport | null>(null);
-  protected readonly loadError = signal(false);
+  /** `notFound` : autopsie retirée, inexistante ou d'un autre compte (404) ; `failed` : autre erreur. */
+  protected readonly loadError = signal<'notFound' | 'failed' | null>(null);
   protected readonly ai = signal<IncidentAiState | null>(null);
   protected readonly aiLoading = signal(false);
   protected readonly dismissing = signal(false);
@@ -71,7 +73,7 @@ export class AccountAutopsyComponent implements OnInit {
   }
 
   protected load(): void {
-    this.loadError.set(false);
+    this.loadError.set(null);
     this.api
       .incident(this.accountId, this.incidentId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -81,7 +83,7 @@ export class AccountAutopsyComponent implements OnInit {
           this.ai.set(res.data.ai);
           if (res.data.ai.status === 'pending') this.loadAnalysis();
         },
-        error: () => this.loadError.set(true),
+        error: (err: unknown) => this.loadError.set(err instanceof HttpErrorResponse && err.status === 404 ? 'notFound' : 'failed'),
       });
   }
 
@@ -107,10 +109,21 @@ export class AccountAutopsyComponent implements OnInit {
     this.lostAccount.openRetry(this.accountId);
   }
 
-  /** « Ce n'est pas un échec » : retire l'autopsie ; le serveur décide de la réactivation. */
-  protected dismiss(): void {
+  /**
+   * « Ce n'est pas un échec » : retire l'autopsie (définitif, jamais recréée) ; le serveur décide
+   * de la réactivation. Confirmation d'abord : un tap ne suffit pas pour un geste sans retour.
+   */
+  protected async dismiss(): Promise<void> {
     const r = this.report();
     if (!r || this.dismissing()) return;
+    const ok = await this.confirm.ask({
+      title: "Retirer l'autopsie\u00a0?",
+      message: r.canReactivate
+        ? `Elle ne reviendra pas, et « ${r.account.label} » redeviendra actif (il compte de nouveau dans tes comptes actifs).`
+        : 'Elle ne reviendra pas. Le statut du compte ne change pas.',
+      confirmLabel: "Retirer l'autopsie",
+    });
+    if (!ok) return;
     this.dismissing.set(true);
     this.api
       .dismissIncident(this.accountId, this.incidentId)

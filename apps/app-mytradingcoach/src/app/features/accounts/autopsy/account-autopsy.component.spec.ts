@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import type { AccountIncidentReport } from '@mtc/shared';
 import { AccountAutopsyComponent } from './account-autopsy.component';
 import { mockupReport } from './autopsy.fixture';
@@ -12,11 +13,12 @@ import { TradesStore } from '@app/core/stores/trades.store';
 import { UserStore } from '@app/core/stores/user.store';
 import { LostAccountFlowService } from '@app/core/services/lost-account-flow.service';
 import { ToastService } from '@app/core/services/toast.service';
+import { ConfirmService } from '@mtc/front-ui';
 import TEMPLATE from './account-autopsy.component.html?raw';
 
 /** Page d'autopsie (#669) : VRAI template (`?raw`), API et parcours simulés. */
 
-function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: boolean } = {}) {
+function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: boolean; confirm?: boolean } = {}) {
   const api = {
     incident: vi.fn(() => of({ data: report })),
     incidentAnalysis: vi.fn(() => of({ data: { status: 'ready', text: "D'après tes trades enregistrés, deux phases.", generatedAt: '2026-10-14T09:20:00.000Z' } })),
@@ -25,6 +27,7 @@ function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: 
   const flow = { busy: signal(false), openRetry: vi.fn() };
   const store = { loaded: signal(true), isLoading: signal(false), load: vi.fn() };
   const router = { navigate: vi.fn(async () => true) };
+  const confirm = { ask: vi.fn(async () => opts.confirm ?? true) };
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: api },
@@ -34,6 +37,7 @@ function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: 
       { provide: TradesStore, useValue: { reset: vi.fn() } },
       { provide: UserStore, useValue: { isPremium: signal(!!opts.premium), trialAvailable: signal(true), isDemo: signal(!!opts.demo) } },
       { provide: LostAccountFlowService, useValue: flow },
+      { provide: ConfirmService, useValue: confirm },
     ],
   });
   TestBed.overrideComponent(AccountAutopsyComponent, {
@@ -43,7 +47,7 @@ function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: 
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const q = (id: string) => el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
-  return { fixture, el, q, api, flow, store, router };
+  return { fixture, el, q, api, flow, store, router, confirm };
 }
 
 describe('Autopsie — page', () => {
@@ -56,7 +60,9 @@ describe('Autopsie — page', () => {
     expect(q('autopsy-timeline')!.querySelectorAll('li')).toHaveLength(6);
     expect(q('autopsy-timeline')!.textContent).toContain("Après l'alerte");
     expect(q('autopsy-findings')!.querySelectorAll('li')).toHaveLength(3);
-    expect(el.textContent).toContain("L'heure d'entrée n'est pas enregistrée : la distance est une estimation calculée sur les trades clôturés.");
+    expect(el.textContent).toContain("L'heure d'entrée n'est pas enregistrée\u00a0: la distance est une estimation calculée sur les trades clôturés.");
+    // Espace insécable devant « : ; ! ? » partout sur la page (revue #712).
+    expect(el.textContent).not.toMatch(/ [:;!?]/);
     expect(q('autopsy-ai-locked')!.textContent).toContain('Essayer Premium · 1 mois offert');
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
   });
@@ -72,13 +78,16 @@ describe('Autopsie — page', () => {
   it('compte démo : analyse préenregistrée signalée comme exemple, aucun appel', () => {
     const { q, api } = mount(mockupReport({ ai: { status: 'ready', text: "D'après tes trades enregistrés…", generatedAt: '2026-10-14T09:20:00.000Z' } }), { premium: true, demo: true });
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
-    expect(q('autopsy-ai')!.textContent).toContain('Exemple');
+    // Le badge lui-même (la note contient aussi « Exemple » : elle ne suffit pas à le prouver).
+    expect(q('autopsy-ai-example-badge')!.textContent!.trim()).toBe('Exemple');
     expect(q('autopsy-ai-example')!.textContent).toContain("Exemple préenregistré du compte démo, sans appel à l'IA.");
   });
 
   it('analyse déjà conservée : aucun nouvel appel', () => {
     const { q, api } = mount(mockupReport({ ai: { status: 'ready', text: 'Texte conservé.', generatedAt: '2026-10-14T09:20:00.000Z' } }), { premium: true });
     expect(api.incidentAnalysis).not.toHaveBeenCalled();
+    // Hors démo : jamais de badge « Exemple ».
+    expect(q('autopsy-ai-example-badge')).toBeNull();
     expect(q('autopsy-ai')!.textContent).toContain('Texte conservé.');
   });
 
@@ -102,10 +111,14 @@ describe('Autopsie — page', () => {
     expect(q('autopsy-retry')).toBeNull();
   });
 
-  it("« Ce n'est pas un échec » : retire, recharge les comptes, annonce la réactivation, revient à Mes comptes", () => {
-    const { q, api, store, router } = mount(mockupReport());
+  it("« Ce n'est pas un échec » : confirmé, retire, recharge les comptes, annonce la réactivation, revient à Mes comptes", async () => {
+    const { q, api, store, router, confirm } = mount(mockupReport());
     q('autopsy-dismiss')!.click();
-    expect(api.dismissIncident).toHaveBeenCalledWith('acc', 'inc');
+    await vi.waitFor(() => expect(api.dismissIncident).toHaveBeenCalledWith('acc', 'inc'));
+    expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({
+      title: "Retirer l'autopsie\u00a0?", confirmLabel: "Retirer l'autopsie",
+      message: expect.stringContaining('redeviendra actif'),
+    }));
     expect(store.load).toHaveBeenCalled();
     expect(TestBed.inject(ToastService).visible()[0]).toMatchObject({
       type: 'success', message: '« Apex 50K · Éval #1 » est de nouveau actif. Autopsie retirée.',
@@ -113,9 +126,28 @@ describe('Autopsie — page', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/accounts']);
   });
 
+  it("« Ce n'est pas un échec » annulé : rien n'est retiré", async () => {
+    const { q, api, confirm, router } = mount(mockupReport(), { confirm: false });
+    q('autopsy-dismiss')!.click();
+    await vi.waitFor(() => expect(confirm.ask).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(api.dismissIncident).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('échec marqué à la main : la note dit que le statut ne change pas', () => {
     const { el } = mount(mockupReport({ canReactivate: false }));
     expect(el.textContent).toContain("« Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.");
+  });
+
+  it('autopsie introuvable ou d’un autre utilisateur (404) : message neutre, pas de « réessaie »', () => {
+    const { el, api, fixture, q } = mount(mockupReport());
+    api.incident.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    (fixture.componentInstance as unknown as { load(): void }).load();
+    fixture.detectChanges();
+    expect(q('autopsy-not-found')!.textContent).toContain("Cette autopsie n'existe pas ou n'est plus disponible.");
+    expect(el.querySelector('mtc-error-state')).toBeNull();
+    expect(el.textContent).not.toMatch(/connexion|réessai/i);
   });
 
   it('chargement en échec : état d’erreur avec réessai', () => {

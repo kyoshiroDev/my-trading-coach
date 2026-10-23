@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { AccountStatus, Plan, Role } from '@prisma/client';
-import { AccountIncidentsService, type IncidentUser } from './account-incidents.service';
+import { AI_MAX_TRIES_PER_DAY, AI_RETRY_DELAY_S, AccountIncidentsService, type IncidentUser } from './account-incidents.service';
 import { INCIDENT_AI_MAX_TOKENS } from './incident-ai.prompt';
 
 /**
@@ -13,6 +13,41 @@ const PREMIUM = { plan: Plan.PREMIUM, role: Role.USER, trialEndsAt: null };
 const NOW = new Date('2026-10-14T09:13:00.000Z');
 
 type Metrics = { drawdown?: object | null; dailyLoss?: object | null };
+
+/**
+ * Redis en mémoire, avec la sémantique utile au verrou d'analyse : `SET … EX … NX`, `EXPIRE`,
+ * `INCR`, et une horloge qu'on avance à la main (`advance`, en secondes).
+ */
+function fakeRedis() {
+  let now = 0;
+  const store = new Map<string, { v: string; exp: number | null }>();
+  const live = (k: string) => {
+    const e = store.get(k);
+    if (e && e.exp !== null && e.exp <= now) store.delete(k);
+    return store.get(k);
+  };
+  const client = {
+    set: vi.fn(async (k: string, v: string, _ex: 'EX', ttl: number, nx?: 'NX'): Promise<string | null> => {
+      if (nx === 'NX' && live(k)) return null;
+      store.set(k, { v, exp: now + ttl * 1000 });
+      return 'OK';
+    }),
+    expire: vi.fn(async (k: string, ttl: number) => {
+      const e = live(k);
+      if (!e) return 0;
+      e.exp = now + ttl * 1000;
+      return 1;
+    }),
+    incr: vi.fn(async (k: string) => {
+      const e = live(k);
+      const n = (e ? Number(e.v) : 0) + 1;
+      store.set(k, { v: String(n), exp: e?.exp ?? null });
+      return n;
+    }),
+    del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+  };
+  return { client, advance: (s: number) => { now += s * 1000; }, ttl: (k: string) => live(k)?.exp ?? null, now: () => now };
+}
 
 function makeDeps() {
   const prisma = {
@@ -50,7 +85,7 @@ function makeDeps() {
     enabled: true,
     create: vi.fn(async () => ({ content: [{ type: 'text', text: "D'après tes trades enregistrés, la séance…" }] })),
   };
-  const redis = { client: { set: vi.fn(async (): Promise<string | null> => 'OK'), del: vi.fn(async () => 1) } };
+  const redis = fakeRedis();
   const svc = new AccountIncidentsService(prisma as never, accounts as never, anthropic as never, redis as never);
   return { prisma, accounts, anthropic, redis, metrics, svc };
 }
@@ -120,10 +155,12 @@ describe('AccountIncidentsService.detect', () => {
 describe('AccountIncidentsService.updateAccount — passage en échoué', () => {
   let d: ReturnType<typeof makeDeps>;
   beforeEach(() => { d = makeDeps(); });
+  const confirmed = (status: AccountStatus) => ({ status, confirmIncident: true });
 
-  it("limite détectée : l'échec confirme l'incident (réactivation possible ensuite)", async () => {
+  it("feuille de choix, limite détectée : l'échec confirme l'incident (réactivation possible ensuite)", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.FAILED), PREMIUM);
+    // `confirmIncident` ne part jamais dans la mise à jour du compte (Prisma le refuserait).
     expect(d.accounts.update).toHaveBeenCalledWith('u1', 'acc', { status: AccountStatus.FAILED }, PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledWith({
       where: { id: 'inc', failedByIncidentAt: null },
@@ -141,31 +178,42 @@ describe('AccountIncidentsService.updateAccount — passage en échoué', () => 
 
   it("« Archiver » depuis la feuille de choix, limite détectée : confirme l'incident", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledWith({
       where: { id: 'inc', failedByIncidentAt: null },
       data: { failedByIncidentAt: expect.any(Date) },
     });
   });
 
+  it("formulaire d'édition (sans confirmIncident) : archiver ou échouer ne confirme JAMAIS l'incident ouvert", async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'old-daily-loss' });
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED, confirmIncident: false }, PREMIUM);
+    expect(d.accounts.update).toHaveBeenCalledWith('u1', 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
+    // Une limite ouverte existe : pas d'incident « manual » en plus.
+    expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
+  });
+
   it("archivage répété : seul le premier (compte encore ACTIF) confirme l'incident", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.ARCHIVED });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
   });
 
   it('simple archivage sans limite franchie : aucun incident créé', async () => {
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
     expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
   });
 
   it('compte déjà échoué, ou autre changement : aucun incident touché', async () => {
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.FAILED });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.FAILED), PREMIUM);
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.ACTIVE });
     await d.svc.updateAccount(user(), 'acc', { label: 'Apex' } as never, PREMIUM);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
@@ -256,36 +304,65 @@ describe('AccountIncidentsService.analysis — IA Premium, une seule fois', () =
     expect(d.anthropic.create).not.toHaveBeenCalled();
   });
 
-  it('verrou déjà pris (ouverture simultanée, ou échec il y a moins d’une heure) : aucun second appel', async () => {
+  it('verrou déjà pris : aucun second appel', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
     d.redis.client.set.mockResolvedValue(null);
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
     expect(d.anthropic.create).not.toHaveBeenCalled();
   });
 
-  it('appel en échec : rien d’inventé, rien d’écrit, verrou libéré pour un nouvel essai', async () => {
+  it('deux ouvertures simultanées : un seul appel IA, une seule écriture', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    let answer!: (v: { content: { type: 'text'; text: string }[] }) => void;
+    d.anthropic.create.mockImplementationOnce(() => new Promise((r) => { answer = r; }));
+    const both = Promise.all([d.svc.analysis(user(), 'acc', 'inc'), d.svc.analysis(user(), 'acc', 'inc')]);
+    await vi.waitFor(() => expect(d.anthropic.create).toHaveBeenCalledTimes(1));
+    answer({ content: [{ type: 'text', text: "D'après tes trades enregistrés, une seule fois." }] });
+    const results = await both;
+    expect(d.anthropic.create).toHaveBeenCalledTimes(1);
+    expect(results.map((r) => r.status).sort()).toEqual(['ready', 'unavailable']);
+    expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('appel en échec : rien d’inventé, rien d’écrit, nouvel essai seulement après le délai', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
     d.anthropic.create.mockRejectedValueOnce(new Error('529'));
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
     expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
-    expect(d.redis.client.del).toHaveBeenCalledWith('incident-ai:inc');
-    // Nouvelle ouverture : nouvel essai, qui aboutit et s'enregistre.
+    // Rechargement immédiat : pas de nouvel appel pendant le délai.
+    expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
+    expect(d.anthropic.create).toHaveBeenCalledTimes(1);
+    // Délai écoulé : nouvel essai, qui aboutit et s'enregistre.
+    d.redis.advance(AI_RETRY_DELAY_S);
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toMatchObject({ status: 'ready' });
     expect(d.anthropic.create).toHaveBeenCalledTimes(2);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
   });
 
-  it('réponse vide : verrou libéré aussi, rien d’écrit', async () => {
+  it('réponse vide (facturée) : même délai avant un nouvel essai, rien d’écrit', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
     d.anthropic.create.mockResolvedValueOnce({ content: [] });
     expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
-    expect(d.redis.client.del).toHaveBeenCalledWith('incident-ai:inc');
+    expect(d.redis.ttl('incident-ai:inc')).toBe(d.redis.now() + AI_RETRY_DELAY_S * 1000);
+    expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
+    expect(d.anthropic.create).toHaveBeenCalledTimes(1);
     expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
   });
 
-  it('succès : le verrou n’est pas libéré (l’analyse enregistrée suffit à bloquer un second appel)', async () => {
+  it(`plafond : ${AI_MAX_TRIES_PER_DAY} essais au plus par incident et par jour, même espacés`, async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    d.anthropic.create.mockRejectedValue(new Error('529'));
+    for (let i = 0; i < AI_MAX_TRIES_PER_DAY + 2; i++) {
+      expect(await d.svc.analysis(user(), 'acc', 'inc')).toEqual({ status: 'unavailable' });
+      d.redis.advance(AI_RETRY_DELAY_S);
+    }
+    expect(d.anthropic.create).toHaveBeenCalledTimes(AI_MAX_TRIES_PER_DAY);
+  });
+
+  it('succès : le verrou garde sa durée longue (l’analyse enregistrée bloque tout second appel)', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
     await d.svc.analysis(user(), 'acc', 'inc');
+    expect(d.redis.client.expire).not.toHaveBeenCalledWith('incident-ai:inc', AI_RETRY_DELAY_S);
     expect(d.redis.client.del).not.toHaveBeenCalled();
   });
 

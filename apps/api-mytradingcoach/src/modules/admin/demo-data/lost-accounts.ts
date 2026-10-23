@@ -186,10 +186,13 @@ export function buildLostDemoTrades(now: Date): LostDemoTrade[] {
   return trades;
 }
 
-/** Texte d'analyse préenregistré de l'autopsie démo : un exemple, jamais un appel IA (#669). */
+/**
+ * Texte d'analyse préenregistré de l'autopsie démo : un exemple, jamais un appel IA (#669). Montants
+ * NETS (frais déduits), comme la chronologie de la page : `demo-incident.spec.ts` le vérifie.
+ */
 export const DEMO_INCIDENT_ANALYSIS =
   "D'après tes trades enregistrés, la séance se décompose en deux phases : trois trades à 2 contrats " +
-  '(+$80, -$140, -$160), puis deux entrées à 4 contrats après deux pertes d\'affilée.\n\n' +
+  '(+$78, -$142, -$162), puis deux entrées à 4 contrats après deux pertes d\'affilée.\n\n' +
   "L'alerte de MyTradingCoach sur les pertes d'affilée a précédé les deux plus grosses pertes de la " +
   'séance, et la marge estimée est passée sous le plancher sur le dernier trade.';
 

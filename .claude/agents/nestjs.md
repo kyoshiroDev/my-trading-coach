@@ -1712,10 +1712,13 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 - **Déclencheurs** : `PropAlertsService` (niveau `breached` drawdown / perte du jour, source `live`),
   `TradesService.importTrades` (fin de lot, par compte touché : import CSV, synchro et historique
   Tradovate) et `TradesService.create` hors lot (saisie), source `sync`.
-- **Confirmation** : `PATCH /accounts/:id` passe par `AccountIncidentsService.updateAccount`. Un compte
-  ACTIF passé en `FAILED` ou `ARCHIVED` (feuille « … est échoué ») relance la détection puis pose
-  `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre `failedByIncidentAt: null`).
-  Passé en `FAILED` sans limite détectée : incident `manual` (chronologie de la dernière séance, jamais
+- **Confirmation** : `PATCH /accounts/:id` (`UpdateAccountRequestDto`) passe par
+  `AccountIncidentsService.updateAccount`. Un compte ACTIF passé en `FAILED` ou `ARCHIVED` relance la
+  détection ; il ne pose `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre
+  `failedByIncidentAt: null`) **que si le corps porte `confirmIncident: true`**, envoyé par la seule
+  feuille « … est échoué ». Le formulaire d'édition ne l'envoie jamais : son archivage ne confirme rien
+  (revue #712). `confirmIncident` est retiré avant `AccountsService.update` (le DTO part dans Prisma).
+  Passé en `FAILED` sans limite ouverte : incident `manual` (chronologie de la dernière séance, jamais
   réactivable). Simple archivage sans limite franchie : rien.
 - **Routes** : `GET /accounts/:id/incidents` (ouverts) · `GET …/:incidentId` (chronologie, KPI, série
   de distance, 3 constats, `ai` stocké, `canReactivate` ; **aucun appel IA**) · `GET …/:incidentId/analysis`
@@ -1728,14 +1731,21 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 - **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
   feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Jamais pour la démo,
   jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
-  Verrou Redis `incident-ai:<id>` (NX, 1 h) contre la double ouverture ; **libéré si l'appel échoue
-  ou revient vide** (nouvel essai à la prochaine ouverture), conservé après un succès.
+  Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
+  `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
+  réponse vide (facturée), il est ramené à `AI_RETRY_DELAY_S` (2 min) ; compteur
+  `incident-ai-tries:<id>:<jour CME>` (`INCR`, 24 h), au plus `AI_MAX_TRIES_PER_DAY` (3) essais par
+  incident et par jour, réussis ou non.
 - **« Ce n'est pas un échec »** : `dismissedAt` (jamais recréé) ; remet le compte en ACTIVE seulement si
   `failedByIncidentAt` et statut encore `FAILED` / `ARCHIVED`, via `AccountsService.update` (quota).
+- **Constats de marge** (`incident-report.ts`) : marge affichée avec son signe ; `crossingPoint` = passage
+  d'au-dessus de la limite à zéro ou dessous. Marge déjà ≤ 0 avant le premier trade : « Limite estimée
+  déjà franchie avant la séance », jamais de franchissement daté. Un seul trade : « 1 trade à HH:MM ».
 - **Démo** : `demo-data/lost-accounts.ts` (`lastSession`, `buildLostDemoIncident`,
   `DEMO_INCIDENT_ANALYSIS`) : séance de casse sur « Apex 50k · Éval #1 », alerte « pertes d'affilée »,
   paliers 25 % / 10 % / dépassé, échec confirmé, texte d'analyse PRÉENREGISTRÉ (vitrine démo seulement :
-  `seed:user` n'en pose pas). La page le signale comme exemple.
+  `seed:user` n'en pose pas). La page le signale comme exemple. Ses montants sont NETS, comme la
+  chronologie (test qui les recalcule depuis les trades du seed).
 - E-mail : pas encore branché (texte à valider par Greg ; seulement si `notificationsEmail` déjà actif,
   formule « d'après tes trades enregistrés, la limite semble franchie », jamais démo).
 

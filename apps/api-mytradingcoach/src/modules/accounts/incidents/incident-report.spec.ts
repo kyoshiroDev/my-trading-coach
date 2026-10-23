@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { alertLabel, buildIncidentReport, type IncidentReportInput, type IncidentTrade, type PreviousSession } from './incident-report';
+import { alertLabel, buildIncidentReport, crossingPoint, type IncidentReportInput, type IncidentTrade, type PreviousSession } from './incident-report';
 import { INCIDENT_AI_MAX_TOKENS, INCIDENT_AI_SYSTEM, buildIncidentPrompt } from './incident-ai.prompt';
 
 /**
@@ -144,5 +144,37 @@ describe('analyse IA — prompt', () => {
     expect(prompt).toContain('10:49 LONG MNQ x4 : -$420, marge estimée ensuite +$360 (après une alerte)');
     expect(prompt).toContain("10:44 alerte MyTradingCoach : pertes d'affilée");
     expect(prompt).toContain('- Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
+  });
+});
+
+describe('buildIncidentReport — marge déjà sous la limite avant la séance (revue #712)', () => {
+  // Casse un jour précédent, synchro après une séance gagnante : marge relevée -40 $ après +58 $.
+  const already = () => buildIncidentReport(input({
+    snapshot: { limit: 1000, remaining: -40, detectedAt: at('21:13').toISOString() },
+    trades: [trade('w', '21:12', 'SHORT', 2, 58)],
+    alerts: [],
+  }));
+
+  it('marge de départ négative : signe affiché, pas de franchissement daté', () => {
+    const r = already();
+    expect(r.kpis.startDistance).toBe(-98);
+    const margin = r.findings.find((f) => f.includes('avant le premier trade'))!;
+    expect(margin).toBe('Limite estimée déjà franchie avant la séance : marge estimée de -$98 avant le premier trade.');
+    expect(r.findings.join(' ')).not.toMatch(/franchie à/);
+  });
+
+  it('franchissement pendant la séance : toujours daté, marge positive sans signe', () => {
+    const r = buildIncidentReport(input());
+    expect(r.findings.join(' ')).not.toMatch(/déjà franchie/);
+    expect(crossingPoint(r.series)?.at).toBe(at('11:12').toISOString());
+    expect(crossingPoint(already().series)).toBeNull();
+  });
+});
+
+describe('buildIncidentReport — séance d\'un seul trade (revue #712)', () => {
+  it('« 1 trade à 16:40 », jamais « entre 16:40 et 16:40 »', () => {
+    const r = buildIncidentReport(input({ trades: [trade('x', '16:40', 'LONG', 5, -3000)], alerts: [] }));
+    expect(r.findings).toContain('Séance de 1 trade à 16:40, pour -$3,000.');
+    expect(r.findings.join(' ')).not.toMatch(/entre 16:40 et 16:40/);
   });
 });

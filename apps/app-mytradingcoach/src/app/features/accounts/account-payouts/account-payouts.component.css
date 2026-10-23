@@ -104,13 +104,14 @@
 .ap-btn {
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid var(--cyan);
+  border: 1px solid var(--primary);
   border-radius: 10px;
-  background: var(--cyan);
-  color: var(--bg);
+  background: var(--primary);
+  color: var(--text);
   font: 600 13px var(--font-body);
   cursor: pointer;
 }
+.ap-btn:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .ap-btn:disabled {
   opacity: 0.5;
@@ -121,7 +122,7 @@
 .ap-btn:focus-visible,
 .ap-del:focus-visible,
 .ap-link:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--blue-bright);
   outline-offset: 2px;
 }
 

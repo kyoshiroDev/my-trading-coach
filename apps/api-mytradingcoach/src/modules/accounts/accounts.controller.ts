@@ -8,12 +8,13 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountRequestDto } from './dto/update-account.dto';
 import { CreatePayoutDto } from './dto/create-payout.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
 import { AccountIncidentsService } from './incidents/account-incidents.service';
@@ -51,12 +52,13 @@ export class AccountsController {
     });
   }
 
-  // Passage en ÉCHOUÉ : rattaché à l'incident détecté (autopsie, #669), cf. AccountIncidentsService.
+  // Passage en ÉCHOUÉ / ARCHIVÉ : confirme l'incident détecté seulement avec `confirmIncident` (feuille
+  // de choix, autopsie #669), cf. AccountIncidentsService.updateAccount.
   @Patch(':id')
   update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
-    @Body() dto: UpdateAccountDto,
+    @Body() dto: UpdateAccountRequestDto,
   ) {
     return this.incidents.updateAccount(
       { ...user, trialEndsAt: user.trialEndsAt ?? null },
@@ -78,7 +80,11 @@ export class AccountsController {
     return this.incidents.get({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
   }
 
-  /** Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée. */
+  /**
+   * Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée.
+   * Débit borné ici, et côté service (verrou, délai après échec, essais par jour).
+   */
+  @Throttle({ default: { ttl: 60_000, limit: 6 } })
   @Get(':id/incidents/:incidentId/analysis')
   incidentAnalysis(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
     return this.incidents.analysis({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);

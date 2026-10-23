@@ -30,19 +30,32 @@ export function distanceMoney(v: number, currency: string): string {
   return formatMoney(v, currency, { decimals: 0, sign: false });
 }
 
-/** Heure à laquelle la distance estimée passe à zéro ou dessous, null sinon. */
+/**
+ * Heure à laquelle la distance estimée passe d'au-dessus de la limite à zéro ou dessous, null si
+ * elle ne la franchit pas pendant la séance (jamais atteinte, ou déjà franchie avant).
+ */
 export function crossedAt(r: AccountIncidentReport): string | null {
-  return r.series.find((p) => p.at && p.distance <= 0)?.at ?? null;
+  const s = r.series;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i].at && s[i - 1].distance > 0 && s[i].distance <= 0) return s[i].at;
+  }
+  return null;
+}
+
+/** Marge estimée déjà à zéro ou dessous avant le premier trade de la séance. */
+export function alreadyCrossed(r: AccountIncidentReport): boolean {
+  return r.kpis.startDistance != null && r.kpis.startDistance <= 0;
 }
 
 /** Phrase sous le titre (maquette : « Plancher estimé franchi le 14 oct. à 11:12 · séance de 5 trades · … »). */
 export function headline(r: AccountIncidentReport): string {
   const day = shortDay(`${r.tradeDate}T12:00:00.000Z`);
   const crossed = crossedAt(r);
-  const when = crossed ? `le ${shortDay(crossed)} à ${clock(crossed)}` : `le ${day}`;
+  const when = alreadyCrossed(r) ? `avant la séance du ${day}`
+    : crossed ? `le ${shortDay(crossed)} à ${clock(crossed)}` : `le ${day}`;
   const what =
-    r.kind === 'drawdown' ? `Plancher estimé franchi ${when}`
-      : r.kind === 'daily_loss' ? `Perte du jour estimée atteinte ${when}`
+    r.kind === 'drawdown' ? `Plancher estimé ${alreadyCrossed(r) ? 'déjà franchi' : 'franchi'} ${when}`
+      : r.kind === 'daily_loss' ? `Perte du jour estimée ${alreadyCrossed(r) ? 'déjà atteinte' : 'atteinte'} ${when}`
         : `Compte marqué comme échoué · dernière séance du ${day}`;
   return `${what} · séance de ${plural(r.kpis.trades, 'trade')} · ${r.disclaimer.charAt(0).toLowerCase()}${r.disclaimer.slice(1)}`;
 }
@@ -97,22 +110,26 @@ export interface AutopsyRow {
 /** Lignes de la chronologie, dans l'ordre de l'API. */
 export function autopsyRows(r: AccountIncidentReport): AutopsyRow[] {
   const cur = r.account.currency;
+  // Distance avant le trade : seul un passage d'au-dessus de la limite à zéro ou dessous est un
+  // franchissement (en rouge). Déjà sous la limite avant la séance : aucune ligne marquée.
+  let before = r.kpis.startDistance;
   let crossedDone = false;
   return r.timeline.map((e, i) => {
     if (e.type === 'alert') {
       const next = e.nextTradeMinutes == null ? 'aucun trade ensuite' : `trade suivant ${e.nextTradeMinutes} min plus tard`;
       return {
-        key: `a${i}`, time: clock(e.at), title: `Alerte : ${e.label}`, pnl: null, tone: null,
+        key: `a${i}`, time: clock(e.at), title: frenchSpacing(`Alerte : ${e.label}`), pnl: null, tone: null,
         meta: `Enregistrée par MyTradingCoach, ${next}`, alert: true, afterAlert: false, crossing: false,
       };
     }
-    const crossing = !crossedDone && e.distanceAfter != null && e.distanceAfter <= 0;
+    const crossing = !crossedDone && before != null && before > 0 && e.distanceAfter != null && e.distanceAfter <= 0;
     if (crossing) crossedDone = true;
+    if (e.distanceAfter != null) before = e.distanceAfter;
     return {
       key: e.tradeId, time: clock(e.at),
       title: `${e.side} ${e.asset}${e.quantity != null ? ` · ${qty(e.quantity)} contrat${e.quantity > 1 ? 's' : ''}` : ''}`,
       pnl: signedMoney(e.net, cur), tone: e.net < 0 ? 'neg' : e.net > 0 ? 'pos' : null,
-      meta: e.distanceAfter != null ? `Distance à la limite : ${distanceMoney(e.distanceAfter, cur)}` : 'Distance non relevée',
+      meta: e.distanceAfter != null ? frenchSpacing(`Distance à la limite : ${distanceMoney(e.distanceAfter, cur)}`) : 'Distance non relevée',
       alert: false, afterAlert: e.afterAlert, crossing,
     };
   });
@@ -122,16 +139,24 @@ export interface DistanceChart {
   width: number;
   height: number;
   path: string;
-  points: { x: number; y: number; last: boolean }[];
+  /** `crossing` : point où la distance passe sous la limite (rouge), au plus un. */
+  points: { x: number; y: number; last: boolean; crossing: boolean }[];
   /** Ligne de la limite estimée (distance 0). */
   zeroY: number;
-  alerts: { x: number; label: string }[];
+  /**
+   * Repère de chaque alerte. Seule la première porte un libellé (plusieurs alertes rapprochées se
+   * chevauchaient), placé du côté du trait où il ne déborde pas du tracé et où aucun autre trait
+   * d'alerte ne le traverse ; sans place des deux côtés, pas de libellé (la chronologie le donne).
+   */
+  alerts: { x: number; label: string | null; anchor: 'start' | 'end' }[];
   startLabel: string;
   endLabel: string;
   aria: string;
 }
 
 const CHART_H = 120;
+/** Largeur d'un caractère des libellés du tracé (JetBrains Mono 11 px), pour éviter qu'ils débordent. */
+const LABEL_CHAR_W = 6.7;
 const PAD = 26;
 
 /**
@@ -149,7 +174,10 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
   const step = (width - PAD * 2) / (pts.length - 1);
   const x = (i: number) => PAD + i * step;
   const y = (v: number) => 10 + ((max - v) * (CHART_H - 20)) / (max - min);
-  const points = pts.map((p, i) => ({ x: round(x(i)), y: round(y(p.distance)), last: i === pts.length - 1 }));
+  const crossAt = pts.findIndex((p, i) => i > 0 && pts[i - 1].distance > 0 && p.distance <= 0);
+  const points = pts.map((p, i) => ({
+    x: round(x(i)), y: round(y(p.distance)), last: i === pts.length - 1, crossing: i === crossAt,
+  }));
   const path = points.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
 
   // Alerte : placée entre le trade d'avant et celui d'après, au prorata de l'heure.
@@ -162,15 +190,27 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
     const before = after - 1;
     const t0 = times[before] ?? times[after]! - 1;
     const ratio = Math.min(1, Math.max(0, (t - t0) / (times[after]! - t0)));
-    return [{ x: round(x(before) + ratio * step), label: `Alerte ${clock(e.at)}` }];
+    return [{ x: round(x(before) + ratio * step), label: `Alerte ${clock(e.at)}`, anchor: 'start' as const }];
+  });
+  const labelled = alerts.map((a, i) => {
+    if (i > 0 || !a.label) return { ...a, label: null };
+    const w = a.label.length * LABEL_CHAR_W;
+    const others = alerts.filter((_, j) => j !== i).map((o) => o.x);
+    // Intervalle [from, to] libre : dans le tracé, et sans autre trait (marge de 2 px).
+    const free = (from: number, to: number) => from >= 0 && to <= width && !others.some((x) => x >= from - 2 && x <= to + 2);
+    if (free(a.x + 5, a.x + 5 + w)) return a;
+    if (free(a.x - 5 - w, a.x - 5)) return { ...a, anchor: 'end' as const };
+    return { ...a, label: null };
   });
 
   const cur = r.account.currency;
   const firstAt = pts.find((p) => p.at)?.at ?? null;
   const lastAt = pts[pts.length - 1].at;
   return {
-    width, height: CHART_H + 18, path, points, zeroY: round(y(0)), alerts,
-    startLabel: firstAt ? clock(firstAt) : '', endLabel: lastAt ? clock(lastAt) : '',
+    width, height: CHART_H + 18, path, points, zeroY: round(y(0)), alerts: labelled,
+    // Séance d'un seul trade (ou à la même minute) : une seule heure sous l'axe, pas « 16:40 … 16:40 ».
+    startLabel: firstAt ? clock(firstAt) : '',
+    endLabel: lastAt && (!firstAt || clock(lastAt) !== clock(firstAt)) ? clock(lastAt) : '',
     aria: `Distance à la limite au fil de la séance : de ${distanceMoney(values[0], cur)} à ${distanceMoney(values[values.length - 1], cur)}`,
   };
 }

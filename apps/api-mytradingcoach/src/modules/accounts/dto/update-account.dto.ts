@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsISO8601,
@@ -92,4 +93,15 @@ export class UpdateAccountDto {
   @IsString()
   @MaxLength(80, { message: 'Le nom de la firm est trop long (80 caractères max).' })
   unlistedFirm?: string | null;
+}
+
+/**
+ * Corps de `PATCH /accounts/:id`. `confirmIncident` n'est envoyé QUE par la feuille de choix
+ * « … est échoué » (#669) : il confirme la limite franchie détectée. Le formulaire d'édition ne
+ * l'envoie jamais, son changement de statut ne confirme donc rien. Retiré avant l'écriture.
+ */
+export class UpdateAccountRequestDto extends UpdateAccountDto {
+  @IsOptional()
+  @IsBoolean({ message: 'confirmIncident doit être un booléen.' })
+  confirmIncident?: boolean;
 }

@@ -88,13 +88,15 @@
   min-height: 44px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid var(--cyan);
-  background: var(--cyan);
-  color: var(--bg);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--text);
   font: 600 13px var(--font-body);
   cursor: pointer;
 }
-.toast-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+/* Action d'un toast = CTA : bleu (le cyan est réservé à l'IA et au temps réel). */
+.toast-action:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.toast-action:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .toast-msg {
   min-width: 0;
   margin: 0;

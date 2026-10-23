@@ -23,6 +23,9 @@
 .lbl { font: 500 11px var(--font-mono); letter-spacing: .08em; color: var(--text-3); }
 .note { font-size: 12px; color: var(--text-3); line-height: 1.5; margin: 6px 0 0; }
 .loading { padding: 24px 0; }
+.not-found { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.not-found p { margin: 0; font-size: 14px; color: var(--text); }
+.not-found .btn { text-decoration: none; }
 .pos { color: var(--green); }
 .neg { color: var(--red); }
 
@@ -44,7 +47,16 @@
 
 .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .kpi { padding: 12px; }
-.kpi .v { font: 600 18px var(--font-mono); font-variant-numeric: tabular-nums; margin-top: 6px; color: var(--text); overflow-wrap: anywhere; }
+/* Montant jamais coupé (« -$1,1 / 67 » à 320 px) : une ligne, taille réduite sur les écrans étroits
+   (cqi = largeur de la page, conteneur `.content`). */
+.kpi .v {
+  font: 600 18px var(--font-mono);
+  font-size: clamp(13px, 4.2cqi, 18px);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+  color: var(--text);
+  white-space: nowrap;
+}
 .kpi .s { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.35; }
 
 /* Courbe : un tracé par largeur, pour garder des libellés lisibles. */
@@ -54,9 +66,9 @@
 .chart .zero { stroke: var(--red); stroke-dasharray: 4 4; stroke-opacity: .7; }
 .chart .alert-mark { fill: var(--yellow); fill-opacity: .8; }
 .chart .alert-txt { fill: var(--yellow); }
-.chart .line { fill: none; stroke: var(--cyan); stroke-width: 2; }
-.chart .dot { fill: var(--cyan); }
-.chart .dot-last { fill: var(--red); }
+.chart .line { fill: none; stroke: var(--text-2); stroke-width: 2; }
+.chart .dot { fill: var(--text-2); }
+.chart .dot-cross { fill: var(--red); }
 
 .tl { list-style: none; margin: 10px 0 0; padding: 0; }
 .tl li {
@@ -92,8 +104,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--cyan) 12%, transparent);
-  color: var(--cyan);
+  background: var(--bg-3);
+  color: var(--text-2);
   font: 600 12px var(--font-mono);
   font-style: normal;
   display: flex;
@@ -139,10 +151,12 @@
   font: 600 14px var(--font-body);
   cursor: pointer;
 }
-/* Même CTA que le parcours « compte perdu » (lost-btn.pri de Mes comptes). */
-.btn.pri { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+/* Action principale en bleu, comme le parcours « compte perdu » (lost-btn.pri de Mes comptes) :
+   le cyan reste réservé à l'IA et au temps réel (design.md). */
+.btn.pri { background: var(--primary); border-color: var(--primary); color: var(--text); }
+.btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .btn.ghost { background: transparent; font-weight: 500; }
-.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .btn:disabled { opacity: .6; cursor: progress; }
 
 @container (min-width: 600px) {
