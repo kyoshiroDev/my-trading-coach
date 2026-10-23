@@ -70,7 +70,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
 - 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
   compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
-  push vers les appareils abonnés, #666, même condition « app ouverte »)
+  push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
+  synchro de fond, jusqu'à 15 min de décalage)
 
 ### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
 

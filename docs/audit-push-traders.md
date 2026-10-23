@@ -112,7 +112,10 @@ mérite une maquette `maquettes/mockup-push.html` (390 puis 1440) **avant la pha
 
 **Phase 2 · App** (après la maquette)
 `push-sw.js`, manifest, icônes, `PushService` (permission demandée seulement au clic), section
-profil, aide iOS, tests, captures 390 et 1440.
+profil, aide iOS, tests, captures 390 et 1440. **Désabonner l'appareil à la déconnexion**
+(`POST /push/unsubscribe`, revue #717 m2) : sinon, sur un navigateur partagé, le trader précédent
+reçoit ses alertes jusqu'à ce que le suivant s'abonne. Politique de confidentialité : paragraphe sur
+l'enregistrement d'un appareil à publier avec la phase 2 (proposé dans la revue de #717).
 
 **Phase 3 · Démo et docs**
 Seed démo : un appareil fictif et des préférences pour que la section soit représentative (aucun
@@ -174,8 +177,9 @@ D'après la documentation Chrome :
   15 min, utilisateurs dont l'app est fermée, connexions non synchronisées depuis 12 min) appelle déjà
   `TradovateSyncService.sync`, qui relit positions, trades et **solde** (`captureSnapshot`). Il suffit
   d'appeler `PropAlertsService.check` après chaque synchro de fond réussie : il ne lit que la base
-  (`AccountsService.list`). Même clé Redis que le direct : une alerte déjà partie ne repart pas quand
-  l'app s'ouvre.
+  (`AccountsService.list`). Marqueur « push envoyé » distinct du marqueur
+  « affichée dans l'app » (revue #717, I3) : l'alerte relevée en fond s'affiche quand même à
+  l'ouverture, sans second push.
 - **Coût Tradovate actuel, inchangé** : par connexion et par passage, 4 appels sans nouveau trade
   (`/account/list`, `/position/list`, `/fillPair/list`, solde) et environ 9 avec des trades (fills,
   frais, contrats, échéances, produits), soit environ 400 à 860 appels par connexion et par jour.
