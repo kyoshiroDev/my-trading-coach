@@ -25,6 +25,7 @@ import {
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { PushSettingsComponent } from './notifications/push-settings.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -55,7 +56,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
+  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,6 +154,8 @@ export class ProfileComponent implements OnInit {
 
   // Danger
   protected readonly showPlanModal = signal(false);
+  /** Section Notifications chargée tout de suite (lien `#notifications`), sinon à l'approche. */
+  protected openNotifications = false;
   protected readonly showDeleteConfirm = signal(false);
   protected readonly deleteInput = signal('');
   protected readonly deleteReason = signal('');
@@ -192,6 +195,11 @@ export class ProfileComponent implements OnInit {
     // Deep-link onglet : ?tab=params ouvre directement l'onglet Paramètres.
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
       this.activeProfileTab.set('params');
+    }
+    // Lien des notifications push (« Réglages », #666) : /profil#notifications.
+    if (this.route.snapshot.fragment === 'notifications') {
+      this.activeProfileTab.set('params');
+      this.openNotifications = true;
     }
 
     // Init stratégie une seule fois au chargement
