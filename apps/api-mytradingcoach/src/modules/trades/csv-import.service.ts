@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { xlsxToCsv } from './xlsx-worker';
 import { Plan, Role, EmotionState } from '@prisma/client';
 import type { CreateTradeDto } from './dto/create-trade.dto';
@@ -26,6 +26,8 @@ import {
 import { BrokerMappingService } from './broker-mapping.service';
 import { AI_MODELS } from '../infra/ai-pricing.const';
 import { redactForAi } from './csv-ai-redaction';
+import { RedisService } from '../infra/redis.service';
+import { todayParis } from '@mtc/shared';
 
 
 
@@ -37,6 +39,11 @@ const MAX_KNOWN_ROWS = 10_000;
 // on désactive la saisie d'un total des frais (front) et on l'ignore (back).
 const FEES_INPUT_MAX_TRADES = 5000;
 const MAX_AI_ROWS = 2000;
+/**
+ * Repli ligne par ligne (le plus cher : un appel au modèle d'analyse par lot de AI_BATCH lignes) :
+ * au plus N passages par utilisateur et par jour (heure de Paris). Un passage en échec rend sa place.
+ */
+export const CSV_AI_FALLBACK_DAILY_LIMIT = 3;
 /** Plafond de sortie d'un lot du repli ligne a ligne. */
 export const AI_CHUNK_MAX_TOKENS = 8192;
 /**
@@ -114,6 +121,8 @@ export class CsvImportService {
     private readonly prisma: PrismaService,
     private readonly setups: SetupsService,
     private readonly brokerMappings: BrokerMappingService,
+    /** Limite quotidienne du repli ligne par ligne : optionnel pour garder les tests unitaires légers. */
+    @Optional() private readonly redis?: RedisService,
   ) {}
 
   async parseCSV(
@@ -469,10 +478,29 @@ export class CsvImportService {
     const parMapping = await this.tryMappingPath(normalizedLines, dataLines, filename, userId);
     if (parMapping) return parMapping;
 
+    // Journal structuré de chaque passage par le repli : volumes et résultat, AUCUNE donnée du
+    // fichier (ni nom, ni contenu).
+    const started = Date.now();
+    const logFallback = (result: 'ok' | 'error' | 'too_many_rows' | 'daily_limit', extra: { trades?: number } = {}) =>
+      this.logger.log(JSON.stringify({
+        event: 'csv_ai_fallback', userId: userId ?? null, rows: dataLines.length,
+        batches: Math.ceil(dataLines.length / AI_BATCH), result, ...extra, durationMs: Date.now() - started,
+      }));
+
     if (dataLines.length > MAX_AI_ROWS) {
+      logFallback('too_many_rows');
       throw new BadRequestException(
         `${dataLines.length} lignes détectées. Maximum ${MAX_AI_ROWS} pour un import automatique. ` +
         `Découpe ton fichier par période, ou exporte uniquement tes trades fermés.`,
+      );
+    }
+
+    if (userId && !(await this.reserveFallback(userId))) {
+      logFallback('daily_limit');
+      throw new HttpException(
+        `Tu as atteint la limite de ${CSV_AI_FALLBACK_DAILY_LIMIT} imports analysés ligne par ligne aujourd'hui. ` +
+        "Réessaie demain, ou écris-nous à support@mytradingcoach.app pour qu'on ajoute ton broker aux formats reconnus.",
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
@@ -500,6 +528,8 @@ export class CsvImportService {
         }
       }
     } catch (err) {
+      if (userId) await this.refundFallback(userId);
+      logFallback('error');
       if (err instanceof BadRequestException) throw err;
       this.logger.error('Erreur parsing CSV', err);
       throw new BadRequestException(
@@ -508,7 +538,32 @@ export class CsvImportService {
       );
     }
 
+    logFallback('ok', { trades: allTrades.length });
     return this.mapToDto(allTrades);
+  }
+
+  private fallbackKey(userId: string): string {
+    return `csv-ai-fallback:${userId}:${todayParis()}`;
+  }
+
+  /**
+   * Prend une place du repli du jour (INCR puis vérification : deux imports simultanés ne passent
+   * pas tous les deux). Redis indisponible → refus, comme le quota IA : on ne dépense pas à l'aveugle.
+   */
+  private async reserveFallback(userId: string): Promise<boolean> {
+    if (!this.redis) return true;
+    try {
+      const key = this.fallbackKey(userId);
+      const count = await this.redis.client.incr(key);
+      if (count === 1) await this.redis.client.expire(key, 2 * 24 * 3600);
+      return count <= CSV_AI_FALLBACK_DAILY_LIMIT;
+    } catch {
+      throw new ServiceUnavailableException("L'import par IA est momentanément indisponible. Réessaie dans quelques instants.");
+    }
+  }
+
+  private async refundFallback(userId: string): Promise<void> {
+    await this.redis?.client.decr(this.fallbackKey(userId)).catch(() => undefined);
   }
 
   // ── Registre des brokers : entrees publiques pour l'admin ────────────────────
