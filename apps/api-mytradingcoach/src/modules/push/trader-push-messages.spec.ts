@@ -39,6 +39,24 @@ describe('TRADER_PUSH_MESSAGES', () => {
     expect(TRADER_PUSH_MESSAGES.propAlert(prop({ kind: 'objective', level: 'reached' }))!.urgency).toBe('normal');
   });
 
+  it('chaque message de règle de firm porte la mention d’estimation, en direct comme en fond (revue m4)', () => {
+    const firm = [
+      ...(['drawdown', 'daily_loss'] as const).flatMap((kind) => (['critical', 'breached'] as const).map((level) => ({ kind, level }))),
+      { kind: 'consistency' as const, level: 'breached' as const },
+      { kind: 'objective' as const, level: 'reached' as const },
+      { kind: 'payout' as const, level: 'reached' as const },
+    ];
+    for (const background of [false, true]) {
+      for (const f of firm) {
+        expect(TRADER_PUSH_MESSAGES.propAlert(prop(f), { background })!.body, `${f.kind} ${f.level}`).toContain('(estimation MyTradingCoach)');
+      }
+    }
+    for (const type of ['A1_SIZE_OVER_PLAN', 'A2_DAILY_LOSS_DISTANCE', 'A3_ENTRY_DAY_STARTED']) {
+      expect(TRADER_PUSH_MESSAGES.behavior('a', { type, message: 'Règle du plan.' } as never).body).toBe('Règle du plan (estimation MyTradingCoach).');
+    }
+    expect(TRADER_PUSH_MESSAGES.behavior('a', { type: 'B_REVENGE', message: 'Entrée rapide.' } as never).body).toBe('Entrée rapide.');
+  });
+
   it('aucun montant, aucun conseil, aucun tiret cadratin', () => {
     for (const m of all()) {
       const text = `${m.title} ${m.body}`;

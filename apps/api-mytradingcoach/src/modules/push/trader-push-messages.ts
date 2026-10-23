@@ -95,9 +95,13 @@ function tilt(e: TiltAlertEvent): TraderPushMessage {
   }
 }
 
-/** Détecteurs de comportement (#602) : leur message est déjà une phrase factuelle sans montant. */
+/**
+ * Détecteurs de comportement (#602) : leur message est déjà une phrase factuelle sans montant. Les
+ * détecteurs A (`A1_…`, `A2_…`, `A3_…`) citent une règle du plan de la firm : mention d'estimation.
+ */
 function behavior(accountId: string, draft: Pick<BehaviorAlertDraft, 'type' | 'message'>): TraderPushMessage {
-  return live('Signal de comportement', draft.message, `behavior-${accountId}-${draft.type}`, 'normal');
+  const body = draft.type.startsWith('A') ? `${draft.message.replace(/\.$/, '')} ${ESTIMATION}.` : draft.message;
+  return live('Signal de comportement', body, `behavior-${accountId}-${draft.type}`, 'normal');
 }
 
 export const TRADER_PUSH_MESSAGES = {

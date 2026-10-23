@@ -84,6 +84,12 @@ describe('TraderNotifier.send', () => {
     expect(deliverToUser).toHaveBeenCalledTimes(1);
   });
 
+  it('limite franchie forcée : la clé anti-spam est posée quand même (revue M3)', async () => {
+    const { notifier, set } = setup({});
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
+    expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
+  });
+
   it('Redis indisponible : on envoie plutôt que de perdre une alerte', async () => {
     const { notifier } = setup({}, { redisSet: () => Promise.reject(new Error('down')) });
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');
