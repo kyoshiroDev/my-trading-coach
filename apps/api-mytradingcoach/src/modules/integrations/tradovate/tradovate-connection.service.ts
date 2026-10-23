@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  AdminPushEvent,
   BrokerConnection,
   BrokerConnectionStatus,
   BrokerProvider,
@@ -14,8 +13,7 @@ import { loadTokenKey } from '@api/common/utils/token-cipher.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { AdminNotifier } from '../../admin-push/admin-notifier.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
-import { TRADER_PUSH_MESSAGES } from '../../push/trader-push-messages';
-import { ADMIN_PUSH_MESSAGES } from '../../admin-push/push-messages';
+import { RECONNECT_NOTICE_SELECT, noticeReconnectRequired } from './tradovate-reconnect-notice';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { signOAuthState, verifyOAuthState } from './oauth-state.util';
 import type { OAuthOrigin } from './oauth-state.util';
@@ -508,10 +506,7 @@ export class TradovateConnectionService {
     this.logger.warn(`Connexion Tradovate ${connectionId} → À RECONNECTER (${cause}).`);
     // État d'avant, pour ne prévenir l'admin qu'au PASSAGE à « à reconnecter » (pas à chaque essai).
     const before = await this.prisma.brokerConnection
-      .findUnique({
-        where: { id: connectionId },
-        select: { status: true, userId: true, accountId: true, account: { select: { label: true } }, user: { select: { isDemo: true } } },
-      })
+      .findUnique({ where: { id: connectionId }, select: RECONNECT_NOTICE_SELECT })
       .catch(() => null);
     await this.prisma.brokerConnection.update({
       where: { id: connectionId },
@@ -520,15 +515,7 @@ export class TradovateConnectionService {
         lastSyncError: 'Connexion expirée ou révoquée : reconnecte ton compte Tradovate.',
       },
     });
-    if (before?.user && !before.user.isDemo && before.status !== BrokerConnectionStatus.NEEDS_RECONNECT) {
-      this.adminNotifier?.notify(AdminPushEvent.TRADOVATE_RECONNECT, ADMIN_PUSH_MESSAGES.tradovateReconnect());
-      this.traderNotifier?.notify(
-        before.userId,
-        'CONNECTION',
-        TRADER_PUSH_MESSAGES.tradovateReconnect(before.accountId, before.account.label),
-        { accountId: before.accountId, dedupKey: 'connection:tradovate' },
-      );
-    }
+    noticeReconnectRequired(before, { admin: this.adminNotifier, trader: this.traderNotifier });
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

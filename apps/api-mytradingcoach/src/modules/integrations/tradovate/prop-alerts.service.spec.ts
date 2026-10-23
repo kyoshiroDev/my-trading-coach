@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ALERT_DEBOUNCE_MS, PropAlertsService, alertLevel, consistencyCandidate, type PropAlertEvent } from './prop-alerts.service';
 import { BACKGROUND_NOTE } from '../../push/trader-push-messages';
+import { ALERT_LEVEL_RANK as RANK } from './prop-alert-levels';
 
 type Metrics = {
   drawdown: { pct: number; breached: boolean; margin: number; maxDrawdown: number } | null;
@@ -17,7 +18,19 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
     client: {
       get: vi.fn(async (k: string) => store.get(k) ?? null),
       set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }),
-      del: vi.fn(async (k: string) => { store.delete(k); return 1; }),
+      del: vi.fn(async (...keys: string[]) => { keys.forEach((k) => store.delete(k)); return keys.length; }),
+      // Scripts Lua de `prop-alert-push.ts`, rejoués en JS : réservation par rang, puis restitution.
+      eval: vi.fn(async (lua: string, _n: number, key: string, level: string, a: string) => {
+        const cur = store.get(key) ?? null;
+        if (lua.includes('local rank')) {
+          if (cur && RANK[cur as keyof typeof RANK] >= RANK[level as keyof typeof RANK]) return null;
+          store.set(key, level);
+          return cur ?? '';
+        }
+        if (cur !== level) return 0;
+        if (a === '') store.delete(key); else store.set(key, a);
+        return 1;
+      }),
     },
   };
   const prisma = {
@@ -31,7 +44,8 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
   const accounts = {
     list: vi.fn(async () => [{ id: 'a', label: 'Apex 50k', currency: 'USD', status: opts.status ?? 'ACTIVE', metrics }]),
   };
-  const notifier = { notify: vi.fn() };
+  const notifier = { send: vi.fn(async (..._args: unknown[]) => outcome) };
+  let outcome = 'sent';
   const journal = { recordReading: vi.fn(async () => undefined), recordEvent: vi.fn(async () => undefined) };
   const incidents = { detectQuietly: vi.fn(async () => undefined) };
   const svc = new PropAlertsService(prisma as never, redis as never, accounts as never, journal as never, incidents as never, notifier as never);
@@ -39,7 +53,8 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
   const emit = (_e: 'prop:alert', p: PropAlertEvent) => events.push(p);
   const set = (m: Partial<Metrics>) => { metrics = { ...metrics, ...m }; };
   const dd = (pct: number, breached = false) => ({ pct, breached, margin: pct * 2000, maxDrawdown: 2000 });
-  return { svc, emit, events, set, dd, accounts, store, notifier, journal, incidents };
+  const deliver = (o: string) => { outcome = o; };
+  return { svc, emit, events, set, dd, accounts, store, notifier, journal, incidents, deliver };
 }
 
 const NOW = new Date(Date.UTC(2026, 5, 2, 16));
@@ -184,27 +199,33 @@ describe('PropAlertsService.check — consistency et bonnes nouvelles', () => {
   });
 });
 
+const flush = () => new Promise((r) => setTimeout(r, 0));
+const dedupKeys = (n: { send: { mock: { calls: unknown[][] } } }) => n.send.mock.calls.map((c) => (c[3] as { dedupKey: string }).dedupKey);
+
 describe('PropAlertsService → push (#666)', () => {
   it('25 % : dans l’app seulement ; 10 % : push ; dépassé : push forcé malgré l’anti-spam', async () => {
     const { svc, emit, set, dd, notifier } = setup();
     set({ drawdown: dd(0.2) });
     await svc.check('u', 'a', emit, NOW);
-    expect(notifier.notify).not.toHaveBeenCalled();
+    await flush();
+    expect(notifier.send).not.toHaveBeenCalled();
 
     set({ drawdown: dd(0.05) });
     await svc.check('u', 'a', emit, NOW);
-    expect(notifier.notify).toHaveBeenLastCalledWith(
-      'u', 'PROP_RULES', expect.objectContaining({ title: 'Apex 50k', url: '/session', urgency: 'high' }),
+    await flush();
+    expect(notifier.send).toHaveBeenLastCalledWith(
+      'u', 'PROP_RULES', expect.objectContaining({ title: '{compte}', url: '/session', urgency: 'high' }),
       { accountId: 'a', dedupKey: 'prop:drawdown:critical', force: false },
     );
 
     set({ drawdown: dd(0, true) });
     await svc.check('u', 'a', emit, NOW);
-    expect(notifier.notify).toHaveBeenLastCalledWith(
+    await flush();
+    expect(notifier.send).toHaveBeenLastCalledWith(
       'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining('Drawdown max dépassé') }),
       { accountId: 'a', dedupKey: 'prop:drawdown:breached', force: true },
     );
-    expect(notifier.notify).toHaveBeenCalledTimes(2);
+    expect(notifier.send).toHaveBeenCalledTimes(2);
   });
 
   it('hors Premium ou compte démo : aucun push', async () => {
@@ -212,33 +233,72 @@ describe('PropAlertsService → push (#666)', () => {
       const { svc, emit, set, dd, notifier } = setup(opts);
       set({ drawdown: dd(0, true) });
       await svc.check('u', 'a', emit, NOW);
-      expect(notifier.notify).not.toHaveBeenCalled();
+      await flush();
+      expect(notifier.send).not.toHaveBeenCalled();
     }
+  });
+
+  it('direct et fond en même temps sur une limite franchie : un seul push (réservation atomique, m1)', async () => {
+    const { svc, emit, set, dd, notifier } = setup();
+    set({ drawdown: dd(0, true) });
+    await Promise.all([svc.check('u', 'a', emit, NOW), svc.checkFromBackground('u', 'a', NOW)]);
+    await flush();
+    expect(dedupKeys(notifier)).toEqual(['prop:drawdown:breached']);
   });
 });
 
 describe('PropAlertsService.checkFromBackground (#666, synchro de fond, app fermée)', () => {
-  it('25 % : rien, et le niveau n’est pas marqué envoyé (l’app l’affichera en direct)', async () => {
+  it('25 % : rien, aucun marqueur posé', async () => {
     const { svc, set, dd, notifier, store } = setup();
     set({ drawdown: dd(0.2) });
     await svc.checkFromBackground('u', 'a', NOW);
-    expect(notifier.notify).not.toHaveBeenCalled();
+    expect(notifier.send).not.toHaveBeenCalled();
     expect(store.size).toBe(0);
   });
 
   it('10 % : push avec le décalage annoncé, sans événement d’app, ni journal, ni incident', async () => {
-    const { svc, emit, events, set, dd, notifier, journal } = setup();
+    const { svc, set, dd, notifier, journal, incidents, events } = setup();
     set({ drawdown: dd(0.05) });
     await svc.checkFromBackground('u', 'a', NOW);
-    expect(notifier.notify).toHaveBeenCalledWith(
+    expect(notifier.send).toHaveBeenCalledWith(
       'u', 'PROP_RULES', expect.objectContaining({ body: expect.stringContaining(BACKGROUND_NOTE) }),
       { accountId: 'a', dedupKey: 'prop:drawdown:critical', force: false },
     );
+    expect(events).toHaveLength(0);
     expect(journal.recordReading).not.toHaveBeenCalled();
     expect(journal.recordEvent).not.toHaveBeenCalled();
-    // Même clé que le direct : à l'ouverture de l'app, la même alerte ne repart pas.
+    expect(incidents.detectQuietly).not.toHaveBeenCalled();
+  });
+
+  it('trader SANS appareil : à l’ouverture de l’app, l’alerte s’affiche (revue I3)', async () => {
+    const { svc, emit, events, set, dd, notifier, journal, deliver } = setup();
+    deliver('no_device');
+    set({ drawdown: dd(0, true) });
+    await svc.checkFromBackground('u', 'a', NOW);
     await svc.check('u', 'a', emit, NOW);
-    expect(events).toHaveLength(0);
+    await flush();
+    expect(events.map((e) => [e.kind, e.level])).toEqual([['drawdown', 'breached']]);
+    expect(journal.recordEvent).toHaveBeenCalledTimes(1);
+    // Le push reste à faire : tenté au relevé de fond, puis une fois à l'affichage.
+    expect(notifier.send).toHaveBeenCalledTimes(2);
+  });
+
+  it('push parti en fond : l’app affiche l’alerte à l’ouverture, sans second push', async () => {
+    const { svc, emit, events, set, dd, notifier } = setup();
+    set({ drawdown: dd(0.05) });
+    await svc.checkFromBackground('u', 'a', NOW);
+    await svc.check('u', 'a', emit, NOW);
+    await flush();
+    expect(events.map((e) => e.level)).toEqual(['critical']);
+    expect(notifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('push parti en fond : les relevés suivants ne le renvoient pas', async () => {
+    const { svc, set, dd, notifier } = setup();
+    set({ drawdown: dd(0.05) });
+    await svc.checkFromBackground('u', 'a', NOW);
+    await svc.checkFromBackground('u', 'a', NOW);
+    expect(notifier.send).toHaveBeenCalledTimes(1);
   });
 
   it('limite franchie, objectif, payout : push ; consistency : jamais depuis le fond', async () => {
@@ -248,9 +308,8 @@ describe('PropAlertsService.checkFromBackground (#666, synchro de fond, app ferm
       progress: { kind: 'objective', done: true, cycleAfter: null, requirements: [{ key: 'consistency', required: 0.4, dayCap: 100, todayPnl: 500 }] },
     });
     await svc.checkFromBackground('u', 'a', NOW);
-    const keys = notifier.notify.mock.calls.map((c) => (c[3] as { dedupKey: string }).dedupKey);
-    expect(keys).toEqual(['prop:drawdown:breached', 'prop:objective:reached']);
-    expect(notifier.notify.mock.calls[0][3]).toMatchObject({ force: true });
+    expect(dedupKeys(notifier)).toEqual(['prop:drawdown:breached', 'prop:objective:reached']);
+    expect(notifier.send.mock.calls[0][3]).toMatchObject({ force: true });
     expect(incidents.detectQuietly).not.toHaveBeenCalled();
   });
 
@@ -259,7 +318,7 @@ describe('PropAlertsService.checkFromBackground (#666, synchro de fond, app ferm
       const { svc, set, dd, notifier } = setup({ status });
       set({ drawdown: dd(0, true) });
       await svc.checkFromBackground('u', 'a', NOW);
-      expect(notifier.notify).not.toHaveBeenCalled();
+      expect(notifier.send).not.toHaveBeenCalled();
     }
   });
 });

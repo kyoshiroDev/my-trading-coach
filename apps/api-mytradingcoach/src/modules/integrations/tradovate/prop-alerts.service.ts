@@ -7,7 +7,8 @@ import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
-import { TRADER_PUSH_MESSAGES } from '../../push/trader-push-messages';
+import { TRADER_PUSH_MESSAGES, type TraderPushMessage } from '../../push/trader-push-messages';
+import { claimPush, pushedKey, releasePush } from './prop-alert-push';
 import { AccountIncidentsService } from '../../accounts/incidents/account-incidents.service';
 import { ALERT_LEVEL_RANK as RANK, ALERT_REARM_PCT, type PropAlertLevel, alertLevel } from './prop-alert-levels';
 
@@ -200,34 +201,57 @@ export class PropAlertsService implements OnModuleDestroy {
 
     for (const c of candidates) {
       if (background && !BACKGROUND_ALERT_KINDS.includes(c.kind)) continue;
-      const key = alertKey(accountId, c.kind, c.period);
-      const sent = (await this.redis.client.get(key)) as PropAlertLevel | null;
+      // Deux marqueurs (revue #717, I3) : « affichée dans l'app » (direct seulement) et « push
+      // envoyé » (direct et fond). Le fond ne touche jamais le premier.
+      const shownKey = alertKey(accountId, c.kind, c.period);
+      const pushKey = pushedKey(accountId, c.kind, c.period);
       if (!c.level) {
-        if (sent && c.rearm) await this.redis.client.del(key);
+        if (c.rearm) await this.redis.client.del(...(background ? [pushKey] : [shownKey, pushKey]));
         continue;
       }
-      if (sent && RANK[sent] >= RANK[c.level]) continue;
       const event: PropAlertEvent = {
         accountId, accountLabel: account.label, currency: account.currency, kind: c.kind, level: c.level, ...c.payload,
       };
-      // Push (#666) : seuil 10 %, limite franchie, bonnes nouvelles. Une limite franchie part
-      // toujours, même si la même alerte est partie il y a moins de 15 min.
+      // Push (#666) : seuil 10 %, limite franchie, bonnes nouvelles. App fermée : à chaque relevé tant
+      // que le push n'est pas parti (appareil abonné plus tard, fin des heures silencieuses).
       const push = TRADER_PUSH_MESSAGES.propAlert(event, { background });
-      if (background && !push) continue;
-      await this.redis.client.set(key, c.level, 'EX', c.ttl);
-      if (push) {
-        this.notifier?.notify(userId, 'PROP_RULES', push, {
-          accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached',
-        });
+      if (background) {
+        if (push) await this.pushOnce(userId, accountId, { ...c, level: c.level }, pushKey, push);
+        continue;
       }
-      if (background) continue;
+      const shown = (await this.redis.client.get(shownKey)) as PropAlertLevel | null;
+      if (shown && RANK[shown] >= RANK[c.level]) continue;
+      await this.redis.client.set(shownKey, c.level, 'EX', c.ttl);
       emit('prop:alert', event);
+      // En direct, le push n'est tenté qu'au moment où l'alerte s'affiche (pas à chaque solde).
+      if (push) void this.pushOnce(userId, accountId, { ...c, level: c.level }, pushKey, push);
       await this.journal
         ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
         .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));
       if (c.level === 'breached' && (c.kind === 'drawdown' || c.kind === 'daily_loss')) {
         await this.incidents?.detectQuietly(userId, accountId, 'live');
       }
+    }
+  }
+
+  /**
+   * Un push par niveau : réservation atomique du marqueur « push envoyé », envoi, puis réservation
+   * rendue si le push n'est pas parti (aucun appareil, type coupé, heures silencieuses, erreur).
+   * Une limite franchie passe l'anti-spam de 15 min. Ne lève jamais.
+   */
+  private async pushOnce(
+    userId: string, accountId: string, c: Candidate & { level: PropAlertLevel }, key: string, message: TraderPushMessage,
+  ): Promise<void> {
+    if (!this.notifier) return;
+    try {
+      const previous = await claimPush(this.redis, key, c.level, c.ttl);
+      if (previous === null) return;
+      const outcome = await this.notifier
+        .send(userId, 'PROP_RULES', message, { accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached' })
+        .catch(() => 'error' as const);
+      if (outcome !== 'sent') await releasePush(this.redis, key, c.level, previous, c.ttl);
+    } catch (err) {
+      this.logger.warn(`Push prop firm non envoyé (compte ${accountId}) : ${(err as Error).message}`);
     }
   }
 

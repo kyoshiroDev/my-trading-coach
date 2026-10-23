@@ -6,6 +6,7 @@ import { RedisService } from '../infra/redis.service';
 import { isPremiumAccess } from '../discord/discord-access.util';
 import { TraderPushService } from './trader-push.service';
 import { inQuietHours } from './quiet-hours';
+import { ACCOUNT_TOKEN, UNNAMED_ACCOUNT, accountPushName, withAccountName } from './push-account-name';
 import type { TraderPushMessage } from './trader-push-messages';
 
 /** La même alerte au plus une fois toutes les 15 min par compte (critère du ticket #666). */
@@ -94,9 +95,24 @@ export class TraderNotifier {
     const fresh = await this.claim(userId, options);
     if (!fresh && !options.force) return 'anti_spam';
 
-    const r = await this.push.deliverToUser(userId, message);
+    const r = await this.push.deliverToUser(userId, await this.named(userId, message, options.accountId));
     this.logger.debug(`Push ${type} (${options.dedupKey}) : ${r.delivered}/${r.subscriptions} livré(s)`);
     return 'sent';
+  }
+
+  /**
+   * Nom du compte depuis le catalogue (firme et taille), jamais le libellé saisi par le trader :
+   * l'écran verrouillé est visible par d'autres.
+   */
+  private async named(userId: string, message: TraderPushMessage, accountId: string | undefined): Promise<TraderPushMessage> {
+    if (!`${message.title} ${message.body}`.includes(ACCOUNT_TOKEN)) return message;
+    if (!accountId) return withAccountName(message, UNNAMED_ACCOUNT);
+    const accounts = await this.prisma.tradingAccount.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, propFirmPlan: { select: { accountSize: true, firm: { select: { name: true } } } } },
+    });
+    return withAccountName(message, accountPushName(accounts, accountId));
   }
 
   /** `true` si cette alerte n'est pas partie depuis 15 min. Redis indisponible : on envoie. */

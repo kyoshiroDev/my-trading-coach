@@ -66,7 +66,7 @@ describe('markNeedsReconnect → push au trader (#666)', () => {
     expect(trader.notify).toHaveBeenCalledWith(
       'u1',
       'CONNECTION',
-      expect.objectContaining({ title: 'Connexion Tradovate à renouveler', url: '/accounts', body: expect.stringContaining('Apex 50K') }),
+      expect.objectContaining({ title: 'Connexion Tradovate à renouveler', url: '/accounts', body: 'Synchro interrompue pour {compte} : reconnecte-le depuis Comptes.' }),
       { accountId: 'acc-1', dedupKey: 'connection:tradovate' },
     );
   });

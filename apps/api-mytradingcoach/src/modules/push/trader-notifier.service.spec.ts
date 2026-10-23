@@ -13,11 +13,18 @@ const FREE = { plan: 'FREE', role: 'USER', trialEndsAt: null };
 // 2026-07-01T10:00Z = 12:00 à Paris (été).
 const NOON = new Date('2026-07-01T10:00:00Z');
 
-function setup(user: Record<string, unknown> | null, opts: { enabled?: boolean; redisSet?: () => Promise<unknown> } = {}) {
+type Acc = { id: string; label?: string; propFirmPlan: { accountSize: number; firm: { name: string } } | null };
+const APEX50 = { accountSize: 50_000, firm: { name: 'Apex' } };
+
+function setup(
+  user: Record<string, unknown> | null,
+  opts: { enabled?: boolean; redisSet?: () => Promise<unknown>; accounts?: Acc[] } = {},
+) {
   const findUnique = vi.fn().mockResolvedValue(
     user === null ? null : { isDemo: false, ...PREMIUM, pushPreference: null, _count: { pushDevices: 1 }, ...user },
   );
-  const prisma = { user: { findUnique } } as unknown as PrismaService;
+  const accounts = opts.accounts ?? [{ id: 'acc-1', label: 'Jean Dupont 0612345678', propFirmPlan: APEX50 }];
+  const prisma = { user: { findUnique }, tradingAccount: { findMany: vi.fn().mockResolvedValue(accounts) } } as unknown as PrismaService;
   const set = vi.fn(opts.redisSet ?? (() => Promise.resolve('OK')));
   const redis = { client: { set } } as unknown as RedisService;
   const deliverToUser = vi.fn().mockResolvedValue({ subscriptions: 1, delivered: 1, failed: 0, removed: 0 });
@@ -25,7 +32,7 @@ function setup(user: Record<string, unknown> | null, opts: { enabled?: boolean; 
   return { notifier: new TraderNotifier(prisma, redis, push), deliverToUser, set };
 }
 
-const msg = TRADER_PUSH_MESSAGES.tradovateReconnect('acc-1', 'Apex 50K');
+const msg = TRADER_PUSH_MESSAGES.tradovateReconnect('acc-1');
 const send = (n: TraderNotifier, type: PushAlertType, force = false) =>
   n.send('u1', type, msg, { accountId: 'acc-1', dedupKey: 'prop:drawdown:critical', force }, NOON);
 
@@ -33,7 +40,7 @@ describe('TraderNotifier.send', () => {
   it('Premium, appareil abonné, rien de coupé : envoyé, clé anti-spam de 15 min par compte', async () => {
     const { notifier, deliverToUser, set } = setup({});
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');
-    expect(deliverToUser).toHaveBeenCalledWith('u1', msg);
+    expect(deliverToUser).toHaveBeenCalledWith('u1', { ...msg, body: 'Synchro interrompue pour Apex 50K : reconnecte-le depuis Comptes.' });
     expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
   });
 
@@ -84,6 +91,12 @@ describe('TraderNotifier.send', () => {
     expect(deliverToUser).toHaveBeenCalledTimes(1);
   });
 
+  it('limite franchie forcée : la clé anti-spam est posée quand même (revue M3)', async () => {
+    const { notifier, set } = setup({});
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
+    expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
+  });
+
   it('Redis indisponible : on envoie plutôt que de perdre une alerte', async () => {
     const { notifier } = setup({}, { redisSet: () => Promise.reject(new Error('down')) });
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');
@@ -103,5 +116,37 @@ describe('TraderNotifier.notify', () => {
     const { notifier, deliverToUser } = setup({}, { enabled: false });
     notifier.notify('u1', 'PROP_RULES', msg, { dedupKey: 'x' });
     expect(deliverToUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('TraderNotifier · nom du compte sur l’écran verrouillé (décision #717)', () => {
+  const sent = async (accounts: Acc[], accountId = 'acc-1', message = TRADER_PUSH_MESSAGES.tilt({ signal: 'revenge', ref: 't', accountId, accountLabel: 'x', moodStart: null })) => {
+    const { notifier, deliverToUser } = setup({}, { accounts });
+    await notifier.send('u1', 'BEHAVIOR', message, { accountId, dedupKey: 'tilt:revenge' }, NOON);
+    return deliverToUser.mock.calls[0][1] as { title: string; body: string };
+  };
+
+  it('le libellé saisi par le trader n’apparaît jamais : firme et taille du catalogue', async () => {
+    const m = await sent([{ id: 'acc-1', label: 'Jean Dupont 0612345678', propFirmPlan: APEX50 }]);
+    expect(m.title).toBe('Apex 50K');
+    expect(JSON.stringify(m)).not.toMatch(/Jean|Dupont|0612345678/);
+  });
+
+  it('même firme et même taille : « compte 2 » pour le second (ordre de création)', async () => {
+    const accounts = [
+      { id: 'acc-1', propFirmPlan: APEX50 },
+      { id: 'acc-9', propFirmPlan: { accountSize: 100_000, firm: { name: 'Apex' } } },
+      { id: 'acc-2', propFirmPlan: APEX50 },
+    ];
+    expect((await sent(accounts, 'acc-1')).title).toBe('Apex 50K');
+    expect((await sent(accounts, 'acc-2')).title).toBe('Apex 50K compte 2');
+    expect((await sent(accounts, 'acc-9')).title).toBe('Apex 100K');
+  });
+
+  it('sans plan du catalogue : « Ton compte » en titre, « ton compte » dans le texte', async () => {
+    const accounts = [{ id: 'acc-1', label: 'Mon compte perso Jean', propFirmPlan: null }];
+    expect((await sent(accounts)).title).toBe('Ton compte');
+    expect((await sent(accounts, 'acc-1', TRADER_PUSH_MESSAGES.tradovateReconnect('acc-1'))).body)
+      .toBe('Synchro interrompue pour ton compte : reconnecte-le depuis Comptes.');
   });
 });

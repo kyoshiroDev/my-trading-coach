@@ -1,5 +1,6 @@
 import type { Logger } from '@nestjs/common';
 import type { PushSendOptions, PushSender, PushTarget } from './push-sender';
+import { pushEndpointCheck } from './push-endpoint';
 
 /** Bilan d'un envoi (même forme que `AdminPushTestResult`). */
 export interface PushDeliveryReport {
@@ -48,6 +49,15 @@ export async function deliverPush(
   const report: PushDeliveryReport = { subscriptions: targets.length, delivered: 0, failed: 0, removed: 0 };
   await Promise.all(
     targets.map(async (t) => {
+      // Ligne en base hors liste blanche (abonnée avant la liste, ou écrite à la main) : jamais
+      // contactée, supprimée comme un abonnement mort.
+      const check = pushEndpointCheck(t.endpoint);
+      if (!check.ok) {
+        report.removed++;
+        await store.gone(t.id).catch(() => undefined);
+        logger.warn(`Abonnement push ${audience} supprimé sans envoi : ${check.reason} (${check.host})`);
+        return;
+      }
       try {
         const status = await sender.send(t, payload, options);
         if (status >= 200 && status < 300) {
