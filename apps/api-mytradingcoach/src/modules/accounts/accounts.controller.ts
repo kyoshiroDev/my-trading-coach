@@ -13,7 +13,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountRequestDto } from './dto/update-account.dto';
 import { CreatePayoutDto } from './dto/create-payout.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
 import { AccountIncidentsService } from './incidents/account-incidents.service';
@@ -51,12 +51,13 @@ export class AccountsController {
     });
   }
 
-  // Passage en ÉCHOUÉ : rattaché à l'incident détecté (autopsie, #669), cf. AccountIncidentsService.
+  // Passage en ÉCHOUÉ / ARCHIVÉ : confirme l'incident détecté seulement avec `confirmIncident` (feuille
+  // de choix, autopsie #669), cf. AccountIncidentsService.updateAccount.
   @Patch(':id')
   update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
-    @Body() dto: UpdateAccountDto,
+    @Body() dto: UpdateAccountRequestDto,
   ) {
     return this.incidents.updateAccount(
       { ...user, trialEndsAt: user.trialEndsAt ?? null },

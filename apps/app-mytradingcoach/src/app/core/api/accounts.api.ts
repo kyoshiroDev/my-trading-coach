@@ -201,6 +201,11 @@ export type UpdateAccountPayload = Partial<CreateAccountPayload> & {
   status?: AccountStatus;
   planLinkChoice?: PlanLinkChoice | null;
   unlistedFirm?: string | null;
+  /**
+   * Feuille de choix « … est échoué » SEULEMENT (#669) : confirme la limite franchie détectée.
+   * Le formulaire d'édition ne l'envoie jamais.
+   */
+  confirmIncident?: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

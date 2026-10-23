@@ -120,10 +120,12 @@ describe('AccountIncidentsService.detect', () => {
 describe('AccountIncidentsService.updateAccount — passage en échoué', () => {
   let d: ReturnType<typeof makeDeps>;
   beforeEach(() => { d = makeDeps(); });
+  const confirmed = (status: AccountStatus) => ({ status, confirmIncident: true });
 
-  it("limite détectée : l'échec confirme l'incident (réactivation possible ensuite)", async () => {
+  it("feuille de choix, limite détectée : l'échec confirme l'incident (réactivation possible ensuite)", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.FAILED), PREMIUM);
+    // `confirmIncident` ne part jamais dans la mise à jour du compte (Prisma le refuserait).
     expect(d.accounts.update).toHaveBeenCalledWith('u1', 'acc', { status: AccountStatus.FAILED }, PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledWith({
       where: { id: 'inc', failedByIncidentAt: null },
@@ -141,31 +143,42 @@ describe('AccountIncidentsService.updateAccount — passage en échoué', () => 
 
   it("« Archiver » depuis la feuille de choix, limite détectée : confirme l'incident", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledWith({
       where: { id: 'inc', failedByIncidentAt: null },
       data: { failedByIncidentAt: expect.any(Date) },
     });
   });
 
+  it("formulaire d'édition (sans confirmIncident) : archiver ou échouer ne confirme JAMAIS l'incident ouvert", async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'old-daily-loss' });
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED, confirmIncident: false }, PREMIUM);
+    expect(d.accounts.update).toHaveBeenCalledWith('u1', 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
+    // Une limite ouverte existe : pas d'incident « manual » en plus.
+    expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
+  });
+
   it("archivage répété : seul le premier (compte encore ACTIF) confirme l'incident", async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue({ id: 'inc' });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.ARCHIVED });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.updateMany).toHaveBeenCalledTimes(1);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
   });
 
   it('simple archivage sans limite franchie : aucun incident créé', async () => {
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.ARCHIVED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.ARCHIVED), PREMIUM);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();
     expect(d.prisma.accountIncident.updateMany).not.toHaveBeenCalled();
   });
 
   it('compte déjà échoué, ou autre changement : aucun incident touché', async () => {
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.FAILED });
-    await d.svc.updateAccount(user(), 'acc', { status: AccountStatus.FAILED }, PREMIUM);
+    await d.svc.updateAccount(user(), 'acc', confirmed(AccountStatus.FAILED), PREMIUM);
     d.prisma.tradingAccount.findFirst.mockResolvedValue({ status: AccountStatus.ACTIVE });
     await d.svc.updateAccount(user(), 'acc', { label: 'Apex' } as never, PREMIUM);
     expect(d.prisma.accountIncident.createMany).not.toHaveBeenCalled();

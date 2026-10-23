@@ -77,7 +77,8 @@ export class LostAccountFlowService {
       return;
     }
     const status = choice === 'archive' ? 'ARCHIVED' : 'FAILED';
-    this.run(this.api.update(a.id, { status }), {
+    // Seule la feuille confirme la limite franchie (#669) : l'autopsie devient réactivable.
+    this.run(this.api.update(a.id, { status, confirmIncident: true }), {
       success: () =>
         choice === 'archive'
           ? `« ${a.label} » archivé : il sort de tes statistiques.`

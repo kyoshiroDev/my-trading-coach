@@ -7,7 +7,7 @@ import { AI_MODELS } from '../../infra/ai-pricing.const';
 import { isPremiumAccess, type PremiumAccessUser } from '../../discord/discord-access.util';
 import { AccountsService, type PlanContext } from '../accounts.service';
 import { tradingDay } from '../account-rules';
-import type { UpdateAccountDto } from '../dto/update-account.dto';
+import type { UpdateAccountRequestDto } from '../dto/update-account.dto';
 import {
   buildIncidentReport,
   type IncidentKind,
@@ -112,44 +112,58 @@ export class AccountIncidentsService {
   }
 
   /**
-   * Mise à jour d'un compte (`PATCH /accounts/:id`). Un compte ACTIF passé en ÉCHOUÉ ou ARCHIVÉ
-   * (feuille « Apex 50K #1 est échoué » : « Garder comme échoué » ou « Archiver ») CONFIRME la
-   * limite franchie détectée : « Ce n'est pas un échec » pourra alors remettre le compte en actif.
+   * Mise à jour d'un compte (`PATCH /accounts/:id`). Seule la feuille « Apex 50K #1 est échoué »
+   * (« Garder comme échoué » ou « Archiver ») envoie `confirmIncident` : un compte ACTIF fermé avec
+   * ce paramètre CONFIRME la limite franchie détectée, et « Ce n'est pas un échec » pourra alors le
+   * remettre en actif. Sans lui (formulaire d'édition), aucun incident n'est jamais confirmé.
    * Passé en ÉCHOUÉ sans limite détectée, l'échec est marqué à la main : un incident `manual` garde
-   * la chronologie de la dernière séance, sans jamais permettre de réactivation. Un simple
-   * archivage sans limite franchie ne crée rien.
+   * la chronologie de la dernière séance, sans jamais permettre de réactivation.
    */
-  async updateAccount(user: IncidentUser, accountId: string, dto: UpdateAccountDto, ctx: PlanContext) {
+  async updateAccount(user: IncidentUser, accountId: string, dto: UpdateAccountRequestDto, ctx: PlanContext) {
+    const { confirmIncident, ...changes } = dto;
     const before = await this.prisma.tradingAccount.findFirst({
       where: { id: accountId, userId: user.id },
       select: { status: true },
     });
     const closing = before?.status === AccountStatus.ACTIVE
-      && (dto.status === AccountStatus.FAILED || dto.status === AccountStatus.ARCHIVED);
+      && (changes.status === AccountStatus.FAILED || changes.status === AccountStatus.ARCHIVED);
     if (closing) await this.detectQuietly(user.id, accountId, 'sync');
-    const updated = await this.accounts.update(user.id, accountId, dto, ctx);
+    const updated = await this.accounts.update(user.id, accountId, changes, ctx);
     if (closing && !user.isDemo) {
-      await this.confirmFailure(user.id, accountId, dto.status === AccountStatus.FAILED).catch((err: unknown) =>
+      await this.closeIncident(user.id, accountId, {
+        confirm: confirmIncident === true,
+        markedFailed: changes.status === AccountStatus.FAILED,
+      }).catch((err: unknown) =>
         this.logger.warn(`Échec non rattaché à un incident (compte ${accountId}) : ${(err as Error).message}`),
       );
     }
     return updated;
   }
 
-  private async confirmFailure(userId: string, accountId: string, markedFailed: boolean, now = new Date()): Promise<void> {
+  /**
+   * Compte fermé : confirme la limite franchie ouverte (seulement si demandé), ou, passé en ÉCHOUÉ
+   * sans limite ouverte, garde un incident `manual` (jamais réactivable).
+   */
+  private async closeIncident(
+    userId: string,
+    accountId: string,
+    opts: { confirm: boolean; markedFailed: boolean },
+    now = new Date(),
+  ): Promise<void> {
     const open = await this.prisma.accountIncident.findFirst({
       where: { accountId, dismissedAt: null, kind: { in: ['drawdown', 'daily_loss'] } },
       orderBy: { createdAt: 'desc' },
       select: { id: true },
     });
     if (open) {
+      if (!opts.confirm) return;
       await this.prisma.accountIncident.updateMany({
         where: { id: open.id, failedByIncidentAt: null },
         data: { failedByIncidentAt: now },
       });
       return;
     }
-    if (!markedFailed) return;
+    if (!opts.markedFailed) return;
     const day = await this.lastTradedDay(accountId, tradingDay(now));
     await this.prisma.accountIncident.createMany({
       data: [{ userId, accountId, kind: 'manual', period: ONCE_PER_ACCOUNT, tradeDate: asDate(day), source: 'manual' }],
@@ -245,7 +259,7 @@ export class AccountIncidentsService {
 
   /**
    * « Ce n'est pas un échec » : retire l'incident (jamais recréé) et remet le compte en actif
-   * SEULEMENT s'il a été passé en échoué (ou archivé depuis la feuille de choix) en confirmant cet
+   * SEULEMENT s'il a été fermé (échoué ou archivé) depuis la feuille de choix en confirmant cet
    * incident, et qu'il l'est encore. Un échec marqué à la main reste tel quel. Réactivation soumise
    * au quota de comptes, comme toute réactivation.
    */

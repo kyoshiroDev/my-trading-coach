@@ -60,7 +60,8 @@ describe('LostAccountFlowService (compte perdu)', () => {
     const { flow, api, store, tradesStore, toast } = setup();
     flow.openChoice('a1');
     await flow.confirmChoice('archive');
-    expect(api.update).toHaveBeenCalledWith('a1', { status: 'ARCHIVED' });
+    // La feuille confirme l'incident détecté (#669).
+    expect(api.update).toHaveBeenCalledWith('a1', { status: 'ARCHIVED', confirmIncident: true });
     expect(store.load).toHaveBeenCalled();
     expect(tradesStore.reset).toHaveBeenCalled();
     expect(flow.choiceId()).toBeNull();
@@ -92,7 +93,7 @@ describe('LostAccountFlowService (compte perdu)', () => {
     const { flow, api } = setup();
     flow.openChoice('a1');
     await flow.confirmChoice('keep');
-    expect(api.update).toHaveBeenCalledWith('a1', { status: 'FAILED' });
+    expect(api.update).toHaveBeenCalledWith('a1', { status: 'FAILED', confirmIncident: true });
   });
 
   it('Supprimer : confirmation explicite qui rappelle le compte MyTradingCoach et l\'abonnement, puis suppression définitive', async () => {
@@ -139,6 +140,7 @@ describe('LostAccountFlowService (compte perdu)', () => {
   it('Archiver un compte échoué (Mes comptes) passe par le PATCH, jamais par DELETE', () => {
     const { flow, api } = setup({ accounts: [acc('k', 'Lucid 25K', { status: 'FAILED' })] });
     flow.archive(acc('k', 'Lucid 25K', { status: 'FAILED' }));
+    // Hors de la feuille de choix : aucune confirmation d'incident.
     expect(api.update).toHaveBeenCalledWith('k', { status: 'ARCHIVED' });
   });
 
