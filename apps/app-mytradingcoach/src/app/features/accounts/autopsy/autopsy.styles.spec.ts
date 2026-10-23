@@ -8,6 +8,8 @@ const AUTOPSY_CSS = css('account-autopsy.component.css');
 const ACCOUNTS_CSS = css('../accounts.component.css');
 const SHEETS_CSS = css('../lost-account/lost-account-sheets.component.css');
 const TOASTS_CSS = css('../../../shared/components/toasts/toasts.component.css');
+const BANNER_CSS = css('../lost-account/floor-reached-banner.component.css');
+const PAYOUTS_CSS = css('../account-payouts/account-payouts.component.css');
 
 /**
  * Couleurs de l'autopsie et de ses entrées (revue #712) : action principale en bleu (`--primary`,
@@ -51,5 +53,12 @@ describe("Autopsie : couleurs (revue #712)", () => {
     expect(checked).toMatch(/background: var\(--blue-glow\)/);
     expect(rule(SHEETS_CSS, '.la-opt.is-checked .la-opt-t i')).toMatch(/var\(--blue-bright\)/);
     expect(SHEETS_CSS).not.toMatch(/--cyan/);
+  });
+
+  it('bandeau « Plancher atteint » et ajout de payout : bouton d’action en bleu, aucun cyan', () => {
+    expect(rule(BANNER_CSS, '.fr-btn.pri')).toMatch(/background: var\(--primary\)/);
+    expect(rule(PAYOUTS_CSS, '.ap-btn')).toMatch(/background: var\(--primary\)/);
+    expect(BANNER_CSS).not.toMatch(/--cyan/);
+    expect(PAYOUTS_CSS).not.toMatch(/--cyan/);
   });
 });
