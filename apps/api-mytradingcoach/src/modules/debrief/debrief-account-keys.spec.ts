@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UNASSIGNED, accountKeys, tradesByKey } from './debrief-account-keys';
+import { UNASSIGNED, accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 
 /** Débrief : comptes désignés à l'IA par compte-1, compte-2…, jamais par leur id interne. */
 describe('accountKeys', () => {
@@ -34,5 +34,14 @@ describe('tradesByKey', () => {
     );
     expect(out).toEqual({ 'compte-1': [{ asset: 'MNQ' }], [UNASSIGNED]: [{ asset: 'ES' }] });
     expect(JSON.stringify(out)).not.toContain('cuid-');
+  });
+});
+
+describe('analysesById', () => {
+  it('retraduit les clés en ids, ignore les clés inconnues', () => {
+    const keys = accountKeys(['cuid-a', 'cuid-b']);
+    const out = analysesById([{ accountId: 'compte-2', s: 'b' }, { accountId: 'compte-9', s: 'x' }, { accountId: UNASSIGNED, s: 'u' }], keys);
+    expect([...out.keys()]).toEqual(['cuid-b', UNASSIGNED]);
+    expect(out.get('cuid-b')).toEqual({ accountId: 'cuid-b', s: 'b' });
   });
 });

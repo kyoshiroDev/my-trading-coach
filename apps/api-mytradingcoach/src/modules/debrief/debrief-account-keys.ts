@@ -48,3 +48,16 @@ export function tradesByKey<T extends { accountId?: string | null }>(
     ]),
   );
 }
+
+/**
+ * Analyses par compte renvoyées par l'IA, indexées par id interne : la clé de chacune est
+ * retraduite, une clé inconnue (inventée ou mal recopiée) est ignorée.
+ */
+export function analysesById<T extends { accountId?: string | null }>(items: T[], keys: AccountKeys): Map<string, T> {
+  const out = new Map<string, T>();
+  for (const a of items) {
+    const id = a?.accountId ? keys.toId(a.accountId) : null;
+    if (id) out.set(id, { ...a, accountId: id });
+  }
+  return out;
+}

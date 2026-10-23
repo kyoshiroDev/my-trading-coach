@@ -28,7 +28,7 @@ import { AiService } from '../ai/ai.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { SessionService } from '../session/session.service';
 import { PropRiskContextService } from '../accounts/prop-risk-context';
-import { accountKeys, tradesByKey } from './debrief-account-keys';
+import { accountKeys, analysesById, tradesByKey } from './debrief-account-keys';
 import { activeAccountsWhere, inactiveAccountsTradeWhere } from '../accounts/account-status-scope';
 import type { DebriefAccountSection, DebriefBadgeItem, DebriefObjective } from '@mtc/shared';
 
@@ -221,12 +221,7 @@ export class DebriefService {
     const overviewSummary = aiResult.overview?.summary ?? aiResult.summary ?? '';
 
     // Analyse IA indexée par compte pour la fusion.
-    const aiByAccount = new Map<string, DebriefAccountAi>();
-    for (const a of aiResult.accounts ?? []) {
-      // Clé renvoyée par l'IA → id interne ; clé inconnue : analyse ignorée.
-      const id = a?.accountId ? keys.toId(a.accountId) : null;
-      if (id) aiByAccount.set(id, { ...a, accountId: id });
-    }
+    const aiByAccount = analysesById<DebriefAccountAi>(aiResult.accounts ?? [], keys);
 
     // Onglets : tous les comptes non archivés + bucket « unassigned » si trades orphelins.
     const accountSections: DebriefAccountSection[] = accounts.map((a) =>
