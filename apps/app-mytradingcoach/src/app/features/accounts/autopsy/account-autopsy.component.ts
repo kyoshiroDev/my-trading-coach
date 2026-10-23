@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { AccountIncidentReport, IncidentAiState } from '@mtc/shared';
-import { ErrorStateComponent } from '@mtc/front-ui';
+import { ConfirmService, ErrorStateComponent } from '@mtc/front-ui';
 import { AccountsApi } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradesStore } from '@app/core/stores/trades.store';
@@ -36,6 +36,7 @@ export class AccountAutopsyComponent implements OnInit {
   private readonly store = inject(SelectedAccountStore);
   private readonly tradesStore = inject(TradesStore);
   private readonly toast = inject(ToastService);
+  private readonly confirm = inject(ConfirmService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly userStore = inject(UserStore);
   protected readonly lostAccount = inject(LostAccountFlowService);
@@ -107,10 +108,21 @@ export class AccountAutopsyComponent implements OnInit {
     this.lostAccount.openRetry(this.accountId);
   }
 
-  /** « Ce n'est pas un échec » : retire l'autopsie ; le serveur décide de la réactivation. */
-  protected dismiss(): void {
+  /**
+   * « Ce n'est pas un échec » : retire l'autopsie (définitif, jamais recréée) ; le serveur décide
+   * de la réactivation. Confirmation d'abord : un tap ne suffit pas pour un geste sans retour.
+   */
+  protected async dismiss(): Promise<void> {
     const r = this.report();
     if (!r || this.dismissing()) return;
+    const ok = await this.confirm.ask({
+      title: "Retirer l'autopsie\u00a0?",
+      message: r.canReactivate
+        ? `Elle ne reviendra pas, et « ${r.account.label} » redeviendra actif (il compte de nouveau dans tes comptes actifs).`
+        : 'Elle ne reviendra pas. Le statut du compte ne change pas.',
+      confirmLabel: "Retirer l'autopsie",
+    });
+    if (!ok) return;
     this.dismissing.set(true);
     this.api
       .dismissIncident(this.accountId, this.incidentId)
