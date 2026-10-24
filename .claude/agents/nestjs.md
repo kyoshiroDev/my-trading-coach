@@ -2228,6 +2228,12 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
   appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
   une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+  `TraderNotifier.send` ne rend `sent` que si **au moins un appareil a reçu** le push ; sinon
+  `undelivered` (5xx, délai dépassé, 404/410, adresse hors liste blanche) : réservation rendue, retenté
+  au relevé suivant, la clé anti-spam reste posée (15 min pour une alerte non forcée). Au plus
+  `MAX_UNDELIVERED_PUSH` (3) envois sans livraison par niveau et par période : ensuite le marqueur est
+  gardé (abandon journalisé), une limite franchie forcée ne repart pas toutes les 15 min toute la journée.
+  Le réarmement en fond n'efface que `prop-alert-push:…`, le direct efface les deux.
 - **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
   seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
 - **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le

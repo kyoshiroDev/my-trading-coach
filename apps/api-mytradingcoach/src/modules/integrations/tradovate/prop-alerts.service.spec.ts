@@ -19,6 +19,8 @@ function setup(opts: { premium?: boolean; demo?: boolean; status?: string } = {}
       get: vi.fn(async (k: string) => store.get(k) ?? null),
       set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }),
       del: vi.fn(async (...keys: string[]) => { keys.forEach((k) => store.delete(k)); return keys.length; }),
+      incr: vi.fn(async (k: string) => { const n = Number(store.get(k) ?? 0) + 1; store.set(k, String(n)); return n; }),
+      expire: vi.fn(async () => 1),
       // Scripts Lua de `prop-alert-push.ts`, rejoués en JS : réservation par rang, puis restitution.
       eval: vi.fn(async (lua: string, _n: number, key: string, level: string, a: string) => {
         const cur = store.get(key) ?? null;
@@ -299,6 +301,22 @@ describe('PropAlertsService.checkFromBackground (#666, synchro de fond, app ferm
     await svc.checkFromBackground('u', 'a', NOW);
     await svc.checkFromBackground('u', 'a', NOW);
     expect(notifier.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('réarmement en fond : efface le marqueur « push envoyé », jamais « affichée » ; en direct, les deux', async () => {
+    const { svc, emit, set, dd, store } = setup();
+    const keys = () => [...store.keys()].sort();
+    set({ drawdown: dd(0.05) });
+    await svc.check('u', 'a', emit, NOW);
+    await flush();
+    expect(keys()).toEqual(['prop-alert-push:a:drawdown:2026-06-02', 'prop-alert:a:drawdown:2026-06-02']);
+
+    set({ drawdown: dd(0.5) });
+    await svc.checkFromBackground('u', 'a', NOW);
+    expect(keys()).toEqual(['prop-alert:a:drawdown:2026-06-02']);
+
+    await svc.check('u', 'a', emit, NOW);
+    expect(keys()).toEqual([]);
   });
 
   it('limite franchie, objectif, payout : push ; consistency : jamais depuis le fond', async () => {

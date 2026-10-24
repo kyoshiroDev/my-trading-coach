@@ -14,6 +14,21 @@ import { ALERT_LEVEL_RANK, type PropAlertLevel } from './prop-alert-levels';
 
 export const pushedKey = (accountId: string, kind: string, period: string) => `prop-alert-push:${accountId}:${kind}:${period}`;
 
+/**
+ * Envois tentés sans aucune livraison (5xx, délai, abonnement mort…) avant d'abandonner un niveau :
+ * la synchro de fond tourne toutes les 15 min, une limite franchie (forcée, hors anti-spam) serait
+ * sinon retentée toute la journée vers un service push qui refuse.
+ */
+export const MAX_UNDELIVERED_PUSH = 3;
+
+/** Compte un envoi sans livraison pour ce niveau ; rend le total (clé expirée avec le marqueur). */
+export async function countUndelivered(redis: RedisService, key: string, level: PropAlertLevel, ttl: number): Promise<number> {
+  const failKey = `${key}:undelivered:${level}`;
+  const n = await redis.client.incr(failKey);
+  if (n === 1) await redis.client.expire(failKey, ttl);
+  return n;
+}
+
 const RANKS = Object.entries(ALERT_LEVEL_RANK)
   .map(([level, rank]) => `${level}=${rank}`)
   .join(',');
