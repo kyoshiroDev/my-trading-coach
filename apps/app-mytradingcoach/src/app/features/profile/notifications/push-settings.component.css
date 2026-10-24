@@ -4,7 +4,8 @@
 
 :host { display: block; }
 
-.pn { max-width: 1100px; margin-top: 24px; }
+/* `scroll-margin-top` : arrivée par /profil#notifications, le titre ne passe pas sous la barre fixe du haut. */
+.pn { max-width: 1100px; margin-top: 24px; scroll-margin-top: 72px; }
 .pn-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 12px; }
 
 .pn-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -21,6 +22,9 @@
   .pn-grid--two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
   .pn-grid--two .pn-col { display: flex; flex-direction: column; min-width: 0; }
   .pn-grid--two .pn-o-types .pn-hd { margin-top: 0; }
+  /* Gratuit : l'invitation ouvre la colonne, le titre des types garde son espace. */
+  .pn-grid--two .pn-o-up { margin-top: 0; }
+  .pn-grid--two .pn-o-up + .pn-o-types .pn-hd { margin-top: 20px; }
 }
 
 .pn-hd { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin: 20px 0 8px; }
@@ -31,6 +35,8 @@
 .pn-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
 .pn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 .pn-dot--warn { background: var(--yellow); }
+/* Démo : état neutre, rien n'est actif. */
+.pn-dot--muted { background: var(--text-3); }
 .pn-sm { margin: 4px 0 0; font-size: 13px; color: var(--text-2); line-height: 1.45; }
 .pn-actions { margin-top: 12px; }
 
@@ -43,8 +49,8 @@
 .pn-ban--warn .pn-status { margin-bottom: 8px; }
 .pn-steps { color: var(--text); }
 .pn-steps b { color: var(--text); font-weight: 600; }
-.pn-warn { color: var(--yellow); }
-.pn-error { color: var(--red); margin: 10px 0 0; font-size: 13px; }
+.pn-warn, .pn-ban .pn-warn { color: var(--yellow); }
+.pn-error, .pn-ban .pn-error { color: var(--red); margin: 10px 0 0; font-size: 13px; }
 
 /* Boutons : 44 px de haut (cible tactile), principal en --primary */
 .pn-btn {
@@ -56,6 +62,10 @@
 .pn-btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .pn-btn--sm { width: auto; font-size: 13px; padding: 0 14px; flex-shrink: 0; }
 .pn-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Bureau : boutons à leur largeur (maquette : bouton test borné à 260 px). */
+@media (min-width: 1024px) {
+  .pn-ban .pn-btn, .pn-actions .pn-btn { width: auto; min-width: 260px; }
+}
 .pn-btn:focus-visible, .pn-switch:focus-visible, .pn-time input:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 
 /* Lignes de types */
