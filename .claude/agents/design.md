@@ -26,6 +26,17 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
 - Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
+- **Mise en page de l'app** : chaque page occupe **toute la largeur disponible** à droite de la
+  barre latérale, sans plafond (`max-width` sur le conteneur de page) ni bande vide à droite. Pour
+  garder des lignes lisibles à très grande largeur, répartir les cartes en **grille à colonnes
+  automatiques** (`repeat(auto-fit, minmax(min(100%, Npx), 1fr))`), pas plafonner la page. Contenu
+  plus haut que l'écran : la page **défile verticalement** (aucune hauteur fixe ni `overflow:
+  hidden` qui coupe la fin), **jamais de défilement horizontal**. Graphiques : tracés à la largeur
+  réelle de leur carte (SVG non étiré), textes à taille fixe. **Vérifier à 360, 390, 768, 1024,
+  1440, 1920 et 2560 px** (cadre iframe sur le banc : `resize_window` ne change pas le viewport).
+  Les modales, feuilles et textes longs (`max-width` en `ch`) ne sont pas des pages : leur plafond
+  reste permis. Pages encore plafonnées au 24/10/2026 : sessions (960 px), parrainage et
+  ambassadeur (1 200 px), devenir ambassadeur (1 080 px).
 
 ---
 
