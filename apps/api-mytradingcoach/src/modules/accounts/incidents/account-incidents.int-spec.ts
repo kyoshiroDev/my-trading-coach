@@ -41,9 +41,15 @@ async function seed(isDemo = false) {
   return { user: asUser, setupId: setup.id, accountId: account.id };
 }
 
-/** Séance d'hier : trois trades, quantité qui double sur le dernier. */
+/**
+ * Séance passée à date FIXE (mercredi 14/10/2026, 9 h à Chicago) : trois trades, quantité qui
+ * double sur le dernier. Avec « maintenant − 24 h », la séance se coupait en deux journées CME
+ * (bascule à 17 h Chicago) quand le test tournait dans les 40 min avant, et les KPI changeaient.
+ */
+const SESSION_START = Date.UTC(2026, 9, 14, 14, 0);
+
 function session(setupId: string, accountId: string, pnls: number[]) {
-  const base = Date.now() - 24 * 3600_000;
+  const base = SESSION_START;
   return pnls.map((pnl, i) => ({
     asset: 'MNQ', side: 'LONG' as const, entry: 100, exit: 101, pnl, commission: 0,
     quantity: i === pnls.length - 1 ? 4 : 2, setupId, accountId,
