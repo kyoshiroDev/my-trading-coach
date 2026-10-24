@@ -88,6 +88,17 @@ describe('TraderPushService abonnements et réglages', () => {
     expect(db.upsert.mock.calls[0][0].update.createdAt).toBeInstanceOf(Date);
   });
 
+  it(`au-delà de ${MAX_PUSH_DEVICES} appareils : le plus ancien est retiré, jamais le plus récent`, async () => {
+    const { service, db } = setup();
+    // 11 appareils, du plus ancien (old-0) au plus récent (old-10) ; la base simulée applique orderBy et skip.
+    const rows = Array.from({ length: MAX_PUSH_DEVICES + 1 }, (_, i) => ({ id: `old-${i}`, createdAt: new Date(Date.UTC(2026, 9, 1 + i)) }));
+    db.findMany.mockImplementationOnce(async ({ orderBy, skip }: { orderBy: { createdAt: 'asc' | 'desc' }; skip: number }) =>
+      [...rows].sort((a, b) => (orderBy.createdAt === 'desc' ? -1 : 1) * (a.createdAt.getTime() - b.createdAt.getTime())).slice(skip),
+    );
+    await service.subscribe('u1', SUB, null);
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['old-0'] } } });
+  });
+
   it('subscribe sans clés VAPID : 503', async () => {
     const { service } = setup({ config: { enabled: false, reason: 'off' } });
     await expect(service.subscribe('u1', SUB, null)).rejects.toBeInstanceOf(ServiceUnavailableException);

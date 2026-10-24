@@ -33,7 +33,9 @@ export type TraderNotifyOutcome =
   | 'plan'
   | 'muted'
   | 'quiet_hours'
-  | 'anti_spam';
+  | 'anti_spam'
+  /** Envoi tenté, aucun appareil ne l'a reçu (5xx, délai, abonnement mort, adresse refusée). */
+  | 'undelivered';
 
 /**
  * Point d'entrée unique des services métier pour prévenir un trader par push (#666).
@@ -97,7 +99,9 @@ export class TraderNotifier {
 
     const r = await this.push.deliverToUser(userId, await this.named(userId, message, options.accountId));
     this.logger.debug(`Push ${type} (${options.dedupKey}) : ${r.delivered}/${r.subscriptions} livré(s)`);
-    return 'sent';
+    // `sent` seulement si un appareil au moins l'a reçu : sinon l'appelant rend sa réservation et
+    // retente. La clé anti-spam reste posée, les retentes non forcées attendent donc 15 min.
+    return r.delivered > 0 ? 'sent' : 'undelivered';
   }
 
   /**
