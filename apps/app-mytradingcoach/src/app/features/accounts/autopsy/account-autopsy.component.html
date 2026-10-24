@@ -135,14 +135,14 @@
               </button>
             }
             <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
-              {{ dismissing() ? 'Retrait…' : "Ce n'est pas un échec" }}
+              {{ dismissing() ? 'Retrait…' : (r.canReactivate ? "Ce n'est pas un échec" : 'Retirer cette autopsie') }}
             </button>
           </div>
           <p class="note">
             @if (r.canReactivate) {
               « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
             } @else {
-              « Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.
+              Retirer l'autopsie ne change pas le statut du compte.
             }
           </p>
         </div>

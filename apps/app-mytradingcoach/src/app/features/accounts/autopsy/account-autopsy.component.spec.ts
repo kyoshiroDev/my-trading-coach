@@ -141,9 +141,22 @@ describe('Autopsie — page', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('échec marqué à la main : la note dit que le statut ne change pas', () => {
-    const { el } = mount(mockupReport({ canReactivate: false }));
-    expect(el.textContent).toContain("« Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.");
+  it('autopsie non confirmée ou échec marqué à la main (B2) : « Retirer cette autopsie », même confirmation', async () => {
+    const { el, q, api, confirm } = mount(mockupReport({ canReactivate: false }));
+    expect(q('autopsy-dismiss')!.textContent!.trim()).toBe('Retirer cette autopsie');
+    expect(el.textContent).not.toContain("Ce n'est pas un échec");
+    expect(el.textContent).toContain("Retirer l'autopsie ne change pas le statut du compte.");
+    q('autopsy-dismiss')!.click();
+    await vi.waitFor(() => expect(api.dismissIncident).toHaveBeenCalledWith('acc', 'inc'));
+    expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({
+      title: "Retirer l'autopsie\u00a0?", confirmLabel: "Retirer l'autopsie",
+      message: 'Elle ne reviendra pas. Le statut du compte ne change pas.',
+    }));
+  });
+
+  it('échec confirmé depuis cette autopsie : le bouton reste « Ce n’est pas un échec »', () => {
+    const { q } = mount(mockupReport({ canReactivate: true }));
+    expect(q('autopsy-dismiss')!.textContent!.trim()).toBe("Ce n'est pas un échec");
   });
 
   it('autopsie introuvable ou d’un autre utilisateur (404) : message neutre, pas de « réessaie »', () => {

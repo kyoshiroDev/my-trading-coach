@@ -884,6 +884,9 @@ Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
   `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
   Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
 - « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
+  Libellé (B2) : « Ce n'est pas un échec » seulement si `canReactivate` ; sinon (autopsie non confirmée,
+  échec marqué à la main) « Retirer cette autopsie », note « Retirer l'autopsie ne change pas le statut du
+  compte. ». Même confirmation dans les deux cas.
   « Ce n'est pas un échec » → **`ConfirmService.ask` d'abord** (retrait définitif, réactivation annoncée si
   `canReactivate`), puis `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
 - Feuille de choix (« Garder comme échoué » / « Archiver ») : `update(id, { status, confirmIncident: true })`.
