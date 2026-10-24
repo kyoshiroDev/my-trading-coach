@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, type Observable, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import type { AccountIncidentReport } from '@mtc/shared';
-import { AccountAutopsyComponent } from './account-autopsy.component';
+import { AUTOPSY_TIMEOUT_MS, AccountAutopsyComponent } from './account-autopsy.component';
+import { DemoService } from '@app/core/services/demo.service';
 import { mockupReport } from './autopsy.fixture';
 import { AccountsApi } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
@@ -18,20 +19,25 @@ import TEMPLATE from './account-autopsy.component.html?raw';
 
 /** Page d'autopsie (#669) : VRAI template (`?raw`), API et parcours simulés. */
 
-function mount(report: AccountIncidentReport, opts: { premium?: boolean; demo?: boolean; confirm?: boolean } = {}) {
+type IncidentResponse = Observable<{ data: AccountIncidentReport }>;
+
+function mount(
+  report: AccountIncidentReport,
+  opts: { premium?: boolean; demo?: boolean; confirm?: boolean; incident?: () => IncidentResponse; accountsLoading?: boolean } = {},
+) {
   const api = {
-    incident: vi.fn(() => of({ data: report })),
+    incident: vi.fn(opts.incident ?? (() => of({ data: report }))),
     incidentAnalysis: vi.fn(() => of({ data: { status: 'ready', text: "D'après tes trades enregistrés, deux phases.", generatedAt: '2026-10-14T09:20:00.000Z' } })),
     dismissIncident: vi.fn(() => of({ data: { dismissed: true, reactivated: report.canReactivate } })),
   };
   const flow = { busy: signal(false), openRetry: vi.fn() };
-  const store = { loaded: signal(true), isLoading: signal(false), load: vi.fn() };
+  const store = { loaded: signal(!opts.accountsLoading), isLoading: signal(!!opts.accountsLoading), load: vi.fn() };
   const router = { navigate: vi.fn(async () => true) };
   const confirm = { ask: vi.fn(async () => opts.confirm ?? true) };
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: api },
-      { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ accountId: 'acc', incidentId: 'inc' }) } } },
+      { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ accountId: 'acc', incidentId: 'inc' })) } },
       { provide: Router, useValue: router },
       { provide: SelectedAccountStore, useValue: store },
       { provide: TradesStore, useValue: { reset: vi.fn() } },
@@ -156,5 +162,62 @@ describe('Autopsie — page', () => {
     (fixture.componentInstance as unknown as { load(): void }).load();
     fixture.detectChanges();
     expect(el.querySelector('mtc-error-state')).not.toBeNull();
+  });
+
+  describe('chargement (A3) : jamais sans fin', () => {
+    it('404 dès la première réponse : message neutre tout de suite, même si la liste des comptes charge encore', () => {
+      const { q } = mount(mockupReport(), {
+        accountsLoading: true,
+        incident: () => throwError(() => new HttpErrorResponse({ status: 404 })),
+      });
+      expect(q('autopsy-loading')).toBeNull();
+      expect(q('autopsy-not-found')!.textContent).toContain("Cette autopsie n'existe pas ou n'est plus disponible.");
+    });
+
+    it('adresse mal formée (400) : même message neutre', () => {
+      const { q } = mount(mockupReport(), {
+        incident: () => throwError(() => new HttpErrorResponse({ status: 400 })),
+      });
+      expect(q('autopsy-not-found')).not.toBeNull();
+    });
+
+    it('5xx ou réseau coupé : état d’erreur, « Réessayer » relance la requête', () => {
+      for (const status of [503, 0]) {
+        TestBed.resetTestingModule();
+        const { el, api, fixture, q } = mount(mockupReport(), {
+          incident: () => throwError(() => new HttpErrorResponse({ status })),
+        });
+        expect(el.querySelector('mtc-error-state')).not.toBeNull();
+        expect(q('autopsy-loading')).toBeNull();
+        api.incident.mockReturnValue(of({ data: mockupReport() }));
+        (fixture.componentInstance as unknown as { load(): void }).load();
+        fixture.detectChanges();
+        expect(api.incident).toHaveBeenCalledTimes(2);
+        expect(q('autopsy-findings')).not.toBeNull();
+      }
+    });
+
+    it(`aucune réponse : chargement, puis état d’erreur au bout de ${AUTOPSY_TIMEOUT_MS / 1000} s`, () => {
+      vi.useFakeTimers();
+      try {
+        const { el, fixture, q } = mount(mockupReport(), { incident: () => NEVER });
+        expect(q('autopsy-loading')).not.toBeNull();
+        vi.advanceTimersByTime(AUTOPSY_TIMEOUT_MS);
+        fixture.detectChanges();
+        expect(q('autopsy-loading')).toBeNull();
+        expect(el.querySelector('mtc-error-state')).not.toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  it('démo : « Ce n’est pas un échec » ouvre « Crée ton compte » au premier clic, sans confirmation ni requête', async () => {
+    const { q, api, confirm } = mount(mockupReport(), { demo: true });
+    q('autopsy-dismiss')!.click();
+    await Promise.resolve();
+    expect(TestBed.inject(DemoService).showSignupPrompt()).toBe(true);
+    expect(confirm.ask).not.toHaveBeenCalled();
+    expect(api.dismissIncident).not.toHaveBeenCalled();
   });
 });

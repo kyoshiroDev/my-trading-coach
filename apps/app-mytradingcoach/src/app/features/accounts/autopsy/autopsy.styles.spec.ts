@@ -62,3 +62,24 @@ describe("Autopsie : couleurs (revue #712)", () => {
     expect(PAYOUTS_CSS).not.toMatch(/--cyan/);
   });
 });
+
+describe('Autopsie : mise en page (A1, design.md « Mise en page »)', () => {
+  const TEMPLATE = css('account-autopsy.component.html');
+  const noComments = AUTOPSY_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('page sur toute la largeur : aucun plafond de largeur ni hauteur fixe', () => {
+    expect(rule(AUTOPSY_CSS, '.content')).not.toMatch(/max-width/);
+    expect(noComments).not.toMatch(/max-width:\s*\d+px/);
+    expect(noComments).not.toMatch(/(^|[;{\s])height:\s*(\d{3,}px|\d+vh)/);
+    expect(noComments).not.toMatch(/overflow(-y)?:\s*hidden/);
+  });
+
+  it('grand écran : colonnes automatiques plutôt qu’un conteneur plafonné', () => {
+    expect(noComments).toMatch(/@container \(min-width: 1500px\)[\s\S]*repeat\(auto-fit, minmax\(min\(100%, 480px\), 1fr\)\)/);
+  });
+
+  it('courbe à la largeur réelle de sa carte : jamais un SVG étiré (textes qui grossissent)', () => {
+    expect(TEMPLATE).not.toMatch(/<svg[^>]*width="100%"/);
+    expect(TEMPLATE).toMatch(/\[attr\.width\]="c\.width"/);
+  });
+});

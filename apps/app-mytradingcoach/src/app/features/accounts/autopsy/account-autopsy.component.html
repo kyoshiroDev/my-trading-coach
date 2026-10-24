@@ -12,7 +12,7 @@
   } @else if (loadError()) {
     <mtc-error-state (retry)="load()" />
   } @else if (!report()) {
-    <p class="note loading">Chargement de l'autopsie…</p>
+    <p class="note loading" data-testid="autopsy-loading">Chargement de l'autopsie…</p>
   } @else {
     @let r = report()!;
     <div class="top">
@@ -25,43 +25,45 @@
     <p class="note headline" data-testid="autopsy-headline">{{ headline() }}</p>
 
     <div class="grid">
-      <div class="col">
-        <div class="kpis">
-          @for (k of kpis(); track k.label) {
-            <div class="card kpi">
-              <div class="lbl">{{ k.label }}</div>
-              <div class="v" [class.pos]="k.tone === 'pos'" [class.neg]="k.tone === 'neg'">{{ k.value }}</div>
-              <div class="s">{{ k.sub }}</div>
-            </div>
+      <div class="col col-main">
+        <div class="stack">
+          <div class="kpis">
+            @for (k of kpis(); track k.label) {
+              <div class="card kpi">
+                <div class="lbl">{{ k.label }}</div>
+                <div class="v" [class.pos]="k.tone === 'pos'" [class.neg]="k.tone === 'neg'">{{ k.value }}</div>
+                <div class="s">{{ k.sub }}</div>
+              </div>
+            }
+          </div>
+
+          @if (chart(); as c) {
+            <section class="card" data-testid="autopsy-chart">
+              <div class="lbl">DISTANCE À LA LIMITE</div>
+              <div class="chart-box" #chartBox>
+                <svg class="chart" [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" [attr.width]="c.width" [attr.height]="c.height"
+                     role="img" [attr.aria-label]="c.aria">
+                  <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
+                  <text [attr.x]="26" [attr.y]="c.zeroY - 5">Limite estimée</text>
+                  @for (al of c.alerts; track $index) {
+                    <rect class="alert-mark" [attr.x]="al.x - 1" y="8" width="2" [attr.height]="c.height - 34" />
+                    @if (al.label) {
+                      <text class="alert-txt" [attr.x]="al.anchor === 'end' ? al.x - 5 : al.x + 5" y="20"
+                            [attr.text-anchor]="al.anchor">{{ al.label }}</text>
+                    }
+                  }
+                  <path class="line" [attr.d]="c.path" />
+                  @for (p of c.points; track $index) {
+                    <circle [class]="p.crossing ? 'dot dot-cross' : 'dot'" [attr.cx]="p.x" [attr.cy]="p.y"
+                            [attr.r]="p.crossing || p.last ? 5 : 3" />
+                  }
+                  <text [attr.x]="26" [attr.y]="c.height - 4">{{ c.startLabel }}</text>
+                  <text [attr.x]="c.width - 56" [attr.y]="c.height - 4">{{ c.endLabel }}</text>
+                </svg>
+              </div>
+            </section>
           }
         </div>
-
-        @if (chartWide(); as wide) {
-          <section class="card" data-testid="autopsy-chart">
-            <div class="lbl">DISTANCE À LA LIMITE</div>
-            @for (c of [chartNarrow()!, wide]; track $index) {
-              <svg [class]="$index === 0 ? 'chart chart-narrow' : 'chart chart-wide'"
-                   [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" width="100%" role="img" [attr.aria-label]="c.aria">
-                <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
-                <text [attr.x]="26" [attr.y]="c.zeroY - 5">Limite estimée</text>
-                @for (al of c.alerts; track $index) {
-                  <rect class="alert-mark" [attr.x]="al.x - 1" y="8" width="2" [attr.height]="c.height - 34" />
-                  @if (al.label) {
-                    <text class="alert-txt" [attr.x]="al.anchor === 'end' ? al.x - 5 : al.x + 5" y="20"
-                          [attr.text-anchor]="al.anchor">{{ al.label }}</text>
-                  }
-                }
-                <path class="line" [attr.d]="c.path" />
-                @for (p of c.points; track $index) {
-                  <circle [class]="p.crossing ? 'dot dot-cross' : 'dot'" [attr.cx]="p.x" [attr.cy]="p.y"
-                          [attr.r]="p.crossing || p.last ? 5 : 3" />
-                }
-                <text [attr.x]="26" [attr.y]="c.height - 4">{{ c.startLabel }}</text>
-                <text [attr.x]="c.width - 56" [attr.y]="c.height - 4">{{ c.endLabel }}</text>
-              </svg>
-            }
-          </section>
-        }
 
         <section class="card">
           <div class="lbl">CHRONOLOGIE DE LA SÉANCE</div>
