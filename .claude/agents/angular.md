@@ -1353,6 +1353,35 @@ directement (pas de `?raw` comme dans l'app).
   Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
   Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.
 
+## Notifications push des traders (#666 phase 2, 2026-10-24)
+
+Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : `nestjs.md`.
+- **Service worker maison** `public/push-sw.js` : push SEULEMENT, aucun `fetch`, aucun cache (l'app
+  n'est jamais servie par lui). Au clic : ouvre ou met au premier plan `data.url`, revérifié comme
+  chemin interne (`safePath` : `/…` seulement, ni `//`, ni `\`, ni autre origine ; sinon `/`). Action
+  « Réglages » → `settingsUrl` (`/profil#notifications`). Testé dans un bac à sable `node:vm`
+  (`core/push/push-sw.spec.ts`). Enregistré avec `updateViaCache: 'none'`, seulement au clic sur
+  « Activer » (jamais au chargement).
+- **`core/push/push-browser.ts`** : `PUSH_BROWSER` (environnement, abonnement courant, `subscribe`),
+  remplaçable dans les tests. **`core/push/push.service.ts`** : états `server-disabled`,
+  `in-app-browser`, `ios-not-installed`, `unsupported`, `denied`, `supported`, `subscribed` ;
+  permission demandée par `enable()` seulement ; abonnement inconnu du serveur resynchronisé ;
+  interrupteurs et heures silencieuses avec retour arrière ; limite `PUSH_MAX_DEVICES` (`@mtc/shared`).
+- **Déconnexion** (`core/push/push-logout.ts`, appelé par `AuthService.logout`) : abonnement de CET
+  appareil retiré côté API avec le jeton d'AVANT la déconnexion (`HttpBackend`, sans intercepteur),
+  puis côté navigateur. Sans ça, sur un appareil partagé, les alertes du compte arrivaient chez la
+  personne suivante. +1,5 Ko sur le bundle initial (seul ajout initial de la phase 2).
+- **Section du profil** `features/profile/notifications/push-settings.component` : onglet
+  Paramètres, chargée par `@defer (on viewport; when openNotifications)` ; `/profil#notifications`
+  ouvre l'onglet et charge tout de suite. Masquée sans erreur si le push est coupé côté serveur ;
+  démo en lecture seule (aucun appel `device`, aucun bouton d'action). Gratuit : lignes Premium
+  verrouillées + modale des offres, seule `CONNECTION` active. Interrupteurs `role="switch"`
+  étiquetés (`aria-labelledby`), cibles de 44 px, `scroll-margin-top` sous la barre fixe.
+  Couleurs : variables de `theme.css`, sauf le texte blanc du bouton principal (`--primary`).
+- iPhone sans installation : aide FIXE « Partager, puis Sur l'écran d'accueil, puis Ajouter », sans
+  bouton, en attendant le parcours d'installation (#715). Sans manifest (#715), l'app ajoutée à
+  l'écran d'accueil d'un iPhone ne s'ouvre pas encore en mode app, donc pas de push iOS avant #715.
+
 ## Connexion Google (#618, 2026-10-18)
 
 - `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans

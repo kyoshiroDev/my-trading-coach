@@ -889,3 +889,8 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   (sinon la règle des `.js` les fige 1 an). L'admin est servi par l'**ancien VPS** : sur ce VPS,
   `spa-releases.conf` est un fichier **partagé** par `mtc_admin`, `mtc_app_dev_static` et
   `mtc_app_beta_static` (bind-mount d'un fichier unique) ; le modifier change aussi dev et beta.
+- Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
+  enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
+  règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible
+  (même fichier partagé `spa-releases.conf` sur l'ancien VPS ; config de l'app prod sur le VPS prod),
+  pas indispensable.
