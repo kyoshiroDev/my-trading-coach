@@ -4,8 +4,10 @@
 
 :host { display: block; }
 
-/* `scroll-margin-top` : arrivée par /profil#notifications, le titre ne passe pas sous la barre fixe du haut. */
-.pn { max-width: 1100px; margin-top: 24px; scroll-margin-top: 72px; }
+/* Toute la largeur à droite de la barre latérale, sans plafond (design.md « Mise en page », revue
+   phase 2 I3) : les colonnes se répartissent à la largeur disponible.
+   `scroll-margin-top` : arrivée par /profil#notifications, le titre ne passe pas sous la barre fixe du haut. */
+.pn { margin-top: 24px; scroll-margin-top: 72px; }
 .pn-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 12px; }
 
 .pn-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -19,7 +21,7 @@
 .pn-o-note { order: 6; }
 
 @media (min-width: 1024px) {
-  .pn-grid--two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .pn-grid--two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; align-items: start; }
   .pn-grid--two .pn-col { display: flex; flex-direction: column; min-width: 0; }
   .pn-grid--two .pn-o-types .pn-hd { margin-top: 0; }
   /* Gratuit : l'invitation ouvre la colonne, le titre des types garde son espace. */
