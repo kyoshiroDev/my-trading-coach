@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, afterRenderEffect, computed, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, timeout } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -70,9 +70,13 @@ export class AccountAutopsyComponent implements OnInit {
    * Tracé calculé à la largeur RÉELLE de sa carte (un px du tracé = un px de l'écran) : à toute
    * largeur, textes à 11 px et libellé d'alerte placé sans chevauchement, jamais un SVG étiré.
    */
-  private readonly chartBox = viewChild<ElementRef<HTMLElement>>('chartBox');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly chartWidth = signal(CHART_DEFAULT_WIDTH);
+  /** Courbe masquée (place gardée) tant que sa carte n'est pas mesurée : jamais d'abord à 330 px. */
+  protected readonly chartMeasured = signal(false);
   protected readonly chart = computed(() => (this.report() ? distanceChart(this.report()!, this.chartWidth()) : null));
+  /** Vrai/faux seulement : la mesure ne se relance pas à chaque nouvelle largeur. */
+  private readonly hasChart = computed(() => this.chart() !== null);
   protected readonly aiText = computed(() => {
     const a = this.ai();
     return a?.status === 'ready' ? { paragraphs: aiParagraphs(a.text), when: `${shortDay(a.generatedAt)} à ${clock(a.generatedAt)}` } : null;
@@ -80,14 +84,23 @@ export class AccountAutopsyComponent implements OnInit {
   protected readonly statusLabel = statusLabel;
 
   constructor() {
-    // La carte apparaît avec le rapport : on observe sa largeur utile (sans le padding).
-    effect((onCleanup) => {
-      const box = this.chartBox()?.nativeElement;
-      if (!box || typeof ResizeObserver === 'undefined') return;
-      const ro = new ResizeObserver(([entry]) => {
-        const w = Math.round(entry.contentRect.width);
-        if (w > 0 && w !== this.chartWidth()) this.chartWidth.set(w);
-      });
+    // La carte apparaît avec le rapport : largeur lue juste après son rendu (avant d'être montrée),
+    // puis suivie (sans le padding). Sans ResizeObserver, la courbe s'affiche à la largeur par défaut.
+    afterRenderEffect((onCleanup) => {
+      if (!this.hasChart()) return;
+      const box = this.host.nativeElement.querySelector<HTMLElement>('.chart-box');
+      if (!box) return;
+      const measure = (w: number) => {
+        if (w <= 0) return;
+        if (w !== this.chartWidth()) this.chartWidth.set(w);
+        this.chartMeasured.set(true);
+      };
+      untracked(() => measure(Math.round(box.clientWidth)));
+      if (typeof ResizeObserver === 'undefined') {
+        this.chartMeasured.set(true);
+        return;
+      }
+      const ro = new ResizeObserver(([entry]) => measure(Math.round(entry.contentRect.width)));
       ro.observe(box);
       onCleanup(() => ro.disconnect());
     });

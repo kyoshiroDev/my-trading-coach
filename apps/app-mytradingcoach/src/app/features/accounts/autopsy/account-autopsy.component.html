@@ -38,9 +38,9 @@
           </div>
 
           @if (chart(); as c) {
-            <section class="card" data-testid="autopsy-chart">
+            <section class="card chart-card" data-testid="autopsy-chart">
               <div class="lbl">DISTANCE À LA LIMITE</div>
-              <div class="chart-box" #chartBox>
+              <div class="chart-box" [class.pending]="!chartMeasured()">
                 <svg class="chart" [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" [attr.width]="c.width" [attr.height]="c.height"
                      role="img" [attr.aria-label]="c.aria">
                   <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
@@ -65,7 +65,7 @@
           }
         </div>
 
-        <section class="card">
+        <section class="card tl-card">
           <div class="lbl">CHRONOLOGIE DE LA SÉANCE</div>
           <ul class="tl" data-testid="autopsy-timeline">
             @for (row of rows(); track row.key) {
@@ -84,7 +84,7 @@
       </div>
 
       <div class="col">
-        <section class="card">
+        <section class="card find-card">
           <div class="lbl">{{ findings().length }} CONSTAT{{ findings().length > 1 ? 'S' : '' }}</div>
           <ol class="find" data-testid="autopsy-findings">
             @for (f of findings(); track $index) {
@@ -93,57 +93,59 @@
           </ol>
         </section>
 
-        @switch (ai()?.status) {
-          @case ('locked') {
-            <section class="card ai lock" data-testid="autopsy-ai-locked">
-              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
-              <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
-              <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
-                {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
-              </button>
-            </section>
+        <div class="side">
+          @switch (ai()?.status) {
+            @case ('locked') {
+              <section class="card ai lock" data-testid="autopsy-ai-locked">
+                <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+                <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
+                <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
+                  {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+                </button>
+              </section>
+            }
+            @case ('ready') {
+              <section class="card ai" data-testid="autopsy-ai">
+                <div class="top">
+                  <div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span>
+                  @if (userStore.isDemo()) { <span class="badge-example" data-testid="autopsy-ai-example-badge">Exemple</span> }
+                </div>
+                @for (p of aiText()!.paragraphs; track $index) {
+                  <p>{{ p }}</p>
+                }
+                @if (userStore.isDemo()) {
+                  <p class="note" data-testid="autopsy-ai-example">Exemple préenregistré du compte démo, sans appel à l'IA. Sur ton compte, l'analyse est rédigée une seule fois à partir de ta séance. Elle décrit ce qui s'est passé, ne prédit rien et ne constitue pas un conseil.</p>
+                } @else {
+                  <p class="note">Cette analyse décrit ce qui s'est passé. Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le {{ aiText()!.when }}.</p>
+                }
+              </section>
+            }
+            @default {
+              <section class="card ai" data-testid="autopsy-ai-wait">
+                <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+                <p class="note">{{ aiLoading() ? 'Analyse en cours de rédaction…' : 'Analyse indisponible pour le moment. La chronologie et les constats restent à jour.' }}</p>
+              </section>
+            }
           }
-          @case ('ready') {
-            <section class="card ai" data-testid="autopsy-ai">
-              <div class="top">
-                <div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span>
-                @if (userStore.isDemo()) { <span class="badge-example" data-testid="autopsy-ai-example-badge">Exemple</span> }
-              </div>
-              @for (p of aiText()!.paragraphs; track $index) {
-                <p>{{ p }}</p>
-              }
-              @if (userStore.isDemo()) {
-                <p class="note" data-testid="autopsy-ai-example">Exemple préenregistré du compte démo, sans appel à l'IA. Sur ton compte, l'analyse est rédigée une seule fois à partir de ta séance. Elle décrit ce qui s'est passé, ne prédit rien et ne constitue pas un conseil.</p>
-              } @else {
-                <p class="note">Cette analyse décrit ce qui s'est passé. Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le {{ aiText()!.when }}.</p>
-              }
-            </section>
-          }
-          @default {
-            <section class="card ai" data-testid="autopsy-ai-wait">
-              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
-              <p class="note">{{ aiLoading() ? 'Analyse en cours de rédaction…' : 'Analyse indisponible pour le moment. La chronologie et les constats restent à jour.' }}</p>
-            </section>
-          }
-        }
 
-        <div class="actions">
-          @if (r.account.status === 'FAILED') {
-            <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
-              Repartir sur une nouvelle tentative
+          <div class="actions">
+            @if (r.account.status === 'FAILED') {
+              <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
+                Repartir sur une nouvelle tentative
+              </button>
+            }
+            <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
+              {{ dismissing() ? 'Retrait…' : "Ce n'est pas un échec" }}
             </button>
-          }
-          <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
-            {{ dismissing() ? 'Retrait…' : "Ce n'est pas un échec" }}
-          </button>
+          </div>
+          <p class="note">
+            @if (r.canReactivate) {
+              « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
+            } @else {
+              « Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.
+            }
+          </p>
         </div>
-        <p class="note">
-          @if (r.canReactivate) {
-            « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
-          } @else {
-            « Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.
-          }
-        </p>
       </div>
     </div>
   }

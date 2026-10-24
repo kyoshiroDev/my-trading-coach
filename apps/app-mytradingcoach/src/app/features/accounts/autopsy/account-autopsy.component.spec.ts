@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -219,5 +219,48 @@ describe('Autopsie — page', () => {
     expect(TestBed.inject(DemoService).showSignupPrompt()).toBe(true);
     expect(confirm.ask).not.toHaveBeenCalled();
     expect(api.dismissIncident).not.toHaveBeenCalled();
+  });
+
+  describe('courbe (A8) : jamais affichée d’abord à la largeur par défaut', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    it('largeur de la carte connue au premier rendu : courbe tracée à cette largeur, visible tout de suite', () => {
+      vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(640);
+      const { el } = mount(mockupReport());
+      TestBed.tick();
+      expect(el.querySelector('svg.chart')!.getAttribute('width')).toBe('640');
+      expect(el.querySelector('.chart-box')!.classList).not.toContain('pending');
+    });
+
+    it('carte pas encore mesurée : courbe masquée, puis affichée à la largeur relevée', () => {
+      let report: ((entries: { contentRect: { width: number } }[]) => void) | undefined;
+      vi.stubGlobal('ResizeObserver', class {
+        constructor(cb: typeof report) { report = cb; }
+        observe() { /* rien */ }
+        disconnect() { /* rien */ }
+      });
+      const { el } = mount(mockupReport());
+      TestBed.tick();
+      expect(el.querySelector('.chart-box')!.classList).toContain('pending');
+      report!([{ contentRect: { width: 700 } }]);
+      TestBed.tick();
+      expect(el.querySelector('svg.chart')!.getAttribute('width')).toBe('700');
+      expect(el.querySelector('.chart-box')!.classList).not.toContain('pending');
+    });
+  });
+
+  it('grand écran (A7) : ordre du DOM inchangé (chiffres, courbe, chronologie, constats, analyse, boutons)', () => {
+    const { el } = mount(mockupReport());
+    const order = [...el.querySelectorAll('[data-testid^="autopsy-"]')].map((n) => n.getAttribute('data-testid'));
+    const pick = ['autopsy-chart', 'autopsy-timeline', 'autopsy-findings', 'autopsy-ai-locked', 'autopsy-retry', 'autopsy-dismiss'];
+    expect(order.filter((id) => pick.includes(id!))).toEqual(pick);
+    // Analyse IA et boutons regroupés dans la 3e zone ; constats hors de ce groupe.
+    const side = el.querySelector('.side')!;
+    expect(side.querySelector('[data-testid="autopsy-ai-locked"]')).not.toBeNull();
+    expect(side.querySelector('[data-testid="autopsy-dismiss"]')).not.toBeNull();
+    expect(side.querySelector('[data-testid="autopsy-findings"]')).toBeNull();
   });
 });

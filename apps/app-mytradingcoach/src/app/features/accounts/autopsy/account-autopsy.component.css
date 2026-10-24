@@ -35,7 +35,7 @@
 .headline { margin-top: 8px; max-width: 75ch; }
 
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 14px; }
-.col, .stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.col, .stack, .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .card {
   background: var(--bg-card);
@@ -63,6 +63,7 @@
    `max-width` ne joue qu'avant la première mesure, pour ne jamais déborder. */
 .chart-box { margin-top: 8px; min-width: 0; }
 .chart { display: block; max-width: 100%; height: auto; }
+.chart-box.pending .chart { visibility: hidden; }
 .chart text { font: 11px var(--font-mono); fill: var(--text-3); }
 .chart .zero { stroke: var(--red); stroke-dasharray: 4 4; stroke-opacity: .7; }
 .chart .alert-mark { fill: var(--yellow); fill-opacity: .8; }
@@ -165,16 +166,26 @@
   .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
 }
 
-/* Grand écran : la colonne de gauche se répartit en colonnes automatiques (chiffres et courbe,
-   puis chronologie à côté dès qu'il y a la place de deux cartes de 480 px) : trois colonnes de
-   largeur voisine à 1920 et 2560 px, au lieu d'une page plafonnée et d'une bande vide. */
+/* Grand écran : trois colonnes par zones de grille, sans toucher à l'ordre du DOM (mobile et
+   lecteurs d'écran inchangés). 1 = chiffres, courbe, constats ; 2 = chronologie ; 3 = analyse IA
+   et boutons. Les conteneurs intermédiaires s'effacent (`display: contents`). La dernière rangée
+   en 1fr absorbe la hauteur des colonnes 2 et 3 : la colonne 1 reste serrée, sans trou. */
 @container (min-width: 1500px) {
-  .grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  .col-main {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
-    align-items: start;
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "kpis  tl side"
+      "chart tl side"
+      "find  tl side"
+      ".     tl side";
   }
+  .col, .col-main, .stack { display: contents; }
+  .kpis { grid-area: kpis; }
+  .chart-card { grid-area: chart; }
+  .find-card { grid-area: find; }
+  .tl-card { grid-area: tl; }
+  .side { grid-area: side; }
 }
 
 @media (min-width: 769px) {
