@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -28,7 +29,9 @@ import {
 } from './account-rules';
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
-import { isFloorReached, nextAttemptLabel, retryAccountData } from './account-retry';
+import {
+  floorDismissalExpired, isFloorReached, nextAttemptLabel, readFloorDismissal, retryAccountData, withoutFloorDismissal,
+} from './account-retry';
 import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
 import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
@@ -224,6 +227,8 @@ export interface AccountRuleMetrics {
 
 @Injectable()
 export class AccountsService {
+  private readonly logger = new Logger(AccountsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     /** Cache analytics : un changement de statut fait entrer ou sortir les trades des agrégats. */
@@ -312,20 +317,41 @@ export class AccountsService {
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
     const ids = accounts.map(({ account }) => account.id);
-    const [aggs, sessions] = await Promise.all([
+    const [aggs, sessions, dismissedFloors] = await Promise.all([
       ruleAggregatesSql(this.prisma, userId, ids),
       // P&L par séance : seulement utile aux comptes reliés à un plan (progression).
       sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
+      // Plancher écarté par « Ce n'est pas un échec » (B1) : au plus un par compte (clé unique).
+      this.prisma.accountIncident.findMany({
+        where: { accountId: { in: ids }, kind: 'drawdown', dismissedAt: { not: null } },
+        select: { id: true, accountId: true, data: true },
+      }),
     ]);
+    const dismissalByAccount = new Map(dismissedFloors.map((d) => [d.accountId, d]));
+    const today = tradingDay(new Date());
+    const expired: { id: string; data: unknown }[] = [];
 
-    return accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
+    const result = accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
       const metrics = this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
         sessions.get(account.id) ?? [], payouts, options,
       );
+      const row = dismissalByAccount.get(account.id);
+      let dismissal = readFloorDismissal(row?.data);
+      if (row && dismissal && floorDismissalExpired(dismissal, metrics.drawdown?.margin ?? null, today)) {
+        expired.push(row);
+        dismissal = null;
+      }
       // Compte perdu : plancher estimé atteint → bandeau côté front, statut inchangé (l'utilisateur confirme).
-      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown), openIncidentId };
+      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown, dismissal), openIncidentId };
     });
+    // Retrait périmé (marge repassée au-dessus de zéro, séance suivante) : effacé, la prochaine
+    // perte sous le plancher redonne le bandeau. Rare, et sans effet sur la réponse en cours.
+    await Promise.all(expired.map((row) => this.prisma.accountIncident.update({
+      where: { id: row.id },
+      data: { data: withoutFloorDismissal(row.data) },
+    }))).catch((err: unknown) => this.logger.warn(`Retrait de plancher non effacé : ${(err as Error).message}`));
+    return result;
   }
 
   private clamp01(x: number): number {

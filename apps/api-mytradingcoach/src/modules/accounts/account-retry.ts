@@ -44,6 +44,41 @@ export function retryAccountData(
 export function isFloorReached(
   account: Pick<TradingAccount, 'status'>,
   drawdown: { margin: number } | null,
+  dismissal: FloorDismissal | null = null,
 ): boolean {
-  return account.status === AccountStatus.ACTIVE && !!drawdown && drawdown.margin <= 0;
+  if (account.status !== AccountStatus.ACTIVE || !drawdown || drawdown.margin > 0) return false;
+  // Déjà écarté par « Ce n'est pas un échec » : ne revient que sur une perte plus profonde.
+  return !dismissal || drawdown.margin < dismissal.margin - FLOOR_DISMISS_TOLERANCE;
+}
+
+/**
+ * « Ce n'est pas un échec » sur un plancher atteint (B1) : marge estimée au moment du retrait et
+ * séance (journée CME), gardées dans le JSON `data` de l'incident retiré. Pas de nouvelle table.
+ */
+export interface FloorDismissal {
+  margin: number;
+  day: string;
+}
+
+/** Écart de marge (devise du compte) en deçà duquel ce n'est pas une nouvelle perte : arrondis. */
+export const FLOOR_DISMISS_TOLERANCE = 1;
+
+/** Retrait mémorisé dans `data`, ou null (incident sans retrait mémorisé, JSON inattendu). */
+export function readFloorDismissal(data: unknown): FloorDismissal | null {
+  if (!data || typeof data !== 'object') return null;
+  const { dismissedMargin, dismissedDay } = data as Record<string, unknown>;
+  return typeof dismissedMargin === 'number' && typeof dismissedDay === 'string'
+    ? { margin: dismissedMargin, day: dismissedDay }
+    : null;
+}
+
+/** Le retrait ne vaut plus : marge repassée au-dessus de zéro, ou séance suivante. */
+export function floorDismissalExpired(dismissal: FloorDismissal, margin: number | null, today: string): boolean {
+  return dismissal.day !== today || margin == null || margin > 0;
+}
+
+/** `data` de l'incident sans le retrait mémorisé (le reste du relevé est gardé). */
+export function withoutFloorDismissal(data: unknown): Prisma.InputJsonObject {
+  const { dismissedMargin: _m, dismissedDay: _d, ...rest } = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  return rest as Prisma.InputJsonObject;
 }

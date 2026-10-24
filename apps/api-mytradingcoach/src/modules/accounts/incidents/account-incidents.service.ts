@@ -274,14 +274,35 @@ export class AccountIncidentsService {
    * SEULEMENT s'il a été fermé (échoué ou archivé) depuis la feuille de choix en confirmant cet
    * incident, et qu'il l'est encore. Un échec marqué à la main reste tel quel. Réactivation soumise
    * au quota de comptes, comme toute réactivation.
+   *
+   * Plancher (B1) : la marge du moment et la séance sont gardées dans `data`, pour que le bandeau
+   * « Plancher atteint » ne revienne que sur une perte plus profonde (cf. `isFloorReached`).
    */
-  async dismiss(user: IncidentUser, accountId: string, incidentId: string, ctx: PlanContext) {
+  async dismiss(user: IncidentUser, accountId: string, incidentId: string, ctx: PlanContext, now = new Date()) {
     const incident = await this.find(user.id, accountId, incidentId);
     const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { status: true } });
     const reactivate = !!incident.failedByIncidentAt && CLOSED_BY_INCIDENT.includes(account.status);
+    const memo = incident.kind === 'drawdown' ? await this.floorDismissal(user, accountId, incident, now) : null;
     if (reactivate) await this.accounts.update(user.id, accountId, { status: AccountStatus.ACTIVE }, ctx);
-    await this.prisma.accountIncident.update({ where: { id: incident.id }, data: { dismissedAt: new Date() } });
+    await this.prisma.accountIncident.update({
+      where: { id: incident.id },
+      data: memo ? { dismissedAt: now, data: memo } : { dismissedAt: now },
+    });
     return { dismissed: true as const, reactivated: reactivate };
+  }
+
+  /** `data` de l'incident + marge et séance du retrait, seulement si le plancher est atteint. */
+  private async floorDismissal(
+    user: IncidentUser,
+    accountId: string,
+    incident: AccountIncident,
+    now: Date,
+  ): Promise<Prisma.InputJsonObject | null> {
+    const account = (await this.accounts.list(user.id, { premium: isPremiumAccess(user) })).find((a) => a.id === accountId);
+    const margin = account?.metrics.drawdown?.margin;
+    if (margin == null || margin > 0) return null;
+    const data = incident.data && typeof incident.data === 'object' ? (incident.data as Prisma.JsonObject) : {};
+    return { ...data, dismissedMargin: margin, dismissedDay: tradingDay(now) };
   }
 
   private aiState(user: IncidentUser, incident: AccountIncident): IncidentAiState {

@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { aggregateRuleTrades, previousSession, sessionPnls } from './account-rules';
+import { aggregateRuleTrades, previousSession, sessionPnls, tradingDay } from './account-rules';
 import { AccountsService, brokerReferenceMismatch, type RuleBroker, type RulePayouts, type RulePlan } from './accounts.service';
 
 // Le AccountsController n'est gardé que par JwtAuthGuard : le multi-comptes
@@ -29,6 +29,7 @@ function makePrisma() {
     brokerDailyClose: { groupBy: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
     brokerConnection: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0) },
     brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
+    accountIncident: { findMany: vi.fn(async (): Promise<unknown[]> => []), update: vi.fn(async () => ({})) },
   };
 }
 
@@ -330,6 +331,43 @@ describe('AccountsService', () => {
         // Autopsie ouverte la plus récente (#669), pour le lien « Voir l'autopsie ».
         incidents: { where: { dismissedAt: null }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true } },
       },
+    });
+  });
+
+  describe('list — plancher écarté par « Ce n’est pas un échec » (B1)', () => {
+    const today = tradingDay(new Date());
+    function withAccount(margin: number, dismissed: Record<string, unknown> | null) {
+      prisma.tradingAccount.findMany.mockResolvedValue([
+        { id: 'a1', userId: 'u1', status: 'ACTIVE', label: 'Apex 50K #1', propFirmPlan: null, brokerConnections: [], incidents: [] },
+      ]);
+      (prisma as unknown as { $queryRaw: unknown }).$queryRaw = vi.fn(async () => []);
+      prisma.accountIncident.findMany.mockResolvedValue(dismissed ? [{ id: 'inc', accountId: 'a1', data: dismissed }] : []);
+      vi.spyOn(svc as unknown as { ruleMetricsFromAgg: () => unknown }, 'ruleMetricsFromAgg')
+        .mockReturnValue({ drawdown: { margin } });
+    }
+
+    it('même séance, marge pas plus basse qu’au retrait : pas de bandeau, rien d’effacé', async () => {
+      withAccount(-40, { limit: 2000, dismissedMargin: -50, dismissedDay: today });
+      const [a] = await svc.list('u1');
+      expect(a.floorReached).toBe(false);
+      expect(prisma.accountIncident.update).not.toHaveBeenCalled();
+    });
+
+    it('nouvelle perte plus profonde : le bandeau revient', async () => {
+      withAccount(-120, { limit: 2000, dismissedMargin: -50, dismissedDay: today });
+      expect((await svc.list('u1'))[0].floorReached).toBe(true);
+    });
+
+    it('séance suivante : retrait effacé, le bandeau revient', async () => {
+      withAccount(-40, { limit: 2000, dismissedMargin: -50, dismissedDay: '2000-01-03' });
+      expect((await svc.list('u1'))[0].floorReached).toBe(true);
+      expect(prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { data: { limit: 2000 } } });
+    });
+
+    it('marge repassée au-dessus de zéro : retrait effacé (la prochaine perte sous le plancher redonne le bandeau)', async () => {
+      withAccount(30, { limit: 2000, dismissedMargin: -50, dismissedDay: today });
+      expect((await svc.list('u1'))[0].floorReached).toBe(false);
+      expect(prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { data: { limit: 2000 } } });
     });
   });
 

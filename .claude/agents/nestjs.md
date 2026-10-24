@@ -1686,6 +1686,10 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
   compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
   de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+  Plancher écarté par « Ce n'est pas un échec » (B1) : le retrait garde `dismissedMargin` et
+  `dismissedDay` (journée CME) dans le JSON `data` de l'incident (pas de table, pas de migration) ;
+  `floorReached` reste faux tant que la marge ne descend pas plus bas (tolérance 1). `list` efface ce
+  retrait dès que la marge repasse au-dessus de zéro ou à la séance suivante (rare écriture dans une lecture).
 - `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
   404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
