@@ -75,7 +75,8 @@
   display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
   letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px; border: 1px solid;
 }
-.pn-prem { background: var(--badge-premium-bg); color: var(--badge-premium-color); border-color: var(--badge-premium-border); }
+/* Violet comme la maquette et le cadenas Premium de l'app (`premium-lock`), revue phase 2 m8. */
+.pn-prem { background: var(--purple-dim); color: var(--purple-bright); border-color: var(--purple-dim); }
 .pn-free { background: var(--badge-free-bg); color: var(--badge-free-color); border-color: var(--badge-free-border); }
 
 /* Interrupteur : zone cliquable de 44 px, piste de 40 × 24 */

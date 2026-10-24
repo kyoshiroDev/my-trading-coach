@@ -23,4 +23,12 @@ describe('Section Notifications : mise en page (revue phase 2 I3, design.md « M
     expect(noComments).not.toMatch(/(^|[;{\s])order:/);
     expect(noComments).not.toMatch(/display:\s*contents/);
   });
+
+  it('badge Premium en violet, comme le cadenas Premium de l’app (m8)', () => {
+    const i = noComments.indexOf('.pn-prem {');
+    const rule = noComments.slice(i, noComments.indexOf('}', i));
+    expect(rule).toMatch(/color: var\(--purple-bright\)/);
+    expect(rule).toMatch(/background: var\(--purple-dim\)/);
+    expect(rule).not.toMatch(/--badge-premium|--blue/);
+  });
 });
