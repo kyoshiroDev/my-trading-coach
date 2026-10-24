@@ -79,6 +79,17 @@ describe('Section Notifications du profil', () => {
     expect(el.textContent).not.toMatch(/[\u2013\u2014]/);
   });
 
+  it('ordre du DOM (donc du clavier) = ordre affiché sur mobile : état, types, heures silencieuses, appareils (m1)', async () => {
+    const { el, q } = await mount({ settings: settings({ quietHours: { start: 1320, end: 420 } }) });
+    const order = ['push-test', 'push-type-PROP_RULES', 'push-quiet-toggle', 'push-quiet-start', 'push-remove'];
+    const focusables = [...el.querySelectorAll<HTMLElement>('button, input')].map((n) => n.dataset['testid']);
+    const idx = order.map((id) => focusables.indexOf(id));
+    expect(idx.every((i) => i >= 0)).toBe(true);
+    expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    // La mention ferme la section, sous la grille (pleine ligne sans colonne vide gardée à grande largeur).
+    expect(q('push-settings')!.lastElementChild!.classList).toContain('pn-o-note');
+  });
+
   it('interrupteur : clic → réglage envoyé, état mis à jour', async () => {
     const { q, api, settle } = await mount();
     q('push-type-RECAP')!.click();

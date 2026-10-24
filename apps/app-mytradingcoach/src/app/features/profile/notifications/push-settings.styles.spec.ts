@@ -15,5 +15,12 @@ describe('Section Notifications : mise en page (revue phase 2 I3, design.md « M
 
   it('cartes en grille à colonnes automatiques', () => {
     expect(noComments).toMatch(/grid-template-columns: repeat\(auto-fit, minmax\(min\(100%, 420px\), 1fr\)\)/);
+    // Aucune carte en pleine ligne dans la grille : elle garderait des colonnes vides à 2560 px.
+    expect(noComments).not.toMatch(/grid-column: 1 \/ -1/);
+  });
+
+  it('ordre du clavier = ordre affiché (m1) : aucun order ni display: contents qui réordonne', () => {
+    expect(noComments).not.toMatch(/(^|[;{\s])order:/);
+    expect(noComments).not.toMatch(/display:\s*contents/);
   });
 });

@@ -7,26 +7,20 @@
 /* Toute la largeur à droite de la barre latérale, sans plafond (design.md « Mise en page », revue
    phase 2 I3) : les colonnes se répartissent à la largeur disponible.
    `scroll-margin-top` : arrivée par /profil#notifications, le titre ne passe pas sous la barre fixe du haut. */
-.pn { margin-top: 24px; scroll-margin-top: 72px; }
+.pn { margin-top: 24px; scroll-margin-top: 72px; container-type: inline-size; }
 .pn-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 12px; }
 
-.pn-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
-/* Mobile : les deux colonnes s'effacent, chaque bloc prend sa place dans l'ordre de la maquette. */
-.pn-col { display: contents; }
-.pn-o-status { order: 1; }
-.pn-o-up { order: 2; }
-.pn-o-types { order: 3; }
-.pn-o-quiet { order: 4; }
-.pn-o-devices { order: 5; }
-.pn-o-note { order: 6; }
-
-@media (min-width: 1024px) {
-  .pn-grid--two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; align-items: start; }
-  .pn-grid--two .pn-col { display: flex; flex-direction: column; min-width: 0; }
-  .pn-grid--two .pn-o-types .pn-hd { margin-top: 0; }
-  /* Gratuit : l'invitation ouvre la colonne, le titre des types garde son espace. */
-  .pn-grid--two .pn-o-up { margin-top: 0; }
-  .pn-grid--two .pn-o-up + .pn-o-types .pn-hd { margin-top: 20px; }
+/* Cartes dans l'ordre du DOM, qui est l'ordre affiché sur mobile et celui du clavier (revue phase 2
+   m1) : aucun `order`, aucun `display: contents`. Colonnes automatiques selon la largeur. */
+.pn-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 20px 24px; align-items: start;
+}
+.pn-grid .pn-hd { margin-top: 0; }
+/* Deux colonnes ou plus : les types, la carte la plus haute, prennent deux rangées ; l'état et les
+   heures silencieuses s'empilent à côté (maquette bureau). */
+@container (min-width: 864px) {
+  .pn-o-types { grid-row: span 2; }
 }
 
 .pn-hd { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin: 20px 0 8px; }
@@ -119,11 +113,12 @@
 .pn-chip { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px; background: var(--bg-3); color: var(--text-2); border: 1px solid var(--border-hover); }
 
 /* Gratuit : invitation Premium */
-.pn-up { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--bg-3); border: 1px solid var(--border-hover); font-size: 13px; color: var(--text-2); line-height: 1.45; }
+.pn-up { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--bg-3); border: 1px solid var(--border-hover); font-size: 13px; color: var(--text-2); line-height: 1.45; }
 .pn-up > div { flex: 1; min-width: 0; }
 .pn-up b { display: block; color: var(--text); font-size: 14px; margin-bottom: 2px; }
 
 .pn-note { font-size: 12px; color: var(--text-3); line-height: 1.5; margin: 10px 0 0; }
+.pn-o-note { margin: 14px 0 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .pn-track, .pn-track::before { transition: none; }
