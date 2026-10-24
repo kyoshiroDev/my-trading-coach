@@ -648,7 +648,10 @@ plus s'y référer ni tenter de le synchroniser. La source de vérité du design
 Règles design non négociables (détail dans `design.md`) : dark only, tokens CSS (jamais
 de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes Lucide**
 (jamais d'emoji dans les headers — seuls les émotions trader et watermarks décoratifs
-sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
+sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu. **Mise en page** : page sur toute
+la largeur à droite de la barre latérale (aucun `max-width` de page, grille à colonnes
+automatiques), défilement vertical seulement, vérifiée de 360 à 2560 px (règle complète dans
+`design.md`).
 
 ---
 
@@ -880,7 +883,14 @@ Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
 - Gratuit : chronologie et constats ; carte IA verrouillée (« Essayer Premium · 1 mois offert » selon
   `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
   Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
+- Tentative suivante déjà créée (`LostAccountFlowService.newerAttempt`, `@mtc/shared`) : « Nouvelle
+  tentative » (Mes comptes) et « Repartir… » (autopsie) deviennent « Voir Apex 50K #2 » (`openAttempt` :
+  ce compte sélectionné, `/accounts`). 409 `RETRY_EXISTS` à la création : ni toast d'erreur ni message
+  de quota, feuille fermée, liste rechargée (le bouton bascule).
 - « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
+  Libellé (B2) : « Ce n'est pas un échec » seulement si `canReactivate` ; sinon (autopsie non confirmée,
+  échec marqué à la main) « Retirer cette autopsie », note « Retirer l'autopsie ne change pas le statut du
+  compte. ». Même confirmation dans les deux cas.
   « Ce n'est pas un échec » → **`ConfirmService.ask` d'abord** (retrait définitif, réactivation annoncée si
   `canReactivate`), puis `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
 - Feuille de choix (« Garder comme échoué » / « Archiver ») : `update(id, { status, confirmIncident: true })`.
@@ -1418,5 +1428,12 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   padding-box !important` (sinon le fond clair imposé passe sous la bordure semi-transparente : le
   raccourci `background:` des champs de composant remet `border-box`). Champ sur un autre fond →
   poser `--autofill-bg`.
+- `box-shadow` et `transition` en **`!important`** (2026-10-24) : `input:focus { box-shadow }` d'un composant
+  a la même spécificité et passe après la feuille globale ; au focus il effaçait l'ombre, le fond clair
+  de Chrome revenait sous un texte clair (contraste 1,06:1, texte invisible). Anneau du composant →
+  `--field-ring` (`auth-form.css`, `card-page*.css`), ajouté par la règle globale après l'ombre.
+- Connexion : `autocomplete="username"` sur l'email + `current-password` ; inscription : `email` +
+  `new-password` (×2). Le navigateur ne livre la valeur autoremplie au JS qu'après un geste de
+  l'utilisateur : un `blur()` programmé sur un champ autorempli affiche « requis ».
 - ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
   règle globale va dans `styles.css`, pas là.

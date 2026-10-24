@@ -1686,11 +1686,23 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
   compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
   de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+  Plancher écarté par « Ce n'est pas un échec » (B1) : le retrait garde `dismissedMargin` et
+  `dismissedDay` (journée CME) dans le JSON `data` de l'incident (pas de table, pas de migration) ;
+  `floorReached` reste faux tant que la marge ne descend pas plus bas (tolérance 1). `list` efface ce
+  retrait dès que la marge repasse au-dessus de zéro ou à la séance suivante (rare écriture dans une lecture,
+  `clearExpiredFloorDismissals`) : jamais bloquante (try/catch, journal sans données ni id) et conditionnelle
+  (`updateMany` seulement si l'incident porte ENCORE ce retrait : deux lectures simultanées sans effet
+  croisé, un retrait plus récent jamais effacé).
 - `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
   404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
   `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
   « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+  Tentative plus récente déjà créée (même base, numéro plus grand : `newerAttempt`) → **409
+  `RETRY_EXISTS`**, vérifié AVANT le quota (jamais « Passe à un plan supérieur » dans ce cas). Lecture,
+  contrôles et création sous `pg_advisory_xact_lock(hashtextextended('account-retry:<userId>', 0))` :
+  deux requêtes simultanées ne créent qu'un compte (int-spec `account-status-scope`). Le filtre
+  global ne renvoie que `code` et `message` : l'app retrouve le compte dans la liste.
 - `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
   Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
   (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
@@ -2228,6 +2240,12 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
   appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
   une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+  `TraderNotifier.send` ne rend `sent` que si **au moins un appareil a reçu** le push ; sinon
+  `undelivered` (5xx, délai dépassé, 404/410, adresse hors liste blanche) : réservation rendue, retenté
+  au relevé suivant, la clé anti-spam reste posée (15 min pour une alerte non forcée). Au plus
+  `MAX_UNDELIVERED_PUSH` (3) envois sans livraison par niveau et par période : ensuite le marqueur est
+  gardé (abandon journalisé), une limite franchie forcée ne repart pas toutes les 15 min toute la journée.
+  Le réarmement en fond n'efface que `prop-alert-push:…`, le direct efface les deux.
 - **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
   seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
 - **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le

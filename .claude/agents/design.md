@@ -26,6 +26,17 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
 - Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
+- **Mise en page de l'app** : chaque page occupe **toute la largeur disponible** à droite de la
+  barre latérale, sans plafond (`max-width` sur le conteneur de page) ni bande vide à droite. Pour
+  garder des lignes lisibles à très grande largeur, répartir les cartes en **grille à colonnes
+  automatiques** (`repeat(auto-fit, minmax(min(100%, Npx), 1fr))`), pas plafonner la page. Contenu
+  plus haut que l'écran : la page **défile verticalement** (aucune hauteur fixe ni `overflow:
+  hidden` qui coupe la fin), **jamais de défilement horizontal**. Graphiques : tracés à la largeur
+  réelle de leur carte (SVG non étiré), textes à taille fixe. **Vérifier à 360, 390, 768, 1024,
+  1440, 1920 et 2560 px** (cadre iframe sur le banc : `resize_window` ne change pas le viewport).
+  Les modales, feuilles et textes longs (`max-width` en `ch`) ne sont pas des pages : leur plafond
+  reste permis. Pages encore plafonnées au 24/10/2026 : sessions (960 px), parrainage et
+  ambassadeur (1 200 px), devenir ambassadeur (1 080 px).
 
 ---
 
@@ -278,11 +289,17 @@ aperçu 90 px de haut, marges réduites) · **≥ 1280 px** version complète (t
   « Éval Apex 50K · En séance » (3 indicateurs mono, courbe drawdown rouge, limite en pointillé
   rouge, mention « Données de démonstration » `--text-faint`), pied mono « LECTURE SEULE · HÉBERGÉ EN
   FRANCE · SANS PUBLICITÉ ».
+- Colonne de présentation : logo, contenu et pied dans une même colonne de **560 px au plus, centrée**
+  dans la moitié gauche (texte aligné à gauche) ; marge basse 44 px pour que le pied reste au-dessus du
+  badge « interne » (fixé à 8 px du bas). Vérifié à 1024, 1280, 1440, 1920 et 2560 px.
 - Carte : `--bg-card`, radius 16, titres alignés à gauche à partir de 1024 px ; champs sur `--bg`,
   44 px, radius 10 ; bouton principal 48 px, `--primary` + texte blanc (5,2:1 ; `--text` y fait 4,3:1).
   Séparateurs à libellé mono 10 px `--text-faint` (« ou », « Pas encore sûr ? »). Ligne de confiance
   mono 9,5 px `--text-faint` / `--text-3` (≥ 5:1 sur `--bg-card`), un élément par ligne quand la
   carte est trop étroite.
+- Champs autoremplis par le navigateur : règle globale de `styles.css` (fond repeint, texte `--text`).
+  Un anneau de focus ou d'erreur se déclare dans **`--field-ring`** (`box-shadow: var(--field-ring)`),
+  jamais en `box-shadow` seul : la règle globale le garde à côté de l'ombre qui masque le fond clair.
 
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 

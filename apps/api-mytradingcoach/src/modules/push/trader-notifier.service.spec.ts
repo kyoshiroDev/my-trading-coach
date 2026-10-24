@@ -97,6 +97,15 @@ describe('TraderNotifier.send', () => {
     expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
   });
 
+  it('aucun appareil n’a reçu le push : « undelivered », clé anti-spam gardée (correctif #719)', async () => {
+    const { notifier, deliverToUser, set } = setup({});
+    deliverToUser.mockResolvedValueOnce({ subscriptions: 2, delivered: 0, failed: 1, removed: 1 });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('undelivered');
+    expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
+    deliverToUser.mockResolvedValueOnce({ subscriptions: 2, delivered: 1, failed: 1, removed: 0 });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
+  });
+
   it('Redis indisponible : on envoie plutôt que de perdre une alerte', async () => {
     const { notifier } = setup({}, { redisSet: () => Promise.reject(new Error('down')) });
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');

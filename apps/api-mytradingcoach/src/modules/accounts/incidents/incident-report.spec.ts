@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { alertLabel, buildIncidentReport, crossingPoint, type IncidentReportInput, type IncidentTrade, type PreviousSession } from './incident-report';
+import { alertLabel, buildIncidentReport, crossingPoint, distanceSeries, type IncidentReportInput, type IncidentTrade, type PreviousSession } from './incident-report';
 import { INCIDENT_AI_MAX_TOKENS, INCIDENT_AI_SYSTEM, buildIncidentPrompt } from './incident-ai.prompt';
 
 /**
@@ -31,6 +31,9 @@ function input(over: Partial<IncidentReportInput> = {}): IncidentReportInput {
     ...over,
   };
 }
+
+/** Texte attendu avec l'espace insécable devant `: ; ! ? %` (comme le rapport le produit). */
+const nb = (text: string) => text.replace(/ ([:;!?%])/g, '\u00a0$1');
 
 /** Pas de conseil, pas de promesse, pas de prédiction (AMF). */
 const ADVICE = /devrais|aurais dû|conseil|achète|vends|garanti|promet|prévoi|il faut/i;
@@ -80,8 +83,8 @@ describe('alertLabel — alertes retenues', () => {
   });
 
   it('garde les paliers de marge et le tilt', () => {
-    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'drawdown', level: 'warning' })).toBe('marge drawdown sous 25 %');
-    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'daily_loss', level: 'critical' })).toBe('perte du jour sous 10 %');
+    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'drawdown', level: 'warning' })).toBe(nb('marge drawdown sous 25 %'));
+    expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'daily_loss', level: 'critical' })).toBe(nb('perte du jour sous 10 %'));
     expect(alertLabel({ at: at('10:00'), source: 'prop', type: 'tilt', level: 'revenge' })).toBe('reprise rapide après une perte');
   });
 
@@ -95,8 +98,8 @@ describe('buildIncidentReport — 3 constats', () => {
   it('séance de la maquette : taille, concentration de la perte, trades après l’alerte', () => {
     const { findings } = buildIncidentReport(input());
     expect(findings).toHaveLength(3);
-    expect(findings).toContain("2 trades pris après l'alerte de 10:44 (pertes d'affilée), pour -$830.");
-    expect(findings).toContain('Taille : 2 contrats au premier trade, 4 contrats à partir du 4e, après 2 pertes d\'affilée.');
+    expect(findings).toContain(nb("2 trades pris après l'alerte de 10:44 (pertes d'affilée), pour -$830."));
+    expect(findings).toContain(nb('Taille : 2 contrats au premier trade, 4 contrats à partir du 4e, après 2 pertes d\'affilée.'));
     expect(findings).toContain('Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
   });
 
@@ -159,7 +162,7 @@ describe('buildIncidentReport — marge déjà sous la limite avant la séance (
     const r = already();
     expect(r.kpis.startDistance).toBe(-98);
     const margin = r.findings.find((f) => f.includes('avant le premier trade'))!;
-    expect(margin).toBe('Limite estimée déjà franchie avant la séance : marge estimée de -$98 avant le premier trade.');
+    expect(margin).toBe(nb('Limite estimée déjà franchie avant la séance : marge estimée de -$98 avant le premier trade.'));
     expect(r.findings.join(' ')).not.toMatch(/franchie à/);
   });
 
@@ -176,5 +179,97 @@ describe('buildIncidentReport — séance d\'un seul trade (revue #712)', () => 
     const r = buildIncidentReport(input({ trades: [trade('x', '16:40', 'LONG', 5, -3000)], alerts: [] }));
     expect(r.findings).toContain('Séance de 1 trade à 16:40, pour -$3,000.');
     expect(r.findings.join(' ')).not.toMatch(/entre 16:40 et 16:40/);
+  });
+});
+
+describe('distanceSeries — une seule source pour la marge de départ et la chronologie (A5)', () => {
+  // Plan trailing intraday de 2 500 $ : premier trade gagnant (+80), le plancher monte avec lui.
+  const trailingInput = (over: Partial<IncidentReportInput> = {}) => input({
+    snapshot: { limit: 2500, remaining: -80, detectedAt: at('11:13').toISOString() },
+    trades: [trade('g', '09:34', 'LONG', 2, 80), trade('p1', '10:10', 'SHORT', 2, -1300), trade('p2', '11:12', 'SHORT', 4, -1280)],
+    alerts: [],
+    trailing: true,
+    ...over,
+  });
+
+  it('trailing, premier trade gagnant : marge de départ = drawdown du plan (2 500 $), pas 2 420 $', () => {
+    const r = buildIncidentReport(trailingInput());
+    expect(r.kpis.startDistance).toBe(2500);
+    expect(r.series.map((p) => p.distance)).toEqual([2500, 2500, 1200, -80]);
+    // Chronologie et carte lisent la même suite : la marge après le dernier trade est celle relevée.
+    const after = r.timeline.flatMap((e) => (e.type === 'trade' ? [e.distanceAfter] : []));
+    expect(after).toEqual(r.series.slice(1).map((p) => p.distance));
+  });
+
+  it('trailing, plus haut d’avant la séance sous celui de la séance : plancher de départ plus haut', () => {
+    // Plus haut d'avant à +50 : plancher de départ -2 450, puis poussé à -2 420 par le +80.
+    const r = buildIncidentReport(trailingInput({ peakAboveStart: 50 }));
+    expect(r.series.map((p) => p.distance)).toEqual([2450, 2500, 1200, -80]);
+  });
+
+  it('trailing, plus haut d’avant la séance au-dessus de la séance : le plancher ne bouge pas', () => {
+    // Plancher déjà à 200 − 2 500 = -2 300 : le +80 ne le pousse pas, la marge relevée est -200.
+    const r = buildIncidentReport(trailingInput({ peakAboveStart: 200, snapshot: { limit: 2500, remaining: -200, detectedAt: at('11:13').toISOString() } }));
+    expect(r.series.map((p) => p.distance)).toEqual([2300, 2380, 1080, -200]);
+  });
+
+  it('trailing figé (plancher au relevé sous ce que la séance pouvait pousser) : plancher fixe', () => {
+    // Marge relevée 120 : plancher au relevé = -2 500 − 120 = -2 620, sous 80 − 2 500 → n'a pas bougé.
+    const r = buildIncidentReport(trailingInput({ snapshot: { limit: 2500, remaining: 120, detectedAt: at('11:13').toISOString() } }));
+    expect(r.series.map((p) => p.distance)).toEqual([2620, 2700, 1400, 120]);
+  });
+
+  it('plancher fixe (statique) : le gain du premier trade agrandit la marge', () => {
+    const r = buildIncidentReport(trailingInput({ trailing: false, snapshot: { limit: 2500, remaining: 0, detectedAt: at('11:13').toISOString() } }));
+    expect(r.kpis.startDistance).toBe(2500);
+    expect(r.series.map((p) => p.distance)).toEqual([2500, 2580, 1280, 0]);
+  });
+
+  it('perte du jour : jamais traitée comme un plancher trailing', () => {
+    const d = distanceSeries([{ tradedAt: at('09:34'), net: 80 }, { tradedAt: at('10:00'), net: -600 }], {
+      kind: 'daily_loss', trailing: true, snapshot: { limit: 500, remaining: -20, detectedAt: at('10:01').toISOString() },
+    });
+    expect(d).toEqual({ start: 500, after: [580, -20] });
+  });
+});
+
+describe('distanceSeries — trade daté après la détection (A6)', () => {
+  it('seul trade sorti après le relevé : ni « déjà franchie » ni marge de départ négative', () => {
+    const r = buildIncidentReport(input({
+      snapshot: { limit: 2000, remaining: -100, detectedAt: at('10:00').toISOString() },
+      trades: [trade('late', '10:05', 'LONG', 2, -900)],
+      alerts: [],
+    }));
+    expect(r.kpis.startDistance).toBeNull();
+    expect(r.series).toEqual([]);
+    expect(r.findings.join(' ')).not.toMatch(/déjà franchie|marge estimée/i);
+  });
+
+  it('position ouverte au franchissement avec une marge de départ positive : toujours calculée', () => {
+    const r = buildIncidentReport(input({ snapshot: { limit: 2000, remaining: 360, detectedAt: at('10:50').toISOString() } }));
+    expect(r.kpis.startDistance).toBe(1000);
+  });
+});
+
+describe('textes générés — espace insécable devant : ; ! ? % (A2)', () => {
+  it('aucun constat ni libellé d’alerte avec une espace normale devant ces signes', () => {
+    const previous: PreviousSession[] = Array.from({ length: 6 }, (_, i) => ({ day: `2026-10-0${i + 1}`, trades: 2, maxQuantity: 1, net: -10 }));
+    const alerts: IncidentReportInput['alerts'] = [
+      { at: at('10:00'), source: 'prop', type: 'drawdown', level: 'warning' },
+      { at: at('10:30'), source: 'prop', type: 'daily_loss', level: 'critical' },
+      { at: at('10:44'), source: 'behavior', type: 'C1_LOSS_STREAK' },
+    ];
+    const reports = [
+      buildIncidentReport(input()),
+      buildIncidentReport(input({ previous, alerts })),
+      buildIncidentReport(input({ alerts, snapshot: { limit: 1000, remaining: -40, detectedAt: at('21:13').toISOString() } })),
+      buildIncidentReport(input({ trades: [MOCKUP_TRADES[3]], alerts: [] })),
+    ];
+    const texts = reports.flatMap((r) => [
+      ...r.findings,
+      ...r.timeline.flatMap((e) => (e.type === 'alert' ? [e.label] : [])),
+    ]);
+    expect(texts.length).toBeGreaterThan(10);
+    for (const t of texts) expect(t).not.toMatch(/ [:;!?%]/);
   });
 });

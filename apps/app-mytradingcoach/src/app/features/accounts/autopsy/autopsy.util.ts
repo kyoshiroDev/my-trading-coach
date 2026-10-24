@@ -211,15 +211,15 @@ export function distanceChart(r: AccountIncidentReport, width: number): Distance
     // Séance d'un seul trade (ou à la même minute) : une seule heure sous l'axe, pas « 16:40 … 16:40 ».
     startLabel: firstAt ? clock(firstAt) : '',
     endLabel: lastAt && (!firstAt || clock(lastAt) !== clock(firstAt)) ? clock(lastAt) : '',
-    aria: `Distance à la limite au fil de la séance : de ${distanceMoney(values[0], cur)} à ${distanceMoney(values[values.length - 1], cur)}`,
+    aria: `Distance à la limite au fil de la séance\u00a0: de ${distanceMoney(values[0], cur)} à ${distanceMoney(values[values.length - 1], cur)}`,
   };
 }
 
 const round = (v: number) => Math.round(v * 10) / 10;
 
-/** Espace insécable devant `: ; ! ?` : la ponctuation double ne passe jamais seule à la ligne. */
+/** Espace insécable devant `: ; ! ? %` : la ponctuation double et « % » ne passent jamais seuls à la ligne. */
 export function frenchSpacing(text: string): string {
-  return text.replace(/ ([:;!?])/g, '\u00a0$1');
+  return text.replace(/ ([:;!?%])/g, '\u00a0$1');
 }
 
 /** Paragraphes de l'analyse IA (lignes vides comme séparateurs). */

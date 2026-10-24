@@ -191,4 +191,60 @@ describe("Autopsie — « Ce n'est pas un échec »", () => {
     await expect(incidents.get(b.user, a.accountId, listed.id)).rejects.toThrow('Autopsie introuvable.');
     await expect(incidents.dismiss(b.user, a.accountId, listed.id, FREE)).rejects.toThrow('Autopsie introuvable.');
   });
+
+  describe('plancher écarté par « Ce n’est pas un échec » (B1)', () => {
+    async function dismissedFloor() {
+      const { user, setupId, accountId } = await seed();
+      await trades.importTrades(user.id, session(setupId, accountId, [-2_500]), TradeSource.BROKER_SYNC);
+      const [listed] = await incidents.list(user.id, accountId);
+      const floor = async () => (await accounts.list(user.id)).find((a) => a.id === accountId)!.floorReached;
+      expect(await floor()).toBe(true);
+      await incidents.dismiss(user, accountId, listed.id, FREE);
+      return { user, setupId, accountId, incidentId: listed.id, floor };
+    }
+
+    it('le bandeau ne revient que sur une perte plus profonde', async () => {
+      const { user, setupId, accountId, incidentId, floor } = await dismissedFloor();
+      const row = await prisma.accountIncident.findUniqueOrThrow({ where: { id: incidentId } });
+      expect(row.data).toMatchObject({ limit: 2_000, dismissedMargin: -500 });
+      expect(await floor()).toBe(false);
+      await trades.importTrades(user.id, [{ ...session(setupId, accountId, [-100])[0], tradedAt: new Date(SESSION_START + 90 * 60_000).toISOString() }], TradeSource.BROKER_SYNC);
+      expect(await floor()).toBe(true);
+    });
+
+    it('séance suivante, deux lectures simultanées : effacé une fois, aucune lecture en échec, relevé gardé', async () => {
+      const { user, incidentId, floor } = await dismissedFloor();
+      const row = await prisma.accountIncident.findUniqueOrThrow({ where: { id: incidentId } });
+      await prisma.accountIncident.update({
+        where: { id: incidentId },
+        data: { data: { ...(row.data as object), dismissedDay: '2000-01-03' } },
+      });
+      const [a, b] = await Promise.all([accounts.list(user.id), accounts.list(user.id)]);
+      expect(a.find((x) => x.floorReached)).toBeDefined();
+      expect(b.find((x) => x.floorReached)).toBeDefined();
+      const after = (await prisma.accountIncident.findUniqueOrThrow({ where: { id: incidentId } })).data as Record<string, unknown>;
+      expect(after).not.toHaveProperty('dismissedMargin');
+      expect(after).not.toHaveProperty('dismissedDay');
+      expect(after).toMatchObject({ limit: 2_000, remaining: -500 });
+      expect(await floor()).toBe(true);
+    });
+
+    it('retrait plus récent que la lecture : jamais effacé par elle (écriture conditionnelle)', async () => {
+      const { incidentId } = await dismissedFloor();
+      const row = await prisma.accountIncident.findUniqueOrThrow({ where: { id: incidentId } });
+      // Ce qu'une lecture périmée tenterait (retrait du 03/01/2000), alors que la base porte celui du jour.
+      const res = await prisma.accountIncident.updateMany({
+        where: {
+          id: incidentId,
+          AND: [
+            { data: { path: ['dismissedDay'], equals: '2000-01-03' } },
+            { data: { path: ['dismissedMargin'], equals: -500 } },
+          ],
+        },
+        data: { data: { limit: 2_000 } },
+      });
+      expect(res.count).toBe(0);
+      expect((await prisma.accountIncident.findUniqueOrThrow({ where: { id: incidentId } })).data).toEqual(row.data);
+    });
+  });
 });

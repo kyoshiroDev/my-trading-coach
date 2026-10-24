@@ -69,11 +69,14 @@ input {
   font-size: 16px;
   outline: none;
   transition: border-color 0.15s;
+  /* Autoremplissage (styles.css) : fond du champ repeint sur le bon fond, anneau gardé. */
+  --autofill-bg: var(--bg);
 }
 
 input:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--blue-glow);
+  --field-ring: 0 0 0 3px var(--blue-glow);
+  box-shadow: var(--field-ring);
 }
 
 input::placeholder {
@@ -115,7 +118,8 @@ input::placeholder {
 
 .form-group.input-error input {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px var(--red-dim);
+  --field-ring: 0 0 0 3px var(--red-dim);
+  box-shadow: var(--field-ring);
 }
 
 /* ─── Bouton principal ─── */

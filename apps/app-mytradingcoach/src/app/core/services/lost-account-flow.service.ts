@@ -3,11 +3,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ConfirmService } from '@mtc/front-ui';
-import { nextAttemptLabel } from '@mtc/shared';
+import { newerAttempt, nextAttemptLabel } from '@mtc/shared';
 import { AccountsApi, TradingAccount } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradesStore } from '@app/core/stores/trades.store';
 import { ToastService, type ToastAction } from '@app/core/services/toast.service';
+import { DemoService } from '@app/core/services/demo.service';
+import { UserStore } from '@app/core/stores/user.store';
 import { apiErrorMessage } from '@app/core/utils/api-error';
 
 /** Sort d'un compte dont le plancher est atteint (feuille « Apex 50K #1 est échoué »). */
@@ -18,6 +20,10 @@ export type LostAccountChoice = 'archive' | 'keep' | 'delete';
  * le bandeau « Plancher atteint », l'alerte live ou Mes comptes, et rendues une seule fois par
  * `mtc-lost-account-sheets` (coque connectée). Les états gardent l'id du compte, jamais l'objet
  * (cf. angular.md). Aucun statut n'est changé sans un clic de l'utilisateur sur « Confirmer ».
+ *
+ * Démo (lecture seule) : chaque écriture ouvre l'invite « Crée ton compte » au PREMIER clic, sans
+ * requête. Seule la feuille de choix reste ouverte, parce qu'elle montre le parcours (archiver,
+ * garder, supprimer) : l'invite vient à son « Confirmer ».
  */
 @Injectable({ providedIn: 'root' })
 export class LostAccountFlowService {
@@ -27,6 +33,8 @@ export class LostAccountFlowService {
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
+  private readonly user = inject(UserStore);
+  private readonly demo = inject(DemoService);
 
   /** Feuille de choix ouverte pour ce compte. */
   readonly choiceId = signal<string | null>(null);
@@ -56,8 +64,25 @@ export class LostAccountFlowService {
     if (!this.busy()) this.choiceId.set(null);
   }
 
+  /**
+   * Tentative plus récente du même compte (« Apex 50K #2 » pour le #1), ou null : « Nouvelle
+   * tentative » laisse alors la place à « Voir Apex 50K #2 » (B3).
+   */
+  newerAttempt(account: Pick<TradingAccount, 'label'>): TradingAccount | null {
+    return newerAttempt(account.label, this.store.accounts());
+  }
+
+  /** « Voir Apex 50K #2 » : ce compte sélectionné, affiché dans Mes comptes. */
+  openAttempt(accountId: string): void {
+    this.choiceId.set(null);
+    this.retryId.set(null);
+    this.store.select(accountId);
+    void this.router.navigate(['/accounts']);
+  }
+
   openRetry(accountId: string): void {
     this.choiceId.set(null);
+    if (this.blockedInDemo()) return;
     this.retryId.set(accountId);
   }
 
@@ -72,6 +97,10 @@ export class LostAccountFlowService {
   async confirmChoice(choice: LostAccountChoice): Promise<void> {
     const a = this.choiceAccount();
     if (!a || this.busy()) return;
+    if (this.blockedInDemo()) {
+      this.choiceId.set(null);
+      return;
+    }
     if (choice === 'delete') {
       await this.purge(a);
       return;
@@ -92,7 +121,7 @@ export class LostAccountFlowService {
 
   /** « Archiver » sur un compte déjà échoué (Mes comptes). PATCH et non DELETE : un compte sans trade serait supprimé. */
   archive(a: TradingAccount): void {
-    if (this.busy()) return;
+    if (this.busy() || this.blockedInDemo()) return;
     this.run(this.api.update(a.id, { status: 'ARCHIVED' }), {
       success: () => `« ${a.label} » archivé.`,
       fallback: "Le compte n'a pas pu être archivé.",
@@ -102,17 +131,24 @@ export class LostAccountFlowService {
   /** « Créer Apex 50K #2 » : le serveur crée le compte (libellé, quota) ; rien n'est copié de l'ancien. */
   createRetry(): void {
     const a = this.retryAccount();
-    if (!a || this.busy()) return;
+    if (!a || this.busy() || this.blockedInDemo()) return;
     this.busy.set(true);
     this.api.retry(a.id).subscribe({
       next: (res) => {
         this.busy.set(false);
         this.retryId.set(null);
         this.store.load();
-        this.toast.success(`« ${res.data.label} » créé : il démarre à zéro.`);
+        this.toast.success(`« ${res.data.label} » créé\u00a0: il démarre à zéro.`);
       },
       error: (err: HttpErrorResponse) => {
         this.busy.set(false);
+        // Déjà créée (autre onglet, double clic) : pas une erreur. La liste rechargée la montre et
+        // le bouton devient « Voir Apex 50K #2 ».
+        if (err.status === 409 && (err.error as { code?: string } | null)?.code === 'RETRY_EXISTS') {
+          this.retryId.set(null);
+          this.store.load();
+          return;
+        }
         this.toast.error(apiErrorMessage(err, "La nouvelle tentative n'a pas pu être créée."));
       },
     });
@@ -122,7 +158,7 @@ export class LostAccountFlowService {
     const n = a.metrics?.tradesCount ?? 0;
     const trades = n === 0 ? 'Son journal sera effacé' : `Ses ${n} trade${n > 1 ? 's' : ''} et son journal seront effacés`;
     const ok = await this.confirm.ask({
-      title: `Supprimer définitivement « ${a.label} » ?`,
+      title: `Supprimer définitivement « ${a.label} »\u00a0?`,
       message: `${trades}, sans retour possible. Ton compte MyTradingCoach et ton abonnement ne changent pas.`,
       confirmLabel: 'Supprimer définitivement',
       danger: true,
@@ -187,6 +223,13 @@ export class LostAccountFlowService {
         this.toast.error(apiErrorMessage(err, opts.fallback));
       },
     });
+  }
+
+  /** Démo : ouvre l'invite « Crée ton compte » à la place de l'écriture, et le signale. */
+  private blockedInDemo(): boolean {
+    if (!this.user.isDemo()) return false;
+    this.demo.promptSignup();
+    return true;
   }
 
   private find(id: string | null): TradingAccount | null {
