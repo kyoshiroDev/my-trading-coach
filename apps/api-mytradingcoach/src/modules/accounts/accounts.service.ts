@@ -31,7 +31,7 @@ import { computeProgress, type AccountProgress, type ProgressInput } from './acc
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
 import {
   floorDismissalExpired, isFloorReached, newerAttempt, nextAttemptLabel, readFloorDismissal, retryAccountData,
-  withoutFloorDismissal,
+  withoutFloorDismissal, type FloorDismissal,
 } from './account-retry';
 import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
@@ -330,7 +330,7 @@ export class AccountsService {
     ]);
     const dismissalByAccount = new Map(dismissedFloors.map((d) => [d.accountId, d]));
     const today = tradingDay(new Date());
-    const expired: { id: string; data: unknown }[] = [];
+    const expired: { id: string; data: unknown; dismissal: FloorDismissal }[] = [];
 
     const result = accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
       const metrics = this.ruleMetricsFromAgg(
@@ -340,19 +340,41 @@ export class AccountsService {
       const row = dismissalByAccount.get(account.id);
       let dismissal = readFloorDismissal(row?.data);
       if (row && dismissal && floorDismissalExpired(dismissal, metrics.drawdown?.margin ?? null, today)) {
-        expired.push(row);
+        expired.push({ ...row, dismissal });
         dismissal = null;
       }
       // Compte perdu : plancher estimé atteint → bandeau côté front, statut inchangé (l'utilisateur confirme).
       return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown, dismissal), openIncidentId };
     });
-    // Retrait périmé (marge repassée au-dessus de zéro, séance suivante) : effacé, la prochaine
-    // perte sous le plancher redonne le bandeau. Rare, et sans effet sur la réponse en cours.
-    await Promise.all(expired.map((row) => this.prisma.accountIncident.update({
-      where: { id: row.id },
-      data: { data: withoutFloorDismissal(row.data) },
-    }))).catch((err: unknown) => this.logger.warn(`Retrait de plancher non effacé : ${(err as Error).message}`));
+    await this.clearExpiredFloorDismissals(expired);
     return result;
+  }
+
+  /**
+   * Retrait périmé (marge repassée au-dessus de zéro, séance suivante) : effacé, la prochaine perte
+   * sous le plancher redonne le bandeau. Écriture rare faite pendant une lecture, donc :
+   * - jamais bloquante : un échec est journalisé (sans données) et la liste part quand même ;
+   * - idempotente : effacé seulement si l'incident porte ENCORE ce retrait. Deux lectures
+   *   simultanées écrivent le même résultat, la seconde ne touche à rien (0 ligne), et un retrait
+   *   plus récent posé entre-temps n'est jamais effacé par une lecture qui ne l'a pas vu.
+   */
+  private async clearExpiredFloorDismissals(expired: { id: string; data: unknown; dismissal: FloorDismissal }[]): Promise<void> {
+    if (expired.length === 0) return;
+    try {
+      await Promise.all(expired.map(({ id, data, dismissal }) => this.prisma.accountIncident.updateMany({
+        where: {
+          id,
+          AND: [
+            { data: { path: ['dismissedDay'], equals: dismissal.day } },
+            { data: { path: ['dismissedMargin'], equals: dismissal.margin } },
+          ],
+        },
+        data: { data: withoutFloorDismissal(data) },
+      })));
+    } catch (err: unknown) {
+      const code = (err as { code?: unknown } | null)?.code;
+      this.logger.warn(`Retrait de plancher non effacé (${expired.length} incident(s)${typeof code === 'string' ? `, ${code}` : ''}) : réessai à la prochaine lecture.`);
+    }
   }
 
   private clamp01(x: number): number {

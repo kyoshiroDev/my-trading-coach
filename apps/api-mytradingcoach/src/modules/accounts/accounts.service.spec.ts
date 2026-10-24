@@ -29,7 +29,7 @@ function makePrisma() {
     brokerDailyClose: { groupBy: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
     brokerConnection: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0) },
     brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
-    accountIncident: { findMany: vi.fn(async (): Promise<unknown[]> => []), update: vi.fn(async () => ({})) },
+    accountIncident: { findMany: vi.fn(async (): Promise<unknown[]> => []), updateMany: vi.fn(async () => ({ count: 1 })) },
   };
 }
 
@@ -336,6 +336,14 @@ describe('AccountsService', () => {
 
   describe('list — plancher écarté par « Ce n’est pas un échec » (B1)', () => {
     const today = tradingDay(new Date());
+    /** Effacement conditionnel : seulement si l'incident porte ENCORE ce retrait. */
+    const clearIf = (id: string, day: string) => ({
+      where: {
+        id,
+        AND: [{ data: { path: ['dismissedDay'], equals: day } }, { data: { path: ['dismissedMargin'], equals: -50 } }],
+      },
+      data: { data: { limit: 2000 } },
+    });
     function withAccount(margin: number, dismissed: Record<string, unknown> | null) {
       prisma.tradingAccount.findMany.mockResolvedValue([
         { id: 'a1', userId: 'u1', status: 'ACTIVE', label: 'Apex 50K #1', propFirmPlan: null, brokerConnections: [], incidents: [] },
@@ -350,7 +358,7 @@ describe('AccountsService', () => {
       withAccount(-40, { limit: 2000, dismissedMargin: -50, dismissedDay: today });
       const [a] = await svc.list('u1');
       expect(a.floorReached).toBe(false);
-      expect(prisma.accountIncident.update).not.toHaveBeenCalled();
+      expect(prisma.accountIncident.updateMany).not.toHaveBeenCalled();
     });
 
     it('nouvelle perte plus profonde : le bandeau revient', async () => {
@@ -361,13 +369,35 @@ describe('AccountsService', () => {
     it('séance suivante : retrait effacé, le bandeau revient', async () => {
       withAccount(-40, { limit: 2000, dismissedMargin: -50, dismissedDay: '2000-01-03' });
       expect((await svc.list('u1'))[0].floorReached).toBe(true);
-      expect(prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { data: { limit: 2000 } } });
+      expect(prisma.accountIncident.updateMany).toHaveBeenCalledWith(clearIf('inc', '2000-01-03'));
     });
 
     it('marge repassée au-dessus de zéro : retrait effacé (la prochaine perte sous le plancher redonne le bandeau)', async () => {
       withAccount(30, { limit: 2000, dismissedMargin: -50, dismissedDay: today });
       expect((await svc.list('u1'))[0].floorReached).toBe(false);
-      expect(prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { data: { limit: 2000 } } });
+      expect(prisma.accountIncident.updateMany).toHaveBeenCalledWith(clearIf('inc', today));
+    });
+
+    it('effacement en échec : la liste part quand même, journal sans données', async () => {
+      withAccount(-40, { limit: 2000, remaining: -50, dismissedMargin: -50, dismissedDay: '2000-01-03' });
+      prisma.accountIncident.updateMany.mockRejectedValue(Object.assign(new Error('échec sur {"remaining":-50} pour inc'), { code: 'P1001' }));
+      const warn = vi.spyOn((svc as unknown as { logger: { warn: (m: string) => void } }).logger, 'warn').mockImplementation(() => undefined);
+      const [a] = await svc.list('u1');
+      expect(a.floorReached).toBe(true);
+      expect(warn).toHaveBeenCalledTimes(1);
+      const line = warn.mock.calls[0][0];
+      expect(line).toContain('P1001');
+      expect(line).not.toMatch(/remaining|-50|\binc\b|échec sur/);
+    });
+
+    it('deux lectures simultanées : la même écriture conditionnelle, la seconde sans effet, aucune erreur', async () => {
+      withAccount(-40, { limit: 2000, dismissedMargin: -50, dismissedDay: '2000-01-03' });
+      prisma.accountIncident.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+      const [first, second] = await Promise.all([svc.list('u1'), svc.list('u1')]);
+      expect(first[0].floorReached).toBe(true);
+      expect(second[0].floorReached).toBe(true);
+      expect(prisma.accountIncident.updateMany).toHaveBeenCalledTimes(2);
+      expect(prisma.accountIncident.updateMany.mock.calls[0]).toEqual(prisma.accountIncident.updateMany.mock.calls[1]);
     });
   });
 
