@@ -5,7 +5,7 @@
          (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" data-testid="lost-account-choice">
       <div class="la-grab" aria-hidden="true"></div>
       <h3 id="la-choice-title" class="la-title">{{ a.label }} est échoué</h3>
-      <p id="la-choice-sub" class="la-note">Ses trades sortent de tes statistiques. Que veux-tu en faire ?</p>
+      <p id="la-choice-sub" class="la-note">Ses trades sortent de tes statistiques. Que veux-tu en faire&nbsp;?</p>
 
       <fieldset class="la-options">
         <legend class="sr-only">Sort du compte {{ a.label }}</legend>
@@ -49,7 +49,7 @@
         <div class="la-name" data-testid="retry-label">{{ flow.retryLabel() }}</div>
         <div class="la-meta">Même firme · même plan · même taille</div>
       </div>
-      <p class="la-note">Le nouveau compte démarre à zéro, sans trade ni historique. Si tu utilises la synchro Tradovate, relie le nouveau compte : il a un autre identifiant chez ta firm.</p>
+      <p class="la-note">Le nouveau compte démarre à zéro, sans trade ni historique. Si tu utilises la synchro Tradovate, relie le nouveau compte&nbsp;: il a un autre identifiant chez ta firm.</p>
       <button type="button" class="la-btn pri" [disabled]="flow.busy()" (click)="flow.createRetry()" data-testid="retry-confirm">
         {{ flow.busy() ? 'Création…' : 'Créer ' + flow.retryLabel() }}
       </button>
