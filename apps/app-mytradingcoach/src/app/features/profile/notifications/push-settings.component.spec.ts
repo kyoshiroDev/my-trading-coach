@@ -4,6 +4,7 @@ import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import type { TraderPushSettings } from '@mtc/shared';
 import { PushApi } from '@app/core/api/push.api';
 import { PUSH_BROWSER, type BrowserEnv, type PushBrowser } from '@app/core/push/push-browser';
+import { AuthService } from '@app/core/auth/auth.service';
 import { UserStore } from '@app/core/stores/user.store';
 import { ToastService } from '@app/core/services/toast.service';
 import { PushSettingsComponent, fromHhmm, toHhmm } from './push-settings.component';
@@ -42,6 +43,7 @@ async function mount(opts: {
     providers: [
       { provide: PushApi, useValue: api },
       { provide: PUSH_BROWSER, useValue: browser },
+      { provide: AuthService, useValue: { currentUser: signal({ id: 'u1' }) } },
       { provide: UserStore, useValue: { isPremium: signal(opts.premium ?? true), isDemo: signal(!!opts.demo), trialAvailable: signal(true) } },
     ],
   });
@@ -81,24 +83,24 @@ describe('Section Notifications du profil', () => {
     const { q, api, settle } = await mount();
     q('push-type-RECAP')!.click();
     await settle();
-    expect(api.preferences).toHaveBeenCalledWith({ mutedTypes: [] });
+    expect(api.preferences).toHaveBeenCalledWith({ mutedTypes: [] }, expect.anything());
     expect(q('push-type-RECAP')!.getAttribute('aria-checked')).toBe('true');
     q('push-type-BEHAVIOR')!.click();
     await settle();
-    expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: ['BEHAVIOR'] });
+    expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: ['BEHAVIOR'] }, expect.anything());
   });
 
   it('heures silencieuses : activées à 22:00-07:00, puis modifiables', async () => {
     const { q, api, settle } = await mount();
     q('push-quiet-toggle')!.click();
     await settle();
-    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 420 } });
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 420 } }, expect.anything());
     expect((q('push-quiet-start') as HTMLInputElement).value).toBe('22:00');
     const end = q('push-quiet-end') as HTMLInputElement;
     end.value = '06:30';
     end.dispatchEvent(new Event('change'));
     await settle();
-    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 390 } });
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 390 } }, expect.anything());
   });
 
   it('notification test : toast « Notification envoyée, regarde ton écran »', async () => {
@@ -112,7 +114,7 @@ describe('Section Notifications du profil', () => {
     const { el, api, settle, q } = await mount();
     (el.querySelectorAll('[data-testid="push-remove"]')[1] as HTMLElement).click();
     await settle();
-    expect(api.removeDevice).toHaveBeenCalledWith('d2');
+    expect(api.removeDevice).toHaveBeenCalledWith('d2', expect.anything());
     expect(q('push-active')).not.toBeNull();
   });
 

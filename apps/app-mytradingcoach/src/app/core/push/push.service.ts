@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import {
   PUSH_MAX_DEVICES,
   type AdminPushSubscriptionInput,
@@ -7,6 +7,8 @@ import {
   type TraderPushSettings,
 } from '@mtc/shared';
 import { PushApi } from '../api/push.api';
+import { AuthService } from '../auth/auth.service';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { PUSH_BROWSER, type BrowserEnv } from './push-browser';
 
 /**
@@ -43,11 +45,22 @@ export function browserState(env: BrowserEnv): Exclude<PushState, 'server-disabl
  * État, abonnement et réglages push du trader (#666). Repris de l'admin, sur le service worker
  * maison (`push-sw.js`). La permission du navigateur n'est demandée QUE par `enable()`, appelé au
  * clic sur « Activer les notifications », jamais au chargement.
+ *
+ * Propre à un compte (revue phase 2 I2) : tout est vidé à la déconnexion et à tout changement
+ * d'utilisateur, les requêtes en cours sont annulées, et une réponse arrivée pour le compte
+ * précédent est ignorée. Tant que l'état du compte courant n'est pas chargé, `state` vaut `null` :
+ * rien n'est affiché et aucune commande n'est possible.
  */
 @Injectable({ providedIn: 'root' })
 export class PushService {
   private readonly api = inject(PushApi);
   private readonly browser = inject(PUSH_BROWSER);
+  private readonly auth = inject(AuthService);
+
+  /** Compte à qui appartient l'état affiché, et génération de cet état (changée à chaque remise à zéro). */
+  private owner: string | null = null;
+  private generation = 0;
+  private abort = new AbortController();
 
   /** `null` tant que le diagnostic n'est pas fait. */
   readonly state = signal<PushState | null>(null);
@@ -61,17 +74,61 @@ export class PushService {
     () => this.state() !== 'subscribed' && (this.settings()?.devices.length ?? 0) >= PUSH_MAX_DEVICES,
   );
 
+  constructor() {
+    inject(UserScopedReset).register(() => this.reset());
+    // Autre compte sans passer par la déconnexion (connexion par-dessus une session) : même remise à zéro.
+    effect(() => {
+      const id = this.userId();
+      untracked(() => {
+        if (this.owner !== null && id !== this.owner) this.reset();
+      });
+    });
+  }
+
+  private userId(): string | null {
+    return this.auth.currentUser()?.id ?? null;
+  }
+
+  /** Vide l'état, annule les requêtes en cours : plus rien du compte précédent n'est lu ni affiché. */
+  private reset(): void {
+    this.generation++;
+    this.abort.abort();
+    this.abort = new AbortController();
+    this.owner = null;
+    this.state.set(null);
+    this.settings.set(null);
+    this.currentDeviceId.set(null);
+    this.busy.set(false);
+    this.error.set(null);
+  }
+
+  /** Vrai tant que la génération lue au départ est toujours celle du compte courant. */
+  private current(generation: number): boolean {
+    return generation === this.generation && this.owner !== null && this.owner === this.userId();
+  }
+
+  /** Commande permise : état du compte courant chargé (jamais pendant un chargement ou après un changement de compte). */
+  private loaded(generation: number): boolean {
+    return this.current(generation) && this.state() !== null;
+  }
+
   /** `readOnly` (compte démo) : réglages affichés, aucun abonnement ni lecture de l'appareil. */
   async init(opts: { readOnly?: boolean } = {}): Promise<void> {
+    const uid = this.userId();
+    if (this.owner !== uid) this.reset();
+    this.owner = uid;
+    const gen = this.generation;
+    const signal = this.abort.signal;
     this.error.set(null);
     let settings: TraderPushSettings;
     try {
-      settings = await this.api.settings();
+      settings = await this.api.settings(signal);
     } catch {
       // Section masquée plutôt qu'une erreur : le push n'est pas une fonction critique.
-      this.state.set('server-disabled');
+      if (this.current(gen)) this.state.set('server-disabled');
       return;
     }
+    if (!this.current(gen)) return;
     this.settings.set(settings);
     if (!settings.enabled || !settings.publicKey) {
       this.state.set('server-disabled');
@@ -84,19 +141,22 @@ export class PushService {
     }
     try {
       const sub = await this.browser.currentSubscription();
+      if (!this.current(gen)) return;
       if (!sub) {
         this.state.set('supported');
         return;
       }
-      let device = await this.api.device(sub.endpoint);
+      let device = await this.api.device(sub.endpoint, signal);
       // Abonnement du navigateur inconnu du serveur (supprimé après un 410, autre compte) :
       // resynchronisé, comme dans l'admin.
-      if (!device.subscribed) device = await this.api.subscribe(sub.toJSON() as AdminPushSubscriptionInput);
+      if (!device.subscribed) device = await this.api.subscribe(sub.toJSON() as AdminPushSubscriptionInput, signal);
+      const fresh = await this.api.settings(signal);
+      if (!this.current(gen)) return;
       this.currentDeviceId.set(device.id);
       this.state.set('subscribed');
-      this.settings.set(await this.api.settings());
+      this.settings.set(fresh);
     } catch {
-      this.state.set('supported');
+      if (this.current(gen)) this.state.set('supported');
     }
   }
 
@@ -104,22 +164,28 @@ export class PushService {
   async enable(): Promise<void> {
     const key = this.settings()?.publicKey;
     if (!key || this.busy()) return;
+    const gen = this.generation;
+    const signal = this.abort.signal;
     this.busy.set(true);
     this.error.set(null);
     try {
       const sub = await this.browser.subscribe(key);
-      const device = await this.api.subscribe(sub.toJSON() as AdminPushSubscriptionInput);
+      if (!this.current(gen)) return;
+      const device = await this.api.subscribe(sub.toJSON() as AdminPushSubscriptionInput, signal);
+      const fresh = await this.api.settings(signal);
+      if (!this.current(gen)) return;
       this.currentDeviceId.set(device.id);
       this.state.set('subscribed');
-      this.settings.set(await this.api.settings());
+      this.settings.set(fresh);
     } catch {
+      if (!this.current(gen)) return;
       if (this.browser.env().notificationPermission === 'denied') {
         this.state.set('denied');
       } else {
         this.error.set("L'activation des notifications a échoué. Réessaie.");
       }
     } finally {
-      this.busy.set(false);
+      if (gen === this.generation) this.busy.set(false);
     }
   }
 
@@ -130,15 +196,20 @@ export class PushService {
 
   /** Retire un appareil de la liste ; si c'est celui-ci, il est aussi désabonné côté navigateur. */
   async removeDevice(id: string): Promise<boolean> {
+    const gen = this.generation;
+    if (!this.loaded(gen)) return false;
+    const signal = this.abort.signal;
     try {
-      await this.api.removeDevice(id);
+      await this.api.removeDevice(id, signal);
+      if (!this.current(gen)) return false;
       if (id === this.currentDeviceId()) {
         const sub = await this.browser.currentSubscription().catch(() => null);
         await sub?.unsubscribe().catch(() => false);
         this.currentDeviceId.set(null);
         this.state.set('supported');
       }
-      this.settings.set(await this.api.settings());
+      const fresh = await this.api.settings(signal);
+      if (this.current(gen)) this.settings.set(fresh);
       return true;
     } catch {
       return false;
@@ -165,22 +236,25 @@ export class PushService {
     input: Parameters<PushApi['preferences']>[0],
     optimistic: (s: TraderPushSettings) => TraderPushSettings,
   ): Promise<boolean> {
+    const gen = this.generation;
     const previous = this.settings();
-    if (!previous) return false;
+    if (!previous || !this.loaded(gen)) return false;
     this.settings.set(optimistic(previous));
     try {
-      this.settings.set(await this.api.preferences(input));
+      const saved = await this.api.preferences(input, this.abort.signal);
+      if (this.current(gen)) this.settings.set(saved);
       return true;
     } catch {
-      this.settings.set(previous);
+      if (this.current(gen)) this.settings.set(previous);
       return false;
     }
   }
 
   /** « Envoyer une notification test » : nombre d'appareils atteints, `null` en cas d'échec. */
   async test(): Promise<number | null> {
+    if (!this.loaded(this.generation)) return null;
     try {
-      return (await this.api.test()).delivered;
+      return (await this.api.test(this.abort.signal)).delivered;
     } catch {
       return null;
     }

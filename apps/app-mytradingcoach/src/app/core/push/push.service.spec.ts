@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { TraderPushSettings } from '@mtc/shared';
 import { PushApi } from '../api/push.api';
+import { AuthService } from '../auth/auth.service';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { PUSH_BROWSER, type BrowserEnv, type PushBrowser } from './push-browser';
 import { PushService, browserState } from './push.service';
 
@@ -41,8 +44,20 @@ function setup(opts: { env?: BrowserEnv; settings?: TraderPushSettings | Error; 
     preferences: vi.fn(async (input: { mutedTypes?: string[] }) => settings({ mutedTypes: (input.mutedTypes ?? ['RECAP']) as TraderPushSettings['mutedTypes'] })),
     test: vi.fn(async () => ({ subscriptions: 1, delivered: 1, failed: 0, removed: 0 })),
   };
-  TestBed.configureTestingModule({ providers: [{ provide: PUSH_BROWSER, useValue: browser }, { provide: PushApi, useValue: api }] });
-  return { service: TestBed.inject(PushService), browser, api, setEnv: (e: BrowserEnv) => { currentEnv = e; } };
+  const currentUser = signal<{ id: string } | null>({ id: 'A' });
+  TestBed.configureTestingModule({
+    providers: [
+      { provide: PUSH_BROWSER, useValue: browser },
+      { provide: PushApi, useValue: api },
+      { provide: AuthService, useValue: { currentUser } },
+    ],
+  });
+  return {
+    service: TestBed.inject(PushService), browser, api, currentUser,
+    setEnv: (e: BrowserEnv) => { currentEnv = e; },
+    /** `AuthService.logout` : purge des stores du compte. */
+    logout: () => { TestBed.inject(UserScopedReset).resetAll(); currentUser.set(null); },
+  };
 }
 
 afterEach(() => TestBed.resetTestingModule());
@@ -159,7 +174,7 @@ describe('PushService réglages et appareils', () => {
     await service.init();
     expect(service.isTypeEnabled('RECAP')).toBe(false);
     expect(await service.setTypeEnabled('RECAP', true)).toBe(true);
-    expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: [] });
+    expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: [] }, expect.anything());
     expect(service.isTypeEnabled('RECAP')).toBe(true);
 
     api.preferences.mockRejectedValueOnce(new Error('500'));
@@ -171,9 +186,9 @@ describe('PushService réglages et appareils', () => {
     const { service, api } = setup({ sub: fakeSub() });
     await service.init();
     await service.setQuietHours({ start: 1320, end: 420 });
-    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 420 } });
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 420 } }, expect.anything());
     await service.setQuietHours(null);
-    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: null });
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: null }, expect.anything());
   });
 
   it('retirer CET appareil : désabonné aussi côté navigateur, retour à supported', async () => {
@@ -181,7 +196,7 @@ describe('PushService réglages et appareils', () => {
     const { service, api } = setup({ sub });
     await service.init();
     expect(await service.removeDevice('d1')).toBe(true);
-    expect(api.removeDevice).toHaveBeenCalledWith('d1');
+    expect(api.removeDevice).toHaveBeenCalledWith('d1', expect.anything());
     expect(sub.unsubscribe).toHaveBeenCalledOnce();
     expect(service.state()).toBe('supported');
   });
@@ -200,5 +215,87 @@ describe('PushService réglages et appareils', () => {
     const { service } = setup({ settings: settings({ devices }) });
     await service.init();
     expect(service.deviceLimitReached()).toBe(true);
+  });
+});
+
+/** Promesse résolue à la main, pour tenir une réponse de l'API en attente. */
+function deferred<T>() {
+  let resolve!: (v: T) => void;
+  let reject!: (e: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
+describe('PushService : un compte puis un autre dans le même onglet (revue phase 2 I2)', () => {
+  const devicesOfA = [{ id: 'd1', label: 'Chrome · Android', createdAt: '2026-10-01T00:00:00.000Z', lastSuccessAt: null }];
+
+  it('A se déconnecte, B se connecte : pendant le chargement B ne voit rien de A et aucune écriture ne part', async () => {
+    const { service, api, currentUser, logout } = setup({ sub: fakeSub(), settings: settings({ devices: devicesOfA }) });
+    await service.init();
+    expect(service.state()).toBe('subscribed');
+
+    logout();
+    expect(service.state()).toBeNull();
+    expect(service.settings()).toBeNull();
+    expect(service.currentDeviceId()).toBeNull();
+
+    currentUser.set({ id: 'B' });
+    const slow = deferred<TraderPushSettings>();
+    api.settings.mockImplementation(() => slow.promise);
+    const loading = service.init();
+    // Réglages de B pas encore reçus : rien de A, et les commandes ne partent pas.
+    expect(service.state()).toBeNull();
+    expect(service.settings()).toBeNull();
+    expect(service.currentDeviceId()).toBeNull();
+    api.preferences.mockClear();
+    expect(await service.setTypeEnabled('RECAP', true)).toBe(false);
+    expect(await service.setQuietHours({ start: 1320, end: 420 })).toBe(false);
+    expect(await service.removeDevice('d1')).toBe(false);
+    expect(api.preferences).not.toHaveBeenCalled();
+    expect(api.removeDevice).not.toHaveBeenCalled();
+
+    slow.resolve(settings({ mutedTypes: [], devices: [] }));
+    await loading;
+    expect(service.settings()?.devices).toEqual([]);
+  });
+
+  it('réponse arrivée pour A après le changement de compte : ignorée, requête annulée', async () => {
+    const { service, api, currentUser, logout } = setup({ sub: fakeSub() });
+    const slow = deferred<TraderPushSettings>();
+    let signalOfA: AbortSignal | undefined;
+    api.settings.mockImplementationOnce((s?: AbortSignal) => { signalOfA = s; return slow.promise; });
+    const loadingA = service.init();
+
+    logout();
+    expect(signalOfA?.aborted).toBe(true);
+    currentUser.set({ id: 'B' });
+    slow.resolve(settings({ devices: devicesOfA }));
+    await loadingA;
+    expect(service.state()).toBeNull();
+    expect(service.settings()).toBeNull();
+    expect(api.device).not.toHaveBeenCalled();
+  });
+
+  it('autre compte sans déconnexion (connexion par-dessus la session) : même remise à zéro', async () => {
+    const { service, currentUser } = setup({ sub: fakeSub(), settings: settings({ devices: devicesOfA }) });
+    await service.init();
+    currentUser.set({ id: 'B' });
+    TestBed.tick();
+    expect(service.state()).toBeNull();
+    expect(service.settings()).toBeNull();
+    expect(service.currentDeviceId()).toBeNull();
+  });
+
+  it('écriture partie pour A, réponse reçue après le passage à B : jamais affichée chez B', async () => {
+    const { service, api, currentUser, logout } = setup({ sub: fakeSub() });
+    await service.init();
+    const slow = deferred<TraderPushSettings>();
+    api.preferences.mockImplementationOnce(() => slow.promise);
+    const saving = service.setTypeEnabled('RECAP', true);
+    logout();
+    currentUser.set({ id: 'B' });
+    slow.resolve(settings({ mutedTypes: [] }));
+    await saving;
+    expect(service.settings()).toBeNull();
   });
 });
