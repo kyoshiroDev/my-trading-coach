@@ -7,15 +7,17 @@ import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import Redis from 'ioredis';
 import { redisSettings } from '../../infra/redis-config';
 import type { RedisService } from '../../infra/redis.service';
-import { claimPush, pushedKey, releasePush } from './prop-alert-push';
+import { claimPush, countUndelivered, pushedKey, releasePush } from './prop-alert-push';
 
 const base = redisSettings();
 const client = new Redis({ host: base.host, port: base.port, password: base.password, db: 13 });
 const redis = { client } as unknown as RedisService;
 const key = pushedKey('acc-test', 'drawdown', '2026-10-23');
 
+const failKey = `${key}:undelivered:breached`;
+
 beforeEach(async () => {
-  await client.del(key);
+  await client.del(key, failKey);
 });
 
 afterAll(async () => {
@@ -55,3 +57,33 @@ describe('claimPush / releasePush (Lua)', () => {
     expect(await client.get(key)).toBe('breached');
   });
 });
+
+describe('countUndelivered : compteur et expiration atomiques (revue #726 m11)', () => {
+  it('premier comptage : la clé naît avec son TTL', async () => {
+    expect(await countUndelivered(redis, key, 'breached', 120)).toBe(1);
+    const ttl = await client.ttl(failKey);
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(120);
+  });
+
+  it('comptages suivants : le total monte, le TTL d’origine est gardé (pas prolongé)', async () => {
+    await countUndelivered(redis, key, 'breached', 120);
+    await client.expire(failKey, 30);
+    expect(await countUndelivered(redis, key, 'breached', 120)).toBe(2);
+    expect(await client.ttl(failKey)).toBeLessThanOrEqual(30);
+  });
+
+  it('clé restée sans TTL (crash entre INCR et EXPIRE avant le correctif) : TTL reposé au comptage suivant', async () => {
+    await client.set(failKey, '1');
+    expect(await client.ttl(failKey)).toBe(-1);
+    expect(await countUndelivered(redis, key, 'breached', 120)).toBe(2);
+    expect(await client.ttl(failKey)).toBeGreaterThan(0);
+  });
+
+  it('20 comptages simultanés : total exact, jamais de clé sans TTL', async () => {
+    const totals = await Promise.all(Array.from({ length: 20 }, () => countUndelivered(redis, key, 'breached', 120)));
+    expect([...totals].sort((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(await client.ttl(failKey)).toBeGreaterThan(0);
+  });
+});
+

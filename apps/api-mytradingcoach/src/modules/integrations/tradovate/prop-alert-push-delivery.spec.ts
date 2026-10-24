@@ -26,11 +26,14 @@ function setup(devices: { id: string; endpoint: string; reply: Reply }[], pushPr
       get: vi.fn(async (k: string) => store.get(k) ?? null),
       set: vi.fn(async (k: string, v: string) => { store.set(k, v); return 'OK'; }),
       del: vi.fn(async (...keys: string[]) => { keys.forEach((k) => store.delete(k)); return keys.length; }),
-      incr: vi.fn(async (k: string) => { const n = Number(store.get(k) ?? 0) + 1; store.set(k, String(n)); return n; }),
-      expire: vi.fn(async () => 1),
       // Scripts Lua de `prop-alert-push.ts`, rejoués en JS (exécutés pour de vrai dans l'int-spec).
       eval: vi.fn(async (lua: string, _n: number, key: string, level: string, a: string) => {
         const cur = store.get(key) ?? null;
+        if (lua.includes("'incr'")) {
+          const n = Number(cur ?? 0) + 1;
+          store.set(key, String(n));
+          return n;
+        }
         if (lua.includes('local rank')) {
           if (cur && RANK[cur as keyof typeof RANK] >= RANK[level as keyof typeof RANK]) return null;
           store.set(key, level);
@@ -137,7 +140,7 @@ describe('Push prop firm : rien n’est parti, aucun essai consommé (revue #726
       const { sync, store, send, redis } = setup(devices, pref);
       for (let i = 0; i < MAX_UNDELIVERED_PUSH + 2; i++) await sync();
       expect(send).not.toHaveBeenCalled();
-      expect(redis.client.incr).not.toHaveBeenCalled();
+      expect(redis.client.eval.mock.calls.filter((c) => String(c[0]).includes("'incr'"))).toHaveLength(0);
       expect([...store.keys()].some((k) => k.includes(':undelivered:'))).toBe(false);
       expect(store.has(PUSH_KEY)).toBe(false);
     },
