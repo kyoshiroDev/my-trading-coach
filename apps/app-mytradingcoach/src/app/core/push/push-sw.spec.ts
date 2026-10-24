@@ -63,6 +63,14 @@ describe('push-sw.js', () => {
     expect(sw.shown[0].title).toBe('MyTradingCoach');
   });
 
+  it.each([null, 42, 'texte', [1]])('payload JSON %j : notification neutre, sans planter (m6)', async (payload) => {
+    const sw = load();
+    await sw.run('push', push(payload));
+    expect(sw.shown).toHaveLength(1);
+    expect(sw.shown[0].title).toBe('MyTradingCoach');
+    expect(sw.shown[0].options['data']).toEqual({ url: '/', settingsUrl: '/' });
+  });
+
   it.each([
     ['https://evil.example.com/vol', '/'],
     ['//evil.example.com/vol', '/'],

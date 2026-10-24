@@ -34,6 +34,8 @@ self.addEventListener('push', (event) => {
   } catch (e) {
     data = {};
   }
+  // `null`, un nombre, une chaîne ou un tableau : notification neutre (revue phase 2 m6).
+  if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
   const title = typeof data.title === 'string' && data.title ? data.title : 'MyTradingCoach';
   event.waitUntil(
     self.registration.showNotification(title, {
