@@ -1,5 +1,7 @@
-import { WebPushError, sendNotification } from 'web-push';
+import { generateRequestDetails } from 'web-push';
 import type { PushConfig } from '../../config/push-config';
+import { PUSH_DEADLINE_MS, PUSH_MAX_RESPONSE_BYTES, postWithLimits, type PushHttpLimits } from './push-http';
+import { pushEndpointCheck } from './push-endpoint';
 
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 /** Résultat de `resolvePushConfig` (fourni par `PushCoreModule`). */
@@ -21,32 +23,34 @@ export interface PushSender {
   send(target: PushTarget, payload: string, options: PushSendOptions): Promise<number>;
 }
 
-/** Implémentation réelle : bibliothèque web-push (chiffrement aes128gcm + VAPID). Reprise de xmr-trader. */
+/**
+ * Implémentation réelle : `web-push` chiffre (aes128gcm) et signe (VAPID) la requête, l'envoi HTTP
+ * est le nôtre (`postWithLimits` : délai total, plafond de réponse, aucune redirection). L'adresse
+ * est revérifiée contre la liste blanche juste avant l'envoi. Rend le code HTTP du service push.
+ */
 export class WebPushLibSender implements PushSender {
-  constructor(private readonly vapid: PushConfig) {}
+  constructor(
+    private readonly vapid: PushConfig,
+    private readonly limits: PushHttpLimits = { deadlineMs: PUSH_DEADLINE_MS, maxResponseBytes: PUSH_MAX_RESPONSE_BYTES },
+    /** Tests seulement : faux serveur local, hors liste blanche. */
+    private readonly checkEndpoint = (endpoint: string) => pushEndpointCheck(endpoint).ok,
+  ) {}
 
   async send(target: PushTarget, payload: string, options: PushSendOptions): Promise<number> {
-    try {
-      const res = await sendNotification(
-        { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
-        payload,
-        {
-          vapidDetails: {
-            subject: this.vapid.subject,
-            publicKey: this.vapid.publicKey,
-            privateKey: this.vapid.privateKey,
-          },
-          TTL: options.ttlSeconds,
-          urgency: options.urgency,
-          timeout: 10_000,
-          contentEncoding: 'aes128gcm',
-        },
-      );
-      return res.statusCode;
-    } catch (e) {
-      // Réponse HTTP d'erreur du service push : on renvoie son code (404/410 = abonnement mort).
-      if (e instanceof WebPushError) return e.statusCode;
-      throw e;
-    }
+    if (!this.checkEndpoint(target.endpoint)) throw new Error('service push non autorisé');
+    const details = generateRequestDetails(
+      { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
+      payload,
+      {
+        vapidDetails: { subject: this.vapid.subject, publicKey: this.vapid.publicKey, privateKey: this.vapid.privateKey },
+        TTL: options.ttlSeconds,
+        urgency: options.urgency,
+        contentEncoding: 'aes128gcm',
+      },
+    );
+    return postWithLimits(
+      { endpoint: details.endpoint, method: details.method, headers: details.headers as Record<string, string | number>, body: details.body },
+      this.limits,
+    );
   }
 }

@@ -86,7 +86,9 @@ export class TraderPushService implements OnModuleInit {
     const row = await this.prisma.userPushDevice.upsert({
       where: { endpoint: dto.endpoint },
       create: { userId, endpoint: dto.endpoint, p256dh: dto.keys.p256dh, auth: dto.keys.auth, userAgent: ua },
-      update: { userId, p256dh: dto.keys.p256dh, auth: dto.keys.auth, userAgent: ua },
+      // `createdAt` remis à maintenant : l'éviction au-delà de 10 appareils garde les plus récents,
+      // donc jamais l'appareil qu'on vient de réabonner (revue #717, m3).
+      update: { userId, p256dh: dto.keys.p256dh, auth: dto.keys.auth, userAgent: ua, createdAt: new Date() },
       select: { id: true },
     });
     const stale = await this.prisma.userPushDevice.findMany({

@@ -52,6 +52,19 @@ describe('TraderPushService.deliverToUser', () => {
     expect(db.deleteMany).not.toHaveBeenCalled();
   });
 
+  it('ligne en base hors service push connu : jamais contactée, supprimée, journal sans l’adresse (revue I1)', async () => {
+    const internal = { id: 'd-int', endpoint: 'https://169.254.169.254/latest/secret-token', p256dh: 'k'.repeat(87), auth: 'a'.repeat(22) };
+    const { service, db, send } = setup({ devices: [internal, dev('d1')] });
+    const warn = vi.spyOn((service as unknown as { logger: { warn: (m: string) => void } }).logger, 'warn');
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test());
+    expect(r).toEqual({ subscriptions: 2, delivered: 1, failed: 0, removed: 1 });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0]).toMatchObject({ id: 'd1' });
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: 'd-int' } });
+    expect(warn.mock.calls.flat().join(' ')).toContain('169.254.169.254');
+    expect(warn.mock.calls.flat().join(' ')).not.toContain('secret-token');
+  });
+
   it('push désactivé : rien n’est lu ni envoyé', async () => {
     const { service, db, send } = setup({ config: { enabled: false, reason: 'off' } });
     expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test())).subscriptions).toBe(0);
@@ -67,6 +80,12 @@ describe('TraderPushService abonnements et réglages', () => {
     expect(db.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { endpoint: SUB.endpoint }, update: expect.objectContaining({ userId: 'u1' }) }));
     expect(db.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: MAX_PUSH_DEVICES }));
     expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['old'] } } });
+  });
+
+  it('réabonnement : l’appareil redevient le plus récent, jamais évincé à sa place (revue m3)', async () => {
+    const { service, db } = setup({ devices: [] });
+    await service.subscribe('u1', SUB, null);
+    expect(db.upsert.mock.calls[0][0].update.createdAt).toBeInstanceOf(Date);
   });
 
   it('subscribe sans clés VAPID : 503', async () => {

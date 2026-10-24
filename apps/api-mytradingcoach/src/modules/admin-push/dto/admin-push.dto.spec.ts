@@ -25,6 +25,21 @@ describe('SubscribePushDto', () => {
   });
 });
 
+describe('SubscribePushDto · liste blanche des services push (revue #717, I1)', () => {
+  it.each(['https://127.0.0.1/x', 'https://169.254.169.254/latest', 'https://10.0.0.5/x', 'https://[::1]/x', 'https://postgres.internal/x', 'https://evil.example.com/x'])(
+    'adresse hors service push refusée : %s',
+    async (endpoint) => {
+      expect(await errorsOf(SubscribePushDto, { ...valid, endpoint })).toEqual(['endpoint']);
+    },
+  );
+
+  it('FCM, Mozilla, Apple, Windows acceptés', async () => {
+    for (const endpoint of ['https://fcm.googleapis.com/fcm/send/x', 'https://updates.push.services.mozilla.com/wpush/v2/x', 'https://web.push.apple.com/x', 'https://wns2-par02p.notify.windows.com/w/?token=x']) {
+      expect(await errorsOf(SubscribePushDto, { ...valid, endpoint })).toEqual([]);
+    }
+  });
+});
+
 describe('PushPreferencesDto', () => {
   it('événements connus seulement', async () => {
     expect(await errorsOf(PushPreferencesDto, { endpoint: valid.endpoint, mutedEvents: ['SIGNUP', 'PREMIUM'] })).toEqual([]);

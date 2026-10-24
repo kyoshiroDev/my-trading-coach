@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -12,6 +12,13 @@ describe('AnalyticsComponent — equity curve période', () => {
       return c;
     });
   }
+
+  // Horloge figée : « 1 mois » dépend du mois courant (du 28 mars au 28 février : 28 jours).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-21T12:00:00.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -38,12 +45,15 @@ describe('AnalyticsComponent — equity curve période', () => {
     expect(range.from).toBeDefined();
     expect(range.to).toBeDefined();
 
-    // from doit être environ 1 mois en arrière
-    const fromDate = new Date(range.from!);
-    const toDate = new Date(range.to!);
-    const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 86400);
-    expect(diffDays).toBeGreaterThan(28);
-    expect(diffDays).toBeLessThan(32);
+    // Un mois calendaire en arrière, jusqu'à maintenant.
+    expect(range).toEqual({ from: '2026-09-21T12:00:00.000Z', to: '2026-10-21T12:00:00.000Z' });
+  });
+
+  it('equityDateRange "1m" à la fin mars : remonte au 28 février (28 jours, pas un bug)', () => {
+    vi.setSystemTime(new Date('2027-03-28T00:55:00.000Z'));
+    const c = makeComponent();
+    const range = (c as unknown as { equityDateRange: () => { from?: string; to?: string } }).equityDateRange();
+    expect(range).toEqual({ from: '2027-02-28T00:55:00.000Z', to: '2027-03-28T00:55:00.000Z' });
   });
 
   it('equityDateRange retourne from=undefined pour "all"', () => {
