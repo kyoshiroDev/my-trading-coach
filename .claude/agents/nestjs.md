@@ -2245,6 +2245,11 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   au relevé suivant, la clé anti-spam reste posée (15 min pour une alerte non forcée). Au plus
   `MAX_UNDELIVERED_PUSH` (3) envois sans livraison par niveau et par période : ensuite le marqueur est
   gardé (abandon journalisé), une limite franchie forcée ne repart pas toutes les 15 min toute la journée.
+  Seul `undelivered` consomme un essai, jamais aucun appareil, type coupé ou heures silencieuses
+  (testé). Compteur `…:undelivered:<niveau>` : `INCR` et `EXPIRE` dans UN script Lua, la clé
+  n'existe jamais sans TTL (`prop-alert-push.int-spec.ts`, vrai Redis). Redis indisponible après
+  l'envoi : journal « envoyé sans livraison, suivi Redis impossible », la réservation reste posée
+  jusqu'à son expiration (pas de spam) ; « non envoyé » seulement si la réservation a échoué avant.
   Le réarmement en fond n'efface que `prop-alert-push:…`, le direct efface les deux.
 - **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
   seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.

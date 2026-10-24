@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { PropAlertsService } from './prop-alerts.service';
 import { MAX_UNDELIVERED_PUSH } from './prop-alert-push';
 import { ALERT_LEVEL_RANK as RANK } from './prop-alert-levels';
@@ -145,5 +146,36 @@ describe('Push prop firm : rien n’est parti, aucun essai consommé (revue #726
       expect(store.has(PUSH_KEY)).toBe(false);
     },
   );
+});
+
+describe('Push prop firm : journal exact si Redis tombe autour de l’envoi (revue #726 m12)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('Redis indisponible juste après un envoi sans livraison : « envoyé sans livraison », jamais « non envoyé »', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { sync, send, redis } = setup([{ id: 'd0', endpoint: fcm('d0'), reply: 503 }]);
+    const evalImpl = redis.client.eval.getMockImplementation()!;
+    redis.client.eval.mockImplementation(async (lua, n, key, level, a) => {
+      if (lua.includes("'incr'")) throw new Error('Connection is closed.');
+      return evalImpl(lua, n, key, level, a);
+    });
+    await sync();
+    expect(send).toHaveBeenCalledOnce();
+    const lines = warn.mock.calls.map((c) => String(c[0])).filter((l) => l.startsWith('Push prop firm'));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('Push prop firm envoyé sans livraison, suivi Redis impossible');
+    expect(lines[0]).toContain('compte a, drawdown breached');
+    expect(lines[0]).not.toMatch(/non envoyé/);
+  });
+
+  it('Redis indisponible avant l’envoi : « non envoyé », aucun envoi', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const { sync, send, redis } = setup([{ id: 'd0', endpoint: fcm('d0'), reply: 201 }]);
+    redis.client.eval.mockRejectedValue(new Error('Connection is closed.'));
+    await sync();
+    expect(send).not.toHaveBeenCalled();
+    const lines = warn.mock.calls.map((c) => String(c[0])).filter((l) => l.startsWith('Push prop firm'));
+    expect(lines).toEqual([expect.stringContaining('Push prop firm non envoyé, réservation impossible (compte a, drawdown breached)')]);
+  });
 });
 
