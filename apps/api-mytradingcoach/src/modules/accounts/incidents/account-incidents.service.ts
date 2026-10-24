@@ -193,7 +193,7 @@ export class AccountIncidentsService {
       where: { id: accountId },
       select: { id: true, label: true, currency: true, status: true },
     });
-    const report = await this.report(incident, account.currency);
+    const report = await this.report(user, incident, account.currency);
     const snap = incident.data as (IncidentSnapshot & { floor?: number }) | null;
     return {
       id: incident.id,
@@ -239,7 +239,7 @@ export class AccountIncidentsService {
         return unavailable;
       }
       const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { currency: true } });
-      const report = await this.report(incident, account.currency);
+      const report = await this.report(user, incident, account.currency);
       const response = await this.anthropic.create(
         {
           model: AI_MODELS.analysis,
@@ -316,7 +316,19 @@ export class AccountIncidentsService {
   }
 
   /** Faits de la séance de l'incident, et des séances précédentes du compte. */
-  private async report(incident: AccountIncident, currency: string): Promise<IncidentReport> {
+  /**
+   * Plancher qui suit le plus haut en cours de séance : trailing intraday d'un plan du catalogue,
+   * ou trailing saisi à la main (calculé sur le plus haut des trades). Lu sur les métriques du
+   * compte, comme la détection (aucune règle dupliquée).
+   */
+  private async trailsInSession(user: IncidentUser, accountId: string): Promise<boolean> {
+    const account = (await this.accounts.list(user.id, { premium: isPremiumAccess(user) })).find((a) => a.id === accountId);
+    const dd = account?.metrics.drawdown;
+    if (!dd) return false;
+    return dd.rule ? dd.rule.kind === 'trailing_intraday' : dd.type === 'TRAILING';
+  }
+
+  private async report(user: IncidentUser, incident: AccountIncident, currency: string): Promise<IncidentReport> {
     const day = dayKey(incident.tradeDate);
     // Une journée CME court de la veille 17 h à 17 h (Chicago) : fenêtre large, puis filtre exact.
     const from = new Date(asDate(day).getTime() - 36 * 3600_000);
@@ -353,6 +365,17 @@ export class AccountIncidentsService {
     }
     const previous = [...byDay.values()].sort((a, b) => b.day.localeCompare(a.day)).slice(0, PREVIOUS_SESSIONS);
 
+    // Plus haut solde réalisé avant la séance, au-dessus du solde de départ de la séance : en
+    // remontant les trades d'avant, le solde après chacun vaut « départ − ce qui a suivi ».
+    let after = 0;
+    let peakAboveStart = 0;
+    for (const t of earlier) {
+      if (tradingDay(t.tradedAt) >= day) continue;
+      after += (t.pnl ?? 0) - Math.abs(t.commission ?? 0);
+      peakAboveStart = Math.max(peakAboveStart, -after);
+    }
+    const trailing = incident.kind === 'drawdown' && (await this.trailsInSession(user, incident.accountId));
+
     return buildIncidentReport({
       kind: incident.kind as IncidentKind,
       currency,
@@ -363,6 +386,8 @@ export class AccountIncidentsService {
         ...prop.map((e) => ({ at: e.createdAt, source: 'prop' as const, type: e.kind, level: e.level })),
       ],
       previous,
+      trailing,
+      peakAboveStart,
     });
   }
 }
