@@ -1399,5 +1399,12 @@ directement (pas de `?raw` comme dans l'app).
   padding-box !important` (sinon le fond clair imposé passe sous la bordure semi-transparente : le
   raccourci `background:` des champs de composant remet `border-box`). Champ sur un autre fond →
   poser `--autofill-bg`.
+- `box-shadow` et `transition` en **`!important`** (2026-10-24) : `input:focus { box-shadow }` d'un composant
+  a la même spécificité et passe après la feuille globale ; au focus il effaçait l'ombre, le fond clair
+  de Chrome revenait sous un texte clair (contraste 1,06:1, texte invisible). Anneau du composant →
+  `--field-ring` (`auth-form.css`, `card-page*.css`), ajouté par la règle globale après l'ombre.
+- Connexion : `autocomplete="username"` sur l'email + `current-password` ; inscription : `email` +
+  `new-password` (×2). Le navigateur ne livre la valeur autoremplie au JS qu'après un geste de
+  l'utilisateur : un `blur()` programmé sur un champ autorempli affiche « requis ».
 - ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
   règle globale va dans `styles.css`, pas là.

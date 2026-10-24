@@ -102,7 +102,8 @@
 
 .form-group.input-error input {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  --field-ring: 0 0 0 3px var(--red-dim);
+  box-shadow: var(--field-ring);
 }
 
 /* ─── Form ─── */
@@ -136,7 +137,9 @@ input {
 
 input:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  /* Anneau déclaré dans `--field-ring` : gardé quand le champ est autorempli (styles.css). */
+  --field-ring: 0 0 0 3px var(--blue-glow);
+  box-shadow: var(--field-ring);
 }
 input::placeholder {
   color: var(--text-3);
