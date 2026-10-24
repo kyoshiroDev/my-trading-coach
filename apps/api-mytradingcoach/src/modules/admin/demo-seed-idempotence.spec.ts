@@ -126,6 +126,8 @@ function fakePrisma(calls: Call[]) {
     propRiskEvent: model('propRiskEvent'),
     behaviorAlert: model('behaviorAlert'),
     accountIncident: model('accountIncident'),
+    userPushDevice: model('userPushDevice'),
+    traderPushPreference: model('traderPushPreference'),
     // Catalogue synchronisé : les deux plans des comptes démo existent.
     propFirmPlan: { findMany: vi.fn(async () => [{ id: 'apex-eod-50k' }, { id: 'tradeify-select-flex-50k' }]) },
   };
@@ -792,5 +794,23 @@ describe('seedDemo — dates relatives au run (cron quotidien de 03:20)', () => 
       const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
       expect(startOfToday.getTime() - at.getTime()).toBeGreaterThan(24 * 3600_000);
     }
+  });
+});
+
+describe('seedDemo : notifications push (revue phase 2 m9)', () => {
+  it('deux appareils et des heures silencieuses de 22:00 à 07:00, scopés au user démo', async () => {
+    const calls: Call[] = [];
+    const res = await seedDemo(fakePrisma(calls).prisma);
+    expect(res.pushDevices).toBe(2);
+    const devices = calls.find((c) => c.model === 'userPushDevice' && c.op === 'createMany')!;
+    const rows = devices.args['data'] as { userId: string; endpoint: string; userAgent: string }[];
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.userId === DEMO_ID)).toBe(true);
+    expect(new Set(rows.map((r) => r.endpoint)).size).toBe(2);
+    const purge = calls.findIndex((c) => c.model === 'userPushDevice' && c.op === 'deleteMany');
+    expect(purge).toBeGreaterThanOrEqual(0);
+    expect(purge).toBeLessThan(calls.indexOf(devices));
+    const pref = calls.find((c) => c.model === 'traderPushPreference' && c.op === 'upsert')!;
+    expect(pref.args).toMatchObject({ where: { userId: DEMO_ID }, update: { quietStart: 22 * 60, quietEnd: 7 * 60 } });
   });
 });
