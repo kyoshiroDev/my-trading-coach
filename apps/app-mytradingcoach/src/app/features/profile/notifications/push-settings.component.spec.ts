@@ -103,6 +103,26 @@ describe('Section Notifications du profil', () => {
     expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 390 } }, expect.anything());
   });
 
+  it('deux interrupteurs, la 1re écriture échoue après le 2e clic : écran = serveur, un seul message (revue I1)', async () => {
+    const { q, api, settle, toast } = await mount();
+    const errors = vi.spyOn(toast, 'error');
+    let failFirst!: (e: Error) => void;
+    api.preferences.mockImplementationOnce(() => new Promise((_, reject) => { failFirst = reject; }));
+    q('push-type-RECAP')!.click();
+    q('push-type-BEHAVIOR')!.click();
+    await settle();
+    expect(q('push-type-RECAP')!.getAttribute('aria-checked')).toBe('true');
+    expect(q('push-type-BEHAVIOR')!.getAttribute('aria-checked')).toBe('false');
+    failFirst(new Error('500'));
+    await settle();
+    await settle();
+    // Serveur inchangé (Récap coupé, Comportement actif) et réaffiché tel quel.
+    expect(api.preferences).toHaveBeenCalledTimes(1);
+    expect(q('push-type-RECAP')!.getAttribute('aria-checked')).toBe('false');
+    expect(q('push-type-BEHAVIOR')!.getAttribute('aria-checked')).toBe('true');
+    expect(errors).toHaveBeenCalledOnce();
+  });
+
   it('notification test : toast « Notification envoyée, regarde ton écran »', async () => {
     const { q, settle, toast } = await mount();
     q('push-test')!.click();

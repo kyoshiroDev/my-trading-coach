@@ -169,16 +169,16 @@ describe('PushService.enable', () => {
 });
 
 describe('PushService réglages et appareils', () => {
-  it('interrupteur : envoi immédiat, retour arrière si l’API refuse', async () => {
+  it('interrupteur : envoi immédiat, état du serveur réaffiché si l’API refuse', async () => {
     const { service, api } = setup({ sub: fakeSub() });
     await service.init();
     expect(service.isTypeEnabled('RECAP')).toBe(false);
-    expect(await service.setTypeEnabled('RECAP', true)).toBe(true);
+    expect(await service.setTypeEnabled('RECAP', true)).toBe('saved');
     expect(api.preferences).toHaveBeenLastCalledWith({ mutedTypes: [] }, expect.anything());
     expect(service.isTypeEnabled('RECAP')).toBe(true);
 
     api.preferences.mockRejectedValueOnce(new Error('500'));
-    expect(await service.setTypeEnabled('BEHAVIOR', false)).toBe(false);
+    expect(await service.setTypeEnabled('BEHAVIOR', false)).toBe('failed');
     expect(service.isTypeEnabled('BEHAVIOR')).toBe(true);
   });
 
@@ -248,8 +248,8 @@ describe('PushService : un compte puis un autre dans le même onglet (revue phas
     expect(service.settings()).toBeNull();
     expect(service.currentDeviceId()).toBeNull();
     api.preferences.mockClear();
-    expect(await service.setTypeEnabled('RECAP', true)).toBe(false);
-    expect(await service.setQuietHours({ start: 1320, end: 420 })).toBe(false);
+    expect(await service.setTypeEnabled('RECAP', true)).toBe('skipped');
+    expect(await service.setQuietHours({ start: 1320, end: 420 })).toBe('skipped');
     expect(await service.removeDevice('d1')).toBe(false);
     expect(api.preferences).not.toHaveBeenCalled();
     expect(api.removeDevice).not.toHaveBeenCalled();
@@ -297,5 +297,80 @@ describe('PushService : un compte puis un autre dans le même onglet (revue phas
     slow.resolve(settings({ mutedTypes: [] }));
     await saving;
     expect(service.settings()).toBeNull();
+  });
+});
+
+describe('PushService : deux interrupteurs rapprochés (revue phase 2 I1)', () => {
+  /** Serveur simulé : garde les réglages, applique chaque PATCH reçu, échoue à la demande. */
+  function server(initial: TraderPushSettings) {
+    let saved = initial;
+    return {
+      get saved() { return saved; },
+      apply: (input: Partial<TraderPushSettings>) => (saved = { ...saved, ...input }),
+    };
+  }
+
+  it('la 1re écriture échoue après le clic sur la 2e : écran = serveur, une seule erreur, 2e jamais partie', async () => {
+    const srv = server(settings({ mutedTypes: ['RECAP'] }));
+    const { service, api } = setup({ sub: fakeSub(), settings: srv.saved });
+    api.settings.mockImplementation(async () => srv.saved);
+    await service.init();
+    const first = deferred<TraderPushSettings>();
+    api.preferences.mockImplementationOnce(() => first.promise);
+
+    // Récap activé puis Comportement coupé, 100 ms d'écart : la 1re requête est encore en vol.
+    const a = service.setTypeEnabled('RECAP', true);
+    const b = service.setTypeEnabled('BEHAVIOR', false);
+    expect(service.isTypeEnabled('RECAP')).toBe(true);
+    expect(service.isTypeEnabled('BEHAVIOR')).toBe(false);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(api.preferences).toHaveBeenCalledTimes(1);
+
+    first.reject(new Error('500'));
+    expect([await a, await b]).toEqual(['failed', 'skipped']);
+    expect(api.preferences).toHaveBeenCalledTimes(1);
+    // L'écran montre ce que le serveur a enregistré, sur les deux lignes.
+    expect(service.settings()?.mutedTypes).toEqual(srv.saved.mutedTypes);
+    expect(service.isTypeEnabled('RECAP')).toBe(false);
+    expect(service.isTypeEnabled('BEHAVIOR')).toBe(true);
+  });
+
+  it('réponse perdue alors que le serveur a enregistré : l’écran relit le serveur, pas l’état d’avant', async () => {
+    const srv = server(settings({ mutedTypes: ['RECAP'] }));
+    const { service, api } = setup({ sub: fakeSub(), settings: srv.saved });
+    api.settings.mockImplementation(async () => srv.saved);
+    api.preferences.mockImplementationOnce(async (input) => {
+      srv.apply(input as Partial<TraderPushSettings>);
+      throw new Error('délai dépassé');
+    });
+    await service.init();
+    expect(await service.setTypeEnabled('RECAP', true)).toBe('failed');
+    expect(srv.saved.mutedTypes).toEqual([]);
+    expect(service.isTypeEnabled('RECAP')).toBe(true);
+  });
+
+  it('écritures en file : la 2e part de ce que le serveur a enregistré à la 1re', async () => {
+    const srv = server(settings({ mutedTypes: ['RECAP'] }));
+    const { service, api } = setup({ sub: fakeSub(), settings: srv.saved });
+    api.preferences.mockImplementation(async (input) => srv.apply(input as Partial<TraderPushSettings>));
+    await service.init();
+    const [a, b] = await Promise.all([service.setTypeEnabled('RECAP', true), service.setTypeEnabled('BEHAVIOR', false)]);
+    expect([a, b]).toEqual(['saved', 'saved']);
+    expect(api.preferences.mock.calls.map((c) => c[0])).toEqual([{ mutedTypes: [] }, { mutedTypes: ['BEHAVIOR'] }]);
+    expect(srv.saved.mutedTypes).toEqual(['BEHAVIOR']);
+    expect(service.settings()?.mutedTypes).toEqual(['BEHAVIOR']);
+  });
+
+  it('la 2e écriture échoue : la 1re reste, état relu sur le serveur', async () => {
+    const srv = server(settings({ mutedTypes: ['RECAP'] }));
+    const { service, api } = setup({ sub: fakeSub(), settings: srv.saved });
+    api.settings.mockImplementation(async () => srv.saved);
+    api.preferences
+      .mockImplementationOnce(async (input) => srv.apply(input as Partial<TraderPushSettings>))
+      .mockRejectedValueOnce(new Error('réseau'));
+    await service.init();
+    const results = await Promise.all([service.setTypeEnabled('RECAP', true), service.setTypeEnabled('BEHAVIOR', false)]);
+    expect(results).toEqual(['saved', 'failed']);
+    expect(service.settings()?.mutedTypes).toEqual([]);
   });
 });

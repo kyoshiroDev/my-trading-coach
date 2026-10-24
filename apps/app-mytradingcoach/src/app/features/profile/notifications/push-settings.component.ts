@@ -118,22 +118,20 @@ export class PushSettingsComponent implements OnInit {
 
   protected async toggleRow(row: PushTypeRow): Promise<void> {
     if (this.rowDisabled(row)) return;
-    const ok = await this.push.setTypeEnabled(row.type, !this.rowOn(row));
-    if (!ok) this.toast.error('Ton réglage n’a pas pu être enregistré. Réessaie.');
+    // `failed` une seule fois par échec : les changements abandonnés derrière lui (`skipped`) restent muets.
+    if ((await this.push.setTypeEnabled(row.type, !this.rowOn(row))) === 'failed') this.toast.error('Ton réglage n’a pas pu être enregistré. Réessaie.');
   }
 
   protected async toggleQuiet(): Promise<void> {
     if (this.readOnly()) return;
-    const ok = await this.push.setQuietHours(this.quiet() ? null : DEFAULT_QUIET);
-    if (!ok) this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
+    if ((await this.push.setQuietHours(this.quiet() ? null : DEFAULT_QUIET)) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
   }
 
   protected async changeQuiet(edge: 'start' | 'end', value: string): Promise<void> {
     const current = this.quiet();
     const minutes = fromHhmm(value);
     if (!current || minutes === null || this.readOnly()) return;
-    const ok = await this.push.setQuietHours({ ...current, [edge]: minutes });
-    if (!ok) this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
+    if ((await this.push.setQuietHours({ ...current, [edge]: minutes })) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
   }
 
   protected hhmm(minutes: number): string {

@@ -4,6 +4,7 @@ import {
   type AdminPushSubscriptionInput,
   type PushAlertType,
   type PushQuietHours,
+  type TraderPushPreferencesInput,
   type TraderPushSettings,
 } from '@mtc/shared';
 import { PushApi } from '../api/push.api';
@@ -23,6 +24,14 @@ export type PushState =
   | 'denied'
   | 'supported'
   | 'subscribed';
+
+/** Issue d'une écriture des réglages : `skipped` = abandonnée sans envoi (échec précédent, autre compte). */
+export type SaveResult = 'saved' | 'failed' | 'skipped';
+
+interface PendingChange {
+  apply: (s: TraderPushSettings) => TraderPushSettings;
+  input: (s: TraderPushSettings) => TraderPushPreferencesInput;
+}
 
 /** Navigateurs intégrés aux applis (Instagram, Facebook, TikTok…) : pas de push fiable. */
 const IN_APP_BROWSER = /Instagram|FBAN|FBAV|FB_IAB|Line\/|Snapchat|musical_ly|BytedanceWebview|LinkedInApp|Twitter/i;
@@ -61,6 +70,10 @@ export class PushService {
   private owner: string | null = null;
   private generation = 0;
   private abort = new AbortController();
+  /** Réglages tels qu'enregistrés par le serveur, et changements de l'écran pas encore confirmés. */
+  private confirmed: TraderPushSettings | null = null;
+  private pending: PendingChange[] = [];
+  private writes: Promise<unknown> = Promise.resolve();
 
   /** `null` tant que le diagnostic n'est pas fait. */
   readonly state = signal<PushState | null>(null);
@@ -96,6 +109,9 @@ export class PushService {
     this.abort = new AbortController();
     this.owner = null;
     this.state.set(null);
+    this.confirmed = null;
+    this.pending = [];
+    this.writes = Promise.resolve();
     this.settings.set(null);
     this.currentDeviceId.set(null);
     this.busy.set(false);
@@ -129,7 +145,7 @@ export class PushService {
       return;
     }
     if (!this.current(gen)) return;
-    this.settings.set(settings);
+    this.setServer(settings);
     if (!settings.enabled || !settings.publicKey) {
       this.state.set('server-disabled');
       return;
@@ -154,7 +170,7 @@ export class PushService {
       if (!this.current(gen)) return;
       this.currentDeviceId.set(device.id);
       this.state.set('subscribed');
-      this.settings.set(fresh);
+      this.setServer(fresh);
     } catch {
       if (this.current(gen)) this.state.set('supported');
     }
@@ -176,7 +192,7 @@ export class PushService {
       if (!this.current(gen)) return;
       this.currentDeviceId.set(device.id);
       this.state.set('subscribed');
-      this.settings.set(fresh);
+      this.setServer(fresh);
     } catch {
       if (!this.current(gen)) return;
       if (this.browser.env().notificationPermission === 'denied') {
@@ -209,7 +225,7 @@ export class PushService {
         this.state.set('supported');
       }
       const fresh = await this.api.settings(signal);
-      if (this.current(gen)) this.settings.set(fresh);
+      if (this.current(gen)) this.setServer(fresh);
       return true;
     } catch {
       return false;
@@ -220,33 +236,67 @@ export class PushService {
     return !(this.settings()?.mutedTypes ?? []).includes(type);
   }
 
-  /** Coche / décoche un type (retour arrière si l'API refuse). */
-  setTypeEnabled(type: PushAlertType, enabled: boolean): Promise<boolean> {
-    const muted = this.settings()?.mutedTypes ?? [];
-    const next = enabled ? muted.filter((t) => t !== type) : [...new Set([...muted, type])];
-    return this.save({ mutedTypes: next }, (s) => ({ ...s, mutedTypes: next }));
+  /** Coche / décoche un type. Le type est retiré ou ajouté à la liste au moment de l'envoi. */
+  setTypeEnabled(type: PushAlertType, enabled: boolean): Promise<SaveResult> {
+    const apply = (s: TraderPushSettings): TraderPushSettings => ({
+      ...s,
+      mutedTypes: enabled ? s.mutedTypes.filter((t) => t !== type) : [...new Set([...s.mutedTypes, type])],
+    });
+    return this.save({ apply, input: (s) => ({ mutedTypes: apply(s).mutedTypes }) });
   }
 
   /** `null` = heures silencieuses désactivées. */
-  setQuietHours(quietHours: PushQuietHours | null): Promise<boolean> {
-    return this.save({ quietHours }, (s) => ({ ...s, quietHours }));
+  setQuietHours(quietHours: PushQuietHours | null): Promise<SaveResult> {
+    return this.save({ apply: (s) => ({ ...s, quietHours }), input: () => ({ quietHours }) });
   }
 
-  private async save(
-    input: Parameters<PushApi['preferences']>[0],
-    optimistic: (s: TraderPushSettings) => TraderPushSettings,
-  ): Promise<boolean> {
+  /** Dernier état enregistré par le serveur, affiché avec les changements encore en attente par-dessus. */
+  private setServer(settings: TraderPushSettings): void {
+    this.confirmed = settings;
+    this.render();
+  }
+
+  private render(): void {
+    const base = this.confirmed;
+    this.settings.set(base && this.pending.reduce((s, change) => change.apply(s), base));
+  }
+
+  /**
+   * Écritures en file, une à la fois (revue phase 2 I1). Chacune part de ce que le serveur a
+   * enregistré à la précédente, jamais d'un état optimiste. Après un échec, les changements encore
+   * en attente sont abandonnés et l'état du serveur est relu puis réaffiché : un seul `failed`
+   * (un seul message), les suivants rendent `skipped`.
+   */
+  private save(change: PendingChange): Promise<SaveResult> {
     const gen = this.generation;
-    const previous = this.settings();
-    if (!previous || !this.loaded(gen)) return false;
-    this.settings.set(optimistic(previous));
+    if (!this.confirmed || !this.loaded(gen)) return Promise.resolve('skipped');
+    this.pending.push(change);
+    this.render();
+    const run = this.writes.then(() => this.write(change, gen));
+    this.writes = run;
+    return run;
+  }
+
+  private async write(change: PendingChange, gen: number): Promise<SaveResult> {
+    if (!this.current(gen) || !this.confirmed || !this.pending.includes(change)) return 'skipped';
+    const signal = this.abort.signal;
     try {
-      const saved = await this.api.preferences(input, this.abort.signal);
-      if (this.current(gen)) this.settings.set(saved);
-      return true;
+      const saved = await this.api.preferences(change.input(this.confirmed), signal);
+      if (!this.current(gen)) return 'skipped';
+      this.pending = this.pending.filter((c) => c !== change);
+      this.setServer(saved);
+      return 'saved';
     } catch {
-      if (this.current(gen)) this.settings.set(previous);
-      return false;
+      if (!this.current(gen)) return 'skipped';
+      this.pending = [];
+      try {
+        const fresh = await this.api.settings(signal);
+        if (this.current(gen)) this.setServer(fresh);
+      } catch {
+        // Relecture impossible : dernier état connu du serveur.
+        if (this.current(gen)) this.render();
+      }
+      return 'failed';
     }
   }
 
