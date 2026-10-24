@@ -101,3 +101,55 @@ describe('TraderPushService abonnements et réglages', () => {
     expect(pref.upsert).toHaveBeenLastCalledWith(expect.objectContaining({ update: { quietStart: 1320, quietEnd: 420 } }));
   });
 });
+
+describe('Appareil partagé : retrait échoué à la déconnexion de A, puis B s’abonne (#666 phase 2)', () => {
+  /** Base simulée en mémoire, avec la contrainte UNIQUE de l'endpoint (comme Postgres). */
+  function memoryDb() {
+    const rows: { id: string; userId: string; endpoint: string; p256dh: string; auth: string; userAgent: string | null; createdAt: Date }[] = [];
+    let seq = 0;
+    const db = {
+      rows,
+      upsert: vi.fn(async ({ where, create, update }: { where: { endpoint: string }; create: typeof rows[number]; update: Partial<typeof rows[number]> }) => {
+        const found = rows.find((r) => r.endpoint === where.endpoint);
+        if (found) { Object.assign(found, update); return { id: found.id }; }
+        if (rows.some((r) => r.endpoint === create.endpoint)) throw new Error('Unique constraint failed on endpoint');
+        const row = { ...create, id: `dev-${++seq}`, createdAt: new Date() };
+        rows.push(row);
+        return { id: row.id };
+      }),
+      findMany: vi.fn(async ({ where, skip }: { where: { userId: string }; skip?: number }) =>
+        rows.filter((r) => r.userId === where.userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(skip ?? 0)),
+      findFirst: vi.fn(async ({ where }: { where: { userId: string; endpoint: string } }) =>
+        rows.find((r) => r.userId === where.userId && r.endpoint === where.endpoint) ?? null),
+      update: vi.fn(async () => ({})),
+      deleteMany: vi.fn(async ({ where }: { where: { id?: string | { in: string[] } } }) => {
+        const ids = typeof where.id === 'string' ? [where.id] : where.id?.in ?? [];
+        const before = rows.length;
+        for (const id of ids) rows.splice(rows.findIndex((r) => r.id === id), 1);
+        return { count: before - rows.length };
+      }),
+    };
+    return db;
+  }
+
+  it('l’appareil passe à B : une seule ligne, aucune erreur, A ne reçoit plus rien', async () => {
+    const db = memoryDb();
+    const prisma = { userPushDevice: db, traderPushPreference: { findUnique: vi.fn(), upsert: vi.fn() } } as unknown as PrismaService;
+    const send = vi.fn().mockResolvedValue(201);
+    const service = new TraderPushService(prisma, ENABLED, { send } as PushSender);
+
+    await service.subscribe('user-a', SUB, 'Chrome · Android');
+    // Déconnexion de A : le retrait côté API a échoué, la ligne appartient encore à A.
+    expect(await service.device('user-a', SUB.endpoint)).toEqual({ subscribed: true, id: 'dev-1' });
+
+    // B se connecte sur le même navigateur : même endpoint, l'app le resynchronise.
+    expect(await service.device('user-b', SUB.endpoint)).toEqual({ subscribed: false, id: null });
+    await expect(service.subscribe('user-b', SUB, 'Chrome · Android')).resolves.toEqual({ subscribed: true, id: 'dev-1' });
+
+    expect(db.rows).toHaveLength(1);
+    expect(db.rows[0].userId).toBe('user-b');
+    expect(await service.deliverToUser('user-a', TRADER_PUSH_MESSAGES.test())).toEqual({ subscriptions: 0, delivered: 0, failed: 0, removed: 0 });
+    expect(send).not.toHaveBeenCalled();
+    expect((await service.deliverToUser('user-b', TRADER_PUSH_MESSAGES.test())).delivered).toBe(1);
+  });
+});
