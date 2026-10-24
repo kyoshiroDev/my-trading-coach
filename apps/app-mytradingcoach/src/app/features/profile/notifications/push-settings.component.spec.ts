@@ -192,7 +192,10 @@ describe('Section Notifications du profil', () => {
     const { q } = await mount({ subscribed: false, env: { userAgent: IPHONE } });
     const ban = q('push-ios')!;
     expect(ban.textContent).toContain('Partager, puis Sur l’écran d’accueil, puis Ajouter');
+    expect(ban.textContent).toContain('ajoute MyTradingCoach à l’écran d’accueil, puis ouvre-la depuis son icône');
     expect(ban.querySelector('button, a')).toBeNull();
+    // Revue phase 2 I4 : ni durée, ni promesse que le push marchera (manifest de #715 pas encore en ligne).
+    expect(ban.textContent).not.toMatch(/secondes|fonctionne|garanti/i);
   });
 
   it('permission refusée : étapes et « J’ai changé le réglage »', async () => {

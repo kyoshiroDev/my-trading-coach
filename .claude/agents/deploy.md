@@ -889,6 +889,11 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   (sinon la règle des `.js` les fige 1 an). L'admin est servi par l'**ancien VPS** : sur ce VPS,
   `spa-releases.conf` est un fichier **partagé** par `mtc_admin`, `mtc_app_dev_static` et
   `mtc_app_beta_static` (bind-mount d'un fichier unique) ; le modifier change aussi dev et beta.
+- **Push des traders (#666) : ne pas activer `PUSH_ENABLED` en production avant que le manifest
+  (étape 1 de #715) soit en ligne.** Sans manifest, l'app ajoutée à l'écran d'accueil d'un iPhone
+  avant iOS 26 s'ouvre dans Safari (pas en mode app, donc pas de push) et le trader reste sur le
+  bandeau « ajoute MyTradingCoach à l'écran d'accueil ». Depuis iOS 26, tout site ajouté s'ouvre
+  en mode app par défaut, mais le push sans manifest n'a pas été vérifié sur un vrai iPhone.
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible
