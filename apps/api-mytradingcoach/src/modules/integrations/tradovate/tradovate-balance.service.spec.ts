@@ -92,7 +92,8 @@ describe('TradovateBalanceService', () => {
   });
 
   it('rafraîchissement bridé : instantané de moins de 20 s → aucun appel au broker', async () => {
-    const { service, api } = setup(conn({ brokerEquityAt: new Date(Date.now() - BALANCE_REFRESH_MIN_MS + 1_000) }));
+    // Instantané vieux de 10 s : marge large sous le seuil de 20 s (1 s ne résistait pas à un runner chargé).
+    const { service, api } = setup(conn({ brokerEquityAt: new Date(Date.now() - BALANCE_REFRESH_MIN_MS + 10_000) }));
     await service.refresh('u1', 'acc-1');
     expect(api.postRead).not.toHaveBeenCalled();
   });
