@@ -12,6 +12,9 @@ export const PUSH_TIME_ZONE = 'Europe/Paris';
 /** Types réservés au Premium (les alertes qu'ils relaient le sont déjà). `CONNECTION` reste gratuit. */
 export const PUSH_PREMIUM_TYPES: readonly PushAlertType[] = ['PROP_RULES', 'BEHAVIOR', 'RECAP'];
 
+/** Appareils gardés par trader : au-delà, le plus ancien est remplacé à l'abonnement. */
+export const PUSH_MAX_DEVICES = 10;
+
 /** Types coupés tant que le trader n'a rien réglé. */
 export const DEFAULT_MUTED_PUSH_TYPES: readonly PushAlertType[] = ['RECAP'];
 
