@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SILENT_ERRORS } from '@mtc/front-ui';
 import { PushApi } from './push.api';
 
 /** Requêtes `/push/*` de l'app (#666 phase 2). */
@@ -37,5 +38,23 @@ describe('PushApi : annulation (revue phase 2 I2)', () => {
     const pending = api.test();
     http.expectOne((r) => r.url.endsWith('/push/test')).flush({ data: { subscriptions: 1, delivered: 1, failed: 0, removed: 0 } });
     expect((await pending).delivered).toBe(1);
+  });
+});
+
+describe('PushApi : un seul message par erreur (revue phase 2 m2)', () => {
+  it('chaque appel est en SILENT_ERRORS : pas de toast global en plus de celui de la section', async () => {
+    const { api, http } = setup();
+    const calls = [
+      api.settings(), api.device('https://fcm.googleapis.com/fcm/send/x'),
+      api.subscribe({ endpoint: 'https://fcm.googleapis.com/fcm/send/x', expirationTime: null, keys: { p256dh: 'k', auth: 'a' } }),
+      api.removeDevice('d1'), api.preferences({ mutedTypes: [] }), api.test(),
+    ];
+    const reqs = http.match(() => true);
+    expect(reqs).toHaveLength(6);
+    for (const req of reqs) {
+      expect(req.request.context.get(SILENT_ERRORS), req.request.url).toBe(true);
+      req.flush('', { status: 429, statusText: 'Too Many Requests' });
+    }
+    await Promise.allSettled(calls);
   });
 });
