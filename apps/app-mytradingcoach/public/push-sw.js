@@ -15,6 +15,9 @@ function safePath(value) {
   try {
     const url = new URL(value, self.location.origin);
     if (url.origin !== self.location.origin) return '/';
+    // `/..//evil.com`, `/%2e%2e//evil.com` : une fois normalisé, le chemin commencerait par `//`
+    // et serait lu comme une adresse externe à la prochaine lecture (revue phase 2 m5).
+    if (url.pathname.startsWith('//')) return '/';
     return url.pathname + url.search + url.hash;
   } catch (e) {
     return '/';

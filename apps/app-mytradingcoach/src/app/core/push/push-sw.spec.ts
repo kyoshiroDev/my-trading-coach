@@ -77,6 +77,15 @@ describe('push-sw.js', () => {
     expect(sw.opened).toEqual([`${ORIGIN}${expected}`]);
   });
 
+  it.each(['/..//evil.example.com', '/.//evil.example.com', '/%2e%2e//evil.example.com', '/a/..//evil.example.com'])(
+    'chemin qui deviendrait //hôte une fois normalisé : %s rangé comme la racine dès l’affichage (m5)',
+    async (url) => {
+      const sw = load();
+      await sw.run('push', push({ title: 'x', body: 'y', url, settingsUrl: url }));
+      expect(sw.shown[0].options['data']).toEqual({ url: '/', settingsUrl: '/' });
+    },
+  );
+
   it('adresse externe déjà filtrée à l’affichage : jamais ouverte, même si elle arrive par le push', async () => {
     const sw = load();
     await sw.run('push', push({ title: 'x', body: 'y', url: 'https://evil.example.com/' }));
