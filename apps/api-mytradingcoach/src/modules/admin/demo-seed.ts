@@ -121,7 +121,7 @@ export async function seedTradingData(
     const isToday = d.kind === 'today';
     // Session du jour sans trade clôturé (week-end, avant 09:45) : ouverte il y a 30 min, jamais
     // avant le début de la journée de trading en cours (sinon elle ne serait pas « active »).
-    const now = new Date();
+    // `now` = celui du seed (et non l'heure réelle) : un seed daté reste cohérent avec lui-même.
     const first = d.trades[0]?.tradedAt ?? new Date(Math.max(tradingDayStart(now).getTime(), now.getTime() - 30 * 60_000) + 25 * 60_000);
     const last = d.trades[d.trades.length - 1]?.tradedAt ?? first;
     const dayStats = computeTradeStats(d.trades);
