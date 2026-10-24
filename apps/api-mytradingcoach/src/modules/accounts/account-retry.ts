@@ -6,7 +6,7 @@ import { AccountStatus, type Prisma, type TradingAccount } from '@prisma/client'
  */
 
 // Libellé de la nouvelle tentative : partagé avec l'app, qui l'affiche avant la création.
-export { attemptBase, nextAttemptLabel } from '@mtc/shared';
+export { attemptBase, newerAttempt, nextAttemptLabel } from '@mtc/shared';
 
 /**
  * Données du compte de la nouvelle tentative : même firme, même plan, même taille et mêmes règles.

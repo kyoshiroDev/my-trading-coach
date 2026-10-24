@@ -29,6 +29,7 @@ function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean; demo?: bo
     loaded: signal(true),
     isLoading: signal(false),
     load: vi.fn(),
+    select: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
   const confirm = { ask: vi.fn(async (_o: { title: string; message: string; danger?: boolean }) => opts.confirm ?? true) };
@@ -172,6 +173,41 @@ describe('LostAccountFlowService (compte perdu)', () => {
     flow.createRetry();
     expect(toast.visible()[0]).toMatchObject({ type: 'error', message: 'Limite de comptes atteinte' });
     expect(flow.retryId()).toBe('a1');
+  });
+
+  describe('tentative déjà créée (B3)', () => {
+    const accounts = () => [
+      acc('a1', 'Apex 50K #1', { status: 'FAILED' }),
+      acc('a2', 'Apex 50K #2'),
+      acc('x', 'Lucid 25K', { status: 'FAILED' }),
+    ];
+
+    it('« Voir Apex 50K #2 » : la tentative suivante est trouvée, aucune pour la dernière', () => {
+      const { flow } = setup({ accounts: accounts() });
+      expect(flow.newerAttempt({ label: 'Apex 50K #1' })?.id).toBe('a2');
+      expect(flow.newerAttempt({ label: 'Apex 50K #2' })).toBeNull();
+      expect(flow.newerAttempt({ label: 'Lucid 25K' })).toBeNull();
+    });
+
+    it('« Voir Apex 50K #2 » sélectionne ce compte et ouvre Mes comptes', () => {
+      const { flow, store, router } = setup({ accounts: accounts() });
+      flow.openAttempt('a2');
+      expect(store.select).toHaveBeenCalledWith('a2');
+      expect(router.navigate).toHaveBeenCalledWith(['/accounts']);
+    });
+
+    it('409 RETRY_EXISTS (autre onglet, double clic) : pas d’erreur ni de message de quota, liste rechargée', () => {
+      const { flow, api, store, toast } = setup({ accounts: [acc('a1', 'Apex 50K #1', { status: 'FAILED' })] });
+      api.retry.mockReturnValueOnce(throwError(() => new HttpErrorResponse({
+        status: 409, error: { statusCode: 409, code: 'RETRY_EXISTS', message: '« Apex 50K #2 » existe déjà.' },
+      })));
+      flow.openRetry('a1');
+      flow.createRetry();
+      expect(toast.visible()).toHaveLength(0);
+      expect(flow.retryId()).toBeNull();
+      expect(flow.busy()).toBe(false);
+      expect(store.load).toHaveBeenCalled();
+    });
   });
 
   it('depuis l\'alerte live, liste pas encore chargée : elle se charge', () => {

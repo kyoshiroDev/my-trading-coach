@@ -23,14 +23,17 @@ type IncidentResponse = Observable<{ data: AccountIncidentReport }>;
 
 function mount(
   report: AccountIncidentReport,
-  opts: { premium?: boolean; demo?: boolean; confirm?: boolean; incident?: () => IncidentResponse; accountsLoading?: boolean } = {},
+  opts: {
+    premium?: boolean; demo?: boolean; confirm?: boolean; incident?: () => IncidentResponse; accountsLoading?: boolean;
+    newer?: { id: string; label: string };
+  } = {},
 ) {
   const api = {
     incident: vi.fn(opts.incident ?? (() => of({ data: report }))),
     incidentAnalysis: vi.fn(() => of({ data: { status: 'ready', text: "D'après tes trades enregistrés, deux phases.", generatedAt: '2026-10-14T09:20:00.000Z' } })),
     dismissIncident: vi.fn(() => of({ data: { dismissed: true, reactivated: report.canReactivate } })),
   };
-  const flow = { busy: signal(false), openRetry: vi.fn() };
+  const flow = { busy: signal(false), openRetry: vi.fn(), openAttempt: vi.fn(), newerAttempt: vi.fn(() => opts.newer ?? null) };
   const store = { loaded: signal(!opts.accountsLoading), isLoading: signal(!!opts.accountsLoading), load: vi.fn() };
   const router = { navigate: vi.fn(async () => true) };
   const confirm = { ask: vi.fn(async () => opts.confirm ?? true) };
@@ -110,6 +113,15 @@ describe('Autopsie — page', () => {
     const { q, flow } = mount(mockupReport());
     q('autopsy-retry')!.click();
     expect(flow.openRetry).toHaveBeenCalledWith('acc');
+  });
+
+  it('tentative suivante déjà créée (B3) : « Voir Apex 50K #2 » à la place de « Repartir… »', () => {
+    const { q, flow } = mount(mockupReport(), { newer: { id: 'acc-2', label: 'Apex 50K #2' } });
+    expect(q('autopsy-retry')).toBeNull();
+    expect(q('autopsy-see-attempt')!.textContent!.trim()).toBe('Voir Apex 50K #2');
+    q('autopsy-see-attempt')!.click();
+    expect(flow.openAttempt).toHaveBeenCalledWith('acc-2');
+    expect(flow.openRetry).not.toHaveBeenCalled();
   });
 
   it('compte archivé : pas de nouvelle tentative (réservée aux comptes échoués)', () => {

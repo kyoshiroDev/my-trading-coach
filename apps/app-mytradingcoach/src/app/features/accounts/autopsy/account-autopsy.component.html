@@ -130,9 +130,15 @@
 
           <div class="actions">
             @if (r.account.status === 'FAILED') {
-              <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
-                Repartir sur une nouvelle tentative
-              </button>
+              @if (lostAccount.newerAttempt(r.account); as next) {
+                <button type="button" class="btn pri" (click)="lostAccount.openAttempt(next.id)" data-testid="autopsy-see-attempt">
+                  Voir {{ next.label }}
+                </button>
+              } @else {
+                <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
+                  Repartir sur une nouvelle tentative
+                </button>
+              }
             }
             <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
               {{ dismissing() ? 'Retrait…' : (r.canReactivate ? "Ce n'est pas un échec" : 'Retirer cette autopsie') }}

@@ -10,9 +10,9 @@ import { isFloorReached } from './account-retry';
  * agrégats « tous les comptes »).
  */
 function makePrisma() {
-  return {
+  const prisma = {
     tradingAccount: {
-      findMany: vi.fn(async () => [] as { label: string }[]),
+      findMany: vi.fn(async () => [] as { id?: string; label: string }[]),
       findUnique: vi.fn(),
       create: vi.fn(async ({ data }: { data: unknown }) => ({ id: 'acc-new', ...(data as object) })),
       update: vi.fn(async () => ({})),
@@ -23,7 +23,11 @@ function makePrisma() {
     tradeSession: { count: vi.fn(async () => 0) },
     propFirmPlan: { count: vi.fn(async () => 1) },
     brokerConnection: { count: vi.fn(async () => 0) },
+    // Nouvelle tentative sous verrou transactionnel (B3) : la transaction rejoue sur le même client.
+    $executeRaw: vi.fn(async () => 1),
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(prisma)),
   };
+  return prisma;
 }
 
 const failed = {
@@ -59,11 +63,12 @@ describe('AccountsService.retry — nouvelle tentative', () => {
     expect(data).not.toHaveProperty('status'); // ACTIVE par défaut
     expect(data).not.toHaveProperty('lastPayoutAt');
     // Libellés lus pour CET utilisateur seulement.
-    expect(prisma.tradingAccount.findMany).toHaveBeenCalledWith({ where: { userId: 'u1' }, select: { label: true } });
+    expect(prisma.tradingAccount.findMany).toHaveBeenCalledWith({ where: { userId: 'u1' }, select: { id: true, label: true } });
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1); // verrou pris avant la lecture
   });
 
   it('libellé : plus grand numéro existant + 1', async () => {
-    prisma.tradingAccount.findUnique.mockResolvedValue({ ...failed, label: 'Apex 50K #2' });
+    prisma.tradingAccount.findUnique.mockResolvedValue({ ...failed, label: 'Apex 50K #3' });
     prisma.tradingAccount.findMany.mockResolvedValue([{ label: 'Apex 50K #1' }, { label: 'Apex 50K #2' }, { label: 'Apex 50K #3' }]);
     await svc.retry('u1', 'acc-old', PREMIUM);
     expect(prisma.tradingAccount.create.mock.calls[0][0].data).toMatchObject({ label: 'Apex 50K #4' });
@@ -72,6 +77,17 @@ describe('AccountsService.retry — nouvelle tentative', () => {
   it.each([AccountStatus.ACTIVE, AccountStatus.PASSED, AccountStatus.ARCHIVED])('compte %s → 409, rien créé', async (status) => {
     prisma.tradingAccount.findUnique.mockResolvedValue({ ...failed, status });
     await expect(svc.retry('u1', 'acc-old', PREMIUM)).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
+  });
+
+  it('tentative plus récente déjà créée (B3) : 409 RETRY_EXISTS avec son id, rien créé, avant le quota', async () => {
+    prisma.tradingAccount.findUnique.mockResolvedValue(failed);
+    prisma.tradingAccount.findMany.mockResolvedValue([{ id: 'acc-old', label: 'Apex 50K #1' }, { id: 'acc-2', label: 'Apex 50K #2' }]);
+    prisma.tradingAccount.count.mockResolvedValue(1); // FREE au quota : le quota n'est même pas lu
+    const err = await svc.retry('u1', 'acc-old', FREE).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ConflictException);
+    expect((err as ConflictException).getResponse()).toMatchObject({ code: 'RETRY_EXISTS', accountId: 'acc-2', label: 'Apex 50K #2' });
+    expect(prisma.tradingAccount.count).not.toHaveBeenCalled();
     expect(prisma.tradingAccount.create).not.toHaveBeenCalled();
   });
 

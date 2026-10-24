@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ConfirmService } from '@mtc/front-ui';
-import { nextAttemptLabel } from '@mtc/shared';
+import { newerAttempt, nextAttemptLabel } from '@mtc/shared';
 import { AccountsApi, TradingAccount } from '@app/core/api/accounts.api';
 import { SelectedAccountStore } from '@app/core/stores/selected-account.store';
 import { TradesStore } from '@app/core/stores/trades.store';
@@ -62,6 +62,22 @@ export class LostAccountFlowService {
 
   closeChoice(): void {
     if (!this.busy()) this.choiceId.set(null);
+  }
+
+  /**
+   * Tentative plus récente du même compte (« Apex 50K #2 » pour le #1), ou null : « Nouvelle
+   * tentative » laisse alors la place à « Voir Apex 50K #2 » (B3).
+   */
+  newerAttempt(account: Pick<TradingAccount, 'label'>): TradingAccount | null {
+    return newerAttempt(account.label, this.store.accounts());
+  }
+
+  /** « Voir Apex 50K #2 » : ce compte sélectionné, affiché dans Mes comptes. */
+  openAttempt(accountId: string): void {
+    this.choiceId.set(null);
+    this.retryId.set(null);
+    this.store.select(accountId);
+    void this.router.navigate(['/accounts']);
   }
 
   openRetry(accountId: string): void {
@@ -126,6 +142,13 @@ export class LostAccountFlowService {
       },
       error: (err: HttpErrorResponse) => {
         this.busy.set(false);
+        // Déjà créée (autre onglet, double clic) : pas une erreur. La liste rechargée la montre et
+        // le bouton devient « Voir Apex 50K #2 ».
+        if (err.status === 409 && (err.error as { code?: string } | null)?.code === 'RETRY_EXISTS') {
+          this.retryId.set(null);
+          this.store.load();
+          return;
+        }
         this.toast.error(apiErrorMessage(err, "La nouvelle tentative n'a pas pu être créée."));
       },
     });

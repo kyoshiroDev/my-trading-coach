@@ -883,6 +883,10 @@ Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
 - Gratuit : chronologie et constats ; carte IA verrouillée (« Essayer Premium · 1 mois offert » selon
   `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
   Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
+- Tentative suivante déjà créée (`LostAccountFlowService.newerAttempt`, `@mtc/shared`) : « Nouvelle
+  tentative » (Mes comptes) et « Repartir… » (autopsie) deviennent « Voir Apex 50K #2 » (`openAttempt` :
+  ce compte sélectionné, `/accounts`). 409 `RETRY_EXISTS` à la création : ni toast d'erreur ni message
+  de quota, feuille fermée, liste rechargée (le bouton bascule).
 - « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
   Libellé (B2) : « Ce n'est pas un échec » seulement si `canReactivate` ; sinon (autopsie non confirmée,
   échec marqué à la main) « Retirer cette autopsie », note « Retirer l'autopsie ne change pas le statut du

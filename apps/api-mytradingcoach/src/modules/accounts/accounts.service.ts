@@ -30,7 +30,8 @@ import {
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
 import {
-  floorDismissalExpired, isFloorReached, nextAttemptLabel, readFloorDismissal, retryAccountData, withoutFloorDismissal,
+  floorDismissalExpired, isFloorReached, newerAttempt, nextAttemptLabel, readFloorDismissal, retryAccountData,
+  withoutFloorDismissal,
 } from './account-retry';
 import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
@@ -583,10 +584,11 @@ export class AccountsService {
   private async assertActiveSlotAvailable(
     userId: string,
     ctx?: PlanContext,
+    db: Pick<PrismaService, 'tradingAccount'> = this.prisma,
   ): Promise<void> {
     const limit = this.resolveAccountLimit(ctx);
     if (limit === null) return;
-    const activeCount = await this.prisma.tradingAccount.count({
+    const activeCount = await db.tradingAccount.count({
       where: { userId, status: AccountStatus.ACTIVE },
     });
     if (activeCount >= limit) {
@@ -654,10 +656,25 @@ export class AccountsService {
         message: 'Une nouvelle tentative ne se crée que depuis un compte marqué comme échoué.',
       });
     }
-    await this.assertActiveSlotAvailable(userId, ctx);
-    const labels = await this.prisma.tradingAccount.findMany({ where: { userId }, select: { label: true } });
-    const label = nextAttemptLabel(account.label, labels.map((l) => l.label));
-    return this.prisma.tradingAccount.create({ data: retryAccountData(account, label) });
+    // Sous verrou par utilisateur : deux clics simultanés ne créent qu'une tentative, le second
+    // voit la première (B3). Une tentative plus récente existe déjà → 409 avec son id et son
+    // libellé, AVANT le quota : jamais « Passe à un plan supérieur » dans ce cas.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`account-retry:${userId}`}, 0))`;
+      const others = await tx.tradingAccount.findMany({ where: { userId }, select: { id: true, label: true } });
+      const newer = newerAttempt(account.label, others);
+      if (newer) {
+        throw new ConflictException({
+          code: 'RETRY_EXISTS',
+          message: `« ${newer.label} » existe déjà\u00a0: c'est ta tentative en cours.`,
+          accountId: newer.id,
+          label: newer.label,
+        });
+      }
+      await this.assertActiveSlotAvailable(userId, ctx, tx);
+      const label = nextAttemptLabel(account.label, others.map((l) => l.label));
+      return tx.tradingAccount.create({ data: retryAccountData(account, label) });
+    });
   }
 
   /**

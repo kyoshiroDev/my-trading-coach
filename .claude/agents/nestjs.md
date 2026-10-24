@@ -1695,6 +1695,11 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
   `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
   « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+  Tentative plus récente déjà créée (même base, numéro plus grand : `newerAttempt`) → **409
+  `RETRY_EXISTS`**, vérifié AVANT le quota (jamais « Passe à un plan supérieur » dans ce cas). Lecture,
+  contrôles et création sous `pg_advisory_xact_lock(hashtextextended('account-retry:<userId>', 0))` :
+  deux requêtes simultanées ne créent qu'un compte (int-spec `account-status-scope`). Le filtre
+  global ne renvoie que `code` et `message` : l'app retrouve le compte dans la liste.
 - `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
   Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
   (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
