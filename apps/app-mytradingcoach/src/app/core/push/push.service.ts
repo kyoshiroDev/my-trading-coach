@@ -195,10 +195,14 @@ export class PushService {
       this.setServer(fresh);
     } catch {
       if (!this.current(gen)) return;
-      if (this.browser.env().notificationPermission === 'denied') {
+      const permission = this.browser.env().notificationPermission;
+      if (permission === 'denied') {
         this.state.set('denied');
+      } else if (permission === 'default') {
+        // Demande fermée sans réponse (revue phase 2 m3) : rien n'a échoué, il reste à répondre.
+        this.error.set('Autorise les notifications quand ton navigateur te le demande.');
       } else {
-        this.error.set("L'activation des notifications a échoué. Réessaie.");
+        this.error.set('L’activation des notifications a échoué. Réessaie.');
       }
     } finally {
       if (gen === this.generation) this.busy.set(false);

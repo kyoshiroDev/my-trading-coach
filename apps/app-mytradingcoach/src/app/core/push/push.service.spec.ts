@@ -158,9 +158,19 @@ describe('PushService.enable', () => {
     expect(service.state()).toBe('denied');
   });
 
-  it('autre échec : message, état inchangé', async () => {
+  it('demande de permission fermée sans réponse : message neutre, pas d’échec annoncé (m3)', async () => {
     const { service, browser } = setup();
     await service.init();
+    vi.mocked(browser.subscribe).mockRejectedValueOnce(new Error('NotAllowedError'));
+    await service.enable();
+    expect(service.state()).toBe('supported');
+    expect(service.error()).toBe('Autorise les notifications quand ton navigateur te le demande.');
+  });
+
+  it('autre échec : message, état inchangé', async () => {
+    const { service, browser, setEnv } = setup();
+    await service.init();
+    setEnv(env({ notificationPermission: 'granted' }));
     vi.mocked(browser.subscribe).mockRejectedValueOnce(new Error('réseau'));
     await service.enable();
     expect(service.state()).toBe('supported');
