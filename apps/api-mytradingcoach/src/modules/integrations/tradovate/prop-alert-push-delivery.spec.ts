@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { PropAlertsService } from './prop-alerts.service';
 import { MAX_UNDELIVERED_PUSH } from './prop-alert-push';
 import { ALERT_LEVEL_RANK as RANK } from './prop-alert-levels';
@@ -17,7 +17,9 @@ const fcm = (id: string) => `https://fcm.googleapis.com/fcm/send/${id}`;
 const NOW = new Date(Date.UTC(2026, 5, 2, 16));
 const PUSH_KEY = 'prop-alert-push:a:drawdown:2026-06-02';
 
-function setup(devices: { id: string; endpoint: string; reply: Reply }[]) {
+type Pref = { mutedTypes: string[]; quietStart: number | null; quietEnd: number | null } | null;
+
+function setup(devices: { id: string; endpoint: string; reply: Reply }[], pushPreference: Pref = null) {
   const store = new Map<string, string>();
   const redis = {
     client: {
@@ -44,7 +46,7 @@ function setup(devices: { id: string; endpoint: string; reply: Reply }[]) {
   const prisma = {
     user: {
       findUnique: vi.fn(async () => ({
-        plan: 'PREMIUM', role: 'USER', trialEndsAt: null, isDemo: false, pushPreference: null, _count: { pushDevices: rows.length },
+        plan: 'PREMIUM', role: 'USER', trialEndsAt: null, isDemo: false, pushPreference, _count: { pushDevices: rows.length },
       })),
     },
     tradingAccount: { findMany: vi.fn(async () => [{ id: 'a', propFirmPlan: null }]) },
@@ -70,7 +72,7 @@ function setup(devices: { id: string; endpoint: string; reply: Reply }[]) {
   const quiet = { recordReading: vi.fn(async () => undefined), recordEvent: vi.fn(async () => undefined), detectQuietly: vi.fn(async () => undefined) };
   const svc = new PropAlertsService(prisma as never, redis as never, accounts as never, quiet as never, quiet as never, notifier);
   const sync = () => svc.checkFromBackground('u', 'a', NOW);
-  return { sync, store, send };
+  return { sync, store, send, redis };
 }
 
 describe('Push prop firm : marqueur posé seulement si un appareil l’a reçu', () => {
@@ -116,3 +118,29 @@ describe('Push prop firm : marqueur posé seulement si un appareil l’a reçu',
     expect(store.get(PUSH_KEY)).toBe('breached');
   });
 });
+
+describe('Push prop firm : rien n’est parti, aucun essai consommé (revue #726 m10)', () => {
+  // 16:00 UTC = 18:00 à Paris (juin) : dans la plage 17:00 à 20:00.
+  const QUIET: Pref = { mutedTypes: [], quietStart: 17 * 60, quietEnd: 20 * 60 };
+  const MUTED: Pref = { mutedTypes: ['PROP_RULES'], quietStart: null, quietEnd: null };
+  // Le notifieur lit l'heure courante : figée sur celle du relevé.
+  beforeAll(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(NOW); });
+  afterAll(() => vi.useRealTimers());
+
+  it.each([
+    ['aucun appareil', [], null],
+    ['type coupé', [{ id: 'd0', endpoint: fcm('d0'), reply: 201 }], MUTED],
+    ['heures silencieuses', [{ id: 'd0', endpoint: fcm('d0'), reply: 201 }], QUIET],
+  ] as [string, { id: string; endpoint: string; reply: Reply }[], Pref][])(
+    '%s : aucun envoi, compteur jamais touché, réservation rendue à chaque relevé',
+    async (_, devices, pref) => {
+      const { sync, store, send, redis } = setup(devices, pref);
+      for (let i = 0; i < MAX_UNDELIVERED_PUSH + 2; i++) await sync();
+      expect(send).not.toHaveBeenCalled();
+      expect(redis.client.incr).not.toHaveBeenCalled();
+      expect([...store.keys()].some((k) => k.includes(':undelivered:'))).toBe(false);
+      expect(store.has(PUSH_KEY)).toBe(false);
+    },
+  );
+});
+
