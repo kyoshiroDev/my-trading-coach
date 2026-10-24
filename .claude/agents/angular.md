@@ -1368,26 +1368,49 @@ directement (pas de `?raw` comme dans l'app).
 Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : `nestjs.md`.
 - **Service worker maison** `public/push-sw.js` : push SEULEMENT, aucun `fetch`, aucun cache (l'app
   n'est jamais servie par lui). Au clic : ouvre ou met au premier plan `data.url`, revérifié comme
-  chemin interne (`safePath` : `/…` seulement, ni `//`, ni `\`, ni autre origine ; sinon `/`). Action
+  chemin interne (`safePath` : `/…` seulement, ni `//`, ni `\`, ni autre origine, ni chemin qui
+  devient `//hôte` une fois normalisé comme `/..//evil.com` ; sinon `/`). Charge utile `null` ou
+  non-objet : notification neutre. Action
   « Réglages » → `settingsUrl` (`/profil#notifications`). Testé dans un bac à sable `node:vm`
   (`core/push/push-sw.spec.ts`). Enregistré avec `updateViaCache: 'none'`, seulement au clic sur
   « Activer » (jamais au chargement).
 - **`core/push/push-browser.ts`** : `PUSH_BROWSER` (environnement, abonnement courant, `subscribe`),
   remplaçable dans les tests. **`core/push/push.service.ts`** : états `server-disabled`,
   `in-app-browser`, `ios-not-installed`, `unsupported`, `denied`, `supported`, `subscribed` ;
-  permission demandée par `enable()` seulement ; abonnement inconnu du serveur resynchronisé ;
-  interrupteurs et heures silencieuses avec retour arrière ; limite `PUSH_MAX_DEVICES` (`@mtc/shared`).
-- **Déconnexion** (`core/push/push-logout.ts`, appelé par `AuthService.logout`) : abonnement de CET
-  appareil retiré côté API avec le jeton d'AVANT la déconnexion (`HttpBackend`, sans intercepteur),
-  puis côté navigateur. Sans ça, sur un appareil partagé, les alertes du compte arrivaient chez la
-  personne suivante. +1,5 Ko sur le bundle initial (seul ajout initial de la phase 2).
+  permission demandée par `enable()` seulement (demande fermée sans réponse : message neutre, pas
+  d'échec) ; abonnement inconnu du serveur resynchronisé ; limite `PUSH_MAX_DEVICES` (`@mtc/shared`).
+  **Propre à un compte** (revue phase 2 I2) : inscrit à `UserScopedReset` et remis à zéro à tout
+  changement d'utilisateur (effet sur `currentUser`), requêtes en cours annulées (`AbortSignal`
+  passé à `PushApi`), réponse du compte précédent ignorée (génération), aucune commande tant que
+  `state` vaut `null`. **Écritures en file** (I1) : une à la fois, chacune calculée sur ce que le
+  serveur a enregistré ; après un échec, changements en attente abandonnés (`skipped`), réglages
+  relus et réaffichés, un seul `failed` donc un seul toast. `PushApi` entièrement en
+  `SILENT_ERRORS` : la section a ses propres messages.
+- **Déconnexion** (`core/push/push-logout.ts`, appelé par `AuthService.logout` sans l'attendre) :
+  abonnement de CET appareil retiré côté navigateur D'ABORD (`unsubscribe()`, local, sans réseau :
+  l'adresse meurt chez le service push même si l'onglet se ferme), puis côté API avec le jeton
+  d'AVANT la déconnexion (`HttpBackend`, sans intercepteur), 5 s au plus, en `keepalive` (revue
+  phase 2 I6). Un échec ne bloque rien : la ligne serveur part au premier 404 ou 410. Sans ça, sur
+  un appareil partagé, les alertes du compte arrivaient chez la personne suivante.
+  Poids (revue phase 2 m7, mesuré le 25/10/2026 au build de production) : bundle initial 492,69 ko
+  contre 489,25 ko sur `dev` (`69bffaf2`), soit +3,44 ko bruts (+1,10 ko transférés) pour toute la
+  phase 2 ; reste 7,31 ko sous le plafond bloquant de 500 ko. La section est un chunk paresseux
+  (`push-settings-component`, 28,26 ko).
 - **Section du profil** `features/profile/notifications/push-settings.component` : onglet
   Paramètres, chargée par `@defer (on viewport; when openNotifications)` ; `/profil#notifications`
   ouvre l'onglet et charge tout de suite. Masquée sans erreur si le push est coupé côté serveur ;
   démo en lecture seule (aucun appel `device`, aucun bouton d'action). Gratuit : lignes Premium
   verrouillées + modale des offres, seule `CONNECTION` active. Interrupteurs `role="switch"`
   étiquetés (`aria-labelledby`), cibles de 44 px, `scroll-margin-top` sous la barre fixe.
-  Couleurs : variables de `theme.css`, sauf le texte blanc du bouton principal (`--primary`).
+  Couleurs : variables de `theme.css`, sauf le texte blanc du bouton principal (`--primary`) ;
+  badges Premium violets (`--purple-bright` sur `--purple-dim`, comme `premium-lock`).
+  **Mise en page** (revue I3, m1) : toute la largeur, aucun `max-width` ; cartes dans l'ordre du DOM
+  (= ordre mobile = ordre du clavier : état, invitation, types, heures silencieuses, appareils), en
+  grille `repeat(auto-fit, minmax(min(100%, 420px), 1fr))`, types sur deux rangées dès deux
+  colonnes (`@container`), mention SOUS la grille (une carte `1 / -1` garderait des colonnes vides à
+  2560 px). Aucun `order` ni `display: contents` (`push-settings.styles.spec.ts`). Heures
+  silencieuses : début égal à la fin refusé (« Choisis deux heures différentes », 400 côté API),
+  champ vidé ou refusé remis à la valeur enregistrée. Seed démo : 2 appareils, 22:00 à 07:00.
 - iPhone sans installation : aide FIXE « Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach
   à l'écran d'accueil, puis ouvre-la depuis son icône » et « Partager, puis Sur l'écran d'accueil,
   puis Ajouter », sans bouton, sans durée ni promesse (revue phase 2 I4), en attendant le parcours
