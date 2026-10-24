@@ -46,6 +46,12 @@ export const TOAST_DURATIONS: Record<ToastType, number> = {
   error: 7000,
 };
 
+/**
+ * Toast portant un bouton (« Voir l'autopsie », « Marquer comme échoué ») : le temps de lire PUIS
+ * d'agir, jamais moins que la durée de son type (WCAG 2.2.1).
+ */
+export const TOAST_ACTION_MIN_DURATION = 10_000;
+
 /** Au-delà, les toasts attendent leur tour : une rafale ne recouvre pas l'écran. */
 export const MAX_VISIBLE_TOASTS = 3;
 
@@ -95,7 +101,8 @@ export class ToastService {
       this.restart(twin);
       return twin.id;
     }
-    const duration = opts.duration === undefined ? TOAST_DURATIONS[type] : opts.duration;
+    const byType = opts.action ? Math.max(TOAST_DURATIONS[type], TOAST_ACTION_MIN_DURATION) : TOAST_DURATIONS[type];
+    const duration = opts.duration === undefined ? byType : opts.duration;
     const toast: Toast = { id: this.nextId++, type, message, duration, version: 0, ...(opts.action ? { action: opts.action } : {}) };
     this.all.update((list) => [...list, toast]);
     this.syncTimers();

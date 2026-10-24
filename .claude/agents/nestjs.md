@@ -1686,11 +1686,23 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
   compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
   de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+  Plancher écarté par « Ce n'est pas un échec » (B1) : le retrait garde `dismissedMargin` et
+  `dismissedDay` (journée CME) dans le JSON `data` de l'incident (pas de table, pas de migration) ;
+  `floorReached` reste faux tant que la marge ne descend pas plus bas (tolérance 1). `list` efface ce
+  retrait dès que la marge repasse au-dessus de zéro ou à la séance suivante (rare écriture dans une lecture,
+  `clearExpiredFloorDismissals`) : jamais bloquante (try/catch, journal sans données ni id) et conditionnelle
+  (`updateMany` seulement si l'incident porte ENCORE ce retrait : deux lectures simultanées sans effet
+  croisé, un retrait plus récent jamais effacé).
 - `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
   404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
   `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
   « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+  Tentative plus récente déjà créée (même base, numéro plus grand : `newerAttempt`) → **409
+  `RETRY_EXISTS`**, vérifié AVANT le quota (jamais « Passe à un plan supérieur » dans ce cas). Lecture,
+  contrôles et création sous `pg_advisory_xact_lock(hashtextextended('account-retry:<userId>', 0))` :
+  deux requêtes simultanées ne créent qu'un compte (int-spec `account-status-scope`). Le filtre
+  global ne renvoie que `code` et `message` : l'app retrouve le compte dans la liste.
 - `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
   Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
   (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
@@ -1712,10 +1724,13 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 - **Déclencheurs** : `PropAlertsService` (niveau `breached` drawdown / perte du jour, source `live`),
   `TradesService.importTrades` (fin de lot, par compte touché : import CSV, synchro et historique
   Tradovate) et `TradesService.create` hors lot (saisie), source `sync`.
-- **Confirmation** : `PATCH /accounts/:id` passe par `AccountIncidentsService.updateAccount`. Un compte
-  ACTIF passé en `FAILED` ou `ARCHIVED` (feuille « … est échoué ») relance la détection puis pose
-  `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre `failedByIncidentAt: null`).
-  Passé en `FAILED` sans limite détectée : incident `manual` (chronologie de la dernière séance, jamais
+- **Confirmation** : `PATCH /accounts/:id` (`UpdateAccountRequestDto`) passe par
+  `AccountIncidentsService.updateAccount`. Un compte ACTIF passé en `FAILED` ou `ARCHIVED` relance la
+  détection ; il ne pose `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre
+  `failedByIncidentAt: null`) **que si le corps porte `confirmIncident: true`**, envoyé par la seule
+  feuille « … est échoué ». Le formulaire d'édition ne l'envoie jamais : son archivage ne confirme rien
+  (revue #712). `confirmIncident` est retiré avant `AccountsService.update` (le DTO part dans Prisma).
+  Passé en `FAILED` sans limite ouverte : incident `manual` (chronologie de la dernière séance, jamais
   réactivable). Simple archivage sans limite franchie : rien.
 - **Routes** : `GET /accounts/:id/incidents` (ouverts) · `GET …/:incidentId` (chronologie, KPI, série
   de distance, 3 constats, `ai` stocké, `canReactivate` ; **aucun appel IA**) · `GET …/:incidentId/analysis`
@@ -1728,14 +1743,21 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 - **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
   feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Jamais pour la démo,
   jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
-  Verrou Redis `incident-ai:<id>` (NX, 1 h) contre la double ouverture ; **libéré si l'appel échoue
-  ou revient vide** (nouvel essai à la prochaine ouverture), conservé après un succès.
+  Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
+  `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
+  réponse vide (facturée), il est ramené à `AI_RETRY_DELAY_S` (2 min) ; compteur
+  `incident-ai-tries:<id>:<jour CME>` (`INCR`, 24 h), au plus `AI_MAX_TRIES_PER_DAY` (3) essais par
+  incident et par jour, réussis ou non.
 - **« Ce n'est pas un échec »** : `dismissedAt` (jamais recréé) ; remet le compte en ACTIVE seulement si
   `failedByIncidentAt` et statut encore `FAILED` / `ARCHIVED`, via `AccountsService.update` (quota).
+- **Constats de marge** (`incident-report.ts`) : marge affichée avec son signe ; `crossingPoint` = passage
+  d'au-dessus de la limite à zéro ou dessous. Marge déjà ≤ 0 avant le premier trade : « Limite estimée
+  déjà franchie avant la séance », jamais de franchissement daté. Un seul trade : « 1 trade à HH:MM ».
 - **Démo** : `demo-data/lost-accounts.ts` (`lastSession`, `buildLostDemoIncident`,
   `DEMO_INCIDENT_ANALYSIS`) : séance de casse sur « Apex 50k · Éval #1 », alerte « pertes d'affilée »,
   paliers 25 % / 10 % / dépassé, échec confirmé, texte d'analyse PRÉENREGISTRÉ (vitrine démo seulement :
-  `seed:user` n'en pose pas). La page le signale comme exemple.
+  `seed:user` n'en pose pas). La page le signale comme exemple. Ses montants sont NETS, comme la
+  chronologie (test qui les recalcule depuis les trades du seed).
 - E-mail : pas encore branché (texte à valider par Greg ; seulement si `notificationsEmail` déjà actif,
   formule « d'après tes trades enregistrés, la limite semble franchie », jamais démo).
 
@@ -2184,6 +2206,57 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
 - **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
   `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.
+- Socle commun avec les traders (#666) : config VAPID et émetteur dans `modules/push/push-core.module.ts`
+  (`PUSH_CONFIG`, `PUSH_SENDER`), boucle d'envoi `deliverPush` (`push-delivery.ts`), DTO d'abonnement
+  `push/dto/push-subscription.dto.ts`. Une seule paire VAPID pour l'admin et l'app.
+
+## Notifications push des traders (#666, phase 1 API, 2026-10-23)
+
+Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-push-traders.md`.
+- Services métier → **`TraderNotifier.notify(userId, type, message, { accountId?, dedupKey, force? })`**
+  uniquement, injecté en `@Optional()` en dernier paramètre. Ne lève jamais, n'attend pas l'envoi.
+- **Filtres côté API, dans l'ordre** (`TraderNotifier.send`, renvoie la raison) : push actif, compte
+  démo, au moins un appareil, plan (`PUSH_PREMIUM_TYPES` : `isPremiumAccess`), type coupé
+  (`TraderPushPreference.mutedTypes`, défaut `[RECAP]`), heures silencieuses (`quiet-hours.ts`, heure de
+  Paris, plage à cheval sur minuit possible ; aucun fuseau par utilisateur en base), anti-spam Redis
+  `push:spam:<user>:<compte>:<dedupKey>` (`SET NX PX 15 min`, Redis indisponible = on envoie).
+  `force: true` (limite prop firm franchie) passe l'anti-spam mais **ni** les types coupés **ni** les
+  heures silencieuses ; la clé est posée quand même.
+- **Branchements** : `PropAlertsService` (`PROP_RULES` : 10 %, franchi, objectif, payout ; le 25 % et
+  l'approche de la consistency restent dans l'app ; `force` sur `breached`), `TiltAlertsService` et
+  `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
+  `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
+  (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
+  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+- **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
+  Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
+  Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),
+  comptes ACTIVE seulement (échoués et archivés exclus), PUSH SEULEMENT : ni événement d'app, ni journal
+  de séance (#373), ni incident `live` (#669).
+- **Deux marqueurs Redis par alerte** (revue #717, I3) : `prop-alert:<compte>:<type>:<période>` =
+  « affichée dans l'app » (direct seulement) et `prop-alert-push:…` = « push envoyé » (direct et fond,
+  `prop-alert-push.ts`). Le fond ne touche JAMAIS le premier : une alerte relevée app fermée s'affiche
+  à l'ouverture, sans second push si le push est parti. Le marqueur push est réservé ATOMIQUEMENT
+  (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
+  appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
+  une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+- **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
+  seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
+- **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le
+  libellé saisi par le trader** (écran verrouillé) : repère `{compte}` remplacé dans
+  `TraderNotifier` par le nom de catalogue (`push-account-name.ts` : « Apex 50K », « Apex 50K compte 2 »
+  pour le suivant de même firme et taille, « ton compte » sans plan relié). « (estimation
+  MyTradingCoach) » sur toute règle de firm (détecteurs A compris), aucun conseil. Clic →
+  `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.
+  Payload `TraderPushPayload` (`@mtc/shared`), lu par le service worker maison de l'app (phase 2).
+- **Routes `/push/*`** (`JwtAuthGuard`, mutations bloquées en démo par `DemoReadOnlyGuard`) :
+  `GET settings`, `POST device` / `subscribe` / `unsubscribe` (endpoint dans le corps), `DELETE
+  devices/:id`, `PATCH preferences` (`quietHours: null` = désactivées), `POST test` (sans filtre, 3/min).
+  `POST device` (lecture) est `@DemoAllowed`. Adresse d'abonnement : liste blanche des services push
+  (`push-endpoint.ts`, DTO et avant chaque envoi) ; envoi borné (`push-http.ts` : 10 s au total, 16 Ko
+  de réponse au plus, aucune redirection).
+  Au plus `MAX_PUSH_DEVICES` = 10 appareils par trader (le plus ancien part). L'endpoint n'est jamais
+  renvoyé ; libellé d'appareil déduit du User-Agent (`device-label.ts`).
 
 ## Détecteurs de comportement (#602, phase 1 : moteur + mode silencieux, 2026-10-18)
 

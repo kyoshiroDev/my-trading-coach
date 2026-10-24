@@ -21,12 +21,25 @@ import { TradesApi, Trade } from '../../core/api/trades.api';
 import { statsScopeStub } from '../../core/stores/selected-account.store.stub';
 import JOURNAL_HTML from './journal.component.html?raw';
 
-const trade = (id: string, account: Trade['account']): Trade => ({
+/**
+ * Heures FIXES et distinctes (une heure d'écart, même journée quel que soit le fuseau entre UTC-8 et
+ * UTC+12) : le journal trie la journée du plus récent au plus ancien, l'ordre des lignes est donc
+ * déterministe. Avec `new Date()`, deux trades tombaient ou non sur la même milliseconde et l'ordre
+ * des badges changeait d'une exécution à l'autre.
+ */
+const AT = {
+  t1: '2026-10-14T11:00:00.000Z',
+  t2: '2026-10-14T10:00:00.000Z',
+  t3: '2026-10-14T09:00:00.000Z',
+  t4: '2026-10-14T08:00:00.000Z',
+} as const;
+
+const trade = (id: keyof typeof AT, account: Trade['account']): Trade => ({
   id, userId: 'u1', asset: 'MNQ', side: 'LONG', entry: 18600, exit: 18605,
   stopLoss: null, takeProfit: null, pnl: 10, commission: 0, riskReward: null, quantity: 1,
   capitalEngaged: null, emotion: null, setupId: 's1', setup: { id: 's1', title: 'Breakout', color: '#fff' },
   accountId: account?.id ?? null, account, session: 'NEW_YORK', timeframe: 'M5', notes: null, tags: [],
-  tradedAt: new Date().toISOString(), createdAt: new Date().toISOString(),
+  tradedAt: AT[id], createdAt: AT[id],
 } as Trade);
 
 async function render(trades: Trade[]) {

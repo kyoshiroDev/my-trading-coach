@@ -2,8 +2,8 @@
   <section class="fr-alert" role="alert" [attr.aria-labelledby]="'fr-lbl-' + a.id" [attr.data-testid]="'floor-banner-' + a.id">
     <div class="fr-lbl" [id]="'fr-lbl-' + a.id">PLANCHER ATTEINT</div>
     <p class="fr-text">
-      <b>{{ a.label }}</b> : d'après tes trades enregistrés, le plancher estimé est atteint. Vérifie chez ta firm.
-      {{ endedLabel(a) }}, marque le compte comme échoué : il sortira de tes statistiques.
+      <b>{{ a.label }}</b>&nbsp;: d'après tes trades enregistrés, le plancher estimé est atteint. Vérifie chez ta firm.
+      {{ endedLabel(a) }}, marque le compte comme échoué&nbsp;: il sortira de tes statistiques.
     </p>
     <div class="fr-actions">
       <button class="fr-btn pri" type="button" (click)="flow.openChoice(a.id)" [attr.data-testid]="'floor-mark-failed-' + a.id">

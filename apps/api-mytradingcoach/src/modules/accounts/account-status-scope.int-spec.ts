@@ -9,7 +9,7 @@
  * chaque statistique du service les applique sur de vraies lignes.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { INestApplication } from '@nestjs/common';
+import { ConflictException, INestApplication } from '@nestjs/common';
 import { AccountStatus, Plan, Prisma, Role } from '@prisma/client';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -252,14 +252,32 @@ describe('nouvelle tentative (vraie base)', () => {
     expect(await prisma.trade.count({ where: { accountId: second.id } })).toBe(0);
     expect(await prisma.brokerConnection.count({ where: { accountId: second.id } })).toBe(0);
 
-    const third = await accounts.retry(f.userId, f.ids.failed, premium);
+    // Le #1 a déjà sa suite : 409, pas de #3 ; le #3 part du #2 une fois échoué.
+    await expect(accounts.retry(f.userId, f.ids.failed, premium)).rejects.toMatchObject({ status: 409 });
+    await prisma.tradingAccount.update({ where: { id: second.id }, data: { status: AccountStatus.FAILED } });
+    const third = await accounts.retry(f.userId, second.id, premium);
     expect(third.label).toBe('Apex 50K #3');
   });
 
-  it('FREE : l’échoué libère sa place ; une 2e tentative bloquée par le quota', async () => {
+  it('FREE : l’échoué libère sa place ; 2e clic → 409 RETRY_EXISTS, jamais le message de quota', async () => {
     const f = await seed({ failed: -300 }, null);
     const free = { plan: Plan.FREE, role: Role.USER, trialEndsAt: null };
-    await accounts.retry(f.userId, f.ids.failed, free);
-    await expect(accounts.retry(f.userId, f.ids.failed, free)).rejects.toMatchObject({ status: 403 });
+    const second = await accounts.retry(f.userId, f.ids.failed, free);
+    const err = await accounts.retry(f.userId, f.ids.failed, free).then(() => null, (e: ConflictException) => e);
+    expect(err).toBeInstanceOf(ConflictException);
+    expect(err!.getResponse()).toMatchObject({ code: 'RETRY_EXISTS', accountId: second.id, label: second.label });
+  });
+
+  it('deux requêtes simultanées (double clic) : un seul compte créé, l’autre reçoit 409', async () => {
+    const f = await seed({ failed: -300 }, null);
+    await prisma.tradingAccount.update({ where: { id: f.ids.failed }, data: { label: 'Apex 50K #1' } });
+    const premium = { plan: Plan.PREMIUM, role: Role.USER, trialEndsAt: null };
+    const results = await Promise.allSettled([
+      accounts.retry(f.userId, f.ids.failed, premium),
+      accounts.retry(f.userId, f.ids.failed, premium),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({ reason: { status: 409 } });
+    expect(await prisma.tradingAccount.count({ where: { userId: f.userId, label: { startsWith: 'Apex 50K #' } } })).toBe(2);
   });
 });

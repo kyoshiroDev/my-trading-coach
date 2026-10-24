@@ -12,10 +12,12 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
   const findUnique = vi.fn();
   const generateRecap = vi.fn();
   const sendDailyRecap = vi.fn();
+  const notify = vi.fn();
   const processor = new DailyRecapProcessor(
     { user: { findUnique } } as unknown as PrismaService,
     { generateRecap } as unknown as DailyRecapService,
     { sendDailyRecap } as unknown as ResendService,
+    { notify } as never,
   );
   const job = { data: { userId: 'u1', at: '2026-10-07T15:30:00.000Z' } } as Job<DailyRecapJob>;
   const user = { email: 'a@test.com', name: 'A' };
@@ -24,6 +26,7 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
     findUnique.mockReset().mockResolvedValue(user);
     generateRecap.mockReset().mockResolvedValue({ tradesCount: 2 });
     sendDailyRecap.mockReset().mockResolvedValue(undefined);
+    notify.mockReset();
   });
 
   it('génère le récap du jour de la passe du cron puis met l’e-mail en file', async () => {
@@ -37,6 +40,15 @@ describe('DailyRecapProcessor (SCA-B5-01)', () => {
     generateRecap.mockResolvedValue(null);
     await processor.process(job);
     expect(sendDailyRecap).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('push « récap prêt » (#666) après l’e-mail, une fois par passe du cron', async () => {
+    await processor.process(job);
+    expect(notify).toHaveBeenCalledWith(
+      'u1', 'RECAP', expect.objectContaining({ title: 'Récap du jour', url: '/dashboard' }),
+      { dedupKey: 'recap:2026-10-07T15:30:00.000Z' },
+    );
   });
 
   it('compte supprimé entre-temps → rien, sans erreur', async () => {

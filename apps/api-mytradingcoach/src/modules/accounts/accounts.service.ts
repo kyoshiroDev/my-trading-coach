@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -28,7 +29,10 @@ import {
 } from './account-rules';
 import { computeProgress, type AccountProgress, type ProgressInput } from './account-progress';
 import { computeDailyLoss, type DailyLossMetrics } from './daily-loss';
-import { isFloorReached, nextAttemptLabel, retryAccountData } from './account-retry';
+import {
+  floorDismissalExpired, isFloorReached, newerAttempt, nextAttemptLabel, readFloorDismissal, retryAccountData,
+  withoutFloorDismissal, type FloorDismissal,
+} from './account-retry';
 import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
 import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
@@ -224,6 +228,8 @@ export interface AccountRuleMetrics {
 
 @Injectable()
 export class AccountsService {
+  private readonly logger = new Logger(AccountsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     /** Cache analytics : un changement de statut fait entrer ou sortir les trades des agrégats. */
@@ -312,20 +318,63 @@ export class AccountsService {
     // Agrégats de tous les comptes en UNE requête SQL (SCA-B2-03) : avant, tous les trades
     // fermés du user étaient chargés puis groupés en mémoire.
     const ids = accounts.map(({ account }) => account.id);
-    const [aggs, sessions] = await Promise.all([
+    const [aggs, sessions, dismissedFloors] = await Promise.all([
       ruleAggregatesSql(this.prisma, userId, ids),
       // P&L par séance : seulement utile aux comptes reliés à un plan (progression).
       sessionPnlsSql(this.prisma, userId, accounts.filter((a) => a.plan).map(({ account }) => account.id)),
+      // Plancher écarté par « Ce n'est pas un échec » (B1) : au plus un par compte (clé unique).
+      this.prisma.accountIncident.findMany({
+        where: { accountId: { in: ids }, kind: 'drawdown', dismissedAt: { not: null } },
+        select: { id: true, accountId: true, data: true },
+      }),
     ]);
+    const dismissalByAccount = new Map(dismissedFloors.map((d) => [d.accountId, d]));
+    const today = tradingDay(new Date());
+    const expired: { id: string; data: unknown; dismissal: FloorDismissal }[] = [];
 
-    return accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
+    const result = accounts.map(({ account, openIncidentId, plan, broker, connectedPlatform, official, payouts }) => {
       const metrics = this.ruleMetricsFromAgg(
         account, aggs.get(account.id) ?? EMPTY_RULE_AGG, plan, broker, connectedPlatform, official, new Date(),
         sessions.get(account.id) ?? [], payouts, options,
       );
+      const row = dismissalByAccount.get(account.id);
+      let dismissal = readFloorDismissal(row?.data);
+      if (row && dismissal && floorDismissalExpired(dismissal, metrics.drawdown?.margin ?? null, today)) {
+        expired.push({ ...row, dismissal });
+        dismissal = null;
+      }
       // Compte perdu : plancher estimé atteint → bandeau côté front, statut inchangé (l'utilisateur confirme).
-      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown), openIncidentId };
+      return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown, dismissal), openIncidentId };
     });
+    await this.clearExpiredFloorDismissals(expired);
+    return result;
+  }
+
+  /**
+   * Retrait périmé (marge repassée au-dessus de zéro, séance suivante) : effacé, la prochaine perte
+   * sous le plancher redonne le bandeau. Écriture rare faite pendant une lecture, donc :
+   * - jamais bloquante : un échec est journalisé (sans données) et la liste part quand même ;
+   * - idempotente : effacé seulement si l'incident porte ENCORE ce retrait. Deux lectures
+   *   simultanées écrivent le même résultat, la seconde ne touche à rien (0 ligne), et un retrait
+   *   plus récent posé entre-temps n'est jamais effacé par une lecture qui ne l'a pas vu.
+   */
+  private async clearExpiredFloorDismissals(expired: { id: string; data: unknown; dismissal: FloorDismissal }[]): Promise<void> {
+    if (expired.length === 0) return;
+    try {
+      await Promise.all(expired.map(({ id, data, dismissal }) => this.prisma.accountIncident.updateMany({
+        where: {
+          id,
+          AND: [
+            { data: { path: ['dismissedDay'], equals: dismissal.day } },
+            { data: { path: ['dismissedMargin'], equals: dismissal.margin } },
+          ],
+        },
+        data: { data: withoutFloorDismissal(data) },
+      })));
+    } catch (err: unknown) {
+      const code = (err as { code?: unknown } | null)?.code;
+      this.logger.warn(`Retrait de plancher non effacé (${expired.length} incident(s)${typeof code === 'string' ? `, ${code}` : ''}) : réessai à la prochaine lecture.`);
+    }
   }
 
   private clamp01(x: number): number {
@@ -557,10 +606,11 @@ export class AccountsService {
   private async assertActiveSlotAvailable(
     userId: string,
     ctx?: PlanContext,
+    db: Pick<PrismaService, 'tradingAccount'> = this.prisma,
   ): Promise<void> {
     const limit = this.resolveAccountLimit(ctx);
     if (limit === null) return;
-    const activeCount = await this.prisma.tradingAccount.count({
+    const activeCount = await db.tradingAccount.count({
       where: { userId, status: AccountStatus.ACTIVE },
     });
     if (activeCount >= limit) {
@@ -628,10 +678,25 @@ export class AccountsService {
         message: 'Une nouvelle tentative ne se crée que depuis un compte marqué comme échoué.',
       });
     }
-    await this.assertActiveSlotAvailable(userId, ctx);
-    const labels = await this.prisma.tradingAccount.findMany({ where: { userId }, select: { label: true } });
-    const label = nextAttemptLabel(account.label, labels.map((l) => l.label));
-    return this.prisma.tradingAccount.create({ data: retryAccountData(account, label) });
+    // Sous verrou par utilisateur : deux clics simultanés ne créent qu'une tentative, le second
+    // voit la première (B3). Une tentative plus récente existe déjà → 409 avec son id et son
+    // libellé, AVANT le quota : jamais « Passe à un plan supérieur » dans ce cas.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`account-retry:${userId}`}, 0))`;
+      const others = await tx.tradingAccount.findMany({ where: { userId }, select: { id: true, label: true } });
+      const newer = newerAttempt(account.label, others);
+      if (newer) {
+        throw new ConflictException({
+          code: 'RETRY_EXISTS',
+          message: `« ${newer.label} » existe déjà\u00a0: c'est ta tentative en cours.`,
+          accountId: newer.id,
+          label: newer.label,
+        });
+      }
+      await this.assertActiveSlotAvailable(userId, ctx, tx);
+      const label = nextAttemptLabel(account.label, others.map((l) => l.label));
+      return tx.tradingAccount.create({ data: retryAccountData(account, label) });
+    });
   }
 
   /**

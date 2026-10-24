@@ -6,6 +6,7 @@ import { AuthModule } from '../../auth/auth.module';
 import { AccountsModule } from '../../accounts/accounts.module';
 import { AdminPushModule } from '../../admin-push/admin-push.module';
 import { BehaviorModule } from '../../behavior/behavior.module';
+import { TraderPushModule } from '../../push/trader-push.module';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
@@ -34,7 +35,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
   // AuthModule : JwtService pour authentifier le handshake du canal temps réel.
   // AccountsModule : métriques des règles prop firm, base des alertes (#370).
   // BehaviorModule : détecteurs de comportement branchés sur le temps réel (#602, silencieux).
-  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule, AdminPushModule, BehaviorModule],
+  // TraderPushModule : push des alertes et de la connexion à renouveler (#666).
+  imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule, AdminPushModule, BehaviorModule, TraderPushModule],
   controllers: [TradovateController, TradovateCallbackController],
   providers: [
     TradovateApiClient,

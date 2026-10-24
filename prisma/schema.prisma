@@ -123,6 +123,9 @@ model User {
   checkoutReservations CheckoutReservation[]
   /// Appareils de l'admin abonnés aux notifications push (rôle ADMIN uniquement).
   adminPushSubscriptions AdminPushSubscription[]
+  /// Appareils du trader abonnés aux notifications push (#666) et ses réglages.
+  pushDevices     UserPushDevice[]
+  pushPreference  TraderPushPreference?
   /// Référence personnelle des détecteurs de comportement (#602), une ligne au plus.
   behaviorBaseline BehaviorBaseline?
   behaviorAlerts   BehaviorAlert[]
@@ -689,6 +692,44 @@ model AdminPushSubscription {
   lastSuccessAt DateTime?
 
   @@index([userId])
+}
+
+// ── Notifications push des traders (#666) ───────────────────────────────────
+/// Types d'alerte réglables un par un par le trader.
+enum PushAlertType {
+  PROP_RULES  // règles prop firm : marge sous 10 %, limite franchie, objectif, payout
+  BEHAVIOR    // anti-tilt et détecteurs de comportement
+  RECAP       // récap du jour prêt
+  CONNECTION  // connexion Tradovate à renouveler (palier Gratuit)
+}
+
+/// Un appareil (navigateur / PWA installée) d'un trader abonné au Web Push.
+/// Supprimé automatiquement quand le service push répond 404/410 (abonnement mort).
+model UserPushDevice {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+  lastSuccessAt DateTime?
+
+  @@index([userId])
+}
+
+/// Réglages push du trader, valables pour tous ses appareils. Pas de ligne = réglages par défaut
+/// (récap coupé, pas d'heures silencieuses). Table dédiée : `User` est lu à chaque requête.
+model TraderPushPreference {
+  userId     String          @id
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Types coupés (tous les appareils).
+  mutedTypes PushAlertType[] @default([RECAP])
+  /// Heures silencieuses en minutes depuis minuit, heure de Paris ; null = aucune.
+  quietStart Int?
+  quietEnd   Int?
+  updatedAt  DateTime        @updatedAt
 }
 
 // ── Idempotence webhooks Stripe ─────────────────────────────────────────────

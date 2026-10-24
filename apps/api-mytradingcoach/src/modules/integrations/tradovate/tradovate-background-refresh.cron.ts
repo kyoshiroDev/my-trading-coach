@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
@@ -7,6 +7,7 @@ import { TradovateLiveService } from './tradovate-live.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { RedisService } from '../../infra/redis.service';
+import { PropAlertsService } from './prop-alerts.service';
 import { mapWithConcurrency } from '../../../common/utils/concurrency.util';
 import { randomUUID } from 'node:crypto';
 
@@ -41,6 +42,9 @@ export const BACKGROUND_USER_CONCURRENCY = 5;
 /**
  * Filet de fond du temps réel — PAS du temps réel lui-même.
  *
+ * Seule exception (#666) : après une synchro de fond, les alertes de limite, objectif et payout
+ * partent en push (app fermée, jusqu'à 15 min de décalage, annoncé dans le texte).
+ *
  * Le temps réel est couvert par le WebSocket (app ouverte) et le rattrapage à l'ouverture.
  * Ce cron sert les features qui tournent SANS l'app ouverte (récap journalier, Weekly Debrief) :
  * elles doivent voir les trades Tradovate même si l'utilisateur n'a pas ouvert l'app depuis
@@ -69,6 +73,8 @@ export class TradovateBackgroundRefreshCron {
     private readonly history: TradovateHistoryService,
     private readonly live: TradovateLiveService,
     private readonly redis: RedisService,
+    /** Alertes de limite, objectif et payout relevées app fermée (#666) : push seulement. */
+    @Optional() private readonly alerts?: PropAlertsService,
   ) {}
 
   @Cron('*/15 * * * *', { timeZone: 'Europe/Paris' })
@@ -180,6 +186,11 @@ export class TradovateBackgroundRefreshCron {
         });
         result.synced++;
         result.created += r.created;
+        // App fermée : le solde vient d'être relu, les alertes de règles partent en push (0 appel
+        // Tradovate en plus). Best-effort, n'échoue pas le passage.
+        await this.alerts
+          ?.checkFromBackground(c.userId, c.accountId)
+          .catch((err: unknown) => this.logger.warn(`Alertes de fond non évaluées (connexion ${c.id}) : ${(err as Error).message}`));
         if (passeComplet) {
           result.created += await this.importer(c.userId, c.accountId, true, result);
         }

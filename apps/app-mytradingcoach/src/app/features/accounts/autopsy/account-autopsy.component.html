@@ -3,10 +3,16 @@
 <div class="content autopsy" data-testid="autopsy-page">
   <a routerLink="/accounts" class="back">← Mes comptes</a>
 
-  @if (loadError()) {
+  @if (loadError() === 'notFound') {
+    <!-- Même message qu'elle soit retirée, inexistante ou d'un autre compte : rien n'est révélé. -->
+    <section class="card not-found" data-testid="autopsy-not-found">
+      <p>Cette autopsie n'existe pas ou n'est plus disponible.</p>
+      <a routerLink="/accounts" class="btn ghost">Revenir à Mes comptes</a>
+    </section>
+  } @else if (loadError()) {
     <mtc-error-state (retry)="load()" />
   } @else if (!report()) {
-    <p class="note loading">Chargement de l'autopsie…</p>
+    <p class="note loading" data-testid="autopsy-loading">Chargement de l'autopsie…</p>
   } @else {
     @let r = report()!;
     <div class="top">
@@ -19,41 +25,47 @@
     <p class="note headline" data-testid="autopsy-headline">{{ headline() }}</p>
 
     <div class="grid">
-      <div class="col">
-        <div class="kpis">
-          @for (k of kpis(); track k.label) {
-            <div class="card kpi">
-              <div class="lbl">{{ k.label }}</div>
-              <div class="v" [class.pos]="k.tone === 'pos'" [class.neg]="k.tone === 'neg'">{{ k.value }}</div>
-              <div class="s">{{ k.sub }}</div>
-            </div>
+      <div class="col col-main">
+        <div class="stack">
+          <div class="kpis">
+            @for (k of kpis(); track k.label) {
+              <div class="card kpi">
+                <div class="lbl">{{ k.label }}</div>
+                <div class="v" [class.pos]="k.tone === 'pos'" [class.neg]="k.tone === 'neg'">{{ k.value }}</div>
+                <div class="s">{{ k.sub }}</div>
+              </div>
+            }
+          </div>
+
+          @if (chart(); as c) {
+            <section class="card chart-card" data-testid="autopsy-chart">
+              <div class="lbl">DISTANCE À LA LIMITE</div>
+              <div class="chart-box" [class.pending]="!chartMeasured()">
+                <svg class="chart" [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" [attr.width]="c.width" [attr.height]="c.height"
+                     role="img" [attr.aria-label]="c.aria">
+                  <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
+                  <text [attr.x]="26" [attr.y]="c.zeroY - 5">Limite estimée</text>
+                  @for (al of c.alerts; track $index) {
+                    <rect class="alert-mark" [attr.x]="al.x - 1" y="8" width="2" [attr.height]="c.height - 34" />
+                    @if (al.label) {
+                      <text class="alert-txt" [attr.x]="al.anchor === 'end' ? al.x - 5 : al.x + 5" y="20"
+                            [attr.text-anchor]="al.anchor">{{ al.label }}</text>
+                    }
+                  }
+                  <path class="line" [attr.d]="c.path" />
+                  @for (p of c.points; track $index) {
+                    <circle [class]="p.crossing ? 'dot dot-cross' : 'dot'" [attr.cx]="p.x" [attr.cy]="p.y"
+                            [attr.r]="p.crossing || p.last ? 5 : 3" />
+                  }
+                  <text [attr.x]="26" [attr.y]="c.height - 4">{{ c.startLabel }}</text>
+                  <text [attr.x]="c.width - 56" [attr.y]="c.height - 4">{{ c.endLabel }}</text>
+                </svg>
+              </div>
+            </section>
           }
         </div>
 
-        @if (chartWide(); as wide) {
-          <section class="card" data-testid="autopsy-chart">
-            <div class="lbl">DISTANCE À LA LIMITE</div>
-            @for (c of [chartNarrow()!, wide]; track $index) {
-              <svg [class]="$index === 0 ? 'chart chart-narrow' : 'chart chart-wide'"
-                   [attr.viewBox]="'0 0 ' + c.width + ' ' + c.height" width="100%" role="img" [attr.aria-label]="c.aria">
-                <line class="zero" [attr.x1]="26" [attr.x2]="c.width - 26" [attr.y1]="c.zeroY" [attr.y2]="c.zeroY" />
-                <text [attr.x]="26" [attr.y]="c.zeroY - 5">Limite estimée</text>
-                @for (al of c.alerts; track $index) {
-                  <rect class="alert-mark" [attr.x]="al.x - 1" y="8" width="2" [attr.height]="c.height - 34" />
-                  <text class="alert-txt" [attr.x]="al.x + 5" y="20">{{ al.label }}</text>
-                }
-                <path class="line" [attr.d]="c.path" />
-                @for (p of c.points; track $index) {
-                  <circle [class]="p.last ? 'dot dot-last' : 'dot'" [attr.cx]="p.x" [attr.cy]="p.y" [attr.r]="p.last ? 5 : 3" />
-                }
-                <text [attr.x]="26" [attr.y]="c.height - 4">{{ c.startLabel }}</text>
-                <text [attr.x]="c.width - 56" [attr.y]="c.height - 4">{{ c.endLabel }}</text>
-              </svg>
-            }
-          </section>
-        }
-
-        <section class="card">
+        <section class="card tl-card">
           <div class="lbl">CHRONOLOGIE DE LA SÉANCE</div>
           <ul class="tl" data-testid="autopsy-timeline">
             @for (row of rows(); track row.key) {
@@ -67,12 +79,12 @@
               <li class="empty"><span class="m">Aucun trade enregistré sur cette séance.</span></li>
             }
           </ul>
-          <p class="note">L'heure d'entrée n'est pas enregistrée : la distance est une estimation calculée sur les trades clôturés.</p>
+          <p class="note">L'heure d'entrée n'est pas enregistrée&nbsp;: la distance est une estimation calculée sur les trades clôturés.</p>
         </section>
       </div>
 
       <div class="col">
-        <section class="card">
+        <section class="card find-card">
           <div class="lbl">{{ findings().length }} CONSTAT{{ findings().length > 1 ? 'S' : '' }}</div>
           <ol class="find" data-testid="autopsy-findings">
             @for (f of findings(); track $index) {
@@ -81,57 +93,65 @@
           </ol>
         </section>
 
-        @switch (ai()?.status) {
-          @case ('locked') {
-            <section class="card ai lock" data-testid="autopsy-ai-locked">
-              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
-              <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
-              <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
-                {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
-              </button>
-            </section>
+        <div class="side">
+          @switch (ai()?.status) {
+            @case ('locked') {
+              <section class="card ai lock" data-testid="autopsy-ai-locked">
+                <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+                <p>Une lecture rédigée de cette séance, générée une seule fois et conservée.</p>
+                <button type="button" class="btn pri" (click)="showPlanModal.set(true)">
+                  {{ userStore.trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium →' }}
+                </button>
+              </section>
+            }
+            @case ('ready') {
+              <section class="card ai" data-testid="autopsy-ai">
+                <div class="top">
+                  <div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span>
+                  @if (userStore.isDemo()) { <span class="badge-example" data-testid="autopsy-ai-example-badge">Exemple</span> }
+                </div>
+                @for (p of aiText()!.paragraphs; track $index) {
+                  <p>{{ p }}</p>
+                }
+                @if (userStore.isDemo()) {
+                  <p class="note" data-testid="autopsy-ai-example">Exemple préenregistré du compte démo, sans appel à l'IA. Sur ton compte, l'analyse est rédigée une seule fois à partir de ta séance. Elle décrit ce qui s'est passé, ne prédit rien et ne constitue pas un conseil.</p>
+                } @else {
+                  <p class="note">Cette analyse décrit ce qui s'est passé. Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le {{ aiText()!.when }}.</p>
+                }
+              </section>
+            }
+            @default {
+              <section class="card ai" data-testid="autopsy-ai-wait">
+                <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
+                <p class="note">{{ aiLoading() ? 'Analyse en cours de rédaction…' : 'Analyse indisponible pour le moment. La chronologie et les constats restent à jour.' }}</p>
+              </section>
+            }
           }
-          @case ('ready') {
-            <section class="card ai" data-testid="autopsy-ai">
-              <div class="top">
-                <div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span>
-                @if (userStore.isDemo()) { <span class="badge-example">Exemple</span> }
-              </div>
-              @for (p of aiText()!.paragraphs; track $index) {
-                <p>{{ p }}</p>
-              }
-              @if (userStore.isDemo()) {
-                <p class="note" data-testid="autopsy-ai-example">Exemple préenregistré du compte démo, sans appel à l'IA. Sur ton compte, l'analyse est rédigée une seule fois à partir de ta séance. Elle décrit ce qui s'est passé, ne prédit rien et ne constitue pas un conseil.</p>
-              } @else {
-                <p class="note">Cette analyse décrit ce qui s'est passé. Elle ne prédit rien et ne constitue pas un conseil. Générée une seule fois le {{ aiText()!.when }}.</p>
-              }
-            </section>
-          }
-          @default {
-            <section class="card ai" data-testid="autopsy-ai-wait">
-              <div class="top"><div class="lbl">ANALYSE IA</div><span class="badge-prem">Premium</span></div>
-              <p class="note">{{ aiLoading() ? 'Analyse en cours de rédaction…' : 'Analyse indisponible pour le moment. La chronologie et les constats restent à jour.' }}</p>
-            </section>
-          }
-        }
 
-        <div class="actions">
-          @if (r.account.status === 'FAILED') {
-            <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
-              Repartir sur une nouvelle tentative
+          <div class="actions">
+            @if (r.account.status === 'FAILED') {
+              @if (lostAccount.newerAttempt(r.account); as next) {
+                <button type="button" class="btn pri" (click)="lostAccount.openAttempt(next.id)" data-testid="autopsy-see-attempt">
+                  Voir {{ next.label }}
+                </button>
+              } @else {
+                <button type="button" class="btn pri" (click)="retry()" [disabled]="lostAccount.busy()" data-testid="autopsy-retry">
+                  Repartir sur une nouvelle tentative
+                </button>
+              }
+            }
+            <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
+              {{ dismissing() ? 'Retrait…' : (r.canReactivate ? "Ce n'est pas un échec" : 'Retirer cette autopsie') }}
             </button>
-          }
-          <button type="button" class="btn ghost" (click)="dismiss()" [disabled]="dismissing()" data-testid="autopsy-dismiss">
-            {{ dismissing() ? 'Retrait…' : "Ce n'est pas un échec" }}
-          </button>
+          </div>
+          <p class="note">
+            @if (r.canReactivate) {
+              « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
+            } @else {
+              Retirer l'autopsie ne change pas le statut du compte.
+            }
+          </p>
         </div>
-        <p class="note">
-          @if (r.canReactivate) {
-            « Ce n'est pas un échec » retire l'autopsie et remet le compte en actif si la limite estimée était fausse.
-          } @else {
-            « Ce n'est pas un échec » retire l'autopsie. Le statut du compte ne change pas.
-          }
-        </p>
       </div>
     </div>
   }

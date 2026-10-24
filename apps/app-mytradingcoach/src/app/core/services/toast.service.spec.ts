@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MAX_VISIBLE_TOASTS, TOAST_DURATIONS, ToastService } from './toast.service';
+import { MAX_VISIBLE_TOASTS, TOAST_ACTION_MIN_DURATION, TOAST_DURATIONS, ToastService } from './toast.service';
 
 describe('ToastService — file, durées, pause', () => {
   let toast: ToastService;
@@ -20,6 +20,18 @@ describe('ToastService — file, durées, pause', () => {
     expect(TOAST_DURATIONS.success).toBeLessThanOrEqual(4000);
     expect(TOAST_DURATIONS.error).toBeGreaterThanOrEqual(6000);
     expect(TOAST_DURATIONS.warning).toBeGreaterThanOrEqual(6000);
+  });
+
+  it("toast avec un bouton : reste au moins 10 s, le temps d'agir (revue #712)", () => {
+    toast.success("« Apex 50K #1 » marqué comme échoué.", { action: { label: "Voir l'autopsie", run: () => undefined } });
+    expect(toast.visible()[0].duration).toBe(TOAST_ACTION_MIN_DURATION);
+    vi.advanceTimersByTime(TOAST_DURATIONS.success + 1);
+    expect(messages()).toHaveLength(1);
+    vi.advanceTimersByTime(TOAST_ACTION_MIN_DURATION - TOAST_DURATIONS.success);
+    expect(messages()).toEqual([]);
+    // Une durée explicite reste respectée.
+    toast.info('x', { action: { label: 'y', run: () => undefined }, duration: null });
+    expect(toast.visible()[0].duration).toBeNull();
   });
 
   it('succès : disparaît seul après sa durée', () => {

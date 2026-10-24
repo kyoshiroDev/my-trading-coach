@@ -314,8 +314,13 @@
                   <a class="lost-btn" [routerLink]="['/accounts', a.id, 'autopsie', a.openIncidentId]"
                      [attr.data-testid]="'account-autopsy-' + a.id">Voir l'autopsie</a>
                 }
-                <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
-                        [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
+                @if (lostAccount.newerAttempt(a); as next) {
+                  <button type="button" class="lost-btn pri" (click)="lostAccount.openAttempt(next.id)"
+                          [attr.data-testid]="'account-see-attempt-' + a.id">Voir {{ next.label }}</button>
+                } @else {
+                  <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
+                          [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
+                }
                 <button type="button" class="lost-btn" (click)="lostAccount.archive(a)"
                         [disabled]="lostAccount.busy()" [attr.data-testid]="'account-archive-' + a.id">Archiver</button>
               </div>

@@ -21,7 +21,7 @@
   gap: 12px;
   padding: 16px;
   background: var(--bg-3);
-  border: 1px solid color-mix(in srgb, var(--cyan) 25%, transparent);
+  border: 1px solid var(--border-hover);
   border-radius: 16px;
   color: var(--text);
   font-family: var(--font-body);
@@ -104,14 +104,16 @@
   color: var(--text-2);
 }
 
+/* Sélection = bleu (design.md : bordure bleue + halo), le cyan est réservé à l'IA et au temps réel. */
 .la-opt.is-checked {
-  border-color: var(--cyan);
-  background: color-mix(in srgb, var(--cyan) 6%, transparent);
+  border-color: var(--blue);
+  background: var(--blue-glow);
+  box-shadow: 0 0 0 3px var(--blue-glow);
 }
 
 .la-opt.is-checked .la-opt-t i {
-  border-color: var(--cyan);
-  background: radial-gradient(var(--cyan) 45%, transparent 50%);
+  border-color: var(--blue-bright);
+  background: radial-gradient(var(--blue-bright) 45%, transparent 50%);
 }
 
 .la-opt.is-danger.is-checked {
@@ -125,7 +127,7 @@
 }
 
 .la-opt:has(input:focus-visible) {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--blue-bright);
   outline-offset: 2px;
 }
 
@@ -171,10 +173,11 @@
 }
 
 .la-btn.pri {
-  background: var(--cyan);
-  border-color: var(--cyan);
-  color: var(--bg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text);
 }
+.la-btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .la-btn.ghost {
   background: transparent;
@@ -182,7 +185,7 @@
 }
 
 .la-btn:focus-visible {
-  outline: 2px solid var(--cyan);
+  outline: 2px solid var(--blue-bright);
   outline-offset: 2px;
 }
 

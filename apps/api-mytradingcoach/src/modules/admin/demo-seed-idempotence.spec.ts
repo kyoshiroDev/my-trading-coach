@@ -28,13 +28,17 @@ import { generate } from './demo-data/generate';
 // Date simulée, pour vérifier la robustesse du tirage (il dépend de la date du run) :
 // DEMO_SEED_DATE=2026-11-03T03:20:00 pnpm exec vitest run … demo-seed-idempotence.spec.ts
 const SEED_DATE = process.env['DEMO_SEED_DATE'];
-if (SEED_DATE) {
-  beforeAll(() => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(SEED_DATE));
-  });
-  afterAll(() => vi.useRealTimers());
-}
+/**
+ * Horloge figée pour tout le fichier : un mercredi de séance (21/10/2026, 14:00 heure de Paris),
+ * ou `DEMO_SEED_DATE` pour explorer un autre jour. Sans elle, le résultat dépendait du jour et de
+ * l'heure du run (rouge un samedi après 11 h).
+ */
+const FROZEN_AT = SEED_DATE ?? '2026-10-21T12:00:00.000Z';
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(FROZEN_AT));
+});
+afterAll(() => vi.useRealTimers());
 
 /** Un jour ouvré (mercredi) à l'heure donnée, pour les tests de la démo « live ». */
 function weekdayAt(hour: number, minute = 0): Date {

@@ -12,6 +12,7 @@ vi.mock('../../prisma/prisma.module', () => stub('PrismaModule'));
 vi.mock('../ai/ai.module', () => stub('AiModule'));
 vi.mock('../resend/resend.module', () => stub('ResendModule'));
 vi.mock('../accounts/accounts.module', () => stub('AccountsModule'));
+vi.mock('../push/trader-push.module', () => stub('TraderPushModule'));
 vi.mock('./daily-recap.service', () => stub('DailyRecapService'));
 vi.mock('./daily-recap.cron', () => stub('DailyRecapCron'));
 vi.mock('./daily-recap.processor', () => stub('DailyRecapProcessor'));
