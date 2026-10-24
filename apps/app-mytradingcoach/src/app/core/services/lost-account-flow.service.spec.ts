@@ -10,11 +10,13 @@ import { ToastService } from './toast.service';
 import { AccountsApi, TradingAccount } from '../api/accounts.api';
 import { SelectedAccountStore } from '../stores/selected-account.store';
 import { TradesStore } from '../stores/trades.store';
+import { UserStore } from '../stores/user.store';
+import { DemoService } from './demo.service';
 
 const acc = (id: string, label: string, over: Partial<TradingAccount> = {}): TradingAccount =>
   ({ id, label, status: 'ACTIVE', metrics: { tradesCount: 12 }, ...over }) as TradingAccount;
 
-function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean } = {}) {
+function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean; demo?: boolean } = {}) {
   const api = {
     update: vi.fn(() => of({ data: {} })),
     purge: vi.fn(() => of({ data: { deleted: true, tradesDeleted: 12 } })),
@@ -27,6 +29,7 @@ function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean } = {}) {
     loaded: signal(true),
     isLoading: signal(false),
     load: vi.fn(),
+    select: vi.fn(),
   };
   const tradesStore = { reset: vi.fn() };
   const confirm = { ask: vi.fn(async (_o: { title: string; message: string; danger?: boolean }) => opts.confirm ?? true) };
@@ -37,9 +40,11 @@ function setup(opts: { accounts?: TradingAccount[]; confirm?: boolean } = {}) {
       { provide: TradesStore, useValue: tradesStore },
       { provide: ConfirmService, useValue: confirm },
       { provide: Router, useValue: router },
+      { provide: UserStore, useValue: { isDemo: signal(!!opts.demo) } },
     ],
   });
   return {
+    demo: TestBed.inject(DemoService),
     flow: TestBed.inject(LostAccountFlowService),
     toast: TestBed.inject(ToastService),
     api, store, tradesStore, confirm, router,
@@ -158,7 +163,7 @@ describe('LostAccountFlowService (compte perdu)', () => {
     expect(api.retry).toHaveBeenCalledWith('a1');
     expect(store.load).toHaveBeenCalled();
     expect(flow.retryId()).toBeNull();
-    expect(toast.visible()[0].message).toBe('« Apex 50K #2 » créé : il démarre à zéro.');
+    expect(toast.visible()[0].message).toBe('« Apex 50K #2 » créé\u00a0: il démarre à zéro.');
   });
 
   it('Nouvelle tentative refusée (quota) : toast d\'erreur, feuille ouverte', () => {
@@ -170,10 +175,78 @@ describe('LostAccountFlowService (compte perdu)', () => {
     expect(flow.retryId()).toBe('a1');
   });
 
+  describe('tentative déjà créée (B3)', () => {
+    const accounts = () => [
+      acc('a1', 'Apex 50K #1', { status: 'FAILED' }),
+      acc('a2', 'Apex 50K #2'),
+      acc('x', 'Lucid 25K', { status: 'FAILED' }),
+    ];
+
+    it('« Voir Apex 50K #2 » : la tentative suivante est trouvée, aucune pour la dernière', () => {
+      const { flow } = setup({ accounts: accounts() });
+      expect(flow.newerAttempt({ label: 'Apex 50K #1' })?.id).toBe('a2');
+      expect(flow.newerAttempt({ label: 'Apex 50K #2' })).toBeNull();
+      expect(flow.newerAttempt({ label: 'Lucid 25K' })).toBeNull();
+    });
+
+    it('« Voir Apex 50K #2 » sélectionne ce compte et ouvre Mes comptes', () => {
+      const { flow, store, router } = setup({ accounts: accounts() });
+      flow.openAttempt('a2');
+      expect(store.select).toHaveBeenCalledWith('a2');
+      expect(router.navigate).toHaveBeenCalledWith(['/accounts']);
+    });
+
+    it('409 RETRY_EXISTS (autre onglet, double clic) : pas d’erreur ni de message de quota, liste rechargée', () => {
+      const { flow, api, store, toast } = setup({ accounts: [acc('a1', 'Apex 50K #1', { status: 'FAILED' })] });
+      api.retry.mockReturnValueOnce(throwError(() => new HttpErrorResponse({
+        status: 409, error: { statusCode: 409, code: 'RETRY_EXISTS', message: '« Apex 50K #2 » existe déjà.' },
+      })));
+      flow.openRetry('a1');
+      flow.createRetry();
+      expect(toast.visible()).toHaveLength(0);
+      expect(flow.retryId()).toBeNull();
+      expect(flow.busy()).toBe(false);
+      expect(store.load).toHaveBeenCalled();
+    });
+  });
+
   it('depuis l\'alerte live, liste pas encore chargée : elle se charge', () => {
     const { flow, store } = setup();
     store.loaded.set(false);
     flow.openChoice('a1');
     expect(store.load).toHaveBeenCalled();
+  });
+
+  describe('démo (lecture seule) : « Crée ton compte » au premier clic', () => {
+    it('« Nouvelle tentative » : invite tout de suite, aucune feuille, aucune requête', () => {
+      const { flow, api, demo } = setup({ demo: true, accounts: [acc('a1', 'Apex 50K #1', { status: 'FAILED' })] });
+      flow.openRetry('a1');
+      expect(demo.showSignupPrompt()).toBe(true);
+      expect(flow.retryId()).toBeNull();
+      flow.createRetry();
+      expect(api.retry).not.toHaveBeenCalled();
+    });
+
+    it('« Archiver » (compte échoué) : invite tout de suite, aucune requête', () => {
+      const { flow, api, demo } = setup({ demo: true });
+      flow.archive(acc('a1', 'Apex 50K #1', { status: 'FAILED' }));
+      expect(demo.showSignupPrompt()).toBe(true);
+      expect(api.update).not.toHaveBeenCalled();
+    });
+
+    it('feuille de choix montrée (le parcours), invite à son « Confirmer », sans requête', async () => {
+      const { flow, api, demo } = setup({ demo: true });
+      flow.openChoice('a1');
+      expect(flow.choiceAccount()?.label).toBe('Apex 50K #1');
+      expect(demo.showSignupPrompt()).toBe(false);
+      for (const c of ['archive', 'keep', 'delete'] as const) {
+        flow.openChoice('a1');
+        await flow.confirmChoice(c);
+        expect(flow.choiceId()).toBeNull();
+      }
+      expect(demo.showSignupPrompt()).toBe(true);
+      expect(api.update).not.toHaveBeenCalled();
+      expect(api.purge).not.toHaveBeenCalled();
+    });
   });
 });

@@ -114,7 +114,7 @@ describe('Feuilles du compte perdu (écrans 2 et 4)', () => {
     const sheet = q('lost-account-choice')!;
     expect(sheet.getAttribute('role')).toBe('dialog');
     expect(sheet.textContent).toContain('Apex 50K #1 est échoué');
-    expect(sheet.textContent).toContain('Ses trades sortent de tes statistiques. Que veux-tu en faire ?');
+    expect(sheet.textContent).toContain('Ses trades sortent de tes statistiques. Que veux-tu en faire\u00a0?');
     expect(sheet.textContent).toContain('Ton compte MyTradingCoach et ton abonnement ne changent pas.');
     expect((q('lost-choice-archive') as HTMLInputElement).checked).toBe(true);
     expect((q('lost-choice-delete') as HTMLInputElement).checked).toBe(false);
@@ -151,7 +151,7 @@ describe('Feuilles du compte perdu (écrans 2 et 4)', () => {
     expect(sheet.textContent).toContain('Repartir sur une nouvelle tentative');
     expect(q('retry-label')!.textContent).toContain('Apex 50K #2');
     expect(sheet.textContent).toContain('Même firme · même plan · même taille');
-    expect(sheet.textContent).toContain('relie le nouveau compte : il a un autre identifiant chez ta firm');
+    expect(sheet.textContent).toContain('relie le nouveau compte\u00a0: il a un autre identifiant chez ta firm');
     expect(q('retry-confirm')!.textContent).toContain('Créer Apex 50K #2');
     q('retry-confirm')!.click();
     expect(flow.createRetry).toHaveBeenCalled();

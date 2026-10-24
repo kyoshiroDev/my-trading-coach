@@ -62,3 +62,34 @@ describe("Autopsie : couleurs (revue #712)", () => {
     expect(PAYOUTS_CSS).not.toMatch(/--cyan/);
   });
 });
+
+describe('Autopsie : mise en page (A1, design.md « Mise en page »)', () => {
+  const TEMPLATE = css('account-autopsy.component.html');
+  const noComments = AUTOPSY_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('page sur toute la largeur : aucun plafond de largeur ni hauteur fixe', () => {
+    expect(rule(AUTOPSY_CSS, '.content')).not.toMatch(/max-width/);
+    expect(noComments).not.toMatch(/max-width:\s*\d+px/);
+    expect(noComments).not.toMatch(/(^|[;{\s])height:\s*(\d{3,}px|\d+vh)/);
+    expect(noComments).not.toMatch(/overflow(-y)?:\s*hidden/);
+  });
+
+  it('grand écran (A7) : trois colonnes par zones, constats sous la courbe, sans réordonner le DOM', () => {
+    const wide = noComments.slice(noComments.indexOf('@container (min-width: 1500px)'));
+    expect(wide).toMatch(/grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+    expect(wide).toMatch(/"kpis\s+tl side"\s*"chart tl side"\s*"find\s+tl side"/);
+    // La dernière rangée absorbe la hauteur des colonnes 2 et 3 : pas de trou entre courbe et constats.
+    expect(wide).toMatch(/grid-template-rows: auto auto auto 1fr/);
+    expect(rule(wide, '.col, .col-main, .stack')).toMatch(/display: contents/);
+    expect(wide).not.toMatch(/order:/);
+  });
+
+  it('courbe masquée jusqu’à sa première mesure (A8), place gardée', () => {
+    expect(rule(AUTOPSY_CSS, '.chart-box.pending .chart')).toMatch(/visibility: hidden/);
+  });
+
+  it('courbe à la largeur réelle de sa carte : jamais un SVG étiré (textes qui grossissent)', () => {
+    expect(TEMPLATE).not.toMatch(/<svg[^>]*width="100%"/);
+    expect(TEMPLATE).toMatch(/\[attr\.width\]="c\.width"/);
+  });
+});

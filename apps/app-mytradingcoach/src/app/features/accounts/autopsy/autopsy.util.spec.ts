@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aiParagraphs, autopsyKpis, autopsyRows, crossedAt, distanceChart, headline } from './autopsy.util';
+import { aiParagraphs, autopsyKpis, autopsyRows, crossedAt, distanceChart, frenchSpacing, headline } from './autopsy.util';
 import { alreadyCrossedReport, mockupReport, parisAt as at } from './autopsy.fixture';
 
 describe('autopsy.util — en-tête et KPI de la maquette', () => {
@@ -57,7 +57,7 @@ describe('autopsy.util — courbe de distance', () => {
     expect(c.alerts[0].x).toBeGreaterThan(c.points[3].x);
     expect(c.alerts[0].x).toBeLessThan(c.points[4].x);
     expect([c.startLabel, c.endLabel]).toEqual(['09:34', '11:12']);
-    expect(c.aria).toBe('Distance à la limite au fil de la séance : de $1,000 à -$50');
+    expect(c.aria).toBe('Distance à la limite au fil de la séance\u00a0: de $1,000 à -$50');
   });
 
   it('alertes rapprochées : un seul libellé (la première), les autres en simple trait (revue #712)', () => {
@@ -139,5 +139,11 @@ describe('autopsy.util — limite déjà franchie avant la séance (revue #712)'
     expect(crossedAt(r)).toBeNull();
     expect(headline(r)).toMatch(/^Plancher estimé déjà franchi avant la séance du 20 août · séance de 1 trade/);
     expect(autopsyKpis(r)[2]).toMatchObject({ label: 'MARGE AU DÉPART', value: '-$98' });
+  });
+});
+
+describe('frenchSpacing (A2)', () => {
+  it('espace insécable devant : ; ! ? et %', () => {
+    expect(frenchSpacing('Alerte : marge sous 25 % ; ok ! vrai ?')).toBe('Alerte : marge sous 25 % ; ok ! vrai ?');
   });
 });

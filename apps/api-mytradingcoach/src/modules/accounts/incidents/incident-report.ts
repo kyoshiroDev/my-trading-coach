@@ -94,6 +94,13 @@ export interface IncidentReportInput {
   trades: IncidentTrade[];
   alerts: IncidentAlert[];
   previous: PreviousSession[];
+  /**
+   * Plancher qui suit le plus haut en cours de séance (drawdown trailing intraday, ou trailing
+   * saisi à la main) : un gain fait monter le plancher avec lui, la marge ne grandit pas.
+   */
+  trailing?: boolean;
+  /** Écart entre le plus haut solde réalisé avant la séance et le solde au début de la séance (≥ 0). */
+  peakAboveStart?: number;
 }
 
 const BEHAVIOR_LABEL: Record<string, string> = {
@@ -106,7 +113,8 @@ const BEHAVIOR_LABEL: Record<string, string> = {
   C3_MARTINGALE: 'taille grossie après une perte',
 };
 const PROP_KIND_LABEL: Record<string, string> = { drawdown: 'marge drawdown', daily_loss: 'perte du jour' };
-const PROP_LEVEL_LABEL: Record<string, string> = { warning: 'sous 25 %', critical: 'sous 10 %' };
+// Espace insécable avant « % » : « 25 % » ne se coupe jamais en fin de ligne.
+const PROP_LEVEL_LABEL: Record<string, string> = { warning: 'sous 25\u00a0%', critical: 'sous 10\u00a0%' };
 const TILT_LABEL: Record<string, string> = {
   revenge: 'reprise rapide après une perte', size: 'taille grossie après une perte', overtrading: 'surtrading',
 };
@@ -130,6 +138,14 @@ const median = (xs: number[]): number | null => {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
 
+/**
+ * Espace insécable devant `: ; ! ? %` : la ponctuation double et le signe pour cent ne passent
+ * jamais seuls à la ligne (« sous 25 » puis « %) » à 1440 px).
+ */
+export function frenchSpacing(text: string): string {
+  return text.replace(/ ([:;!?%])/g, '\u00a0$1');
+}
+
 /** Séances précédentes minimum pour comparer la séance à l'habitude du compte. */
 export const MIN_PREVIOUS_SESSIONS = 5;
 
@@ -149,6 +165,47 @@ export function crossingPoint(series: IncidentReport['series']): IncidentReport[
   return null;
 }
 
+/**
+ * Marge estimée avant le premier trade puis après chacun (trades triés) : SOURCE UNIQUE de la
+ * carte « Marge au départ », de la courbe et de la chronologie. Null sans relevé, ou quand l'ordre
+ * des événements ne permet pas d'affirmer la marge de départ.
+ *
+ * Calcul en soldes relatifs au début de la séance (0) : solde au relevé = réalisé jusque-là,
+ * plancher au relevé = ce solde − marge relevée. Plancher fixe (statique, trailing EOD qui ne
+ * bouge qu'à la clôture, perte du jour) : il reste celui du relevé. Plancher trailing en séance :
+ * s'il vaut au relevé « plus haut de la séance − drawdown », c'est la séance qui l'a poussé ; il
+ * valait au départ « plus haut avant la séance − drawdown » et monte avec chaque nouveau plus haut.
+ * Plus haut que ça, il venait d'avant la séance ; plus bas, il est figé : fixe dans les deux cas.
+ */
+export function distanceSeries(
+  trades: { tradedAt: Date; net: number }[],
+  input: Pick<IncidentReportInput, 'snapshot' | 'kind' | 'trailing' | 'peakAboveStart'>,
+): { start: number; after: number[] } | null {
+  const snap = input.snapshot;
+  if (snap?.remaining == null) return null;
+  const detectedAt = new Date(snap.detectedAt).getTime();
+  const before = trades.filter((t) => t.tradedAt.getTime() <= detectedAt);
+  const balances = trades.reduce<number[]>((acc, t) => [...acc, (acc.at(-1) ?? 0) + t.net], []);
+  const floorAtDetection = before.reduce((s, t) => s + t.net, 0) - snap.remaining;
+
+  const amount = snap.limit ?? 0;
+  const highest = Math.max(0, ...balances.slice(0, before.length));
+  // Tolérance : frais et solde du broker écartent un peu le relevé des trades enregistrés.
+  const trails = input.kind === 'drawdown' && !!input.trailing && amount > 0
+    && Math.abs(floorAtDetection - (highest - amount)) <= Math.max(1, amount * 0.005);
+  let floor = trails ? Math.min(floorAtDetection, (input.peakAboveStart ?? 0) - amount) : floorAtDetection;
+  const start = -floor;
+  // Trade sorti après le relevé alors que la marge de départ serait déjà épuisée : son P&L était
+  // en partie latent dans l'equity relevée, on ne peut affirmer ni la marge ni « déjà franchi ».
+  if (start <= 0 && before.length < trades.length) return null;
+  const after = balances.map((b, i) => {
+    if (trails) floor = Math.max(floor, b - amount);
+    if (trails && i < before.length) floor = Math.min(floor, floorAtDetection);
+    return b - floor;
+  });
+  return { start, after };
+}
+
 export function buildIncidentReport(input: IncidentReportInput): IncidentReport {
   const money = (v: number) => formatMoney(v, input.currency, { decimals: 0 });
   const amount = (v: number) => formatMoney(Math.abs(v), input.currency, { decimals: 0, sign: false });
@@ -162,24 +219,14 @@ export function buildIncidentReport(input: IncidentReportInput): IncidentReport 
     .filter((a): a is typeof a & { label: string } => a.label !== null)
     .sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  // Marge avant le premier trade = marge relevée − réalisé jusqu'au relevé ; les trades sortis
-  // après (position encore ouverte au franchissement) s'ajoutent ensuite.
-  const snap = input.snapshot;
-  let startDistance: number | null = null;
-  if (snap?.remaining != null) {
-    const detectedAt = new Date(snap.detectedAt).getTime();
-    const realizedBefore = trades.filter((t) => t.tradedAt.getTime() <= detectedAt).reduce((s, t) => s + t.net, 0);
-    startDistance = snap.remaining - realizedBefore;
-  }
+  const distances = distanceSeries(trades, input);
+  const startDistance = distances?.start ?? null;
 
   const firstAlertAt = alerts[0]?.at.getTime() ?? null;
-  const series: IncidentReport['series'] = startDistance != null ? [{ at: null, distance: startDistance }] : [];
-  let distance = startDistance;
-  const tradeEntries: (TimelineEntry & { type: 'trade' })[] = trades.map((t) => {
-    if (distance != null) {
-      distance += t.net;
-      series.push({ at: t.tradedAt.toISOString(), distance });
-    }
+  const series: IncidentReport['series'] = distances ? [{ at: null, distance: distances.start }] : [];
+  const tradeEntries: (TimelineEntry & { type: 'trade' })[] = trades.map((t, i) => {
+    const distance = distances ? distances.after[i] : null;
+    if (distance != null) series.push({ at: t.tradedAt.toISOString(), distance });
     return {
       type: 'trade', at: t.tradedAt.toISOString(), tradeId: t.id, asset: t.asset, side: t.side,
       quantity: t.quantity, net: t.net, distanceAfter: distance,
@@ -302,6 +349,6 @@ export function buildIncidentReport(input: IncidentReportInput): IncidentReport 
       .map((f, i) => ({ ...f, i }))
       .sort((a, b) => b.weight - a.weight || a.i - b.i)
       .slice(0, 3)
-      .map((f) => f.text),
+      .map((f) => frenchSpacing(f.text)),
   };
 }

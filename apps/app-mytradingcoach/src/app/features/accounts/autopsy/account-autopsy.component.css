@@ -1,8 +1,8 @@
 /* Autopsie d'un compte grillé (#669) : maquette maquettes/mockup-autopsie.html, mobile d'abord. */
 
 .content {
-  /* Maquette « bureau · 1100 px » : au-delà, la page ne s'étire plus (tracé et libellés à taille nominale). */
-  max-width: 1180px;
+  /* Toute la largeur à droite de la barre latérale (design.md « Mise en page ») : pas de plafond,
+     ce sont les colonnes de la grille qui gardent des lignes lisibles à grande largeur. */
   padding: 16px;
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
   container-type: inline-size;
@@ -35,7 +35,7 @@
 .headline { margin-top: 8px; max-width: 75ch; }
 
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 14px; }
-.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.col, .stack, .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .card {
   background: var(--bg-card);
@@ -59,9 +59,11 @@
 }
 .kpi .s { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.35; }
 
-/* Courbe : un tracé par largeur, pour garder des libellés lisibles. */
-.chart { display: block; margin-top: 8px; }
-.chart-wide { display: none; }
+/* Courbe tracée à la largeur réelle de sa carte (composant) : textes à 11 px à toute largeur.
+   `max-width` ne joue qu'avant la première mesure, pour ne jamais déborder. */
+.chart-box { margin-top: 8px; min-width: 0; }
+.chart { display: block; max-width: 100%; height: auto; }
+.chart-box.pending .chart { visibility: hidden; }
 .chart text { font: 11px var(--font-mono); fill: var(--text-3); }
 .chart .zero { stroke: var(--red); stroke-dasharray: 4 4; stroke-opacity: .7; }
 .chart .alert-mark { fill: var(--yellow); fill-opacity: .8; }
@@ -159,14 +161,31 @@
 .btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .btn:disabled { opacity: .6; cursor: progress; }
 
-@container (min-width: 600px) {
-  .chart-narrow { display: none; }
-  .chart-wide { display: block; }
-}
-
 /* Deux colonnes à partir de 760 px : chronologie à gauche, constats et analyse IA à droite. */
 @container (min-width: 760px) {
   .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+}
+
+/* Grand écran : trois colonnes par zones de grille, sans toucher à l'ordre du DOM (mobile et
+   lecteurs d'écran inchangés). 1 = chiffres, courbe, constats ; 2 = chronologie ; 3 = analyse IA
+   et boutons. Les conteneurs intermédiaires s'effacent (`display: contents`). La dernière rangée
+   en 1fr absorbe la hauteur des colonnes 2 et 3 : la colonne 1 reste serrée, sans trou. */
+@container (min-width: 1500px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "kpis  tl side"
+      "chart tl side"
+      "find  tl side"
+      ".     tl side";
+  }
+  .col, .col-main, .stack { display: contents; }
+  .kpis { grid-area: kpis; }
+  .chart-card { grid-area: chart; }
+  .find-card { grid-area: find; }
+  .tl-card { grid-area: tl; }
+  .side { grid-area: side; }
 }
 
 @media (min-width: 769px) {

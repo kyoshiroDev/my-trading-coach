@@ -26,3 +26,29 @@ export function nextAttemptLabel(label: string, existingLabels: readonly string[
   }
   return `${base} #${max + 1}`;
 }
+
+/** Numéro de tentative du libellé : « Apex 50K #3 » → 3 ; sans suffixe, 1. */
+export function attemptNumber(label: string): number {
+  const m = label.match(SUFFIX);
+  return m ? Number(m[1]) : 1;
+}
+
+/**
+ * Tentative plus récente du même compte (même base, numéro plus grand), la plus récente s'il y en a
+ * plusieurs ; null sinon. « Nouvelle tentative » n'a alors plus lieu d'être : l'API la refuse (409
+ * `RETRY_EXISTS`) et l'app propose « Voir Apex 50K #2 » à la place.
+ */
+export function newerAttempt<T extends { label: string }>(label: string, accounts: readonly T[]): T | null {
+  const key = attemptBase(label).toLowerCase();
+  let best: T | null = null;
+  let bestN = attemptNumber(label);
+  for (const a of accounts) {
+    if (attemptBase(a.label).toLowerCase() !== key) continue;
+    const n = attemptNumber(a.label);
+    if (n > bestN) {
+      best = a;
+      bestN = n;
+    }
+  }
+  return best;
+}

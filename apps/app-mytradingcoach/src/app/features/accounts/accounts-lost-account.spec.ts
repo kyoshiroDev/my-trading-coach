@@ -5,6 +5,7 @@ import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { newerAttempt } from '@mtc/shared';
 import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -44,7 +45,10 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
     selectedAccountId: signal<string | 'all'>(selected),
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
-  const flow = { busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn() };
+  const flow = {
+    busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn(), openAttempt: vi.fn(),
+    newerAttempt: (a: TradingAccount) => newerAttempt(a.label, store.accounts()),
+  };
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: {} },
@@ -92,14 +96,25 @@ describe('Mes comptes · compte perdu', () => {
   });
 
   it('compte échoué : « Hors statistiques », « Nouvelle tentative » et « Archiver »', () => {
-    const { q, flow } = setup(LIST());
+    const { q, flow } = setup(LIST().filter((a) => a.id !== 'a2'));
     expect(q('account-failed-a1')!.textContent).toContain('Hors statistiques · 12 trades');
     q('account-retry-a1')!.click();
     expect(flow.openRetry).toHaveBeenCalledWith('a1');
     q('account-archive-a1')!.click();
     expect(flow.archive).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }));
-    expect(q('account-retry-a2')).toBeNull();
     expect(q('account-retry-t')).toBeNull();
+    expect(q('account-see-attempt-a1')).toBeNull();
+  });
+
+  it('tentative suivante déjà créée (B3) : « Voir Apex 50K #2 » à la place de « Nouvelle tentative »', () => {
+    const { q, flow } = setup(LIST());
+    expect(q('account-retry-a1')).toBeNull();
+    expect(q('account-see-attempt-a1')!.textContent!.trim()).toBe('Voir Apex 50K #2');
+    q('account-see-attempt-a1')!.click();
+    expect(flow.openAttempt).toHaveBeenCalledWith('a2');
+    expect(flow.openRetry).not.toHaveBeenCalled();
+    // « Archiver » reste proposé.
+    expect(q('account-archive-a1')).not.toBeNull();
   });
 
   it("« Voir l'autopsie » : sur un compte échoué ou archivé qui en a une (#669), jamais sinon", () => {

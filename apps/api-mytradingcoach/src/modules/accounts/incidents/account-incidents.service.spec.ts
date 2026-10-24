@@ -233,6 +233,26 @@ describe("AccountIncidentsService.dismiss — « Ce n'est pas un échec »", () 
     expect(d.prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { dismissedAt: expect.any(Date) } });
   });
 
+  it('plancher atteint (B1) : marge et séance du retrait gardées dans le relevé de l’incident', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident({ failedByIncidentAt: NOW }));
+    d.metrics.drawdown = { breached: true, maxDrawdown: 2000, margin: -60, floor: 48_000 };
+    await d.svc.dismiss(user(), 'acc', 'inc', PREMIUM, NOW);
+    expect(d.prisma.accountIncident.update).toHaveBeenCalledWith({
+      where: { id: 'inc' },
+      data: {
+        dismissedAt: NOW,
+        data: { limit: 2000, remaining: -50, detectedAt: NOW.toISOString(), dismissedMargin: -60, dismissedDay: '2026-10-14' },
+      },
+    });
+  });
+
+  it('plancher plus atteint au moment du retrait : rien de mémorisé', async () => {
+    d.prisma.accountIncident.findFirst.mockResolvedValue(incident());
+    d.metrics.drawdown = { breached: false, maxDrawdown: 2000, margin: 300, floor: 48_000 };
+    await d.svc.dismiss(user(), 'acc', 'inc', PREMIUM, NOW);
+    expect(d.prisma.accountIncident.update).toHaveBeenCalledWith({ where: { id: 'inc' }, data: { dismissedAt: NOW } });
+  });
+
   it('échec marqué à la main AVANT (incident non confirmé) : incident retiré, compte laissé échoué', async () => {
     d.prisma.accountIncident.findFirst.mockResolvedValue(incident({ kind: 'manual', data: null }));
     const res = await d.svc.dismiss(user(), 'acc', 'inc', PREMIUM);
