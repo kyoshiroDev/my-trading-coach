@@ -103,6 +103,25 @@ describe('Section Notifications du profil', () => {
     expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1320, end: 390 } }, expect.anything());
   });
 
+  it('heures silencieuses : début égal à la fin refusé, message sous les champs, rien envoyé (revue I5)', async () => {
+    const { q, api, settle } = await mount({ settings: settings({ quietHours: { start: 1320, end: 420 } }) });
+    api.preferences.mockClear();
+    const start = q('push-quiet-start') as HTMLInputElement;
+    start.value = '07:00';
+    start.dispatchEvent(new Event('change'));
+    await settle();
+    expect(api.preferences).not.toHaveBeenCalled();
+    expect(q('push-quiet-error')!.textContent).toContain('Choisis deux heures différentes');
+    expect(q('push-quiet-error')!.getAttribute('role')).toBe('alert');
+    expect(start.value).toBe('22:00');
+    // Une plage valide efface le message.
+    start.value = '23:00';
+    start.dispatchEvent(new Event('change'));
+    await settle();
+    expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1380, end: 420 } }, expect.anything());
+    expect(q('push-quiet-error')).toBeNull();
+  });
+
   it('deux interrupteurs, la 1re écriture échoue après le 2e clic : écran = serveur, un seul message (revue I1)', async () => {
     const { q, api, settle, toast } = await mount();
     const errors = vi.spyOn(toast, 'error');

@@ -127,11 +127,21 @@ export class PushSettingsComponent implements OnInit {
     if ((await this.push.setQuietHours(this.quiet() ? null : DEFAULT_QUIET)) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
   }
 
-  protected async changeQuiet(edge: 'start' | 'end', value: string): Promise<void> {
+  /** Début égal à la fin : refusé ici comme par l'API (revue phase 2 I5), le champ reprend sa valeur. */
+  protected readonly quietError = signal<string | null>(null);
+
+  protected async changeQuiet(edge: 'start' | 'end', input: HTMLInputElement): Promise<void> {
     const current = this.quiet();
-    const minutes = fromHhmm(value);
+    const minutes = fromHhmm(input.value);
     if (!current || minutes === null || this.readOnly()) return;
-    if ((await this.push.setQuietHours({ ...current, [edge]: minutes })) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
+    const next = { ...current, [edge]: minutes };
+    if (next.start === next.end) {
+      this.quietError.set('Choisis deux heures différentes');
+      input.value = toHhmm(current[edge]);
+      return;
+    }
+    this.quietError.set(null);
+    if ((await this.push.setQuietHours(next)) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
   }
 
   protected hhmm(minutes: number): string {

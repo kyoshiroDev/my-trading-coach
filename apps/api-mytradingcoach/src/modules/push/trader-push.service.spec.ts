@@ -121,6 +121,16 @@ describe('TraderPushService abonnements et réglages', () => {
     expect(JSON.stringify(s)).not.toContain('secret');
   });
 
+  it('ligne déjà enregistrée avec début égal à la fin : aucune heure silencieuse renvoyée (revue phase 2 I5)', async () => {
+    const { service, pref, db } = setup();
+    db.findMany.mockResolvedValueOnce([]);
+    pref.findUnique.mockResolvedValueOnce({ mutedTypes: [], quietStart: 420, quietEnd: 420 });
+    expect((await service.settings('u1')).quietHours).toBeNull();
+    db.findMany.mockResolvedValueOnce([]);
+    pref.findUnique.mockResolvedValueOnce({ mutedTypes: [], quietStart: 1320, quietEnd: 420 });
+    expect((await service.settings('u1')).quietHours).toEqual({ start: 1320, end: 420 });
+  });
+
   it('préférences : champ absent inchangé, quietHours null = désactivées', async () => {
     const { service, pref } = setup({ devices: [] });
     await service.setPreferences('u1', { mutedTypes: ['BEHAVIOR', 'BEHAVIOR'] });

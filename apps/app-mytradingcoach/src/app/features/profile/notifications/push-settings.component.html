@@ -88,13 +88,14 @@
                   <div class="pn-time">
                     <label>De
                       <input type="time" step="300" [value]="hhmm(q.start)" [disabled]="readOnly()" data-testid="push-quiet-start"
-                        (change)="changeQuiet('start', $any($event.target).value)" />
+                        (change)="changeQuiet('start', $any($event.target))" />
                     </label>
                     <label>À
                       <input type="time" step="300" [value]="hhmm(q.end)" [disabled]="readOnly()" data-testid="push-quiet-end"
-                        (change)="changeQuiet('end', $any($event.target).value)" />
+                        (change)="changeQuiet('end', $any($event.target))" />
                     </label>
                   </div>
+                  @if (quietError(); as e) { <p class="pn-error" role="alert" data-testid="push-quiet-error">{{ e }}</p> }
                 }
                 <p class="pn-note">Heure de Paris.</p>
               </div>

@@ -62,7 +62,11 @@ export class TraderPushService implements OnModuleInit {
       enabled: this.enabled,
       publicKey: this.config.enabled ? this.config.config.publicKey : null,
       mutedTypes: pref?.mutedTypes ?? [...DEFAULT_MUTED_PUSH_TYPES],
-      quietHours: pref?.quietStart != null && pref.quietEnd != null ? { start: pref.quietStart, end: pref.quietEnd } : null,
+      // Début égal à la fin (ligne enregistrée avant la revue phase 2 I5) : aucune heure silencieuse.
+      quietHours:
+        pref?.quietStart != null && pref.quietEnd != null && pref.quietStart !== pref.quietEnd
+          ? { start: pref.quietStart, end: pref.quietEnd }
+          : null,
       timeZone: PUSH_TIME_ZONE,
       devices: devices.map((d) => ({
         id: d.id,
