@@ -133,6 +133,17 @@ describe('Section Notifications du profil', () => {
     expect(q('push-quiet-error')).toBeNull();
   });
 
+  it('champ d’heure vidé : il reprend la valeur enregistrée, rien n’est envoyé (m4)', async () => {
+    const { q, api, settle } = await mount({ settings: settings({ quietHours: { start: 1320, end: 420 } }) });
+    api.preferences.mockClear();
+    const end = q('push-quiet-end') as HTMLInputElement;
+    end.value = '';
+    end.dispatchEvent(new Event('change'));
+    await settle();
+    expect(end.value).toBe('07:00');
+    expect(api.preferences).not.toHaveBeenCalled();
+  });
+
   it('deux interrupteurs, la 1re écriture échoue après le 2e clic : écran = serveur, un seul message (revue I1)', async () => {
     const { q, api, settle, toast } = await mount();
     const errors = vi.spyOn(toast, 'error');

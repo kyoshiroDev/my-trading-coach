@@ -133,7 +133,12 @@ export class PushSettingsComponent implements OnInit {
   protected async changeQuiet(edge: 'start' | 'end', input: HTMLInputElement): Promise<void> {
     const current = this.quiet();
     const minutes = fromHhmm(input.value);
-    if (!current || minutes === null || this.readOnly()) return;
+    if (!current || this.readOnly()) return;
+    // Champ vidé ou illisible (revue phase 2 m4) : il reprend la valeur enregistrée, rien n'est envoyé.
+    if (minutes === null) {
+      input.value = toHhmm(current[edge]);
+      return;
+    }
     const next = { ...current, [edge]: minutes };
     if (next.start === next.end) {
       this.quietError.set('Choisis deux heures différentes');
