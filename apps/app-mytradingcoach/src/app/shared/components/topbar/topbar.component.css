@@ -4,9 +4,9 @@
   background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--topbar-border-w) solid var(--border);
   padding: 0 22px;
-  height: 56px;
+  height: var(--topbar-h);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -48,7 +48,7 @@
 /* Sélecteur de compte global, sous l'en-tête (écrans scopés par compte) */
 .topbar-accounts {
   position: sticky;
-  top: 56px;
+  top: var(--topbar-h);
   background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -302,7 +302,7 @@
 
 @media (max-width: 768px) {
   .topbar {
-    height: 56px;
+    height: var(--topbar-h);
     padding: 0 16px;
     padding-right: 64px;
   }
@@ -323,5 +323,6 @@
   /* Le quota + le libellé Discord encombrent la barre 56px sur mobile */
   .tb-quota-wrap { display: none; }
   .tb-discord-label { display: none; }
-  .tb-discord { padding: 7px 9px; }
+  /* Hauteur commune avec le burger de la sidebar (--topbar-btn-h) : ils sont côte à côte. */
+  .tb-discord { padding: 7px 9px; height: var(--topbar-btn-h); }
 }
