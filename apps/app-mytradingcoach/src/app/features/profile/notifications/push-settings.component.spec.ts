@@ -133,6 +133,23 @@ describe('Section Notifications du profil', () => {
     expect(q('push-quiet-error')).toBeNull();
   });
 
+  it.each([
+    ['coupées', 1],
+    ['coupées puis réactivées', 2],
+  ])('heures silencieuses %s après une saisie refusée : le message disparaît (n1)', async (_, clicks) => {
+    const { q, settle } = await mount({ settings: settings({ quietHours: { start: 1320, end: 420 } }) });
+    const start = q('push-quiet-start') as HTMLInputElement;
+    start.value = '07:00';
+    start.dispatchEvent(new Event('change'));
+    await settle();
+    expect(q('push-quiet-error')).not.toBeNull();
+    for (let i = 0; i < clicks; i++) {
+      q('push-quiet-toggle')!.click();
+      await settle();
+    }
+    expect(q('push-quiet-error')).toBeNull();
+  });
+
   it('champ d’heure vidé : il reprend la valeur enregistrée, rien n’est envoyé (m4)', async () => {
     const { q, api, settle } = await mount({ settings: settings({ quietHours: { start: 1320, end: 420 } }) });
     api.preferences.mockClear();

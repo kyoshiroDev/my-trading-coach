@@ -124,6 +124,8 @@ export class PushSettingsComponent implements OnInit {
 
   protected async toggleQuiet(): Promise<void> {
     if (this.readOnly()) return;
+    // Coupées, ou réactivées sur 22:00 à 07:00 (valide) : l'erreur d'une saisie précédente ne vaut plus (n1).
+    this.quietError.set(null);
     if ((await this.push.setQuietHours(this.quiet() ? null : DEFAULT_QUIET)) === 'failed') this.toast.error('Les heures silencieuses n’ont pas pu être enregistrées.');
   }
 
