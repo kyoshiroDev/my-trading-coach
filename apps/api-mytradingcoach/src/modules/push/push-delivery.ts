@@ -32,6 +32,14 @@ export function hostOf(endpoint: string): string {
   }
 }
 
+/**
+ * Nature d'une erreur pour les journaux : son nom de classe, jamais son message, qui peut citer
+ * un identifiant (requête Prisma), une clé Redis ou l'adresse d'un abonnement.
+ */
+export function errorKind(err: unknown): string {
+  return err instanceof Error ? err.name : typeof err;
+}
+
 /** Classe de la réponse pour les journaux : 404 et 410 à part (abonnement mort), sinon `Nxx`. */
 export function pushStatusClass(status: number): string {
   if (status === 404 || status === 410) return String(status);
