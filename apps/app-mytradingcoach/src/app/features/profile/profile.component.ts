@@ -22,6 +22,7 @@ import {
   LucideRotateCcw as RotateCcw,
   LucideChevronDown as ChevronDown,
   LucideChevronRight as ChevronRight,
+  LucideGift as Gift,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -62,6 +63,7 @@ type ProfileTab = 'trader' | 'params';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
+  protected readonly GiftIcon = Gift;
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
   private readonly billingApi = inject(BillingApi);

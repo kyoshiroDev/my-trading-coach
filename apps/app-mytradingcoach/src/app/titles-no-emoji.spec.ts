@@ -4,32 +4,15 @@
  * design.md ; seules les émotions trader, rendues par EmotionEmojiPipe, échappent à la règle).
  *
  * Lu dans les gabarits sources (jsdom ne sert à rien ici) : titres h1 à h6, éléments dont la classe
- * porte « title », « label », « lbl » ou « head », et titre de page passé à `<mtc-topbar title="…">`. RESTANTS liste les emojis de titre encore
- * présents (relevés le 25/10/2026), à remplacer dans des PR séparées : un emoji AJOUTÉ fait échouer
- * le test, un emoji RETIRÉ aussi tant que la liste n'est pas mise à jour (elle doit rester exacte).
+ * porte « title », « label », « lbl » ou « head », et titre de page passé à `<mtc-topbar title="…">`.
+ * Plus aucun emoji de titre depuis le 25/10/2026 : RESTANTS est vide et doit le rester. Un emoji de
+ * titre ajouté fait échouer le test (le message liste les fichiers et titres fautifs).
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const RESTANTS = [
-  'features/auth/google-finalize.component.html · Bienvenue 👋',
-  'features/dashboard/dashboard.component.html · Fais ton premier pas 🚀',
-  'features/eco-calendar/eco-calendar.component.html · ⭐', // en-tête « Ma sélection »
-  'features/eco-calendar/eco-event-row.component.ts · 📌',
-  'features/journal/journal.component.html · ↔️', // en-tête de la modale « Déplacer la journée »
-  'features/journal/journal.component.html · 🗑️', // en-tête de la modale « Supprimer la journée »
-  'features/profile/profile.component.html · 🎁 Essai gratuit',
-  'features/profile/profile.component.html · 🎁 Premium offert',
-  'features/scoring/scoring.component.html · 🎖 Badges obtenus',
-  'features/scoring/scoring.component.html · 📅 Streak & activité',
-  'features/sessions/sessions.component.html · 💭 Question de réflexion',
-  'features/sessions/sessions.component.html · 📉 Drawdown intra-session',
-  'features/sessions/sessions.component.html · 📊 Contexte marché',
-  'features/sessions/sessions.component.html · 📋 Plan du jour',
-  'features/sessions/sessions.component.html · 📓 Journal',
-  'features/sessions/sessions.component.html · 🏆 Meilleur trade',
-];
+const RESTANTS: string[] = [];
 
 const EMOJI = /\p{Extended_Pictographic}/u;
 const TITRE = new RegExp(
@@ -64,8 +47,7 @@ function titresAvecEmoji(): string[] {
         .trim();
       if (!EMOJI.test(txt)) continue;
       // Libellé stable : jusqu'à la première ponctuation forte (les comptes « 20 jours » varient).
-      const court = txt.split(/\s*[:·]\s/)[0].replace(/\s+(Bienvenue)\s+👋.*/, ' $1 👋').trim();
-      out.add(`${relative(APP, f)} · ${court.includes('Bienvenue') ? 'Bienvenue 👋' : court}`);
+      out.add(`${relative(APP, f)} · ${txt.split(/\s*[:·]\s/)[0].trim()}`);
     }
   }
   return [...out].sort();
@@ -76,11 +58,19 @@ describe('titres sans emoji (icônes Lucide)', () => {
     expect(titresAvecEmoji()).toEqual([...RESTANTS].sort());
   });
 
-  it('Parrainage, Ambassadeur, Devenir ambassadeur : titres en icônes Lucide', () => {
+  it('les anciens titres à emoji portent leur icône Lucide', () => {
     const pages = [
       ['features/ambassador/ambassador.component.html', ['HandshakeIcon', 'ClipboardListIcon', 'ReceiptIcon']],
       ['features/referral/referral.component.ts', ['GiftIcon']],
       ['features/become-ambassador/become-ambassador.component.ts', ['HandshakeIcon', 'ClipboardListIcon', 'SendIcon']],
+      ['features/sessions/sessions.component.html', ['ClipboardListIcon', 'ChartColumnIcon', 'TrendingDownIcon', 'TrophyIcon', 'MessageCircleQuestionMarkIcon', 'BookOpenIcon']],
+      ['features/scoring/scoring.component.html', ['MedalIcon', 'CalendarDaysIcon']],
+      ['features/profile/profile.component.html', ['GiftIcon']],
+      ['features/journal/journal.component.html', ['TrashIcon', 'ReassignIcon']],
+      ['features/eco-calendar/eco-calendar.component.html', ['StarIcon']],
+      ['features/eco-calendar/eco-event-row.component.ts', ['PinIcon']],
+      ['features/dashboard/dashboard.component.html', ['RocketIcon']],
+      ['features/auth/google-finalize.component.html', ['HandIcon']],
     ] as const;
     for (const [f, icones] of pages) {
       const src = readFileSync(join(APP, f), 'utf-8');

@@ -116,7 +116,7 @@
         <div class="right-col">
           <div class="card">
             <div class="card-title" style="margin-bottom: 14px">
-              🎖 Badges obtenus
+              <svg [lucideIcon]="MedalIcon" [size]="16"></svg> Badges obtenus
             </div>
             <div class="badges-grid">
               @for (b of EARNED_BADGES; track b.label) {
@@ -136,7 +136,7 @@
 
           <div class="card streak-card">
             <div class="card-title" style="margin-bottom: 14px">
-              📅 Streak &amp; activité
+              <svg [lucideIcon]="CalendarDaysIcon" [size]="16"></svg> Streak &amp; activité
             </div>
             <div class="streak-dots">
               @for (d of streakDots; track $index) {

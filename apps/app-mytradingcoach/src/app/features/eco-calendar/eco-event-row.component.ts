@@ -6,9 +6,14 @@ import {
   output,
 } from '@angular/core';
 import type { EcoEvent } from '@mtc/shared';
+import {
+  LucideDynamicIcon,
+  LucidePin as Pin,
+} from '@lucide/angular';
 
 @Component({
   selector: 'mtc-eco-event-row',
+  imports: [LucideDynamicIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   styleUrl: './eco-event-row.component.css',
@@ -30,7 +35,7 @@ import type { EcoEvent } from '@mtc/shared';
           class="eco-pin-label"
           [attr.for]="'pin-' + event().name + '-' + event().currency"
           [title]="pinned() ? 'Retirer des épinglés' : 'Épingler dans ma session'"
-        >📌</label>
+        ><svg [lucideIcon]="PinIcon" [size]="13"></svg></label>
       </div>
 
       <div class="eco-impact-bar" [class]="event().impact"></div>
@@ -69,6 +74,7 @@ import type { EcoEvent } from '@mtc/shared';
   `,
 })
 export class EcoEventRowComponent {
+  protected readonly PinIcon = Pin;
   readonly event          = input.required<EcoEvent>();
   readonly pinned         = input(false);
   readonly flag           = input('🌐');

@@ -9,6 +9,8 @@ import { httpResource } from '@angular/common/http';
 import {
   LucideDynamicIcon,
   LucideTrophy as Trophy,
+  LucideMedal as Medal,
+  LucideCalendarDays as CalendarDays,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -149,6 +151,8 @@ const LOCKED_BADGES = [
   styleUrl: './scoring.component.css',
 })
 export class ScoringComponent {
+  protected readonly MedalIcon = Medal;
+  protected readonly CalendarDaysIcon = CalendarDays;
   protected readonly userStore = inject(UserStore);
   protected readonly showPlanModal = signal(false);
   protected readonly TrophyIcon = Trophy;

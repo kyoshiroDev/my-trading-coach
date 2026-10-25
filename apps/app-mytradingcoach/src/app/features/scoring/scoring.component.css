@@ -39,6 +39,8 @@
   font-weight: 600;
   color: var(--text);
 }
+/* Icône Lucide en ligne : centrée sur le texte (sur la ligne de base, elle montait de 3 px). */
+.card-title svg.lucide { vertical-align: -0.2em; }
 
 /* ─── Score ring ─── */
 .score-ring {

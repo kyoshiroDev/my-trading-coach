@@ -354,7 +354,7 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 .confirm-modal-header { display: flex; align-items: center; gap: 12px; }
-.confirm-modal-ic     { font-size: 24px; }
+.confirm-modal-ic     { display: inline-flex; flex-shrink: 0; color: var(--text-2); } /* icône Lucide (ex-emoji) */
 .confirm-modal-title  { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
 .confirm-modal-sub    { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); margin: 0; text-transform: capitalize; }
 .confirm-modal-desc   { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0; background: var(--bg-2); border-radius: 8px; padding: 12px; }

@@ -5,6 +5,10 @@ import { ActivatedRoute } from '@angular/router';
 import { environment } from '@app/environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { PostSignupService } from '../../core/auth/post-signup.service';
+import {
+  LucideDynamicIcon,
+  LucideHand as Hand,
+} from '@lucide/angular';
 
 const landing = environment.landingUrl.replace(/\/$/, '');
 
@@ -16,12 +20,13 @@ const landing = environment.landingUrl.replace(/\/$/, '');
  */
 @Component({
   selector: 'mtc-google-finalize',
-  imports: [FormsModule],
+  imports: [LucideDynamicIcon, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./auth-layout/card-page-signup.css', './google-finalize.component.css'],
   templateUrl: './google-finalize.component.html',
 })
 export class GoogleFinalizeComponent {
+  protected readonly HandIcon = Hand;
   private readonly auth = inject(AuthService);
   private readonly postSignup = inject(PostSignupService);
   private readonly route = inject(ActivatedRoute);
