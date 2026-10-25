@@ -11,6 +11,7 @@ import { tradingDay } from '../accounts/account-rules';
 import { tradingDayStart } from '../session/active-session';
 import { buildDemoRiskJournal, dayRiskLine, weekRiskNote } from './demo-data/prop-risk';
 import { classifyEcoEvent } from '../eco-calendar/eco-calendar.impact';
+import { seedDemoPush } from './demo-data/push';
 import { DEMO_INCIDENT_ANALYSIS, LOST_DEMO_ACCOUNTS, buildLostDemoIncident, buildLostDemoTrades } from './demo-data/lost-accounts';
 
 
@@ -39,6 +40,8 @@ export interface DemoSeedResult {
   lostAccounts: number;
   /** Autopsie d'exemple du compte échoué (#669) : 1, ou 0 sans dernière séance. */
   incidents: number;
+  /** Appareils push de la section Notifications (compte démo seulement, 0 ailleurs). */
+  pushDevices: number;
   bySetup: DemoStats['bySetup']; byAccount: DemoStats['byAccount'];
 }
 
@@ -53,7 +56,9 @@ export async function seedDemo(prisma: PrismaClient, now: Date = new Date()): Pr
     update: { ...PROFILE },
     create: { email: DEMO_EMAIL, password, ...PROFILE },
   });
-  return seedTradingData(prisma, user, now, { brokerShowcase: true, dataset });
+  const res = await seedTradingData(prisma, user, now, { brokerShowcase: true, dataset });
+  // Appareils et heures silencieuses : compte démo seulement (adresses factices, jamais d'envoi).
+  return { ...res, pushDevices: await seedDemoPush(prisma, user.id, now) };
 }
 
 export interface SeedTradingDataOptions {
@@ -446,6 +451,7 @@ export async function seedTradingData(
     sessions: days.filter((d) => d.trades.length).length, recaps, debriefs, accounts: DEMO_ACCOUNTS.length,
     lostAccounts: LOST_DEMO_ACCOUNTS.length,
     incidents: incident && failedId ? 1 : 0,
+    pushDevices: 0,
     bySetup: stats.bySetup, byAccount: stats.byAccount,
   };
 }

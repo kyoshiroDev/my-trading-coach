@@ -84,6 +84,13 @@ describe('TraderNotifier.send', () => {
     expect(await send(outside.notifier, 'PROP_RULES')).toBe('sent');
   });
 
+  it('ligne déjà enregistrée avec début égal à la fin : aucune heure silencieuse, l’alerte part (revue phase 2 I5)', async () => {
+    const pref = { mutedTypes: [], quietStart: 11 * 60, quietEnd: 11 * 60 };
+    const { notifier, deliverToUser } = setup({ pushPreference: pref });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
+    expect(deliverToUser).toHaveBeenCalledTimes(1);
+  });
+
   it('anti-spam : la même alerte dans les 15 min ne repart pas, sauf limite franchie', async () => {
     const { notifier, deliverToUser } = setup({}, { redisSet: () => Promise.resolve(null) });
     expect(await send(notifier, 'PROP_RULES')).toBe('anti_spam');

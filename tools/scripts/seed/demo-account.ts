@@ -19,6 +19,7 @@ async function main() {
   console.log(`   ${res.trades} trades · WR net ${res.winRate}% · brut ${res.grossPnl} $ · frais ${res.fees} $ · net ${res.pnl} $`);
   console.log(`   ${res.redDays}/${res.tradingDays} jours rouges`);
   console.log(`   ${res.sessions} sessions · ${res.recaps} daily recaps · ${res.debriefs} weekly debriefs`);
+  console.log(`   ${res.pushDevices} appareils push · heures silencieuses 22:00 à 07:00`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(() => prisma.$disconnect());

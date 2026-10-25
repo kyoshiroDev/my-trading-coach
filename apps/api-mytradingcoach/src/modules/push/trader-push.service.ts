@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException, OnModuleInit, ServiceUna
 import type { PushAlertType } from '@prisma/client';
 import {
   DEFAULT_MUTED_PUSH_TYPES,
+  PUSH_MAX_DEVICES,
   PUSH_TIME_ZONE,
   type AdminPushTestResult,
   type TraderPushDeviceState,
@@ -17,7 +18,7 @@ import { TRADER_PUSH_MESSAGES, traderPushPayload, type TraderPushMessage } from 
 import type { SubscribePushDto } from './dto/push-subscription.dto';
 
 /** Appareils gardés par trader : au-delà, le plus ancien est remplacé (navigateurs réinstallés…). */
-export const MAX_PUSH_DEVICES = 10;
+export const MAX_PUSH_DEVICES = PUSH_MAX_DEVICES;
 
 /**
  * Abonnements Web Push des traders (#666) et livraison vers TOUS les appareils d'un trader.
@@ -61,7 +62,11 @@ export class TraderPushService implements OnModuleInit {
       enabled: this.enabled,
       publicKey: this.config.enabled ? this.config.config.publicKey : null,
       mutedTypes: pref?.mutedTypes ?? [...DEFAULT_MUTED_PUSH_TYPES],
-      quietHours: pref?.quietStart != null && pref.quietEnd != null ? { start: pref.quietStart, end: pref.quietEnd } : null,
+      // Début égal à la fin (ligne enregistrée avant la revue phase 2 I5) : aucune heure silencieuse.
+      quietHours:
+        pref?.quietStart != null && pref.quietEnd != null && pref.quietStart !== pref.quietEnd
+          ? { start: pref.quietStart, end: pref.quietEnd }
+          : null,
       timeZone: PUSH_TIME_ZONE,
       devices: devices.map((d) => ({
         id: d.id,
