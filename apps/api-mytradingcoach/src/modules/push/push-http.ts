@@ -14,6 +14,14 @@ export const PUSH_DEADLINE_MS = 10_000;
 /** Corps de réponse lu au plus (les services push renvoient quelques octets, ou rien). */
 export const PUSH_MAX_RESPONSE_BYTES = 16 * 1024;
 
+/** Aucune réponse avant l'échéance : distinguée des autres erreurs réseau dans les journaux. */
+export class PushDeadlineError extends Error {
+  constructor(deadlineMs: number) {
+    super(`délai total de ${deadlineMs} ms dépassé`);
+    this.name = 'PushDeadlineError';
+  }
+}
+
 export interface PushHttpRequest {
   endpoint: string;
   method: string;
@@ -63,7 +71,7 @@ export function postWithLimits(req: PushHttpRequest, limits: PushHttpLimits): Pr
       },
     );
     const timer = setTimeout(() => {
-      request.destroy(new Error(`délai total de ${limits.deadlineMs} ms dépassé`));
+      request.destroy(new PushDeadlineError(limits.deadlineMs));
     }, limits.deadlineMs);
     request.on('error', (err) => {
       // Code déjà reçu (corps trop long ou trop lent, coupé) : l'envoi a eu sa réponse.

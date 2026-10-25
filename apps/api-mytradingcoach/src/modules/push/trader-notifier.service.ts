@@ -97,7 +97,7 @@ export class TraderNotifier {
     const fresh = await this.claim(userId, options);
     if (!fresh && !options.force) return 'anti_spam';
 
-    const r = await this.push.deliverToUser(userId, await this.named(userId, message, options.accountId));
+    const r = await this.push.deliverToUser(userId, await this.named(userId, message, options.accountId), type);
     this.logger.debug(`Push ${type} (${options.dedupKey}) : ${r.delivered}/${r.subscriptions} livré(s)`);
     // `sent` seulement si un appareil au moins l'a reçu : sinon l'appelant rend sa réservation et
     // retente. La clé anti-spam reste posée, les retentes non forcées attendent donc 15 min.
