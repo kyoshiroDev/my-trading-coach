@@ -12,7 +12,7 @@
 
     @if (pinnedCount > 0) {
       <div class="eco-pins-badge">
-        📌 {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} du jour, affichés en priorité dans ta session
+        <svg [lucideIcon]="PinIcon" [size]="12"></svg> {{ pinnedCount }} épinglé{{ pinnedCount > 1 ? 's' : '' }} du jour, affichés en priorité dans ta session
         @if (isSavingPins()) {
           <span class="eco-saving">· Sauvegarde...</span>
         }
