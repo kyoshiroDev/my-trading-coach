@@ -244,21 +244,33 @@ export class PropAlertsService implements OnModuleDestroy {
     userId: string, accountId: string, c: Candidate & { level: PropAlertLevel }, key: string, message: TraderPushMessage,
   ): Promise<void> {
     if (!this.notifier) return;
+    const what = `compte ${accountId}, ${c.kind} ${c.level}`;
+    let previous: string | null;
     try {
-      const previous = await claimPush(this.redis, key, c.level, c.ttl);
-      if (previous === null) return;
-      const outcome = await this.notifier
-        .send(userId, 'PROP_RULES', message, { accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached' })
-        .catch(() => 'error' as const);
-      if (outcome === 'sent') return;
+      previous = await claimPush(this.redis, key, c.level, c.ttl);
+    } catch (err) {
+      this.logger.warn(`Push prop firm non envoyé, réservation impossible (${what}) : ${(err as Error).message}`);
+      return;
+    }
+    if (previous === null) return;
+    const outcome = await this.notifier
+      .send(userId, 'PROP_RULES', message, { accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached' })
+      .catch(() => 'error' as const);
+    if (outcome === 'sent') return;
+    try {
       // Aucun appareil ne l'a reçu : retenté au relevé suivant, au plus MAX_UNDELIVERED_PUSH fois.
       if (outcome === 'undelivered' && (await countUndelivered(this.redis, key, c.level, c.ttl)) >= MAX_UNDELIVERED_PUSH) {
-        this.logger.warn(`Push prop firm abandonné après ${MAX_UNDELIVERED_PUSH} envois sans livraison (compte ${accountId}, ${c.kind} ${c.level})`);
+        this.logger.warn(`Push prop firm abandonné après ${MAX_UNDELIVERED_PUSH} envois sans livraison (${what})`);
         return;
       }
       await releasePush(this.redis, key, c.level, previous, c.ttl);
     } catch (err) {
-      this.logger.warn(`Push prop firm non envoyé (compte ${accountId}) : ${(err as Error).message}`);
+      // Journal exact (revue #726 m12) : l'envoi a eu lieu ou a été écarté, c'est le suivi Redis qui
+      // manque. La réservation reste posée jusqu'à son expiration : ce niveau n'est pas retenté.
+      const done = outcome === 'undelivered' ? 'envoyé sans livraison' : `non parti (${outcome})`;
+      this.logger.warn(
+        `Push prop firm ${done}, suivi Redis impossible : niveau pas retenté avant expiration (${what}) : ${(err as Error).message}`,
+      );
     }
   }
 
