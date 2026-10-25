@@ -10,6 +10,9 @@
 .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 20px 22px; }
 .card-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; margin-bottom: 16px; }
 .card-title.nomb { margin-bottom: 0; }
+/* Icônes Lucide des titres (ex-emojis) : décoratives, aria-hidden posé par la librairie. Calée sur
+   la PREMIÈRE ligne du titre (1lh = son interligne) : centrée, elle tombait entre deux lignes à 360 px. */
+.page-title svg.lucide { color: var(--text-2); flex-shrink: 0; align-self: flex-start; margin-top: calc((1lh - 20px) / 2); }
 .mb { margin-bottom: 18px; }
 
 .state-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 13px; padding: 30px; text-align: center; color: var(--text-2); font-size: 13px; }

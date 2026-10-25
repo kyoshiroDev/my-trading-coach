@@ -647,7 +647,7 @@ plus s'y référer ni tenter de le synchroniser. La source de vérité du design
 
 Règles design non négociables (détail dans `design.md`) : dark only, tokens CSS (jamais
 de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes Lucide**
-(jamais d'emoji dans les headers — seuls les émotions trader et watermarks décoratifs
+(jamais d'emoji dans les headers, vérifié par `src/app/titles-no-emoji.spec.ts` — seuls les émotions trader et watermarks décoratifs
 sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu. **Mise en page** : page sur toute
 la largeur à droite de la barre latérale (aucun `max-width` de page, grille à colonnes
 automatiques), défilement vertical seulement, vérifiée de 360 à 2560 px (règle complète dans

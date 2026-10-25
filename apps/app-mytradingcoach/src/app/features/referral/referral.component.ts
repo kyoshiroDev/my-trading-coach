@@ -31,7 +31,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
   template: `
     <div class="content mtc-page">
       <div class="page-head mtc-page-head">
-        <h1 class="page-title mtc-page-title">🎁 Parrainage</h1>
+        <h1 class="page-title mtc-page-title"><svg [lucideIcon]="GiftIcon" [size]="20"></svg>Parrainage</h1>
         <p class="page-sub">Invite des traders, gagnez tous les deux. Aucun statut ni paperasse requis.</p>
       </div>
 

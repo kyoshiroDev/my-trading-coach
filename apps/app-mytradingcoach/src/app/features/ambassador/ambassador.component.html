@@ -1,7 +1,7 @@
 <div class="content mtc-page">
 
   <div class="page-head mtc-page-head">
-    <h1 class="page-title mtc-page-title">🤝 Programme Ambassadeur</h1>
+    <h1 class="page-title mtc-page-title"><svg [lucideIcon]="HandshakeIcon" [size]="20"></svg>Programme Ambassadeur</h1>
     <p class="page-sub">Recommande MyTradingCoach à ton audience et touche une commission récurrente sur chaque abonnement.</p>
   </div>
 
@@ -77,7 +77,7 @@
     <!-- CONDITIONS + À FACTURER -->
     <div class="cols mtc-cards">
       <div class="card">
-        <div class="card-title">📋 Conditions</div>
+        <div class="card-title"><svg [lucideIcon]="ClipboardListIcon" [size]="16"></svg>Conditions</div>
         <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
         <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
         <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
@@ -86,7 +86,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">💸 À facturer ce mois</div>
+        <div class="card-title"><svg [lucideIcon]="ReceiptIcon" [size]="16"></svg>À facturer ce mois</div>
         <div class="bill-row"><span class="bill-amt">{{ currentMonthEarnings() | number:'1.2-2' }}€</span>Commissions de {{ currentMonthLabel() }}</div>
         <div class="bill-p">Montant des commissions dues sur la période. Génère ton relevé, puis envoie ta facture pour ce montant. Paiement par virement.</div>
         <button class="btn-full" data-testid="generate-statement" [disabled]="statementLoading()" (click)="generateStatement()">
