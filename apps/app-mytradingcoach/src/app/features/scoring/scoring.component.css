@@ -14,6 +14,8 @@
   gap: 16px;
   align-items: stretch;
 }
+/* Streak et badges masqués : la carte du score prend toute la largeur (pas de colonne vide). */
+.grid-2.une-colonne { grid-template-columns: 1fr; }
 
 /* ─── Card ─── */
 .card {
@@ -39,6 +41,10 @@
   font-weight: 600;
   color: var(--text);
 }
+/* Icône Lucide en ligne : centrée sur le texte (sur la ligne de base, elle montait de 3 px). */
+.card-title svg.lucide { vertical-align: -0.2em; }
+/* Titres des cartes Badges et Streak (ex-style en ligne). */
+.right-col .card-title { margin-bottom: 14px; }
 
 /* ─── Score ring ─── */
 .score-ring {
@@ -122,9 +128,11 @@
   opacity: 0.4;
 }
 
-.badge-emoji {
-  font-size: 24px;
+.badge-ic {
+  display: flex;
+  justify-content: center;
   margin-bottom: 6px;
+  color: var(--text-2);
 }
 .badge-label {
   font-size: var(--fs-2xs);
@@ -144,6 +152,11 @@
   height: 18px;
   border-radius: 3px;
 }
+.streak-dot.niveau-0 { background: var(--streak-0); }
+.streak-dot.niveau-1 { background: var(--streak-1); }
+.streak-dot.niveau-2 { background: var(--streak-2); }
+.streak-dot.niveau-3 { background: var(--streak-3); }
+.streak-dot.niveau-4 { background: var(--streak-4); }
 
 .streak-info {
   font-size: 12px;

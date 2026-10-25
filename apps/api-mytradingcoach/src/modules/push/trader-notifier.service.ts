@@ -6,6 +6,7 @@ import { RedisService } from '../infra/redis.service';
 import { isPremiumAccess } from '../discord/discord-access.util';
 import { TraderPushService } from './trader-push.service';
 import { inQuietHours } from './quiet-hours';
+import { errorKind } from './push-delivery';
 import { ACCOUNT_TOKEN, UNNAMED_ACCOUNT, accountPushName, withAccountName } from './push-account-name';
 import type { TraderPushMessage } from './trader-push-messages';
 
@@ -59,10 +60,10 @@ export class TraderNotifier {
     try {
       if (!this.push.enabled) return;
       void this.send(userId, type, message, options).catch((err: unknown) =>
-        this.logger.warn(`Push ${type} non envoyé : ${err instanceof Error ? err.message : String(err)}`),
+        this.logger.warn(`Push ${type} non envoyé (${errorKind(err)})`),
       );
     } catch (err) {
-      this.logger.warn(`Push ${type} non envoyé : ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(`Push ${type} non envoyé (${errorKind(err)})`);
     }
   }
 
@@ -98,10 +99,12 @@ export class TraderNotifier {
     if (!fresh && !options.force) return 'anti_spam';
 
     const r = await this.push.deliverToUser(userId, await this.named(userId, message, options.accountId), type);
-    this.logger.debug(`Push ${type} (${options.dedupKey}) : ${r.delivered}/${r.subscriptions} livré(s)`);
+    const outcome = r.delivered > 0 ? 'sent' : 'undelivered';
+    // Ni la clé anti-doublon (texte libre de l'appelant) ni aucun identifiant dans le journal.
+    this.logger.debug(`Push ${type}${options.force ? ' forcé' : ''} : ${outcome}, ${r.delivered}/${r.subscriptions} livré(s)`);
     // `sent` seulement si un appareil au moins l'a reçu : sinon l'appelant rend sa réservation et
     // retente. La clé anti-spam reste posée, les retentes non forcées attendent donc 15 min.
-    return r.delivered > 0 ? 'sent' : 'undelivered';
+    return outcome;
   }
 
   /**

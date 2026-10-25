@@ -323,6 +323,50 @@
           </div>
         </div>
 
+        <!-- ══ DISCORD (#741) : liaison par code à usage unique, masquée en démo (lecture seule) ══ -->
+        @if (!userStore.isDemo()) {
+          <div class="settings-section" id="discord">
+            <div class="settings-section-label">Discord</div>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-left">
+                  <span class="settings-row-label">Serveur Discord</span>
+                  @if (discordLinked() !== null) {
+                    <span class="settings-row-value" data-testid="discord-status">
+                      {{ discordLinked() ? 'Relié' : 'Non relié' }}
+                    </span>
+                  }
+                  <span class="settings-row-hint">
+                    Relie ton compte pour obtenir ton rôle Membre ou Premium sur le
+                    <a class="discord-link" [href]="discordUrl" target="_blank" rel="noopener">serveur MyTradingCoach</a>.
+                  </span>
+                </div>
+                <button
+                  class="settings-edit-btn"
+                  data-testid="discord-generate"
+                  [disabled]="generatingDiscordCode()"
+                  (click)="generateDiscordCode()"
+                >
+                  {{ generatingDiscordCode() ? 'Un instant…' : discordCode() ? 'Nouveau code' : discordLinked() ? 'Relier un autre Discord' : 'Générer un code' }}
+                </button>
+              </div>
+              @if (discordCode(); as c) {
+                <div class="settings-row discord-code-row">
+                  <div class="settings-row-left">
+                    <span class="settings-row-label">Ton code</span>
+                    <span class="discord-code" data-testid="discord-code">{{ c.code }}</span>
+                    <span class="settings-row-hint">
+                      Dans le serveur Discord, tape <code>/verify code:{{ c.code }}</code>.
+                      Valable jusqu'à {{ c.expiresAt | date: 'HH:mm' }}, une seule fois.
+                    </span>
+                  </div>
+                  <button class="settings-edit-btn" data-testid="discord-copy" (click)="copyDiscordCode()">Copier</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
         <!-- ══ MAINTENANCE : NETTOYAGE DOUBLONS ══ -->
         <div class="settings-section">
           <div class="settings-section-label">Maintenance des données</div>
@@ -457,14 +501,14 @@
                 }
                 @if (userStore.isOfferedPremium()) {
                   <div class="trial-status" data-testid="offered-premium">
-                    <p class="trial-status-title">🎁 Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
                     </p>
                   </div>
                 } @else if (isInTrial()) {
                   <div class="trial-status">
-                    <p class="trial-status-title">🎁 Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>

@@ -647,7 +647,7 @@ plus s'y référer ni tenter de le synchroniser. La source de vérité du design
 
 Règles design non négociables (détail dans `design.md`) : dark only, tokens CSS (jamais
 de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes Lucide**
-(jamais d'emoji dans les headers — seuls les émotions trader et watermarks décoratifs
+(jamais d'emoji dans les headers, vérifié par `src/app/titles-no-emoji.spec.ts` — seuls les émotions trader et watermarks décoratifs
 sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu. **Mise en page** : page sur toute
 la largeur à droite de la barre latérale (aucun `max-width` de page, grille à colonnes
 automatiques), défilement vertical seulement, vérifiée de 360 à 2560 px (règle complète dans
@@ -1454,6 +1454,14 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
 - `push-sw.js` reste le seul service worker : ni `@angular/service-worker`, ni `SwUpdate`, ni page
   hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
 - Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
+
+## Liaison Discord (#741, 2026-10-25)
+
+Bloc « Discord » de Profil → Paramètres (masqué en démo), directement dans `profile.component`
+(les styles `.settings-*` sont propres au composant). `DiscordApi` (`core/api/discord.api.ts`,
+`SILENT_ERRORS`) : `status()` lu à l'ouverture (la liaison se fait dans Discord, hors de l'app, donc
+pas via `/users/me`), `createCode()` → code affiché + « Copier » (copie `/verify code:XXXX-XXXX`).
+Lien direct utilisé par le bot : `/profil?tab=params`. Commande en `white-space: nowrap`.
 
 ## Connexion Google (#618, 2026-10-18)
 

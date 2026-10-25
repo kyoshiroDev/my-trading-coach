@@ -148,7 +148,7 @@
                     </div>
                   }
                   @if (session.planNote) {
-                    <div class="plan-pill">📋 Plan</div>
+                    <div class="plan-pill"><svg [lucideIcon]="ClipboardListIcon" [size]="11"></svg>Plan</div>
                   }
                   @if (session.aiOneLiner) {
                     <div class="ai-dot">✦</div>
@@ -169,19 +169,19 @@
                     <div class="detail-fields">
                       @if (session.planNote) {
                         <div class="detail-field">
-                          <div class="df-label">📋 Plan du jour</div>
+                          <div class="df-label"><svg [lucideIcon]="ClipboardListIcon" [size]="12"></svg>Plan du jour</div>
                           <div class="df-value">{{ session.planNote }}</div>
                         </div>
                       }
                       @if (session.marketContext) {
                         <div class="detail-field">
-                          <div class="df-label">📊 Contexte marché</div>
+                          <div class="df-label"><svg [lucideIcon]="ChartColumnIcon" [size]="12"></svg>Contexte marché</div>
                           <div class="df-value">{{ session.marketContext }}</div>
                         </div>
                       }
                       @if (session.maxDrawdown !== null && session.maxDrawdown !== undefined) {
                         <div class="detail-field">
-                          <div class="df-label">📉 Drawdown intra-session</div>
+                          <div class="df-label"><svg [lucideIcon]="TrendingDownIcon" [size]="12"></svg>Drawdown intra-session</div>
                           <div class="df-value mono" [class.r]="session.maxDrawdown < 0">
                             {{ session.maxDrawdown | pnlFormat }}
                           </div>
@@ -189,7 +189,7 @@
                       }
                       @if (session.bestTradePnl !== null && session.bestTradePnl !== undefined) {
                         <div class="detail-field">
-                          <div class="df-label">🏆 Meilleur trade</div>
+                          <div class="df-label"><svg [lucideIcon]="TrophyIcon" [size]="12"></svg>Meilleur trade</div>
                           <div class="df-value mono g">
                             {{ session.bestTradePnl | pnlFormat }}
                             @if (session.bestTradeAsset) { · {{ session.bestTradeAsset }} }
@@ -211,7 +211,7 @@
 
                   @if (session.reflectionQuestion) {
                     <div class="detail-refl">
-                      <div class="detail-r-lbl">💭 Question de réflexion</div>
+                      <div class="detail-r-lbl"><svg [lucideIcon]="MessageCircleQuestionMarkIcon" [size]="12"></svg>Question de réflexion</div>
                       <div class="detail-r-q">{{ session.reflectionQuestion }}</div>
                       @if (session.reflectionNote) {
                         <div class="detail-r-ans">
@@ -225,7 +225,7 @@
 
                   @if (session.notes) {
                     <div class="detail-notes">
-                      <div class="detail-notes-lbl">📓 Journal</div>
+                      <div class="detail-notes-lbl"><svg [lucideIcon]="BookOpenIcon" [size]="12"></svg>Journal</div>
                       <div class="detail-notes-txt">{{ session.notes }}</div>
                     </div>
                   }

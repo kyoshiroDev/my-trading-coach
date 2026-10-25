@@ -206,6 +206,7 @@
 }
 .firstrun-text { flex: 1; min-width: 0; }
 .firstrun-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.firstrun-title svg.lucide { vertical-align: -0.125em; color: var(--text-2); } /* icône Lucide (ex-emoji) */
 .firstrun-sub { font-size: 13px; color: var(--text-3); margin-top: 4px; line-height: 1.5; }
 .firstrun-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .firstrun-btn {

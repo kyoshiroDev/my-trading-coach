@@ -25,7 +25,7 @@
     } @else if (isLoading()) {
       <div class="loading">Calcul du score...</div>
     } @else {
-      <div class="grid-2">
+      <div class="grid-2" [class.une-colonne]="!streakEtBadgesVisibles">
         <!-- Left : score ring + bars -->
         <div class="card">
           <div class="card-header">
@@ -112,22 +112,25 @@
           </div>
         </div>
 
-        <!-- Right : badges + streak -->
+        <!-- Right : badges + streak (MASQUÉS tant que leurs données sont inventées, voir
+             STREAK_ET_BADGES_VISIBLES) + conseil des 10 trades (données réelles, toujours affiché). -->
+        @if (streakEtBadgesVisibles || tradeCount() < 10) {
         <div class="right-col">
-          <div class="card">
-            <div class="card-title" style="margin-bottom: 14px">
-              🎖 Badges obtenus
+          @if (streakEtBadgesVisibles) {
+          <div class="card badges-card">
+            <div class="card-title">
+              <svg [lucideIcon]="MedalIcon" [size]="16"></svg> Badges obtenus
             </div>
             <div class="badges-grid">
               @for (b of EARNED_BADGES; track b.label) {
                 <div class="badge-item">
-                  <div class="badge-emoji">{{ b.emoji }}</div>
+                  <div class="badge-ic"><svg [lucideIcon]="b.icon" [size]="22"></svg></div>
                   <div class="badge-label">{{ b.label }}</div>
                 </div>
               }
               @for (b of LOCKED_BADGES; track b.label) {
                 <div class="badge-item locked">
-                  <div class="badge-emoji">{{ b.emoji }}</div>
+                  <div class="badge-ic"><svg [lucideIcon]="b.icon" [size]="22"></svg></div>
                   <div class="badge-label">{{ b.label }}</div>
                 </div>
               }
@@ -135,14 +138,13 @@
           </div>
 
           <div class="card streak-card">
-            <div class="card-title" style="margin-bottom: 14px">
-              📅 Streak &amp; activité
+            <div class="card-title">
+              <svg [lucideIcon]="CalendarDaysIcon" [size]="16"></svg> Streak &amp; activité
             </div>
             <div class="streak-dots">
               @for (d of streakDots; track $index) {
                 <div
-                  class="streak-dot"
-                  [style.background]="d"
+                  class="streak-dot niveau-{{ d }}"
                   [title]="'Jour ' + ($index + 1)"
                 ></div>
               }
@@ -155,6 +157,7 @@
               consécutifs
             </div>
           </div>
+          }
 
           @if (tradeCount() < 10) {
             <div class="advice-banner">
@@ -163,6 +166,7 @@
             </div>
           }
         </div>
+        }
       </div>
     }
   }

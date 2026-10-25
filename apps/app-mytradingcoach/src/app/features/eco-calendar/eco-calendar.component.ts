@@ -18,6 +18,11 @@ import { ToastService } from '../../core/services/toast.service';
 import { toParisDateStr, todayParis } from '@mtc/shared';
 import type { EcoEvent } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import {
+  LucideDynamicIcon,
+  LucideStar as Star,
+  LucidePin as Pin,
+} from '@lucide/angular';
 
 type EcoSession = 'asia' | 'europe' | 'us';
 interface SessionGroup { asia: EcoEvent[]; europe: EcoEvent[]; us: EcoEvent[]; }
@@ -42,11 +47,13 @@ interface TableRow {
 @Component({
   selector: 'mtc-eco-calendar-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ErrorStateComponent],
+  imports: [LucideDynamicIcon, ErrorStateComponent],
   templateUrl: './eco-calendar.component.html',
   styleUrl: './eco-calendar.component.css',
 })
 export class EcoCalendarComponent implements OnInit {
+  protected readonly StarIcon = Star;
+  protected readonly PinIcon = Pin;
   private readonly api = inject(EcoCalendarApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);

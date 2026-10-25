@@ -7,9 +7,11 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { stripeClientProvider } from '../stripe/stripe.client';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
+import { DiscordGuildModule } from '../discord/discord-guild.module';
 
 @Module({
-  imports: [PrismaModule, AmbassadorModule, FounderOfferModule, PartnerCodeModule],
+  // Rôles Discord retirés à la suppression : module feuille (DiscordModule importerait Users en cycle).
+  imports: [PrismaModule, AmbassadorModule, FounderOfferModule, PartnerCodeModule, DiscordGuildModule],
   controllers: [UsersController],
   // Résiliation Stripe à la suppression : client fourni ici (StripeModule importerait Users en cycle).
   providers: [UsersService, stripeClientProvider, StripeAccountClosureService],

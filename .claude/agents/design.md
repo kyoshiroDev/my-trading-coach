@@ -26,6 +26,8 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
 - Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
+- **Typographie** : espace insécable (`&nbsp;` dans les gabarits) avant `:` `;` `!` `?` et `%`. Vérifié
+  sur Parrainage, Ambassadeur et Devenir ambassadeur par `src/app/typographie-parrainage.spec.ts`.
 - **Mise en page de l'app** : chaque page occupe **toute la largeur disponible** à droite de la
   barre latérale, sans plafond (`max-width` sur le conteneur de page) ni bande vide à droite. Pour
   garder des lignes lisibles à très grande largeur, répartir les cartes en **grille à colonnes
@@ -87,6 +89,16 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > Les badges plan/rôle (`--badge-premium-*`, `--badge-free-*`, `--badge-beta-*`,
 > `--badge-admin-*`) et les alias legacy (`--color-profit`, `--bg-primary`, `--text2`…)
 > existent dans `theme.css` — les réutiliser tels quels.
+>
+> Intensité d'activité (pastilles de streak de Score) : `--streak-0` (aucune) à `--streak-4`
+> (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
+> `features/scoring/score-streak-couleurs.spec.ts`.
+>
+> **Cartes « Badges obtenus » et « Streak & activité » MASQUÉES** depuis le 25/10/2026
+> (`STREAK_ET_BADGES_VISIBLES = false`, `scoring.component.ts`) : données inventées (pastilles au
+> hasard, série en dur, badges statiques). La carte du score passe alors sur toute la largeur
+> (`.grid-2.une-colonne`) ; le conseil des 10 trades reste. Ne les réafficher qu'avec de vraies
+> données (ticket « brancher le Streak »). Vérifié par `scoring-streak-masque.spec.ts` (compte normal et démo).
 
 ---
 
@@ -465,6 +477,13 @@ Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire 
 - Taille : 14-16px dans la sidebar, 15-20px dans le contenu. Stroke 1.5-2px.
 - **Jamais d'emoji** dans les composants Angular — *sauf* les émotions trader
   (et watermarks/nav décoratifs assumés par le design).
+- **Titres** : icône Lucide à la place de l'emoji. h1 de page : 20 px, `--text-2`, calée sur la
+  PREMIÈRE ligne (`align-self: flex-start; margin-top: calc((1lh - 20px) / 2)`), sinon elle tombe
+  entre deux lignes quand le titre passe à la ligne. Titre de carte : 16 px, `--text-3`.
+  `src/app/titles-no-emoji.spec.ts` balaie les gabarits (h1-h6, classes title/label/lbl/head,
+  `<mtc-topbar title>`) : plus AUCUN emoji de titre depuis le 25/10/2026 (`RESTANTS` vide), un ajout
+  fait échouer le test. Icône en ligne dans un titre non flex : `vertical-align: -0.2em` (sur la ligne
+  de base, elle monte de 3 px). Un en-tête de modale reprend l'icône du bouton qui l'ouvre.
 - **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
   tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
   courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.

@@ -164,7 +164,7 @@ describe('Push prop firm : journal exact si Redis tombe autour de l’envoi (rev
     const lines = warn.mock.calls.map((c) => String(c[0])).filter((l) => l.startsWith('Push prop firm'));
     expect(lines).toHaveLength(1);
     expect(lines[0]).toContain('Push prop firm envoyé sans livraison, suivi Redis impossible');
-    expect(lines[0]).toContain('compte a, drawdown breached');
+    expect(lines[0]).toContain('(drawdown breached, Error)');
     expect(lines[0]).not.toMatch(/non envoyé/);
   });
 
@@ -175,7 +175,7 @@ describe('Push prop firm : journal exact si Redis tombe autour de l’envoi (rev
     await sync();
     expect(send).not.toHaveBeenCalled();
     const lines = warn.mock.calls.map((c) => String(c[0])).filter((l) => l.startsWith('Push prop firm'));
-    expect(lines).toEqual([expect.stringContaining('Push prop firm non envoyé, réservation impossible (compte a, drawdown breached)')]);
+    expect(lines).toEqual([expect.stringContaining('Push prop firm non envoyé, réservation impossible (drawdown breached, Error)')]);
   });
 });
 

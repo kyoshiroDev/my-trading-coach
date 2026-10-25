@@ -155,6 +155,11 @@ POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchr
 DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés) · `?deleteTrades=true` → supprime AUSSI les trades BROKER_SYNC/BROKER_HISTORY de ce compte (jamais MANUAL/CSV_IMPORT) → { disconnected, tradesDeleted } ; suppression hors transaction, en échec → connexion quand même coupée, `tradesDeleted: null` + log
 GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
+GET    /api/discord/link               JWT → { linked } (jamais l'identifiant Discord)
+POST   /api/discord/link-code          JWT, 5 / h par compte, bloqué en démo → { code: 'XXXX-XXXX', expiresAt } (10 min, usage unique)
+POST   /api/discord/link               PUBLIC + x-discord-secret (bot) · body { code, discordId } → 200 { linked, plan } | { linked: false, message } (voir security.md, #741)
+GET    /api/discord/verify             PUBLIC + secret : ancien /verify email, ne relie plus rien (réponse fixe)
+
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ```
@@ -2207,6 +2212,12 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   `Envoi push <admin|trader> <TYPE> : livré|échec (<2xx|404|410|4xx|5xx|délai dépassé|erreur réseau>, <hôte>)`.
   Jamais l'endpoint, ses clés, l'id d'appareil ni le message d'une exception (il peut citer l'adresse) ;
   délai = `PushDeadlineError` (`push-http.ts`). Contrat verrouillé par `push-delivery.spec.ts`.
+- Journaux des notifieurs (`TraderNotifier`, `AdminNotifier`), tous niveaux debug compris : type,
+  « forcé », résultat et compteurs seulement ; jamais la clé anti-doublon (`dedupKey`, texte libre de
+  l'appelant), ni userId / accountId / clé Redis ; une exception = son nom de classe (`errorKind`,
+  `push-delivery.ts`), jamais son message. Verrouillé par `trader-notifier.logs.spec.ts`.
+- Même règle pour `PropAlertsService` (alertes prop firm, Tradovate) : type et niveau d'alerte +
+  `errorKind`, jamais l'id de compte, l'id utilisateur ni la clé Redis. `prop-alerts.logs.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
