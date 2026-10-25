@@ -155,6 +155,11 @@ POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchr
 DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés) · `?deleteTrades=true` → supprime AUSSI les trades BROKER_SYNC/BROKER_HISTORY de ce compte (jamais MANUAL/CSV_IMPORT) → { disconnected, tradesDeleted } ; suppression hors transaction, en échec → connexion quand même coupée, `tradesDeleted: null` + log
 GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
+GET    /api/discord/link               JWT → { linked } (jamais l'identifiant Discord)
+POST   /api/discord/link-code          JWT, 5 / h par compte, bloqué en démo → { code: 'XXXX-XXXX', expiresAt } (10 min, usage unique)
+POST   /api/discord/link               PUBLIC + x-discord-secret (bot) · body { code, discordId } → 200 { linked, plan } | { linked: false, message } (voir security.md, #741)
+GET    /api/discord/verify             PUBLIC + secret : ancien /verify email, ne relie plus rien (réponse fixe)
+
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ```

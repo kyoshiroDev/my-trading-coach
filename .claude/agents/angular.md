@@ -1455,6 +1455,14 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
 - Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
 
+## Liaison Discord (#741, 2026-10-25)
+
+Bloc « Discord » de Profil → Paramètres (masqué en démo), directement dans `profile.component`
+(les styles `.settings-*` sont propres au composant). `DiscordApi` (`core/api/discord.api.ts`,
+`SILENT_ERRORS`) : `status()` lu à l'ouverture (la liaison se fait dans Discord, hors de l'app, donc
+pas via `/users/me`), `createCode()` → code affiché + « Copier » (copie `/verify code:XXXX-XXXX`).
+Lien direct utilisé par le bot : `/profil?tab=params`. Commande en `white-space: nowrap`.
+
 ## Connexion Google (#618, 2026-10-18)
 
 - `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans

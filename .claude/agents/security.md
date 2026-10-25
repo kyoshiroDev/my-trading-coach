@@ -377,3 +377,20 @@ La page `politique-confidentialite.astro` déclare, alignée sur le code :
   `aiAnalysis` vit avec le `TradingAccount` (cascade) ; « Retirer cette autopsie » pose `dismissedAt`,
   n'efface pas le texte.
 Toute évolution de ces champs, du payload push ou du prompt d'autopsie → mettre la page à jour.
+
+## Liaison Discord par code à usage unique (#741, 2026-10-25)
+
+Avant : `/verify email:` reliait au Discord de l'appelant le compte dont on tapait l'e-mail, sans
+preuve (le secret du bot prouve seulement que l'appel vient du bot). Désormais :
+- `POST /discord/link-code` (connecté, `@Throttle` 5 / h par compte, bloqué en démo) → code de 8 signes
+  Crockford (2^40), 10 min, stocké HACHÉ (sha256) dans Redis, un nouveau code efface le précédent.
+- `POST /discord/link` (`@Public`, secret du bot comparé en temps constant) : `GETDEL` du code (usage
+  unique même en concurrence) ; 5 essais / min et 20 / h par identifiant Discord (`SET NX EX` + `INCR`
+  en MULTI, le compteur naît avec son expiration) ; code inconnu, expiré ou déjà utilisé = MÊME réponse.
+  Réponse : `{ linked, plan }`, jamais de nom ni d'e-mail.
+- `GET /discord/verify` (ancien bot) ne lit plus la base et répond pareil quelle que soit l'adresse.
+- Détachements : l'ancien Discord du compte perd ses rôles ; un Discord relié à un autre compte en est
+  détaché (`updateMany` dans la même transaction, plus d'erreur d'unicité) ; rôles retirés à la
+  suppression du compte (`DiscordGuildClient`, module feuille importé par `UsersModule`).
+Verrouillé par `discord-link.service.spec.ts` (7 mutations détectées) et `discord.controller.spec.ts`
+(échoue sur l'ancien contrôleur : `verified: true` sur un e-mail tapé par un tiers).
