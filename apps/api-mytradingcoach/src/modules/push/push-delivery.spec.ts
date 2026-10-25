@@ -23,24 +23,26 @@ async function attempt(send: PushSender['send']) {
   return { report, lines, logger, store };
 }
 
-const CASES: [string, PushSender['send'], string][] = [
-  ['succès 201', async () => 201, 'Envoi push trader PROP_RULES : livré (2xx, fcm.googleapis.com)'],
-  ['404', async () => 404, 'Envoi push trader PROP_RULES : échec (404, fcm.googleapis.com), abonnement supprimé'],
-  ['410', async () => 410, 'Envoi push trader PROP_RULES : échec (410, fcm.googleapis.com), abonnement supprimé'],
-  ['5xx', async () => 503, 'Envoi push trader PROP_RULES : échec (5xx, fcm.googleapis.com)'],
-  ['4xx (413, 429…)', async () => 429, 'Envoi push trader PROP_RULES : échec (4xx, fcm.googleapis.com)'],
-  ['délai dépassé', async () => { throw new PushDeadlineError(10_000); }, 'Envoi push trader PROP_RULES : échec (délai dépassé, fcm.googleapis.com)'],
+/** Livré et abonnement mort (404/410, fonctionnement normal) en info ; tout autre échec en warn. */
+const CASES: [string, PushSender['send'], string, 'log' | 'warn'][] = [
+  ['succès 201', async () => 201, 'Envoi push trader PROP_RULES : livré (2xx, fcm.googleapis.com)', 'log'],
+  ['404', async () => 404, 'Envoi push trader PROP_RULES : échec (404, fcm.googleapis.com), abonnement supprimé', 'log'],
+  ['410', async () => 410, 'Envoi push trader PROP_RULES : échec (410, fcm.googleapis.com), abonnement supprimé', 'log'],
+  ['5xx', async () => 503, 'Envoi push trader PROP_RULES : échec (5xx, fcm.googleapis.com)', 'warn'],
+  ['4xx (413, 429…)', async () => 429, 'Envoi push trader PROP_RULES : échec (4xx, fcm.googleapis.com)', 'warn'],
+  ['délai dépassé', async () => { throw new PushDeadlineError(10_000); }, 'Envoi push trader PROP_RULES : échec (délai dépassé, fcm.googleapis.com)', 'warn'],
   // Message d'erreur qui citerait l'adresse : jamais repris.
-  ['erreur réseau', async () => { throw new Error(`connect ECONNRESET ${target.endpoint}`); }, 'Envoi push trader PROP_RULES : échec (erreur réseau, fcm.googleapis.com)'],
+  ['erreur réseau', async () => { throw new Error(`connect ECONNRESET ${target.endpoint}`); }, 'Envoi push trader PROP_RULES : échec (erreur réseau, fcm.googleapis.com)', 'warn'],
 ];
 
 describe('deliverPush — une ligne de journal par tentative', () => {
-  it.each(CASES)('%s : exactement une ligne, niveau info, contenu attendu', async (_, send, expected) => {
+  it.each(CASES)('%s : exactement une ligne, au bon niveau, contenu attendu', async (_, send, expected, level) => {
     const { lines, logger } = await attempt(send);
+    const other = level === 'log' ? 'warn' : 'log';
 
     expect(lines).toEqual([expected]);
-    expect(logger.log).toHaveBeenCalledTimes(1);
-    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger[level], `ligne attendue au niveau ${level}`).toHaveBeenCalledTimes(1);
+    expect(logger[other]).not.toHaveBeenCalled();
   });
 
   it.each(CASES)('%s : ni adresse d’abonnement, ni clé, ni identifiant dans le texte journalisé', async (_, send) => {

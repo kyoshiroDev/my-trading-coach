@@ -49,7 +49,8 @@ export function pushAttemptLine(audience: string, kind: string, delivered: boole
 /**
  * Envoie `payload` à chaque cible, en parallèle, commun à l'admin et aux traders.
  * 2xx → livré ; 404/410 → abonnement mort, supprimé ; autre code ou exception → échec.
- * Une ligne de journal (info) par tentative, voir `pushAttemptLine`. Ne lève jamais.
+ * Une ligne de journal par tentative, voir `pushAttemptLine` : info si livré ou abonnement mort
+ * (404/410, fonctionnement normal), warn pour tout autre échec. Ne lève jamais.
  */
 export async function deliverPush(
   sender: PushSender,
@@ -89,12 +90,12 @@ export async function deliverPush(
           await store.gone(t.id).catch(() => undefined);
         } else {
           report.failed++;
-          logger.log(pushAttemptLine(audience, kind, false, outcome, host));
+          logger.warn(pushAttemptLine(audience, kind, false, outcome, host));
         }
       } catch (err) {
         report.failed++;
         // Le message de l'erreur n'est pas repris : il pourrait citer l'adresse.
-        logger.log(pushAttemptLine(audience, kind, false, err instanceof PushDeadlineError ? 'délai dépassé' : 'erreur réseau', host));
+        logger.warn(pushAttemptLine(audience, kind, false, err instanceof PushDeadlineError ? 'délai dépassé' : 'erreur réseau', host));
       }
     }),
   );
