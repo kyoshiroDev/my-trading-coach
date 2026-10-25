@@ -93,6 +93,12 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > Intensité d'activité (pastilles de streak de Score) : `--streak-0` (aucune) à `--streak-4`
 > (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
 > `features/scoring/score-streak-couleurs.spec.ts`.
+>
+> **Cartes « Badges obtenus » et « Streak & activité » MASQUÉES** depuis le 25/10/2026
+> (`STREAK_ET_BADGES_VISIBLES = false`, `scoring.component.ts`) : données inventées (pastilles au
+> hasard, série en dur, badges statiques). La carte du score passe alors sur toute la largeur
+> (`.grid-2.une-colonne`) ; le conseil des 10 trades reste. Ne les réafficher qu'avec de vraies
+> données (ticket « brancher le Streak »). Vérifié par `scoring-streak-masque.spec.ts` (compte normal et démo).
 
 ---
 

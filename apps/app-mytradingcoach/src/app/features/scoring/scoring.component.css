@@ -14,6 +14,8 @@
   gap: 16px;
   align-items: stretch;
 }
+/* Streak et badges masqués : la carte du score prend toute la largeur (pas de colonne vide). */
+.grid-2.une-colonne { grid-template-columns: 1fr; }
 
 /* ─── Card ─── */
 .card {

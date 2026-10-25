@@ -110,7 +110,7 @@ export class AmbassadorComponent implements OnInit {
     // Feedback transitoire → toast. L'échec du presse-papiers était muet.
     navigator.clipboard.writeText(this.referralLink()).then(
       () => this.toast.success('Lien copié'),
-      () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),
+      () => this.toast.error('Copie impossible\u00a0: sélectionne le lien et copie-le à la main.'),
     );
   }
 
