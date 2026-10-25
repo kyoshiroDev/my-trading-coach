@@ -3,9 +3,10 @@
  *
  * Au premier passage (aucune stratégie renseignée), le Profil ouvre la modale tout seul.
  * En arrivant d'une notification push (`/profil#notifications`, test réel du 25/10 sur dev),
- * elle recouvrait la section que la notification venait ouvrir. Avec le hash, plus
- * d'ouverture automatique ; sans lui, comportement inchangé (le bandeau « Compléter » du
- * tableau de bord compte dessus).
+ * elle recouvrait la section que la notification venait ouvrir ; même chose pour le lien
+ * « Gérer mes e-mails » (`/profil?tab=params`). Sur ces liens profonds, plus d'ouverture
+ * automatique ; sur `/profil` nu, comportement inchangé (le bandeau « Compléter » du tableau
+ * de bord compte dessus).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
@@ -23,8 +24,12 @@ import { TradesApi } from '../../core/api/trades.api';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
 
-function mount(opts: { fragment: string | null; strategy?: { tradingStyle?: string; strategyDescription?: string } }) {
-  const params = convertToParamMap({});
+function mount(opts: {
+  fragment: string | null;
+  query?: Record<string, string>;
+  strategy?: { tradingStyle?: string; strategyDescription?: string };
+}) {
+  const params = convertToParamMap(opts.query ?? {});
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
@@ -69,7 +74,22 @@ describe('Profil — ouverture automatique de la modale stratégie', () => {
     expect(cmp.activeProfileTab()).toBe('params');
   });
 
-  it('arrivée sur /profil sans stratégie : la modale s\'ouvre toujours (comportement inchangé)', () => {
+  it('arrivée sur /profil?tab=params (« Gérer mes e-mails ») sans stratégie : modale fermée, onglet Paramètres visible', () => {
+    const cmp = mount({ fragment: null, query: { tab: 'params' } });
+
+    expect(cmp.showStrategyModal(), 'La modale recouvre l\'onglet que le lien de l\'e-mail vient ouvrir').toBe(false);
+    expect(cmp.activeProfileTab()).toBe('params');
+  });
+
+  it('tout paramètre ?tab= compte comme lien profond, même une valeur inconnue', () => {
+    expect(mount({ fragment: null, query: { tab: 'autre' } }).showStrategyModal()).toBe(false);
+  });
+
+  it('un autre paramètre (?checkout=success) ne bloque pas l\'ouverture automatique', () => {
+    expect(mount({ fragment: null, query: { checkout: 'success' } }).showStrategyModal()).toBe(true);
+  });
+
+  it('arrivée sur /profil nu sans stratégie : la modale s\'ouvre toujours (comportement inchangé)', () => {
     const cmp = mount({ fragment: null });
 
     expect(cmp.showStrategyModal()).toBe(true);
