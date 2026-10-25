@@ -22,9 +22,10 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { UserStore } from '../../core/stores/user.store';
 import { environment } from '@app/environments/environment';
-import { computeTradeStats } from '@mtc/shared';
+import { computeTradeStats, todayParis } from '@mtc/shared';
 import type { Trade as ApiTrade } from '@mtc/shared';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import { calculerStreak, decalerJour, joursOuvres } from './streak';
 
 /** Champs du trade utilisés par le calcul du score. */
 type Trade = Pick<ApiTrade, 'pnl' | 'riskReward' | 'emotion' | 'effectiveEmotion' | 'setupId' | 'tradedAt'>;
@@ -151,12 +152,15 @@ const LOCKED_BADGES = [
 ];
 
 /**
- * Cartes « Badges obtenus » et « Streak & activité » MASQUÉES (décision du 25/10/2026) : leurs données
- * sont inventées (pastilles tirées au hasard, série de 7 jours en dur, badges statiques), un trader y
- * verrait une activité qui n'est pas la sienne. Le code reste en place pour le ticket « brancher le
- * Streak sur les vraies données » : repasser à true une fois les données réelles branchées.
+ * Carte « Badges obtenus » MASQUÉE (décision du 25/10/2026) : ses badges sont une liste statique, un
+ * trader y verrait des récompenses qui ne sont pas les siennes. Code gardé pour le ticket qui définira
+ * leurs règles réelles : repasser à true une fois les badges calculés. (La carte Streak, elle, est
+ * branchée sur l'activité réelle : voir streak.ts.)
  */
-const STREAK_ET_BADGES_VISIBLES = false;
+const BADGES_VISIBLES = false;
+
+/** Jours ouvrés sur lesquels compter la série (~1 an) : elle peut dépasser les 35 pastilles. */
+const JOURS_SERIE = 260;
 
 @Component({
   selector: 'mtc-scoring',
@@ -198,12 +202,33 @@ export class ScoringComponent {
   protected readonly tradeCount = computed(() => this.trades().length);
   protected readonly scoreLabel = scoreLabel;
 
-  protected readonly streakEtBadgesVisibles = STREAK_ET_BADGES_VISIBLES;
+  protected readonly badgesVisibles = BADGES_VISIBLES;
   protected readonly EARNED_BADGES = EARNED_BADGES;
   protected readonly LOCKED_BADGES = LOCKED_BADGES;
 
-  // Niveau d'activité 0 à 4 par jour ; couleur : --streak-0 … --streak-4 (theme.css), via la classe niveau-N.
-  protected readonly streakDots = Array.from({ length: 35 }, () => Math.floor(Math.random() * 5));
+  // Streak : activité réelle par jour (tous comptes actifs, journées Paris). Un jour de marge de chaque
+  // côté : l'API lit `from`/`to` en heure du serveur, les clés de jour renvoyées sont, elles, en Paris.
+  private readonly aujourdhui = todayParis();
+  private readonly joursSerie = joursOuvres(this.aujourdhui, JOURS_SERIE);
+  private readonly activiteResource = httpResource<{ data: { days: { date: string; tradesCount: number }[] } }>(() =>
+    this.userStore.isPremium()
+      ? `${environment.apiUrl}/analytics/activity/range?from=${decalerJour(this.joursSerie[0], -1)}&to=${decalerJour(this.aujourdhui, 1)}`
+      : undefined,
+  );
+  protected readonly activiteEnErreur = computed(() => !!this.activiteResource.error());
+  protected readonly activiteEnChargement = computed(() => this.activiteResource.isLoading());
+  protected rechargerActivite(): void {
+    this.activiteResource.reload();
+  }
+  // Pastilles (niveau 0 à 4 → classe niveau-N, couleurs --streak-N de theme.css) et série actuelle.
+  protected readonly streak = computed(() =>
+    calculerStreak(this.activiteResource.value()?.data.days ?? [], this.aujourdhui, this.joursSerie),
+  );
+
+  protected titrePastille(p: { date: string; trades: number }): string {
+    const jour = new Date(`${p.date}T12:00:00Z`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return `${jour} · ${p.trades === 0 ? 'aucun trade' : p.trades === 1 ? '1 trade' : `${p.trades} trades`}`;
+  }
 
   protected ringDash(): string {
     const circumference = 2 * Math.PI * 65;

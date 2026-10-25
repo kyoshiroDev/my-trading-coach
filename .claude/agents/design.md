@@ -94,11 +94,14 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
 > `features/scoring/score-streak-couleurs.spec.ts`.
 >
-> **Cartes « Badges obtenus » et « Streak & activité » MASQUÉES** depuis le 25/10/2026
-> (`STREAK_ET_BADGES_VISIBLES = false`, `scoring.component.ts`) : données inventées (pastilles au
-> hasard, série en dur, badges statiques). La carte du score passe alors sur toute la largeur
-> (`.grid-2.une-colonne`) ; le conseil des 10 trades reste. Ne les réafficher qu'avec de vraies
-> données (ticket « brancher le Streak »). Vérifié par `scoring-streak-masque.spec.ts` (compte normal et démo).
+> **Carte « Streak & activité » de Score : activité RÉELLE** depuis le 25/10/2026 (`features/scoring/streak.ts`,
+> données de `GET /analytics/activity/range`, journées Paris, tous comptes actifs) : 35 derniers jours
+> OUVRÉS (week-ends absents), intensité = trades du jour 0 · 1 · 2-3 · 4-5 · 6+ → niveaux 0 à 4, série =
+> jours ouvrés consécutifs avec trade (week-end et journée en cours ne la cassent pas), comptée sur ~1 an.
+> Seule dans sa colonne, hauteur naturelle (`.right-col .streak-card`). Specs : `streak.spec.ts`,
+> `scoring-streak.spec.ts` (rendu, compte normal et démo).
+> **Carte « Badges obtenus » MASQUÉE** (`BADGES_VISIBLES = false`) : badges encore statiques ; ne la
+> réafficher qu'avec des règles d'obtention réelles (ticket à part).
 
 ---
 

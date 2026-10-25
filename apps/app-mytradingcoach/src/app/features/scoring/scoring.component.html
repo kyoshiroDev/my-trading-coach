@@ -25,7 +25,7 @@
     } @else if (isLoading()) {
       <div class="loading">Calcul du score...</div>
     } @else {
-      <div class="grid-2" [class.une-colonne]="!streakEtBadgesVisibles">
+      <div class="grid-2">
         <!-- Left : score ring + bars -->
         <div class="card">
           <div class="card-header">
@@ -112,11 +112,10 @@
           </div>
         </div>
 
-        <!-- Right : badges + streak (MASQUÉS tant que leurs données sont inventées, voir
-             STREAK_ET_BADGES_VISIBLES) + conseil des 10 trades (données réelles, toujours affiché). -->
-        @if (streakEtBadgesVisibles || tradeCount() < 10) {
+        <!-- Right : badges (MASQUÉS tant qu'ils sont inventés, voir BADGES_VISIBLES) + streak (activité
+             réelle, streak.ts) + conseil des 10 trades. -->
         <div class="right-col">
-          @if (streakEtBadgesVisibles) {
+          @if (badgesVisibles) {
           <div class="card badges-card">
             <div class="card-title">
               <svg [lucideIcon]="MedalIcon" [size]="16"></svg> Badges obtenus
@@ -136,28 +135,34 @@
               }
             </div>
           </div>
+          }
 
           <div class="card streak-card">
             <div class="card-title">
               <svg [lucideIcon]="CalendarDaysIcon" [size]="16"></svg> Streak &amp; activité
             </div>
-            <div class="streak-dots">
-              @for (d of streakDots; track $index) {
-                <div
-                  class="streak-dot niveau-{{ d }}"
-                  [title]="'Jour ' + ($index + 1)"
-                ></div>
+            @if (activiteEnErreur()) {
+              <mtc-error-state message="Ton activité n’a pas pu être chargée. Vérifie ta connexion puis réessaie." (retry)="rechargerActivite()" />
+            } @else {
+              <!-- 35 derniers jours ouvrés, du plus ancien au plus récent. -->
+              <div class="streak-dots" [class.chargement]="activiteEnChargement()">
+                @for (p of streak().pastilles; track p.date) {
+                  <div
+                    class="streak-dot niveau-{{ p.niveau }}"
+                    [title]="titrePastille(p)"
+                  ></div>
+                }
+              </div>
+              @if (!activiteEnChargement()) {
+                @let serie = streak().serie;
+                <div class="streak-info">
+                  🔥 Série actuelle :
+                  <strong class="text-green">{{ serie }} jour{{ serie > 1 ? 's' : '' }} ouvré{{ serie > 1 ? 's' : '' }}</strong>
+                  consécutif{{ serie > 1 ? 's' : '' }}
+                </div>
               }
-            </div>
-            <div class="streak-info">
-              🔥 Série actuelle :
-              <strong class="text-green">{{
-                tradeCount() > 0 ? '7 jours' : '0 jour'
-              }}</strong>
-              consécutifs
-            </div>
+            }
           </div>
-          }
 
           @if (tradeCount() < 10) {
             <div class="advice-banner">
@@ -166,7 +171,6 @@
             </div>
           }
         </div>
-        }
       </div>
     }
   }
