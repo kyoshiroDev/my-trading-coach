@@ -124,6 +124,11 @@ describe('Section Notifications du profil', () => {
     expect(api.preferences).not.toHaveBeenCalled();
     expect(q('push-quiet-error')!.textContent).toContain('Choisis deux heures différentes');
     expect(q('push-quiet-error')!.getAttribute('role')).toBe('alert');
+    // Message relié aux deux champs (n2).
+    for (const id of ['push-quiet-start', 'push-quiet-end']) {
+      expect(q(id)!.getAttribute('aria-invalid'), id).toBe('true');
+      expect(q(id)!.getAttribute('aria-describedby'), id).toBe(q('push-quiet-error')!.id);
+    }
     expect(start.value).toBe('22:00');
     // Une plage valide efface le message.
     start.value = '23:00';
@@ -131,6 +136,8 @@ describe('Section Notifications du profil', () => {
     await settle();
     expect(api.preferences).toHaveBeenLastCalledWith({ quietHours: { start: 1380, end: 420 } }, expect.anything());
     expect(q('push-quiet-error')).toBeNull();
+    expect(start.hasAttribute('aria-invalid')).toBe(false);
+    expect(start.hasAttribute('aria-describedby')).toBe(false);
   });
 
   it.each([

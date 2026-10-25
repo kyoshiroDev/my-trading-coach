@@ -126,14 +126,16 @@
                 <div class="pn-time">
                   <label>De
                     <input type="time" step="300" [value]="hhmm(q.start)" [disabled]="readOnly()" data-testid="push-quiet-start"
+                      [attr.aria-invalid]="quietError() ? 'true' : null" [attr.aria-describedby]="quietError() ? 'pn-quiet-error' : null"
                       (change)="changeQuiet('start', $any($event.target))" />
                   </label>
                   <label>À
                     <input type="time" step="300" [value]="hhmm(q.end)" [disabled]="readOnly()" data-testid="push-quiet-end"
+                      [attr.aria-invalid]="quietError() ? 'true' : null" [attr.aria-describedby]="quietError() ? 'pn-quiet-error' : null"
                       (change)="changeQuiet('end', $any($event.target))" />
                   </label>
                 </div>
-                @if (quietError(); as e) { <p class="pn-error" role="alert" data-testid="push-quiet-error">{{ e }}</p> }
+                @if (quietError(); as e) { <p class="pn-error" id="pn-quiet-error" role="alert" data-testid="push-quiet-error">{{ e }}</p> }
               }
               <p class="pn-note">Heure de Paris.</p>
             </div>
