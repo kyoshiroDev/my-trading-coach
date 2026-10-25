@@ -889,15 +889,37 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   (sinon la règle des `.js` les fige 1 an). L'admin est servi par l'**ancien VPS** : sur ce VPS,
   `spa-releases.conf` est un fichier **partagé** par `mtc_admin`, `mtc_app_dev_static` et
   `mtc_app_beta_static` (bind-mount d'un fichier unique) ; le modifier change aussi dev et beta.
-- **Push des traders (#666) : ne pas activer `PUSH_ENABLED` en production avant que le manifest
-  (étape 1 de #715) soit en ligne.** Sans manifest, l'app ajoutée à l'écran d'accueil d'un iPhone
-  avant iOS 26 s'ouvre dans Safari (pas en mode app, donc pas de push) et le trader reste sur le
-  bandeau « ajoute MyTradingCoach à l'écran d'accueil ». Depuis iOS 26, tout site ajouté s'ouvre
-  en mode app par défaut, mais le push sans manifest n'a pas été vérifié sur un vrai iPhone.
+- **Push des traders (#666) : interrupteur séparé `TRADER_PUSH_ENABLED`**, éteint si absent (seule
+  la valeur `true` l'allume). Le push des traders exige `PUSH_ENABLED=true` (clés VAPID valides) ET
+  `TRADER_PUSH_ENABLED=true` ; l'admin reste piloté par `PUSH_ENABLED` seul (déjà à `true` en prod).
+  Éteint : section Notifications absente de l'app (`GET /push/settings` → `enabled: false`),
+  `POST /push/subscribe` et `/push/test` en 503, aucun envoi ; retrait d'un appareil et
+  désabonnement à la déconnexion marchent toujours.
+- **`TRADER_PUSH_ENABLED` ne s'allume pas en production avant le manifest de #715 (étape 1) ET les
+  essais de Greg sur un vrai iPhone installé, un vrai Android et un PC.** Sans manifest, l'app
+  ajoutée à l'écran d'accueil d'un iPhone avant iOS 26 s'ouvre dans Safari (pas en mode app, donc
+  pas de push). Depuis iOS 26, tout site ajouté s'ouvre en mode app par défaut, mais le push sans
+  manifest n'a pas été vérifié sur un vrai iPhone.
   **Règle aussi imposée dans le code** : sur iPhone et iPad, tant que la page n'a pas de
   `<link rel="manifest">`, la section affiche seulement « Les alertes sur iPhone ne sont pas encore
   disponibles. » (état `ios-unavailable`, ni étapes ni activation). Le manifest de #715 en ligne,
   l'activation revient seule.
+- **Push des traders sur beta, pour les essais** (ancien VPS, `/opt/apps/mytradingcoach/beta`).
+  Clés VAPID PROPRES à beta : jamais celles de la prod (une paire partagée laisserait beta signer
+  des push reçus comme ceux de la prod), jamais commitées, jamais affichées. Commandes à taper par
+  Greg (fichier `.env.beta` à lui, droits root) :
+  ```bash
+  cd /opt/apps/mytradingcoach/beta
+  grep -cE '^(PUSH_ENABLED|TRADER_PUSH_ENABLED|VAPID_[A-Z]+)=' .env.beta   # attendu : 0 (sinon éditer, pas d'ajout en double)
+  # Paire générée dans le conteneur API beta (web-push y est installé), écrite sans affichage :
+  docker exec mtc_api_beta node -e "const k=require('web-push').generateVAPIDKeys();process.stdout.write('PUSH_ENABLED=true\nTRADER_PUSH_ENABLED=true\nVAPID_PUBLIC_KEY='+k.publicKey+'\nVAPID_PRIVATE_KEY='+k.privateKey+'\nVAPID_SUBJECT=mailto:hello@mytradingcoach.app\n')" >> .env.beta
+  grep -E '^(PUSH_ENABLED|TRADER_PUSH_ENABLED|VAPID_[A-Z]+)=' .env.beta | cut -d= -f1 | sort | uniq -c   # 1 de chaque
+  docker inspect mtc_api_beta --format '{{index .Config.Labels "com.docker.compose.project"}}'   # projet compose
+  docker compose -p <projet> -f docker-compose.beta.yml up -d --force-recreate api   # relit .env.beta (pas docker restart)
+  docker logs mtc_api_beta 2>&1 | grep 'Notifications push des traders'   # attendu : « activées »
+  ```
+  Couper : `TRADER_PUSH_ENABLED=false` (l'admin de beta, s'il en a, garde son push), puis recréer
+  l'API. Changer la paire invalide les abonnements beta (réabonner depuis le profil).
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible

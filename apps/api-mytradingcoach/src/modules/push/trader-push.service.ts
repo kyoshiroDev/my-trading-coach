@@ -11,7 +11,7 @@ import {
 } from '@mtc/shared';
 import { PrismaService } from '@api/prisma/prisma.service';
 import type { PushConfigResult } from '../../config/push-config';
-import { PUSH_CONFIG, PUSH_SENDER, type PushSender } from './push-sender';
+import { PUSH_CONFIG, PUSH_SENDER, TRADER_PUSH_FLAG, type PushSender } from './push-sender';
 import { deliverPush, hostOf } from './push-delivery';
 import { deviceLabel } from './device-label';
 import { TRADER_PUSH_MESSAGES, traderPushPayload, type TraderPushMessage } from './trader-push-messages';
@@ -33,14 +33,22 @@ export class TraderPushService implements OnModuleInit {
     private readonly prisma: PrismaService,
     @Inject(PUSH_CONFIG) private readonly config: PushConfigResult,
     @Inject(PUSH_SENDER) private readonly sender: PushSender | null,
+    /** `TRADER_PUSH_ENABLED=true` : le push des traders exige les DEUX interrupteurs. */
+    @Inject(TRADER_PUSH_FLAG) private readonly traderFlag: boolean,
   ) {}
 
   onModuleInit(): void {
-    if (!this.enabled) this.logger.log('Notifications push des traders : désactivées (pas de clés VAPID)');
+    if (!this.config.enabled) this.logger.log(`Notifications push des traders : désactivées (${this.config.reason})`);
+    else if (!this.traderFlag) this.logger.log('Notifications push des traders : désactivées (TRADER_PUSH_ENABLED ≠ true)');
+    else this.logger.log('Notifications push des traders : activées');
   }
 
+  /**
+   * Interrupteur éteint : section masquée dans l'app (`enabled: false`), abonnement et test en 503,
+   * aucun envoi. Lecture, retrait d'un appareil et désabonnement à la déconnexion restent possibles.
+   */
   get enabled(): boolean {
-    return this.config.enabled && this.sender !== null;
+    return this.traderFlag && this.config.enabled && this.sender !== null;
   }
 
   private requireEnabled(): void {
@@ -60,7 +68,7 @@ export class TraderPushService implements OnModuleInit {
     ]);
     return {
       enabled: this.enabled,
-      publicKey: this.config.enabled ? this.config.config.publicKey : null,
+      publicKey: this.enabled && this.config.enabled ? this.config.config.publicKey : null,
       mutedTypes: pref?.mutedTypes ?? [...DEFAULT_MUTED_PUSH_TYPES],
       // Début égal à la fin (ligne enregistrée avant la revue phase 2 I5) : aucune heure silencieuse.
       quietHours:
