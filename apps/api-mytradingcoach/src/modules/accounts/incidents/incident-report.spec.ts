@@ -148,6 +148,40 @@ describe('analyse IA — prompt', () => {
     expect(prompt).toContain("10:44 alerte MyTradingCoach : pertes d'affilée");
     expect(prompt).toContain('- Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
   });
+
+  it('le système ne fait parler que de la limite fournie, jamais d\'une limite inventée', () => {
+    expect(INCIDENT_AI_SYSTEM).toMatch(/seulement s'il figure dans les faits/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/aucune limite n'est relevée, n'écris pas qu'une limite a été franchie/);
+  });
+
+  it('franchissement pendant la séance : heure fournie', () => {
+    const prompt = buildIncidentPrompt('drawdown', 'USD', buildIncidentReport(input()));
+    expect(prompt).toContain('Limite estimée franchie à 11:12.');
+  });
+
+  it('déjà franchie avant la séance : dit tel quel, sans heure', () => {
+    const report = buildIncidentReport(input({
+      snapshot: { limit: 1000, remaining: -40, detectedAt: at('21:13').toISOString() },
+      trades: [trade('w', '21:12', 'SHORT', 2, 58)],
+      alerts: [],
+    }));
+    const prompt = buildIncidentPrompt('drawdown', 'USD', report);
+    expect(prompt).toContain('Limite estimée déjà franchie avant le premier trade.');
+    expect(prompt).not.toMatch(/franchie à/);
+  });
+
+  it('échec marqué à la main : aucune limite relevée, aucun franchissement annoncé (revue dev 25/10)', () => {
+    const report = buildIncidentReport(input({ kind: 'manual', snapshot: null }));
+    const prompt = buildIncidentPrompt('manual', 'USD', report);
+    expect(prompt).toContain('Incident : compte marqué comme échoué par le trader.');
+    expect(prompt).toContain('Aucune limite relevée par MyTradingCoach');
+    expect(prompt).not.toMatch(/franchie|perte du jour|journalière|drawdown/i);
+  });
+
+  it('relevé absent : heure du franchissement non connue', () => {
+    const report = buildIncidentReport(input({ snapshot: null }));
+    expect(buildIncidentPrompt('drawdown', 'USD', report)).toContain('Heure du franchissement non connue.');
+  });
 });
 
 describe('buildIncidentReport — marge déjà sous la limite avant la séance (revue #712)', () => {

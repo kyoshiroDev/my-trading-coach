@@ -1741,7 +1741,10 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
   (`tradedAt` = première sortie : estimation, `estimatedDistance: true`). Constats : gabarits chiffrés,
   aucun conseil ni promesse (test dédié).
 - **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
-  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Jamais pour la démo,
+  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Le message dit toujours
+  ce qu'on sait du franchissement (heure, « déjà franchie avant le premier trade », « non connue », ou
+  pour `manual` « Aucune limite relevée ») et le système interdit toute autre limite : sans ça, un échec
+  marqué à la main recevait une « limite journalière franchie » inventée. Jamais pour la démo,
   jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
   Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
   `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
