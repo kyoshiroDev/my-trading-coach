@@ -1,9 +1,9 @@
-<div class="eco-page">
+<div class="eco-page mtc-page">
 
   <!-- Header -->
-  <div class="eco-header">
+  <div class="eco-header mtc-page-head">
     <div class="eco-header-left">
-      <h1 class="eco-title">Calendrier économique</h1>
+      <h1 class="eco-title mtc-page-title">Calendrier économique</h1>
       <span class="eco-subtitle">
         @if (isLoading()) { Chargement… } @else { {{ totalEvents() }} événement{{ totalEvents() > 1 ? 's' : '' }} }
         · {{ getWeekLabel() }}
@@ -256,7 +256,7 @@
         <!-- Col 2 : Ma sélection (fixe) -->
         <aside class="eco-selection-col">
           <div class="eco-session-head selection">
-            <span>⭐</span> Ma sélection
+            <svg [lucideIcon]="StarIcon" [size]="13"></svg> Ma sélection
             <span class="eco-session-cnt">{{ pinnedUpcoming().length }}</span>
           </div>
           <div class="eco-selection-body">

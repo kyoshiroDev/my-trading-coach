@@ -1,7 +1,7 @@
 /* ── Page : borne à la hauteur écran, en-tête fixe, colonnes à scroll interne ── */
 :host { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Padding porté par .mtc-page (styles.css). */
 .eco-page {
-  padding: 30px;
   display: flex; flex-direction: column;
   flex: 1; min-height: 0;
 }

@@ -160,28 +160,66 @@ textarea {
   }
 }
 
+/* ─── Pages du shell sans topbar commune (Mes sessions, Calendrier éco, Parrainage, Ambassadeur,
+   Devenir ambassadeur) ───
+   .mtc-page : conteneur de la page, toute la largeur à droite de la barre latérale (aucun
+   max-width), défilement vertical seulement. .mtc-page-head : en-tête de la page. .mtc-page-title :
+   son titre. .mtc-cards : grille de cartes à colonnes automatiques.
+   Mobile : pas de topbar, mais le burger fixe de la sidebar est calé sur elle (--topbar-h). La
+   ligne du titre prend la boîte du burger (même haut, même hauteur) et l'en-tête lui réserve sa
+   place à droite : rien ne passe dessous. Le padding des pages vit ICI seulement : une règle de
+   composant a une spécificité plus forte et l'écraserait.
+   Vérifié par shared/components/topbar/topbar-burger-alignment.spec.ts. */
+.mtc-page {
+  padding: var(--page-pad);
+  min-width: 0;
+}
+.mtc-cards {
+  display: grid;
+  gap: var(--page-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--cards-min, var(--card-col-min))), 1fr));
+  align-items: stretch;
+}
+@media (max-width: 768px) {
+  .mtc-page {
+    padding: 0 var(--page-pad-mobile) calc(env(safe-area-inset-bottom) + var(--page-pad-mobile));
+  }
+  .mtc-page-head {
+    padding-top: calc((var(--topbar-h) - var(--topbar-border-w) - var(--topbar-btn-h)) / 2);
+    padding-right: calc(var(--topbar-burger-space) - var(--page-pad-mobile));
+  }
+  .mtc-page-title {
+    line-height: var(--topbar-btn-h);
+  }
+}
+
 /* ─── Live mode : bloquer le scroll du main pour laisser les colonnes scroller ─── */
 body.live-mode-active .main-content {
   overflow: hidden;
 }
 
 /* Autoremplissage du navigateur (email, mot de passe…) : Chrome et Safari imposent un fond clair
-   et un texte sombre, illisibles sur le thème. Le fond est repeint par une ombre interne (seul moyen
-   de couvrir le fond imposé), le texte forcé en clair, et la transition retarde indéfiniment le
-   repeint du navigateur (sans effet sur l'aperçu de Chrome, d'où l'ombre). Fond par défaut `--bg-2` (champs de l'app) ; un champ sur un autre fond
-   pose `--autofill-bg`. Tous les champs de l'app, pas seulement l'auth. */
+   (#e8f0fe) que rien ne remplace. On le recouvre d'une ombre interne au fond du champ, texte forcé
+   en clair, et la transition retarde indéfiniment le repeint du navigateur.
+   `!important` : un composant qui pose son propre `box-shadow` (anneau de focus ou d'erreur) ou sa
+   propre `transition` a la même spécificité et passe après la feuille globale ; il effaçait l'ombre
+   au focus, et le texte clair devenait invisible sur le fond clair. L'anneau du champ n'est pas
+   perdu : le composant le déclare dans `--field-ring`, ajouté ici après l'ombre.
+   Fond par défaut `--bg-2` ; un champ posé sur un autre fond déclare `--autofill-bg`. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-text-fill-color: var(--text);
+  -webkit-text-fill-color: var(--text) !important;
   caret-color: var(--text);
-  box-shadow: 0 0 0 1000px var(--autofill-bg, var(--bg-2)) inset;
+  box-shadow:
+    0 0 0 1000px var(--autofill-bg, var(--bg-2)) inset,
+    var(--field-ring, 0 0 0 0 transparent) !important;
   /* Le fond clair imposé ne passe plus sous la bordure semi-transparente (liseré blanc).
      `!important` : le raccourci `background:` des champs de composant remet `border-box`. */
   background-clip: padding-box !important;
-  transition: background-color 9999s ease-out 0s;
+  transition: background-color 9999s ease-out 0s !important;
 }
 
 /* ── Badge d'état d'un compte de trading (compte perdu) : Actif · Validé · Échoué · Archivé.

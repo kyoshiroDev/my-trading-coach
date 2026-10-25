@@ -25,14 +25,19 @@ process.on('unhandledRejection', (err) => {
   console.error('[Bot] Unhandled rejection (process protégé) :', err?.message ?? err);
 });
 
+// Où l'utilisateur génère son code de liaison (#741).
+const LINK_PAGE = 'https://app.mytradingcoach.app/profil?tab=params';
+const HOW_TO_LINK =
+  `Génère ton code dans l'app (Profil, onglet Paramètres, bloc Discord) : ${LINK_PAGE}\n` +
+  'puis tape ici : ```/verify code:XXXX-XXXX```';
+
 // DM de bienvenue automatique
 client.on('guildMemberAdd', async (member) => {
   try {
     await member.send(
       '👋 Bienvenue sur le Discord MyTradingCoach !\n\n' +
-      'Pour accéder aux salons, vérifie ton compte :\n' +
-      'Tape dans **#👋-bienvenue** :\n' +
-      '```/verify email:ton@email.com```\n' +
+      'Pour accéder aux salons, relie ton compte :\n' +
+      HOW_TO_LINK + '\n' +
       'Ton rôle sera attribué automatiquement.\n\n' +
       '➡️ Pas encore inscrit ? https://app.mytradingcoach.app/register',
     );
@@ -41,7 +46,8 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
-// Commande /verify
+// Commande /verify code: (#741). Le code prouve que la personne est connectée au compte : un
+// e-mail tapé ne prouvait rien.
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand() || interaction.commandName !== 'verify') return;
 
@@ -51,24 +57,31 @@ client.on('interactionCreate', async (interaction) => {
     return; // interaction expirée (bot redémarré entre-temps) — on ignore
   }
 
-  const email     = interaction.options.getString('email');
+  // Tant que la commande n'est pas réenregistrée, Discord envoie encore l'option « email » :
+  // `code` est alors vide et on explique la nouvelle marche à suivre.
+  const code      = interaction.options.getString('code');
   const discordId = interaction.user.id;
 
-  if (!email) {
-    await interaction.editReply({ content: '❌ Adresse email manquante.' });
+  if (!code) {
+    await interaction.editReply({ content: 'ℹ️ La vérification par e-mail n\'existe plus.\n' + HOW_TO_LINK });
     return;
   }
 
   let data;
   try {
-    const res = await fetch(
-      `${API_URL}/api/discord/verify?email=${encodeURIComponent(email)}&discordId=${discordId}`,
-      { headers: { 'x-discord-secret': BOT_SECRET } },
-    );
+    const res = await fetch(`${API_URL}/api/discord/link`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-discord-secret': BOT_SECRET },
+      body: JSON.stringify({ code, discordId }),
+    });
 
-    if (!res.ok && res.status === 401) {
+    if (res.status === 401) {
       console.error(`[Bot] /verify — 401 Unauthorized (DISCORD_BOT_SECRET incorrect ou manquant)`);
       await interaction.editReply({ content: '❌ Erreur de configuration du bot. Contacte un administrateur.' });
+      return;
+    }
+    if (res.status === 400) {
+      await interaction.editReply({ content: '❌ Code invalide ou expiré.\n' + HOW_TO_LINK });
       return;
     }
 
@@ -79,7 +92,7 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
 
-  if (!data.data?.verified) {
+  if (!data.data?.linked) {
     await interaction.editReply({ content: '❌ ' + (data.data?.message ?? 'Erreur inconnue') });
     return;
   }
@@ -91,25 +104,21 @@ client.on('interactionCreate', async (interaction) => {
     if (data.data.plan === 'PREMIUM') {
       await member.roles.add(ROLE_PREMIUM);
       await interaction.editReply({
-        content:
-          `✅ Vérifié **${data.data.name}** ! 🎉\n` +
-          `Rôle ⭐ Premium attribué — salon Premium débloqué.`,
+        content: '✅ Compte relié ! 🎉\nRôle ⭐ Premium attribué : salon Premium débloqué.',
       });
     } else {
       await member.roles.add(ROLE_MEMBRE);
       await interaction.editReply({
         content:
-          `✅ Vérifié **${data.data.name}** ! 👋\n` +
-          `Rôle 👋 Membre attribué.\n` +
-          `💡 Passe à Premium → https://app.mytradingcoach.app/settings`,
+          '✅ Compte relié ! 👋\n' +
+          'Rôle 👋 Membre attribué.\n' +
+          `💡 Passe à Premium : ${LINK_PAGE}`,
       });
     }
   } catch (err) {
     console.error(`[Bot] /verify — Impossible d'attribuer le rôle (${err.message}) — vérifier : 1) permission "Gérer les rôles" activée, 2) rôle du bot au-dessus des rôles Membre/Premium dans la hiérarchie`);
     await interaction.editReply({
-      content:
-        `✅ Compte vérifié **${data.data.name}** !\n` +
-        `⚠️ Impossible d'attribuer le rôle automatiquement — contacte un administrateur.`,
+      content: "✅ Compte relié !\n⚠️ Impossible d'attribuer le rôle automatiquement : contacte un administrateur.",
     });
   }
 });

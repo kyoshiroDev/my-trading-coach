@@ -92,6 +92,22 @@ import { GA_ID } from '../config';
         passe. Recevoir nos emails reste un choix séparé : une case à cocher, jamais cochée par défaut.
       </p>
 
+      <h3>g) Notifications push (uniquement si vous les activez)</h3>
+      <p>
+        Lorsque vous activez les notifications sur un appareil, nous enregistrons l'adresse
+        d'abonnement fournie par votre navigateur et ses clés de chiffrement, l'identification
+        technique de votre navigateur («&nbsp;user agent&nbsp;», dont l'application déduit un libellé comme
+        «&nbsp;Chrome&nbsp;·&nbsp;Linux&nbsp;»), la date d'ajout de l'appareil et la date du dernier envoi réussi. Au plus
+        10 appareils sont gardés&nbsp;: au-delà, le plus ancien est retiré. Si vous les modifiez, vos
+        réglages (types de notifications coupés, heures silencieuses) sont enregistrés une fois pour
+        tous vos appareils.
+      </p>
+      <p>
+        Les notifications ne contiennent ni montant, ni conseil, ni texte que vous avez saisi&nbsp;: un
+        compte y est désigné par sa prop firm et sa taille (par exemple «&nbsp;Apex 50K&nbsp;»), jamais par le
+        nom que vous lui avez donné.
+      </p>
+
       <h2>2. Finalités et bases légales</h2>
       <table>
         <thead>
@@ -104,6 +120,7 @@ import { GA_ID } from '../config';
           <tr><td>Fourniture du service</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
           <tr><td>Connexion avec Google</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
           <tr><td>Génération des analyses IA</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr><td>Notifications push</td><td>Consentement (Art. 6.1.a RGPD)&nbsp;: vous les activez, puis votre navigateur vous demande l'autorisation. Retrait à tout moment&nbsp;: bouton «&nbsp;Retirer&nbsp;» dans Profil, Notifications, interrupteurs par type de notification, ou réglages du navigateur</td></tr>
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
           <tr><td>Communications marketing</td><td>Consentement (Art. 6.1.a RGPD)</td></tr>
@@ -127,13 +144,16 @@ import { GA_ID } from '../config';
           <tr><td>IP anonymisées</td><td>30 jours</td></tr>
           <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
           <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
+          <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
+          <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>
+          <tr><td>Analyse IA d'une autopsie de compte</td><td>Jusqu'à la suppression du compte de trading concerné ou de votre compte. «&nbsp;Retirer cette autopsie&nbsp;» la masque sans l'effacer</td></tr>
         </tbody>
       </table>
 
       <h2>4. Destinataires des données</h2>
       <p>Vos données sont partagées avec les sous-traitants suivants :</p>
       <ul>
-        <li><strong>Anthropic (USA)</strong> : rédaction des analyses du coach IA (insights, chat, débrief de la semaine, récap du jour), lecture d'un fichier d'import venant d'un courtier non reconnu, et analyse du calendrier économique. Base : clauses contractuelles types (CCT). Votre nom, votre adresse e-mail et votre identifiant d'utilisateur ne sont jamais transmis. Selon la fonction, nous transmettons : vos trades (actif, sens, résultat, frais, heure, setup, émotion) et vos statistiques ; votre profil de trading, dont la description libre de votre stratégie ; le début des notes de certains trades, vos notes de fin de séance, les descriptions de vos setups et vos messages au coach ; le nom, la devise et les règles de vos comptes de trading (solde de départ, objectif, drawdown, prop firm et plan) ; pour l'import d'un fichier d'un courtier non reconnu, l'en-tête et les lignes du fichier, dont les valeurs d'identification (numéro de compte, client, nom, adresse e-mail, identifiants d'ordre) sont remplacées par des codes avant l'envoi (une colonne intitulée seulement « Name », qui désigne souvent l'instrument, peut rester visible), jamais le nom du fichier ; pour le calendrier économique, seulement les symboles des actifs que vous tradez le plus. Les conditions commerciales d'Anthropic lui interdisent d'entraîner ses modèles sur ces contenus.</li>
+        <li><strong>Anthropic (USA)</strong> : rédaction des analyses du coach IA (insights, chat, débrief de la semaine, récap du jour, autopsie d'un compte échoué), lecture d'un fichier d'import venant d'un courtier non reconnu, et analyse du calendrier économique. Base : clauses contractuelles types (CCT). Votre nom, votre adresse e-mail et votre identifiant d'utilisateur ne sont jamais transmis. Selon la fonction, nous transmettons : vos trades (actif, sens, résultat, frais, heure, setup, émotion) et vos statistiques ; votre profil de trading, dont la description libre de votre stratégie ; le début des notes de certains trades, vos notes de fin de séance, les descriptions de vos setups et vos messages au coach ; le nom, la devise et les règles de vos comptes de trading (solde de départ, objectif, drawdown, prop firm et plan) ; pour l'import d'un fichier d'un courtier non reconnu, l'en-tête et les lignes du fichier, dont les valeurs d'identification (numéro de compte, client, nom, adresse e-mail, identifiants d'ordre) sont remplacées par des codes avant l'envoi (une colonne intitulée seulement « Name », qui désigne souvent l'instrument, peut rester visible), jamais le nom du fichier ; pour l'autopsie d'un compte échoué, seulement le type d'incident (plancher de drawdown, perte du jour ou échec que vous avez marqué), la devise du compte, les trades de la séance (heures, sens, actif, quantité, résultat net, marge estimée), les alertes MyTradingCoach de la séance et quelques comparaisons chiffrées avec vos séances précédentes sur ce compte, sans aucune note, ni nom de compte, ni nom de prop firm ; pour le calendrier économique, seulement les symboles des actifs que vous tradez le plus. Les conditions commerciales d'Anthropic lui interdisent d'entraîner ses modèles sur ces contenus.</li>
         <li><strong>Stripe (USA)</strong> : gestion des paiements. Base : CCT. Certifié PCI-DSS.</li>
         <li><strong>OVH</strong> : hébergement de l'API, de la base de données et de l'application de production à Strasbourg (France), et du site vitrine. Sous-traitant EU, RGPD compliant.</li>
         <li><strong>Resend (USA)</strong> : envoi des e-mails (liés au compte, aide à la prise en main et, avec votre consentement, offres et nouveautés). Base : CCT.</li>
@@ -156,8 +176,17 @@ import { GA_ID } from '../config';
         Tradovate, qui nous transmet la liste de vos comptes, vos exécutions et votre solde.
       </p>
       <p>
-        <strong>Discord (USA)</strong>, si vous reliez votre compte Discord : nous transmettons à Discord
-        votre identifiant Discord pour vous attribuer le rôle correspondant à votre plan (membre ou Premium).
+        <strong>Discord (USA)</strong>, si vous reliez votre compte Discord avec le code à usage unique
+        affiché dans votre Profil&nbsp;: nous enregistrons votre identifiant Discord et le transmettons
+        à Discord pour vous attribuer le rôle correspondant à votre plan (membre ou Premium). Ce rôle
+        est retiré si vous reliez un autre compte Discord ou supprimez votre compte.
+      </p>
+      <p>
+        <strong>Service de notification de l'éditeur de votre navigateur</strong> (Google, Apple, Mozilla
+        ou Microsoft selon le navigateur), uniquement si vous activez les notifications&nbsp;: il reçoit
+        l'adresse d'abonnement et le message, chiffré selon la norme Web Push&nbsp;; il ne peut pas en
+        lire le contenu.
+        {/* Cadre de transfert hors UE de ces services (clauses types, Data Privacy Framework…) : à vérifier avec le conseil juridique avant de le citer. */}
       </p>
       <p>Aucune vente de données à des tiers.</p>
 

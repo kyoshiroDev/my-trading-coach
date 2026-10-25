@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException, OnModuleInit, ServiceUna
 import type { PushAlertType } from '@prisma/client';
 import {
   DEFAULT_MUTED_PUSH_TYPES,
+  PUSH_MAX_DEVICES,
   PUSH_TIME_ZONE,
   type AdminPushTestResult,
   type TraderPushDeviceState,
@@ -10,14 +11,14 @@ import {
 } from '@mtc/shared';
 import { PrismaService } from '@api/prisma/prisma.service';
 import type { PushConfigResult } from '../../config/push-config';
-import { PUSH_CONFIG, PUSH_SENDER, type PushSender } from './push-sender';
+import { PUSH_CONFIG, PUSH_SENDER, TRADER_PUSH_FLAG, type PushSender } from './push-sender';
 import { deliverPush, hostOf } from './push-delivery';
 import { deviceLabel } from './device-label';
 import { TRADER_PUSH_MESSAGES, traderPushPayload, type TraderPushMessage } from './trader-push-messages';
 import type { SubscribePushDto } from './dto/push-subscription.dto';
 
 /** Appareils gardés par trader : au-delà, le plus ancien est remplacé (navigateurs réinstallés…). */
-export const MAX_PUSH_DEVICES = 10;
+export const MAX_PUSH_DEVICES = PUSH_MAX_DEVICES;
 
 /**
  * Abonnements Web Push des traders (#666) et livraison vers TOUS les appareils d'un trader.
@@ -32,14 +33,22 @@ export class TraderPushService implements OnModuleInit {
     private readonly prisma: PrismaService,
     @Inject(PUSH_CONFIG) private readonly config: PushConfigResult,
     @Inject(PUSH_SENDER) private readonly sender: PushSender | null,
+    /** `TRADER_PUSH_ENABLED=true` : le push des traders exige les DEUX interrupteurs. */
+    @Inject(TRADER_PUSH_FLAG) private readonly traderFlag: boolean,
   ) {}
 
   onModuleInit(): void {
-    if (!this.enabled) this.logger.log('Notifications push des traders : désactivées (pas de clés VAPID)');
+    if (!this.config.enabled) this.logger.log(`Notifications push des traders : désactivées (${this.config.reason})`);
+    else if (!this.traderFlag) this.logger.log('Notifications push des traders : désactivées (TRADER_PUSH_ENABLED ≠ true)');
+    else this.logger.log('Notifications push des traders : activées');
   }
 
+  /**
+   * Interrupteur éteint : section masquée dans l'app (`enabled: false`), abonnement et test en 503,
+   * aucun envoi. Lecture, retrait d'un appareil et désabonnement à la déconnexion restent possibles.
+   */
   get enabled(): boolean {
-    return this.config.enabled && this.sender !== null;
+    return this.traderFlag && this.config.enabled && this.sender !== null;
   }
 
   private requireEnabled(): void {
@@ -59,9 +68,13 @@ export class TraderPushService implements OnModuleInit {
     ]);
     return {
       enabled: this.enabled,
-      publicKey: this.config.enabled ? this.config.config.publicKey : null,
+      publicKey: this.enabled && this.config.enabled ? this.config.config.publicKey : null,
       mutedTypes: pref?.mutedTypes ?? [...DEFAULT_MUTED_PUSH_TYPES],
-      quietHours: pref?.quietStart != null && pref.quietEnd != null ? { start: pref.quietStart, end: pref.quietEnd } : null,
+      // Début égal à la fin (ligne enregistrée avant la revue phase 2 I5) : aucune heure silencieuse.
+      quietHours:
+        pref?.quietStart != null && pref.quietEnd != null && pref.quietStart !== pref.quietEnd
+          ? { start: pref.quietStart, end: pref.quietEnd }
+          : null,
       timeZone: PUSH_TIME_ZONE,
       devices: devices.map((d) => ({
         id: d.id,
@@ -129,14 +142,14 @@ export class TraderPushService implements OnModuleInit {
   /** « Tester » : tous les appareils du trader, sans filtre de préférence. */
   async test(userId: string): Promise<AdminPushTestResult> {
     this.requireEnabled();
-    return this.deliverToUser(userId, TRADER_PUSH_MESSAGES.test());
+    return this.deliverToUser(userId, TRADER_PUSH_MESSAGES.test(), 'TEST');
   }
 
   /**
    * Envoie `message` à chaque appareil du trader. Aucun filtre ici (c'est `TraderNotifier`).
-   * Ne lève que si la base est indisponible.
+   * `kind` ne sert qu'aux journaux. Ne lève que si la base est indisponible.
    */
-  async deliverToUser(userId: string, message: TraderPushMessage): Promise<AdminPushTestResult> {
+  async deliverToUser(userId: string, message: TraderPushMessage, kind: PushAlertType | 'TEST'): Promise<AdminPushTestResult> {
     const empty = { subscriptions: 0, delivered: 0, failed: 0, removed: 0 };
     if (!this.enabled || !this.sender) return empty;
     const targets = await this.prisma.userPushDevice.findMany({
@@ -156,6 +169,7 @@ export class TraderPushService implements OnModuleInit {
       },
       this.logger,
       'trader',
+      kind,
     );
   }
 }

@@ -40,7 +40,7 @@ describe('TraderNotifier.send', () => {
   it('Premium, appareil abonné, rien de coupé : envoyé, clé anti-spam de 15 min par compte', async () => {
     const { notifier, deliverToUser, set } = setup({});
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');
-    expect(deliverToUser).toHaveBeenCalledWith('u1', { ...msg, body: 'Synchro interrompue pour Apex 50K : reconnecte-le depuis Comptes.' });
+    expect(deliverToUser).toHaveBeenCalledWith('u1', { ...msg, body: 'Synchro interrompue pour Apex 50K : reconnecte-le depuis Comptes.' }, 'PROP_RULES');
     expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
   });
 
@@ -84,6 +84,13 @@ describe('TraderNotifier.send', () => {
     expect(await send(outside.notifier, 'PROP_RULES')).toBe('sent');
   });
 
+  it('ligne déjà enregistrée avec début égal à la fin : aucune heure silencieuse, l’alerte part (revue phase 2 I5)', async () => {
+    const pref = { mutedTypes: [], quietStart: 11 * 60, quietEnd: 11 * 60 };
+    const { notifier, deliverToUser } = setup({ pushPreference: pref });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
+    expect(deliverToUser).toHaveBeenCalledTimes(1);
+  });
+
   it('anti-spam : la même alerte dans les 15 min ne repart pas, sauf limite franchie', async () => {
     const { notifier, deliverToUser } = setup({}, { redisSet: () => Promise.resolve(null) });
     expect(await send(notifier, 'PROP_RULES')).toBe('anti_spam');
@@ -95,6 +102,15 @@ describe('TraderNotifier.send', () => {
     const { notifier, set } = setup({});
     expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
     expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
+  });
+
+  it('aucun appareil n’a reçu le push : « undelivered », clé anti-spam gardée (correctif #719)', async () => {
+    const { notifier, deliverToUser, set } = setup({});
+    deliverToUser.mockResolvedValueOnce({ subscriptions: 2, delivered: 0, failed: 1, removed: 1 });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('undelivered');
+    expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
+    deliverToUser.mockResolvedValueOnce({ subscriptions: 2, delivered: 1, failed: 1, removed: 0 });
+    expect(await send(notifier, 'PROP_RULES', true)).toBe('sent');
   });
 
   it('Redis indisponible : on envoie plutôt que de perdre une alerte', async () => {

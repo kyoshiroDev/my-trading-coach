@@ -81,4 +81,22 @@
   --badge-admin-bg:       rgba(245, 158, 11, 0.12);
   --badge-admin-color:    #f59e0b;
   --badge-admin-border:   rgba(245, 158, 11, 0.25);
+
+  /* ─── En-tête des pages (topbar) ───
+     Partagé par la topbar et le burger mobile de la sidebar, posé en position fixe PAR-DESSUS
+     l'en-tête : sans valeurs communes, il s'en désaligne (burger 40 px, bas à 2 px de la ligne).
+     Vérifié par shared/components/topbar/topbar-burger-alignment.spec.ts. */
+  --topbar-h: 56px;
+  --topbar-border-w: 1px;
+  --topbar-btn-h: 31px;        /* boutons de l'en-tête mobile : Discord (7 + 15 + 7 + bordures), burger */
+  --demo-banner-h-mobile: 52px; /* bandeau « Mode démo » sur téléphone, qui porte alors le burger */
+  --tap-min: 44px;             /* zone tactile minimale (Apple HIG, WCAG 2.5.5) */
+  --topbar-burger-space: 64px; /* réservé à droite pour le burger : 16 (marge) + 40 (bouton) + 8 */
+
+  /* ─── Pages sans topbar (classes .mtc-page*, styles.css) ─── */
+  --page-pad: 30px;
+  --page-pad-mobile: 16px;
+  --page-gap: 18px;            /* entre cartes et sections */
+  --card-col-min: 480px;       /* largeur mini d'une colonne de cartes (grille auto-fit) */
+  --stat-col-min: 220px;       /* largeur mini d'une carte de statistique */
 }

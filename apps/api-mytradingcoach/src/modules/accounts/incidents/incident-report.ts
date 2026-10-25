@@ -29,6 +29,8 @@ export interface IncidentTrade {
   quantity: number | null;
   pnl: number | null;
   commission: number | null;
+  /** Heure d'entrée, seulement si une source la fournit (aucune aujourd'hui : `tradedAt` = sortie). */
+  enteredAt?: Date | null;
 }
 
 /** Alerte enregistrée par MTC pendant la séance : anti-tilt (`BehaviorAlert`) ou prop firm (`PropRiskEvent`). */
@@ -62,6 +64,8 @@ export type TimelineEntry =
       distanceAfter: number | null;
       /** Trade daté après une alerte de la séance. */
       afterAlert: boolean;
+      /** ISO : heure d'entrée, absente quand elle n'est pas enregistrée (jamais déduite de la sortie). */
+      enteredAt?: string;
     }
   | {
       type: 'alert';
@@ -231,6 +235,7 @@ export function buildIncidentReport(input: IncidentReportInput): IncidentReport 
       type: 'trade', at: t.tradedAt.toISOString(), tradeId: t.id, asset: t.asset, side: t.side,
       quantity: t.quantity, net: t.net, distanceAfter: distance,
       afterAlert: firstAlertAt != null && t.tradedAt.getTime() > firstAlertAt,
+      ...(t.enteredAt ? { enteredAt: t.enteredAt.toISOString() } : {}),
     };
   });
   const alertEntries: TimelineEntry[] = alerts.map((a) => {

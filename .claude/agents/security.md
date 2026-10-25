@@ -362,3 +362,35 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
 - **Rate limit** `POST /auth/google` : 10/min (`default`, par IP faute d'e-mail dans le corps) +
   30/10 min (`ip`). **Logs** : issue (`created | linked | login`, raison d'un refus) + id interne
   seulement, jamais le jeton, l'e-mail ni le `sub`.
+
+## Push et autopsie déclarés dans la politique de confidentialité (2026-10-25)
+
+La page `politique-confidentialite.astro` déclare, alignée sur le code :
+- **Push des traders (#666)** : 1.g (champs de `UserPushDevice` : endpoint, `p256dh`/`auth`, `userAgent`
+  d'où le libellé est déduit, `createdAt`, `lastSuccessAt` ; 10 appareils max ; `TraderPushPreference`),
+  base légale consentement, destinataire « service de notification de l'éditeur du navigateur »
+  (liste blanche `push-endpoint.ts` : Google FCM, Mozilla, Apple, Microsoft), durées (retrait,
+  déconnexion via `PushLogout`, suppression du compte, 404/410 supprimés à l'envoi). Le cadre de
+  transfert hors UE n'est PAS cité (commentaire HTML « à vérifier avec le conseil juridique »).
+- **Autopsie (#669)** : ligne Anthropic (faits de `buildIncidentPrompt` seulement : type d'incident,
+  devise, trades de la séance, alertes, comparaisons ; ni note, ni libellé, ni firm) et durée :
+  `aiAnalysis` vit avec le `TradingAccount` (cascade) ; « Retirer cette autopsie » pose `dismissedAt`,
+  n'efface pas le texte.
+Toute évolution de ces champs, du payload push ou du prompt d'autopsie → mettre la page à jour.
+
+## Liaison Discord par code à usage unique (#741, 2026-10-25)
+
+Avant : `/verify email:` reliait au Discord de l'appelant le compte dont on tapait l'e-mail, sans
+preuve (le secret du bot prouve seulement que l'appel vient du bot). Désormais :
+- `POST /discord/link-code` (connecté, `@Throttle` 5 / h par compte, bloqué en démo) → code de 8 signes
+  Crockford (2^40), 10 min, stocké HACHÉ (sha256) dans Redis, un nouveau code efface le précédent.
+- `POST /discord/link` (`@Public`, secret du bot comparé en temps constant) : `GETDEL` du code (usage
+  unique même en concurrence) ; 5 essais / min et 20 / h par identifiant Discord (`SET NX EX` + `INCR`
+  en MULTI, le compteur naît avec son expiration) ; code inconnu, expiré ou déjà utilisé = MÊME réponse.
+  Réponse : `{ linked, plan }`, jamais de nom ni d'e-mail.
+- `GET /discord/verify` (ancien bot) ne lit plus la base et répond pareil quelle que soit l'adresse.
+- Détachements : l'ancien Discord du compte perd ses rôles ; un Discord relié à un autre compte en est
+  détaché (`updateMany` dans la même transaction, plus d'erreur d'unicité) ; rôles retirés à la
+  suppression du compte (`DiscordGuildClient`, module feuille importé par `UsersModule`).
+Verrouillé par `discord-link.service.spec.ts` (7 mutations détectées) et `discord.controller.spec.ts`
+(échoue sur l'ancien contrôleur : `verified: true` sur un e-mail tapé par un tiers).

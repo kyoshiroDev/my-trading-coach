@@ -121,6 +121,7 @@ export class AdminPushService implements OnModuleInit {
       },
       this.logger,
       'admin',
+      event ?? 'TEST',
     );
   }
 }

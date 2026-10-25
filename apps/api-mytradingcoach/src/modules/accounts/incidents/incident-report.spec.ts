@@ -148,6 +148,112 @@ describe('analyse IA — prompt', () => {
     expect(prompt).toContain("10:44 alerte MyTradingCoach : pertes d'affilée");
     expect(prompt).toContain('- Les 2 derniers trades représentent $830 des $1,050 perdus sur la séance.');
   });
+
+  it('le système ne fait parler que de la limite fournie, jamais d\'une limite inventée', () => {
+    expect(INCIDENT_AI_SYSTEM).toMatch(/seulement s'il figure dans les faits/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/aucune limite n'est relevée, n'écris pas qu'une limite a été franchie/);
+  });
+
+  it('franchissement pendant la séance : heure fournie', () => {
+    const prompt = buildIncidentPrompt('drawdown', 'USD', buildIncidentReport(input()));
+    expect(prompt).toContain('Limite estimée franchie à 11:12.');
+  });
+
+  it('déjà franchie avant la séance : dit tel quel, sans heure', () => {
+    const report = buildIncidentReport(input({
+      snapshot: { limit: 1000, remaining: -40, detectedAt: at('21:13').toISOString() },
+      trades: [trade('w', '21:12', 'SHORT', 2, 58)],
+      alerts: [],
+    }));
+    const prompt = buildIncidentPrompt('drawdown', 'USD', report);
+    expect(prompt).toContain('Limite estimée déjà franchie avant le premier trade.');
+    expect(prompt).not.toMatch(/franchie à/);
+  });
+
+  it('échec marqué à la main : aucune limite relevée, aucun franchissement annoncé (revue dev 25/10)', () => {
+    const report = buildIncidentReport(input({ kind: 'manual', snapshot: null }));
+    const prompt = buildIncidentPrompt('manual', 'USD', report);
+    expect(prompt).toContain('Incident : compte marqué comme échoué par le trader.');
+    expect(prompt).toContain('Aucune limite relevée par MyTradingCoach');
+    expect(prompt).not.toMatch(/franchie|perte du jour|journalière|drawdown/i);
+  });
+
+  it('relevé absent : heure du franchissement non connue', () => {
+    const report = buildIncidentReport(input({ snapshot: null }));
+    expect(buildIncidentPrompt('drawdown', 'USD', report)).toContain('Heure du franchissement non connue.');
+  });
+
+  it("heure d'entrée absente : dite au modèle, et interdite à la déduction (revue dev 25/10)", () => {
+    const prompt = buildIncidentPrompt('drawdown', 'USD', buildIncidentReport(input()));
+    expect(prompt).toContain("Heure d'entrée non enregistrée.");
+    expect(prompt).not.toMatch(/entrée à/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/n'écris jamais à quelle heure le trader est entré en position/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/ne la déduis pas et ne la recopie pas depuis l'heure de sortie/);
+    expect(INCIDENT_AI_SYSTEM).toMatch(/n'apparaît dans ton texte que s'il figure dans les faits fournis/);
+  });
+
+  it("heure d'entrée connue : transmise trade par trade, sans la ligne « non enregistrée »", () => {
+    const trades = MOCKUP_TRADES.map((t, i) => ({ ...t, enteredAt: i === 3 ? at('10:40') : null }));
+    const prompt = buildIncidentPrompt('drawdown', 'USD', buildIncidentReport(input({ trades })));
+    expect(prompt).toContain('10:49 LONG MNQ x4 : -$420, entrée à 10:40, marge estimée ensuite +$360');
+    expect(prompt).toContain("09:34 LONG MNQ x2 : +$80, heure d'entrée non enregistrée");
+    expect(prompt).not.toContain("Heure d'entrée non enregistrée.");
+  });
+
+  /**
+   * Garde-fou d'ensemble : pour chaque cas, une donnée absente n'est jamais présentée comme un
+   * fait. Toute heure du message vient des données ; franchissement, heure d'entrée, marge de
+   * départ et vocabulaire de limite n'apparaissent que si les données les portent.
+   */
+  describe('aucune donnée absente présentée comme un fait', () => {
+    const cases: { name: string; kind: 'drawdown' | 'daily_loss' | 'manual'; over: Partial<IncidentReportInput> }[] = [
+      { name: 'franchie pendant la séance', kind: 'drawdown', over: {} },
+      { name: 'perte du jour franchie', kind: 'daily_loss', over: { kind: 'daily_loss' } },
+      {
+        name: 'déjà franchie avant la séance', kind: 'drawdown',
+        over: { snapshot: { limit: 1000, remaining: -40, detectedAt: at('21:13').toISOString() }, trades: [trade('w', '21:12', 'SHORT', 2, 58)], alerts: [] },
+      },
+      { name: 'sans relevé', kind: 'drawdown', over: { snapshot: null } },
+      { name: 'échec marqué à la main', kind: 'manual', over: { kind: 'manual', snapshot: null } },
+      { name: 'séance sans trade', kind: 'manual', over: { kind: 'manual', snapshot: null, trades: [], alerts: [] } },
+      { name: 'heure d\'entrée connue', kind: 'drawdown', over: { trades: MOCKUP_TRADES.map((t) => ({ ...t, enteredAt: new Date(t.tradedAt.getTime() - 5 * 60_000) })) } },
+    ];
+    const hhmm = (iso: string) =>
+      new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+
+    it.each(cases)('$name', ({ kind, over }) => {
+      const report = buildIncidentReport(input(over));
+      const prompt = buildIncidentPrompt(kind, 'USD', report);
+      const tradeRows = report.timeline.filter((e) => e.type === 'trade');
+      const entries = tradeRows.flatMap((e) => (e.enteredAt ? [hhmm(e.enteredAt)] : []));
+      const crossedAt = crossingPoint(report.series)?.at ?? null;
+
+      // Toute heure citée vient des données (sorties, alertes, entrées connues, franchissement).
+      const known = new Set([...report.timeline.map((e) => hhmm(e.at)), ...entries, ...(crossedAt ? [hhmm(crossedAt)] : [])]);
+      for (const h of prompt.match(/\b\d{2}:\d{2}\b/g) ?? []) expect(known, `heure ${h}`).toContain(h);
+
+      // Franchissement daté seulement s'il est connu, et à la bonne heure.
+      if (crossedAt) expect(prompt).toContain(`Limite estimée franchie à ${hhmm(crossedAt)}.`);
+      else expect(prompt).not.toMatch(/franchie à/);
+
+      // Heure d'entrée : jamais citée si elle n'est pas enregistrée, toujours signalée absente.
+      if (entries.length === 0) {
+        expect(prompt).not.toMatch(/entrée à/);
+        if (tradeRows.length > 0) expect(prompt).toContain("Heure d'entrée non enregistrée.");
+      } else {
+        for (const e of entries) expect(prompt).toContain(`entrée à ${e}`);
+      }
+
+      // Marge de départ seulement si elle est calculée.
+      expect(prompt.includes('Marge estimée avant le premier trade')).toBe(report.kpis.startDistance != null);
+
+      // Échec manuel : aucune limite, de quelque type que ce soit.
+      if (kind === 'manual') {
+        expect(prompt).toContain('Aucune limite relevée par MyTradingCoach');
+        expect(prompt).not.toMatch(/franchie|perte du jour|journalière|drawdown/i);
+      }
+    });
+  });
 });
 
 describe('buildIncidentReport — marge déjà sous la limite avant la séance (revue #712)', () => {

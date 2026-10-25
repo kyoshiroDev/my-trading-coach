@@ -22,13 +22,17 @@ import {
   LucideRotateCcw as RotateCcw,
   LucideChevronDown as ChevronDown,
   LucideChevronRight as ChevronRight,
+  LucideGift as Gift,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
+import { PushSettingsComponent } from './notifications/push-settings.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { UsersApi } from '../../core/api/users.api';
+import { DiscordApi, type DiscordLinkCode } from '../../core/api/discord.api';
+import { DISCORD_URL } from '../onboarding/onboarding.model';
 import type {
   UpdateMeDto,
   UpdatePreferencesDto,
@@ -55,12 +59,13 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon],
+  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
+  protected readonly GiftIcon = Gift;
   protected readonly userStore = inject(UserStore);
   private readonly auth = inject(AuthService);
   private readonly billingApi = inject(BillingApi);
@@ -73,6 +78,7 @@ export class ProfileComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly confirm = inject(ConfirmService);
+  private readonly discordApi = inject(DiscordApi);
   protected readonly offersStore = inject(OffersStore);
   protected readonly PRICING = PRICING;
 
@@ -112,6 +118,13 @@ export class ProfileComponent implements OnInit {
   /** Compte Google sans mot de passe (#618) : `hasPassword` absent d'un ancien cache = vrai. */
   protected readonly hasPassword = computed(() => this.userStore.user()?.hasPassword !== false);
   protected readonly unlinkingGoogle = signal(false);
+
+  // Discord (#741) : liaison par code à usage unique, tapé dans le serveur (`/verify code:`).
+  protected readonly discordUrl = DISCORD_URL;
+  /** null = état pas encore lu (ou lecture impossible) : ni « Relié » ni « Non relié » affiché. */
+  protected readonly discordLinked = signal<boolean | null>(null);
+  protected readonly discordCode = signal<DiscordLinkCode | null>(null);
+  protected readonly generatingDiscordCode = signal(false);
 
   // Préférences (plus de devise : elle est portée par chaque compte)
   protected readonly prefNotifications = signal(true);
@@ -153,6 +166,8 @@ export class ProfileComponent implements OnInit {
 
   // Danger
   protected readonly showPlanModal = signal(false);
+  /** Section Notifications chargée tout de suite (lien `#notifications`), sinon à l'approche. */
+  protected openNotifications = false;
   protected readonly showDeleteConfirm = signal(false);
   protected readonly deleteInput = signal('');
   protected readonly deleteReason = signal('');
@@ -193,6 +208,11 @@ export class ProfileComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.get('tab') === 'params') {
       this.activeProfileTab.set('params');
     }
+    // Lien des notifications push (« Réglages », #666) : /profil#notifications.
+    if (this.route.snapshot.fragment === 'notifications') {
+      this.activeProfileTab.set('params');
+      this.openNotifications = true;
+    }
 
     // Init stratégie une seule fois au chargement
     const user = this.userStore.user();
@@ -202,8 +222,16 @@ export class ProfileComponent implements OnInit {
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
-      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition.
-      if (!this.hasStrategyProfile()) this.openStrategyModal();
+      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition, sauf sur
+      // un lien profond (#notifications d'un push, ?tab= d'un e-mail) : elle masquerait sa cible.
+      const deepLink = this.openNotifications || this.route.snapshot.queryParamMap.has('tab');
+      if (!this.hasStrategyProfile() && !deepLink) this.openStrategyModal();
+    }
+
+    if (!this.userStore.isDemo()) {
+      this.discordApi.status()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ next: (s) => this.discordLinked.set(s.linked), error: () => this.discordLinked.set(null) });
     }
 
     this.tradesApi.getUserAssets().subscribe({
@@ -468,6 +496,35 @@ export class ProfileComponent implements OnInit {
           /* silently ignore : user stays on page */
         },
       });
+  }
+
+  /** Nouveau code : le précédent ne vaut plus rien (côté API). */
+  protected generateDiscordCode() {
+    this.generatingDiscordCode.set(true);
+    this.discordApi
+      .createCode()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (code) => {
+          this.generatingDiscordCode.set(false);
+          this.discordCode.set(code);
+        },
+        error: (err: unknown) => {
+          this.generatingDiscordCode.set(false);
+          this.toast.error(apiErrorMessage(err, "Le code n'a pas pu être généré, réessaie dans quelques minutes."));
+        },
+      });
+  }
+
+  protected async copyDiscordCode() {
+    const code = this.discordCode()?.code;
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(`/verify code:${code}`);
+      this.toast.success('Commande copiée : colle-la dans le serveur Discord');
+    } catch {
+      this.toast.error('Copie impossible : sélectionne le code à la main');
+    }
   }
 
   protected async unlinkGoogle() {

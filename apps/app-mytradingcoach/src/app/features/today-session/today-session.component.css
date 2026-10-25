@@ -67,6 +67,11 @@
    (carte journal) passait dessous (#440). */
 @media (max-width: 768px) {
   .session-page { padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+  /* Pas de topbar ici, mais le burger fixe de la sidebar est calé sur elle (--topbar-h) : la
+     ligne du titre prend la boîte du burger (même hauteur, même haut) pour être centrée avec
+     lui. Vérifié par shared/components/topbar/topbar-burger-alignment.spec.ts. */
+  .session-page { padding-top: calc((var(--topbar-h) - var(--topbar-border-w) - var(--topbar-btn-h)) / 2); }
+  .mtc-sess-h1 { line-height: var(--topbar-btn-h); }
 }
 /* La page est le SEUL conteneur de scroll, y compris en mode live : les panneaux
    de l'onglet live se dimensionnent à leur contenu (fin du terminal à hauteur fixe). */

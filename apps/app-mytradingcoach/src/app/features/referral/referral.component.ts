@@ -29,9 +29,9 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
   imports: [ErrorStateComponent, DatePipe, DecimalPipe, RouterLink, LucideDynamicIcon],
   styleUrl: './referral.component.css',
   template: `
-    <div class="content">
-      <div class="page-head">
-        <h1 class="page-title">🎁 Parrainage</h1>
+    <div class="content mtc-page">
+      <div class="page-head mtc-page-head">
+        <h1 class="page-title mtc-page-title"><svg [lucideIcon]="GiftIcon" [size]="20"></svg>Parrainage</h1>
         <p class="page-sub">Invite des traders, gagnez tous les deux. Aucun statut ni paperasse requis.</p>
       </div>
 
@@ -42,7 +42,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
       } @else if (data(); as d) {
 
         <!-- HÉRO : lien (action) + objectif -->
-        <div class="hero">
+        <div class="hero mtc-cards">
           <div class="link-card">
             <div class="link-lbl">Ton lien de parrainage</div>
             <div class="link-row">
@@ -104,8 +104,10 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
           </div>
         </div>
 
+        <!-- Comment ça marche | Mes filleuls : côte à côte dès que la largeur le permet -->
+        <div class="ref-cols mtc-cards">
         <!-- COMMENT ÇA MARCHE -->
-        <div class="card mb">
+        <div class="card">
           <div class="card-title">Comment ça marche</div>
           <div class="steps">
             <div class="step">
@@ -128,7 +130,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
         </div>
 
         <!-- MES FILLEULS -->
-        <div class="card mb">
+        <div class="card">
           <div class="filleuls-head">
             <div class="card-title nomb">Mes filleuls</div>
             <span class="count-pill">{{ d.filleuls.length }}</span>
@@ -152,6 +154,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               }
             </div>
           }
+        </div>
         </div>
 
         <!-- CTA AMBASSADEUR -->

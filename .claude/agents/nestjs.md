@@ -155,6 +155,11 @@ POST   /api/integrations/tradovate/accounts/:accountId/sync       JWT → synchr
 DELETE /api/integrations/tradovate/accounts/:accountId            JWT → déconnexion (tokens supprimés, trades gardés) · `?deleteTrades=true` → supprime AUSSI les trades BROKER_SYNC/BROKER_HISTORY de ce compte (jamais MANUAL/CSV_IMPORT) → { disconnected, tradesDeleted } ; suppression hors transaction, en échec → connexion quand même coupée, `tradesDeleted: null` + log
 GET    /integrations/tradovate/callback   PUBLIC, HORS /api (redirect_uri enregistré) → 1re synchro puis 302 vers l'app
 
+GET    /api/discord/link               JWT → { linked } (jamais l'identifiant Discord)
+POST   /api/discord/link-code          JWT, 5 / h par compte, bloqué en démo → { code: 'XXXX-XXXX', expiresAt } (10 min, usage unique)
+POST   /api/discord/link               PUBLIC + x-discord-secret (bot) · body { code, discordId } → 200 { linked, plan } | { linked: false, message } (voir security.md, #741)
+GET    /api/discord/verify             PUBLIC + secret : ancien /verify email, ne relie plus rien (réponse fixe)
+
 GET    /api/health
 POST   /api/test/upgrade-user          NODE_ENV=test uniquement
 ```
@@ -1741,7 +1746,15 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
   (`tradedAt` = première sortie : estimation, `estimatedDistance: true`). Constats : gabarits chiffrés,
   aucun conseil ni promesse (test dédié).
 - **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
-  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Jamais pour la démo,
+  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Le message dit toujours
+  ce qu'on sait du franchissement (heure, « déjà franchie avant le premier trade », « non connue », ou
+  pour `manual` « Aucune limite relevée ») et le système interdit toute autre limite : sans ça, un échec
+  marqué à la main recevait une « limite journalière franchie » inventée. Heure d'entrée : pas en base
+  (`tradedAt` = sortie), donc le message porte « Heure d'entrée non enregistrée. » et le système
+  interdit de la déduire ou de la recopier depuis la sortie (sinon « À 17h30, tu entres en position »).
+  `IncidentTrade.enteredAt` (optionnel) la transmet le jour où une source la fournit. Règle générale :
+  une heure, un montant ou un fait n'est cité que s'il est dans le message ; le test « aucune donnée
+  absente présentée comme un fait » (`incident-report.spec.ts`) le vérifie cas par cas. Jamais pour la démo,
   jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
   Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
   `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
@@ -2194,6 +2207,17 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
 - Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
   moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
   404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Journal d'envoi (`push-delivery.ts`, admin et traders) : UNE ligne par tentative et par appareil
+  (info si livré ou 404/410 abonnement supprimé ; warn pour 5xx, autres 4xx, délai, erreur réseau),
+  `Envoi push <admin|trader> <TYPE> : livré|échec (<2xx|404|410|4xx|5xx|délai dépassé|erreur réseau>, <hôte>)`.
+  Jamais l'endpoint, ses clés, l'id d'appareil ni le message d'une exception (il peut citer l'adresse) ;
+  délai = `PushDeadlineError` (`push-http.ts`). Contrat verrouillé par `push-delivery.spec.ts`.
+- Journaux des notifieurs (`TraderNotifier`, `AdminNotifier`), tous niveaux debug compris : type,
+  « forcé », résultat et compteurs seulement ; jamais la clé anti-doublon (`dedupKey`, texte libre de
+  l'appelant), ni userId / accountId / clé Redis ; une exception = son nom de classe (`errorKind`,
+  `push-delivery.ts`), jamais son message. Verrouillé par `trader-notifier.logs.spec.ts`.
+- Même règle pour `PropAlertsService` (alertes prop firm, Tradovate) : type et niveau d'alerte +
+  `errorKind`, jamais l'id de compte, l'id utilisateur ni la clé Redis. `prop-alerts.logs.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
@@ -2201,6 +2225,11 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
 - Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
   (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Traders (#666) : en plus `TRADER_PUSH_ENABLED=true` (`resolveTraderPushFlag`, jeton
+  `TRADER_PUSH_FLAG` de `PushCoreModule`, éteint si absent) ; `TraderPushService.enabled` exige
+  les deux, l'admin ne lit que `PUSH_ENABLED`. Éteint : `enabled: false` et `publicKey: null` sur
+  `GET /push/settings`, 503 sur `subscribe` et `test`, notifieur `disabled` ; `DELETE
+  /push/devices/:id` et `POST /push/unsubscribe` restent ouverts (`push-switches.spec.ts`).
   Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
 - Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
@@ -2240,6 +2269,17 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
   appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
   une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+  `TraderNotifier.send` ne rend `sent` que si **au moins un appareil a reçu** le push ; sinon
+  `undelivered` (5xx, délai dépassé, 404/410, adresse hors liste blanche) : réservation rendue, retenté
+  au relevé suivant, la clé anti-spam reste posée (15 min pour une alerte non forcée). Au plus
+  `MAX_UNDELIVERED_PUSH` (3) envois sans livraison par niveau et par période : ensuite le marqueur est
+  gardé (abandon journalisé), une limite franchie forcée ne repart pas toutes les 15 min toute la journée.
+  Seul `undelivered` consomme un essai, jamais aucun appareil, type coupé ou heures silencieuses
+  (testé). Compteur `…:undelivered:<niveau>` : `INCR` et `EXPIRE` dans UN script Lua, la clé
+  n'existe jamais sans TTL (`prop-alert-push.int-spec.ts`, vrai Redis). Redis indisponible après
+  l'envoi : journal « envoyé sans livraison, suivi Redis impossible », la réservation reste posée
+  jusqu'à son expiration (pas de spam) ; « non envoyé » seulement si la réservation a échoué avant.
+  Le réarmement en fond n'efface que `prop-alert-push:…`, le direct efface les deux.
 - **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
   seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
 - **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le

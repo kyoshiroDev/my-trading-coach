@@ -7,8 +7,9 @@ import { tradingDay } from '../../accounts/account-rules';
 import { isPremiumAccess } from '../../discord/discord-access.util';
 import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
+import { errorKind } from '../../push/push-delivery';
 import { TRADER_PUSH_MESSAGES, type TraderPushMessage } from '../../push/trader-push-messages';
-import { claimPush, pushedKey, releasePush } from './prop-alert-push';
+import { MAX_UNDELIVERED_PUSH, claimPush, countUndelivered, pushedKey, releasePush } from './prop-alert-push';
 import { AccountIncidentsService } from '../../accounts/incidents/account-incidents.service';
 import { ALERT_LEVEL_RANK as RANK, ALERT_REARM_PCT, type PropAlertLevel, alertLevel } from './prop-alert-levels';
 
@@ -129,7 +130,7 @@ export class PropAlertsService implements OnModuleDestroy {
       setTimeout(() => {
         this.timers.delete(accountId);
         void this.check(userId, accountId, emit).catch((err: unknown) =>
-          this.logger.warn(`Alertes prop firm non évaluées (compte ${accountId}) : ${(err as Error).message}`),
+          this.logger.warn(`Alertes prop firm non évaluées (${errorKind(err)})`),
         );
       }, ALERT_DEBOUNCE_MS),
     );
@@ -171,7 +172,7 @@ export class PropAlertsService implements OnModuleDestroy {
           dailyLossRemaining: m.dailyLoss?.remaining ?? null,
           floor: m.drawdown?.floor ?? null,
         }, now)
-        .catch((err: unknown) => this.logger.warn(`Séance non journalisée (compte ${accountId}) : ${(err as Error).message}`));
+        .catch((err: unknown) => this.logger.warn(`Séance non journalisée (${errorKind(err)})`));
     }
 
     const candidates: Candidate[] = [];
@@ -227,7 +228,7 @@ export class PropAlertsService implements OnModuleDestroy {
       if (push) void this.pushOnce(userId, accountId, { ...c, level: c.level }, pushKey, push);
       await this.journal
         ?.recordEvent(userId, accountId, day, c.kind, c.level, { ...c.payload })
-        .catch((err: unknown) => this.logger.warn(`Alerte non journalisée (compte ${accountId}) : ${(err as Error).message}`));
+        .catch((err: unknown) => this.logger.warn(`Alerte ${c.kind} ${c.level} non journalisée (${errorKind(err)})`));
       if (c.level === 'breached' && (c.kind === 'drawdown' || c.kind === 'daily_loss')) {
         await this.incidents?.detectQuietly(userId, accountId, 'live');
       }
@@ -236,22 +237,42 @@ export class PropAlertsService implements OnModuleDestroy {
 
   /**
    * Un push par niveau : réservation atomique du marqueur « push envoyé », envoi, puis réservation
-   * rendue si le push n'est pas parti (aucun appareil, type coupé, heures silencieuses, erreur).
+   * rendue si le push n'est pas parti (aucun appareil, type coupé, heures silencieuses, erreur) ou
+   * si aucun appareil ne l'a reçu (gardée après MAX_UNDELIVERED_PUSH envois sans livraison).
    * Une limite franchie passe l'anti-spam de 15 min. Ne lève jamais.
    */
   private async pushOnce(
     userId: string, accountId: string, c: Candidate & { level: PropAlertLevel }, key: string, message: TraderPushMessage,
   ): Promise<void> {
     if (!this.notifier) return;
+    // Ni identifiant de compte ni message d'exception (il peut citer l'id ou la clé Redis).
+    const what = `${c.kind} ${c.level}`;
+    let previous: string | null;
     try {
-      const previous = await claimPush(this.redis, key, c.level, c.ttl);
-      if (previous === null) return;
-      const outcome = await this.notifier
-        .send(userId, 'PROP_RULES', message, { accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached' })
-        .catch(() => 'error' as const);
-      if (outcome !== 'sent') await releasePush(this.redis, key, c.level, previous, c.ttl);
+      previous = await claimPush(this.redis, key, c.level, c.ttl);
     } catch (err) {
-      this.logger.warn(`Push prop firm non envoyé (compte ${accountId}) : ${(err as Error).message}`);
+      this.logger.warn(`Push prop firm non envoyé, réservation impossible (${what}, ${errorKind(err)})`);
+      return;
+    }
+    if (previous === null) return;
+    const outcome = await this.notifier
+      .send(userId, 'PROP_RULES', message, { accountId, dedupKey: `prop:${c.kind}:${c.level}`, force: c.level === 'breached' })
+      .catch(() => 'error' as const);
+    if (outcome === 'sent') return;
+    try {
+      // Aucun appareil ne l'a reçu : retenté au relevé suivant, au plus MAX_UNDELIVERED_PUSH fois.
+      if (outcome === 'undelivered' && (await countUndelivered(this.redis, key, c.level, c.ttl)) >= MAX_UNDELIVERED_PUSH) {
+        this.logger.warn(`Push prop firm abandonné après ${MAX_UNDELIVERED_PUSH} envois sans livraison (${what})`);
+        return;
+      }
+      await releasePush(this.redis, key, c.level, previous, c.ttl);
+    } catch (err) {
+      // Journal exact (revue #726 m12) : l'envoi a eu lieu ou a été écarté, c'est le suivi Redis qui
+      // manque. La réservation reste posée jusqu'à son expiration : ce niveau n'est pas retenté.
+      const done = outcome === 'undelivered' ? 'envoyé sans livraison' : `non parti (${outcome})`;
+      this.logger.warn(
+        `Push prop firm ${done}, suivi Redis impossible : niveau pas retenté avant expiration (${what}, ${errorKind(err)})`,
+      );
     }
   }
 

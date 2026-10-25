@@ -14,6 +14,28 @@ import { ALERT_LEVEL_RANK, type PropAlertLevel } from './prop-alert-levels';
 
 export const pushedKey = (accountId: string, kind: string, period: string) => `prop-alert-push:${accountId}:${kind}:${period}`;
 
+/**
+ * Envois tentés sans aucune livraison (5xx, délai, abonnement mort…) avant d'abandonner un niveau :
+ * la synchro de fond tourne toutes les 15 min, une limite franchie (forcée, hors anti-spam) serait
+ * sinon retentée toute la journée vers un service push qui refuse.
+ */
+export const MAX_UNDELIVERED_PUSH = 3;
+
+/**
+ * Incrément et expiration dans le même script (revue #726 m11) : la clé n'existe jamais sans TTL,
+ * même après un crash ou une erreur entre les deux. Une clé restée sans TTL (avant ce correctif)
+ * en reçoit un au prochain comptage.
+ */
+const COUNT_LUA = `
+local n = redis.call('incr', KEYS[1])
+if redis.call('ttl', KEYS[1]) < 0 then redis.call('expire', KEYS[1], ARGV[1]) end
+return n`;
+
+/** Compte un envoi sans livraison pour ce niveau ; rend le total (clé expirée avec le marqueur). */
+export async function countUndelivered(redis: RedisService, key: string, level: PropAlertLevel, ttl: number): Promise<number> {
+  return Number(await redis.client.eval(COUNT_LUA, 1, `${key}:undelivered:${level}`, String(ttl)));
+}
+
 const RANKS = Object.entries(ALERT_LEVEL_RANK)
   .map(([level, rank]) => `${level}=${rank}`)
   .join(',');

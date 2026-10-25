@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createECDH, randomBytes } from 'node:crypto';
 import { generateVAPIDKeys } from 'web-push';
-import { postWithLimits } from './push-http';
+import { PUSH_DEADLINE_MS, PUSH_MAX_RESPONSE_BYTES, PushDeadlineError, postWithLimits } from './push-http';
 import { WebPushLibSender } from './push-sender';
 
 /**
@@ -78,7 +78,8 @@ describe('postWithLimits', () => {
 
   it('aucune réponse : rejetée à l’échéance, pas après', async () => {
     const t0 = Date.now();
-    await expect(post('/silent')).rejects.toThrow(/délai total/);
+    // Classe dédiée : `deliverPush` la journalise « délai dépassé », pas « erreur réseau ».
+    await expect(post('/silent')).rejects.toBeInstanceOf(PushDeadlineError);
     expect(Date.now() - t0).toBeLessThan(1500);
   });
 
@@ -99,6 +100,15 @@ describe('postWithLimits', () => {
     expect(await post('/redirect')).toBe(302);
     await new Promise((r) => setTimeout(r, 100));
     expect(hits.slice(before)).toEqual(['/redirect']);
+  });
+});
+
+describe('limites de production (revue #717, I2)', () => {
+  it('délai total 10 s, réponse lue jusqu’à 16 Ko, appliqués par défaut à l’envoi réel', () => {
+    expect(PUSH_DEADLINE_MS).toBe(10_000);
+    expect(PUSH_MAX_RESPONSE_BYTES).toBe(16 * 1024);
+    const sender = new WebPushLibSender({ ...generateVAPIDKeys(), subject: 'mailto:test@example.com' });
+    expect((sender as unknown as { limits: unknown }).limits).toEqual({ deadlineMs: 10_000, maxResponseBytes: 16 * 1024 });
   });
 });
 

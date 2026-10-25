@@ -6,7 +6,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 28px 36px;
+  /* Bas : les pastilles restent au-dessus du badge « interne » (fixé à 8 px du bas, 22 px de haut). */
+  padding: 28px 36px 44px;
   background:
     radial-gradient(900px 500px at 15% 0%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 60%),
     radial-gradient(700px 500px at 90% 100%, color-mix(in srgb, var(--purple) 7%, transparent), transparent 60%),
@@ -27,17 +28,27 @@
   opacity: 0.55;
 }
 
+/* Logo, contenu et pastilles dans une même colonne de 560 px au plus, centrée dans la moitié
+   gauche : à 1920 et 2560 px, plus de bloc collé à gauche et de vide à droite. Texte aligné à gauche. */
+.brand,
+.pitch-body,
+.pitch-foot {
+  align-self: center;
+  width: 100%;
+  max-width: 560px;
+}
+
 .brand {
   position: relative;
   height: 34px;
-  width: auto;
-  align-self: flex-start;
+  /* Boîte de la largeur de la colonne, logo dessiné à gauche à sa taille. */
+  object-fit: contain;
+  object-position: left center;
 }
 
 .pitch-body {
   position: relative;
   margin: auto 0;
-  max-width: 560px;
   padding: 20px 0 16px;
 }
 
@@ -148,7 +159,7 @@
 
 @media (min-width: 1280px) {
   :host {
-    padding: 40px 64px;
+    padding: 40px 64px 44px;
   }
 
   .pitch-body {

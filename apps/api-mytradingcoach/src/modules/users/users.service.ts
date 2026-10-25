@@ -19,6 +19,7 @@ import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
+import { DiscordGuildClient } from '../discord/discord-guild.client';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -87,6 +88,7 @@ export class UsersService {
     private readonly ambassador: AmbassadorService,
     private readonly billingClosure: StripeAccountClosureService,
     @Optional() private readonly userCache?: AuthUserCacheService,
+    @Optional() private readonly discordGuild?: DiscordGuildClient,
   ) {}
 
   async findById(id: string) {
@@ -95,13 +97,6 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
-  }
-
-  async updateDiscordId(userId: string, discordId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { discordId },
-    });
   }
 
   async findActivePremium() {
@@ -239,6 +234,7 @@ export class UsersService {
         createdAt: true,
         referredBy: true,
         stripeCustomerId: true,
+        discordId: true,
         _count: { select: { trades: true } },
       },
     });
@@ -279,6 +275,8 @@ export class UsersService {
       this.prisma.user.delete({ where: { id: userId } }),
     ]);
     await this.userCache?.invalidate(userId); // jeton encore valide d'un compte supprimé : refusé immédiatement
+    // Le Discord relié perd ses rôles : sans compte, plus d'accès aux salons réservés (#741).
+    if (user.discordId) await this.discordGuild?.removePlanRoles(user.discordId);
   }
 
   async adminStats() {
