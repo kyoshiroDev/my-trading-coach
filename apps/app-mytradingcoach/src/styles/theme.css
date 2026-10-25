@@ -99,4 +99,11 @@
   --page-gap: 18px;            /* entre cartes et sections */
   --card-col-min: 480px;       /* largeur mini d'une colonne de cartes (grille auto-fit) */
   --stat-col-min: 220px;       /* largeur mini d'une carte de statistique */
+
+  /* ─── Intensité d'activité (pastilles de streak, Score) : 0 = aucune → 4 = forte ─── */
+  --streak-0: #1a2535;
+  --streak-1: #1a3a2a;
+  --streak-2: #1e5c3a;
+  --streak-3: #1a7a4a;
+  --streak-4: var(--green);
 }

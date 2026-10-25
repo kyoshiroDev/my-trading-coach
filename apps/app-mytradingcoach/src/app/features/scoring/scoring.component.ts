@@ -11,6 +11,12 @@ import {
   LucideTrophy as Trophy,
   LucideMedal as Medal,
   LucideCalendarDays as CalendarDays,
+  LucideFlame as Flame,
+  LucideTarget as Target,
+  LucideTrendingUp as TrendingUp,
+  LucideAward as Award,
+  LucideShieldCheck as ShieldCheck,
+  LucideGem as Gem,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -131,16 +137,17 @@ function scoreLabel(score: number): string {
   return 'Critique';
 }
 
+// Icônes Lucide (ex-emojis 🔥 🎯 📈 / 🏅 🧘 💎).
 const EARNED_BADGES = [
-  { emoji: '🔥', label: 'Streak 7' },
-  { emoji: '🎯', label: '100 trades' },
-  { emoji: '📈', label: '+$5k' },
+  { icon: Flame, label: 'Streak 7' },
+  { icon: Target, label: '100 trades' },
+  { icon: TrendingUp, label: '+$5k' },
 ];
 
 const LOCKED_BADGES = [
-  { emoji: '🏅', label: 'Zen trader' },
-  { emoji: '🧘', label: 'No revenge' },
-  { emoji: '💎', label: 'Elite' },
+  { icon: Award, label: 'Zen trader' },
+  { icon: ShieldCheck, label: 'No revenge' },
+  { icon: Gem, label: 'Elite' },
 ];
 
 @Component({
@@ -186,11 +193,8 @@ export class ScoringComponent {
   protected readonly EARNED_BADGES = EARNED_BADGES;
   protected readonly LOCKED_BADGES = LOCKED_BADGES;
 
-  protected readonly streakDots = Array.from({ length: 35 }, () => {
-    const v = Math.random();
-    const colors = ['#1a2535', '#1a3a2a', '#1e5c3a', '#1a7a4a', '#10b981'];
-    return colors[Math.floor(v * 5)];
-  });
+  // Niveau d'activité 0 à 4 par jour ; couleur : --streak-0 … --streak-4 (theme.css), via la classe niveau-N.
+  protected readonly streakDots = Array.from({ length: 35 }, () => Math.floor(Math.random() * 5));
 
   protected ringDash(): string {
     const circumference = 2 * Math.PI * 65;

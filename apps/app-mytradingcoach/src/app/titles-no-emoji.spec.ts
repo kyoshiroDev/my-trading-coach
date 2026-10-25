@@ -85,4 +85,23 @@ describe('titres sans emoji (icônes Lucide)', () => {
     expect(pastille).toContain('[lucideIcon]="ClipboardListIcon"');
     expect(EMOJI.test(pastille)).toBe(false);
   });
+
+  it('badge « épinglés » du calendrier éco : icône Lucide, sans emoji', () => {
+    const src = readFileSync(join(APP, 'features/eco-calendar/eco-calendar.component.html'), 'utf-8');
+    const badge = src.match(/<div class="eco-pins-badge">([\s\S]*?)<\/div>/)?.[1] ?? '';
+    expect(badge, 'badge introuvable').not.toBe('');
+    expect(badge).toContain('[lucideIcon]="PinIcon"');
+    expect(EMOJI.test(badge)).toBe(false);
+  });
+
+  it('Score : badges en icônes Lucide, aucun emoji ni style en ligne', () => {
+    const ts = readFileSync(join(APP, 'features/scoring/scoring.component.ts'), 'utf-8');
+    const html = readFileSync(join(APP, 'features/scoring/scoring.component.html'), 'utf-8');
+    const badges = ts.slice(ts.indexOf('const EARNED_BADGES'), ts.indexOf('@Component'));
+    expect(badges, 'listes de badges introuvables').toContain('LOCKED_BADGES');
+    expect(EMOJI.test(badges.replace(/\/\/.*$/gm, ''))).toBe(false);
+    expect(html).toContain('[lucideIcon]="b.icon"');
+    expect(html).not.toMatch(/\{\{\s*b\.emoji\s*\}\}/);
+    expect(html, 'CSS en ligne (convention : .css uniquement)').not.toMatch(/\sstyle="/);
+  });
 });

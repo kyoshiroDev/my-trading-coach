@@ -26,6 +26,8 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
 - Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
+- **Typographie** : espace insécable (`&nbsp;` dans les gabarits) avant `:` `;` `!` `?` et `%`. Vérifié
+  sur Parrainage, Ambassadeur et Devenir ambassadeur par `src/app/typographie-parrainage.spec.ts`.
 - **Mise en page de l'app** : chaque page occupe **toute la largeur disponible** à droite de la
   barre latérale, sans plafond (`max-width` sur le conteneur de page) ni bande vide à droite. Pour
   garder des lignes lisibles à très grande largeur, répartir les cartes en **grille à colonnes
@@ -87,6 +89,10 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > Les badges plan/rôle (`--badge-premium-*`, `--badge-free-*`, `--badge-beta-*`,
 > `--badge-admin-*`) et les alias legacy (`--color-profit`, `--bg-primary`, `--text2`…)
 > existent dans `theme.css` — les réutiliser tels quels.
+>
+> Intensité d'activité (pastilles de streak de Score) : `--streak-0` (aucune) à `--streak-4`
+> (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
+> `features/scoring/score-streak-couleurs.spec.ts`.
 
 ---
 
