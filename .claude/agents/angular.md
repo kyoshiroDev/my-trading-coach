@@ -1392,10 +1392,10 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   d'AVANT la déconnexion (`HttpBackend`, sans intercepteur), 5 s au plus, en `keepalive` (revue
   phase 2 I6). Un échec ne bloque rien : la ligne serveur part au premier 404 ou 410. Sans ça, sur
   un appareil partagé, les alertes du compte arrivaient chez la personne suivante.
-  Poids (revue phase 2 m7, mesuré le 25/10/2026 au build de production) : bundle initial 492,69 ko
-  contre 489,25 ko sur `dev` (`69bffaf2`), soit +3,44 ko bruts (+1,10 ko transférés) pour toute la
-  phase 2 ; reste 7,31 ko sous le plafond bloquant de 500 ko. La section est un chunk paresseux
-  (`push-settings-component`, 28,26 ko).
+  Poids (revue phase 2 m7, mesuré le 25/10/2026 au build de production) : bundle initial 492,76 ko
+  contre 489,25 ko sur `dev` (`69bffaf2`), soit +3,51 ko bruts (+1,11 ko transférés) pour toute la
+  phase 2 ; reste 7,24 ko sous le plafond bloquant de 500 ko. La section est un chunk paresseux
+  (`push-settings-component`, 28,81 ko).
 - **Section du profil** `features/profile/notifications/push-settings.component` : onglet
   Paramètres, chargée par `@defer (on viewport; when openNotifications)` ; `/profil#notifications`
   ouvre l'onglet et charge tout de suite. Masquée sans erreur si le push est coupé côté serveur ;
