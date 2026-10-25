@@ -376,6 +376,9 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 │   → exécute le script inline register_view d'index.html avec un faux navigateur ;
 │     motif inApp = IN_APP_UA_PATTERN, URL de l'API = environment.*.ts (un script inline
 │     ne peut rien importer : ce test est la seule garde contre la dérive)
+├── index-pwa.spec.ts (src/)
+│   → manifest et balises PWA : couleurs = --bg de theme.css, icônes présentes à leur taille
+│     (en-tête PNG), maskable et apple-touch-icon sans transparence, lien manifest présent
 └── pnl-color.pipe.spec.ts
     → positif → var(--green)
     → négatif → var(--red)

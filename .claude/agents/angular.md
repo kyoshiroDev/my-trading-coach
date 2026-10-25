@@ -1424,6 +1424,32 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `TRADER_PUSH_ENABLED` reste
   coupé en production jusque-là (`deploy.md`) ; coupé, la section est absente de l'app.
 
+## Installation PWA de l'app (2026-10-25, PR 1 : manifest)
+
+- **`public/manifest.webmanifest`** : `name` MyTradingCoach, `short_name` MTC (≤ 12 caractères,
+  = `apple-mobile-web-app-title`), `display: standalone`, `scope: /`, `id: /`,
+  `start_url: /dashboard?source=pwa` (mesure des lancements depuis l'écran d'accueil ; directement
+  sur `/dashboard` pour ne pas dépendre de la redirection de `''`). Raccourcis Android : Séance
+  (`/session`) et Statistiques (`/analytics`), avec `?source=pwa`. iOS ignore les raccourcis.
+- **Couleurs** : `background_color` et `theme_color` = `--bg` de `theme.css` en dur (un manifest et
+  une balise ne lisent pas de variable CSS) ; `src/index-pwa.spec.ts` casse si elles divergent.
+- **Icônes** dans `public/pwa/` (192, 512 « any », maskable 512, `apple-touch-icon-180`), générées par
+  `node tools/scripts/generate-app-icons.mjs` (tracé de `logo.svg`, couleurs `--blue`, `--purple`,
+  `--text` lues dans `theme.css`). Maskable et Apple sont des carrés pleins sans transparence (le
+  système découpe ; iOS remplit la transparence en noir), courbe réduite dans la zone sûre. Noms
+  non hashés et cache d'un an côté nginx : **si le dessin change, changer le nom des fichiers**.
+- **Balises iOS** dans `index.html` : `apple-touch-icon` PNG (iOS n'affiche pas de SVG),
+  `apple-mobile-web-app-capable`, `mobile-web-app-capable`, barre d'état `black` (opaque) : le
+  contenu des pages ne tient pas compte de `safe-area-inset-top` (seuls burger, menu et toasts),
+  il passerait sous l'heure en `black-translucent`. Pas d'écran de lancement iOS.
+- **Le `<link rel="manifest">` réactive le push sur iPhone** : `PUSH_BROWSER.env().hasManifest` le
+  lit dans le document. Sans lui, le profil n'affiche que « Les alertes sur iPhone ne sont pas encore
+  disponibles. » Vérifié sur banc (iPhone émulé) : Safari non installé → étapes d'ajout ; ouvert
+  depuis l'écran d'accueil → « Activer les notifications ». Ne pas retirer le lien.
+- `push-sw.js` reste le seul service worker : ni `@angular/service-worker`, ni `SwUpdate`, ni page
+  hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
+- Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
+
 ## Connexion Google (#618, 2026-10-18)
 
 - `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans
