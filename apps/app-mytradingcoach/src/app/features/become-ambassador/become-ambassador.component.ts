@@ -22,10 +22,13 @@ import { apiErrorMessage } from '../../core/utils/api-error';
   imports: [RouterLink, LucideDynamicIcon],
   styleUrl: './become-ambassador.component.css',
   template: `
-    <div class="content">
-      <a class="back" routerLink="/parrainage">← Retour au parrainage</a>
-
-      <h1 class="page-title">🤝 Devenir ambassadeur</h1>
+    <div class="content mtc-page">
+      <!-- Titre en premier dans le DOM : sur mobile il est la ligne du burger. Le lien retour
+           s'affiche au-dessus en bureau (order), dessous sur mobile. -->
+      <div class="page-head mtc-page-head">
+        <h1 class="page-title mtc-page-title">🤝 Devenir ambassadeur</h1>
+        <a class="back" routerLink="/parrainage">← Retour au parrainage</a>
+      </div>
       <p class="page-sub">Tu as une audience de traders ? Touche une commission cash récurrente de 20% sur chaque abonnement de tes filleuls, tant qu'ils restent clients.</p>
 
       @if (submitted()) {
@@ -60,7 +63,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
         </div>
 
         <!-- 2 colonnes alignées : comment ça marche | ta demande -->
-        <div class="grid">
+        <div class="grid mtc-cards">
           <div class="card">
             <div class="card-title">Comment ça marche</div>
             <div class="vstep"><div class="n">1</div><div><h4>Partage ton lien</h4><p>À ta communauté, sur tes contenus. Le code est attribué automatiquement à l'inscription.</p></div></div>

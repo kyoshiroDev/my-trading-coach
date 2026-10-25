@@ -651,7 +651,9 @@ de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes 
 sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu. **Mise en page** : page sur toute
 la largeur à droite de la barre latérale (aucun `max-width` de page, grille à colonnes
 automatiques), défilement vertical seulement, vérifiée de 360 à 2560 px (règle complète dans
-`design.md`).
+`design.md`). Page sans `mtc-topbar` : classes communes `.mtc-page` / `.mtc-page-head` /
+`.mtc-page-title` / `.mtc-cards` de `styles.css` (alignement du titre sur le burger mobile), jamais de
+padding ni de `max-width` sur le conteneur dans le CSS du composant.
 
 ---
 

@@ -304,7 +304,7 @@
   .topbar {
     height: var(--topbar-h);
     padding: 0 16px;
-    padding-right: 64px;
+    padding-right: var(--topbar-burger-space);
   }
 
   .page-title {
