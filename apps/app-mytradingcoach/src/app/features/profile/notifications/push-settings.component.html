@@ -3,89 +3,93 @@
     <section class="pn" id="notifications" aria-labelledby="pn-title" data-testid="push-settings" [attr.data-state]="st">
       <h2 class="pn-title" id="pn-title">Notifications</h2>
 
-      <!-- Ordre du DOM = ordre affiché sur mobile, donc ordre du clavier (revue phase 2 m1) : état,
-           invitation Premium, types, heures silencieuses, appareils, puis la mention sous la grille.
-           Au bureau, la grille répartit ces cartes en colonnes sans les réordonner. -->
+      <!-- Ordre du DOM = ordre affiché sur mobile, donc ordre du clavier (revue phase 2 m1) : cet
+           appareil, types (invitation Premium en tête), heures silencieuses, appareils, puis la mention
+           sous la grille. Au bureau, la grille répartit ces blocs en colonnes sans les réordonner ;
+           chacun commence par un petit titre, les colonnes s'alignent en haut. -->
       <div class="pn-grid">
-        @if (readOnly()) {
-          <div class="pn-card pn-pad pn-o-status" data-testid="push-demo">
-            <p class="pn-status"><span class="pn-dot pn-dot--muted" aria-hidden="true"></span>Mode démo</p>
-            <p class="pn-sm">Lecture seule, aucune notification n’est envoyée.</p>
-          </div>
-        } @else {
-          @switch (st) {
-            @case ('subscribed') {
-              <div class="pn-card pn-pad pn-o-status" data-testid="push-active">
-                <p class="pn-status"><span class="pn-dot" aria-hidden="true"></span>Alertes actives sur cet appareil</p>
-                @if (currentDevice(); as d) { <p class="pn-sm">{{ d.label }}</p> }
-                <div class="pn-actions">
-                  <button type="button" class="pn-btn" data-testid="push-test" [disabled]="testing()" (click)="sendTest()">
-                    {{ testing() ? 'Envoi…' : 'Envoyer une notification test' }}
-                  </button>
+        <div class="pn-o-status">
+          <h3 class="pn-hd">Cet appareil</h3>
+          @if (readOnly()) {
+            <div class="pn-card pn-pad" data-testid="push-demo">
+              <p class="pn-status"><span class="pn-dot pn-dot--muted" aria-hidden="true"></span>Mode démo</p>
+              <p class="pn-sm">Lecture seule, aucune notification n’est envoyée.</p>
+            </div>
+          } @else {
+            @switch (st) {
+              @case ('subscribed') {
+                <div class="pn-card pn-pad" data-testid="push-active">
+                  <p class="pn-status"><span class="pn-dot" aria-hidden="true"></span>Alertes actives sur cet appareil</p>
+                  @if (currentDevice(); as d) { <p class="pn-sm">{{ d.label }}</p> }
+                  <div class="pn-actions">
+                    <button type="button" class="pn-btn" data-testid="push-test" [disabled]="testing()" (click)="sendTest()">
+                      {{ testing() ? 'Envoi…' : 'Envoyer une notification test' }}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            }
-            @case ('supported') {
-              <div class="pn-ban pn-o-status" data-testid="push-setup">
-                <h3>Reçois tes alertes de séance sur {{ deviceNoun() }}</h3>
-                <p>Une notification peut te prévenir avant ta limite. Tu choisis lesquelles, et tu peux tout couper ici.</p>
-                @if (push.deviceLimitReached()) {
-                  <p class="pn-warn" data-testid="push-limit">Retire un appareil pour en ajouter un.</p>
-                }
-                <button type="button" class="pn-btn pn-btn--primary" data-testid="push-enable"
-                  [disabled]="push.busy() || push.deviceLimitReached()" (click)="push.enable()">
-                  {{ push.busy() ? 'Activation…' : 'Activer les notifications' }}
-                </button>
-                @if (push.error(); as e) { <p class="pn-error" role="alert">{{ e }}</p> }
-              </div>
-            }
-            @case ('ios-unavailable') {
-              <div class="pn-card pn-pad pn-o-status" data-testid="push-ios-unavailable">
-                <p class="pn-sm">Les alertes sur iPhone ne sont pas encore disponibles.</p>
-              </div>
-            }
-            @case ('ios-not-installed') {
-              <div class="pn-ban pn-o-status" data-testid="push-ios">
-                <h3>Ajoute MTC à ton écran d’accueil</h3>
-                <p>Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach à l’écran d’accueil, puis ouvre-la depuis son icône.</p>
-                <p class="pn-steps">Partager, puis <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b></p>
-              </div>
-            }
-            @case ('denied') {
-              <div class="pn-ban pn-ban--warn pn-o-status" data-testid="push-denied">
-                <p class="pn-status"><span class="pn-dot pn-dot--warn" aria-hidden="true"></span>Notifications bloquées</p>
-                <p>Ton navigateur refuse les notifications pour MTC. Pour les rétablir&nbsp;:</p>
-                <ol>
-                  <li>Ouvre les réglages du site (cadenas, à côté de l’adresse)</li>
-                  <li>Mets « Notifications » sur « Autoriser »</li>
-                  <li>Reviens ici et recharge la page</li>
-                </ol>
-                <button type="button" class="pn-btn" data-testid="push-recheck" (click)="push.recheck()">J’ai changé le réglage</button>
-                <p class="pn-note">Rien ne t’est envoyé tant que c’est bloqué.</p>
-              </div>
-            }
-            @case ('unsupported') {
-              <div class="pn-card pn-pad pn-o-status" data-testid="push-unsupported">
-                <p class="pn-sm">Ton navigateur ne gère pas les notifications.</p>
-              </div>
-            }
-            @case ('in-app-browser') {
-              <div class="pn-card pn-pad pn-o-status" data-testid="push-in-app">
-                <p class="pn-sm">Ouvre MyTradingCoach dans ton navigateur (Safari ou Chrome) pour activer les notifications.</p>
-              </div>
+              }
+              @case ('supported') {
+                <div class="pn-ban" data-testid="push-setup">
+                  <h3>Reçois tes alertes de séance sur {{ deviceNoun() }}</h3>
+                  <p>Une notification peut te prévenir avant ta limite. Tu choisis lesquelles, et tu peux tout couper ici.</p>
+                  @if (push.deviceLimitReached()) {
+                    <p class="pn-warn" data-testid="push-limit">Retire un appareil pour en ajouter un.</p>
+                  }
+                  <button type="button" class="pn-btn pn-btn--primary" data-testid="push-enable"
+                    [disabled]="push.busy() || push.deviceLimitReached()" (click)="push.enable()">
+                    {{ push.busy() ? 'Activation…' : 'Activer les notifications' }}
+                  </button>
+                  @if (push.error(); as e) { <p class="pn-error" role="alert">{{ e }}</p> }
+                </div>
+              }
+              @case ('ios-unavailable') {
+                <div class="pn-card pn-pad" data-testid="push-ios-unavailable">
+                  <p class="pn-sm">Les alertes sur iPhone ne sont pas encore disponibles.</p>
+                </div>
+              }
+              @case ('ios-not-installed') {
+                <div class="pn-ban" data-testid="push-ios">
+                  <h3>Ajoute MTC à ton écran d’accueil</h3>
+                  <p>Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach à l’écran d’accueil, puis ouvre-la depuis son icône.</p>
+                  <p class="pn-steps">Partager, puis <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b></p>
+                </div>
+              }
+              @case ('denied') {
+                <div class="pn-ban pn-ban--warn" data-testid="push-denied">
+                  <p class="pn-status"><span class="pn-dot pn-dot--warn" aria-hidden="true"></span>Notifications bloquées</p>
+                  <p>Ton navigateur refuse les notifications pour MTC. Pour les rétablir&nbsp;:</p>
+                  <ol>
+                    <li>Ouvre les réglages du site (cadenas, à côté de l’adresse)</li>
+                    <li>Mets « Notifications » sur « Autoriser »</li>
+                    <li>Reviens ici et recharge la page</li>
+                  </ol>
+                  <button type="button" class="pn-btn" data-testid="push-recheck" (click)="push.recheck()">J’ai changé le réglage</button>
+                  <p class="pn-note">Rien ne t’est envoyé tant que c’est bloqué.</p>
+                </div>
+              }
+              @case ('unsupported') {
+                <div class="pn-card pn-pad" data-testid="push-unsupported">
+                  <p class="pn-sm">Ton navigateur ne gère pas les notifications.</p>
+                </div>
+              }
+              @case ('in-app-browser') {
+                <div class="pn-card pn-pad" data-testid="push-in-app">
+                  <p class="pn-sm">Ouvre MyTradingCoach dans ton navigateur (Safari ou Chrome) pour activer les notifications.</p>
+                </div>
+              }
             }
           }
-        }
+        </div>
 
         @if (showsTypes()) {
-          @if (!premium() && !readOnly() && (st === 'subscribed' || st === 'supported')) {
-            <div class="pn-up pn-o-up" data-testid="push-upsell">
-              <div><b>Les alertes de limite sont Premium</b>Marge, objectif, anti-tilt, récap.</div>
-              <button type="button" class="pn-btn pn-btn--primary pn-btn--sm" (click)="showPlanModal.set(true)">Voir Premium</button>
-            </div>
-          }
           <div class="pn-o-types">
             <h3 class="pn-hd">{{ active() ? 'Ce que tu reçois' : 'Ce que tu recevras' }}</h3>
+            @if (!premium() && !readOnly() && (st === 'subscribed' || st === 'supported')) {
+              <div class="pn-up pn-o-up" data-testid="push-upsell">
+                <div><b>Les alertes de limite sont Premium</b>Marge, objectif, anti-tilt, récap.</div>
+                <button type="button" class="pn-btn pn-btn--primary pn-btn--sm" (click)="showPlanModal.set(true)">Voir Premium</button>
+              </div>
+            }
             <ul class="pn-card" data-testid="push-types">
               @for (row of rows; track row.type) {
                 <li class="pn-row" [class.pn-row--lock]="rowLocked(row)">

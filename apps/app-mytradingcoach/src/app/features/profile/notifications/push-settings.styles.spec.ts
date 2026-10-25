@@ -31,4 +31,15 @@ describe('Section Notifications : mise en page (revue phase 2 I3, design.md « M
     expect(rule).toMatch(/background: var\(--purple-dim\)/);
     expect(rule).not.toMatch(/--badge-premium|--blue/);
   });
+
+  it('chaque bloc de la grille commence par un petit titre : colonnes alignées en haut au bureau', () => {
+    const tpl = readFileSync(join(__dirname, 'push-settings.component.html'), 'utf-8');
+    const grid = tpl.slice(tpl.indexOf('<div class="pn-grid">'));
+    for (const block of ['pn-o-status', 'pn-o-types', 'pn-o-quiet', 'pn-o-devices']) {
+      const i = grid.indexOf(`<div class="${block}">`);
+      expect(i, block).toBeGreaterThanOrEqual(0);
+      expect(grid.slice(i).split('\n')[1].trim(), block).toMatch(/^<h3 class="pn-hd">/);
+    }
+    expect(grid).toContain('<h3 class="pn-hd">Cet appareil</h3>');
+  });
 });

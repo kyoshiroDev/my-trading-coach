@@ -1405,7 +1405,9 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   Couleurs : variables de `theme.css`, sauf le texte blanc du bouton principal (`--primary`) ;
   badges Premium violets (`--purple-bright` sur `--purple-dim`, comme `premium-lock`).
   **Mise en page** (revue I3, m1) : toute la largeur, aucun `max-width` ; cartes dans l'ordre du DOM
-  (= ordre mobile = ordre du clavier : état, invitation, types, heures silencieuses, appareils), en
+  (= ordre mobile = ordre du clavier : cet appareil, types avec l'invitation Premium sous leur titre,
+  heures silencieuses, appareils), chaque bloc ouvert par un petit titre pour aligner le haut des
+  colonnes au bureau (« Cet appareil » au-dessus de la carte d'état), en
   grille `repeat(auto-fit, minmax(min(100%, 420px), 1fr))`, types sur deux rangées dès deux
   colonnes (`@container`), mention SOUS la grille (une carte `1 / -1` garderait des colonnes vides à
   2560 px). Aucun `order` ni `display: contents` (`push-settings.styles.spec.ts`). Heures

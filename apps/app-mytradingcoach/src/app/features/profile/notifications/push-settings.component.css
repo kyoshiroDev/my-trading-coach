@@ -17,6 +17,9 @@
   gap: 20px 24px; align-items: start;
 }
 .pn-grid .pn-hd { margin-top: 0; }
+/* Chaque bloc de la grille commence par un petit titre (« Cet appareil », « Ce que tu reçois »…) :
+   les colonnes s'alignent en haut au bureau. L'invitation Premium suit le titre des types. */
+.pn-o-up { margin-bottom: 10px; }
 /* Deux colonnes ou plus : les types, la carte la plus haute, prennent deux rangées ; l'état et les
    heures silencieuses s'empilent à côté (maquette bureau). */
 @container (min-width: 864px) {
