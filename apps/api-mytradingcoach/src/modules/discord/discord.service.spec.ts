@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { DiscordService } from './discord.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DiscordGuildClient } from './discord-guild.client';
 
 const mockFetch = vi.fn().mockResolvedValue({ ok: true });
 vi.stubGlobal('fetch', mockFetch);
@@ -23,6 +24,7 @@ describe('DiscordService', () => {
     const module = await Test.createTestingModule({
       providers: [
         DiscordService,
+        DiscordGuildClient,
         { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
@@ -87,6 +89,18 @@ describe('DiscordService', () => {
       ([url, opts]) => opts?.method === 'PUT' && url.includes('role-premium'),
     );
     expect(putCall).toBeDefined();
+  });
+
+  it('retrait des rôles (#741) : DELETE Membre et Premium, aucun PUT', async () => {
+    await new DiscordGuildClient().removePlanRoles('discord-123');
+    const methods = mockFetch.mock.calls.map(([url, opts]) => `${opts?.method} ${url.split('/roles/')[1]}`);
+    expect(methods).toEqual(['DELETE role-membre', 'DELETE role-premium']);
+    expect(mockFetch.mock.calls[0][0]).toContain('/members/discord-123/roles/');
+  });
+
+  it('erreur réseau Discord : ne lève pas (une liaison ou une suppression ne doit pas échouer)', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('ECONNRESET'));
+    await expect(new DiscordGuildClient().removePlanRoles('discord-123')).resolves.toBeUndefined();
   });
 
   it('env vars manquantes → skip sans appel fetch', async () => {

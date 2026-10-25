@@ -94,6 +94,26 @@
   color: var(--green);
 }
 
+/* ── Discord (#741) : code à taper dans le serveur ── */
+.discord-link {
+  color: var(--blue-bright);
+}
+.discord-code {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text);
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+/* La commande ne se coupe pas entre « /verify » et « code: » (22 signes : tient dès 320 px). */
+.discord-code-row code {
+  font-family: var(--font-mono);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
 /* ── Edit button ── */
 .settings-edit-btn {
   background: transparent;

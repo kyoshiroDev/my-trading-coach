@@ -6,6 +6,7 @@ import { AmbassadorService } from '../ambassador/ambassador.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
+import { DiscordGuildClient } from '../discord/discord-guild.client';
 
 const baseUser = {
   role: 'USER',
@@ -28,6 +29,8 @@ const mockRedis = { client: { get: vi.fn(), set: vi.fn(), del: vi.fn() } };
 
 const billingClosure = { cancelAllSubscriptions: vi.fn() };
 
+const discordGuild = { removePlanRoles: vi.fn(async () => undefined) };
+
 describe('UsersService — suppression + trace DeletedAccount', () => {
   let service: UsersService;
 
@@ -48,6 +51,7 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
         // d'un AMBASSADOR ; non sollicité par ces tests.
         { provide: AmbassadorService, useValue: { promote: vi.fn(), revoke: vi.fn() } },
         { provide: StripeAccountClosureService, useValue: billingClosure },
+        { provide: DiscordGuildClient, useValue: discordGuild },
       ],
     }).compile();
     service = moduleRef.get(UsersService);
@@ -68,6 +72,20 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     // create ET delete passés ensemble à $transaction
     expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mockPrisma.$transaction.mock.calls[0][0]).toHaveLength(2);
+  });
+
+  it('Discord relié (#741) : ses rôles sont retirés, APRÈS la suppression du User', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, discordId: '111111111111111111' });
+    await service.deleteMe('user-1');
+    expect(discordGuild.removePlanRoles).toHaveBeenCalledWith('111111111111111111');
+    expect(mockPrisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      discordGuild.removePlanRoles.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('sans Discord relié : aucun appel Discord', async () => {
+    await service.deleteMe('user-1');
+    expect(discordGuild.removePlanRoles).not.toHaveBeenCalled();
   });
 
   it('reason vide → null', async () => {
