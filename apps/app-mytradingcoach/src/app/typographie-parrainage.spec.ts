@@ -38,4 +38,17 @@ describe('typographie des pages de parrainage et de commission', () => {
     ]);
     expect(fautes).toEqual([]);
   });
+
+  // Messages des toasts (chaînes du composant, hors gabarit) : même règle. `\u00a0` dans la source.
+  const COMPOSANTS = [
+    'features/ambassador/ambassador.component.ts',
+    'features/referral/referral.component.ts',
+    'features/become-ambassador/become-ambassador.component.ts',
+  ];
+  it.each(COMPOSANTS)('%s : messages des toasts', (f) => {
+    const src = readFileSync(join(__dirname, f), 'utf-8');
+    const messages = [...src.matchAll(/toast\.(?:success|error|info|warning)\(\s*'([^']*)'/g)].map((m) => m[1]);
+    const fautes = messages.filter((m) => / [:;!?](?=\s|$)|\d%/.test(m));
+    expect(fautes).toEqual([]);
+  });
 });

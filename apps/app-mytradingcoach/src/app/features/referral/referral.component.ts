@@ -207,7 +207,7 @@ export class ReferralComponent implements OnInit {
   protected copy(link: string): void {
     navigator.clipboard.writeText(link).then(
       () => this.toast.success('Lien copié'),
-      () => this.toast.error('Copie impossible : sélectionne le lien et copie-le à la main.'),
+      () => this.toast.error('Copie impossible\u00a0: sélectionne le lien et copie-le à la main.'),
     );
   }
 

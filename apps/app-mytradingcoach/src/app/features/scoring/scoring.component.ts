@@ -150,6 +150,14 @@ const LOCKED_BADGES = [
   { icon: Gem, label: 'Elite' },
 ];
 
+/**
+ * Cartes « Badges obtenus » et « Streak & activité » MASQUÉES (décision du 25/10/2026) : leurs données
+ * sont inventées (pastilles tirées au hasard, série de 7 jours en dur, badges statiques), un trader y
+ * verrait une activité qui n'est pas la sienne. Le code reste en place pour le ticket « brancher le
+ * Streak sur les vraies données » : repasser à true une fois les données réelles branchées.
+ */
+const STREAK_ET_BADGES_VISIBLES = false;
+
 @Component({
   selector: 'mtc-scoring',
   imports: [ErrorStateComponent, TopbarComponent, PlanModalComponent, LucideDynamicIcon],
@@ -190,6 +198,7 @@ export class ScoringComponent {
   protected readonly tradeCount = computed(() => this.trades().length);
   protected readonly scoreLabel = scoreLabel;
 
+  protected readonly streakEtBadgesVisibles = STREAK_ET_BADGES_VISIBLES;
   protected readonly EARNED_BADGES = EARNED_BADGES;
   protected readonly LOCKED_BADGES = LOCKED_BADGES;
 
