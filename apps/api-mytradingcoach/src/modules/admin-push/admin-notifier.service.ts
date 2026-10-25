@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { AdminPushEvent } from '@prisma/client';
+import { errorKind } from '../push/push-delivery';
 import { AdminPushService } from './admin-push.service';
 import type { AdminPushMessage } from './push-messages';
 
@@ -25,10 +26,10 @@ export class AdminNotifier {
         (r) => {
           if (r.subscriptions > 0) this.logger.debug(`Push ${event} : ${r.delivered}/${r.subscriptions} livré(s)`);
         },
-        (err: unknown) => this.logger.warn(`Push ${event} non envoyé : ${err instanceof Error ? err.message : String(err)}`),
+        (err: unknown) => this.logger.warn(`Push ${event} non envoyé (${errorKind(err)})`),
       );
     } catch (err) {
-      this.logger.warn(`Push ${event} non envoyé : ${err instanceof Error ? err.message : String(err)}`);
+      this.logger.warn(`Push ${event} non envoyé (${errorKind(err)})`);
     }
   }
 }

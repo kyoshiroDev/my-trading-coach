@@ -2212,6 +2212,10 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   `Envoi push <admin|trader> <TYPE> : livré|échec (<2xx|404|410|4xx|5xx|délai dépassé|erreur réseau>, <hôte>)`.
   Jamais l'endpoint, ses clés, l'id d'appareil ni le message d'une exception (il peut citer l'adresse) ;
   délai = `PushDeadlineError` (`push-http.ts`). Contrat verrouillé par `push-delivery.spec.ts`.
+- Journaux des notifieurs (`TraderNotifier`, `AdminNotifier`), tous niveaux debug compris : type,
+  « forcé », résultat et compteurs seulement ; jamais la clé anti-doublon (`dedupKey`, texte libre de
+  l'appelant), ni userId / accountId / clé Redis ; une exception = son nom de classe (`errorKind`,
+  `push-delivery.ts`), jamais son message. Verrouillé par `trader-notifier.logs.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
