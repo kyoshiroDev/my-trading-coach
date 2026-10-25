@@ -372,6 +372,8 @@ Règles :
 - Politique de confidentialité, section 6 : le paragraphe « Mesure d'audience sans cookie » décrit
   aussi les étapes de l'inscription, le booléen navigateur intégré et l'engagement de l'accueil et de
   /prop-firm (défilement, temps, sélecteur). Toute nouvelle mesure → l'y ajouter.
+- Politique de confidentialité, push et autopsie (1.g, bases légales, durées, destinataires) : voir
+  `security.md`. Guillemets français de la page : `«&nbsp;…&nbsp;»` (sinon « » orphelin à 390 px).
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
 
