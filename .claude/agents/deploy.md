@@ -309,6 +309,12 @@ directement ne marcherait pas : Docker fige la cible d'un lien au démarrage du 
 le dépôt (`infra/static/nginx/`) : modifier le dépôt **et** le VPS. Les assets hashés (`*.js|css|…`
 côté SPA, `/_assets/` côté landing : c'est le `build.assets` d'Astro, pas `/_astro/`) font
 `try_files /current$uri /previous$uri =404`.
+Fichiers à nom fixe, avant la règle des assets (`location =`, prioritaire sur la regex) : les service
+workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des `.js` leur donnait un
+cache immuable d'un an ; `manifest.webmanifest` en `application/manifest+json`, cache 1 h, 404 s'il
+manque (pas l'`index.html` de la SPA). Les icônes PWA (`/pwa/*.png`) gardent le cache d'un an : changer
+leur nom si le dessin change. Modification du 25/10/2026 : **à reporter à la main sur les deux VPS**
+(ancien : dev, beta, admin ; prod : app), selon la procédure ci-dessous.
 
 Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :
 `cat nouvelle.conf > /opt/infra/static/nginx/<conf>`, jamais `cp`, `rsync` ni `sed -i` qui en créent

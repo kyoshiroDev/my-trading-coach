@@ -1,0 +1,50 @@
+{
+  "id": "/",
+  "name": "MyTradingCoach",
+  "short_name": "MTC",
+  "description": "Journal de trading avec coach IA : séance, alertes prop firm, statistiques.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/dashboard?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080c14",
+  "theme_color": "#080c14",
+  "icons": [
+    {
+      "src": "pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ma séance",
+      "short_name": "Séance",
+      "url": "/session?source=pwa",
+      "icons": [
+        { "src": "pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    },
+    {
+      "name": "Statistiques",
+      "url": "/analytics?source=pwa",
+      "icons": [
+        { "src": "pwa/icon-192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    }
+  ]
+}

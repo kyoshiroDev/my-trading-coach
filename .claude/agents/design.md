@@ -438,6 +438,9 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 - Taille : 14-16px dans la sidebar, 15-20px dans le contenu. Stroke 1.5-2px.
 - **Jamais d'emoji** dans les composants Angular — *sauf* les émotions trader
   (et watermarks/nav décoratifs assumés par le design).
+- **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
+  tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
+  courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.
 
 ---
 

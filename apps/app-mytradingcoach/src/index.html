@@ -13,7 +13,18 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="apple-touch-icon" href="logo.svg" />
+    <!-- PWA : le manifest rend l'app installable, et c'est sa présence que le profil lit pour
+         proposer les notifications sur iPhone (PUSH_BROWSER.env().hasManifest). Couleurs = --bg de
+         theme.css (vérifié par index-pwa.spec.ts). Icônes : tools/scripts/generate-app-icons.mjs. -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#080c14" />
+    <link rel="apple-touch-icon" href="pwa/apple-touch-icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="MTC" />
+    <!-- Barre d'état opaque : le contenu des pages ne tient pas compte de safe-area-inset-top
+         (seuls le burger, le menu et les toasts le font), il passerait sous l'heure en translucide. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <!-- Écran de chargement : visible dès le HTML, avant le JS. Retiré par `App` après le
          rendu de la première page (removeBootScreen). Valeurs de theme.css en repli : la
          feuille de style n'est peut-être pas encore là. Police monospace SYSTÈME : JetBrains Mono
