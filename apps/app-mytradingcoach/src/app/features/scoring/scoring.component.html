@@ -115,19 +115,19 @@
         <!-- Right : badges + streak -->
         <div class="right-col">
           <div class="card">
-            <div class="card-title" style="margin-bottom: 14px">
+            <div class="card-title">
               <svg [lucideIcon]="MedalIcon" [size]="16"></svg> Badges obtenus
             </div>
             <div class="badges-grid">
               @for (b of EARNED_BADGES; track b.label) {
                 <div class="badge-item">
-                  <div class="badge-emoji">{{ b.emoji }}</div>
+                  <div class="badge-ic"><svg [lucideIcon]="b.icon" [size]="22"></svg></div>
                   <div class="badge-label">{{ b.label }}</div>
                 </div>
               }
               @for (b of LOCKED_BADGES; track b.label) {
                 <div class="badge-item locked">
-                  <div class="badge-emoji">{{ b.emoji }}</div>
+                  <div class="badge-ic"><svg [lucideIcon]="b.icon" [size]="22"></svg></div>
                   <div class="badge-label">{{ b.label }}</div>
                 </div>
               }
@@ -135,7 +135,7 @@
           </div>
 
           <div class="card streak-card">
-            <div class="card-title" style="margin-bottom: 14px">
+            <div class="card-title">
               <svg [lucideIcon]="CalendarDaysIcon" [size]="16"></svg> Streak &amp; activité
             </div>
             <div class="streak-dots">

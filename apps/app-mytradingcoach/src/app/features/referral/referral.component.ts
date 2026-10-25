@@ -49,12 +49,12 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               <input class="link-input" type="text" readonly [value]="d.link" aria-label="Ton lien de parrainage" />
               <button class="btn btn-blue" data-testid="referral-copy" (click)="copy(d.link)">Copier</button>
             </div>
-            <div class="hero-note">Ton filleul démarre avec <b>-10%</b> sur sa première année, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
+            <div class="hero-note">Ton filleul démarre avec <b>-10&nbsp;%</b> sur sa première année, et tu gagnes <b>1 mois offert</b> dès qu'il s'abonne.</div>
           </div>
 
           <div class="goal">
             <div class="goal-head">
-              <span class="l">Objectif : 1 an offert</span>
+              <span class="l">Objectif&nbsp;: 1 an offert</span>
               <span class="r">{{ d.subscribed }} / {{ GOAL }}</span>
             </div>
             <div class="goal-bar"><div class="goal-fill" [style.width.%]="goalPercent()"></div></div>
@@ -62,7 +62,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
               @if (goalRemaining() > 0) {
                 Encore {{ goalRemaining() }} filleul{{ goalRemaining() > 1 ? 's' : '' }} payant{{ goalRemaining() > 1 ? 's' : '' }} et tu débloques 12 mois offerts cumulés.
               } @else {
-                Objectif atteint : 12 mois offerts cumulés.
+                Objectif atteint&nbsp;: 12 mois offerts cumulés.
               }
             </div>
           </div>
@@ -118,7 +118,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
             <div class="step">
               <div class="step-n">2</div>
               <h4>Il s'abonne, il économise</h4>
-              <p>Ton filleul profite de <em>-10% sur sa première année, mensuel ou annuel</em>.</p>
+              <p>Ton filleul profite de <em>-10&nbsp;% sur sa première année, mensuel ou annuel</em>.</p>
             </div>
             <div class="step">
               <div class="step-n">3</div>
@@ -159,7 +159,7 @@ const GOAL = 12; // 12 filleuls payants = 1 an offert
 
         <!-- CTA AMBASSADEUR -->
         <a class="amb" routerLink="/devenir-ambassadeur">
-          <div class="t"><b>Tu as une audience ?</b> Le programme Ambassadeur te verse une commission cash récurrente plutôt que des mois offerts.</div>
+          <div class="t"><b>Tu as une audience&nbsp;?</b> Le programme Ambassadeur te verse une commission cash récurrente plutôt que des mois offerts.</div>
           <span class="amb-link">Voir le programme Ambassadeur →</span>
         </a>
       }

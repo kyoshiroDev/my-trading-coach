@@ -21,6 +21,7 @@ import { ErrorStateComponent } from '@mtc/front-ui';
 import {
   LucideDynamicIcon,
   LucideStar as Star,
+  LucidePin as Pin,
 } from '@lucide/angular';
 
 type EcoSession = 'asia' | 'europe' | 'us';
@@ -52,6 +53,7 @@ interface TableRow {
 })
 export class EcoCalendarComponent implements OnInit {
   protected readonly StarIcon = Star;
+  protected readonly PinIcon = Pin;
   private readonly api = inject(EcoCalendarApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);

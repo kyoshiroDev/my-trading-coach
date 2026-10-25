@@ -11,6 +11,12 @@ import {
   LucideTrophy as Trophy,
   LucideMedal as Medal,
   LucideCalendarDays as CalendarDays,
+  LucideFlame as Flame,
+  LucideTarget as Target,
+  LucideTrendingUp as TrendingUp,
+  LucideAward as Award,
+  LucideShieldCheck as ShieldCheck,
+  LucideGem as Gem,
 } from '@lucide/angular';
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
@@ -131,16 +137,17 @@ function scoreLabel(score: number): string {
   return 'Critique';
 }
 
+// Icônes Lucide (ex-emojis 🔥 🎯 📈 / 🏅 🧘 💎).
 const EARNED_BADGES = [
-  { emoji: '🔥', label: 'Streak 7' },
-  { emoji: '🎯', label: '100 trades' },
-  { emoji: '📈', label: '+$5k' },
+  { icon: Flame, label: 'Streak 7' },
+  { icon: Target, label: '100 trades' },
+  { icon: TrendingUp, label: '+$5k' },
 ];
 
 const LOCKED_BADGES = [
-  { emoji: '🏅', label: 'Zen trader' },
-  { emoji: '🧘', label: 'No revenge' },
-  { emoji: '💎', label: 'Elite' },
+  { icon: Award, label: 'Zen trader' },
+  { icon: ShieldCheck, label: 'No revenge' },
+  { icon: Gem, label: 'Elite' },
 ];
 
 @Component({

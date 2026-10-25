@@ -32,7 +32,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
         <h1 class="page-title mtc-page-title"><svg [lucideIcon]="HandshakeIcon" [size]="20"></svg>Devenir ambassadeur</h1>
         <a class="back" routerLink="/parrainage">← Retour au parrainage</a>
       </div>
-      <p class="page-sub">Tu as une audience de traders ? Touche une commission cash récurrente de 20% sur chaque abonnement de tes filleuls, tant qu'ils restent clients.</p>
+      <p class="page-sub">Tu as une audience de traders&nbsp;? Touche une commission cash récurrente de 20&nbsp;% sur chaque abonnement de tes filleuls, tant qu'ils restent clients.</p>
 
       @if (submitted()) {
         <div class="card success">
@@ -40,14 +40,14 @@ import { apiErrorMessage } from '../../core/utils/api-error';
           <div class="success-t">Demande envoyée</div>
           <div class="success-d">
             Ta demande est étudiée manuellement, je reviens vers toi rapidement.
-            Pas d'accès instantané : je vérifie tes réseaux avant d'activer le statut ambassadeur.
+            Pas d'accès instantané&nbsp;: je vérifie tes réseaux avant d'activer le statut ambassadeur.
           </div>
           <a class="back-btn" routerLink="/parrainage">Revenir au parrainage</a>
         </div>
       } @else {
         <!-- 20% (pleine largeur) -->
         <div class="comm">
-          <div class="comm-pct">20%</div>
+          <div class="comm-pct">20&nbsp;%</div>
           <div class="comm-body">
             <div class="comm-txt"><b>de commission récurrente</b> sur chaque paiement de tes filleuls. Versée chaque mois, tant qu'ils restent abonnés, pas seulement au premier mois.</div>
             <span class="comm-pill">RÉCURRENT · TANT QUE LE FILLEUL RESTE ABONNÉ</span>
@@ -58,8 +58,8 @@ import { apiErrorMessage } from '../../core/utils/api-error';
         <div class="card">
           <div class="card-title"><svg [lucideIcon]="ClipboardListIcon" [size]="16"></svg>Conditions</div>
           <div class="elig-grid">
-            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
-            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b>&nbsp;: micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
+            <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b>&nbsp;: avis de situation SIRENE, ou Kbis si société.</span></div>
             <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>RIB</b> au nom de l'entreprise pour le versement.</span></div>
             <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Facture mensuelle</b> des commissions dues, payée par virement.</span></div>
           </div>
@@ -71,7 +71,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
             <div class="card-title">Comment ça marche</div>
             <div class="vstep"><div class="n">1</div><div><h4>Partage ton lien</h4><p>À ta communauté, sur tes contenus. Le code est attribué automatiquement à l'inscription.</p></div></div>
             <div class="vstep"><div class="n">2</div><div><h4>Ton filleul s'abonne</h4><p>Il passe Premium. Rien n'est dû tant qu'il est en essai.</p></div></div>
-            <div class="vstep"><div class="n">3</div><div><h4>Tu touches 20%</h4><p>Sur chaque paiement, chaque mois, tant qu'il reste client. Tu factures, on te paie par virement.</p></div></div>
+            <div class="vstep"><div class="n">3</div><div><h4>Tu touches 20&nbsp;%</h4><p>Sur chaque paiement, chaque mois, tant qu'il reste client. Tu factures, on te paie par virement.</p></div></div>
           </div>
 
           <div class="card">
