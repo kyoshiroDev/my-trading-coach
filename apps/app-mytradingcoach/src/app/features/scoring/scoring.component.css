@@ -14,8 +14,6 @@
   gap: 16px;
   align-items: stretch;
 }
-/* Streak et badges masqués : la carte du score prend toute la largeur (pas de colonne vide). */
-.grid-2.une-colonne { grid-template-columns: 1fr; }
 
 /* ─── Card ─── */
 .card {
@@ -102,6 +100,9 @@
 .right-col .card {
   flex: 1;
 }
+/* Streak seule dans sa colonne (badges masqués) : hauteur naturelle, sinon elle s'étire à la hauteur
+   de la carte du score et reste vide aux deux tiers. */
+.right-col .streak-card { flex: 0 0 auto; }
 
 /* ─── Badges ─── */
 .badges-grid {
@@ -147,6 +148,7 @@
   margin-bottom: 12px;
 }
 
+.streak-dots.chargement { opacity: 0.5; } /* activité en cours de chargement */
 .streak-dot {
   width: 18px;
   height: 18px;
