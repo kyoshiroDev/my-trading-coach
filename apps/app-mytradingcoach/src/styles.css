@@ -160,6 +160,39 @@ textarea {
   }
 }
 
+/* ─── Pages du shell sans topbar commune (Mes sessions, Calendrier éco, Parrainage, Ambassadeur,
+   Devenir ambassadeur) ───
+   .mtc-page : conteneur de la page, toute la largeur à droite de la barre latérale (aucun
+   max-width), défilement vertical seulement. .mtc-page-head : en-tête de la page. .mtc-page-title :
+   son titre. .mtc-cards : grille de cartes à colonnes automatiques.
+   Mobile : pas de topbar, mais le burger fixe de la sidebar est calé sur elle (--topbar-h). La
+   ligne du titre prend la boîte du burger (même haut, même hauteur) et l'en-tête lui réserve sa
+   place à droite : rien ne passe dessous. Le padding des pages vit ICI seulement : une règle de
+   composant a une spécificité plus forte et l'écraserait.
+   Vérifié par shared/components/topbar/topbar-burger-alignment.spec.ts. */
+.mtc-page {
+  padding: var(--page-pad);
+  min-width: 0;
+}
+.mtc-cards {
+  display: grid;
+  gap: var(--page-gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--cards-min, var(--card-col-min))), 1fr));
+  align-items: stretch;
+}
+@media (max-width: 768px) {
+  .mtc-page {
+    padding: 0 var(--page-pad-mobile) calc(env(safe-area-inset-bottom) + var(--page-pad-mobile));
+  }
+  .mtc-page-head {
+    padding-top: calc((var(--topbar-h) - var(--topbar-border-w) - var(--topbar-btn-h)) / 2);
+    padding-right: calc(var(--topbar-burger-space) - var(--page-pad-mobile));
+  }
+  .mtc-page-title {
+    line-height: var(--topbar-btn-h);
+  }
+}
+
 /* ─── Live mode : bloquer le scroll du main pour laisser les colonnes scroller ─── */
 body.live-mode-active .main-content {
   overflow: hidden;

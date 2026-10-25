@@ -1,9 +1,9 @@
-<div class="sessions-page" data-testid="sessions-page">
+<div class="sessions-page mtc-page" data-testid="sessions-page">
 
   <!-- Header + filtre -->
-  <div class="page-header">
+  <div class="page-header mtc-page-head">
     <div>
-      <div class="page-title">Mes sessions</div>
+      <h1 class="page-title mtc-page-title">Mes sessions</h1>
       <div class="page-sub">
         {{ monthSummary().sessionCount }} session{{ monthSummary().sessionCount > 1 ? 's' : '' }}
         · {{ weekGroups().length }} semaine{{ weekGroups().length > 1 ? 's' : '' }}
@@ -41,7 +41,7 @@
         <div class="ms-lbl">Trades</div>
       </div>
       <div class="ms-card">
-        <div class="ms-val b">{{ monthSummary().avgWinRate | number:'1.0-0' }}%</div>
+        <div class="ms-val b">{{ monthSummary().avgWinRate | number:'1.0-0' }}&nbsp;%</div>
         <div class="ms-lbl">Win Rate moy.</div>
       </div>
       <div class="ms-card">
@@ -66,6 +66,8 @@
       <div class="empty-sub">Démarre une session depuis le dashboard pour commencer à tracker tes journées.</div>
     </div>
   } @else {
+    <!-- Semaines en cartes : une colonne de plus dès que la largeur le permet (pas de plafond). -->
+    <div class="mtc-cards weeks-grid">
     @for (group of weekGroups(); track group.weekNumber) {
       <div class="week-group">
         <div class="week-header">
@@ -130,7 +132,7 @@
                   </div>
                   <div class="stat">
                     <div class="stat-val">
-                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '%' : '-' }}
+                      {{ session.winRate !== null && session.winRate !== undefined ? (session.winRate | number:'1.0-0') + '\u00A0%' : '-' }}
                     </div>
                     <div class="stat-lbl">Win Rate</div>
                   </div>
@@ -248,6 +250,7 @@
         </div>
       </div>
     }
+    </div>
   }
 
 </div>

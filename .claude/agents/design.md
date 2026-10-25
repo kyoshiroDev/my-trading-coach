@@ -35,8 +35,8 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
   réelle de leur carte (SVG non étiré), textes à taille fixe. **Vérifier à 360, 390, 768, 1024,
   1440, 1920 et 2560 px** (cadre iframe sur le banc : `resize_window` ne change pas le viewport).
   Les modales, feuilles et textes longs (`max-width` en `ch`) ne sont pas des pages : leur plafond
-  reste permis. Pages encore plafonnées au 24/10/2026 : sessions (960 px), parrainage et
-  ambassadeur (1 200 px), devenir ambassadeur (1 080 px).
+  reste permis. Plus aucune page plafonnée depuis le 25/10/2026 (sessions, parrainage, ambassadeur,
+  devenir ambassadeur passés sur `.mtc-page` + `.mtc-cards`, voir plus bas).
 
 ---
 
@@ -431,10 +431,21 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 boutons = passer par ces variables ; `topbar-burger-alignment.spec.ts` lit les CSS et échoue sinon.
 Avant (40 px, `top: 14px` en dur) : 9 px de plus que Discord, centre 6 px trop bas, bas à 2 px de la ligne.
 Pages du shell SANS topbar (en-tête propre) : le burger y reste à la même place. Ma session est
-calée dessus en mobile (`padding-top` + `line-height: var(--topbar-btn-h)` du titre). Encore
-décalées, non corrigées (2026-10-25, écart titre − burger à 390 px) : Mes sessions +6,1 px et
-burger SUR le sélecteur de mois, calendrier éco +20,1, Ambassadeur/Parrainage +22,5, Devenir
-ambassadeur (titre sous le lien retour). Le spec tient l'inventaire : nouvelle page sans topbar → l'y ajouter après mesure.
+calée dessus en mobile (`padding-top` + `line-height: var(--topbar-btn-h)` du titre). Les autres
+(Mes sessions, Calendrier éco, Parrainage, Ambassadeur, Devenir ambassadeur) utilisent les classes
+COMMUNES de `styles.css` :
+- `.mtc-page` sur le conteneur : padding `--page-pad` (mobile : 0 en haut, `--page-pad-mobile`),
+  aucun `max-width`. Le padding du conteneur ne vit QUE là : une règle de composant (spécificité
+  plus forte) l'écraserait.
+- `.mtc-page-head` sur l'en-tête : en mobile, `padding-top` = haut du burger et place réservée à
+  droite (`--topbar-burger-space` − `--page-pad-mobile`) : rien ne passe sous le burger.
+- `.mtc-page-title` sur le h1, PREMIER élément de l'en-tête : en mobile, `line-height:
+  var(--topbar-btn-h)`, sa ligne a la boîte du burger. Un lien retour va APRÈS le titre dans le DOM
+  (`order: -1` en bureau pour l'afficher au-dessus).
+- `.mtc-cards` : grille `repeat(auto-fit, minmax(min(100%, var(--cards-min, --card-col-min)), 1fr))`,
+  `--cards-min` réglé par section (420/520/760 px). Grouper par paires : une grille auto-fit de 2
+  cartes n'a jamais de trou. Garder les 4 stats en 4 → 2 colonnes fixes (4 sur 3 colonnes = trou).
+Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire et échoue sinon.
 
 ---
 

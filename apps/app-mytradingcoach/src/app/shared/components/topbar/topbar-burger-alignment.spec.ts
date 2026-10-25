@@ -97,19 +97,18 @@ describe('burger mobile ↔ en-tête des pages', () => {
 });
 
 /**
- * Pages du shell (donc avec le burger) SANS la topbar commune : chacune a son propre en-tête,
- * que rien n'aligne sur le burger. Inventaire mesuré à 360/390 px (cf. PR) : une nouvelle page
- * sans topbar fait échouer ce test, pour qu'on vérifie son alignement avant de l'ajouter ici.
+ * Pages du shell (donc avec le burger) SANS la topbar commune : chacune a son propre en-tête.
+ * Une nouvelle page sans topbar fait échouer l'inventaire, pour qu'on l'aligne avant de l'ajouter.
+ * Valeur = conteneur de la page dans son CSS (null : en-tête propre testé à part, Ma session).
  */
-const SANS_TOPBAR = {
-  // Aligné (en-tête calé sur --topbar-h, testé plus bas).
-  'features/today-session/today-session.component': 'aligné',
-  // Décalés, NON corrigés (règle propre à chaque page) : écart titre − burger mesuré à 390 px.
-  'features/sessions/sessions.component': '+6,1 px, burger sur le sélecteur de mois',
-  'features/eco-calendar/eco-calendar.component': '+20,1 px',
-  'features/ambassador/ambassador.component': '+22,5 px',
-  'features/referral/referral.component': '+22,5 px',
-  'features/become-ambassador/become-ambassador.component': 'titre sous le lien retour (+62,7 px)',
+const SANS_TOPBAR: Record<string, string | null> = {
+  'features/today-session/today-session.component': null,
+  // Classe commune .mtc-page / .mtc-page-head / .mtc-page-title (styles.css).
+  'features/sessions/sessions.component': '.sessions-page',
+  'features/eco-calendar/eco-calendar.component': '.eco-page',
+  'features/ambassador/ambassador.component': '.content',
+  'features/referral/referral.component': '.content',
+  'features/become-ambassador/become-ambassador.component': '.content',
 };
 
 describe('pages du shell sans topbar commune', () => {
@@ -121,6 +120,12 @@ describe('pages du shell sans topbar commune', () => {
       .map((ext) => join(__dirname, '../../..', page + ext))
       .filter(existsSync)
       .some((f) => readFileSync(f, 'utf-8').includes('<mtc-topbar'));
+
+  const source = (page: string, ext: string) => {
+    const f = join(__dirname, '../../..', page + ext);
+    return existsSync(f) ? readFileSync(f, 'utf-8') : '';
+  };
+  const communes = Object.entries(SANS_TOPBAR).filter((e): e is [string, string] => e[1] !== null);
 
   it('inventaire à jour : toute page sans topbar a été mesurée', () => {
     expect(pages.length, 'routes du shell introuvables').toBeGreaterThan(10);
@@ -136,5 +141,42 @@ describe('pages du shell sans topbar commune', () => {
     const burgerTop = px(decl(sidebarCss, '.burger', 'top'));
     expect(lh).toBe(burgerH);
     expect(Math.abs(padTop + lh / 2 - (burgerTop + burgerH / 2))).toBeLessThanOrEqual(0.5);
+  });
+
+  // Géométrie de la classe commune, lue dans styles.css (règles mobiles après .mtc-page).
+  const globalCss = read('../../../../styles.css');
+  const pageCss = globalCss.slice(globalCss.indexOf('.mtc-page {'));
+  const mobile = pageCss.slice(pageCss.indexOf('@media (max-width: 768px)'));
+
+  it('classe commune (mobile) : ligne du titre = boîte du burger, place réservée à droite', () => {
+    const burgerH = px(decl(sidebarCss, '.burger', 'height'));
+    const burgerTop = px(decl(sidebarCss, '.burger', 'top'));
+    expect(decl(mobile, '.mtc-page', 'padding').split(' ')[0], 'haut du conteneur').toBe('0');
+    const headTop = px(decl(mobile, '.mtc-page-head', 'padding-top'));
+    const lh = px(decl(mobile, '.mtc-page-title', 'line-height'));
+    expect(lh).toBe(burgerH);
+    expect(Math.abs(headTop + lh / 2 - (burgerTop + burgerH / 2))).toBeLessThanOrEqual(0.5);
+    // Rien sous le burger : bord droit de l'en-tête à gauche du burger, avec un écart.
+    const reserve = px(tokens['--page-pad-mobile']) + px(decl(mobile, '.mtc-page-head', 'padding-right'));
+    const burgerSpan = px(decl(sidebarCss, '.burger', 'right')) + px(decl(sidebarCss, '.burger', 'width'));
+    expect(reserve - burgerSpan).toBeGreaterThanOrEqual(MARGE_MIN);
+  });
+
+  it('classe commune : pleine largeur, grille de cartes à colonnes automatiques', () => {
+    expect(pageCss.slice(0, pageCss.indexOf('@media'))).not.toMatch(/max-width/);
+    expect(decl(pageCss, '.mtc-cards', 'grid-template-columns')).toMatch(/^repeat\(auto-fit,/);
+  });
+
+  it.each(communes)('%s : en-tête commun, titre en premier, aucun plafond ni padding local', (page, root) => {
+    const tpl = source(page, '.html') || source(page, '.ts');
+    const css = source(page, '.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(tpl).toMatch(new RegExp(`class="${root.slice(1)} mtc-page"`));
+    // Le titre est le premier élément de l'en-tête : c'est lui qui tient la ligne du burger.
+    expect(tpl).toMatch(/class="[^"]*\bmtc-page-head"[^>]*>\s*(?:<!--[\s\S]*?-->\s*)*(?:<div[^>]*>\s*)?<h1 class="[^"]*\bmtc-page-title\b/);
+    // Une règle de composant a une spécificité plus forte que styles.css : elle écraserait la classe.
+    const esc = root.replace('.', '\\.');
+    const rules = [...css.matchAll(new RegExp(`(?:^|[}\\s,])${esc}\\s*\\{([^}]*)\\}`, 'g'))].map((m) => m[1]).join(';');
+    expect(rules, `${root} ne doit plus porter de padding`).not.toMatch(/(?:^|[;\s])padding(?:-top)?\s*:/);
+    expect(rules, `${root} ne doit plus porter de plafond`).not.toMatch(/max-width\s*:/);
   });
 });
