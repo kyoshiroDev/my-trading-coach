@@ -18,6 +18,7 @@ import {
   LucideLayers as Layers,
   LucideHeartPulse as HeartPulse,
   LucideList as List,
+  LucideRocket as Rocket,
 } from '@lucide/angular';
 import { httpResource } from '@angular/common/http';
 import { UserStore } from '../../core/stores/user.store';
@@ -106,6 +107,7 @@ import { NO_AUTO_PERIOD, periodChosenByUser, periodOnSelection, type AutoPeriodS
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {
+  protected readonly RocketIcon = Rocket;
   protected readonly userStore    = inject(UserStore);
   protected readonly money        = inject(MoneyService);
   protected readonly tradesStore  = inject(TradesStore);

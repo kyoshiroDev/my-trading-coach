@@ -469,8 +469,9 @@ Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire 
   PREMIÈRE ligne (`align-self: flex-start; margin-top: calc((1lh - 20px) / 2)`), sinon elle tombe
   entre deux lignes quand le titre passe à la ligne. Titre de carte : 16 px, `--text-3`.
   `src/app/titles-no-emoji.spec.ts` balaie les gabarits (h1-h6, classes title/label/lbl/head,
-  `<mtc-topbar title>`) : liste EXACTE des emojis de titre restants (16 au 25/10/2026), un ajout ou
-  un retrait sans mise à jour de la liste fait échouer le test.
+  `<mtc-topbar title>`) : plus AUCUN emoji de titre depuis le 25/10/2026 (`RESTANTS` vide), un ajout
+  fait échouer le test. Icône en ligne dans un titre non flex : `vertical-align: -0.2em` (sur la ligne
+  de base, elle monte de 3 px). Un en-tête de modale reprend l'icône du bouton qui l'ouvre.
 - **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
   tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
   courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.

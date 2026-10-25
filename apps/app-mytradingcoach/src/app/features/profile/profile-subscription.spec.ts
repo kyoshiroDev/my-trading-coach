@@ -87,7 +87,7 @@ describe('Profil > Abonnement', () => {
 
   it('Premium offert : jours restants, aucun prélèvement, pas de portail Stripe', () => {
     const text = render({ offered: true }).textContent ?? '';
-    expect(text).toContain('🎁 Premium offert : il te reste 20 jours');
+    expect(text).toContain('Premium offert : il te reste 20 jours');
     expect(text).toContain('Aucun prélèvement, tu repasses en gratuit automatiquement.');
     expect(text).toContain('Continuer en Premium →');
     expect(text).not.toContain('Premier prélèvement');
@@ -97,7 +97,7 @@ describe('Profil > Abonnement', () => {
 
   it('Essai Stripe : comportement inchangé (premier prélèvement + portail)', () => {
     const text = render({ offered: false }).textContent ?? '';
-    expect(text).toContain('🎁 Essai gratuit : il te reste 20 jours');
+    expect(text).toContain('Essai gratuit : il te reste 20 jours');
     expect(text).toContain('Premier prélèvement le');
     expect(text).toContain('Gérer / annuler mon essai →');
     expect(text).not.toContain('Premium offert');

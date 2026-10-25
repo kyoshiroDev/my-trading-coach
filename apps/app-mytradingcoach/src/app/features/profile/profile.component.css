@@ -260,6 +260,9 @@
   color: var(--text);
   margin: 0 0 4px;
 }
+/* Icône Lucide (ex-emoji 🎁), calée sur la première ligne si le titre passe à la ligne. */
+.trial-status-title { display: flex; align-items: flex-start; gap: 6px; }
+.trial-status-title svg.lucide { flex-shrink: 0; color: var(--text-2); margin-top: calc((1lh - 15px) / 2); }
 .trial-status-sub {
   font-size: 12px;
   color: var(--text-2);

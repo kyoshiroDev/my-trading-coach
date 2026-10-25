@@ -17,6 +17,15 @@ import { AccountSelectorComponent } from '../../shared/components/account-select
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { UserStore } from '../../core/stores/user.store';
 import { ErrorStateComponent } from '@mtc/front-ui';
+import {
+  LucideDynamicIcon,
+  LucideClipboardList as ClipboardList,
+  LucideChartColumn as ChartColumn,
+  LucideTrendingDown as TrendingDown,
+  LucideTrophy as Trophy,
+  LucideMessageCircleQuestionMark as MessageCircleQuestionMark,
+  LucideBookOpen as BookOpen,
+} from '@lucide/angular';
 
 interface WeekGroup {
   weekNumber: number;
@@ -31,10 +40,16 @@ interface WeekGroup {
   selector: 'mtc-sessions',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sessions.component.css',
-  imports: [ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
+  imports: [LucideDynamicIcon, ErrorStateComponent, DatePipe, DecimalPipe, PnlFormatPipe, EmotionEmojiPipe, RouterLink, AccountSelectorComponent],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent {
+  protected readonly ClipboardListIcon = ClipboardList;
+  protected readonly ChartColumnIcon = ChartColumn;
+  protected readonly TrendingDownIcon = TrendingDown;
+  protected readonly TrophyIcon = Trophy;
+  protected readonly MessageCircleQuestionMarkIcon = MessageCircleQuestionMark;
+  protected readonly BookOpenIcon = BookOpen;
   private readonly sessionApi = inject(SessionApi);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly selectedAccount = inject(SelectedAccountStore);

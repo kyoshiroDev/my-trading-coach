@@ -45,3 +45,6 @@
 .legal-note a {
   color: var(--blue-bright);
 }
+
+/* Icône Lucide du titre (ex-emoji 👋). */
+.auth-title svg.lucide { vertical-align: -0.125em; color: var(--text-2); }

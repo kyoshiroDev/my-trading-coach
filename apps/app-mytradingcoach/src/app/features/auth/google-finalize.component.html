@@ -8,9 +8,9 @@
 
     <h1 class="auth-title">
       @if (firstName) {
-        Bienvenue {{ firstName }} 👋
+        Bienvenue {{ firstName }} <svg [lucideIcon]="HandIcon" [size]="20"></svg>
       } @else {
-        Bienvenue 👋
+        Bienvenue <svg [lucideIcon]="HandIcon" [size]="20"></svg>
       }
     </h1>
     <p class="auth-subtitle">Ton compte est créé avec Google. Une dernière chose avant de commencer.</p>
