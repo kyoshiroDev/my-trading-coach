@@ -193,11 +193,8 @@ export class ScoringComponent {
   protected readonly EARNED_BADGES = EARNED_BADGES;
   protected readonly LOCKED_BADGES = LOCKED_BADGES;
 
-  protected readonly streakDots = Array.from({ length: 35 }, () => {
-    const v = Math.random();
-    const colors = ['#1a2535', '#1a3a2a', '#1e5c3a', '#1a7a4a', '#10b981'];
-    return colors[Math.floor(v * 5)];
-  });
+  // Niveau d'activité 0 à 4 par jour ; couleur : --streak-0 … --streak-4 (theme.css), via la classe niveau-N.
+  protected readonly streakDots = Array.from({ length: 35 }, () => Math.floor(Math.random() * 5));
 
   protected ringDash(): string {
     const circumference = 2 * Math.PI * 65;

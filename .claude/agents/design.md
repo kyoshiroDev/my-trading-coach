@@ -89,6 +89,10 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > Les badges plan/rôle (`--badge-premium-*`, `--badge-free-*`, `--badge-beta-*`,
 > `--badge-admin-*`) et les alias legacy (`--color-profit`, `--bg-primary`, `--text2`…)
 > existent dans `theme.css` — les réutiliser tels quels.
+>
+> Intensité d'activité (pastilles de streak de Score) : `--streak-0` (aucune) à `--streak-4`
+> (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
+> `features/scoring/score-streak-couleurs.spec.ts`.
 
 ---
 

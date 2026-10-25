@@ -141,8 +141,7 @@
             <div class="streak-dots">
               @for (d of streakDots; track $index) {
                 <div
-                  class="streak-dot"
-                  [style.background]="d"
+                  class="streak-dot niveau-{{ d }}"
                   [title]="'Jour ' + ($index + 1)"
                 ></div>
               }

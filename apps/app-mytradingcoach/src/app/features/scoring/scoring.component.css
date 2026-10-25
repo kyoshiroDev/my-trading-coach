@@ -150,6 +150,11 @@
   height: 18px;
   border-radius: 3px;
 }
+.streak-dot.niveau-0 { background: var(--streak-0); }
+.streak-dot.niveau-1 { background: var(--streak-1); }
+.streak-dot.niveau-2 { background: var(--streak-2); }
+.streak-dot.niveau-3 { background: var(--streak-3); }
+.streak-dot.niveau-4 { background: var(--streak-4); }
 
 .streak-info {
   font-size: 12px;
