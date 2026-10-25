@@ -14,11 +14,13 @@ import { PUSH_BROWSER, type BrowserEnv } from './push-browser';
 
 /**
  * Où en est le push sur CET appareil (#666). Ordre de diagnostic : serveur, navigateur intégré,
- * iPhone sans installation, navigateur sans push, permission refusée, puis abonné ou non.
+ * iPhone sans manifest, iPhone sans installation, navigateur sans push, permission refusée, puis
+ * abonné ou non.
  */
 export type PushState =
   | 'server-disabled'
   | 'in-app-browser'
+  | 'ios-unavailable'
   | 'ios-not-installed'
   | 'unsupported'
   | 'denied'
@@ -43,6 +45,10 @@ export function isIos(env: BrowserEnv): boolean {
 /** Diagnostic côté navigateur seul (sans l'avis du serveur ni l'abonnement). */
 export function browserState(env: BrowserEnv): Exclude<PushState, 'server-disabled' | 'subscribed'> {
   if (IN_APP_BROWSER.test(env.userAgent)) return 'in-app-browser';
+  // Sur iPhone et iPad, rien n'est proposé tant que la page n'a pas de manifest (#715) : sans lui,
+  // l'app ajoutée à l'écran d'accueil ne donne pas de push vérifié, même ouverte en mode app (iOS 26).
+  // Le critère est le lien réel dans le document : l'activation revient seule avec le manifest.
+  if (isIos(env) && !env.hasManifest) return 'ios-unavailable';
   // Sur iPhone, le Web Push n'existe que pour l'app ajoutée à l'écran d'accueil (iOS ≥ 16.4).
   if (isIos(env) && !env.standalone) return 'ios-not-installed';
   if (!env.hasServiceWorker || !env.hasPushManager || env.notificationPermission === null) return 'unsupported';

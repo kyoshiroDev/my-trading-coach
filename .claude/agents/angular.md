@@ -1411,7 +1411,11 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   2560 px). Aucun `order` ni `display: contents` (`push-settings.styles.spec.ts`). Heures
   silencieuses : début égal à la fin refusé (« Choisis deux heures différentes », 400 côté API),
   champ vidé ou refusé remis à la valeur enregistrée. Seed démo : 2 appareils, 22:00 à 07:00.
-- iPhone sans installation : aide FIXE « Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach
+- **iPhone ou iPad sans `<link rel="manifest">`** (lien lu dans le document, pas un drapeau ;
+  `BrowserEnv.hasManifest`) : état `ios-unavailable`, seulement « Les alertes sur iPhone ne sont
+  pas encore disponibles. », ni étapes, ni types, ni activation, même ouverte en mode app (iOS 26
+  l'ouvre ainsi sans manifest). L'activation revient seule quand #715 ajoute le lien (revue F4).
+- iPhone sans installation (manifest présent) : aide FIXE « Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach
   à l'écran d'accueil, puis ouvre-la depuis son icône » et « Partager, puis Sur l'écran d'accueil,
   puis Ajouter », sans bouton, sans durée ni promesse (revue phase 2 I4), en attendant le parcours
   d'installation (#715). Sans manifest (#715), l'app ajoutée à l'écran d'accueil d'un iPhone avant

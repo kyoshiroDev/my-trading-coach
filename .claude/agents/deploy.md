@@ -894,6 +894,10 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   avant iOS 26 s'ouvre dans Safari (pas en mode app, donc pas de push) et le trader reste sur le
   bandeau « ajoute MyTradingCoach à l'écran d'accueil ». Depuis iOS 26, tout site ajouté s'ouvre
   en mode app par défaut, mais le push sans manifest n'a pas été vérifié sur un vrai iPhone.
+  **Règle aussi imposée dans le code** : sur iPhone et iPad, tant que la page n'a pas de
+  `<link rel="manifest">`, la section affiche seulement « Les alertes sur iPhone ne sont pas encore
+  disponibles. » (état `ios-unavailable`, ni étapes ni activation). Le manifest de #715 en ligne,
+  l'activation revient seule.
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible

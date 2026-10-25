@@ -39,6 +39,11 @@
                 @if (push.error(); as e) { <p class="pn-error" role="alert">{{ e }}</p> }
               </div>
             }
+            @case ('ios-unavailable') {
+              <div class="pn-card pn-pad pn-o-status" data-testid="push-ios-unavailable">
+                <p class="pn-sm">Les alertes sur iPhone ne sont pas encore disponibles.</p>
+              </div>
+            }
             @case ('ios-not-installed') {
               <div class="pn-ban pn-o-status" data-testid="push-ios">
                 <h3>Ajoute MTC à ton écran d’accueil</h3>

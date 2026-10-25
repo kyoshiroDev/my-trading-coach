@@ -27,7 +27,7 @@ async function mount(opts: {
   let current = opts.settings ?? settings();
   const sub = { endpoint: 'https://fcm.googleapis.com/fcm/send/x', toJSON: () => ({ endpoint: 'https://fcm.googleapis.com/fcm/send/x', keys: { p256dh: 'k', auth: 'a' } }), unsubscribe: vi.fn(async () => true) };
   const browser: PushBrowser = {
-    env: () => ({ userAgent: ANDROID, maxTouchPoints: 5, standalone: false, hasServiceWorker: true, hasPushManager: true, notificationPermission: 'default', ...opts.env }),
+    env: () => ({ userAgent: ANDROID, maxTouchPoints: 5, standalone: false, hasServiceWorker: true, hasPushManager: true, notificationPermission: 'default', hasManifest: true, ...opts.env }),
     currentSubscription: vi.fn(async () => ((opts.subscribed ?? true) ? sub : null) as unknown as PushSubscription | null),
     subscribe: vi.fn(async () => sub as unknown as PushSubscription),
   };
@@ -208,6 +208,27 @@ describe('Section Notifications du profil', () => {
     const { q } = await mount({ subscribed: false, settings: settings({ devices }) });
     expect(q('push-limit')!.textContent).toContain('Retire un appareil pour en ajouter un');
     expect(q('push-enable')!.hasAttribute('disabled')).toBe(true);
+  });
+
+  it.each([
+    ['Safari, non installé', { userAgent: IPHONE }],
+    ['installé (écran d’accueil)', { userAgent: IPHONE, standalone: true }],
+  ])('iPhone sans lien manifest, %s : état neutre seul, ni étapes ni activation (F4)', async (_, e) => {
+    const { q, el, browser } = await mount({ subscribed: false, env: { ...e, hasManifest: false } });
+    expect(q('push-ios-unavailable')!.textContent!.trim()).toBe('Les alertes sur iPhone ne sont pas encore disponibles.');
+    expect(q('push-ios')).toBeNull();
+    expect(q('push-enable')).toBeNull();
+    expect(q('push-setup')).toBeNull();
+    expect(q('push-types')).toBeNull();
+    expect(el.querySelector('button')).toBeNull();
+    expect(el.textContent).not.toMatch(/écran d’accueil|Activer|bientôt|prochainement/i);
+    expect(browser.currentSubscription).not.toHaveBeenCalled();
+  });
+
+  it('iPhone installé avec lien manifest : l’activation revient seule (F4)', async () => {
+    const { q } = await mount({ subscribed: false, env: { userAgent: IPHONE, standalone: true, hasManifest: true } });
+    expect(q('push-ios-unavailable')).toBeNull();
+    expect(q('push-enable')).not.toBeNull();
   });
 
   it('iPhone sans installation : aide fixe, aucun bouton', async () => {

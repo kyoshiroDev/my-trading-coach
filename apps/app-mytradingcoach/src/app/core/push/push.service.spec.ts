@@ -16,7 +16,7 @@ const INSTAGRAM = `${IPHONE_SAFARI} Instagram 350.0.0`;
 
 const env = (over: Partial<BrowserEnv> = {}): BrowserEnv => ({
   userAgent: CHROME_ANDROID, maxTouchPoints: 5, standalone: false, hasServiceWorker: true, hasPushManager: true,
-  notificationPermission: 'default', ...over,
+  notificationPermission: 'default', hasManifest: true, ...over,
 });
 
 const settings = (over: Partial<TraderPushSettings> = {}): TraderPushSettings => ({
@@ -65,7 +65,13 @@ afterEach(() => TestBed.resetTestingModule());
 describe('browserState', () => {
   it.each([
     ['navigateur intégré (Instagram)', env({ userAgent: INSTAGRAM }), 'in-app-browser'],
-    ['iPhone hors écran d’accueil', env({ userAgent: IPHONE_SAFARI }), 'ios-not-installed'],
+    ['iPhone hors écran d’accueil, manifest présent', env({ userAgent: IPHONE_SAFARI }), 'ios-not-installed'],
+    ['iPhone installé, manifest présent', env({ userAgent: IPHONE_SAFARI, standalone: true }), 'supported'],
+    ['iPhone dans Safari, sans manifest', env({ userAgent: IPHONE_SAFARI, hasManifest: false }), 'ios-unavailable'],
+    ['iPhone ouvert en mode app sans manifest (iOS 26)', env({ userAgent: IPHONE_SAFARI, standalone: true, hasManifest: false }), 'ios-unavailable'],
+    ['iPad en mode bureau, sans manifest', env({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', maxTouchPoints: 5, standalone: true, hasManifest: false }), 'ios-unavailable'],
+    ['Instagram sur iPhone sans manifest : navigateur intégré d’abord', env({ userAgent: INSTAGRAM, hasManifest: false }), 'in-app-browser'],
+    ['Chrome Android sans manifest : non concerné', env({ hasManifest: false }), 'supported'],
     ['iPhone installé', env({ userAgent: IPHONE_SAFARI, standalone: true }), 'supported'],
     ['iPad (se présente comme un Mac tactile)', env({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', maxTouchPoints: 5 }), 'ios-not-installed'],
     ['sans PushManager', env({ hasPushManager: false }), 'unsupported'],

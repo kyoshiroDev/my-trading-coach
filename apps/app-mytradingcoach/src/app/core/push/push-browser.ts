@@ -17,6 +17,11 @@ export interface BrowserEnv {
   hasPushManager: boolean;
   /** `null` si l'API Notification n'existe pas. */
   notificationPermission: NotificationPermission | null;
+  /**
+   * La page déclare un manifest (`<link rel="manifest">`). Sans lui, aucun push sur iPhone n'a été
+   * vérifié, même ouverte depuis l'écran d'accueil (#715, revue phase 2 F4).
+   */
+  hasManifest: boolean;
 }
 
 export interface PushBrowser {
@@ -53,6 +58,7 @@ export const PUSH_BROWSER = new InjectionToken<PushBrowser>('PUSH_BROWSER', {
       hasServiceWorker: 'serviceWorker' in navigator,
       hasPushManager: 'PushManager' in window,
       notificationPermission: 'Notification' in window ? Notification.permission : null,
+      hasManifest: document.querySelector('link[rel="manifest"]') !== null,
     }),
     currentSubscription: async () => (await registration())?.pushManager?.getSubscription() ?? null,
     subscribe: async (publicKey) => {
