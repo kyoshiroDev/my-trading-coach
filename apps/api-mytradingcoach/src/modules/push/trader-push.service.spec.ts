@@ -24,7 +24,7 @@ function setup(opts: { config?: PushConfigResult; status?: number; devices?: Ret
   const pref = { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn().mockResolvedValue({}) };
   const prisma = { userPushDevice: db, traderPushPreference: pref } as unknown as PrismaService;
   const send = vi.fn().mockResolvedValue(opts.status ?? 201);
-  const service = new TraderPushService(prisma, opts.config ?? ENABLED, { send } as PushSender);
+  const service = new TraderPushService(prisma, opts.config ?? ENABLED, { send } as PushSender, true);
   return { service, db, pref, send };
 }
 
@@ -176,7 +176,7 @@ describe('Appareil partagé : retrait échoué à la déconnexion de A, puis B s
     const db = memoryDb();
     const prisma = { userPushDevice: db, traderPushPreference: { findUnique: vi.fn(), upsert: vi.fn() } } as unknown as PrismaService;
     const send = vi.fn().mockResolvedValue(201);
-    const service = new TraderPushService(prisma, ENABLED, { send } as PushSender);
+    const service = new TraderPushService(prisma, ENABLED, { send } as PushSender, true);
 
     await service.subscribe('user-a', SUB, 'Chrome · Android');
     // Déconnexion de A : le retrait côté API a échoué, la ligne appartient encore à A.

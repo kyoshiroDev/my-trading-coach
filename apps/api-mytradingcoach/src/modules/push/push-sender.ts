@@ -6,6 +6,8 @@ import { pushEndpointCheck } from './push-endpoint';
 export const PUSH_SENDER = Symbol('PUSH_SENDER');
 /** Résultat de `resolvePushConfig` (fourni par `PushCoreModule`). */
 export const PUSH_CONFIG = Symbol('PUSH_CONFIG');
+/** `TRADER_PUSH_ENABLED=true` (fourni par `PushCoreModule`), voir `resolveTraderPushFlag`. */
+export const TRADER_PUSH_FLAG = Symbol('TRADER_PUSH_FLAG');
 
 export interface PushTarget {
   endpoint: string;

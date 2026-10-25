@@ -1421,8 +1421,8 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   à l'écran d'accueil, puis ouvre-la depuis son icône » et « Partager, puis Sur l'écran d'accueil,
   puis Ajouter », sans bouton, sans durée ni promesse (revue phase 2 I4), en attendant le parcours
   d'installation (#715). Sans manifest (#715), l'app ajoutée à l'écran d'accueil d'un iPhone avant
-  iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `PUSH_ENABLED` reste coupé en
-  production jusque-là (`deploy.md`).
+  iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `TRADER_PUSH_ENABLED` reste
+  coupé en production jusque-là (`deploy.md`) ; coupé, la section est absente de l'app.
 
 ## Connexion Google (#618, 2026-10-18)
 

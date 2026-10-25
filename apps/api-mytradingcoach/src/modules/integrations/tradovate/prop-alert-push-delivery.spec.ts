@@ -69,7 +69,7 @@ function setup(devices: { id: string; endpoint: string; reply: Reply }[], pushPr
     return reply;
   });
   const config = { enabled: true as const, config: { publicKey: 'pub', privateKey: 'priv', subject: 'mailto:support@mytradingcoach.app' } };
-  const push = new TraderPushService(prisma as never, config, { send } as PushSender);
+  const push = new TraderPushService(prisma as never, config, { send } as PushSender, true);
   const notifier = new TraderNotifier(prisma as never, redis as never, push);
   const metrics = { drawdown: { pct: 0, breached: true, margin: 0, maxDrawdown: 2000 }, dailyLoss: null };
   const accounts = { list: vi.fn(async () => [{ id: 'a', label: 'Apex 50k', currency: 'USD', status: 'ACTIVE', metrics }]) };

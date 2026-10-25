@@ -68,6 +68,8 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'PUSH_ENABLED', level: 'optional', check: isBoolean },
   { name: 'VAPID_PUBLIC_KEY', level: 'optional', check: (v) => (isVapidKey(v, 65) ? undefined : 'doit être une clé publique VAPID (base64url, 65 octets)') },
   { name: 'VAPID_PRIVATE_KEY', level: 'optional', check: (v) => (isVapidKey(v, 32) ? undefined : 'doit être une clé privée VAPID (base64url, 32 octets)') },
+  // Push des traders (#666) : exige aussi PUSH_ENABLED ; éteint si absent (config/push-config.ts).
+  { name: 'TRADER_PUSH_ENABLED', level: 'optional', check: isBoolean },
   { name: 'VAPID_SUBJECT', level: 'optional', check: (v) => (/^(mailto:[^@\s]+@[^@\s]+|https:\/\/\S+)$/.test(v) ? undefined : 'doit être mailto:… ou https://…') },
   // Connexion Google (#618). Bouton visible seulement si FEATURE_GOOGLE_AUTH=true ET GOOGLE_CLIENT_ID
   // défini (client OAuth « application web » propre à l'environnement) ; off par défaut.

@@ -2201,6 +2201,11 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
 - Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
   (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Traders (#666) : en plus `TRADER_PUSH_ENABLED=true` (`resolveTraderPushFlag`, jeton
+  `TRADER_PUSH_FLAG` de `PushCoreModule`, éteint si absent) ; `TraderPushService.enabled` exige
+  les deux, l'admin ne lit que `PUSH_ENABLED`. Éteint : `enabled: false` et `publicKey: null` sur
+  `GET /push/settings`, 503 sur `subscribe` et `test`, notifieur `disabled` ; `DELETE
+  /push/devices/:id` et `POST /push/unsubscribe` restent ouverts (`push-switches.spec.ts`).
   Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
 - Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
