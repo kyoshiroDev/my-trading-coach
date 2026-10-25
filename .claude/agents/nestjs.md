@@ -2194,6 +2194,11 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
 - Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
   moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
   404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Journal d'envoi (`push-delivery.ts`, admin et traders) : UNE ligne par tentative et par appareil
+  (info si livré ou 404/410 abonnement supprimé ; warn pour 5xx, autres 4xx, délai, erreur réseau),
+  `Envoi push <admin|trader> <TYPE> : livré|échec (<2xx|404|410|4xx|5xx|délai dépassé|erreur réseau>, <hôte>)`.
+  Jamais l'endpoint, ses clés, l'id d'appareil ni le message d'une exception (il peut citer l'adresse) ;
+  délai = `PushDeadlineError` (`push-http.ts`). Contrat verrouillé par `push-delivery.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;

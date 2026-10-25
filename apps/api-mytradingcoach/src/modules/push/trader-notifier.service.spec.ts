@@ -40,7 +40,7 @@ describe('TraderNotifier.send', () => {
   it('Premium, appareil abonné, rien de coupé : envoyé, clé anti-spam de 15 min par compte', async () => {
     const { notifier, deliverToUser, set } = setup({});
     expect(await send(notifier, 'PROP_RULES')).toBe('sent');
-    expect(deliverToUser).toHaveBeenCalledWith('u1', { ...msg, body: 'Synchro interrompue pour Apex 50K : reconnecte-le depuis Comptes.' });
+    expect(deliverToUser).toHaveBeenCalledWith('u1', { ...msg, body: 'Synchro interrompue pour Apex 50K : reconnecte-le depuis Comptes.' }, 'PROP_RULES');
     expect(set).toHaveBeenCalledWith('push:spam:u1:acc-1:prop:drawdown:critical', '1', 'PX', PUSH_ANTI_SPAM_MS, 'NX');
   });
 

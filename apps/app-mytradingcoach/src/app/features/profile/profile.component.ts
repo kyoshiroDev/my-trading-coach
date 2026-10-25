@@ -210,8 +210,10 @@ export class ProfileComponent implements OnInit {
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
-      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition.
-      if (!this.hasStrategyProfile()) this.openStrategyModal();
+      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition, sauf sur
+      // un lien profond (#notifications d'un push, ?tab= d'un e-mail) : elle masquerait sa cible.
+      const deepLink = this.openNotifications || this.route.snapshot.queryParamMap.has('tab');
+      if (!this.hasStrategyProfile() && !deepLink) this.openStrategyModal();
     }
 
     this.tradesApi.getUserAssets().subscribe({

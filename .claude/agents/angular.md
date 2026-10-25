@@ -1398,7 +1398,10 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   (`push-settings-component`, 28,81 ko).
 - **Section du profil** `features/profile/notifications/push-settings.component` : onglet
   Paramètres, chargée par `@defer (on viewport; when openNotifications)` ; `/profil#notifications`
-  ouvre l'onglet et charge tout de suite. Masquée sans erreur si le push est coupé côté serveur ;
+  ouvre l'onglet et charge tout de suite. La modale « Modifier ma stratégie » ne s'ouvre seule
+  (premier passage, aucune stratégie) que sur `/profil` sans `#notifications` ni `?tab=` : le
+  bandeau « Compléter » du tableau de bord compte dessus, les liens profonds (push, « Gérer mes
+  e-mails ») non ; `profile-strategy-modal-auto.spec.ts`. Masquée sans erreur si le push est coupé côté serveur ;
   démo en lecture seule (aucun appel `device`, aucun bouton d'action). Gratuit : lignes Premium
   verrouillées + modale des offres, seule `CONNECTION` active. Interrupteurs `role="switch"`
   étiquetés (`aria-labelledby`), cibles de 44 px, `scroll-margin-top` sous la barre fixe.

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createECDH, randomBytes } from 'node:crypto';
 import { generateVAPIDKeys } from 'web-push';
-import { PUSH_DEADLINE_MS, PUSH_MAX_RESPONSE_BYTES, postWithLimits } from './push-http';
+import { PUSH_DEADLINE_MS, PUSH_MAX_RESPONSE_BYTES, PushDeadlineError, postWithLimits } from './push-http';
 import { WebPushLibSender } from './push-sender';
 
 /**
@@ -78,7 +78,8 @@ describe('postWithLimits', () => {
 
   it('aucune réponse : rejetée à l’échéance, pas après', async () => {
     const t0 = Date.now();
-    await expect(post('/silent')).rejects.toThrow(/délai total/);
+    // Classe dédiée : `deliverPush` la journalise « délai dépassé », pas « erreur réseau ».
+    await expect(post('/silent')).rejects.toBeInstanceOf(PushDeadlineError);
     expect(Date.now() - t0).toBeLessThan(1500);
   });
 

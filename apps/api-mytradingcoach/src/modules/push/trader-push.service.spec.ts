@@ -31,7 +31,7 @@ function setup(opts: { config?: PushConfigResult; status?: number; devices?: Ret
 describe('TraderPushService.deliverToUser', () => {
   it('tous les appareils du trader, payload de l’app, TTL et urgence du message', async () => {
     const { service, db, send } = setup({ devices: [dev('d1'), dev('d2')] });
-    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.recapReady());
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.recapReady(), 'RECAP');
     expect(r).toEqual({ subscriptions: 2, delivered: 2, failed: 0, removed: 0 });
     expect(db.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'u1' } }));
     expect(JSON.parse(send.mock.calls[0][1])).toMatchObject({ title: 'Récap du jour', url: '/dashboard' });
@@ -41,14 +41,14 @@ describe('TraderPushService.deliverToUser', () => {
 
   it.each([404, 410])('%i : abonnement expiré supprimé', async (status) => {
     const { service, db } = setup({ status });
-    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test());
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST');
     expect(r.removed).toBe(1);
     expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: 'd1' } });
   });
 
   it('autre refus : compté en échec, abonnement gardé', async () => {
     const { service, db } = setup({ status: 429 });
-    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test())).failed).toBe(1);
+    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST')).failed).toBe(1);
     expect(db.deleteMany).not.toHaveBeenCalled();
   });
 
@@ -56,7 +56,7 @@ describe('TraderPushService.deliverToUser', () => {
     const internal = { id: 'd-int', endpoint: 'https://169.254.169.254/latest/secret-token', p256dh: 'k'.repeat(87), auth: 'a'.repeat(22) };
     const { service, db, send } = setup({ devices: [internal, dev('d1')] });
     const warn = vi.spyOn((service as unknown as { logger: { warn: (m: string) => void } }).logger, 'warn');
-    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test());
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST');
     expect(r).toEqual({ subscriptions: 2, delivered: 1, failed: 0, removed: 1 });
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0][0]).toMatchObject({ id: 'd1' });
@@ -67,7 +67,7 @@ describe('TraderPushService.deliverToUser', () => {
 
   it('push désactivé : rien n’est lu ni envoyé', async () => {
     const { service, db, send } = setup({ config: { enabled: false, reason: 'off' } });
-    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test())).subscriptions).toBe(0);
+    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST')).subscriptions).toBe(0);
     expect(db.findMany).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
   });
@@ -188,8 +188,8 @@ describe('Appareil partagé : retrait échoué à la déconnexion de A, puis B s
 
     expect(db.rows).toHaveLength(1);
     expect(db.rows[0].userId).toBe('user-b');
-    expect(await service.deliverToUser('user-a', TRADER_PUSH_MESSAGES.test())).toEqual({ subscriptions: 0, delivered: 0, failed: 0, removed: 0 });
+    expect(await service.deliverToUser('user-a', TRADER_PUSH_MESSAGES.test(), 'TEST')).toEqual({ subscriptions: 0, delivered: 0, failed: 0, removed: 0 });
     expect(send).not.toHaveBeenCalled();
-    expect((await service.deliverToUser('user-b', TRADER_PUSH_MESSAGES.test())).delivered).toBe(1);
+    expect((await service.deliverToUser('user-b', TRADER_PUSH_MESSAGES.test(), 'TEST')).delivered).toBe(1);
   });
 });

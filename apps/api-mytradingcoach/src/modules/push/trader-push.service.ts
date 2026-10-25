@@ -142,14 +142,14 @@ export class TraderPushService implements OnModuleInit {
   /** « Tester » : tous les appareils du trader, sans filtre de préférence. */
   async test(userId: string): Promise<AdminPushTestResult> {
     this.requireEnabled();
-    return this.deliverToUser(userId, TRADER_PUSH_MESSAGES.test());
+    return this.deliverToUser(userId, TRADER_PUSH_MESSAGES.test(), 'TEST');
   }
 
   /**
    * Envoie `message` à chaque appareil du trader. Aucun filtre ici (c'est `TraderNotifier`).
-   * Ne lève que si la base est indisponible.
+   * `kind` ne sert qu'aux journaux. Ne lève que si la base est indisponible.
    */
-  async deliverToUser(userId: string, message: TraderPushMessage): Promise<AdminPushTestResult> {
+  async deliverToUser(userId: string, message: TraderPushMessage, kind: PushAlertType | 'TEST'): Promise<AdminPushTestResult> {
     const empty = { subscriptions: 0, delivered: 0, failed: 0, removed: 0 };
     if (!this.enabled || !this.sender) return empty;
     const targets = await this.prisma.userPushDevice.findMany({
@@ -169,6 +169,7 @@ export class TraderPushService implements OnModuleInit {
       },
       this.logger,
       'trader',
+      kind,
     );
   }
 }
