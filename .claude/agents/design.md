@@ -465,6 +465,12 @@ Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire 
 - Taille : 14-16px dans la sidebar, 15-20px dans le contenu. Stroke 1.5-2px.
 - **Jamais d'emoji** dans les composants Angular — *sauf* les émotions trader
   (et watermarks/nav décoratifs assumés par le design).
+- **Titres** : icône Lucide à la place de l'emoji. h1 de page : 20 px, `--text-2`, calée sur la
+  PREMIÈRE ligne (`align-self: flex-start; margin-top: calc((1lh - 20px) / 2)`), sinon elle tombe
+  entre deux lignes quand le titre passe à la ligne. Titre de carte : 16 px, `--text-3`.
+  `src/app/titles-no-emoji.spec.ts` balaie les gabarits (h1-h6, classes title/label/lbl/head,
+  `<mtc-topbar title>`) : liste EXACTE des emojis de titre restants (16 au 25/10/2026), un ajout ou
+  un retrait sans mise à jour de la liste fait échouer le test.
 - **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
   tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
   courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.

@@ -16,6 +16,9 @@ import {
   LucideTrendingUp as TrendingUp,
   LucideAward as Award,
   LucideCheck as Check,
+  LucideHandshake as Handshake,
+  LucideClipboardList as ClipboardList,
+  LucideReceipt as Receipt,
 } from '@lucide/angular';
 import { AmbassadorApi, AmbassadorStats, ReferralUser } from '../../core/api/ambassador.api';
 import { ReferralApi } from '../../core/api/referral.api';
@@ -47,6 +50,9 @@ export class AmbassadorComponent implements OnInit {
   protected readonly TrendingUpIcon = TrendingUp;
   protected readonly AwardIcon = Award;
   protected readonly CheckIcon = Check;
+  protected readonly HandshakeIcon = Handshake;
+  protected readonly ClipboardListIcon = ClipboardList;
+  protected readonly ReceiptIcon = Receipt;
 
   protected readonly stats = signal<AmbassadorStats | null>(null);
   protected readonly isLoading = signal(true);

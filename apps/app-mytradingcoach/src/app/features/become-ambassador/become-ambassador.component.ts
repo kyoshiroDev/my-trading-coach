@@ -11,6 +11,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideDynamicIcon,
   LucideCheck as Check,
+  LucideHandshake as Handshake,
+  LucideClipboardList as ClipboardList,
+  LucideSend as Send,
 } from '@lucide/angular';
 import { ReferralApi } from '../../core/api/referral.api';
 import { ToastService } from '../../core/services/toast.service';
@@ -26,7 +29,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
       <!-- Titre en premier dans le DOM : sur mobile il est la ligne du burger. Le lien retour
            s'affiche au-dessus en bureau (order), dessous sur mobile. -->
       <div class="page-head mtc-page-head">
-        <h1 class="page-title mtc-page-title">🤝 Devenir ambassadeur</h1>
+        <h1 class="page-title mtc-page-title"><svg [lucideIcon]="HandshakeIcon" [size]="20"></svg>Devenir ambassadeur</h1>
         <a class="back" routerLink="/parrainage">← Retour au parrainage</a>
       </div>
       <p class="page-sub">Tu as une audience de traders ? Touche une commission cash récurrente de 20% sur chaque abonnement de tes filleuls, tant qu'ils restent clients.</p>
@@ -53,7 +56,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 
         <!-- Conditions (pleine largeur, items en 2 colonnes) -->
         <div class="card">
-          <div class="card-title">📋 Conditions</div>
+          <div class="card-title"><svg [lucideIcon]="ClipboardListIcon" [size]="16"></svg>Conditions</div>
           <div class="elig-grid">
             <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Statut pro</b> : micro-entreprise ou société (la micro est gratuite et se crée en 15 min).</span></div>
             <div class="elig"><span class="elig-ic"><svg [lucideIcon]="CheckIcon" [size]="12"></svg></span><span><b>Justificatif</b> : avis de situation SIRENE, ou Kbis si société.</span></div>
@@ -72,7 +75,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
           </div>
 
           <div class="card">
-            <div class="card-title">📨 Ta demande</div>
+            <div class="card-title"><svg [lucideIcon]="SendIcon" [size]="16"></svg>Ta demande</div>
             <label class="field-lbl" for="socials">Tes réseaux sociaux <span class="req">requis</span></label>
             <input
               id="socials"
@@ -119,6 +122,9 @@ export class BecomeAmbassadorComponent {
   private readonly toast = inject(ToastService);
 
   protected readonly CheckIcon = Check;
+  protected readonly HandshakeIcon = Handshake;
+  protected readonly ClipboardListIcon = ClipboardList;
+  protected readonly SendIcon = Send;
 
   protected readonly socials = signal('');
   protected readonly message = signal('');
