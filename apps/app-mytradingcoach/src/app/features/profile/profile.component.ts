@@ -210,8 +210,9 @@ export class ProfileComponent implements OnInit {
       this.tradesPerDayMin.set(user.tradesPerDayMin ?? 1);
       this.tradesPerDayMax.set(user.tradesPerDayMax ?? 10);
       this.strategyDesc.set(user.strategyDescription ?? '');
-      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition.
-      if (!this.hasStrategyProfile()) this.openStrategyModal();
+      // Premier passage (profil stratégie vide) → ouvrir directement la modale d'édition,
+      // sauf en arrivant d'une notification push (#notifications) : elle masquerait la section.
+      if (!this.hasStrategyProfile() && !this.openNotifications) this.openStrategyModal();
     }
 
     this.tradesApi.getUserAssets().subscribe({
