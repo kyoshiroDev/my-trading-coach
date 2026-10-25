@@ -118,12 +118,14 @@
         <div class="acct-block" [style.--ac]="accentVar(a)"
              [class.is-archived]="a.status === 'ARCHIVED'"
              [class.is-failed]="a.status === 'FAILED'"
-             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker"
+             [class.has-detail]="(!a.metrics.objective && !a.metrics.drawdown) || !!a.propFirmPlanId || !!a.metrics.broker || a.type === 'FUNDED'"
              [class.is-open]="expandedId() === a.id"
              [attr.data-testid]="'tradovate-row-' + a.id">
 
+          <!-- `account-row` : ligne d'un compte pour les tests (e2e) ; l'id du compte dans data-account-id. -->
           <div class="acct-line"
-               [attr.data-testid]="'account-card-' + a.id">
+               data-testid="account-row"
+               [attr.data-account-id]="a.id">
 
             <!-- 1 · Compte : icône, nom, badges, statut -->
             <div class="cell cell-acct">
@@ -308,8 +310,17 @@
             <div class="acct-sub acct-failed" [attr.data-testid]="'account-failed-' + a.id">
               <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
               <div class="acct-failed-actions">
-                <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
-                        [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
+                @if (a.openIncidentId) {
+                  <a class="lost-btn" [routerLink]="['/accounts', a.id, 'autopsie', a.openIncidentId]"
+                     [attr.data-testid]="'account-autopsy-' + a.id">Voir l'autopsie</a>
+                }
+                @if (lostAccount.newerAttempt(a); as next) {
+                  <button type="button" class="lost-btn pri" (click)="lostAccount.openAttempt(next.id)"
+                          [attr.data-testid]="'account-see-attempt-' + a.id">Voir {{ next.label }}</button>
+                } @else {
+                  <button type="button" class="lost-btn pri" (click)="lostAccount.openRetry(a.id)"
+                          [disabled]="lostAccount.busy()" [attr.data-testid]="'account-retry-' + a.id">Nouvelle tentative</button>
+                }
                 <button type="button" class="lost-btn" (click)="lostAccount.archive(a)"
                         [disabled]="lostAccount.busy()" [attr.data-testid]="'account-archive-' + a.id">Archiver</button>
               </div>
@@ -317,6 +328,12 @@
           } @else if (a.status === 'ARCHIVED') {
             <div class="acct-sub acct-failed" [attr.data-testid]="'account-archived-' + a.id">
               <span class="tv-text">Hors statistiques · {{ a.metrics.tradesCount }} trade{{ a.metrics.tradesCount > 1 ? 's' : '' }}</span>
+              @if (a.openIncidentId) {
+                <div class="acct-failed-actions">
+                  <a class="lost-btn" [routerLink]="['/accounts', a.id, 'autopsie', a.openIncidentId]"
+                     [attr.data-testid]="'account-autopsy-' + a.id">Voir l'autopsie</a>
+                </div>
+              }
             </div>
           }
 
@@ -473,6 +490,8 @@
                       } @else if (pg.cycleSource === 'broker') {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, détecté chez le broker
                         @if (pg.payoutsReceived) { ({{ pg.payoutsReceived }} payout{{ pg.payoutsReceived > 1 ? 's' : '' }} reçu{{ pg.payoutsReceived > 1 ? 's' : '' }}) }.
+                      } @else if (pg.cycleSource === 'manual') {
+                        Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}, saisi dans la liste des payouts.
                       } @else if (pg.cycleAfter) {
                         Cycle compté depuis ton payout du {{ sessionDate(pg.cycleAfter) }}.
                       } @else {
@@ -492,6 +511,13 @@
               } @else {
                 <span class="tv-text">Chargement des règles du plan…</span>
               }
+            </div>
+          }
+
+          <!-- Payouts d'un compte funded (au dépli) : détectés chez le broker, ou saisis s'il n'est pas connecté. -->
+          @if (a.type === 'FUNDED' && expandedId() === a.id) {
+            <div class="acct-sub acct-payouts" [attr.data-testid]="'account-payouts-' + a.id">
+              <mtc-account-payouts [accountId]="a.id" [currency]="a.currency" [connected]="!!conn" (changed)="onPayoutsChanged()" />
             </div>
           }
 

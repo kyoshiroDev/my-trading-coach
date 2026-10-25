@@ -1,0 +1,49 @@
+<section class="ap" aria-labelledby="ap-title" data-testid="account-payouts">
+  <h4 id="ap-title" class="ap-title">Payouts reçus</h4>
+
+  @if (loadError()) {
+    <p class="ap-note">Payouts indisponibles pour le moment.
+      <button type="button" class="ap-link" (click)="load()">Réessayer</button></p>
+  } @else if (payouts(); as list) {
+    @if (list.length) {
+      <ul class="ap-list">
+        @for (p of list; track p.id) {
+          <li class="ap-row" [attr.data-testid]="'payout-' + p.id">
+            <span class="ap-date">{{ day(p.tradeDate) }}</span>
+            <span class="ap-amount">−{{ money(p.amount) }}</span>
+            <span class="ap-src">{{ p.manual ? 'saisi' : (p.confidence === 'probable' ? 'détecté (probable)' : 'détecté chez le broker') }}</span>
+            @if (p.manual) {
+              <button type="button" class="ap-del" (click)="remove(p)"
+                      [attr.aria-label]="'Supprimer le payout du ' + day(p.tradeDate)"
+                      [attr.data-testid]="'payout-delete-' + p.id">Supprimer</button>
+            }
+          </li>
+        }
+      </ul>
+      <!-- Règle « plancher gelé au premier payout » pas encore modélisée au catalogue. -->
+      <p class="ap-note" data-testid="payouts-floor-lock-note">Le plancher gelé après un payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm.</p>
+    } @else {
+      <p class="ap-note" data-testid="payouts-empty">Aucun payout enregistré.</p>
+    }
+  }
+
+  @if (connected()) {
+    <p class="ap-note" data-testid="payouts-from-broker">Compte connecté : tes payouts sont détectés chez le broker, rien à saisir.</p>
+  } @else {
+    <div class="ap-form" data-testid="payout-form">
+      <label class="ap-field">
+        <span class="ap-lbl">Date du payout</span>
+        <input type="date" class="ap-inp" [value]="date()" [max]="today" (input)="onDate($event)" data-testid="payout-date" />
+      </label>
+      <label class="ap-field">
+        <span class="ap-lbl">Montant retiré ({{ currency() }})</span>
+        <input type="number" class="ap-inp" inputmode="decimal" min="0.01" step="0.01" placeholder="1000"
+               [value]="amount() ?? ''" (input)="onAmount($event)" data-testid="payout-amount" />
+      </label>
+      <button type="button" class="ap-btn" [disabled]="!canSubmit()" (click)="add()" data-testid="payout-add">
+        {{ saving() ? 'Enregistrement…' : 'Ajouter le payout' }}
+      </button>
+    </div>
+    <p class="ap-note">Le montant est retiré du solde, des courbes et de la marge du compte. Le plancher ne bouge pas. Estimation MyTradingCoach : vérifie chez ta firm.</p>
+  }
+</section>

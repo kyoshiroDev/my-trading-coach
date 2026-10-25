@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TradesApi, JournalStats, Trade } from '../api/trades.api';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { computeTradeStats } from '@mtc/shared';
 
 // Un seul type Trade (celui de l'API) : ré-exporté pour les imports existants du store.
@@ -16,6 +17,10 @@ export type { Trade };
 export class TradesStore {
   private readonly tradesApi = inject(TradesApi);
   private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    inject(UserScopedReset).register(() => this.reset());
+  }
 
   readonly trades = signal<Trade[]>([]);
   /**

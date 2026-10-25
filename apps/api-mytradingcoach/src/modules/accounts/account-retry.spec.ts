@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { AccountStatus, AccountType, DrawdownType, PlanLinkChoice, type TradingAccount } from '@prisma/client';
-import { attemptBase, isFloorReached, nextAttemptLabel, retryAccountData } from './account-retry';
+import {
+  attemptBase, floorDismissalExpired, isFloorReached, nextAttemptLabel, readFloorDismissal, retryAccountData, withoutFloorDismissal,
+} from './account-retry';
 
 describe('nextAttemptLabel (libellé de la nouvelle tentative)', () => {
   it.each([
@@ -87,5 +89,34 @@ describe('isFloorReached (détection, aucun statut changé)', () => {
     ['archivé', { ...active, status: AccountStatus.ARCHIVED }, { margin: -500 }, false],
   ])('%s → %s', (_l, account, drawdown, expected) => {
     expect(isFloorReached(account, drawdown)).toBe(expected);
+  });
+});
+
+describe('plancher écarté par « Ce n’est pas un échec » (B1)', () => {
+  const active = { status: AccountStatus.ACTIVE };
+  const dismissal = { margin: -50, day: '2026-10-14' };
+
+  it('même marge (arrondis compris) : pas de bandeau ; perte plus profonde : bandeau', () => {
+    expect(isFloorReached(active, { margin: -50 }, dismissal)).toBe(false);
+    expect(isFloorReached(active, { margin: -50.8 }, dismissal)).toBe(false);
+    expect(isFloorReached(active, { margin: -20 }, dismissal)).toBe(false);
+    expect(isFloorReached(active, { margin: -80 }, dismissal)).toBe(true);
+    // Sans retrait mémorisé : comportement inchangé.
+    expect(isFloorReached(active, { margin: -20 })).toBe(true);
+  });
+
+  it('retrait périmé à la séance suivante ou quand la marge repasse au-dessus de zéro', () => {
+    expect(floorDismissalExpired(dismissal, -30, '2026-10-14')).toBe(false);
+    expect(floorDismissalExpired(dismissal, -30, '2026-10-15')).toBe(true);
+    expect(floorDismissalExpired(dismissal, 10, '2026-10-14')).toBe(true);
+    expect(floorDismissalExpired(dismissal, null, '2026-10-14')).toBe(true);
+  });
+
+  it('lu et effacé dans le JSON de l’incident, le reste du relevé gardé', () => {
+    const data = { limit: 2000, remaining: -50, dismissedMargin: -50, dismissedDay: '2026-10-14' };
+    expect(readFloorDismissal(data)).toEqual(dismissal);
+    expect(readFloorDismissal({ limit: 2000 })).toBeNull();
+    expect(readFloorDismissal(null)).toBeNull();
+    expect(withoutFloorDismissal(data)).toEqual({ limit: 2000, remaining: -50 });
   });
 });

@@ -24,6 +24,10 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
   compte comme échoué peut repartir, puisque l'échoué a libéré la place. Les comptes échoués et
   archivés sortent des statistiques « tous les comptes » quel que soit le plan (`includeInactive`
   pour les réinclure) ; la règle ne change rien au gating des analytics Premium.
+  **Autopsie d'un compte grillé (#669)** : chronologie, distance à la limite et 3 constats en
+  **Gratuit** (zéro IA) ; **analyse IA en Premium** (une par incident, `max_tokens` 400, persistée,
+  jamais régénérée, jamais hors prod ni pour la démo). Perte du jour : métrique Premium, donc incident
+  `daily_loss` en Premium seulement ; le plancher vaut pour tous.
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
 - **Essai** : `TRIAL_PERIOD_DAYS = 30` (api pricing.const). Accordé **uniquement** sur le prix **mensuel** ET si `!user.trialUsed`. L'annuel est facturé immédiatement, sans essai.
 
@@ -65,13 +69,19 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 🌙 **Recap journalier email 17h30**
 - **Comptes illimités**, chacun avec les règles de sa prop firm (le FREE a déjà son compte avec ses règles)
 - 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
-  compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, ni e-mail ni push)
+  compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
+  push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
+  synchro de fond, jusqu'à 15 min de décalage)
 
 ### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
 
 Source UNIQUE des listes courtes : fenêtre des offres (app), cartes de tarifs de `/` et `/prop-firm`,
 e-mail de bienvenue Premium. Toute ligne = une fonction livrée ; toute ligne Premium = une fonction
 réservée au Premium. Changer une ligne → `libs/shared/src/plan-benefits.ts` seulement.
+- **Colonne de présentation de `/register` et `/login`** : `SIGNUP_PITCH_POINTS`
+  (`libs/shared/src/signup-pitch.ts`), même règle ; une ligne marquée Premium porte le `benefitId` de
+  sa ligne `PLAN_BENEFITS.premium` (vérifié par le spec) : aujourd'hui `anti_tilt` et
+  `weekly_debrief`. Compagnon de séance, suivi de la marge et journal : sans étiquette (gratuits).
 - **Gratuit** : Synchro Tradovate automatique, en lecture seule · 1 compte avec les règles de sa prop
   firm, suivi en direct pendant la séance (equity, marge avant le plancher, objectif ou payout) ·
   Journal et trades illimités, historique complet · Préparation et débrief de chaque séance ·
@@ -238,6 +248,11 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   Le débrief **automatique** (cron dimanche + rattrapage lundi + régénération admin « tous ») ne vise
   que ceux qui ont **tradé dans la semaine** (`getEligibleUsers(refDate)`, SCA-B5-08, décision du
   2026-10-07) : semaine vide = ni appel IA ni e-mail. La génération manuelle depuis l'app reste ouverte.
+- **Notifications push des traders (#666)** : les plans ne changent pas, le push relaie seulement
+  ce que le plan donne déjà. Types `PROP_RULES`, `BEHAVIOR`, `RECAP` = Premium (`PUSH_PREMIUM_TYPES`,
+  `@mtc/shared`), `CONNECTION` (connexion Tradovate à renouveler) = **gratuit**, la synchro Tradovate
+  l'étant. Gating CÔTÉ API dans `TraderNotifier` (`isPremiumAccess`), en plus des sources (déjà
+  Premium). S'abonner est ouvert à tous (un Free reçoit `CONNECTION`).
 - **Daily recap** : accès Premium réel (`isPremiumAccess` : PREMIUM, ADMIN, BETA_TESTER, essai / **mois offert**
   actif), même règle que le Weekly Debrief, au cron (`DailyRecapCron`) ET à la génération de la phrase IA
   (`DailyRecapService`). Avant #627, `plan: 'PREMIUM'` seul : un mois offert n'avait pas son récap.

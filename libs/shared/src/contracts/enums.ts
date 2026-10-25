@@ -95,6 +95,15 @@ export const AdminPushEvent = {
 } as const;
 export type AdminPushEvent = (typeof AdminPushEvent)[keyof typeof AdminPushEvent];
 
+// Notifications push des traders (#666) : types d'alerte réglables un par un.
+export const PushAlertType = {
+  PROP_RULES: 'PROP_RULES',
+  BEHAVIOR: 'BEHAVIOR',
+  RECAP: 'RECAP',
+  CONNECTION: 'CONNECTION',
+} as const;
+export type PushAlertType = (typeof PushAlertType)[keyof typeof PushAlertType];
+
 /** Réponse à « Quel est ce compte ? » sans plan relié (#612). */
 export const PlanLinkChoice = {
   LATER: 'LATER',
@@ -125,5 +134,6 @@ export const CONTRACT_ENUMS = {
   PartnerRedemptionStatus,
   CheckoutReservationKind,
   AdminPushEvent,
+  PushAlertType,
   PlanLinkChoice,
 } as const;

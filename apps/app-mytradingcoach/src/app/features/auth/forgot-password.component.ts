@@ -15,7 +15,7 @@ import { GoogleIdentityService } from '../../core/auth/google-identity.service';
   selector: 'mtc-forgot-password',
   imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './login.component.css',
+  styleUrl: './auth-layout/card-page.css',
   templateUrl: './forgot-password.component.html',
 })
 export class ForgotPasswordComponent {

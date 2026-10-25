@@ -26,6 +26,17 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
 - Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
+- **Mise en page de l'app** : chaque page occupe **toute la largeur disponible** à droite de la
+  barre latérale, sans plafond (`max-width` sur le conteneur de page) ni bande vide à droite. Pour
+  garder des lignes lisibles à très grande largeur, répartir les cartes en **grille à colonnes
+  automatiques** (`repeat(auto-fit, minmax(min(100%, Npx), 1fr))`), pas plafonner la page. Contenu
+  plus haut que l'écran : la page **défile verticalement** (aucune hauteur fixe ni `overflow:
+  hidden` qui coupe la fin), **jamais de défilement horizontal**. Graphiques : tracés à la largeur
+  réelle de leur carte (SVG non étiré), textes à taille fixe. **Vérifier à 360, 390, 768, 1024,
+  1440, 1920 et 2560 px** (cadre iframe sur le banc : `resize_window` ne change pas le viewport).
+  Les modales, feuilles et textes longs (`max-width` en `ch`) ne sont pas des pages : leur plafond
+  reste permis. Plus aucune page plafonnée depuis le 25/10/2026 (sessions, parrainage, ambassadeur,
+  devenir ambassadeur passés sur `.mtc-page` + `.mtc-cards`, voir plus bas).
 
 ---
 
@@ -264,6 +275,32 @@ drawdown). Ne jamais recréer un graphique d'équité à part (l'ancien SVG « g
   `prefers-reduced-motion` ou simple redimensionnement.
 - **Accessibilité** : canvas `role="img"` + `aria-label` (départ, actuel, max pour le drawdown, période).
 
+### Inscription / connexion en deux colonnes (`/register`, `/login`)
+
+Maquette : `maquettes/maquette-register-split.html`. Seuils : **< 1024 px** formulaire seul (aucune
+colonne de présentation ; téléphone : carte en haut, logo au-dessus du titre, titres centrés ;
+600–1023 px : carte centrée verticalement) · **1024–1279 px** deux colonnes compactes (titre 38 px,
+aperçu 90 px de haut, marges réduites) · **≥ 1280 px** version complète (titre 50 px).
+- Grille `1.1fr 1fr` : présentation à gauche (`--bg` + deux halos bleu/violet en `color-mix` et
+  quadrillage `--border` estompé), formulaire à droite sur `--bg-2`, séparés par `1px --border`.
+- Présentation : logo, pastille mono majuscules `--blue-bright` sur `--blue-glow` (point cyan), titre
+  Space Grotesk 700 (« prop firm. » en `--blue-bright`), phrase `--text-2`, six points à coche
+  `--blue-bright`, étiquette **PREMIUM** violette (`--purple-bright` sur `--purple-dim`), aperçu
+  « Éval Apex 50K · En séance » (3 indicateurs mono, courbe drawdown rouge, limite en pointillé
+  rouge, mention « Données de démonstration » `--text-faint`), pied mono « LECTURE SEULE · HÉBERGÉ EN
+  FRANCE · SANS PUBLICITÉ ».
+- Colonne de présentation : logo, contenu et pied dans une même colonne de **560 px au plus, centrée**
+  dans la moitié gauche (texte aligné à gauche) ; marge basse 44 px pour que le pied reste au-dessus du
+  badge « interne » (fixé à 8 px du bas). Vérifié à 1024, 1280, 1440, 1920 et 2560 px.
+- Carte : `--bg-card`, radius 16, titres alignés à gauche à partir de 1024 px ; champs sur `--bg`,
+  44 px, radius 10 ; bouton principal 48 px, `--primary` + texte blanc (5,2:1 ; `--text` y fait 4,3:1).
+  Séparateurs à libellé mono 10 px `--text-faint` (« ou », « Pas encore sûr ? »). Ligne de confiance
+  mono 9,5 px `--text-faint` / `--text-3` (≥ 5:1 sur `--bg-card`), un élément par ligne quand la
+  carte est trop étroite.
+- Champs autoremplis par le navigateur : règle globale de `styles.css` (fond repeint, texte `--text`).
+  Un anneau de focus ou d'erreur se déclare dans **`--field-ring`** (`box-shadow: var(--field-ring)`),
+  jamais en `box-shadow` seul : la règle globale le garde à côté de l'ombre qui masque le fond clair.
+
 ### Navigation sidebar (barre d'accent — réservée à la nav)
 
 ```css
@@ -371,7 +408,11 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 
 | Élément | Token | Valeur |
 |---|---|---|
-| Topbar height | `--topbar-h` | **60px** |
+| Topbar height | `--topbar-h` (theme.css) | **56px** (mode hero 60 px, Ma session) |
+| Bordure basse topbar | `--topbar-border-w` | 1px |
+| Boutons topbar mobile (Discord, burger) | `--topbar-btn-h` | 31px |
+| Bandeau démo mobile | `--demo-banner-h-mobile` | 52px |
+| Zone tactile minimale | `--tap-min` | 44px |
 | Sidebar width | `--sidebar-w` | 220px (repliée `--sidebar-w-collapsed` 68px) |
 | Gutter contenu | `--pad-content` | 30px |
 | Padding carte | `--pad-card` | 20px |
@@ -382,6 +423,29 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 | Radius cartes featured | `--radius-lg` | 14px |
 | Radius modals | `--radius-modal` | 16px |
 | Radius pills | `--radius-pill` | 100px |
+
+**Burger mobile (≤ 768 px)** : bouton de la sidebar en `position: fixed` POSÉ PAR-DESSUS la topbar
+(aucun lien DOM). Hauteur `--topbar-btn-h` (= Discord voisin), centré dans la hauteur utile
+`(--topbar-h − --topbar-border-w − --topbar-btn-h) / 2` (idem dans le bandeau démo), zone tactile
+`::before` de `--tap-min` qui reste dans l'en-tête. Toucher la hauteur de la topbar ou de ses
+boutons = passer par ces variables ; `topbar-burger-alignment.spec.ts` lit les CSS et échoue sinon.
+Avant (40 px, `top: 14px` en dur) : 9 px de plus que Discord, centre 6 px trop bas, bas à 2 px de la ligne.
+Pages du shell SANS topbar (en-tête propre) : le burger y reste à la même place. Ma session est
+calée dessus en mobile (`padding-top` + `line-height: var(--topbar-btn-h)` du titre). Les autres
+(Mes sessions, Calendrier éco, Parrainage, Ambassadeur, Devenir ambassadeur) utilisent les classes
+COMMUNES de `styles.css` :
+- `.mtc-page` sur le conteneur : padding `--page-pad` (mobile : 0 en haut, `--page-pad-mobile`),
+  aucun `max-width`. Le padding du conteneur ne vit QUE là : une règle de composant (spécificité
+  plus forte) l'écraserait.
+- `.mtc-page-head` sur l'en-tête : en mobile, `padding-top` = haut du burger et place réservée à
+  droite (`--topbar-burger-space` − `--page-pad-mobile`) : rien ne passe sous le burger.
+- `.mtc-page-title` sur le h1, PREMIER élément de l'en-tête : en mobile, `line-height:
+  var(--topbar-btn-h)`, sa ligne a la boîte du burger. Un lien retour va APRÈS le titre dans le DOM
+  (`order: -1` en bureau pour l'afficher au-dessus).
+- `.mtc-cards` : grille `repeat(auto-fit, minmax(min(100%, var(--cards-min, --card-col-min)), 1fr))`,
+  `--cards-min` réglé par section (420/520/760 px). Grouper par paires : une grille auto-fit de 2
+  cartes n'a jamais de trou. Garder les 4 stats en 4 → 2 colonnes fixes (4 sur 3 colonnes = trou).
+Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire et échoue sinon.
 
 ---
 
@@ -401,6 +465,9 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 - Taille : 14-16px dans la sidebar, 15-20px dans le contenu. Stroke 1.5-2px.
 - **Jamais d'emoji** dans les composants Angular — *sauf* les émotions trader
   (et watermarks/nav décoratifs assumés par le design).
+- **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
+  tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
+  courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.
 
 ---
 

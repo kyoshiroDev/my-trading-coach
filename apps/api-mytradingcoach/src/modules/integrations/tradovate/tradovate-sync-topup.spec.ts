@@ -16,7 +16,7 @@ function conn(overrides: Partial<BrokerConnection> = {}): BrokerConnection {
     accountId: 'compte-mtc',
     provider: BrokerProvider.TRADOVATE,
     status: BrokerConnectionStatus.CONNECTED,
-    externalAccountId: '65772261',
+    externalAccountId: '90000022',
     externalEnv: 'demo',
     accessTokenExpiresAt: new Date(Date.now() - 60_000), // périmé DANS L'OBJET en mémoire
     ...overrides,

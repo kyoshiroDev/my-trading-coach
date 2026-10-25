@@ -1,0 +1,160 @@
+name: E2E de nuit
+
+# Inscription et onboarding (12-activation) sur une base éphémère, chaque nuit sur `dev` (#694).
+# Le smoke des push ne couvre que la démo : une régression du formulaire d'inscription, de ses
+# data-testid ou du wizard n'était vue qu'en local.
+#
+# Budget Actions : la nuit sans nouveau commit sur `dev` depuis 24 h, seul le contrôle tourne
+# (quelques secondes), pas la suite. Un workflow planifié s'exécute depuis la branche par défaut :
+# il ne tourne qu'une fois ce fichier arrivé sur `main`, et teste toujours `dev`.
+on:
+  schedule:
+    - cron: '30 2 * * *' # 02:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-nightly
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NX_NO_CLOUD: true
+
+jobs:
+  changes:
+    name: Nouveaux commits sur dev ?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 50
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ -n "$(git log --since='24 hours ago' --format=%H -1)" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Aucun commit sur dev depuis 24 h : suite e2e non lancée."
+          fi
+
+  activation:
+    name: Inscription et onboarding
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_e2e
+      DATABASE_DIRECT_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_e2e
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      PORT: 3001
+      CORS_ORIGINS: http://localhost:4200
+      JWT_SECRET: test-jwt-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      JWT_REFRESH_SECRET: test-refresh-secret-64-chars-minimum-xxxxxxxxxxxxxxxxxxxxxxxxx
+      ANTHROPIC_API_KEY: sk-ant-test
+      AI_ENABLED: 'false'
+      # Valeurs factices : seul le boot les exige. Aucun e-mail ne part (RESEND_DRY_RUN).
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PREMIUM_PRICE_MONTHLY_V2: price_placeholder_monthly
+      STRIPE_PREMIUM_PRICE_YEARLY_V2: price_placeholder_yearly
+      STRIPE_PREMIUM_PRICE_MONTHLY_FOUNDER: price_placeholder_monthly_founder
+      STRIPE_PREMIUM_PRICE_YEARLY_FOUNDER: price_placeholder_yearly_founder
+      RESEND_API_KEY: re_placeholder
+      RESEND_DRY_RUN: 'true'
+      # Lue par l'API ET par Playwright : chaque test d'inscription a son propre compteur de la limite
+      # « 10 inscriptions par heure et par IP » (load-test-tracker.ts). Pas un secret : base éphémère,
+      # et la clé est ignorée si l'API pointe sur la base de prod.
+      LOAD_TEST_KEY: e2e-nightly-throttle-key-not-a-secret-0001
+      E2E_API_URL: http://localhost:3001
+      E2E_APP_PORT: 4200
+    services:
+      postgres:
+        image: mirror.gcr.io/library/postgres:17-alpine
+        env:
+          POSTGRES_DB: mytradingcoach_e2e
+          POSTGRES_USER: mtc_user
+          POSTGRES_PASSWORD: devpassword
+        options: >-
+          --health-cmd "pg_isready -U mtc_user -d mytradingcoach_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: mirror.gcr.io/library/redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            libs/*/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Navigateur Playwright
+        timeout-minutes: 5
+        run: pnpm exec playwright install chromium
+      - name: Base éphémère (migrations)
+        run: |
+          pnpm exec prisma generate --config=./prisma/prisma.config.ts
+          pnpm exec prisma migrate deploy --config=./prisma/prisma.config.ts
+      - name: Démarrer l'API
+        run: |
+          pnpm nx build api-mytradingcoach --configuration=development
+          nohup node apps/api-mytradingcoach/dist/main.js > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf localhost:3001/api/health > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::API non démarrée après 120 s"; tail -n 80 api.log; exit 1
+      # Build `e2e` : l'adresse de l'API vient de E2E_API_URL (localStorage posé par Playwright),
+      # pas des fichiers compilés.
+      - name: Démarrer l'app (compilée, build e2e)
+        run: |
+          nohup pnpm nx serve-static app-mytradingcoach --buildTarget=app-mytradingcoach:build:e2e --port=4200 > app.log 2>&1 &
+          for i in $(seq 1 120); do
+            curl -sf localhost:4200 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::App non démarrée après 240 s"; tail -n 80 app.log; exit 1
+      - name: Inscription et onboarding (12-activation)
+        run: pnpm exec playwright test 12-activation
+        working-directory: apps/app-mytradingcoach-e2e
+      - name: Rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-nightly
+          path: |
+            apps/app-mytradingcoach-e2e/test-results
+            api.log
+            app.log
+          retention-days: 7

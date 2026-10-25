@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AccountsApi, TradingAccount } from '../api/accounts.api';
+import { UserScopedReset } from '../auth/user-scoped-reset';
 import { commonCurrency } from '@mtc/shared';
 import { countsInAggregate, type ExcludedAccounts } from '../utils/account-status.util';
 
@@ -15,6 +16,10 @@ const STORAGE_KEY = 'mtc.selectedAccount';
 export class SelectedAccountStore {
   private readonly api = inject(AccountsApi);
   private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    inject(UserScopedReset).register(() => this.reset());
+  }
 
   readonly accounts = signal<TradingAccount[]>([]);
   readonly isLoading = signal(false);

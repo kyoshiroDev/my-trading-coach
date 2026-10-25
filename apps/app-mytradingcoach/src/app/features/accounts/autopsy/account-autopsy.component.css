@@ -1,0 +1,193 @@
+/* Autopsie d'un compte grillé (#669) : maquette maquettes/mockup-autopsie.html, mobile d'abord. */
+
+.content {
+  /* Toute la largeur à droite de la barre latérale (design.md « Mise en page ») : pas de plafond,
+     ce sont les colonnes de la grille qui gardent des lignes lisibles à grande largeur. */
+  padding: 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--blue-bright);
+  font: 500 13px var(--font-body);
+  text-decoration: none;
+}
+.back:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; border-radius: 6px; }
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.lbl { font: 500 11px var(--font-mono); letter-spacing: .08em; color: var(--text-3); }
+.note { font-size: 12px; color: var(--text-3); line-height: 1.5; margin: 6px 0 0; }
+.loading { padding: 24px 0; }
+.not-found { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+.not-found p { margin: 0; font-size: 14px; color: var(--text); }
+.not-found .btn { text-decoration: none; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+
+.top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.h { font: 700 20px var(--font-display); margin: 0; color: var(--text); }
+.acct { margin-left: auto; font-size: 12px; color: var(--text-3); min-width: 0; overflow-wrap: anywhere; }
+.headline { margin-top: 8px; max-width: 75ch; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.col, .stack, .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.kpi { padding: 12px; }
+/* Montant jamais coupé (« -$1,1 / 67 » à 320 px) : une ligne, taille réduite sur les écrans étroits
+   (cqi = largeur de la page, conteneur `.content`). */
+.kpi .v {
+  font: 600 18px var(--font-mono);
+  font-size: clamp(13px, 4.2cqi, 18px);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.kpi .s { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.35; }
+
+/* Courbe tracée à la largeur réelle de sa carte (composant) : textes à 11 px à toute largeur.
+   `max-width` ne joue qu'avant la première mesure, pour ne jamais déborder. */
+.chart-box { margin-top: 8px; min-width: 0; }
+.chart { display: block; max-width: 100%; height: auto; }
+.chart-box.pending .chart { visibility: hidden; }
+.chart text { font: 11px var(--font-mono); fill: var(--text-3); }
+.chart .zero { stroke: var(--red); stroke-dasharray: 4 4; stroke-opacity: .7; }
+.chart .alert-mark { fill: var(--yellow); fill-opacity: .8; }
+.chart .alert-txt { fill: var(--yellow); }
+.chart .line { fill: none; stroke: var(--text-2); stroke-width: 2; }
+.chart .dot { fill: var(--text-2); }
+.chart .dot-cross { fill: var(--red); }
+
+.tl { list-style: none; margin: 10px 0 0; padding: 0; }
+.tl li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tl li:last-child { border-bottom: 0; }
+.tl .t { font: 12px var(--font-mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.tl .n { font-size: 14px; font-weight: 600; color: var(--text); min-width: 0; }
+.tl .p { font: 600 14px var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.tl .m { grid-column: 2 / 4; font: 12px var(--font-mono); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.tl .tag {
+  font: 600 11px var(--font-body);
+  color: var(--yellow);
+  background: var(--yellow-dim);
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.tl li.alert { background: color-mix(in srgb, var(--yellow) 6%, transparent); border-radius: 8px; padding: 10px 8px; margin: 2px -8px; border-bottom: 0; }
+.tl li.alert .n { color: var(--yellow); }
+.tl li.last .m { color: var(--red); }
+.tl li.empty { display: block; }
+
+.find { display: flex; flex-direction: column; gap: 10px; margin: 10px 0 0; padding: 0; list-style: none; }
+.find li { display: flex; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--text); }
+.find i {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  color: var(--text-2);
+  font: 600 12px var(--font-mono);
+  font-style: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.ai p { font-size: 14px; line-height: 1.6; margin: 10px 0; color: var(--text); }
+.ai p.note { font-size: 12px; color: var(--text-3); margin: 0; }
+.ai.lock { border: 1px dashed color-mix(in srgb, var(--purple-bright) 40%, transparent); background: color-mix(in srgb, var(--purple) 6%, var(--bg-card)); }
+.badge-prem {
+  font: 600 11px var(--font-body);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  color: var(--purple-bright);
+  background: var(--purple-dim);
+}
+
+.badge-example {
+  font: 600 11px var(--font-body);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+}
+
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-3);
+  color: var(--text);
+  font: 600 14px var(--font-body);
+  cursor: pointer;
+}
+/* Action principale en bleu, comme le parcours « compte perdu » (lost-btn.pri de Mes comptes) :
+   le cyan reste réservé à l'IA et au temps réel (design.md). */
+.btn.pri { background: var(--primary); border-color: var(--primary); color: var(--text); }
+.btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn.ghost { background: transparent; font-weight: 500; }
+.btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+.btn:disabled { opacity: .6; cursor: progress; }
+
+/* Deux colonnes à partir de 760 px : chronologie à gauche, constats et analyse IA à droite. */
+@container (min-width: 760px) {
+  .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+}
+
+/* Grand écran : trois colonnes par zones de grille, sans toucher à l'ordre du DOM (mobile et
+   lecteurs d'écran inchangés). 1 = chiffres, courbe, constats ; 2 = chronologie ; 3 = analyse IA
+   et boutons. Les conteneurs intermédiaires s'effacent (`display: contents`). La dernière rangée
+   en 1fr absorbe la hauteur des colonnes 2 et 3 : la colonne 1 reste serrée, sans trou. */
+@container (min-width: 1500px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "kpis  tl side"
+      "chart tl side"
+      "find  tl side"
+      ".     tl side";
+  }
+  .col, .col-main, .stack { display: contents; }
+  .kpis { grid-area: kpis; }
+  .chart-card { grid-area: chart; }
+  .find-card { grid-area: find; }
+  .tl-card { grid-area: tl; }
+  .side { grid-area: side; }
+}
+
+@media (min-width: 769px) {
+  .content { padding: 28px; }
+}

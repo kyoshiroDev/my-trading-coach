@@ -6,9 +6,8 @@ import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { environment } from '@app/environments/environment';
 import { POLLING_MS } from '../constants/polling.const';
 import { visibleInterval } from '../utils/visible-interval';
-import { SelectedAccountStore } from '../stores/selected-account.store';
-import { TradesStore } from '../stores/trades.store';
-import { SetupsStore } from '../stores/setups.store';
+import { UserScopedReset } from './user-scoped-reset';
+import { PushLogout } from '../push/push-logout';
 import type { Plan, Role } from '@mtc/shared';
 
 /** Rôle d'un utilisateur : alias du contrat partagé, gardé pour les importeurs existants. */
@@ -79,11 +78,9 @@ interface GoogleAuthResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  // Stores user-scoped à purger au logout (anti-fuite inter-comptes). Ces stores n'injectent
-  // jamais AuthService → pas de cycle DI.
-  private readonly accountStore = inject(SelectedAccountStore);
-  private readonly tradesStore = inject(TradesStore);
-  private readonly setupsStore = inject(SetupsStore);
+  // Stores user-scoped à purger au logout : ils s'inscrivent eux-mêmes (cf. UserScopedReset).
+  private readonly userScopedReset = inject(UserScopedReset);
+  private readonly pushLogout = inject(PushLogout);
 
   readonly currentUser = signal<AuthUser | null>(null);
   readonly isAuthenticated = signal(false);
@@ -174,6 +171,9 @@ export class AuthService {
   }
 
   logout() {
+    // Notifications push de CET appareil retirées avec le jeton d'avant la déconnexion (#666) :
+    // sur un appareil partagé, la personne suivante ne reçoit pas les alertes de ce compte.
+    void this.pushLogout.run(this.getAccessToken());
     this.http
       .post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
       .subscribe();
@@ -183,9 +183,7 @@ export class AuthService {
     this.isAuthenticated.set(false);
     // Purge les stores user-scoped : sans ça, un login sur un AUTRE compte dans le même onglet
     // (navigation SPA sans reload) héritait des comptes/setups/trades du user précédent.
-    this.accountStore.reset();
-    this.tradesStore.reset();
-    this.setupsStore.reset();
+    this.userScopedReset.resetAll();
     this.router.navigate(['/login']);
   }
 

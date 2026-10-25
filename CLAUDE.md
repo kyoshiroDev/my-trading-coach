@@ -54,7 +54,7 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 
 ### Branche de départ (demander avant toute tâche de code)
 Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise déjà)
-- **Nouvelle feature** → branche depuis `beta`, testée sur beta, puis `beta` → `dev` → `main`.
+- **Nouvelle feature** → branche depuis `dev`, livrée sur `dev`, puis `dev` → `main`. Ne passe pas par beta.
 - **Tout le reste** (bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `dev`, livrée sur `dev`. Ne passe pas par beta.
 - Les PR vers `dev` et `main` sont ouvertes par Greg, jamais par Claude.
 

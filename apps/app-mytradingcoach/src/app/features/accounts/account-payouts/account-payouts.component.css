@@ -1,0 +1,145 @@
+/* Payouts d'un compte funded (dépli de la ligne dans Mes comptes). */
+.ap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.ap-title {
+  margin: 0;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ap-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ap-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 44px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ap-date,
+.ap-amount {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ap-amount {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ap-src {
+  color: var(--text-3);
+}
+
+.ap-del,
+.ap-link {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font: 500 12px var(--font-body);
+  cursor: pointer;
+}
+
+.ap-link {
+  min-height: 0;
+  padding: 2px 6px;
+}
+
+.ap-del:hover,
+.ap-del:focus-visible {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.ap-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+
+.ap-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ap-lbl {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.ap-inp {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  background: var(--bg-2);
+  color: var(--text);
+  font: 14px var(--font-mono);
+}
+
+.ap-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--text);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+}
+.ap-btn:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.ap-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ap-inp:focus-visible,
+.ap-btn:focus-visible,
+.ap-del:focus-visible,
+.ap-link:focus-visible {
+  outline: 2px solid var(--blue-bright);
+  outline-offset: 2px;
+}
+
+.ap-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+@media (max-width: 768px) {
+  .ap-inp {
+    font-size: 16px;
+  }
+
+  .ap-field,
+  .ap-btn {
+    flex: 1 1 100%;
+  }
+}

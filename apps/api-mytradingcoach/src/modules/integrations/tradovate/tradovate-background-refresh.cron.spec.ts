@@ -36,10 +36,11 @@ function setup(conns: Conn[], liveUsers: string[] = []) {
       eval: vi.fn(async (_lua: string, _n: number, k: string, v: string) => (store.get(k) === v ? (store.delete(k), 1) : 0)),
     },
   };
+  const alerts = { checkFromBackground: vi.fn(async () => undefined) };
   const cron = new TradovateBackgroundRefreshCron(
-    prisma as never, connections as never, sync as never, history as never, live as never, redis as never,
+    prisma as never, connections as never, sync as never, history as never, live as never, redis as never, alerts as never,
   );
-  return { cron, prisma, connections, sync, history, live, redis, store };
+  return { cron, prisma, connections, sync, history, live, redis, store, alerts };
 }
 
 describe('Tradovate — rafraîchissement de fond (15 min)', () => {
@@ -54,6 +55,23 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
     expect(r).toEqual({ synced: 1, created: 2, live: 1, failed: 0, backfilled: 0 });
     expect(sync.sync).toHaveBeenCalledTimes(1);
     expect(sync.sync).toHaveBeenCalledWith('u1', 'a1', { history: expect.any(Boolean) });
+  });
+
+  it('alertes de règles relevées après la synchro (#666), jamais pour un utilisateur en direct', async () => {
+    const { cron, alerts } = setup(
+      [{ id: 'c1', userId: 'u1', accountId: 'a1' }, { id: 'c2', userId: 'u2', accountId: 'a2' }],
+      ['u2'],
+    );
+    await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+    expect(alerts.checkFromBackground).toHaveBeenCalledTimes(1);
+    expect(alerts.checkFromBackground).toHaveBeenCalledWith('u1', 'a1');
+  });
+
+  it('alertes de fond en échec : le passage continue, la synchro reste comptée', async () => {
+    const { cron, alerts } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+    alerts.checkFromBackground.mockRejectedValueOnce(new Error('base lente'));
+    const r = await cron.refreshStale(new Date('2026-09-26T10:37:00Z'));
+    expect(r).toMatchObject({ synced: 1, failed: 0 });
   });
 
   it('app ouverte AU passage horaire → le mois est retiré quand même, sans refaire la séance', async () => {

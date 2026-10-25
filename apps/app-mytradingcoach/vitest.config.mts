@@ -29,6 +29,10 @@ export default defineConfig({
     environment: 'jsdom',
     root: resolve(import.meta.dirname),
     setupFiles: ['src/test-setup.ts'],
+    // Les specs qui compilent un gros template réel en JIT (Mes comptes, journal, onboarding,
+    // profil) prennent 1,5 à 4,3 s en suite complète, et jusqu'à 12 s quand la machine est
+    // chargée : le délai par défaut (5 s) les faisait échouer au hasard (#689).
+    testTimeout: 20_000,
     // Sans isolation, les modules (Angular, lucide…) sont importés une fois par worker et non
     // une fois par spec : 240 s → 40 s. Le TestBed est réinitialisé par test-setup.ts.
     projects: [

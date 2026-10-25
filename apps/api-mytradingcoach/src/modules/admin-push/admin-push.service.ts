@@ -3,23 +3,15 @@ import { AdminPushEvent, Role } from '@prisma/client';
 import type { AdminPushDevice, AdminPushPublicKey, AdminPushTestResult } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { PushConfigResult } from '../../config/push-config';
-import { PUSH_SENDER, type PushSender } from './push-sender';
+import { PUSH_CONFIG, PUSH_SENDER, type PushSender } from '../push/push-sender';
+import { deliverPush, hostOf } from '../push/push-delivery';
 import { ADMIN_PUSH_MESSAGES, angularPushPayload, type AdminPushMessage } from './push-messages';
 import type { SubscribePushDto } from './dto/admin-push.dto';
-
-export const PUSH_CONFIG = Symbol('PUSH_CONFIG');
 
 /** Un événement non lu en 24 h n'a plus d'intérêt (le service push l'abandonne). */
 const TTL_SECONDS = 24 * 3600;
 
-/** Hôte du service push : seul élément journalisé (l'endpoint complet contient un jeton). */
-export function hostOf(endpoint: string): string {
-  try {
-    return new URL(endpoint).host;
-  } catch {
-    return '?';
-  }
-}
+export { hostOf };
 
 /** Abonnements Web Push des appareils ADMIN et livraison des notifications business. */
 @Injectable()
@@ -114,33 +106,22 @@ export class AdminPushService implements OnModuleInit {
       },
       select: { id: true, endpoint: true, p256dh: true, auth: true },
     });
-    report.subscriptions = targets.length;
     if (targets.length === 0) return report;
 
     const payload = JSON.stringify(angularPushPayload(message, Date.now()));
-    await Promise.all(
-      targets.map(async (t) => {
-        try {
-          const status = await sender.send(t, payload, { ttlSeconds: TTL_SECONDS, urgency: message.urgency });
-          if (status >= 200 && status < 300) {
-            report.delivered++;
-            await this.prisma.adminPushSubscription
-              .update({ where: { id: t.id }, data: { lastSuccessAt: new Date() } })
-              .catch(() => undefined);
-          } else if (status === 404 || status === 410) {
-            report.removed++;
-            await this.prisma.adminPushSubscription.deleteMany({ where: { id: t.id } }).catch(() => undefined);
-            this.logger.log(`Abonnement push mort supprimé (${hostOf(t.endpoint)}, HTTP ${status})`);
-          } else {
-            report.failed++;
-            this.logger.warn(`Push admin refusé (${hostOf(t.endpoint)}, HTTP ${status})`);
-          }
-        } catch (err) {
-          report.failed++;
-          this.logger.warn(`Push admin en échec (${hostOf(t.endpoint)}) : ${err instanceof Error ? err.message : String(err)}`);
-        }
-      }),
+    const db = this.prisma.adminPushSubscription;
+    return deliverPush(
+      sender,
+      targets,
+      payload,
+      { ttlSeconds: TTL_SECONDS, urgency: message.urgency },
+      {
+        delivered: (id) => db.update({ where: { id }, data: { lastSuccessAt: new Date() } }),
+        gone: (id) => db.deleteMany({ where: { id } }),
+      },
+      this.logger,
+      'admin',
+      event ?? 'TEST',
     );
-    return report;
   }
 }

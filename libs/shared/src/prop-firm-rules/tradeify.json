@@ -16,7 +16,7 @@
       "rtrader_pro"
     ]
   },
-  "verified_at": "2026-10-07",
+  "verified_at": "2026-10-22",
   "plans": [
     {
       "id": "tradeify-growth-25k",
@@ -138,7 +138,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours avec plus de 100 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 26500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET."
+            "notes": "5 jours avec plus de 100 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 26500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -278,7 +278,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours avec plus de 150 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 53000 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET."
+            "notes": "5 jours avec plus de 150 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 53000 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -418,7 +418,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours avec plus de 200 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 104500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET."
+            "notes": "5 jours avec plus de 200 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 104500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -558,7 +558,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours avec plus de 250 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 156500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET."
+            "notes": "5 jours avec plus de 250 $ de profit (remis à zéro après chaque payout), consistency 35 %, solde minimum 156500 $ pour demander. Plafond par demande selon le numéro de payout (le dernier vaut pour les suivants). Rapprochement quotidien 18:00-20:00 ET. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -644,7 +644,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants). 25K : payout fixe de 1 000 $."
+            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants). 25K : payout fixe de 1 000 $. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -752,7 +752,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants)."
+            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants). Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -860,7 +860,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants)."
+            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants). Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -968,7 +968,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants)."
+            "notes": "Pas de minimum de jours : payout dès que l'objectif de profit du cycle et la consistency sont atteints. Objectif remis à zéro après chaque payout. Plafond par demande selon le numéro de payout (le 4e vaut pour les suivants). Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1094,7 +1094,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 1250 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1250 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1220,7 +1220,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 1250 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1250 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1354,7 +1354,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1488,7 +1488,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 26100,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 600 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1620,7 +1620,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 3000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 3000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1752,7 +1752,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 3000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 3000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -1892,7 +1892,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2032,7 +2032,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 52100,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1000 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2170,7 +2170,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 4000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 4000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2308,7 +2308,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 4000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 4000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2454,7 +2454,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 102600,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2600,7 +2600,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 102600,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 1500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2744,7 +2744,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 5000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 5000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -2888,7 +2888,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés après le 2026-09-01 ; avant : 5000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (au moins le profit minimum par jour). Jusqu'à 50 % du profit total (solde − solde de départ), plafonné (comptes achetés à partir du 2026-09-01 ; avant : 5000 $). Profit net positif exigé sur chaque cycle après le premier. Pas de solde minimum. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3040,7 +3040,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 153600,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3192,7 +3192,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 153600,
-            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés après le 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer. Jusqu'à 2× le profit gagné depuis le dernier payout, plafonné (comptes achetés à partir du 2026-09-01 ; avant : 2500 $). Profit net positif exigé sur chaque cycle. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3282,7 +3282,7 @@
             "breach": "trading_paused_for_day",
             "tiers": null,
             "scaling_rule": null,
-            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05)."
+            "notes": "Soft breach, reprise 18:00 ET. Réalisé + latent, contrôlée en temps réel sur la valeur de liquidation nette, remise à zéro à chaque nouvelle session (support Tradeify, Luisa, 2026-10-05). DLL de 4 000 $ selon l'article 300K Select Account (2026-10-19) ; l'article Rules: Daily Loss Limit (2026-10-17) dit que Select Flex n'a pas de DLL : règle à confirmer chez Tradeify."
           },
           "max_drawdown": {
             "amount": 8000,
@@ -3352,7 +3352,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3513,7 +3513,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 306100,
-            "notes": "Éligible chaque jour au-dessus du buffer (solde 306100 $), 4000 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer (solde 306100 $), 4000 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3658,7 +3658,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": null,
-            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois."
+            "notes": "Tous les 5 jours gagnants (750 $ de profit minimum par jour). Jusqu'à 50 % du profit total, plafonné à 10 000 $ par payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],
@@ -3811,7 +3811,7 @@
             "max_amount_schedule": null,
             "max_payouts": null,
             "safety_net_balance": 305100,
-            "notes": "Éligible chaque jour au-dessus du buffer (solde 305100 $), 3500 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois."
+            "notes": "Éligible chaque jour au-dessus du buffer (solde 305100 $), 3500 $ maximum par jour ; 50 % de chaque payout doit venir de profit gagné depuis le dernier payout. Une seule demande ouverte à la fois. Microscalping (funded) : plus de 50 % des trades tenus plus de 10 secondes et plus de 50 % du profit venant de trades tenus plus de 10 secondes, sinon pas de payout."
           }
         }
       ],

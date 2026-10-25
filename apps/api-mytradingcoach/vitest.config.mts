@@ -15,6 +15,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts'],
+    // Sous charge (builds ou autres suites en parallèle), le câblage des modules Nest et la
+    // lecture Excel dépassent le délai par défaut de 5 s et échouent au hasard (#689).
+    testTimeout: 20_000,
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],

@@ -634,8 +634,10 @@ mtc-floor-reached-banner { margin-bottom: 16px; }
   font: 600 13px var(--font-body);
   cursor: pointer;
 }
-.lost-btn.pri { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
-.lost-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.lost-btn.pri { background: var(--primary); border-color: var(--primary); color: var(--text); }
+.lost-btn.pri:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+a.lost-btn { text-decoration: none; }
+.lost-btn:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
 .lost-btn:disabled { opacity: 0.6; cursor: progress; }
 
 /* Section repliée des comptes archivés, en bas du tableau. */
@@ -661,6 +663,8 @@ mtc-floor-reached-banner { margin-bottom: 16px; }
 @media (max-width: 767px) {
   .acct-failed-actions { width: 100%; }
   .acct-failed-actions .lost-btn.pri { flex: 1; }
+  /* « Voir l'autopsie » (#669) sur sa ligne : trois boutons côte à côte coupaient « Nouvelle tentative ». */
+  .acct-failed-actions a.lost-btn { flex: 1 1 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

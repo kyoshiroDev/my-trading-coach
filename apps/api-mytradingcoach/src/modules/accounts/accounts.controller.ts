@@ -8,20 +8,28 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Plan, Role } from '@prisma/client';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountRequestDto } from './dto/update-account.dto';
+import { CreatePayoutDto } from './dto/create-payout.dto';
 import { isPremiumAccess } from '../discord/discord-access.util';
+import { AccountIncidentsService } from './incidents/account-incidents.service';
+
+type RequestUser = { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null; isDemo?: boolean };
 
 // Multi-comptes (prop firms + perso) : quota par plan (FREE 1 · Premium illimité).
 // Le plafond est appliqué dans AccountsService.create (FREE peut gérer son 1 compte).
 @Controller('accounts')
 @UseGuards(JwtAuthGuard)
 export class AccountsController {
-  constructor(private readonly accounts: AccountsService) {}
+  constructor(
+    private readonly accounts: AccountsService,
+    private readonly incidents: AccountIncidentsService,
+  ) {}
 
   // Couche Premium (#370 : perte journalière, gain max du jour) : calculée pour le Premium seulement (mêmes règles que PremiumGuard).
   @Get()
@@ -44,14 +52,48 @@ export class AccountsController {
     });
   }
 
+  // Passage en ÉCHOUÉ / ARCHIVÉ : confirme l'incident détecté seulement avec `confirmIncident` (feuille
+  // de choix, autopsie #669), cf. AccountIncidentsService.updateAccount.
   @Patch(':id')
   update(
-    @CurrentUser()
-    user: { id: string; plan: Plan; role: Role; trialEndsAt?: Date | null },
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
-    @Body() dto: UpdateAccountDto,
+    @Body() dto: UpdateAccountRequestDto,
   ) {
-    return this.accounts.update(user.id, id, dto, {
+    return this.incidents.updateAccount(
+      { ...user, trialEndsAt: user.trialEndsAt ?? null },
+      id,
+      dto,
+      { plan: user.plan, role: user.role, trialEndsAt: user.trialEndsAt },
+    );
+  }
+
+  /** Autopsies d'un compte (#669) : incidents non retirés, du plus récent au plus ancien. */
+  @Get(':id/incidents')
+  listIncidents(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.incidents.list(user.id, id);
+  }
+
+  /** Autopsie : chronologie, constats (tous plans) et analyse IA déjà générée (Premium). */
+  @Get(':id/incidents/:incidentId')
+  getIncident(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.get({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
+  }
+
+  /**
+   * Analyse IA de l'autopsie (Premium) : générée une seule fois à la première demande, puis conservée.
+   * Débit borné ici, et côté service (verrou, délai après échec, essais par jour).
+   */
+  @Throttle({ default: { ttl: 60_000, limit: 6 } })
+  @Get(':id/incidents/:incidentId/analysis')
+  incidentAnalysis(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.analysis({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId);
+  }
+
+  /** « Ce n'est pas un échec » : retire l'autopsie ; réactive le compte s'il a été échoué depuis elle. */
+  @Post(':id/incidents/:incidentId/dismiss')
+  dismissIncident(@CurrentUser() user: RequestUser, @Param('id') id: string, @Param('incidentId') incidentId: string) {
+    return this.incidents.dismiss({ ...user, trialEndsAt: user.trialEndsAt ?? null }, id, incidentId, {
       plan: user.plan,
       role: user.role,
       trialEndsAt: user.trialEndsAt,
@@ -83,6 +125,24 @@ export class AccountsController {
   }
 
   /** « Ce n'était pas un payout » : écarte un payout détecté chez le broker du cycle de payout. */
+  /** Payouts du compte (détectés chez le broker et saisis à la main), du plus récent au plus ancien. */
+  @Get(':id/payouts')
+  payouts(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.accounts.listPayouts(user.id, id);
+  }
+
+  /** Payout saisi à la main : compte funded sans connexion broker (409 si connecté). */
+  @Post(':id/payouts')
+  addPayout(@CurrentUser() user: { id: string }, @Param('id') id: string, @Body() dto: CreatePayoutDto) {
+    return this.accounts.addManualPayout(user.id, id, dto);
+  }
+
+  /** Supprime un payout saisi à la main (un payout détecté chez le broker s'écarte avec `dismiss`). */
+  @Delete(':id/payouts/:payoutId')
+  removePayout(@CurrentUser() user: { id: string }, @Param('id') id: string, @Param('payoutId') payoutId: string) {
+    return this.accounts.removeManualPayout(user.id, id, payoutId);
+  }
+
   @Post(':id/payouts/:payoutId/dismiss')
   dismissPayout(
     @CurrentUser() user: { id: string },

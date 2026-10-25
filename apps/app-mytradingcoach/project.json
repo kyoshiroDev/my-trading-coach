@@ -97,6 +97,17 @@
             },
             "fonts": false
           }
+        },
+        "e2e": {
+          "fileReplacements": [
+            {
+              "replace": "apps/app-mytradingcoach/src/environments/environment.ts",
+              "with": "apps/app-mytradingcoach/src/environments/environment.e2e.ts"
+            }
+          ],
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
         }
       }
     },
@@ -116,6 +127,9 @@
         },
         "development": {
           "buildTarget": "app-mytradingcoach:build:development"
+        },
+        "e2e": {
+          "buildTarget": "app-mytradingcoach:build:e2e"
         }
       }
     },

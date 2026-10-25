@@ -28,3 +28,12 @@ export function resolvePushConfig(env: NodeJS.ProcessEnv): PushConfigResult {
   if (missing.length > 0) return { enabled: false, reason: `invalide ou absente : ${missing.join(', ')}` };
   return { enabled: true, config: { publicKey, privateKey, subject } };
 }
+
+/**
+ * Push des TRADERS (#666), en plus de `PUSH_ENABLED` : éteint si absent, seule la valeur `true`
+ * l'allume. L'admin reste piloté par `PUSH_ENABLED` seul. En production, il ne s'allume pas avant
+ * le manifest de #715 et les essais sur de vrais appareils (`deploy.md`).
+ */
+export function resolveTraderPushFlag(env: NodeJS.ProcessEnv): boolean {
+  return env['TRADER_PUSH_ENABLED'] === 'true';
+}

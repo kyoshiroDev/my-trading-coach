@@ -1,0 +1,195 @@
+import { describe, it, expect, vi } from 'vitest';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { TraderPushService, MAX_PUSH_DEVICES } from './trader-push.service';
+import { TRADER_PUSH_MESSAGES } from './trader-push-messages';
+import type { PushSender } from './push-sender';
+import type { PushConfigResult } from '../../config/push-config';
+import type { PrismaService } from '../../prisma/prisma.service';
+
+const ENABLED: PushConfigResult = {
+  enabled: true,
+  config: { publicKey: 'pub', privateKey: 'priv', subject: 'mailto:support@mytradingcoach.app' },
+};
+const dev = (id: string) => ({ id, endpoint: `https://fcm.googleapis.com/fcm/send/${id}-secret`, p256dh: 'k'.repeat(87), auth: 'a'.repeat(22) });
+const SUB = { endpoint: 'https://fcm.googleapis.com/fcm/send/new-secret', keys: { p256dh: 'k'.repeat(87), auth: 'a'.repeat(22) } };
+
+function setup(opts: { config?: PushConfigResult; status?: number; devices?: ReturnType<typeof dev>[] } = {}) {
+  const db = {
+    findMany: vi.fn().mockResolvedValue(opts.devices ?? [dev('d1')]),
+    findFirst: vi.fn().mockResolvedValue(null),
+    upsert: vi.fn().mockResolvedValue({ id: 'd-new' }),
+    update: vi.fn().mockResolvedValue({}),
+    deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+  };
+  const pref = { findUnique: vi.fn().mockResolvedValue(null), upsert: vi.fn().mockResolvedValue({}) };
+  const prisma = { userPushDevice: db, traderPushPreference: pref } as unknown as PrismaService;
+  const send = vi.fn().mockResolvedValue(opts.status ?? 201);
+  const service = new TraderPushService(prisma, opts.config ?? ENABLED, { send } as PushSender, true);
+  return { service, db, pref, send };
+}
+
+describe('TraderPushService.deliverToUser', () => {
+  it('tous les appareils du trader, payload de l’app, TTL et urgence du message', async () => {
+    const { service, db, send } = setup({ devices: [dev('d1'), dev('d2')] });
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.recapReady(), 'RECAP');
+    expect(r).toEqual({ subscriptions: 2, delivered: 2, failed: 0, removed: 0 });
+    expect(db.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'u1' } }));
+    expect(JSON.parse(send.mock.calls[0][1])).toMatchObject({ title: 'Récap du jour', url: '/dashboard' });
+    expect(send.mock.calls[0][2]).toEqual({ ttlSeconds: 12 * 3600, urgency: 'normal' });
+    expect(db.update).toHaveBeenCalledWith({ where: { id: 'd1' }, data: { lastSuccessAt: expect.any(Date) } });
+  });
+
+  it.each([404, 410])('%i : abonnement expiré supprimé', async (status) => {
+    const { service, db } = setup({ status });
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST');
+    expect(r.removed).toBe(1);
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: 'd1' } });
+  });
+
+  it('autre refus : compté en échec, abonnement gardé', async () => {
+    const { service, db } = setup({ status: 429 });
+    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST')).failed).toBe(1);
+    expect(db.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('ligne en base hors service push connu : jamais contactée, supprimée, journal sans l’adresse (revue I1)', async () => {
+    const internal = { id: 'd-int', endpoint: 'https://169.254.169.254/latest/secret-token', p256dh: 'k'.repeat(87), auth: 'a'.repeat(22) };
+    const { service, db, send } = setup({ devices: [internal, dev('d1')] });
+    const warn = vi.spyOn((service as unknown as { logger: { warn: (m: string) => void } }).logger, 'warn');
+    const r = await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST');
+    expect(r).toEqual({ subscriptions: 2, delivered: 1, failed: 0, removed: 1 });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0]).toMatchObject({ id: 'd1' });
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: 'd-int' } });
+    expect(warn.mock.calls.flat().join(' ')).toContain('169.254.169.254');
+    expect(warn.mock.calls.flat().join(' ')).not.toContain('secret-token');
+  });
+
+  it('push désactivé : rien n’est lu ni envoyé', async () => {
+    const { service, db, send } = setup({ config: { enabled: false, reason: 'off' } });
+    expect((await service.deliverToUser('u1', TRADER_PUSH_MESSAGES.test(), 'TEST')).subscriptions).toBe(0);
+    expect(db.findMany).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('TraderPushService abonnements et réglages', () => {
+  it('subscribe : upsert par endpoint, rattaché au trader, au plus 10 appareils', async () => {
+    const { service, db } = setup({ devices: [dev('old')] });
+    expect(await service.subscribe('u1', SUB, 'Mozilla/5.0 (iPhone) Safari/604.1')).toEqual({ subscribed: true, id: 'd-new' });
+    expect(db.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { endpoint: SUB.endpoint }, update: expect.objectContaining({ userId: 'u1' }) }));
+    expect(db.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: MAX_PUSH_DEVICES }));
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['old'] } } });
+  });
+
+  it('réabonnement : l’appareil redevient le plus récent, jamais évincé à sa place (revue m3)', async () => {
+    const { service, db } = setup({ devices: [] });
+    await service.subscribe('u1', SUB, null);
+    expect(db.upsert.mock.calls[0][0].update.createdAt).toBeInstanceOf(Date);
+  });
+
+  it(`au-delà de ${MAX_PUSH_DEVICES} appareils : le plus ancien est retiré, jamais le plus récent`, async () => {
+    const { service, db } = setup();
+    // 11 appareils, du plus ancien (old-0) au plus récent (old-10) ; la base simulée applique orderBy et skip.
+    const rows = Array.from({ length: MAX_PUSH_DEVICES + 1 }, (_, i) => ({ id: `old-${i}`, createdAt: new Date(Date.UTC(2026, 9, 1 + i)) }));
+    db.findMany.mockImplementationOnce(async ({ orderBy, skip }: { orderBy: { createdAt: 'asc' | 'desc' }; skip: number }) =>
+      [...rows].sort((a, b) => (orderBy.createdAt === 'desc' ? -1 : 1) * (a.createdAt.getTime() - b.createdAt.getTime())).slice(skip),
+    );
+    await service.subscribe('u1', SUB, null);
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ['old-0'] } } });
+  });
+
+  it('subscribe sans clés VAPID : 503', async () => {
+    const { service } = setup({ config: { enabled: false, reason: 'off' } });
+    await expect(service.subscribe('u1', SUB, null)).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('suppression depuis le profil : seulement un appareil du trader', async () => {
+    const { service, db } = setup();
+    await service.removeDevice('u1', 'd1');
+    expect(db.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1', id: 'd1' } });
+    db.deleteMany.mockResolvedValueOnce({ count: 0 });
+    await expect(service.removeDevice('u1', 'd-autre')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('settings sans réglage : récap coupé, pas d’heures silencieuses, endpoint jamais renvoyé', async () => {
+    const { service, db } = setup();
+    db.findMany.mockResolvedValueOnce([{ id: 'd1', userAgent: 'Mozilla/5.0 (Linux; Android 14) Chrome/130.0', createdAt: new Date('2026-10-01T00:00:00Z'), lastSuccessAt: null }]);
+    const s = await service.settings('u1');
+    expect(s).toMatchObject({ enabled: true, publicKey: 'pub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris' });
+    expect(s.devices).toEqual([{ id: 'd1', label: 'Chrome · Android', createdAt: '2026-10-01T00:00:00.000Z', lastSuccessAt: null }]);
+    expect(JSON.stringify(s)).not.toContain('secret');
+  });
+
+  it('ligne déjà enregistrée avec début égal à la fin : aucune heure silencieuse renvoyée (revue phase 2 I5)', async () => {
+    const { service, pref, db } = setup();
+    db.findMany.mockResolvedValueOnce([]);
+    pref.findUnique.mockResolvedValueOnce({ mutedTypes: [], quietStart: 420, quietEnd: 420 });
+    expect((await service.settings('u1')).quietHours).toBeNull();
+    db.findMany.mockResolvedValueOnce([]);
+    pref.findUnique.mockResolvedValueOnce({ mutedTypes: [], quietStart: 1320, quietEnd: 420 });
+    expect((await service.settings('u1')).quietHours).toEqual({ start: 1320, end: 420 });
+  });
+
+  it('préférences : champ absent inchangé, quietHours null = désactivées', async () => {
+    const { service, pref } = setup({ devices: [] });
+    await service.setPreferences('u1', { mutedTypes: ['BEHAVIOR', 'BEHAVIOR'] });
+    expect(pref.upsert).toHaveBeenLastCalledWith({ where: { userId: 'u1' }, create: { userId: 'u1', mutedTypes: ['BEHAVIOR'] }, update: { mutedTypes: ['BEHAVIOR'] } });
+    await service.setPreferences('u1', { quietHours: null });
+    expect(pref.upsert).toHaveBeenLastCalledWith(expect.objectContaining({ update: { quietStart: null, quietEnd: null } }));
+    await service.setPreferences('u1', { quietHours: { start: 1320, end: 420 } });
+    expect(pref.upsert).toHaveBeenLastCalledWith(expect.objectContaining({ update: { quietStart: 1320, quietEnd: 420 } }));
+  });
+});
+
+describe('Appareil partagé : retrait échoué à la déconnexion de A, puis B s’abonne (#666 phase 2)', () => {
+  /** Base simulée en mémoire, avec la contrainte UNIQUE de l'endpoint (comme Postgres). */
+  function memoryDb() {
+    const rows: { id: string; userId: string; endpoint: string; p256dh: string; auth: string; userAgent: string | null; createdAt: Date }[] = [];
+    let seq = 0;
+    const db = {
+      rows,
+      upsert: vi.fn(async ({ where, create, update }: { where: { endpoint: string }; create: typeof rows[number]; update: Partial<typeof rows[number]> }) => {
+        const found = rows.find((r) => r.endpoint === where.endpoint);
+        if (found) { Object.assign(found, update); return { id: found.id }; }
+        if (rows.some((r) => r.endpoint === create.endpoint)) throw new Error('Unique constraint failed on endpoint');
+        const row = { ...create, id: `dev-${++seq}`, createdAt: new Date() };
+        rows.push(row);
+        return { id: row.id };
+      }),
+      findMany: vi.fn(async ({ where, skip }: { where: { userId: string }; skip?: number }) =>
+        rows.filter((r) => r.userId === where.userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(skip ?? 0)),
+      findFirst: vi.fn(async ({ where }: { where: { userId: string; endpoint: string } }) =>
+        rows.find((r) => r.userId === where.userId && r.endpoint === where.endpoint) ?? null),
+      update: vi.fn(async () => ({})),
+      deleteMany: vi.fn(async ({ where }: { where: { id?: string | { in: string[] } } }) => {
+        const ids = typeof where.id === 'string' ? [where.id] : where.id?.in ?? [];
+        const before = rows.length;
+        for (const id of ids) rows.splice(rows.findIndex((r) => r.id === id), 1);
+        return { count: before - rows.length };
+      }),
+    };
+    return db;
+  }
+
+  it('l’appareil passe à B : une seule ligne, aucune erreur, A ne reçoit plus rien', async () => {
+    const db = memoryDb();
+    const prisma = { userPushDevice: db, traderPushPreference: { findUnique: vi.fn(), upsert: vi.fn() } } as unknown as PrismaService;
+    const send = vi.fn().mockResolvedValue(201);
+    const service = new TraderPushService(prisma, ENABLED, { send } as PushSender, true);
+
+    await service.subscribe('user-a', SUB, 'Chrome · Android');
+    // Déconnexion de A : le retrait côté API a échoué, la ligne appartient encore à A.
+    expect(await service.device('user-a', SUB.endpoint)).toEqual({ subscribed: true, id: 'dev-1' });
+
+    // B se connecte sur le même navigateur : même endpoint, l'app le resynchronise.
+    expect(await service.device('user-b', SUB.endpoint)).toEqual({ subscribed: false, id: null });
+    await expect(service.subscribe('user-b', SUB, 'Chrome · Android')).resolves.toEqual({ subscribed: true, id: 'dev-1' });
+
+    expect(db.rows).toHaveLength(1);
+    expect(db.rows[0].userId).toBe('user-b');
+    expect(await service.deliverToUser('user-a', TRADER_PUSH_MESSAGES.test(), 'TEST')).toEqual({ subscriptions: 0, delivered: 0, failed: 0, removed: 0 });
+    expect(send).not.toHaveBeenCalled();
+    expect((await service.deliverToUser('user-b', TRADER_PUSH_MESSAGES.test(), 'TEST')).delivered).toBe(1);
+  });
+});

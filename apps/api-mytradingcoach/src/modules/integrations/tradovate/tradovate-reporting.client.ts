@@ -16,7 +16,7 @@ import type { TradovateEnv } from './tradovate.types';
  *   1. `timezone` est un NOMBRE ; une chaîne donne « Invalid JSON: illegal number ».
  *   2. les dates sont en `M/D/YYYY` ; l'ISO `2026-09-26` renvoie un HTTP 500.
  *   3. `params` est un TABLEAU de `{ name, value }`, pas un objet.
- *   4. `account` attend le NOM du compte (« APEX4280470000012 »), pas son id numérique —
+ *   4. `account` attend le NOM du compte (« APEX2000000000012 »), pas son id numérique —
  *      l'id donne « account is not found (ID:0) ».
  *
  * Et une règle de performance qui n'en est pas une : **toujours passer `account`**. Sans lui,

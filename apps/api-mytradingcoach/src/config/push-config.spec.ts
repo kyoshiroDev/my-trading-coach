@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import webpush from 'web-push';
-import { resolvePushConfig } from './push-config';
+import { resolvePushConfig, resolveTraderPushFlag } from './push-config';
 import { checkEnv, ENV_VARS } from './env';
 
 const keys = webpush.generateVAPIDKeys();
@@ -43,3 +43,21 @@ describe('checkEnv : variables du push', () => {
     expect(bad.warnings.filter((w) => /VAPID|PUSH/.test(w))).toHaveLength(2);
   });
 });
+
+describe('TRADER_PUSH_ENABLED', () => {
+  it('éteint si absent ; seule la valeur « true » l’allume', () => {
+    expect(resolveTraderPushFlag({})).toBe(false);
+    for (const v of ['false', 'TRUE', '1', 'yes', '']) expect(resolveTraderPushFlag({ TRADER_PUSH_ENABLED: v })).toBe(false);
+    expect(resolveTraderPushFlag({ TRADER_PUSH_ENABLED: 'true' })).toBe(true);
+  });
+
+  it('variable optionnelle : absente sans avertissement, mal formée avertie sans bloquer', () => {
+    const allRequired = Object.fromEntries(ENV_VARS.filter((v) => v.level === 'required').map((v) => [v.name, 'x']));
+    expect(ENV_VARS.find((v) => v.name === 'TRADER_PUSH_ENABLED')?.level).toBe('optional');
+    expect(checkEnv({ ...allRequired }, true).warnings.filter((w) => /TRADER_PUSH/.test(w))).toEqual([]);
+    const bad = checkEnv({ ...allRequired, TRADER_PUSH_ENABLED: 'oui' }, true);
+    expect(bad.errors).toEqual([]);
+    expect(bad.warnings.filter((w) => /TRADER_PUSH/.test(w))).toHaveLength(1);
+  });
+});
+

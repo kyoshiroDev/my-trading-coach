@@ -12,7 +12,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   LucideDynamicIcon,
   LucideUser as User,
@@ -82,6 +82,7 @@ import { AccountPlanWizardComponent } from './account-plan-wizard/account-plan-w
 import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 import { FloorReachedBannerComponent } from './lost-account/floor-reached-banner.component';
+import { AccountPayoutsComponent } from './account-payouts/account-payouts.component';
 import { LostAccountFlowService } from '../../core/services/lost-account-flow.service';
 import { countsInAggregate, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 
@@ -131,7 +132,8 @@ function emptyForm(): AccountFormState {
     DialogDirective,
     FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
-    PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent,
+    PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, AccountPayoutsComponent,
+    RouterLink,
   ],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.css',
@@ -785,6 +787,11 @@ export class AccountsComponent implements OnInit {
         this.toast.error(apiErrorMessage(err, "Le compte n'a pas pu être enregistré."));
       },
     });
+  }
+
+  /** Payout saisi ou supprimé : solde, marge et cycle de payout repartent du serveur. */
+  protected onPayoutsChanged(): void {
+    this.store.load();
   }
 
   /** « Ce n'était pas un payout » : le cycle repart alors du payout précédent, ou du début. */

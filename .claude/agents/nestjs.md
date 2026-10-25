@@ -623,6 +623,12 @@ de `debriefService.getEligibleUsers(refDate)` : Premium / admin / bêta / essai,
 activé, non démo, **et au moins un trade dans la semaine de `refDate`** (SCA-B5-08). Le cron ne
 journalise que le nombre de jobs, jamais les adresses. 3 essais, échecs gardés 7 j.
 
+**Comptes désignés à l'IA par une clé courte** (`debrief/debrief-account-keys.ts`, 2026-10-23) :
+`compte-1`, `compte-2`… dans l'ordre des comptes, `unassigned` inchangé ; jamais l'identifiant
+interne. Les trades partent regroupés par clé et SANS leur `accountId`. L'IA renvoie la clé dans
+`accounts[].accountId` ; `toId` la retraduit avant la fusion, une clé inconnue est ignorée. Le
+débrief stocké garde les vrais ids (onglets, PDF).
+
 ---
 
 ## Clustering — règles
@@ -774,7 +780,13 @@ serait compté dans les chiffres et ferait passer le P&L « Tout » de +1 261 à
 de 125 000 à 175 000 $ ; le statut Validé est couvert par les tests unitaires et d'intégration. Contrat préservé : aucun de ces comptes n'est ACTIVE, donc Σ `startingBalance` des
 comptes ACTIVE === `STARTING_CAPITAL`. Leurs trades (un par jour ouvré, MNQ, frais réels) tombent
 AVANT la fenêtre de 42 jours : récaps, débriefs, journal de risque, `meetsTargets` et vue « 1M » ne
-bougent pas. Aucune connexion broker sur ces comptes. Module pur (tsx). `DemoReadOnlyGuard` reste
+bougent pas. Aucune connexion broker sur ces comptes. Trades réalistes : setups en rotation proche des parts du
+profil (Scalping, Pullback, Breakout, Range, Reversal, News), actifs MNQ / MES / NQ / ES (2 micros ou
+1 mini, frais de l'instrument), plusieurs heures dont une séance de Londres. Module pur (tsx).
+**Contraste des setups** (`setupsContrasted`, `model.ts`) : vérifié sur le tirage principal ET après
+l'ajout du compte statique `elite` (`secondaryMeetsTargets`) ; sans ça, ses trades à résultat forcé
+faisaient passer Pullback ou Range devant Breakout certains jours (4 samedis sur 30 avant correction).
+Robustesse : `DEMO_SEED_DATE=AAAA-MM-JJTHH:MM:SS` rejoue `demo-seed-idempotence.spec.ts` à une date simulée. `DemoReadOnlyGuard` reste
 la seule barrière des mutations (« Nouvelle tentative », « Archiver », suppression : 403 et invite
 « Crée ton compte » côté front).
 
@@ -1112,7 +1124,7 @@ sont en direct.
     - ⚠ **Le login, c'est `/user/list`, JAMAIS `account.userId`** (corrigé le 2026-09-27).
       `account.userId` est le **propriétaire du compte chez le broker** : sur un compte prop firm,
       c'est l'identifiant de la **firme**. Mesuré en prod : deux traders Apex sans aucun lien
-      (`APEX_13679` et `APEX_428047`, e-mails différents) portaient tous deux `userId: 699523`, et
+      (`APEX_10000` et `APEX_200000`, e-mails différents) portaient tous deux `userId: 699523`, et
       `/user/item?id=699523` répondait **404** — ce n'est pas un trader. Tant qu'on écrivait cette
       valeur, **tous les traders Apex de la plateforme partageaient le verrou
       `tradovate:login:699523`** (goulot latent), et « sœur » voulait dire « compte chez la même
@@ -1315,6 +1327,43 @@ sont en direct.
   dans `/brokers` (admin), le modèle déduit la fiche, l'admin la corrige et l'enregistre, et
   le broker est reconnu **pour tous les plans** sans build ni déploiement. Les 7 parseurs en
   dur restent en place pour les brokers historiques.
+- **Garde-fou Tradovate Performance (2026-10-22)** : `parseTradovate` lit par POSITION (symbol 1,
+  qty 7, buyPrice 8, sellPrice 9, pnl 10, boughtTimestamp 11, soldTimestamp 12).
+  `tradovateColumnMismatches` compare l'en-tête à `TRADOVATE_POSITIONAL_COLUMNS` ; au moindre
+  écart, `preprocessCsv` rend `broker: 'unknown'` + `formatChanged` (rien n'est lu par position).
+  Import manuel : fiche du registre si elle existe, sinon 400 « Le format de ce fichier a changé.
+  Contacte support@mytradingcoach.app. » : aucune mention de l'import IA, que l'utilisateur ne peut
+  pas choisir, et jamais l'IA en douce. Historique par l'API : erreur « rapport Performance au format modifié ».
+  Une colonne ajoutée après la 12ᵉ passe.
+- **Export vide** (0 octet, 2 octets CRLF / BOM UTF-16 / `""`, en-tête seul) : toujours
+  `emptyMessage()` (« Aucun trade fermé détecté… Vérifie aussi la période et le compte… »), plus de
+  « Fichier vide » / « Fichier sans données ».
+- **Données d'exemple** : identifiants Tradovate des specs et fixtures FICTIFS (`APEX1000…`,
+  `9000001x`, `9100001`…). Ne jamais y recoller un vrai nom ou id de compte relevé en prod.
+
+## Import d'un broker inconnu : données minimales envoyées à l'IA (2026-10-23)
+
+`trades/csv-ai-redaction.ts` (pur) prépare TOUT ce qui part vers l'IA d'un fichier de broker
+inconnu (mapping `csv_mapping`, repli ligne par ligne `csv_import`, analyse d'échantillon admin) :
+- **en-tête gardé tel quel** (le modèle en a besoin pour reconnaître les colonnes) ;
+- **valeurs** des colonnes d'identification, reconnues par l'en-tête (compte, client, login, nom
+  explicite, e-mail, identifiants d'ordre / de trade / ticket / « Order # ») → jetons stables dans le
+  fichier (`compte-1`, `id-3`) : même valeur, même jeton, les lignes restent rapprochables. « Name »
+  seul n'est PAS masqué (souvent l'instrument) ;
+- autres cellules : e-mails et suites de 7 chiffres ou plus dans un texte masqués ; cellules
+  numériques (prix, quantités, horodatages) et dates compactes `AAAAMMJJ…` intactes ; nombre de
+  colonnes conservé (index du mapping justes) ;
+- **nom du fichier jamais envoyé** (journaux seulement) ;
+- masquage fait UNE fois sur tout le fichier dans le repli (jetons stables d'un lot à l'autre).
+Plafonds inchangés : mapping = en-tête + `MAPPING_SAMPLE_ROWS` (20) lignes, puis le CODE applique
+le mapping à tout le fichier ; repli = toutes les lignes par lots de `AI_BATCH` (25), refus explicite
+au-delà de `MAX_AI_ROWS` (2 000), jamais d'import tronqué en silence.
+**Limite du repli** : `CSV_AI_FALLBACK_DAILY_LIMIT` (3) passages par utilisateur et par jour (Paris),
+compteur Redis `csv-ai-fallback:<userId>:<jour>` (INCR puis contrôle, place rendue si le passage
+échoue, Redis indisponible → refus 503) ; au-delà : 429 avec un message clair, aucun appel IA. Le
+mapping (1 appel, 20 lignes) n'est pas compté. **Journal** : une ligne JSON par passage
+(`event: 'csv_ai_fallback'`, `userId`, `rows`, `batches`, `result` = `ok` · `error` · `too_many_rows` ·
+`daily_limit`, `trades`, `durationMs`), jamais le nom ni le contenu du fichier.
 
 ## Registre des brokers (2026-09-28)
 
@@ -1637,11 +1686,23 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `GET /accounts` : chaque compte porte `floorReached` (`isFloorReached`, `account-retry.ts`) :
   compte ACTIVE avec des règles de perte maximale (plan du catalogue ou drawdown saisi, même calcul
   de marge) et marge estimée ≤ 0. **Aucun statut n'est changé automatiquement** : l'utilisateur confirme.
+  Plancher écarté par « Ce n'est pas un échec » (B1) : le retrait garde `dismissedMargin` et
+  `dismissedDay` (journée CME) dans le JSON `data` de l'incident (pas de table, pas de migration) ;
+  `floorReached` reste faux tant que la marge ne descend pas plus bas (tolérance 1). `list` efface ce
+  retrait dès que la marge repasse au-dessus de zéro ou à la séance suivante (rare écriture dans une lecture,
+  `clearExpiredFloorDismissals`) : jamais bloquante (try/catch, journal sans données ni id) et conditionnelle
+  (`updateMany` seulement si l'incident porte ENCORE ce retrait : deux lectures simultanées sans effet
+  croisé, un retrait plus récent jamais effacé).
 - `POST /accounts/:id/retry` : nouvelle tentative d'un compte `FAILED` du propriétaire (409 sinon,
   404 pour un autre utilisateur). Même firme, plan, taille et règles (`retryAccountData`) ; rien
   n'est copié (trades, connexion broker, dernier payout). Libellé incrémenté côté serveur par
   `nextAttemptLabel` (`@mtc/shared`, partagé avec l'app qui l'annonce avant la création :
   « Apex 50K #2 », plus grand numéro + 1). Quota du plan appliqué.
+  Tentative plus récente déjà créée (même base, numéro plus grand : `newerAttempt`) → **409
+  `RETRY_EXISTS`**, vérifié AVANT le quota (jamais « Passe à un plan supérieur » dans ce cas). Lecture,
+  contrôles et création sous `pg_advisory_xact_lock(hashtextextended('account-retry:<userId>', 0))` :
+  deux requêtes simultanées ne créent qu'un compte (int-spec `account-status-scope`). Le filtre
+  global ne renvoie que `code` et `message` : l'app retrouve le compte dans la liste.
 - `DELETE /accounts/:id/permanent` : suppression DÉFINITIVE d'un compte de trading et de ses trades.
   Corps `{ "confirm": true }` obligatoire (400 sinon), propriétaire seulement (404), démo refusée
   (403, `DemoReadOnlyGuard`). Une transaction : trades, séances, connexion broker (la synchro ne peut
@@ -1650,6 +1711,63 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
   Compte MyTradingCoach et Stripe intacts. Couvert par `account-purge.int-spec.ts`.
 - `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
   compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
+
+## Autopsie d'un compte grillé (#669, 2026-10-23)
+
+Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : pas de cycle).
+- **Détection** `AccountIncidentsService.detect(userId, accountId, source)` : relit `AccountsService.list`
+  (aucune règle recalculée) ; compte ACTIVE, `drawdown.breached` → incident `drawdown`
+  (`period = 'account'`) ; `dailyLoss.breached` (Premium seulement, métrique non calculée en Gratuit)
+  → `daily_loss` (`period = AAAA-MM-JJ`). `createMany … skipDuplicates` + unicité
+  `accountId + kind + period` = un seul incident, même si plusieurs déclencheurs tirent ensemble.
+  **Jamais pour un compte démo** (son incident vient du seed). `detectQuietly` = best-effort.
+- **Déclencheurs** : `PropAlertsService` (niveau `breached` drawdown / perte du jour, source `live`),
+  `TradesService.importTrades` (fin de lot, par compte touché : import CSV, synchro et historique
+  Tradovate) et `TradesService.create` hors lot (saisie), source `sync`.
+- **Confirmation** : `PATCH /accounts/:id` (`UpdateAccountRequestDto`) passe par
+  `AccountIncidentsService.updateAccount`. Un compte ACTIF passé en `FAILED` ou `ARCHIVED` relance la
+  détection ; il ne pose `failedByIncidentAt` sur l'incident ouvert (une seule fois, filtre
+  `failedByIncidentAt: null`) **que si le corps porte `confirmIncident: true`**, envoyé par la seule
+  feuille « … est échoué ». Le formulaire d'édition ne l'envoie jamais : son archivage ne confirme rien
+  (revue #712). `confirmIncident` est retiré avant `AccountsService.update` (le DTO part dans Prisma).
+  Passé en `FAILED` sans limite ouverte : incident `manual` (chronologie de la dernière séance, jamais
+  réactivable). Simple archivage sans limite franchie : rien.
+- **Routes** : `GET /accounts/:id/incidents` (ouverts) · `GET …/:incidentId` (chronologie, KPI, série
+  de distance, 3 constats, `ai` stocké, `canReactivate` ; **aucun appel IA**) · `GET …/:incidentId/analysis`
+  · `POST …/:incidentId/dismiss`. `GET /accounts` porte `openIncidentId`.
+- **Chronologie et constats** : `incident-report.ts` (pur), recalculés à chaque lecture depuis
+  `Trade`, `BehaviorAlert`, `PropRiskEvent` de la journée CME et les 60 séances précédentes. Distance
+  = marge relevée à la détection (`data.remaining`) reconstruite trade par trade sur le réalisé
+  (`tradedAt` = première sortie : estimation, `estimatedDistance: true`). Constats : gabarits chiffrés,
+  aucun conseil ni promesse (test dédié).
+- **Analyse IA (Premium)** : générée à la première demande, `max_tokens` 400 (`INCIDENT_AI_MAX_TOKENS`),
+  feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Le message dit toujours
+  ce qu'on sait du franchissement (heure, « déjà franchie avant le premier trade », « non connue », ou
+  pour `manual` « Aucune limite relevée ») et le système interdit toute autre limite : sans ça, un échec
+  marqué à la main recevait une « limite journalière franchie » inventée. Heure d'entrée : pas en base
+  (`tradedAt` = sortie), donc le message porte « Heure d'entrée non enregistrée. » et le système
+  interdit de la déduire ou de la recopier depuis la sortie (sinon « À 17h30, tu entres en position »).
+  `IncidentTrade.enteredAt` (optionnel) la transmet le jour où une source la fournit. Règle générale :
+  une heure, un montant ou un fait n'est cité que s'il est dans le message ; le test « aucune donnée
+  absente présentée comme un fait » (`incident-report.spec.ts`) le vérifie cas par cas. Jamais pour la démo,
+  jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
+  Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
+  `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
+  réponse vide (facturée), il est ramené à `AI_RETRY_DELAY_S` (2 min) ; compteur
+  `incident-ai-tries:<id>:<jour CME>` (`INCR`, 24 h), au plus `AI_MAX_TRIES_PER_DAY` (3) essais par
+  incident et par jour, réussis ou non.
+- **« Ce n'est pas un échec »** : `dismissedAt` (jamais recréé) ; remet le compte en ACTIVE seulement si
+  `failedByIncidentAt` et statut encore `FAILED` / `ARCHIVED`, via `AccountsService.update` (quota).
+- **Constats de marge** (`incident-report.ts`) : marge affichée avec son signe ; `crossingPoint` = passage
+  d'au-dessus de la limite à zéro ou dessous. Marge déjà ≤ 0 avant le premier trade : « Limite estimée
+  déjà franchie avant la séance », jamais de franchissement daté. Un seul trade : « 1 trade à HH:MM ».
+- **Démo** : `demo-data/lost-accounts.ts` (`lastSession`, `buildLostDemoIncident`,
+  `DEMO_INCIDENT_ANALYSIS`) : séance de casse sur « Apex 50k · Éval #1 », alerte « pertes d'affilée »,
+  paliers 25 % / 10 % / dépassé, échec confirmé, texte d'analyse PRÉENREGISTRÉ (vitrine démo seulement :
+  `seed:user` n'en pose pas). La page le signale comme exemple. Ses montants sont NETS, comme la
+  chronologie (test qui les recalcule depuis les trades du seed).
+- E-mail : pas encore branché (texte à valider par Greg ; seulement si `notificationsEmail` déjà actif,
+  formule « d'après tes trades enregistrés, la limite semble franchie », jamais démo).
 
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
@@ -2084,6 +2202,11 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
 - Livraison (`AdminPushService.deliver`) : appareils dont l'utilisateur est `role = ADMIN` **au
   moment de l'envoi**, filtrés par `mutedEvents` (préférences par appareil) ; 2xx → `lastSuccessAt`,
   404/410 → abonnement supprimé ; journaux = hôte du service push seulement (l'endpoint contient un jeton).
+- Journal d'envoi (`push-delivery.ts`, admin et traders) : UNE ligne par tentative et par appareil
+  (info si livré ou 404/410 abonnement supprimé ; warn pour 5xx, autres 4xx, délai, erreur réseau),
+  `Envoi push <admin|trader> <TYPE> : livré|échec (<2xx|404|410|4xx|5xx|délai dépassé|erreur réseau>, <hôte>)`.
+  Jamais l'endpoint, ses clés, l'id d'appareil ni le message d'une exception (il peut citer l'adresse) ;
+  délai = `PushDeadlineError` (`push-http.ts`). Contrat verrouillé par `push-delivery.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
@@ -2091,11 +2214,78 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   vers NEEDS_RECONNECT, jamais pour la démo (seul chemin d'écriture de ce statut).
 - Config : `PUSH_ENABLED`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
   (`config/push-config.ts`). Absentes/invalides → push désactivé, l'API démarre (log au boot).
+  Traders (#666) : en plus `TRADER_PUSH_ENABLED=true` (`resolveTraderPushFlag`, jeton
+  `TRADER_PUSH_FLAG` de `PushCoreModule`, éteint si absent) ; `TraderPushService.enabled` exige
+  les deux, l'admin ne lit que `PUSH_ENABLED`. Éteint : `enabled: false` et `publicKey: null` sur
+  `GET /push/settings`, 503 sur `subscribe` et `test`, notifieur `disabled` ; `DELETE
+  /push/devices/:id` et `POST /push/unsubscribe` restent ouverts (`push-switches.spec.ts`).
   Clés : `node tools/scripts/vapid-generate.mjs`. Changer de paire invalide les abonnements.
 - Routes `/admin/push/*` (garde de classe) : `public-key`, `subscribe`, `unsubscribe`, `device`,
   `preferences` (PATCH), `test`. L'appareil est identifié par son endpoint, dans le corps.
 - **Nouvel événement** = valeur de l'enum `AdminPushEvent` (migration) + copie dans
   `libs/shared/src/contracts/enums.ts` + libellé `ADMIN_PUSH_EVENT_LABELS` + message + branchement + test.
+- Socle commun avec les traders (#666) : config VAPID et émetteur dans `modules/push/push-core.module.ts`
+  (`PUSH_CONFIG`, `PUSH_SENDER`), boucle d'envoi `deliverPush` (`push-delivery.ts`), DTO d'abonnement
+  `push/dto/push-subscription.dto.ts`. Une seule paire VAPID pour l'admin et l'app.
+
+## Notifications push des traders (#666, phase 1 API, 2026-10-23)
+
+Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-push-traders.md`.
+- Services métier → **`TraderNotifier.notify(userId, type, message, { accountId?, dedupKey, force? })`**
+  uniquement, injecté en `@Optional()` en dernier paramètre. Ne lève jamais, n'attend pas l'envoi.
+- **Filtres côté API, dans l'ordre** (`TraderNotifier.send`, renvoie la raison) : push actif, compte
+  démo, au moins un appareil, plan (`PUSH_PREMIUM_TYPES` : `isPremiumAccess`), type coupé
+  (`TraderPushPreference.mutedTypes`, défaut `[RECAP]`), heures silencieuses (`quiet-hours.ts`, heure de
+  Paris, plage à cheval sur minuit possible ; aucun fuseau par utilisateur en base), anti-spam Redis
+  `push:spam:<user>:<compte>:<dedupKey>` (`SET NX PX 15 min`, Redis indisponible = on envoie).
+  `force: true` (limite prop firm franchie) passe l'anti-spam mais **ni** les types coupés **ni** les
+  heures silencieuses ; la clé est posée quand même.
+- **Branchements** : `PropAlertsService` (`PROP_RULES` : 10 %, franchi, objectif, payout ; le 25 % et
+  l'approche de la consistency restent dans l'app ; `force` sur `breached`), `TiltAlertsService` et
+  `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
+  `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
+  (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
+  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+- **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
+  Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
+  Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),
+  comptes ACTIVE seulement (échoués et archivés exclus), PUSH SEULEMENT : ni événement d'app, ni journal
+  de séance (#373), ni incident `live` (#669).
+- **Deux marqueurs Redis par alerte** (revue #717, I3) : `prop-alert:<compte>:<type>:<période>` =
+  « affichée dans l'app » (direct seulement) et `prop-alert-push:…` = « push envoyé » (direct et fond,
+  `prop-alert-push.ts`). Le fond ne touche JAMAIS le premier : une alerte relevée app fermée s'affiche
+  à l'ouverture, sans second push si le push est parti. Le marqueur push est réservé ATOMIQUEMENT
+  (Lua, rang du niveau) avant `TraderNotifier.send`, et rendu si l'envoi n'a pas eu lieu (aucun
+  appareil, type coupé, heures silencieuses) : direct et fond simultanés ne poussent qu'une fois, même
+  une limite franchie. En direct, le push n'est tenté qu'au moment où l'alerte s'affiche.
+  `TraderNotifier.send` ne rend `sent` que si **au moins un appareil a reçu** le push ; sinon
+  `undelivered` (5xx, délai dépassé, 404/410, adresse hors liste blanche) : réservation rendue, retenté
+  au relevé suivant, la clé anti-spam reste posée (15 min pour une alerte non forcée). Au plus
+  `MAX_UNDELIVERED_PUSH` (3) envois sans livraison par niveau et par période : ensuite le marqueur est
+  gardé (abandon journalisé), une limite franchie forcée ne repart pas toutes les 15 min toute la journée.
+  Seul `undelivered` consomme un essai, jamais aucun appareil, type coupé ou heures silencieuses
+  (testé). Compteur `…:undelivered:<niveau>` : `INCR` et `EXPIRE` dans UN script Lua, la clé
+  n'existe jamais sans TTL (`prop-alert-push.int-spec.ts`, vrai Redis). Redis indisponible après
+  l'envoi : journal « envoyé sans livraison, suivi Redis impossible », la réservation reste posée
+  jusqu'à son expiration (pas de spam) ; « non envoyé » seulement si la réservation a échoué avant.
+  Le réarmement en fond n'efface que `prop-alert-push:…`, le direct efface les deux.
+- **Fond** : texte suivi de `BACKGROUND_NOTE` (« Relevé automatique, jusqu'à 15 min de décalage. »),
+  seul cas à deux phrases. Anti-tilt et comportement : jamais depuis le fond.
+- **Textes** (`trader-push-messages.ts`) : une phrase factuelle, **aucun montant**, **jamais le
+  libellé saisi par le trader** (écran verrouillé) : repère `{compte}` remplacé dans
+  `TraderNotifier` par le nom de catalogue (`push-account-name.ts` : « Apex 50K », « Apex 50K compte 2 »
+  pour le suivant de même firme et taille, « ton compte » sans plan relié). « (estimation
+  MyTradingCoach) » sur toute règle de firm (détecteurs A compris), aucun conseil. Clic →
+  `/session` (récap → `/dashboard`, connexion → `/accounts`). TTL : 1 h pour une alerte de séance.
+  Payload `TraderPushPayload` (`@mtc/shared`), lu par le service worker maison de l'app (phase 2).
+- **Routes `/push/*`** (`JwtAuthGuard`, mutations bloquées en démo par `DemoReadOnlyGuard`) :
+  `GET settings`, `POST device` / `subscribe` / `unsubscribe` (endpoint dans le corps), `DELETE
+  devices/:id`, `PATCH preferences` (`quietHours: null` = désactivées), `POST test` (sans filtre, 3/min).
+  `POST device` (lecture) est `@DemoAllowed`. Adresse d'abonnement : liste blanche des services push
+  (`push-endpoint.ts`, DTO et avant chaque envoi) ; envoi borné (`push-http.ts` : 10 s au total, 16 Ko
+  de réponse au plus, aucune redirection).
+  Au plus `MAX_PUSH_DEVICES` = 10 appareils par trader (le plus ancien part). L'endpoint n'est jamais
+  renvoyé ; libellé d'appareil déduit du User-Agent (`device-label.ts`).
 
 ## Détecteurs de comportement (#602, phase 1 : moteur + mode silencieux, 2026-10-18)
 
@@ -2158,6 +2348,28 @@ idempotent : une 2de finalisation ne réécrit pas le consentement), `DELETE /au
 - Tests : `auth.service.spec.ts` (règles), `google-id-token.verifier.spec.ts` (vraie vérif),
   `google-auth.int-spec.ts` (bout en bout, vérificateur remplacé ; app montée avec `cookieParser` et
   `ValidationPipe` comme `main.ts`, sinon `/auth/refresh` plante et les UTM ne sont pas normalisés).
+
+## Payouts saisis à la main (feature payouts, partie 1, 2026-10-21)
+
+Un compte FUNDED **sans connexion broker** n'a aucune trace de ses retraits : l'utilisateur les saisit
+(date + montant). Ils vivent dans `BrokerPayout`, comme les payouts détectés chez Tradovate, avec
+`changeType = 'manual'` et `transactionId = 'manual:<uuid>'` (**pas de migration**). Logique pure :
+`accounts/account-payouts.ts` (`MANUAL_PAYOUT_TYPE`, `summarizePayouts`, `manualPayoutError`).
+
+- Routes : `GET /accounts/:id/payouts` (détectés et saisis, `manual` pour les seconds),
+  `POST /accounts/:id/payouts` (`CreatePayoutDto` : `tradeDate` `AAAA-MM-JJ` ≤ aujourd'hui, `amount` > 0 ;
+  compte FUNDED seulement, 400 sinon ; **409 `PAYOUTS_FROM_BROKER` si le compte a une connexion**,
+  sinon le retrait compterait deux fois), `DELETE /accounts/:id/payouts/:payoutId` (payout SAISI
+  seulement, 404 sinon). `dismiss` (« ce n'était pas un payout ») ne s'applique qu'aux payouts détectés.
+- Solde : `tradesBalance = solde de départ + P&L des trades − Σ payouts saisis` (`RulePayouts.manualTotal`).
+  Les payouts détectés n'en sont pas retirés : le solde lu chez le broker les a déjà perdus. Le plancher
+  ne bouge pas (le plus haut vient des trades), donc la marge baisse du montant retiré.
+- Cycle du prochain payout : le plus récent entre le dernier payout enregistré (détecté ou saisi) et la
+  date du formulaire ; `cycleSource = 'manual'` quand c'est un payout saisi (pas de `lastPayout` à écarter).
+- Courbe d'équité journalière : les payouts saisis sont lus avec les autres (même table, non mis en cache).
+- La synchro Tradovate ne supprime que ses lignes `balancedrop`, et tient compte des dates de payouts
+  connues (saisies comprises) pour ne pas détecter deux fois le même retrait.
+- Tests : `account-payouts.spec.ts`, `account-payouts.int-spec.ts` (solde, marge, courbe, 409, 404, 400).
 
 ## Courbe d'équité journalière (`/analytics/equity-curve/daily`)
 

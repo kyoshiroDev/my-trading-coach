@@ -5,6 +5,7 @@ import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { newerAttempt } from '@mtc/shared';
 import { AccountsComponent } from './accounts.component';
 import { AccountsApi, TradingAccount } from '../../core/api/accounts.api';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
@@ -44,7 +45,10 @@ function setup(accounts: TradingAccount[], selected: string | 'all' = 'all', con
     selectedAccountId: signal<string | 'all'>(selected),
     isLoading: signal(false), loaded: signal(true), load: vi.fn(),
   };
-  const flow = { busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn() };
+  const flow = {
+    busy: signal(false), openRetry: vi.fn(), archive: vi.fn(), openChoice: vi.fn(), openAttempt: vi.fn(),
+    newerAttempt: (a: TradingAccount) => newerAttempt(a.label, store.accounts()),
+  };
   TestBed.configureTestingModule({
     providers: [
       { provide: AccountsApi, useValue: {} },
@@ -92,14 +96,36 @@ describe('Mes comptes · compte perdu', () => {
   });
 
   it('compte échoué : « Hors statistiques », « Nouvelle tentative » et « Archiver »', () => {
-    const { q, flow } = setup(LIST());
+    const { q, flow } = setup(LIST().filter((a) => a.id !== 'a2'));
     expect(q('account-failed-a1')!.textContent).toContain('Hors statistiques · 12 trades');
     q('account-retry-a1')!.click();
     expect(flow.openRetry).toHaveBeenCalledWith('a1');
     q('account-archive-a1')!.click();
     expect(flow.archive).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }));
-    expect(q('account-retry-a2')).toBeNull();
     expect(q('account-retry-t')).toBeNull();
+    expect(q('account-see-attempt-a1')).toBeNull();
+  });
+
+  it('tentative suivante déjà créée (B3) : « Voir Apex 50K #2 » à la place de « Nouvelle tentative »', () => {
+    const { q, flow } = setup(LIST());
+    expect(q('account-retry-a1')).toBeNull();
+    expect(q('account-see-attempt-a1')!.textContent!.trim()).toBe('Voir Apex 50K #2');
+    q('account-see-attempt-a1')!.click();
+    expect(flow.openAttempt).toHaveBeenCalledWith('a2');
+    expect(flow.openRetry).not.toHaveBeenCalled();
+    // « Archiver » reste proposé.
+    expect(q('account-archive-a1')).not.toBeNull();
+  });
+
+  it("« Voir l'autopsie » : sur un compte échoué ou archivé qui en a une (#669), jamais sinon", () => {
+    const list = LIST().map((a) =>
+      a.id === 'a1' ? { ...a, openIncidentId: 'inc-1' } : a.id === 'l' ? { ...a, openIncidentId: 'inc-2' } : a);
+    const { q } = setup(list);
+    expect(q('account-autopsy-a1')!.textContent!.trim()).toBe("Voir l'autopsie");
+    expect(q('account-autopsy-l')).not.toBeNull();
+    expect(q('account-autopsy-a2')).toBeNull();
+    const { q: q2 } = (TestBed.resetTestingModule(), setup(LIST()));
+    expect(q2('account-autopsy-a1')).toBeNull();
   });
 
   it('archivés : section repliée « 1 COMPTE ARCHIVÉ », hors de la liste principale', () => {
@@ -108,8 +134,8 @@ describe('Mes comptes · compte perdu', () => {
     expect(section.tagName).toBe('DETAILS');
     expect(section.open).toBe(false);
     expect(section.querySelector('summary')!.textContent).toContain('1 COMPTE ARCHIVÉ');
-    expect(section.querySelector('[data-testid="account-card-l"]')).not.toBeNull();
-    expect(section.querySelector('[data-testid="account-card-a1"]')).toBeNull();
+    expect(section.querySelector('[data-testid="account-row"][data-account-id="l"]')).not.toBeNull();
+    expect(section.querySelector('[data-testid="account-row"][data-account-id="a1"]')).toBeNull();
   });
 
   it('chiffres du haut : ni l\'échoué ni l\'archivé (validé compté)', () => {
@@ -120,8 +146,8 @@ describe('Mes comptes · compte perdu', () => {
   });
 
   it('compte archivé choisi dans le sélecteur : affiché seul, ses chiffres lisibles', () => {
-    const { q, cmp } = setup(LIST(), 'l');
-    expect(q('account-card-l')).not.toBeNull();
+    const { el, q, cmp } = setup(LIST(), 'l');
+    expect(el.querySelector('[data-testid="account-row"][data-account-id="l"]')).not.toBeNull();
     expect(q('archived-accounts')).toBeNull();
     expect(cmp['totalPnl']()).toBe(-1100);
   });
@@ -157,6 +183,37 @@ describe('Mes comptes · compte perdu', () => {
     expect(LIST().map((a) => [a.status, can(a)])).toEqual([
       ['ACTIVE', true], ['PASSED', false], ['FAILED', false], ['ARCHIVED', false],
     ]);
+  });
+});
+
+describe('Mes comptes · payouts d\'un compte funded', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('bloc des payouts au dépli d\'un compte funded seulement, saisie si non connecté', () => {
+    const { q, cmp, fixture } = setup([
+      acct('f1', 'Lucid Flex 50K', { type: 'FUNDED' }),
+      acct('e1', 'Apex 50K', { type: 'EVALUATION' }),
+    ]);
+    expect(q('account-payouts-f1')).toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    const block = q('account-payouts-f1')!;
+    expect(block.querySelector('mtc-account-payouts')).not.toBeNull();
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('e1');
+    fixture.detectChanges();
+    expect(q('account-payouts-e1')).toBeNull();
+  });
+
+  it('cycle démarré par un payout saisi : note « saisi dans la liste des payouts »', () => {
+    const funded = acct('f1', 'Lucid Flex 50K', { type: 'FUNDED', propFirmPlanId: 'lucid-flex-50k' });
+    funded.metrics = { ...funded.metrics, progress: {
+      kind: 'payout', remaining: 0, done: false, requirements: [], cycleAfter: '2026-10-05', cycleSource: 'manual',
+      payoutsReceived: 1, lastPayout: null, unconfirmed: false,
+    } };
+    const { q, cmp, fixture } = setup([funded]);
+    (cmp as unknown as { toggleExpand: (id: string) => void }).toggleExpand('f1');
+    fixture.detectChanges();
+    expect(q('account-progress-f1')!.textContent).toContain('Cycle compté depuis ton payout du 05/10, saisi dans la liste des payouts.');
   });
 });
 

@@ -41,7 +41,7 @@ describe('normalizeChangeType / payoutConfidence', () => {
 describe('scanCashHistory', () => {
   it('export réel (commissions, trades) : aucun payout, types comptés', () => {
     const csv = readFileSync(join(__dirname, '../../trades/__fixtures__/tradovate-cash-history.csv'), 'utf8');
-    const scan = scanCashHistory(csv, 'APEX136790000074');
+    const scan = scanCashHistory(csv, 'APEX100000000074');
     expect(scan.payouts).toEqual([]);
     expect(scan.typeCounts).toEqual({ commission: 37, tradepaired: 20 });
   });

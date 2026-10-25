@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { BrokerProvider, type Prisma } from '@prisma/client';
 import type { PropFirmPhaseRules } from '@mtc/shared';
 import { PrismaService } from '@api/prisma/prisma.service';
@@ -13,6 +13,8 @@ import { type BehaviorAlertDraft, type EntryContext, evaluateEntry } from './beh
 import { type SeenPositions, newEntries, snapshot } from './behavior-entries';
 import { maxContractsAt, phaseForAccountType } from './behavior-plan';
 import { groupPositions } from './behavior-positions';
+import { TraderNotifier } from '../push/trader-notifier.service';
+import { TRADER_PUSH_MESSAGES } from '../push/trader-push-messages';
 
 /** Une rafale d'événements broker (fills, position) : une évaluation, juste après. */
 export const BEHAVIOR_DEBOUNCE_MS = 1_500;
@@ -53,6 +55,8 @@ export class BehaviorAlertsService implements OnModuleDestroy {
     private readonly redis: RedisService,
     private readonly accounts: AccountsService,
     private readonly baselines: BehaviorBaselineService,
+    /** Push vers les appareils du trader (#666). */
+    @Optional() private readonly notifier?: TraderNotifier,
   ) {}
 
   schedule(userId: string, accountId: string, emit: BehaviorAlertEmit): void {
@@ -114,7 +118,13 @@ export class BehaviorAlertsService implements OnModuleDestroy {
           select: { id: true },
         });
         recorded++;
-        if (behaviorAlertsUiEnabled()) emit('behavior:alert', { ...draft, id: row.id, accountId });
+        if (behaviorAlertsUiEnabled()) {
+          emit('behavior:alert', { ...draft, id: row.id, accountId });
+          // Push (#666) : seulement quand les alertes sont affichées, jamais en phase silencieuse.
+          this.notifier?.notify(userId, 'BEHAVIOR', TRADER_PUSH_MESSAGES.behavior(accountId, draft), {
+            accountId, dedupKey: `behavior:${draft.type}`,
+          });
+        }
       }
     }
     return recorded;

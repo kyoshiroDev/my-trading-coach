@@ -648,7 +648,12 @@ plus s'y référer ni tenter de le synchroniser. La source de vérité du design
 Règles design non négociables (détail dans `design.md`) : dark only, tokens CSS (jamais
 de valeur en dur), chiffres/labels en `--font-mono` + `tabular-nums`, **icônes Lucide**
 (jamais d'emoji dans les headers — seuls les émotions trader et watermarks décoratifs
-sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu.
+sont tolérés), pas de barre d'accent `::before` sur les cartes de contenu. **Mise en page** : page sur toute
+la largeur à droite de la barre latérale (aucun `max-width` de page, grille à colonnes
+automatiques), défilement vertical seulement, vérifiée de 360 à 2560 px (règle complète dans
+`design.md`). Page sans `mtc-topbar` : classes communes `.mtc-page` / `.mtc-page-head` /
+`.mtc-page-title` / `.mtc-cards` de `styles.css` (alignement du titre sur le burger mobile), jamais de
+padding ni de `max-width` sur le conteneur dans le CSS du composant.
 
 ---
 
@@ -784,6 +789,19 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
 
 ---
 
+## Payouts d'un compte funded (feature payouts, partie 1, 2026-10-21)
+
+`features/accounts/account-payouts` (`mtc-account-payouts`, entrées `accountId`, `currency`, `connected`,
+sortie `changed`) : au dépli d'un compte FUNDED dans Mes comptes (la ligne a alors `has-detail`). Liste
+des payouts (`AccountsApi.listPayouts`) : « saisi » (supprimable, `ConfirmService`, 404 = succès) ou
+« détecté chez le broker ». Compte sans connexion : formulaire date (max aujourd'hui) + montant →
+`addPayout` ; compte connecté : pas de saisie (l'API répondrait 409). `changed` → `store.load()` : solde,
+marge et cycle repartent du serveur. Note du cycle : `cycleSource === 'manual'` → « saisi dans la liste
+des payouts ». En spec (JIT), remplacer les signaux d'`input()` sur l'instance (`setInput` échoue).
+Au moins un payout (saisi ou détecté) : note `payouts-floor-lock-note` (« Le plancher gelé après un
+payout n'est pas encore pris en compte dans l'estimation. Vérifie chez ta firm. ») tant que la règle
+« plancher gelé au premier payout » n'est pas modélisée au catalogue. À retirer quand elle le sera.
+
 ## Compte perdu (#681, 2026-10-21) — statistiques sans les comptes échoués et archivés
 
 Miroir front de la règle API (`nestjs.md`, « Compte perdu ») : **aucun chiffre « tous les comptes »
@@ -835,6 +853,14 @@ les chiffres (jamais au premier passage).
   « Nouvelle tentative » et « Archiver » (44 px), archivés dans un `<details>` replié. La ligne est un
   `<ng-template #acctRow>` rendu par `NgTemplateOutlet` (liste principale + section archivée).
 - Sélecteur de compte : groupe « Hors statistiques » avec badge ; solde de « Tous » = `aggregateAccounts`.
+  Compte échoué ou archivé choisi : ligne discrète sous le sélecteur (`selected-inactive-note`,
+  « Ce compte est échoué : il ne compte pas dans « Tous les comptes ». », ton des notes, sans couleur d'alerte).
+- **Période par défaut d'un compte échoué ou archivé** (`core/utils/inactive-period.util.ts`) : ses
+  trades sont souvent plus vieux que « 1 mois ». Tableau de bord et Statistiques passent sur « Tout »
+  quand on le choisit ; le calendrier des Statistiques s'ouvre sur le mois de son dernier trade
+  (`TradesApi.getAll({ accountId, limit: '1' })`). Retour sur un compte actif : période et mois d'avant
+  reviennent. Un choix de l'utilisateur (`setPeriod`, `selectPeriod`, `onMonthChange`) prime et
+  désarme le retour automatique. Comptes actifs : inchangés.
 - **Connexion Tradovate : comptes ACTIVE seulement** (`canConnect` dans Mes comptes, « Connecter » et
   « Reconnecter » ; l'import CSV ne cible déjà que `activeAccounts()`). Une connexion DÉJÀ établie sur
   un compte qui devient échoué, validé ou archivé n'est pas touchée : elle reste `CONNECTED` et la
@@ -847,7 +873,51 @@ les chiffres (jamais au premier passage).
 ⚠️ `src/styles/global.css` n'est importé nulle part : un style global va dans `src/styles.css`
 (c'est là qu'est `.status-badge`).
 
+## Autopsie d'un compte grillé (#669, 2026-10-23)
+
+Maquette `maquettes/mockup-autopsie.html` (fait foi). Route **paresseuse**
+`/accounts/:accountId/autopsie/:incidentId` → `features/accounts/autopsy/account-autopsy.component`.
+- Mise en forme pure dans `autopsy.util.ts` (en-tête, KPI, lignes, courbe SVG `distanceChart`,
+  `frenchSpacing` : espace insécable devant `: ; ! ?` des constats et de l'IA). Fixture de test :
+  `autopsy.fixture.ts` (jamais importer une fixture depuis un `*.spec.ts` : ses tests seraient rejoués).
+- Contrat : `libs/shared/src/contracts/incident.ts`. Client : `AccountsApi.incidents / incident /
+  incidentAnalysis / dismissIncident`.
+- Gratuit : chronologie et constats ; carte IA verrouillée (« Essayer Premium · 1 mois offert » selon
+  `trialAvailable`). Premium, `ai.status = 'pending'` : UN appel à `…/analysis` à l'ouverture.
+  Démo : texte préenregistré, badge « Exemple » + note « sans appel à l'IA ».
+- Tentative suivante déjà créée (`LostAccountFlowService.newerAttempt`, `@mtc/shared`) : « Nouvelle
+  tentative » (Mes comptes) et « Repartir… » (autopsie) deviennent « Voir Apex 50K #2 » (`openAttempt` :
+  ce compte sélectionné, `/accounts`). 409 `RETRY_EXISTS` à la création : ni toast d'erreur ni message
+  de quota, feuille fermée, liste rechargée (le bouton bascule).
+- « Repartir sur une nouvelle tentative » seulement sur un compte FAILED (`LostAccountFlowService.openRetry`) ;
+  Libellé (B2) : « Ce n'est pas un échec » seulement si `canReactivate` ; sinon (autopsie non confirmée,
+  échec marqué à la main) « Retirer cette autopsie », note « Retirer l'autopsie ne change pas le statut du
+  compte. ». Même confirmation dans les deux cas.
+  « Ce n'est pas un échec » → **`ConfirmService.ask` d'abord** (retrait définitif, réactivation annoncée si
+  `canReactivate`), puis `dismissIncident`, toast, `store.load()`, retour à `/accounts`.
+- Feuille de choix (« Garder comme échoué » / « Archiver ») : `update(id, { status, confirmIncident: true })`.
+  Le formulaire d'édition n'envoie JAMAIS `confirmIncident` (son archivage ne confirme aucune autopsie).
+- 404 au chargement → bloc `autopsy-not-found` « Cette autopsie n'existe pas ou n'est plus disponible »
+  (même message retirée / inexistante / autre compte), lien vers Mes comptes ; autre erreur → `mtc-error-state`.
+- Couleurs (revue #712) : action principale sur `--primary` (aussi `lost-btn.pri`, `la-btn.pri`,
+  `.toast-action`), courbe et pastilles des constats en neutre (`--text-2` / `--bg-3`), **aucun cyan**
+  sur la page (réservé à l'IA et au temps réel). Rouge = seul trade qui franchit la limite (point
+  `dot-cross` et ligne `li.last`), jamais un trade gagnant resté sous une limite déjà franchie. Montant
+  des KPI : `white-space: nowrap` + `clamp(13px, 4.2cqi, 18px)`. Courbe : seule la première alerte porte
+  un libellé (ancré à gauche s'il déborde) ; une seule heure sous l'axe si début = fin.
+- Espaces insécables : `frenchSpacing` aussi sur les titres et méta de la chronologie ; `&nbsp;` dans le
+  template ; le test de la page refuse toute espace simple devant `: ; ! ?`.
+- Page bornée à 1180 px (le SVG s'étire avec la colonne) ; deux tracés (358 / 560) selon la largeur
+  du conteneur ; une colonne puis deux à partir de 760 px (`@container`).
+- Entrées : Mes comptes (« Voir l'autopsie » si `openIncidentId`, compte FAILED ou ARCHIVED ; sur sa
+  ligne en mobile) et bouton du toast après « Confirmer » de la feuille de choix (cherche l'autopsie
+  au clic, sinon toast info).
+
 ## Feedback utilisateur : toast · inline · bloc persistant (PROMPT-210)
+
+> Toast qui porte un bouton (`opts.action`) : durée par défaut ≥ `TOAST_ACTION_MIN_DURATION` (10 s),
+> le temps de lire puis d'agir ; une `duration` explicite reste respectée (revue #712).
+
 
 **Un seul système de toasts** : `core/services/toast.service.ts` (`ToastService`, root, signals)
 et **un seul conteneur** `mtc-toasts` monté dans `app.ts` (`<router-outlet /><mtc-toasts />`,
@@ -1038,6 +1108,28 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   direct ne coûterait que +0,6 Ko gz mais 9 kB bruts de marge sur le budget. Ce qui est importé par
   l'inscription arrive au démarrage : **pas de `@lucide/angular`** dedans (œil du mot de passe :
   `mtc-eye-icon`, SVG en ligne, partagé avec la connexion).
+- **Mise en page de `/register` et `/login`** (oct. 2026, maquette `maquettes/maquette-register-split.html`) :
+  `features/auth/auth-layout/`. `mtc-auth-layout` porte la page ; la page projette le contenu de la
+  carte (titres, Google, formulaire), le layout ajoute le logo (< 1024 px seulement) et la ligne de
+  confiance en bas de carte (« Lecture seule, aucun ordre passé · Hébergé en France » puis
+  « Référencé dans l'écosystème NinjaTrader », texte seul, sans lien). Styles communs de la carte :
+  `auth-form.css` (dans les `styleUrls` des deux pages). < 1024 px : carte seule (en haut sur
+  téléphone, centrée de 600 à 1023 px). ≥ 1024 px : deux colonnes, présentation à gauche, formulaire
+  sur `--bg-2` ; version compacte jusqu'à 1279 px.
+  - **Colonne de présentation `mtc-auth-pitch`** (+ aperçu `mtc-auth-preview`, statique, données de
+    démonstration, aucun appel API) : importée à la demande seulement quand `(min-width: 1024px)`
+    est vraie (jamais sur téléphone), par `import('../login.component')` : `login.component.ts`
+    réexporte `AuthPitchComponent` pour que la colonne voyage dans le morceau déjà paresseux de
+    `/login`. Un morceau à part (ou `@defer`) scindait le chunk partagé d'Angular : +2,7 kB au bundle
+    initial (488,4 kB sur 500 depuis #692, oct. 2026). Ne pas importer la colonne en statique.
+  - Points : `SIGNUP_PITCH_POINTS` (`@mtc/shared`, module `signup-pitch.ts` à part pour ne pas
+    entrer dans le bundle initial avec `PLAN_BENEFITS`) ; nombre de firms `PROP_FIRM_COUNT`, tenu égal
+    à `PROP_FIRM_CATALOG_FILES.length` par un spec (le catalogue fait 1,8 Mo de JSON).
+  - Mot de passe et confirmation côte à côte via `@container auth-card (min-width: 300px)` (= carte de
+    340 px). Bouton « Explorer la démo, sans compte » (`routerLink="/demo"`, `data-testid="register-demo"`)
+    seulement dans le parcours gratuit (ni `offerFlow`, ni Premium).
+  - `/forgot-password`, `/reset-password` et la finalisation Google gardent l'ancien gabarit carte
+    seule (`auth-layout/card-page.css`, `card-page-signup.css`), à migrer si besoin.
 - **Écran de chargement** (`#mtc-boot`, `index.html`) : logo et « Chargement… » statiques, style
   intégré (tokens de `theme.css` avec valeurs de repli), visibles dès le HTML. Texte en police
   monospace **système** : JetBrains Mono y ferait télécharger une police en concurrence avec le JS. Retiré par `App`
@@ -1047,6 +1139,13 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   composant chargé au démarrage (racine, toasts, dialogues globaux, **inscription**) l'importe, TOUTES
   les icônes de l'app partent dans le bundle initial (+226 kB). Au démarrage : SVG en ligne (cf. `toasts`,
   `mtc-eye-icon`).
+- **Stores d'un utilisateur vidés au logout par `UserScopedReset`** (`core/auth/user-scoped-reset.ts`,
+  #692) : chaque store s'inscrit dans son constructeur (`inject(UserScopedReset).register(() =>
+  this.reset())`), `AuthService.logout()` appelle `resetAll()`. **`AuthService` (chargé au démarrage)
+  n'importe aucun store ni API métier** : avant, il injectait `SelectedAccountStore`, `TradesStore` et
+  `SetupsStore`, qui partaient au démarrage avec leurs API (−9,4 kB, 497,8 → 488,4 kB). Nouveau store
+  propre à l'utilisateur → s'inscrire là, pas l'injecter dans `AuthService`. Reste au démarrage ~4,5 kB
+  de `@mtc/shared` (règles prop firm, stats) via un morceau partagé d'esbuild, sans import direct.
 - Dans les libs, sorties en `@Output() … = new EventEmitter()` : leurs tests tournent en JIT, qui
   ne voit pas `output()`.
 - **Toute donnée chargée affiche son échec** : `@if (loadError()) { <mtc-error-state (retry)="reload()" /> }`
@@ -1266,6 +1365,96 @@ directement (pas de `?raw` comme dans l'app).
   Contrôle Playwright : surcharger les variables (`:root{--safe-top:47px;--safe-bottom:34px}`),
   Chromium ne simule pas les safe-area. En-tête < 480 px : `.tb-meta` masqué, statut réduit au point.
 
+## Notifications push des traders (#666 phase 2, 2026-10-24)
+
+Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : `nestjs.md`.
+- **Service worker maison** `public/push-sw.js` : push SEULEMENT, aucun `fetch`, aucun cache (l'app
+  n'est jamais servie par lui). Au clic : ouvre ou met au premier plan `data.url`, revérifié comme
+  chemin interne (`safePath` : `/…` seulement, ni `//`, ni `\`, ni autre origine, ni chemin qui
+  devient `//hôte` une fois normalisé comme `/..//evil.com` ; sinon `/`). Charge utile `null` ou
+  non-objet : notification neutre. Action
+  « Réglages » → `settingsUrl` (`/profil#notifications`). Testé dans un bac à sable `node:vm`
+  (`core/push/push-sw.spec.ts`). Enregistré avec `updateViaCache: 'none'`, seulement au clic sur
+  « Activer » (jamais au chargement).
+- **`core/push/push-browser.ts`** : `PUSH_BROWSER` (environnement, abonnement courant, `subscribe`),
+  remplaçable dans les tests. **`core/push/push.service.ts`** : états `server-disabled`,
+  `in-app-browser`, `ios-not-installed`, `unsupported`, `denied`, `supported`, `subscribed` ;
+  permission demandée par `enable()` seulement (demande fermée sans réponse : message neutre, pas
+  d'échec) ; abonnement inconnu du serveur resynchronisé ; limite `PUSH_MAX_DEVICES` (`@mtc/shared`).
+  **Propre à un compte** (revue phase 2 I2) : inscrit à `UserScopedReset` et remis à zéro à tout
+  changement d'utilisateur (effet sur `currentUser`), requêtes en cours annulées (`AbortSignal`
+  passé à `PushApi`), réponse du compte précédent ignorée (génération), aucune commande tant que
+  `state` vaut `null`. **Écritures en file** (I1) : une à la fois, chacune calculée sur ce que le
+  serveur a enregistré ; après un échec, changements en attente abandonnés (`skipped`), réglages
+  relus et réaffichés, un seul `failed` donc un seul toast. `PushApi` entièrement en
+  `SILENT_ERRORS` : la section a ses propres messages.
+- **Déconnexion** (`core/push/push-logout.ts`, appelé par `AuthService.logout` sans l'attendre) :
+  abonnement de CET appareil retiré côté navigateur D'ABORD (`unsubscribe()`, local, sans réseau :
+  l'adresse meurt chez le service push même si l'onglet se ferme), puis côté API avec le jeton
+  d'AVANT la déconnexion (`HttpBackend`, sans intercepteur), 5 s au plus, en `keepalive` (revue
+  phase 2 I6). Un échec ne bloque rien : la ligne serveur part au premier 404 ou 410. Sans ça, sur
+  un appareil partagé, les alertes du compte arrivaient chez la personne suivante.
+  Poids (revue phase 2 m7, mesuré le 25/10/2026 au build de production) : bundle initial 492,76 ko
+  contre 489,25 ko sur `dev` (`69bffaf2`), soit +3,51 ko bruts (+1,11 ko transférés) pour toute la
+  phase 2 ; reste 7,24 ko sous le plafond bloquant de 500 ko. La section est un chunk paresseux
+  (`push-settings-component`, 28,81 ko).
+- **Section du profil** `features/profile/notifications/push-settings.component` : onglet
+  Paramètres, chargée par `@defer (on viewport; when openNotifications)` ; `/profil#notifications`
+  ouvre l'onglet et charge tout de suite. La modale « Modifier ma stratégie » ne s'ouvre seule
+  (premier passage, aucune stratégie) que sur `/profil` sans `#notifications` ni `?tab=` : le
+  bandeau « Compléter » du tableau de bord compte dessus, les liens profonds (push, « Gérer mes
+  e-mails ») non ; `profile-strategy-modal-auto.spec.ts`. Masquée sans erreur si le push est coupé côté serveur ;
+  démo en lecture seule (aucun appel `device`, aucun bouton d'action). Gratuit : lignes Premium
+  verrouillées + modale des offres, seule `CONNECTION` active. Interrupteurs `role="switch"`
+  étiquetés (`aria-labelledby`), cibles de 44 px, `scroll-margin-top` sous la barre fixe.
+  Couleurs : variables de `theme.css`, sauf le texte blanc du bouton principal (`--primary`) ;
+  badges Premium violets (`--purple-bright` sur `--purple-dim`, comme `premium-lock`).
+  **Mise en page** (revue I3, m1) : toute la largeur, aucun `max-width` ; cartes dans l'ordre du DOM
+  (= ordre mobile = ordre du clavier : cet appareil, types avec l'invitation Premium sous leur titre,
+  heures silencieuses, appareils), chaque bloc ouvert par un petit titre pour aligner le haut des
+  colonnes au bureau (« Cet appareil » au-dessus de la carte d'état), en
+  grille `repeat(auto-fit, minmax(min(100%, 420px), 1fr))`, types sur deux rangées dès deux
+  colonnes (`@container`), mention SOUS la grille (une carte `1 / -1` garderait des colonnes vides à
+  2560 px). Aucun `order` ni `display: contents` (`push-settings.styles.spec.ts`). Heures
+  silencieuses : début égal à la fin refusé (« Choisis deux heures différentes », 400 côté API),
+  champ vidé ou refusé remis à la valeur enregistrée. Seed démo : 2 appareils, 22:00 à 07:00.
+- **iPhone ou iPad sans `<link rel="manifest">`** (lien lu dans le document, pas un drapeau ;
+  `BrowserEnv.hasManifest`) : état `ios-unavailable`, seulement « Les alertes sur iPhone ne sont
+  pas encore disponibles. », ni étapes, ni types, ni activation, même ouverte en mode app (iOS 26
+  l'ouvre ainsi sans manifest). L'activation revient seule quand #715 ajoute le lien (revue F4).
+- iPhone sans installation (manifest présent) : aide FIXE « Pour recevoir des alertes sur iPhone, ajoute MyTradingCoach
+  à l'écran d'accueil, puis ouvre-la depuis son icône » et « Partager, puis Sur l'écran d'accueil,
+  puis Ajouter », sans bouton, sans durée ni promesse (revue phase 2 I4), en attendant le parcours
+  d'installation (#715). Sans manifest (#715), l'app ajoutée à l'écran d'accueil d'un iPhone avant
+  iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `TRADER_PUSH_ENABLED` reste
+  coupé en production jusque-là (`deploy.md`) ; coupé, la section est absente de l'app.
+
+## Installation PWA de l'app (2026-10-25, PR 1 : manifest)
+
+- **`public/manifest.webmanifest`** : `name` MyTradingCoach, `short_name` MTC (≤ 12 caractères,
+  = `apple-mobile-web-app-title`), `display: standalone`, `scope: /`, `id: /`,
+  `start_url: /dashboard?source=pwa` (mesure des lancements depuis l'écran d'accueil ; directement
+  sur `/dashboard` pour ne pas dépendre de la redirection de `''`). Raccourcis Android : Séance
+  (`/session`) et Statistiques (`/analytics`), avec `?source=pwa`. iOS ignore les raccourcis.
+- **Couleurs** : `background_color` et `theme_color` = `--bg` de `theme.css` en dur (un manifest et
+  une balise ne lisent pas de variable CSS) ; `src/index-pwa.spec.ts` casse si elles divergent.
+- **Icônes** dans `public/pwa/` (192, 512 « any », maskable 512, `apple-touch-icon-180`), générées par
+  `node tools/scripts/generate-app-icons.mjs` (tracé de `logo.svg`, couleurs `--blue`, `--purple`,
+  `--text` lues dans `theme.css`). Maskable et Apple sont des carrés pleins sans transparence (le
+  système découpe ; iOS remplit la transparence en noir), courbe réduite dans la zone sûre. Noms
+  non hashés et cache d'un an côté nginx : **si le dessin change, changer le nom des fichiers**.
+- **Balises iOS** dans `index.html` : `apple-touch-icon` PNG (iOS n'affiche pas de SVG),
+  `apple-mobile-web-app-capable`, `mobile-web-app-capable`, barre d'état `black` (opaque) : le
+  contenu des pages ne tient pas compte de `safe-area-inset-top` (seuls burger, menu et toasts),
+  il passerait sous l'heure en `black-translucent`. Pas d'écran de lancement iOS.
+- **Le `<link rel="manifest">` réactive le push sur iPhone** : `PUSH_BROWSER.env().hasManifest` le
+  lit dans le document. Sans lui, le profil n'affiche que « Les alertes sur iPhone ne sont pas encore
+  disponibles. » Vérifié sur banc (iPhone émulé) : Safari non installé → étapes d'ajout ; ouvert
+  depuis l'écran d'accueil → « Activer les notifications ». Ne pas retirer le lien.
+- `push-sw.js` reste le seul service worker : ni `@angular/service-worker`, ni `SwUpdate`, ni page
+  hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
+- Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
+
 ## Connexion Google (#618, 2026-10-18)
 
 - `GoogleIdentityService` (`core/auth`) : config lue sur `GET /auth/google/config` (rien en dur dans
@@ -1302,5 +1491,12 @@ directement (pas de `?raw` comme dans l'app).
   padding-box !important` (sinon le fond clair imposé passe sous la bordure semi-transparente : le
   raccourci `background:` des champs de composant remet `border-box`). Champ sur un autre fond →
   poser `--autofill-bg`.
+- `box-shadow` et `transition` en **`!important`** (2026-10-24) : `input:focus { box-shadow }` d'un composant
+  a la même spécificité et passe après la feuille globale ; au focus il effaçait l'ombre, le fond clair
+  de Chrome revenait sous un texte clair (contraste 1,06:1, texte invisible). Anneau du composant →
+  `--field-ring` (`auth-form.css`, `card-page*.css`), ajouté par la règle globale après l'ombre.
+- Connexion : `autocomplete="username"` sur l'email + `current-password` ; inscription : `email` +
+  `new-password` (×2). Le navigateur ne livre la valeur autoremplie au JS qu'après un geste de
+  l'utilisateur : un `blur()` programmé sur un champ autorempli affiche « requis ».
 - ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
   règle globale va dans `styles.css`, pas là.

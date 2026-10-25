@@ -1,10 +1,9 @@
-/* ─── Page ─── */
-.sessions-page { padding: 24px; max-width: 960px; margin: 0 auto; }
+/* ─── Page : padding et largeur portés par .mtc-page (styles.css), aucun plafond ─── */
 
 /* ─── Header ─── */
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 14px; }
 .sessions-accounts { margin-bottom: 18px; }
-.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
 .page-sub { font-size: 12px; color: var(--text-3); font-family: var(--font-mono); }
 
 .month-select {
@@ -35,8 +34,9 @@
 .empty-title { font-size: 16px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
 .empty-sub { font-size: 13px; color: var(--text-3); line-height: 1.65; max-width: 360px; margin: 0 auto; }
 
-/* ─── Semaine ─── */
-.week-group { margin-bottom: 24px; }
+/* ─── Semaines : grille de cartes (.mtc-cards). Sous 760 px, une ligne à 3 actifs serre ses stats ─── */
+.weeks-grid { --cards-min: 760px; align-items: start; }
+.week-group { min-width: 0; }
 .week-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 0 4px; }
 .week-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
 .week-line { flex: 1; height: 1px; background: var(--border); }
@@ -126,7 +126,6 @@
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .sessions-page { padding: 16px; }
   .month-summary { gap: 8px; }
   .ms-card { padding: 10px 12px; min-width: 90px; }
   .ms-val { font-size: 16px; }

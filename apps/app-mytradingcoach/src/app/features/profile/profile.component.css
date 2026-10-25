@@ -729,3 +729,5 @@ textarea.stp-inp { resize: vertical; min-height: 76px; line-height: 1.5; font-si
 .plan-refund a { color: var(--blue-bright); margin-right: 4px; }
 .plan-cancel-note { font-size: 11.5px; color: var(--text-3); margin-top: 8px; line-height: 1.5; }
 
+/* Réserve la place de la section Notifications (#666) avant son chargement. */
+.push-placeholder { min-height: 120px; }

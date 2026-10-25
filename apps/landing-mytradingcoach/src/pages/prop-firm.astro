@@ -10,6 +10,7 @@ import { APP_URL } from '../config';
 import Base from '../layouts/Base.astro';
 import Footer from '../components/Footer.astro';
 import NinjaTraderTrust from '../components/NinjaTraderTrust.astro';
+import Compatible from '../components/Compatible.astro';
 import PfHeader from '../components/prop-firm-page/PfHeader.astro';
 import PfRules from '../components/prop-firm-page/PfRules.astro';
 import PfPricing from '../components/prop-firm-page/PfPricing.astro';
@@ -74,7 +75,7 @@ const faq = [
         <p class="pf-reassure">Gratuit, sans carte bancaire · Lecture seule, aucun ordre passé</p>
         {/* Seul emoji de la page hors footer (demande du 18/10). NinjaTrader : formulation factuelle
             de la clause 17 ; le logo est dans le bloc NinjaTraderTrust de `.pf-hero-side`. */}
-        <p class="pf-trustline">🇫🇷 Fait en France · Indépendant · Tes données ne sont jamais vendues · Référencé dans l'écosystème NinjaTrader</p>
+        <p class="pf-trustline">🇫🇷 Fait en France · Indépendant · Sans publicité · Référencé dans l'écosystème NinjaTrader</p>
       </div>
 
       <div class="pf-hero-side">
@@ -114,6 +115,9 @@ const faq = [
         </ol>
       </div>
     </section>
+
+    {/* 4 bis. Compatible avec : Tradovate et saisie manuelle, texte seul. */}
+    <Compatible width={1200} gutter={20} />
 
     {/* 5. Sélecteur firm → plan → phase */}
     <PfRules />

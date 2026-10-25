@@ -1,0 +1,227 @@
+/* Contenu de la carte, commun à /register et /login (projeté dans mtc-auth-layout). */
+
+/* ─── Titres ─── */
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-align: center;
+  margin: 0;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+  text-align: center;
+  margin: 6px 0 22px;
+}
+
+@media (min-width: 1024px) {
+  .auth-title {
+    font-size: 24px;
+    text-align: left;
+  }
+
+  .auth-subtitle {
+    text-align: left;
+  }
+}
+
+/* ─── Champs ─── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  /* 16 px sur mobile : iOS ne zoome pas sur le champ. */
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.15s;
+  /* Autoremplissage (styles.css) : fond du champ repeint sur le bon fond, anneau gardé. */
+  --autofill-bg: var(--bg);
+}
+
+input:focus {
+  border-color: var(--blue);
+  --field-ring: 0 0 0 3px var(--blue-glow);
+  box-shadow: var(--field-ring);
+}
+
+input::placeholder {
+  color: var(--text-faint);
+}
+
+@media (min-width: 600px) {
+  input {
+    font-size: 15px;
+  }
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper input {
+  padding-right: 40px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.field-error {
+  font-size: 11px;
+  color: var(--red);
+  font-family: var(--font-mono);
+}
+
+.form-group.input-error input {
+  border-color: var(--red);
+  --field-ring: 0 0 0 3px var(--red-dim);
+  box-shadow: var(--field-ring);
+}
+
+/* ─── Bouton principal ─── */
+.btn-submit {
+  width: 100%;
+  min-height: 48px;
+  background: var(--primary);
+  /* Blanc sur --primary : 5,2:1 (--text n'y fait que 4,3:1, sous le AA). */
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--blue) 35%, transparent);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Erreurs ─── */
+.error-msg {
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+/* Erreur de la connexion Google, entre le bouton et le formulaire. */
+.google-error {
+  margin: 0 0 16px;
+}
+
+/* ─── Séparateur à libellé (même gabarit que le « ou » du bouton Google) ─── */
+.sep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sep::before,
+.sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Lien bas de carte ─── */
+.auth-link {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-2);
+  margin: 16px 0 0;
+}
+
+.auth-link a {
+  color: var(--blue-bright);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}

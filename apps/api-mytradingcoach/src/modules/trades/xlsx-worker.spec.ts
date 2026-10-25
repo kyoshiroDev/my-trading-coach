@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as XLSX from 'xlsx';
-import { xlsxToCsv } from './xlsx-worker';
+import { xlsxToCsv, XLSX_TIMEOUT_MS } from './xlsx-worker';
 
 /** Classeur réel en mémoire : une feuille, en-tête + `rows` lignes. */
 function workbook(rows: number): Buffer {
@@ -28,6 +28,8 @@ describe('xlsxToCsv — Excel lu hors de la boucle d’événements (SCA-B5-05)'
     await expect(xlsxToCsv(workbook(20_000), 30_000, 1)).rejects.toThrow(/interrompue/);
   });
 
+  // ~1 s au repos, bien plus sous charge (#689) : délai au-delà de celui du worker, pour que ce
+  // soit son « interrompue » qui sorte s'il bloque, pas le délai par défaut de vitest (5 s).
   it('pendant une grosse lecture, la boucle d’événements continue de tourner', async () => {
     let ticks = 0;
     const timer = setInterval(() => ticks++, 1);
@@ -35,7 +37,7 @@ describe('xlsxToCsv — Excel lu hors de la boucle d’événements (SCA-B5-05)'
     clearInterval(timer);
     expect(csv.split('\n')).toHaveLength(20_001);
     expect(ticks).toBeGreaterThan(5); // bloquée, elle n'aurait pas tourné du tout
-  });
+  }, XLSX_TIMEOUT_MS + 10_000);
 
   it('appels simultanés → traités un par un, tous aboutissent', async () => {
     const results = await Promise.all([1, 2, 3].map((n) => xlsxToCsv(workbook(n), 100)));

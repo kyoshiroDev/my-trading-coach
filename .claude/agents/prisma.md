@@ -364,6 +364,16 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   `admin/demo-data/prop-risk.ts`. Rien ne les affiche tels quels : ils nourrissent les textes
   fixes du compte démo (PREMIUM, aucun appel IA), récap du jour de tilt et `propNote` Apex du débrief.
 
+## Autopsie d'un compte grillé (#669, 2026-10-23)
+
+`AccountIncident` (migration `20261023120000_account_incident`, table nouvelle, additive, cascade sur
+le compte). `@@unique([accountId, kind, period])` : `period = 'account'` pour `drawdown` et `manual`
+(une fois par compte), `AAAA-MM-JJ` pour `daily_loss`. `kind` / `source` en TEXT. `data` = relevé à la
+détection (`limit`, `remaining`, `floor`, `detectedAt`). `failedByIncidentAt` = compte fermé en
+confirmant CET incident (seul cas réactivable). `dismissedAt` = retiré, jamais recréé. Seule l'analyse
+IA est stockée (`aiAnalysis`, `aiGeneratedAt`) ; chronologie et constats se recalculent. Seed démo :
+un incident sur le compte échoué, recréé à chaque seed (cascade). Détails : nestjs.md.
+
 ## E-mails de service (oct. 2026)
 
 `User.serviceEmailsOptOutAt` (migration `20261019120000_service_emails_opt_out`, additive, nullable) :
@@ -542,6 +552,17 @@ worker cron seulement. `DELETE … WHERE id IN (SELECT id … LIMIT 5000)` en bo
 `lastSuccessAt`. Cascade à la suppression du User. Supprimé par l'API sur réponse 404/410 du service
 push. Enum `AdminPushEvent` copié dans le contrat (`contracts-sync.spec.ts`). Migration
 `20261015220000_admin_push_subscription` (ajouts seuls, compatible N-1).
+
+## Notifications push des traders (#666, 2026-10-23)
+
+`UserPushDevice` : un appareil (navigateur / PWA) d'un trader, même forme que
+`AdminPushSubscription` sans préférence par appareil ; `endpoint` unique (un endpoint déjà connu est
+rattaché au trader qui s'abonne), supprimé sur 404/410. `TraderPushPreference` (clé = `userId`) :
+réglages valables pour tous les appareils, `mutedTypes PushAlertType[]` (défaut `[RECAP]`),
+`quietStart` / `quietEnd` en minutes depuis minuit, heure de Paris (null = aucune). Pas de ligne =
+défauts. Table dédiée plutôt que des colonnes sur `User` (lu à chaque requête). Cascade à la
+suppression du User. Enum `PushAlertType` copié dans le contrat (`contracts-sync.spec.ts`).
+Migration `20261023180000_trader_push` (ajouts seuls, compatible N-1).
 
 ## Détecteurs de comportement (#602, phase 1, 2026-10-18)
 
