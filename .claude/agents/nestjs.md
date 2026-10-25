@@ -2216,6 +2216,8 @@ business. Pas une supervision de pannes (UptimeRobot + `watch-containers`).
   « forcé », résultat et compteurs seulement ; jamais la clé anti-doublon (`dedupKey`, texte libre de
   l'appelant), ni userId / accountId / clé Redis ; une exception = son nom de classe (`errorKind`,
   `push-delivery.ts`), jamais son message. Verrouillé par `trader-notifier.logs.spec.ts`.
+- Même règle pour `PropAlertsService` (alertes prop firm, Tradovate) : type et niveau d'alerte +
+  `errorKind`, jamais l'id de compte, l'id utilisateur ni la clé Redis. `prop-alerts.logs.spec.ts`.
 - Branchements : Stripe (`checkout.session.completed`, `invoice.payment_succeeded` en
   `subscription_cycle` > 0 €, `invoice.payment_failed`, `customer.subscription.deleted`) **en fin de
   handler**, donc après l'idempotence `StripeEvent` ; candidature ambassadeur (`referral` + `public`) ;
