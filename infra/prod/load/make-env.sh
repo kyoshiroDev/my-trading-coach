@@ -37,6 +37,7 @@ LOAD_TEST_KEY=$(rnd 24)
 AI_ENABLED=false
 NEWS_TRANSLATION=false
 PUSH_ENABLED=false
+TRADER_PUSH_ENABLED=false
 ANTHROPIC_API_KEY=sk-ant-load-test-factice
 RESEND_API_KEY=re_load_test_factice
 MAIL_FROM=noreply@mytradingcoach.app
