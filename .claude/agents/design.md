@@ -430,6 +430,11 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 `::before` de `--tap-min` qui reste dans l'en-tête. Toucher la hauteur de la topbar ou de ses
 boutons = passer par ces variables ; `topbar-burger-alignment.spec.ts` lit les CSS et échoue sinon.
 Avant (40 px, `top: 14px` en dur) : 9 px de plus que Discord, centre 6 px trop bas, bas à 2 px de la ligne.
+Pages du shell SANS topbar (en-tête propre) : le burger y reste à la même place. Ma session est
+calée dessus en mobile (`padding-top` + `line-height: var(--topbar-btn-h)` du titre). Encore
+décalées, non corrigées (2026-10-25, écart titre − burger à 390 px) : Mes sessions +6,1 px et
+burger SUR le sélecteur de mois, calendrier éco +20,1, Ambassadeur/Parrainage +22,5, Devenir
+ambassadeur (titre sous le lien retour). Le spec tient l'inventaire : nouvelle page sans topbar → l'y ajouter après mesure.
 
 ---
 

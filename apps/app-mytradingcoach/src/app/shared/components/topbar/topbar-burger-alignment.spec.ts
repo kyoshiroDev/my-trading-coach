@@ -12,7 +12,7 @@
  * Fichier en environnement `node` pour lire le disque (cf. plan-modal-layout.spec.ts).
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const read = (...p: string[]) =>
@@ -93,5 +93,48 @@ describe('burger mobile ↔ en-tête des pages', () => {
     const top = px(decl(sidebarCss, '.burger.in-demo-banner', 'top'));
     expect(Math.abs(top + burgerH / 2 - (bannerH - border) / 2)).toBeLessThanOrEqual(0.5);
     expect(bannerH - border - (top + burgerH)).toBeGreaterThanOrEqual(MARGE_MIN);
+  });
+});
+
+/**
+ * Pages du shell (donc avec le burger) SANS la topbar commune : chacune a son propre en-tête,
+ * que rien n'aligne sur le burger. Inventaire mesuré à 360/390 px (cf. PR) : une nouvelle page
+ * sans topbar fait échouer ce test, pour qu'on vérifie son alignement avant de l'ajouter ici.
+ */
+const SANS_TOPBAR = {
+  // Aligné (en-tête calé sur --topbar-h, testé plus bas).
+  'features/today-session/today-session.component': 'aligné',
+  // Décalés, NON corrigés (règle propre à chaque page) : écart titre − burger mesuré à 390 px.
+  'features/sessions/sessions.component': '+6,1 px, burger sur le sélecteur de mois',
+  'features/eco-calendar/eco-calendar.component': '+20,1 px',
+  'features/ambassador/ambassador.component': '+22,5 px',
+  'features/referral/referral.component': '+22,5 px',
+  'features/become-ambassador/become-ambassador.component': 'titre sous le lien retour (+62,7 px)',
+};
+
+describe('pages du shell sans topbar commune', () => {
+  const routes = read('../../../app.routes.ts');
+  const shell = routes.slice(routes.indexOf('sidebar.component'), routes.indexOf("path: '**'"));
+  const pages = [...shell.matchAll(/import\('\.\/([^']+)'\)/g)].map((m) => m[1]);
+  const usesTopbar = (page: string) =>
+    ['.ts', '.html']
+      .map((ext) => join(__dirname, '../../..', page + ext))
+      .filter(existsSync)
+      .some((f) => readFileSync(f, 'utf-8').includes('<mtc-topbar'));
+
+  it('inventaire à jour : toute page sans topbar a été mesurée', () => {
+    expect(pages.length, 'routes du shell introuvables').toBeGreaterThan(10);
+    expect(pages.filter((p) => !usesTopbar(p)).sort()).toEqual(Object.keys(SANS_TOPBAR).sort());
+  });
+
+  it('Ma session (mobile) : ligne du titre = boîte du burger, centrée avec lui', () => {
+    const css = read('../../../features/today-session/today-session.component.css');
+    const mobile = css.slice(css.indexOf('@media (max-width: 768px)'));
+    const padTop = px(decl(mobile, '.session-page', 'padding-top'));
+    const lh = px(decl(mobile, '.mtc-sess-h1', 'line-height'));
+    const burgerH = px(decl(sidebarCss, '.burger', 'height'));
+    const burgerTop = px(decl(sidebarCss, '.burger', 'top'));
+    expect(lh).toBe(burgerH);
+    expect(Math.abs(padTop + lh / 2 - (burgerTop + burgerH / 2))).toBeLessThanOrEqual(0.5);
   });
 });
