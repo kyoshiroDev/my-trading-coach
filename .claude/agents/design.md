@@ -408,7 +408,11 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 
 | Élément | Token | Valeur |
 |---|---|---|
-| Topbar height | `--topbar-h` | **60px** |
+| Topbar height | `--topbar-h` (theme.css) | **56px** (mode hero 60 px, Ma session) |
+| Bordure basse topbar | `--topbar-border-w` | 1px |
+| Boutons topbar mobile (Discord, burger) | `--topbar-btn-h` | 31px |
+| Bandeau démo mobile | `--demo-banner-h-mobile` | 52px |
+| Zone tactile minimale | `--tap-min` | 44px |
 | Sidebar width | `--sidebar-w` | 220px (repliée `--sidebar-w-collapsed` 68px) |
 | Gutter contenu | `--pad-content` | 30px |
 | Padding carte | `--pad-card` | 20px |
@@ -419,6 +423,18 @@ et `(min-width: 1100px)` ; **aucune `max-width`**, aucun scroll horizontal à 36
 | Radius cartes featured | `--radius-lg` | 14px |
 | Radius modals | `--radius-modal` | 16px |
 | Radius pills | `--radius-pill` | 100px |
+
+**Burger mobile (≤ 768 px)** : bouton de la sidebar en `position: fixed` POSÉ PAR-DESSUS la topbar
+(aucun lien DOM). Hauteur `--topbar-btn-h` (= Discord voisin), centré dans la hauteur utile
+`(--topbar-h − --topbar-border-w − --topbar-btn-h) / 2` (idem dans le bandeau démo), zone tactile
+`::before` de `--tap-min` qui reste dans l'en-tête. Toucher la hauteur de la topbar ou de ses
+boutons = passer par ces variables ; `topbar-burger-alignment.spec.ts` lit les CSS et échoue sinon.
+Avant (40 px, `top: 14px` en dur) : 9 px de plus que Discord, centre 6 px trop bas, bas à 2 px de la ligne.
+Pages du shell SANS topbar (en-tête propre) : le burger y reste à la même place. Ma session est
+calée dessus en mobile (`padding-top` + `line-height: var(--topbar-btn-h)` du titre). Encore
+décalées, non corrigées (2026-10-25, écart titre − burger à 390 px) : Mes sessions +6,1 px et
+burger SUR le sélecteur de mois, calendrier éco +20,1, Ambassadeur/Parrainage +22,5, Devenir
+ambassadeur (titre sous le lien retour). Le spec tient l'inventaire : nouvelle page sans topbar → l'y ajouter après mesure.
 
 ---
 
