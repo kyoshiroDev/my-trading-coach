@@ -76,4 +76,13 @@ describe('titres sans emoji (icônes Lucide)', () => {
       for (const ic of icones) expect(src, `${f} : ${ic}`).toContain(`[lucideIcon]="${ic}"`);
     }
   });
+
+  it('pastille « Plan » des lignes de Mes sessions : icône Lucide, sans emoji', () => {
+    // Pas un titre (non couverte par l'inventaire) : vérifiée à part.
+    const src = readFileSync(join(APP, 'features/sessions/sessions.component.html'), 'utf-8');
+    const pastille = src.match(/<div class="plan-pill">([\s\S]*?)<\/div>/)?.[1] ?? '';
+    expect(pastille, 'pastille introuvable').not.toBe('');
+    expect(pastille).toContain('[lucideIcon]="ClipboardListIcon"');
+    expect(EMOJI.test(pastille)).toBe(false);
+  });
 });
