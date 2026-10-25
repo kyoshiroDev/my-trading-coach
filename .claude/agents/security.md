@@ -362,3 +362,18 @@ prix). CORS : origines globales (`CORS_ORIGINS` doit inclure `https://www.mytrad
 - **Rate limit** `POST /auth/google` : 10/min (`default`, par IP faute d'e-mail dans le corps) +
   30/10 min (`ip`). **Logs** : issue (`created | linked | login`, raison d'un refus) + id interne
   seulement, jamais le jeton, l'e-mail ni le `sub`.
+
+## Push et autopsie déclarés dans la politique de confidentialité (2026-10-25)
+
+La page `politique-confidentialite.astro` déclare, alignée sur le code :
+- **Push des traders (#666)** : 1.g (champs de `UserPushDevice` : endpoint, `p256dh`/`auth`, `userAgent`
+  d'où le libellé est déduit, `createdAt`, `lastSuccessAt` ; 10 appareils max ; `TraderPushPreference`),
+  base légale consentement, destinataire « service de notification de l'éditeur du navigateur »
+  (liste blanche `push-endpoint.ts` : Google FCM, Mozilla, Apple, Microsoft), durées (retrait,
+  déconnexion via `PushLogout`, suppression du compte, 404/410 supprimés à l'envoi). Le cadre de
+  transfert hors UE n'est PAS cité (commentaire HTML « à vérifier avec le conseil juridique »).
+- **Autopsie (#669)** : ligne Anthropic (faits de `buildIncidentPrompt` seulement : type d'incident,
+  devise, trades de la séance, alertes, comparaisons ; ni note, ni libellé, ni firm) et durée :
+  `aiAnalysis` vit avec le `TradingAccount` (cascade) ; « Retirer cette autopsie » pose `dismissedAt`,
+  n'efface pas le texte.
+Toute évolution de ces champs, du payload push ou du prompt d'autopsie → mettre la page à jour.
