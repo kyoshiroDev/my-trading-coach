@@ -20,6 +20,7 @@ Règles :
 - Décris ce qui s'est passé, dans l'ordre : phases de la séance, taille, alertes, puis le franchissement de la limite seulement s'il figure dans les faits.
 - Ne parle que de la limite nommée dans les faits (plancher de drawdown ou perte du jour), jamais d'une autre. Si les faits indiquent qu'aucune limite n'est relevée, n'écris pas qu'une limite a été franchie. Ne donne une heure de franchissement que si elle est fournie.
 - N'utilise QUE les chiffres fournis, n'en calcule aucun autre. Les marges et limites sont des estimations MyTradingCoach, jamais le calcul officiel de la firm.
+- Une heure, un montant ou un fait n'apparaît dans ton texte que s'il figure dans les faits fournis. Les heures de la chronologie sont des heures de sortie. Si l'heure d'entrée n'est pas enregistrée, n'écris jamais à quelle heure le trader est entré en position : ne la déduis pas et ne la recopie pas depuis l'heure de sortie.
 - Aucun conseil d'achat ou de vente, aucune recommandation de position, aucune prédiction, aucune promesse de résultat. Pas d'impératif.
 - Ne juge pas le trader. Pas de « tu aurais dû ».
 - 2 paragraphes courts, 90 mots au total au plus, sans titre, sans liste, sans markdown.
@@ -29,9 +30,15 @@ ${FRENCH_RULE}`;
 /** Message utilisateur : uniquement les faits de l'autopsie, déjà calculés. */
 export function buildIncidentPrompt(kind: IncidentKind, currency: string, report: IncidentReport): string {
   const money = (v: number) => formatMoney(v, currency, { decimals: 0 });
+  const trades = report.timeline.filter((e) => e.type === 'trade');
+  const knownEntries = trades.filter((e) => e.enteredAt).length;
+  // Heure d'entrée : dite trade par trade seulement si une partie est connue, sinon une seule ligne.
+  const entry = (enteredAt?: string) =>
+    knownEntries === 0 ? '' : enteredAt ? `, entrée à ${time(enteredAt)}` : ", heure d'entrée non enregistrée";
   const lines = report.timeline.map((e) =>
     e.type === 'trade'
       ? `${time(e.at)} ${e.side} ${e.asset}${e.quantity != null ? ` x${e.quantity}` : ''} : ${money(e.net)}`
+        + entry(e.enteredAt)
         + (e.distanceAfter != null ? `, marge estimée ensuite ${money(e.distanceAfter)}` : '')
         + (e.afterAlert ? ' (après une alerte)' : '')
       : `${time(e.at)} alerte MyTradingCoach : ${e.label}`,
@@ -41,8 +48,9 @@ export function buildIncidentPrompt(kind: IncidentKind, currency: string, report
     crossing(kind, report),
     `Séance : ${report.kpis.trades} trades, ${money(report.kpis.net)} net.`,
     report.kpis.startDistance != null ? `Marge estimée avant le premier trade : ${money(report.kpis.startDistance)}.` : '',
+    trades.length > 0 && knownEntries === 0 ? "Heure d'entrée non enregistrée." : '',
     '',
-    'Chronologie (heure de sortie, l\'heure d\'entrée n\'est pas connue) :',
+    'Chronologie (heure de sortie de chaque trade) :',
     ...lines,
     '',
     'Constats déjà affichés au trader :',

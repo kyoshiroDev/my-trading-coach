@@ -1744,7 +1744,12 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
   feature `incident`, prompt = faits déjà calculés (`incident-ai.prompt.ts`). Le message dit toujours
   ce qu'on sait du franchissement (heure, « déjà franchie avant le premier trade », « non connue », ou
   pour `manual` « Aucune limite relevée ») et le système interdit toute autre limite : sans ça, un échec
-  marqué à la main recevait une « limite journalière franchie » inventée. Jamais pour la démo,
+  marqué à la main recevait une « limite journalière franchie » inventée. Heure d'entrée : pas en base
+  (`tradedAt` = sortie), donc le message porte « Heure d'entrée non enregistrée. » et le système
+  interdit de la déduire ou de la recopier depuis la sortie (sinon « À 17h30, tu entres en position »).
+  `IncidentTrade.enteredAt` (optionnel) la transmet le jour où une source la fournit. Règle générale :
+  une heure, un montant ou un fait n'est cité que s'il est dans le message ; le test « aucune donnée
+  absente présentée comme un fait » (`incident-report.spec.ts`) le vérifie cas par cas. Jamais pour la démo,
   jamais sans `AI_ENABLED`. Écrite par `updateMany({ where: { aiAnalysis: null } })` : jamais remplacée.
   Débit borné à trois niveaux (revue #712) : `@Throttle` 6/min sur la route ; verrou Redis
   `incident-ai:<id>` (NX, 1 h) contre la double ouverture, **jamais supprimé** : après un échec ou une
