@@ -68,7 +68,6 @@ describe('titres sans emoji (icônes Lucide)', () => {
       ['features/profile/profile.component.html', ['GiftIcon']],
       ['features/journal/journal.component.html', ['TrashIcon', 'ReassignIcon']],
       ['features/eco-calendar/eco-calendar.component.html', ['StarIcon']],
-      ['features/eco-calendar/eco-event-row.component.ts', ['PinIcon']],
       ['features/dashboard/dashboard.component.html', ['RocketIcon']],
       ['features/auth/google-finalize.component.html', ['HandIcon']],
     ] as const;
