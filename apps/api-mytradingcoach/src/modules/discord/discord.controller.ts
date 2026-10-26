@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   HttpCode,
@@ -47,6 +48,16 @@ export class DiscordController {
   @Throttle({ default: { ttl: 3_600_000, limit: 5 } })
   createCode(@CurrentUser() user: { id: string }): Promise<{ code: string; expiresAt: string }> {
     return this.link.createCode(user.id);
+  }
+
+  /**
+   * Délier son Discord : rôles retirés sur le serveur puis liaison effacée (503 si Discord échoue,
+   * la liaison reste). DELETE : bloqué en démo. 5 par heure et par compte.
+   */
+  @Delete('link')
+  @Throttle({ default: { ttl: 3_600_000, limit: 5 } })
+  unlink(@CurrentUser() user: { id: string }): Promise<{ linked: false }> {
+    return this.link.unlink(user.id);
   }
 
   /**

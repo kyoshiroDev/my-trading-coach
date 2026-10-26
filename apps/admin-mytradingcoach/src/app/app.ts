@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ConfirmDialogComponent } from '@mtc/front-ui';
+import { ConfirmDialogComponent } from '@mtc/front-ui/confirm-dialog';
 
 @Component({
   selector: 'mtc-admin-root',

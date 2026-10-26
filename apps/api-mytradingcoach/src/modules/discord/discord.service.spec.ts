@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DiscordService } from './discord.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -113,5 +114,46 @@ describe('DiscordService', () => {
     });
     await service.syncDiscordRole('user-1');
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  describe('tryRemovePlanRoles : délier son Discord', () => {
+    const DISCORD_ID = '111111111111111111';
+
+    it('DELETE Membre puis Premium réussis → true', async () => {
+      mockFetch.mockResolvedValue({ ok: true, status: 204 });
+      await expect(new DiscordGuildClient().tryRemovePlanRoles(DISCORD_ID)).resolves.toBe(true);
+      const methods = mockFetch.mock.calls.map(([url, opts]) => `${opts?.method} ${url.split('/roles/')[1]}`);
+      expect(methods).toEqual(['DELETE role-membre', 'DELETE role-premium']);
+    });
+
+    it('404 (membre parti du serveur) → true : il n’a plus aucun rôle', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 404 });
+      await expect(new DiscordGuildClient().tryRemovePlanRoles(DISCORD_ID)).resolves.toBe(true);
+    });
+
+    it('réponse HTTP en erreur (403) → false, contrairement à removePlanRoles qui l’ignore', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 403 });
+      await expect(new DiscordGuildClient().tryRemovePlanRoles(DISCORD_ID)).resolves.toBe(false);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('erreur réseau → false ; journal avec le nom de l’erreur seulement, sans identifiant ni message', async () => {
+      const logged = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+      const err = new Error(`ECONNRESET members/${DISCORD_ID}`);
+      err.name = 'TypeError';
+      mockFetch.mockRejectedValueOnce(err);
+      await expect(new DiscordGuildClient().tryRemovePlanRoles(DISCORD_ID)).resolves.toBe(false);
+      const lines = logged.mock.calls.map((c) => String(c[0])).join('\n');
+      expect(lines).toContain('TypeError');
+      expect(lines).not.toContain(DISCORD_ID);
+      expect(lines).not.toContain('ECONNRESET');
+      logged.mockRestore();
+    });
+
+    it('configuration absente → false sans appel (la liaison ne doit pas être effacée)', async () => {
+      delete process.env['DISCORD_BOT_TOKEN'];
+      await expect(new DiscordGuildClient().tryRemovePlanRoles(DISCORD_ID)).resolves.toBe(false);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
   });
 });

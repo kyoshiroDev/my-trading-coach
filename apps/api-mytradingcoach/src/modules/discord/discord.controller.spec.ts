@@ -33,6 +33,7 @@ const link = {
   status: vi.fn(async () => ({ linked: false })),
   createCode: vi.fn(async () => ({ code: 'ABCD-EFGH', expiresAt: '2026-10-25T10:10:00.000Z' })),
   redeem: vi.fn(),
+  unlink: vi.fn(async () => ({ linked: false })),
 };
 
 describe('DiscordController (#741)', () => {
@@ -136,5 +137,19 @@ describe('DiscordController (#741)', () => {
     const status = await fetch(`${base}/api/discord/link`);
     expect(await dataOf(status)).toEqual({ linked: false });
     expect(link.status).toHaveBeenCalledWith('alice');
+  });
+
+  it('DELETE /link → délie le Discord de l’utilisateur connecté', async () => {
+    const res = await fetch(`${base}/api/discord/link`, { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    expect(await dataOf(res)).toEqual({ linked: false });
+    expect(link.unlink).toHaveBeenCalledWith('alice');
+  });
+
+  it('DELETE /link : limité à 5 par heure et par compte', () => {
+    const meta = Reflect.getMetadata('THROTTLER:LIMITdefault', DiscordController.prototype.unlink);
+    const ttl = Reflect.getMetadata('THROTTLER:TTLdefault', DiscordController.prototype.unlink);
+    expect(meta).toBe(5);
+    expect(ttl).toBe(3_600_000);
   });
 });

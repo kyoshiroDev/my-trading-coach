@@ -406,3 +406,10 @@ preuve (le secret du bot prouve seulement que l'appel vient du bot). Désormais 
   suppression du compte (`DiscordGuildClient`, module feuille importé par `UsersModule`).
 Verrouillé par `discord-link.service.spec.ts` (7 mutations détectées) et `discord.controller.spec.ts`
 (échoue sur l'ancien contrôleur : `verified: true` sur un e-mail tapé par un tiers).
+- Délier (`DELETE /discord/link`, connecté, `@Throttle` 5 / h par compte, bloqué en démo) : rôles
+  Membre et Premium retirés d'abord par `DiscordGuildClient.tryRemovePlanRoles`, qui, lui, rend `false`
+  au moindre échec (réseau, délai, HTTP en erreur, env absente ; 404 = membre parti = réussi). Échec →
+  503 avec message clair et liaison GARDÉE (effacée seule, elle laisserait un rôle que plus rien ne
+  retire). Puis `updateMany` conditionné à l'identifiant lu (un Discord relié entre-temps reste).
+  Journaux : nom de l'erreur ou statut HTTP seulement, jamais l'identifiant Discord, l'URL ni le code.
+- Le bouton « Copier » du Profil copie le code seul (plus la commande `/verify code:`).

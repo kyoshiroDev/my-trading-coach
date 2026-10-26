@@ -318,8 +318,8 @@ leur nom si le dessin change. Modification du 25/10/2026 : **à reporter à la m
 25/10/2026 (prod : feu vert de Greg).
 
 **Budget du bundle de l'app** (plafond bloquant 500 ko, avertissement 450 ko dépassé) : 495,04 ko après
-le parcours d'installation (25/10/2026), marge 4,96 ko. Une PR « budget du bundle » doit suivre pour
-regagner de la place avant tout nouvel ajout au bundle initial. Mesurer au build de production
+le parcours d'installation (25/10/2026), 479,17 ko après le lot 1 du budget (26/10/2026), marge
+20,83 ko. Règle : marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget (`angular.md`, « Budget du bundle initial »). Mesurer au build de production
 (`nx run app-mytradingcoach:build:production`, ligne « Initial total »).
 
 Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :

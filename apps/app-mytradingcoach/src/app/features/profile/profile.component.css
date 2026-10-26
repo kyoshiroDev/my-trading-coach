@@ -107,7 +107,7 @@
   user-select: all;
   overflow-wrap: anywhere;
 }
-/* La commande ne se coupe pas entre « /verify » et « code: » (22 signes : tient dès 320 px). */
+/* « /verify » ne se coupe pas en fin de ligne. */
 .discord-code-row code {
   font-family: var(--font-mono);
   color: var(--text-2);

@@ -18,7 +18,10 @@ import { filter, first, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
 import { ProductEventsService } from './core/services/product-events.service';
 import { OfferIntentService } from './core/services/offer-intent.service';
-import { ConfirmDialogComponent } from '@mtc/front-ui';
+import { ConfirmService } from '@mtc/front-ui';
+// Chemin direct, pas le barrel : un composant importé par `@mtc/front-ui` resterait dans le bundle
+// initial, même derrière `@defer`.
+import { ConfirmDialogComponent } from '@mtc/front-ui/confirm-dialog';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 import { InternalBadgeComponent } from './shared/components/internal-badge/internal-badge.component';
 import { SignupFunnelService } from './core/services/signup-funnel.service';
@@ -32,8 +35,12 @@ import { InstallSheetComponent } from './features/install/install-sheet.componen
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Toasts et dialogue de confirmation montés UNE fois, hors du routeur : ils survivent aux navigations.
-  // Feuille d'installation : chargée à la demande (`@defer`), seulement quand elle s'ouvre.
-  template: `<router-outlet /><mtc-toasts /><mtc-confirm-dialog /><mtc-internal-badge />
+  // Dialogue de confirmation et feuille d'installation : chargés à la demande (`@defer`, budget du
+  // bundle), à leur première ouverture. Le dialogue reste ensuite monté.
+  template: `<router-outlet /><mtc-toasts /><mtc-internal-badge />
+    @defer (when confirm.pending()) {
+      <mtc-confirm-dialog />
+    }
     @if (install.sheet()) {
       @defer (on immediate) {
         <mtc-install-sheet />
@@ -48,6 +55,8 @@ export class App implements OnInit {
   private readonly injector = inject(Injector);
   /** Créé au démarrage : il garde `beforeinstallprompt`, envoyé tôt par Chrome (le parcours, lui, est paresseux). */
   protected readonly install = inject(InstallCapture);
+  /** Lu par le `@defer` du dialogue : la première demande de confirmation le charge. */
+  protected readonly confirm = inject(ConfirmService);
   private readonly browser = inject(PUSH_BROWSER);
   private readonly auth = inject(AuthService);
   private installLoaded = false;
