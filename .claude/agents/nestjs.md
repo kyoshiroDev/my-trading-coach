@@ -1241,7 +1241,27 @@ sont en direct.
   (`AuthModule` importé) ; invalide ou `isDemo` → `disconnect(true)`. Room `user:<id>`.
 - `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
   existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
-  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée, SAUF veille serveur.
+- **Veille serveur (#770, 2026-10-26)** : dernier onglet fermé, trader éligible → le worker
+  titulaire du bail GARDE le WebSocket, et les alertes du gateway (prop firm, anti-tilt,
+  comportement) partent en push app fermée (émission vers une room vide : les services d'alertes
+  et le push ne changent pas). Plan : `docs/audit-push-veille-serveur.md`.
+  - Allumée seulement si push des traders actif ET `TRADOVATE_WATCH_MAX` > 0 (`config/tradovate-watch-config.ts`,
+    absente = **éteinte**). Éligibilité (`tradovate-watch.ts`, PUR) : pas démo, `isPremiumAccess`,
+    ≥ 1 `UserPushDevice`, `PROP_RULES` ou `BEHAVIOR` non coupé, séance ouverte du jour, ≥ 1 connexion
+    suivable (`TRACKABLE_CONNECTION`). Heures silencieuses → `paused` (WS fermé, veille gardée,
+    rouvert après). Fin : 10 h max, jamais après la journée de trading (17:00 Chicago).
+  - Registre Redis `tradovate:watch` (ZSET, score = fin ms), plafonné à `TRADOVATE_WATCH_MAX`
+    (`TradovateWatchService`). Un aller-retour dans l'app ne repousse pas la fin.
+  - `sweepWatch()` toutes les 30 s sur les process `web`/`all` (pas le worker de crons) : WS tenu
+    sans onglet fermé si veille finie, en pause, ou bail tenu ailleurs ; veille sans titulaire
+    (déploiement blue/green, crash) **reprise** avec rattrapage (trades du trou, sans anti-tilt).
+    Arrêt du process : WS fermé et bail rendu, registre intact. Clôture de séance → fin ≤ 30 s
+    (pas de branchement dans `SessionService`).
+  - En veille, le chemin des alertes est le « direct » : journal de séance (#373), incident `live`
+    (#669), marqueur « affichée » posé (pas de bandeau à la réouverture : le push l'a portée). La
+    synchro de fond voit `isLive` vrai et saute la séance.
+  - `GET /push/settings` → `liveWhileClosed` (push actif ET veille allumée) : le texte du délai suit.
 - Rattrapages **bornés à `LIVE_CATCH_UP_CONCURRENCY` (5) par process** (`createLimiter`,
   `common/utils/concurrency.util.ts`, SCA-B6-02) : après un redémarrage, tous les clients reviennent
   en même temps ; les suivants attendent leur tour (le WebSocket, lui, s'ouvre sans attendre).
@@ -2264,7 +2284,8 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
   `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
   (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
-  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+  si un WebSocket Tradovate est ouvert : app ouverte, ou veille serveur pendant la séance (#770, voir
+  « Temps réel »).
 - **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
   Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
   Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),

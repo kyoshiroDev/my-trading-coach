@@ -83,8 +83,10 @@ retire l'appareil → inéligible au balayage suivant.
 
 - Un WS Tradovate en veille coûte ce que coûte aujourd'hui un onglet ouvert : la veille allonge la
   durée, pas le coût unitaire. Population bornée : Premium × appareil abonné × séance ouverte.
-- Garde-fou : plafond `TRADOVATE_WATCH_MAX` (défaut 500, par environnement) au-delà duquel une
-  nouvelle veille n'est pas ouverte (journalisé en warn, compteur dans le journal du balayage).
+- Garde-fou : plafond `TRADOVATE_WATCH_MAX` (par environnement) au-delà duquel une nouvelle veille
+  n'est pas ouverte (journalisé en warn). **Absente ou 0 = veille éteinte** (décidé au codage : le
+  push des traders est déjà actif en prod, un défaut à 500 l'y aurait allumée à la promotion, avant
+  la mesure). Valeur conseillée : 500.
 - Mesure : banc de `docs/ops/test-charge-vps-prod.md` avec un faux serveur WebSocket Tradovate
   (aucun appel au vrai Tradovate) : 0 · 500 · 1 000 · 2 000 veilles ouvertes, puis le scénario
   k6 habituel → CPU / RAM des conteneurs web et p95. Résultat consigné dans le doc de test de
@@ -95,8 +97,9 @@ retire l'appareil → inéligible au balayage suivant.
 
 - App, `push-settings.component.ts` : « En direct pendant ta séance, même MTC fermé. Hors séance,
   relevé de la synchro automatique, jusqu'à 15 min de décalage. »
-- Landing, `Pricing.astro` (2 lignes « app ouverte ») : « pendant ta séance ouverte, même app
-  fermée avec les notifications activées ».
+- App : le texte suit `liveWhileClosed` (`GET /push/settings`), vrai seulement veille allumée.
+- Landing, `Pricing.astro` (2 lignes « app ouverte ») : « app ouverte ou en notification pendant ta
+  séance », **le jour où la veille est allumée en prod**, pas avant.
 - Guard / gating : inchangés (Premium). Cron : synchro de fond inchangée.
 - Politique de confidentialité : rien de nouveau (aucune donnée en plus, registre éphémère).
 
@@ -124,5 +127,5 @@ Typecheck (`nx run-many -t typecheck`) avant le push ; rien poussé sans « OK p
 | 3 | Heures silencieuses | WS fermé pendant, rouvert après si la séance court encore |
 | 4 | Arrêt à la clôture de séance | ≤ 30 s par le balayage (pas d'appel depuis `SessionService`) |
 | 5 | Bandeau d'alerte à la réouverture | Pas de ré-affichage (le push l'a portée) |
-| 6 | Plafond | `TRADOVATE_WATCH_MAX=500` jusqu'à la mesure |
+| 6 | Plafond | `TRADOVATE_WATCH_MAX`, éteinte si absente ; 500 sur beta jusqu'à la mesure |
 | 7 | Mesure de charge | Sur le banc de test, faux Tradovate, avant activation en prod |

@@ -932,6 +932,14 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   ```
   Couper : `TRADER_PUSH_ENABLED=false` (l'admin de beta, s'il en a, garde son push), puis recréer
   l'API. Changer la paire invalide les abonnements beta (réabonner depuis le profil).
+- **Veille serveur (#770) : `TRADOVATE_WATCH_MAX`**, plafond de WebSockets Tradovate gardés app
+  fermée. Absente ou `0` = **éteinte** (défaut partout), conseillé `500`. Exige aussi le push des
+  traders. Beta : `TRADOVATE_WATCH_MAX=500` dans `.env.beta` puis recréer l'API (même procédure
+  que ci-dessus). **Prod : pas avant la mesure de charge** (banc de `docs/ops/test-charge-vps-prod.md`
+  avec faux serveur Tradovate, plan section 5) ; le jour où elle est posée, changer aussi la landing
+  (`plans.md`, veille serveur). Couper : retirer la variable ou `0`, recréer l'API (les WS en veille
+  se ferment à l'arrêt ; le registre Redis `tradovate:watch` expire seul en ≤ 10 h, inerte éteint).
+  Journal : `Veille Tradovate : N reprise(s)` (après un déploiement), `plafond … atteint` en warn.
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible
