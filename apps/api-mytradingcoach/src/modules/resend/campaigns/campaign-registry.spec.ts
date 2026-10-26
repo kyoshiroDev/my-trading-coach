@@ -22,6 +22,7 @@ function user(over: User = {}): User {
     tradingStyle: null,
     discordId: null,
     stripeSubscriptionStatus: null,
+    trialEndsAt: null,
     founderSeat: null,
     partnerRedemption: null,
     trades: [],
@@ -176,6 +177,20 @@ describe('états qui bloquent un envoi', () => {
     expect(f({ role: 'BETA_TESTER' })).toBe(false);
     expect(f({ emailSends: [{ campaignKey: 'founder_launch' }] })).toBe(false);
     expect(f({ emailSends: [{ campaignKey: 'discord_invite' }] })).toBe(true);
+  });
+});
+
+describe('essai Premium en cours exclu des relances Premium (#769)', () => {
+  const cases: [string, User][] = [
+    ['first_week_recap', { createdAt: daysAgo(8), trades: [{}] }],
+    ['founder_followup', { createdAt: daysAgo(11) }],
+    ['premium_upsell', { trades: [{ tradedAt: daysAgo(2) }] }],
+  ];
+  it.each(cases)('%s : essai en cours → rien ; essai terminé ou absent → envoyé', (key, base) => {
+    expect(matches(key, user(base))).toBe(true);
+    expect(matches(key, user({ ...base, trialEndsAt: new Date(NOW.getTime() + DAY) }))).toBe(false);
+    expect(matches(key, user({ ...base, trialEndsAt: daysAgo(1) }))).toBe(true);
+    expect(matches(key, user({ ...base, trialEndsAt: NOW }))).toBe(true); // fin pile maintenant
   });
 });
 

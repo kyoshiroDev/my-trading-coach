@@ -84,6 +84,14 @@ const sinceOnboardingStart = (): Prisma.UserWhereInput => ({ createdAt: { gte: o
 
 const noTrade: Prisma.UserWhereInput = { trades: { none: {} } };
 
+/**
+ * Hors Premium sans abonnement en cours (essai d'inscription ou Premium offert, #769) : le plan reste
+ * FREE pendant l'essai, mais une relance « passe Premium » n'a pas de sens pour qui l'a déjà.
+ */
+export const notInTrial = (now: Date): Prisma.UserWhereInput => ({
+  OR: [{ trialEndsAt: null }, { trialEndsAt: { lte: now } }],
+});
+
 /** Mêmes exclusions que founder_launch : abonnés payants, fondateurs, codes partenaires, bêta. */
 const founderTargets: Prisma.UserWhereInput = {
   AND: [
@@ -197,7 +205,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
     automated: true,
     priority: 80,
     segment: (now) => ({
-      AND: [sinceOnboardingStart(), ageWindow(now, 7, 14), { plan: Plan.FREE }, { trades: { some: {} } }],
+      AND: [sinceOnboardingStart(), ageWindow(now, 7, 14), { plan: Plan.FREE }, notInTrial(now), { trades: { some: {} } }],
     }),
     loadContext: loadFirstWeek,
     build: firstWeekRecapTemplate,
@@ -215,6 +223,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
         sinceOnboardingStart(),
         ageWindow(now, 10, 30),
         { plan: Plan.FREE },
+        notInTrial(now),
         founderTargets,
         { emailSends: { none: { campaignKey: 'founder_launch' } } },
       ],
@@ -267,8 +276,11 @@ export const CAMPAIGNS: EmailCampaign[] = [
     automated: false,
     priority: 30,
     segment: (now) => ({
-      plan: 'FREE',
-      trades: { some: { tradedAt: { gte: new Date(now.getTime() - 14 * DAY) } } },
+      AND: [
+        { plan: Plan.FREE },
+        notInTrial(now),
+        { trades: { some: { tradedAt: { gte: new Date(now.getTime() - 14 * DAY) } } } },
+      ],
     }),
     build: premiumTemplate,
   },
