@@ -19,7 +19,7 @@ export const SIGNUP_PITCH_POINTS: readonly PitchPoint[] = [
   { text: 'Ton journal complet : setups, émotions, notes, statistiques' },
   { text: 'Prépare ta séance, puis débriefe-la juste après' },
   {
-    text: 'Une alerte quand tu reprends une position juste après une perte, app ouverte (compte Tradovate connecté)',
+    text: 'Une alerte quand tu reprends une position juste après une perte, app ouverte ou en notification (compte Tradovate connecté)',
     premium: true,
     benefitId: 'anti_tilt',
   },
