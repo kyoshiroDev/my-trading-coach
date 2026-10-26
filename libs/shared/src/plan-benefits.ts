@@ -30,11 +30,11 @@ export const PLAN_BENEFITS: { free: readonly PlanBenefit[]; premium: readonly Pl
   premium: [
     {
       id: 'loss_alerts',
-      text: 'Alertes avant d’atteindre ta limite de perte, app ouverte pendant ta séance (compte Tradovate connecté)',
+      text: 'Alertes avant d’atteindre ta limite de perte, app ouverte ou en notification pendant ta séance (compte Tradovate connecté)',
     },
     {
       id: 'anti_tilt',
-      text: 'Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
+      text: 'Anti-tilt en direct, app ouverte ou en notification pendant ta séance (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
     },
     { id: 'accounts', text: 'Comptes illimités, chacun avec les règles de sa prop firm' },
     { id: 'weekly_debrief', text: 'Débrief de ta semaine rédigé par le coach IA' },
