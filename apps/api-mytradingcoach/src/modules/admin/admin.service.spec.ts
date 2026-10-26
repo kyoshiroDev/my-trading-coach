@@ -205,7 +205,11 @@ describe('AdminService.getFunnel', () => {
         { key: 'trial_click', n: 1n }, { key: 'checkout_canceled', n: 1n },
       ])
       .mockResolvedValueOnce([{ event: 'premium_seen', place: 'ai-insights', n: 4n }])
-      .mockResolvedValueOnce([{ trialing: 0n, paying: 0n }]);
+      .mockResolvedValueOnce([{ trialing: 0n, paying: 0n }])
+      .mockResolvedValueOnce([
+        { event: 'install_shown', place: 'ios', n: 5n },
+        { event: 'install_shown', place: 'ios-other', n: 2n },
+      ]);
 
     const f = await service.getFunnel(30);
 
@@ -214,7 +218,18 @@ describe('AdminService.getFunnel', () => {
       demo: { opens: 14, signupClicks: 3 },
       current: { trialing: 0, paying: 0 },
       byPlace: [{ event: 'premium_seen', place: 'ai-insights', users: 4 }],
+      // iPhone hors Safari : sa propre ligne, jamais additionnée à `ios`.
+      install: [
+        { event: 'install_shown', place: 'ios', users: 5 },
+        { event: 'install_shown', place: 'ios-other', users: 2 },
+      ],
     });
+    // Requête d'installation : liste blanche des 8 événements, plateforme groupée telle quelle.
+    const [sql, ...values] = q.mock.calls[6] as [TemplateStringsArray, ...unknown[]];
+    expect(sql.join('?')).toMatch(/GROUP BY e\."event", e\."place"/);
+    expect(sql.join('?')).not.toMatch(/CASE/);
+    expect(sql.join('?')).toMatch(/"isDemo" = false/);
+    expect(JSON.stringify(values)).toContain('install_shown');
     // Ordre fixe des étapes, 0 quand aucune donnée (retour Stripe réussi absent ici).
     expect(f.steps.map((s) => [s.key, s.users])).toEqual([
       ['premium_seen', 6], ['plan_modal_open', 3], ['trial_click', 1], ['checkout_success', 0], ['checkout_canceled', 1],
@@ -225,8 +240,10 @@ describe('AdminService.getFunnel', () => {
     const q = (mockPrisma as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
     q.mockReset();
     q.mockResolvedValueOnce([{ n: null }]).mockResolvedValueOnce([{ n: 0n }]).mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ trialing: 0n, paying: 0n }]);
+      .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ trialing: 0n, paying: 0n }])
+      .mockResolvedValueOnce([]);
     const f = await service.getFunnel(30);
+    expect(f.install).toEqual([]);
     expect(f.landingVisits).toBe(0);
     expect(f.steps.every((s) => s.users === 0)).toBe(true);
   });

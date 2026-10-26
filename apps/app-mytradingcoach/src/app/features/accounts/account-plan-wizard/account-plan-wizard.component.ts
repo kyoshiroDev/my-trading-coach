@@ -7,6 +7,7 @@ import { guessPlan, type AccountPlanHint, type PropFirmCatalogFirm, type PropFir
 import { AccountsApi, type TradingAccount, type UpdateAccountPayload } from '@app/core/api/accounts.api';
 import { PropFirmsApi } from '@app/core/api/prop-firms.api';
 import { apiErrorMessage } from '@app/core/utils/api-error';
+import { InstallPromptService } from '@app/core/install/install-prompt.service';
 import { programKey, programLabel, rulesFromPlan, sizeLabel } from '../prop-firm-plan-picker/prop-firm-plans.util';
 
 export type PlanPhase = 'evaluation' | 'funded';
@@ -46,6 +47,7 @@ export class AccountPlanWizardComponent implements OnInit {
   private readonly accountsApi = inject(AccountsApi);
   private readonly propFirmsApi = inject(PropFirmsApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly installPrompt = inject(InstallPromptService);
 
   readonly accountId = input.required<string>();
   readonly accountLabel = input<string>('');
@@ -262,6 +264,8 @@ export class AccountPlanWizardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.saving.set(false);
+          // Compte Premium : proposition d'installer l'app après la liaison d'un plan prop firm.
+          if (payload.propFirmPlanId) this.installPrompt.offer('plan-linked');
           this.done.emit(res.data);
         },
         error: (err) => {

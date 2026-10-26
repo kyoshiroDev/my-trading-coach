@@ -175,6 +175,40 @@
     </div>
   }
 
+  @if (funnel(); as f) {
+    <div class="card funnel-card" data-testid="install-funnel">
+      <div class="card-head">
+        <span class="card-label">Installation de l'app · {{ f.days }} jours</span>
+        <span class="card-label muted">users distincts par plateforme, hors démo et admin</span>
+      </div>
+      @if (installs().length) {
+        <table class="tbl">
+          <caption class="sr-only">Installation de l'app par plateforme</caption>
+          <thead>
+            <tr>
+              <th scope="col">Plateforme</th>
+              @for (c of installColumns; track c.event) {
+                <th scope="col" class="num">{{ c.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of installs(); track r.place) {
+              <tr [attr.data-testid]="'install-row-' + r.place">
+                <td data-label="Plateforme">{{ r.label }}</td>
+                @for (c of installColumns; track c.event) {
+                  <td [attr.data-label]="c.label" class="td-mono num">{{ r.counts[c.event] }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="empty">Aucun parcours d'installation enregistré pour l'instant</div>
+      }
+    </div>
+  }
+
   @if (data(); as d) {
     <div class="kpi-strip cols-5">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">Visites 7j</div><div class="kpi-value teal">{{ d.totals.visits7d }}</div><div class="kpi-sub">landing, toutes sources</div></div>

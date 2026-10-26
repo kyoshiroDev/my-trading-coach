@@ -490,6 +490,13 @@ Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire 
 - **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
   tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
   courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.
+- **Feuille d'installation** (`features/install/`, maquette `mockup-installation-pwa.html`) : feuille en
+  bas d'écran sur mobile (iPhone : flottante au-dessus de la barre de Safari, flèche vers Partager),
+  boîte centrée de 440 px à partir de 768 px (une feuille n'est pas une page : son plafond est permis).
+  Variables de `theme.css` uniquement, sauf le blanc des boutons `--primary` ; écran verrouillé en
+  `--bg-3` → `--bg-2`, icône d'appli en `--grad-brand`, exemple d'alerte bordé `--yellow`. Boutons 44 px
+  au moins. Ligne « Installer l'app » du Profil : toute la largeur, comme la section Notifications
+  (mesuré de 360 à 2560 px, aucun défilement horizontal). Vérifié par `install.styles.spec.ts`.
 
 ---
 

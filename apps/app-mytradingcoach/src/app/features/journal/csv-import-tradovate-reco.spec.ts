@@ -14,6 +14,9 @@ import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CsvImportComponent } from './csv-import.component';
+import { InstallPromptService } from '../../core/install/install-prompt.service';
+import { TradesApi } from '../../core/api/trades.api';
+import { of } from 'rxjs';
 import { SelectedAccountStore } from '../../core/stores/selected-account.store';
 import { SetupsStore } from '../../core/stores/setups.store';
 import { TradovateStore } from '../../core/stores/tradovate.store';
@@ -31,7 +34,7 @@ function conn(accountId: string, over: Partial<TradovateConnection> = {}): Trado
   } as TradovateConnection;
 }
 
-function mount(opts: { allowFeesFile?: boolean; connections?: TradovateConnection[] } = {}) {
+function mount(opts: { allowFeesFile?: boolean; connections?: TradovateConnection[]; created?: number } = {}) {
   const connections = signal<TradovateConnection[]>(opts.connections ?? []);
   const tv = {
     byAccount: signal(new Map(connections().map((c) => [c.accountId, c] as const))),
@@ -40,8 +43,12 @@ function mount(opts: { allowFeesFile?: boolean; connections?: TradovateConnectio
     sync: vi.fn(),
   };
   const accountLoad = vi.fn();
+  const installPrompt = { offer: vi.fn() };
+  const tradesApi = { importCsv: vi.fn(() => of({ data: { created: opts.created ?? 2, duplicates: 0, failed: 0, total: 2 } })) };
   TestBed.configureTestingModule({
     providers: [
+      { provide: InstallPromptService, useValue: installPrompt },
+      { provide: TradesApi, useValue: tradesApi },
       provideHttpClient(),
       provideHttpClientTesting(),
       { provide: TradovateStore, useValue: tv },
@@ -74,7 +81,7 @@ function mount(opts: { allowFeesFile?: boolean; connections?: TradovateConnectio
     open.set(true);
     fixture.detectChanges();
   };
-  return { cmp, tv, fixture, open, reopen, accountLoad };
+  return { cmp, tv, fixture, open, reopen, accountLoad, installPrompt, tradesApi };
 }
 
 describe('Import — Tradovate : la synchro d’abord, le CSV en repli', () => {
@@ -175,5 +182,34 @@ describe('Import — Tradovate : la synchro d’abord, le CSV en repli', () => {
     cmp.syncTradovate();
     (tv.sync.mock.calls[0][1] as (r: null) => void)(null);
     expect(emitted).toEqual([]);
+  });
+
+  it('installation de l’app : proposée après une synchro qui importe, jamais après 0 trade ni un échec', () => {
+    const ok = mount({ connections: [conn('acc-apex')] });
+    ok.cmp.accountId.set('acc-apex');
+    ok.cmp.syncTradovate();
+    (ok.tv.sync.mock.calls[0][1] as (r: TradovateSyncResult) => void)({ created: 3, duplicates: 0, failed: 0, total: 3 } as TradovateSyncResult);
+    expect(ok.installPrompt.offer).toHaveBeenCalledExactlyOnceWith('import');
+    TestBed.resetTestingModule();
+
+    const none = mount({ connections: [conn('acc-apex')] });
+    none.cmp.accountId.set('acc-apex');
+    none.cmp.syncTradovate();
+    (none.tv.sync.mock.calls[0][1] as (r: TradovateSyncResult) => void)({ created: 0, duplicates: 3, failed: 0, total: 3 } as TradovateSyncResult);
+    (none.tv.sync.mock.calls[0][1] as (r: null) => void)(null);
+    expect(none.installPrompt.offer).not.toHaveBeenCalled();
+  });
+
+  it('installation de l’app : proposée après un import de fichier réussi, pas s’il n’a rien importé', () => {
+    for (const [created, expected] of [[2, 1], [0, 0]] as const) {
+      TestBed.resetTestingModule();
+      const { cmp, installPrompt, tradesApi } = mount({ created });
+      cmp.accountId.set('acc-apex');
+      cmp.selectedFile.set(new File(['a,b'], 'trades.csv', { type: 'text/csv' }));
+      cmp.doUpload();
+      expect(tradesApi.importCsv).toHaveBeenCalledOnce();
+      expect(installPrompt.offer).toHaveBeenCalledTimes(expected);
+      if (expected) expect(installPrompt.offer).toHaveBeenCalledWith('import');
+    }
   });
 });

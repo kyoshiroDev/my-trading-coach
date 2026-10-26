@@ -1,0 +1,105 @@
+/* Feuille d'installation (maquette mockup-installation-pwa.html). Mobile d'abord : feuille en bas
+   d'écran ; à partir de 768 px, boîte centrée. Couleurs : variables de theme.css uniquement, sauf
+   le texte blanc des boutons principaux (convention de design.md : `--primary` + blanc, 5,2:1).
+   Paliers : au-dessus des modales de page (1000) et du bouton menu (150), sous les toasts (10000),
+   pour que « Lien copié » reste visible. */
+
+.is-scrim {
+  position: fixed; inset: 0; z-index: 1100;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+
+.is-sheet, .is-banner {
+  position: fixed; z-index: 1101; box-sizing: border-box;
+  background: var(--bg-card); color: var(--text); border: 1px solid var(--border-hover);
+  max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain;
+  font-family: var(--font-body);
+}
+.is-sheet {
+  left: 0; right: 0; bottom: 0;
+  border-radius: 22px 22px 0 0; border-bottom: none;
+  padding: 14px 18px calc(22px + env(safe-area-inset-bottom));
+}
+/* iPhone : la feuille flotte au-dessus de la barre de Safari, la flèche montre Partager dessous. */
+.is-sheet--ios.is-sheet--arrow { left: 8px; right: 8px; bottom: calc(96px + env(safe-area-inset-bottom)); border-radius: 22px; border-bottom: 1px solid var(--border-hover); max-height: calc(100dvh - 120px); padding-bottom: 18px; }
+.is-arrow {
+  position: fixed; z-index: 1101; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom));
+  text-align: center; color: var(--blue-bright); font-size: 12px; font-weight: 600; pointer-events: none;
+}
+.is-arrow::after { content: ''; display: block; width: 2px; height: 28px; margin: 4px auto 0; background: var(--blue-bright); }
+
+/* Navigateur intégré : bandeau en haut, sous la barre de l'appli (Instagram, X…). */
+.is-banner { left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); border-radius: 16px; padding: 16px; }
+
+@media (min-width: 768px) {
+  .is-sheet, .is-sheet--ios.is-sheet--arrow, .is-banner {
+    left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%);
+    width: min(440px, calc(100vw - 48px)); border-radius: 18px; border-bottom: 1px solid var(--border-hover);
+    padding: 20px 22px;
+  }
+  .is-grab, .is-arrow { display: none; }
+}
+
+.is-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border-hover); margin: 0 auto 14px; }
+
+h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; line-height: 1.3; margin: 0 0 4px; color: var(--text); }
+.is-banner h2 { font-size: 16px; }
+.is-lead, .is-banner p { font-size: 13.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 12px; }
+.is-banner b, .is-help b { color: var(--text); font-weight: 600; }
+
+/* Écran verrouillé : trois vraies notifications, sans montant. */
+.is-lock {
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--border); border-radius: 18px; padding: 14px 12px 4px; margin: 0 0 12px;
+}
+.is-clock { text-align: center; font-family: var(--font-body); font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; margin: 0; color: var(--text); font-variant-numeric: tabular-nums; }
+.is-date { text-align: center; font-size: 12.5px; color: var(--text-2); margin: 4px 0 12px; }
+.is-date::first-letter { text-transform: uppercase; }
+.is-notif {
+  display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center;
+  background: var(--bg-card); border: 1px solid var(--border-hover); border-radius: 16px; padding: 9px 11px; margin: 0 0 8px;
+}
+.is-app { width: 38px; height: 38px; border-radius: 10px; background: var(--grad-brand); display: grid; place-items: center; font-weight: 800; font-size: 15px; color: var(--text); }
+.is-notif small { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--text-3); text-transform: uppercase; margin-bottom: 2px; }
+.is-notif b { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.is-upsell { font-size: 12.5px; color: var(--text-2); margin: -4px 0 12px; }
+
+/* Trois étapes iPhone */
+.is-steps { list-style: none; margin: 2px 0 12px; padding: 0; display: grid; gap: 10px; }
+.is-steps li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.is-steps b { display: block; font-size: 14px; color: var(--text); }
+.is-steps small { font-size: 12.5px; color: var(--text-2); }
+.is-n { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-glow); color: var(--blue-bright); display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
+.is-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-3); border: 1px solid var(--border-hover); border-radius: 8px; padding: 2px 8px; font-size: 12.5px; color: var(--text); }
+.is-pill svg { width: 14px; height: 14px; fill: none; stroke: var(--blue-bright); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Invitation aux alertes */
+.is-al { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--yellow); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; color: var(--text); line-height: 1.45; }
+.is-al b { display: block; color: var(--yellow); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; margin-bottom: 2px; }
+.is-note { font-size: 12px; color: var(--text-2); margin: 0 0 12px; line-height: 1.45; }
+.is-help { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0; text-align: center; }
+
+/* Boutons : 44 px au moins (cible tactile). */
+.is-actions { display: grid; gap: 8px; }
+.is-btn {
+  min-height: 46px; width: 100%; border-radius: 11px; border: 1px solid var(--border-hover);
+  background: var(--bg-3); color: var(--text); font-family: var(--font-body); font-size: 14.5px; font-weight: 600; cursor: pointer;
+}
+.is-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.is-btn--primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.is-btn--ghost { background: transparent; border-color: transparent; color: var(--text-2); min-height: 44px; font-weight: 500; }
+.is-btn--ghost:hover { color: var(--text); }
+.is-never {
+  display: block; width: 100%; min-height: 44px; margin-top: 2px; background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 12.5px; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px;
+}
+.is-never:hover { color: var(--text-2); }
+.is-btn:focus-visible, .is-never:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .is-sheet { animation: is-up 0.24s ease-out; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 768px) {
+  .is-sheet { animation: none; }
+}
+@keyframes is-up { from { transform: translateY(24px); opacity: 0; } }

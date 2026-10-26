@@ -7,6 +7,7 @@ import { AuthService } from '../auth/auth.service';
 import { UserScopedReset } from '../auth/user-scoped-reset';
 import { PUSH_BROWSER, type BrowserEnv, type PushBrowser } from './push-browser';
 import { PushService, browserState } from './push.service';
+import { ProductEventsService } from '../services/product-events.service';
 
 /** États du push sur cet appareil (#666 phase 2) et règles d'abonnement. */
 
@@ -44,16 +45,18 @@ function setup(opts: { env?: BrowserEnv; settings?: TraderPushSettings | Error; 
     preferences: vi.fn(async (input: { mutedTypes?: string[] }) => settings({ mutedTypes: (input.mutedTypes ?? ['RECAP']) as TraderPushSettings['mutedTypes'] })),
     test: vi.fn(async () => ({ subscriptions: 1, delivered: 1, failed: 0, removed: 0 })),
   };
-  const currentUser = signal<{ id: string } | null>({ id: 'A' });
+  const currentUser = signal<{ id: string; isDemo?: boolean } | null>({ id: 'A' });
+  const events = { track: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
+      { provide: ProductEventsService, useValue: events },
       { provide: PUSH_BROWSER, useValue: browser },
       { provide: PushApi, useValue: api },
       { provide: AuthService, useValue: { currentUser } },
     ],
   });
   return {
-    service: TestBed.inject(PushService), browser, api, currentUser,
+    service: TestBed.inject(PushService), browser, api, currentUser, events,
     setEnv: (e: BrowserEnv) => { currentEnv = e; },
     /** `AuthService.logout` : purge des stores du compte. */
     logout: () => { TestBed.inject(UserScopedReset).resetAll(); currentUser.set(null); },
@@ -181,6 +184,50 @@ describe('PushService.enable', () => {
     await service.enable();
     expect(service.state()).toBe('supported');
     expect(service.error()).toContain('Réessaie');
+  });
+});
+
+describe('PushService.enable : mesure de l’activation (installation de l’app)', () => {
+  it('permission accordée : push_enabled avec la plateforme, une fois', async () => {
+    const { service, events } = setup();
+    await service.init();
+    await service.enable();
+    expect(events.track).toHaveBeenCalledExactlyOnceWith('push_enabled', 'android');
+  });
+
+  it('permission refusée : push_denied (iPhone installé = ios)', async () => {
+    const { service, browser, setEnv, events } = setup({ env: env({ userAgent: IPHONE_SAFARI, standalone: true }) });
+    await service.init();
+    vi.mocked(browser.subscribe).mockImplementationOnce(async () => {
+      setEnv(env({ userAgent: IPHONE_SAFARI, standalone: true, notificationPermission: 'denied' }));
+      throw new Error('NotAllowedError');
+    });
+    await service.enable();
+    expect(events.track).toHaveBeenCalledExactlyOnceWith('push_denied', 'ios');
+  });
+
+  it('demande fermée sans réponse : push_denied ; autre échec (permission accordée) : rien', async () => {
+    const closed = setup();
+    await closed.service.init();
+    vi.mocked(closed.browser.subscribe).mockRejectedValueOnce(new Error('NotAllowedError'));
+    await closed.service.enable();
+    expect(closed.events.track).toHaveBeenCalledExactlyOnceWith('push_denied', 'android');
+    TestBed.resetTestingModule();
+
+    const failed = setup();
+    await failed.service.init();
+    failed.setEnv(env({ notificationPermission: 'granted' }));
+    vi.mocked(failed.browser.subscribe).mockRejectedValueOnce(new Error('réseau'));
+    await failed.service.enable();
+    expect(failed.events.track).not.toHaveBeenCalled();
+  });
+
+  it('compte démo : aucun événement', async () => {
+    const { service, events, currentUser } = setup();
+    currentUser.set({ id: 'A', isDemo: true });
+    await service.init();
+    await service.enable();
+    expect(events.track).not.toHaveBeenCalled();
   });
 });
 

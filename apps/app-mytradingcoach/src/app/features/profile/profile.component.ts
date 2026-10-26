@@ -27,6 +27,7 @@ import {
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { PushSettingsComponent } from './notifications/push-settings.component';
+import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -59,7 +60,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent],
+  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

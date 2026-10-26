@@ -193,6 +193,27 @@ export interface AdminFunnelPlace {
   users: number;
 }
 
+/** Événements de l'installation de l'app (même liste que `INSTALL_EVENTS` côté API). */
+export type AdminInstallEvent =
+  | 'install_shown'
+  | 'install_click'
+  | 'install_done'
+  | 'install_later'
+  | 'install_never'
+  | 'inapp_seen'
+  | 'push_enabled'
+  | 'push_denied';
+
+/**
+ * Installation de l'app : users DISTINCTS par événement et par plateforme (`android`, `ios`,
+ * `ios-other` = iPhone hors Safari, `desktop`), hors démo et admin. Plateforme brute, jamais regroupée.
+ */
+export interface AdminInstallRow {
+  event: AdminInstallEvent;
+  place: string;
+  users: number;
+}
+
 /** GET /admin/funnel — de la visite au paiement, sur `days` jours (Paris). */
 export interface AdminFunnelData {
   days: number;
@@ -201,6 +222,7 @@ export interface AdminFunnelData {
   demo: { opens: number; signupClicks: number };
   steps: AdminFunnelStep[];
   byPlace: AdminFunnelPlace[];
+  install: AdminInstallRow[];
   /** État Stripe actuel (hors démo et admin) : essais en cours, abonnés payants. */
   current: { trialing: number; paying: number };
 }

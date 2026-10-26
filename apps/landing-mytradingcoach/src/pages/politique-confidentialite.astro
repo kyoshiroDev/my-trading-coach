@@ -67,7 +67,21 @@ import { GA_ID } from '../config';
         <li>Adresse IP (anonymisée après 30 jours)</li>
         <li>Type de navigateur et système d'exploitation</li>
         <li>Pages visitées et durée de visite</li>
-        <li>Dans l'application : compteur journalier des écrans où une offre Premium est affichée ou ouverte, et des clics vers le paiement (aucun cookie, aucun outil tiers), pour améliorer l'offre</li>
+        <li>
+          Dans l'application, des <strong>événements d'usage rattachés à votre compte</strong> (identifiant
+          interne du compte, jour, nom de l'événement et un seul repère : l'écran, ou la plateforme de
+          l'appareil), comptés par jour, sans cookie ni outil tiers&nbsp;:
+          <ul>
+            <li>offre Premium&nbsp;: écrans où elle est affichée ou ouverte, clics vers le paiement, retour du paiement&nbsp;;</li>
+            <li>installation de l'application sur l'écran d'accueil&nbsp;: parcours affiché, bouton «&nbsp;Installer&nbsp;» ou «&nbsp;Je l'ai fait&nbsp;» touché, installation constatée, «&nbsp;Plus tard&nbsp;», «&nbsp;Ne plus me proposer&nbsp;», message «&nbsp;Ouvre dans ton navigateur&nbsp;» affiché&nbsp;;</li>
+            <li>notifications&nbsp;: activation acceptée ou refusée sur un appareil.</li>
+          </ul>
+          La plateforme se limite à Android, iPhone (Safari ou un autre navigateur) ou ordinateur. Ce ne
+          sont pas des statistiques anonymes&nbsp;: elles sont liées à votre compte, servent à améliorer
+          l'offre et l'application, et ne sont ni vendues ni utilisées à des fins publicitaires. Vos choix
+          «&nbsp;Plus tard&nbsp;» et «&nbsp;Ne plus me proposer&nbsp;» restent dans le stockage de votre navigateur, sur
+          l'appareil, et ne nous sont pas transmis.
+        </li>
         <li>Cookies de session et d'authentification</li>
       </ul>
 
@@ -123,6 +137,7 @@ import { GA_ID } from '../config';
           <tr><td>Notifications push</td><td>Consentement (Art. 6.1.a RGPD)&nbsp;: vous les activez, puis votre navigateur vous demande l'autorisation. Retrait à tout moment&nbsp;: bouton «&nbsp;Retirer&nbsp;» dans Profil, Notifications, interrupteurs par type de notification, ou réglages du navigateur</td></tr>
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
+          <tr><td>Événements d'usage rattachés au compte (offre Premium, installation de l'application, activation des notifications)</td><td>Intérêt légitime (Art. 6.1.f RGPD)&nbsp;: comprendre ce qui aide ou gêne l'usage de l'application</td></tr>
           <tr><td>Communications marketing</td><td>Consentement (Art. 6.1.a RGPD)</td></tr>
           <tr><td>E-mails d'aide à la prise en main</td><td>Intérêt légitime (Art. 6.1.f RGPD), désinscription dans chaque e-mail</td></tr>
           <tr><td>Sécurité et prévention fraude</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
@@ -146,6 +161,7 @@ import { GA_ID } from '../config';
           <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
           <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
           <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>
+          <tr><td>Événements d'usage rattachés au compte</td><td>13 mois, puis effacement automatique, ou à la suppression du compte</td></tr>
           <tr><td>Analyse IA d'une autopsie de compte</td><td>Jusqu'à la suppression du compte de trading concerné ou de votre compte. «&nbsp;Retirer cette autopsie&nbsp;» la masque sans l'effacer</td></tr>
         </tbody>
       </table>

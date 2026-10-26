@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { INestApplication } from '@nestjs/common';
 import { createIntegrationApp } from '../../test/integration-app.helper';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RetentionCron } from './retention.cron';
+import { DAILY_RETENTION_RULES, RetentionCron } from './retention.cron';
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 // Date réelle : la purge ne touche que des lignes vraiment anciennes, jamais celles que d'autres
@@ -63,5 +63,37 @@ describe('Rétention — base réelle', () => {
     expect((await prisma.stripeEvent.findMany({ where: { id: { startsWith: `evt_${RUN}_` } }, select: { id: true } })).map((e) => e.id)).toEqual([`evt_${RUN}_recent`]);
     expect(await prisma.aiUsageLog.count({ where: { feature: `int-${RUN}` } })).toBe(1);
     expect(await prisma.userDailyActivity.count({ where: { userId } })).toBe(1);
+  });
+});
+
+describe('Rétention quotidienne des événements d’usage — base réelle', () => {
+  it('supprime les lignes de plus de 13 mois, garde les autres, ne touche à aucune autre table', async () => {
+    await prisma.productEventDaily.createMany({
+      data: [
+        { userId, date: ago(397), event: 'install_shown', place: 'ios' },
+        { userId, date: ago(395), event: 'install_shown', place: 'ios-other' },
+        { userId, date: ago(1), event: 'premium_seen', place: 'dashboard' },
+      ],
+    });
+    // Témoins d'autres tables, assez vieux pour la purge mensuelle : la quotidienne les laisse.
+    await prisma.aiUsageLog.create({
+      data: { userId, feature: `int-daily-${RUN}`, model: 'm', inputTokens: 1, outputTokens: 1, costUsd: 0, createdAt: ago(1000) },
+    });
+    await prisma.userDailyActivity.create({ data: { userId, date: ago(1000) } });
+
+    const deleted = await app.get(RetentionCron).purgeAll(NOW, DAILY_RETENTION_RULES);
+
+    expect(Object.keys(deleted)).toEqual(['ProductEventDaily']);
+    const left = await prisma.productEventDaily.findMany({ where: { userId }, select: { place: true }, orderBy: { date: 'asc' } });
+    expect(left.map((r) => r.place)).toEqual(['ios-other', 'dashboard']);
+    expect(await prisma.aiUsageLog.count({ where: { feature: `int-daily-${RUN}` } })).toBe(1);
+    expect(await prisma.userDailyActivity.count({ where: { userId, date: { lt: ago(999) } } })).toBe(1);
+  });
+
+  it('la suppression du compte efface ses événements d’usage (cascade)', async () => {
+    const u = await prisma.user.create({ data: { email: `int-pe-cascade-${RUN}@test.local`, password: 'x' } });
+    await prisma.productEventDaily.create({ data: { userId: u.id, date: ago(0), event: 'install_done', place: 'android' } });
+    await prisma.user.delete({ where: { id: u.id } });
+    expect(await prisma.productEventDaily.count({ where: { userId: u.id } })).toBe(0);
   });
 });

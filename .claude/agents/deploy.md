@@ -314,7 +314,13 @@ workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des
 cache immuable d'un an ; `manifest.webmanifest` en `application/manifest+json`, cache 1 h, 404 s'il
 manque (pas l'`index.html` de la SPA). Les icônes PWA (`/pwa/*.png`) gardent le cache d'un an : changer
 leur nom si le dessin change. Modification du 25/10/2026 : **à reporter à la main sur les deux VPS**
-(ancien : dev, beta, admin ; prod : app), selon la procédure ci-dessous.
+(ancien : dev, beta, admin ; prod : app), selon la procédure ci-dessous. Appliquée sur les deux VPS le
+25/10/2026 (prod : feu vert de Greg).
+
+**Budget du bundle de l'app** (plafond bloquant 500 ko, avertissement 450 ko dépassé) : 495,04 ko après
+le parcours d'installation (25/10/2026), marge 4,96 ko. Une PR « budget du bundle » doit suivre pour
+regagner de la place avant tout nouvel ajout au bundle initial. Mesurer au build de production
+(`nx run app-mytradingcoach:build:production`, ligne « Initial total »).
 
 Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :
 `cat nouvelle.conf > /opt/infra/static/nginx/<conf>`, jamais `cp`, `rsync` ni `sed -i` qui en créent
