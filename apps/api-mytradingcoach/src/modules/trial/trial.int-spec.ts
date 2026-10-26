@@ -134,4 +134,17 @@ describe('Fin d’essai : compte gardé actif', () => {
     expect((await api(token, `/accounts/${archived.id}/keep`, { method: 'POST' })).status).toBe(400);
     expect((await api(token, `/accounts/inconnu/keep`, { method: 'POST' })).status).toBe(404);
   }, 60_000);
+
+  it('compte d’un autre utilisateur : 404, rien n’est écrit', async () => {
+    const owner = await register(`${PREFIX}owner-${uid()}@test.local`);
+    const other = await register(`${PREFIX}other-${uid()}@test.local`);
+    const foreign = await prisma.tradingAccount.create({ data: { userId: owner.id, label: 'Compte du propriétaire' } });
+
+    expect((await api(other.token, `/accounts/${foreign.id}/keep`, { method: 'POST' })).status).toBe(404);
+    const after = await prisma.user.findMany({
+      where: { id: { in: [owner.id, other.id] } },
+      select: { keptAccountId: true },
+    });
+    expect(after.map((u) => u.keptAccountId)).toEqual([null, null]);
+  }, 60_000);
 });
