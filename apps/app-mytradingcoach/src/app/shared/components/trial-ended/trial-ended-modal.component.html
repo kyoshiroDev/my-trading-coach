@@ -1,0 +1,53 @@
+@if (show()) {
+  <div class="te-overlay" role="button" tabindex="-1" (click)="close()" (keydown.escape)="close()">
+    <div
+      class="te-modal"
+      role="dialog"
+      aria-modal="true"
+      mtcDialog
+      (mtcDialogClose)="close()"
+      aria-labelledby="te-title"
+      data-testid="trial-ended-modal"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="te-lbl">FIN DE TON ESSAI</div>
+      <h2 id="te-title" class="te-title">Ton Premium offert est terminé</h2>
+      <p class="te-text">
+        Tes {{ trialDays }} jours sont passés. Ton compte repasse en gratuit&nbsp;: tes trades, tes comptes
+        et ton historique restent là, rien n'est supprimé.
+      </p>
+
+      <div class="te-cols">
+        <section class="te-col">
+          <h3 class="te-col-title">Reste gratuit</h3>
+          <ul class="te-list">
+            @for (b of freeBenefits; track b.id) {
+              <li>{{ b.text }}</li>
+            }
+          </ul>
+        </section>
+        <section class="te-col">
+          <h3 class="te-col-title">Demande Premium</h3>
+          <ul class="te-list">
+            @for (b of premiumBenefits; track b.id) {
+              <li>{{ b.text }}</li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      @if (tooManyAccounts()) {
+        <p class="te-note" data-testid="trial-ended-accounts">
+          Tu as plusieurs comptes&nbsp;: l'offre gratuite en inclut un seul.
+          <a routerLink="/accounts" (click)="close()">Choisis celui que tu gardes dans Mes comptes</a>.
+        </p>
+      }
+
+      <div class="te-actions">
+        <button type="button" class="te-btn pri" data-testid="trial-ended-offers" (click)="seeOffers()">Voir les offres</button>
+        <button type="button" class="te-btn ghost" data-testid="trial-ended-close" (click)="close()">Continuer en gratuit</button>
+      </div>
+    </div>
+  </div>
+}

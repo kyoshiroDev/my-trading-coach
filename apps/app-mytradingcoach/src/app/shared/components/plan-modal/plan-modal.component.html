@@ -20,6 +20,12 @@
           &nbsp;
         }
       </p>
+      @if (signupTrialEnd(); as end) {
+        <p class="plan-trial-note" data-testid="plan-trial-note">
+          Ton Premium offert continue jusqu'au <span class="plan-trial-date">{{ end }}</span>.
+          En t'abonnant maintenant, le premier paiement a lieu aujourd'hui.
+        </p>
+      }
       <button class="plan-modal-close" (click)="close()" aria-label="Fermer">
         <svg [lucideIcon]="XIcon" [size]="13"></svg>
       </button>

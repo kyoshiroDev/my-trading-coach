@@ -45,12 +45,14 @@ import { environment } from '@app/environments/environment';
 import { DialogDirective, ScrollMemoryDirective } from '@mtc/front-ui';
 
 import { OfferIntentHostComponent } from '../offer-intent-host/offer-intent-host.component';
+import { TrialEndedModalComponent } from '../trial-ended/trial-ended-modal.component';
 import { LostAccountSheetsComponent } from '@app/features/accounts/lost-account/lost-account-sheets.component';
 
 @Component({
   selector: 'mtc-sidebar',
   imports: [
     OfferIntentHostComponent,
+    TrialEndedModalComponent,
     LostAccountSheetsComponent,
     ScrollMemoryDirective,
     DialogDirective,

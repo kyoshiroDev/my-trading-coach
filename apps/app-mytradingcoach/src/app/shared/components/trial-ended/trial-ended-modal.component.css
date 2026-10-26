@@ -1,0 +1,130 @@
+/* Fenêtre de fin d'essai (#769) : courte, deux colonnes de 760 px au plus (modale, plafond permis). */
+.te-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 12, 20, 0.72);
+}
+
+.te-modal {
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--border-hover);
+  border-radius: 16px;
+  background: var(--bg-card);
+  font-family: var(--font-body);
+}
+
+.te-lbl {
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.te-title {
+  margin: 6px 0 8px;
+  font: 700 20px var(--font-display);
+  color: var(--text);
+}
+
+.te-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.te-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.te-col {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+
+.te-col-title {
+  margin: 0 0 8px;
+  font: 600 14px var(--font-display);
+  color: var(--text);
+}
+
+.te-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.te-list li + li {
+  margin-top: 4px;
+}
+
+.te-note {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.te-note a {
+  color: var(--blue-bright);
+}
+
+.te-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.te-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font: 600 14px var(--font-body);
+  cursor: pointer;
+}
+
+.te-btn.pri {
+  border: none;
+  background: var(--primary);
+  color: #fff;
+}
+
+.te-btn.ghost {
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .te-modal {
+    padding: 18px;
+  }
+
+  .te-btn {
+    flex: 1 1 100%;
+  }
+
+  /* Téléphone : la liste défile, les deux boutons restent visibles en bas de la fenêtre. */
+  .te-actions {
+    position: sticky;
+    bottom: -18px;
+    margin: 0 -18px -18px;
+    padding: 12px 18px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+}
