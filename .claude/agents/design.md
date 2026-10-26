@@ -24,7 +24,11 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - **Bleu = signal** (#3b82f6) : CTA et éléments interactifs uniquement.
 - **Vert = gains uniquement · Rouge = pertes uniquement.** Jamais inversé, jamais décoratif.
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
-- Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
+- Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono), auto-hébergées
+  (`@fontsource`) et déclarées dans `src/styles/fonts.css` (GÉNÉRÉ par `tools/scripts/generate-font-faces.mjs`,
+  sous-ensembles latin + latin-ext : é, œ, €, ·, « », ’ compris). Nouvelle graisse : l'ajouter au
+  script, le relancer ; `fonts.spec.ts` vérifie chaque famille et graisse. Une police ou une graisse
+  ajoutée alourdit le CSS initial : budget du bundle (plafond 500 ko) avec marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget (`angular.md`).
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
 - **Typographie** : espace insécable (`&nbsp;` dans les gabarits) avant `:` `;` `!` `?` et `%`. Vérifié
   sur Parrainage, Ambassadeur et Devenir ambassadeur par `src/app/typographie-parrainage.spec.ts`.

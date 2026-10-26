@@ -14,6 +14,11 @@ export default defineConfig({
     // Librairie partagée front/back (tsconfig `paths` non lu par vitest).
     alias: {
       '@mtc/shared': resolve(import.meta.dirname, '../../libs/shared/src/index.ts'),
+      // Chemin direct du dialogue de confirmation (hors du barrel, budget du bundle) : avant le barrel.
+      '@mtc/front-ui/confirm-dialog': resolve(
+        import.meta.dirname,
+        '../../libs/front/ui/src/lib/confirm-dialog/confirm-dialog.component.ts',
+      ),
       '@mtc/front-ui': resolve(import.meta.dirname, '../../libs/front/ui/src/index.ts'),
       '@mtc/front-auth': resolve(import.meta.dirname, '../../libs/front/auth/src/index.ts'),
       // Alias internes de l'app (tsconfig.base.json) ; le plus précis d'abord.

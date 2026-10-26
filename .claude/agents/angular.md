@@ -27,6 +27,24 @@ Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · N
 - CSS dans `.css` uniquement — jamais inline dans `.ts`
 - `OnPush` sur les composants sans signals
 
+## Budget du bundle initial (règle du 2026-10-26)
+
+- Plafond bloquant 500 ko (`project.json`, jamais relevé). **Tout ajout au bundle initial se mesure**
+  (`nx run app-mytradingcoach:build:production`, ligne « Initial total ») avant/après, chiffre dans la PR.
+- Sous le plafond de 500 ko : **marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget**.
+- Ce qui n'est pas au premier écran part à la demande : route `loadComponent`, `@defer`, `import()`.
+  Un composant exporté par un barrel chargé au démarrage (`@mtc/front-ui`) reste dans le bundle
+  initial même derrière `@defer` : l'importer par un chemin direct (ex. `@mtc/front-ui/confirm-dialog`,
+  alias dans `tsconfig.base.json` ET `vitest.config.mts`).
+- **Point sensible : la page d'inscription** est volontairement chargée d'office (fae5a8c8, −1,3 s en
+  4G lente) et embarque `@angular/forms` (~43 ko) pour son formulaire. N'y toucher qu'avec l'accord
+  de Greg (conversion des inscriptions).
+- Polices : `src/styles/fonts.css` GÉNÉRÉ (`tools/scripts/generate-font-faces.mjs`), latin + latin-ext
+  seulement ; `src/styles/fonts.spec.ts`. Verrous du chargement à la demande : `src/app/bundle-initial.spec.ts`.
+- Mesures : 495,04 ko le 26/10 (`dev` ce2d8f2e) → 479,17 ko après le lot 1 (polices −13,19 ; page 404
+  paresseuse −1,33 ; dialogue de confirmation à la première demande −1,35 ; `RouterOutlet` à la place
+  de `RouterModule` dans `App` : 0, non retenu). Marge 20,83 ko.
+
 ---
 
 ## Structure
