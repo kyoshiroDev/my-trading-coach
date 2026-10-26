@@ -1276,6 +1276,33 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   campagne. Colonnes `ENGAGEMENT_COLUMNS` : Vues · 25/50/75/100 % · 10/30/60 s · Règles, taux = valeur
   / vues de la ligne (pas l'étape précédente). Mêmes classes que le parcours (`signup-*`).
 
+## Essai Premium d'inscription (#769, 2026-10-26)
+
+- **`UserStore`** : `signupTrialDaysLeft()` (jours restants arrondis au supérieur, 1 le dernier jour ;
+  `null` hors essai d'inscription, démo, abonné Stripe, Premium offert par l'admin),
+  `signupTrialEnded()` (essai d'inscription fini, `trialSource` encore `SIGNUP`, aucun autre accès
+  Premium, hors démo). `isOfferedPremium()` exclut `trialSource = SIGNUP` (même règle que l'API).
+  `AuthUser` porte `trialSource` et `signupTrialEndsAt`.
+- **Bandeau** « Premium offert · il te reste N jours » + « Voir les offres → » (`OfferIntentService.open('bandeau')`) :
+  dans `mtc-topbar`, sous l'en-tête, NON collant (les vues calées sur le viewport n'ont pas de topbar
+  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`.
+- **Fenêtre des offres** pendant l'essai : plus de « 1 mois offert » (`trialUsed` posé à l'inscription)
+  et une ligne `plan-trial-note` : fin du Premium offert (JJ/MM) et paiement dès la souscription.
+- **Fin d'essai** : `mtc-trial-ended-modal` (shell, `@defer (when userStore.signupTrialEnded())`), une
+  seule fois par compte et par appareil (localStorage `mtc_trial_ended_seen`, liste d'ids ; pas de
+  colonne, décision du 26/10). Contenu = `PLAN_BENEFITS` (gratuit / Premium) ; renvoi vers Mes comptes
+  si des comptes sont en trop. Téléphone : boutons collés en bas de la fenêtre.
+- **Compte gardé** : `mtc-kept-account-panel` en haut de Mes comptes, visible seulement si un compte a
+  `overFreeLimit` (API). Choix radio parmi les comptes ACTIVE, `POST /accounts/:id/keep`, puis
+  `SelectedAccountStore.load()`. Libellé « gardé » (pas « actif », déjà le statut du compte).
+- **Lien `/register?plan=premium`** (URL conservée, diffusée par la landing) : plus de paiement direct.
+  `PostSignupService.afterSignup()` n'a plus d'option `premium` : tableau de bord, et l'intention
+  `plan=premium` est effacée (aucune modale d'offres à l'arrivée). Textes de l'inscription : titre
+  « Essaie Premium 14 jours » pour ce lien, ligne « 14 jours de Premium offerts · sans carte · puis
+  gratuit, sans engagement » pour tous (`PREMIUM_SIGNUP_TRIAL_DAYS`). Garde :
+  `features/auth/register-premium-link.spec.ts`. Formulaire d'inscription inchangé.
+- Bundle initial : 478,74 ko (−0,43 ko, le paiement ne fait plus partie du retour d'inscription).
+
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
 - **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
