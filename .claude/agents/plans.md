@@ -30,6 +30,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
   `daily_loss` en Premium seulement ; le plancher vaut pour tous.
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
 - **Essai** : `TRIAL_PERIOD_DAYS = 30` (api pricing.const). Accordé **uniquement** sur le prix **mensuel** ET si `!user.trialUsed`. L'annuel est facturé immédiatement, sans essai.
+- **Essai d'inscription (#769)** : `PREMIUM_SIGNUP_TRIAL_DAYS = 14` (`@mtc/shared`), sans carte, posé à la création du compte, puis retour automatique au gratuit. Il pose `trialUsed = true` : **pas de second essai** de 30 j au checkout (prélèvement immédiat du mensuel). Voir « Essai d'inscription » plus bas.
 
 ---
 
@@ -235,7 +236,8 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Premium offert par l'admin** (2026-10-03) : `POST /admin/users/:id/offer-premium` écrit
   `trialEndsAt = max(now, trialEndsAt) + N j` (défaut 30, max 90) et `trialUsed = true` ; **le plan reste
   FREE**. Aucun abonnement Stripe, aucun prélèvement : l'accès retombe seul à la date de fin. C'est la
-  **seule** source réelle de `trialEndsAt` aujourd'hui : l'essai Stripe, lui, ne l'écrit pas (il passe par
+  source de `trialEndsAt` avec l'essai d'inscription (#769, `trialSource` distingue `ADMIN` / `SIGNUP` ;
+  offert pendant l'essai = durées additionnées). L'essai Stripe, lui, ne l'écrit pas (il passe par
   `plan = PREMIUM` + `stripeSubscriptionStatus = trialing`). « Offert » = `trialEndsAt` futur **et** pas
   d'abonnement Stripe actif/trialing (`isOfferedPremium`, `users/premium-offer.util.ts`). Refusé (409) si
   abonnement Stripe en cours, plan PREMIUM, rôle ADMIN/BETA_TESTER ou compte démo. `trialUsed = true` →
@@ -261,6 +263,19 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Perte journalière + alertes « avant la casse »** (#370) : **PREMIUM**, gating CÔTÉ API aux deux points : `GET /accounts` ne calcule `metrics.dailyLoss` que si `isPremiumAccess` (sinon `null`), et `PropAlertsService.check` sort sans rien envoyer hors Premium / démo. Front : bloc « Perte du jour » si `dailyLoss` présent, teaser PREMIUM (modale des offres) pour un compte gratuit relié à un plan. Coût IA nul. Consistency (gain max du jour), objectif atteint et payout possible : aussi en alerte (#370, 2e partie), même gating. Anti-tilt en direct (#371 : revenge, taille après une perte, surtrading) : PREMIUM, même gating côté API (`TiltAlertsService`). Récap 17h30 et Weekly Debrief nourris par les séances suivies en direct (#373 / #374, `PropRiskContextService`) : PREMIUM comme ces deux IA (classe « BORNÉ », prompt plus riche, aucun appel en plus).
 - **Synchro Tradovate par API** (PROMPT-207) : **FREE**, aucun guard — même règle que l'import CSV d'un broker connu (socle « import »), zéro coût IA. Décision Greg 2026-09-11. Le FREE reste borné à 1 compte, donc à 1 connexion. Aucune « sync crypto » n'existe (retirée de la grille et des listes le 2026-10-19) : si une synchro Binance/Bybit arrive, trancher explicitement son palier et l'ajouter à `PLAN_BENEFITS`.
 - **Front** : `isPremium` = PREMIUM / trial / admin / beta (l'alias `isStarterOrAbove` a été supprimé).
+
+## Essai d'inscription : 14 jours de Premium offerts (#769, 2026-10-26)
+- Tout nouvel inscrit (e-mail ou Google, hors démo) : `trialEndsAt = signupTrialEndsAt = J+14`,
+  `trialSource = SIGNUP`, `trialUsed = true`, plan **FREE** inchangé. Aucune carte, aucun Stripe.
+- Réinscription avec l'e-mail d'un compte supprimé depuis moins de 90 j : pas d'essai.
+- L'accès passe par les contrôles existants (`trialEndsAt`) : aucun chemin Premium parallèle.
+- **Fin** : rien n'est supprimé. Le cron quotidien `TrialEndService` réaligne le rôle Discord (vaut
+  aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
+  (`overFreeLimit`), l'utilisateur choisit le compte gardé ; l'arrêt de leur synchro arrive en B0.
+- **Après l'essai** : mensuel 49 € sans essai Stripe (`trialUsed`), annuel inchangé. Les anciens
+  comptes jamais essayés gardent les 30 j.
+- **Coût IA** estimé (prod, coûts moyens par appel) : ≈ 0,10 à 0,20 $ par inscrit sur 14 j,
+  ≈ 0,40 $ au pire ; 300 inscrits ≈ 30 à 60 $ (pire cas ≈ 120 $).
 
 ## Essai 30 jours (mensuel uniquement)
 - Accordé **si** `!user.trialUsed` **ET** prix **mensuel** (`isMonthlyPrice`). Constante `TRIAL_PERIOD_DAYS = 30`.
