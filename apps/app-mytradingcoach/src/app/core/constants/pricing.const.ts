@@ -31,3 +31,6 @@ export const yearlyPerMonth = (yearly: number): number => Math.round(yearly / 12
 
 /** Quota de comptes de trading par plan (`null` = illimité) — cf. `@mtc/shared`. */
 export { ACCOUNT_LIMITS } from '@mtc/shared';
+
+/** Premium offert à l'inscription (#769), en jours — cf. `@mtc/shared`. */
+export { PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';

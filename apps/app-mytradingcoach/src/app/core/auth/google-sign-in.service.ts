@@ -37,13 +37,11 @@ export class GoogleSignInService {
   private readonly postSignup = inject(PostSignupService);
   private readonly toast = inject(ToastService);
 
-  signIn(credential: string, opts: { premium: boolean }): Observable<GoogleAuthStatus> {
+  signIn(credential: string): Observable<GoogleAuthStatus> {
     return this.auth.googleAuth(credential, storedReferralCode(), storedAcquisition()).pipe(
       map(({ data }) => {
         if (data.user.needsSignupFinalization) {
-          void this.router.navigate([GOOGLE_FINALIZE_PATH], {
-            queryParams: opts.premium ? { plan: 'premium' } : {},
-          });
+          void this.router.navigate([GOOGLE_FINALIZE_PATH]);
         } else {
           if (data.googleStatus === 'linked') {
             this.toast.success(
