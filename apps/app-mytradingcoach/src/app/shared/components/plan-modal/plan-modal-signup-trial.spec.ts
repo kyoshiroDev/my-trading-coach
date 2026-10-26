@@ -66,9 +66,11 @@ describe('Fenêtre des offres pendant l’essai d’inscription (#769)', () => {
     expect(c.signupTrialEnd()).toBeNull();
   });
 
-  it('la ligne du gabarit dit la vérité : paiement dès la souscription', () => {
+  it('la ligne du gabarit dit la vérité : paiement dès la souscription, jours offerts non reportés', () => {
     const note = TEMPLATE.slice(TEMPLATE.indexOf('plan-trial-note'), TEMPLATE.indexOf('</p>', TEMPLATE.indexOf('plan-trial-note')));
     expect(TEMPLATE).toContain('@if (signupTrialEnd(); as end)');
-    expect(note.replace(/\s+/g, ' ')).toContain('le premier paiement a lieu aujourd\'hui');
+    expect(note.replace(/\s+/g, ' ')).toContain(
+      'Si tu t\'abonnes maintenant, tu paies dès aujourd\'hui et les jours offerts restants ne sont pas reportés.',
+    );
   });
 });
