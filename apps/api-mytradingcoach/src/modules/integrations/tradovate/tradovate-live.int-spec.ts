@@ -1,7 +1,8 @@
 /**
  * Temps réel Tradovate — séquence complète, sur la VRAIE app (createIntegrationApp : Resend neutralisé) :
  * app ouverte → rattrapage REST → événement WebSocket Tradovate → trade créé et relayé →
- * app fermée → WebSocket Tradovate fermé proprement.
+ * app fermée → WebSocket Tradovate fermé proprement. Veille serveur (#770) : trader Premium en séance
+ * avec un appareil abonné → WebSocket gardé app fermée, trades suivis, fermé à la clôture de séance.
  *
  * Tradovate est simulé des deux côtés : REST via `fetch`, WebSocket via LIVE_SOCKET_FACTORY.
  */
@@ -15,6 +16,8 @@ import { createIntegrationApp } from '@api/test/integration-app.helper';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
 import type { LiveSocket } from './tradovate-live.connection';
+import { TradovateWatchService } from './tradovate-watch.service';
+import { PUSH_CONFIG, PUSH_SENDER, TRADER_PUSH_FLAG } from '../../push/push-sender';
 
 const PREFIX = 'int-tvlive-';
 const uid = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
@@ -114,6 +117,13 @@ beforeAll(async () => {
       b.overrideProvider(getStorageToken()).useValue({
         increment: async () => ({ totalHits: 1, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
       })
+        // Push des traders allumé (la veille en dépend), envoi neutralisé : rien ne sort.
+        .overrideProvider(PUSH_CONFIG)
+        .useValue({ enabled: true, config: { publicKey: 'cle-publique-test', privateKey: 'cle-privee-test', subject: 'mailto:test@test.local' } })
+        .overrideProvider(TRADER_PUSH_FLAG)
+        .useValue(true)
+        .overrideProvider(PUSH_SENDER)
+        .useValue({ send: async () => 201 })
         .overrideProvider(LIVE_SOCKET_FACTORY)
         .useValue((url: string) => {
           const s = new FakeTradovateSocket(url);
@@ -237,6 +247,49 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     await until(() => ws.closedWith === 1000);
     expect(liveService.openConnectionCount()).toBe(0);
     expect(await liveService.isLive(userId)).toBe(false);
+  }, 30_000);
+
+  it('veille serveur (#770) : app fermée en séance → WebSocket gardé, trade suivi, fermé à la clôture', async () => {
+    // Un login Tradovate ne se lie qu'à un compte MTC à la fois : on libère celui du test précédent.
+    await prisma.brokerConnection.deleteMany({ where: { user: { email: { startsWith: PREFIX } } } });
+    const { id: userId, token } = await registerUser();
+    await prisma.user.update({ where: { id: userId }, data: { plan: 'PREMIUM' } });
+    await prisma.userPushDevice.create({
+      data: { userId, endpoint: `https://fcm.googleapis.com/fcm/send/${uid()}`, p256dh: 'p256dh-test', auth: 'auth-test' },
+    });
+    const account = await prisma.tradingAccount.create({ data: { userId, label: 'Apex veille' }, select: { id: true } });
+    await connectTradovate(token, account.id);
+    const session = await prisma.tradeSession.create({ data: { userId, accountId: account.id }, select: { id: true } });
+    const watch = app.get(TradovateWatchService);
+    const liveService = app.get(TradovateLiveService);
+    expect(watch.active).toBe(true);
+    // Éligibilité lue sur le vrai schéma (compteurs filtrés, séance du jour).
+    expect((await watch.verdicts([userId])).get(userId)).toBe('watch');
+
+    const opened = wsSockets.length;
+    const client = openApp(token);
+    await until(() => wsSockets.slice(opened).some((s) => s.sent.some((m) => m.startsWith('user/syncrequest'))));
+    const ws = wsSockets[wsSockets.length - 1];
+    const before = await prisma.trade.count({ where: { userId } });
+
+    // 1. App fermée : le WebSocket Tradovate reste ouvert, la veille est inscrite.
+    client.disconnect();
+    await until(async () => (await watch.current()).includes(userId));
+    expect(ws.closedWith).toBeNull();
+    expect(await liveService.isLive(userId)).toBe(true);
+
+    // 2. Trade fait app fermée : poussé par Tradovate, synchronisé sans aucun onglet ouvert.
+    FILLS.push(fill(4001, 'Buy', 30300, '2026-09-04T14:00:00.000Z'), fill(4002, 'Sell', 30310, '2026-09-04T14:05:00.000Z'));
+    PAIRS.push(pair(4, 4001, 4002));
+    ws.push({ e: 'props', d: { entityType: 'fillPair', eventType: 'Created', entity: { id: 4 } } });
+    await until(async () => (await prisma.trade.count({ where: { userId } })) > before, 10_000);
+
+    // 3. Séance clôturée → le balayage ferme le WebSocket et retire la veille.
+    await prisma.tradeSession.update({ where: { id: session.id }, data: { status: 'CLOSED', endedAt: new Date() } });
+    await liveService.sweepWatch();
+    await until(() => ws.closedWith === 1000);
+    expect(await liveService.isLive(userId)).toBe(false);
+    expect(await watch.current()).not.toContain(userId);
   }, 30_000);
 
   it('jeton applicatif absent ou invalide → canal refusé, aucun WebSocket Tradovate', async () => {
