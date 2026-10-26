@@ -52,6 +52,12 @@ export class AccountsController {
     });
   }
 
+  /** Compte gardé actif en gratuit quand il y en a plusieurs (fin d'essai ou d'abonnement, #769). */
+  @Post(':id/keep')
+  keep(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.accounts.keepAccount(user.id, id);
+  }
+
   // Passage en ÉCHOUÉ / ARCHIVÉ : confirme l'incident détecté seulement avec `confirmIncident` (feuille
   // de choix, autopsie #669), cf. AccountIncidentsService.updateAccount.
   @Patch(':id')

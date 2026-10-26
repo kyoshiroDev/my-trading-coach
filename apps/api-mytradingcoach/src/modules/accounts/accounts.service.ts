@@ -36,6 +36,7 @@ import {
 import { MANUAL_PAYOUT_TYPE, isManualPayout, manualPayoutError, summarizePayouts, type PayoutRow, type RulePayouts } from './account-payouts';
 import { RedisService } from '../infra/redis.service';
 import { bumpAnalyticsVersion } from '../analytics/analytics-cache';
+import { overFreeLimitIds } from './kept-account';
 
 type RuleAccount = Pick<
   TradingAccount,
@@ -248,7 +249,13 @@ export class AccountsService {
   async list(
     userId: string,
     options: RuleMetricsOptions = {},
-  ): Promise<(TradingAccount & { metrics: AccountRuleMetrics; floorReached: boolean; openIncidentId: string | null })[]> {
+  ): Promise<(TradingAccount & {
+    metrics: AccountRuleMetrics;
+    floorReached: boolean;
+    openIncidentId: string | null;
+    /** Compte ACTIVE au-delà du quota gratuit (fin d'essai ou d'abonnement, #769). */
+    overFreeLimit: boolean;
+  })[]> {
     // Ordre enum Postgres = ordre de déclaration (ACTIVE < PASSED < FAILED < ARCHIVED).
     const rows = await this.prisma.tradingAccount.findMany({
       where: { userId },
@@ -347,7 +354,25 @@ export class AccountsService {
       return { ...account, metrics, floorReached: isFloorReached(account, metrics.drawdown, dismissal), openIncidentId };
     });
     await this.clearExpiredFloorDismissals(expired);
-    return result;
+    const chosen = options.premium
+      ? null
+      : (await this.prisma.user.findUnique({ where: { id: userId }, select: { keptAccountId: true } }))?.keptAccountId ?? null;
+    const over = overFreeLimitIds(rows, chosen, !!options.premium);
+    return result.map((r) => ({ ...r, overFreeLimit: over.has(r.id) }));
+  }
+
+  /**
+   * Compte gardé actif en gratuit (#769) : le seul qui restera synchronisé quand l'arrêt des comptes en
+   * trop sera branché. Les autres restent visibles, rien n'est supprimé. Compte ACTIVE du user seulement.
+   */
+  async keepAccount(userId: string, id: string): Promise<{ keptAccountId: string }> {
+    const account = await this.prisma.tradingAccount.findFirst({ where: { id, userId }, select: { status: true } });
+    if (!account) throw new NotFoundException('Compte introuvable');
+    if (account.status !== AccountStatus.ACTIVE) {
+      throw new BadRequestException('Seul un compte actif peut être gardé.');
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { keptAccountId: id } });
+    return { keptAccountId: id };
   }
 
   /**
