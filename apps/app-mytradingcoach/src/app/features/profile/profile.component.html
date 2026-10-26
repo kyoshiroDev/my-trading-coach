@@ -355,12 +355,28 @@
                   <div class="settings-row-left">
                     <span class="settings-row-label">Ton code</span>
                     <span class="discord-code" data-testid="discord-code">{{ c.code }}</span>
-                    <span class="settings-row-hint">
-                      Dans le serveur Discord, tape <code>/verify code:{{ c.code }}</code>.
+                    <span class="settings-row-hint" data-testid="discord-code-hint">
+                      Puis tape <code>/verify</code> dans Discord et colle ce code. Ne le partage pas.
                       Valable jusqu'à {{ c.expiresAt | date: 'HH:mm' }}, une seule fois.
                     </span>
                   </div>
                   <button class="settings-edit-btn" data-testid="discord-copy" (click)="copyDiscordCode()">Copier</button>
+                </div>
+              }
+              @if (discordLinked()) {
+                <div class="settings-row">
+                  <div class="settings-row-left">
+                    <span class="settings-row-label">Délier</span>
+                    <span class="settings-row-hint">Retire ton rôle sur le serveur et efface la liaison.</span>
+                  </div>
+                  <button
+                    class="settings-edit-btn"
+                    data-testid="discord-unlink"
+                    [disabled]="unlinkingDiscord()"
+                    (click)="unlinkDiscord()"
+                  >
+                    {{ unlinkingDiscord() ? 'Un instant…' : 'Délier mon Discord' }}
+                  </button>
                 </div>
               }
             </div>

@@ -5,7 +5,7 @@ import { type Observable, map } from 'rxjs';
 import { environment } from '@app/environments/environment';
 
 export interface DiscordLinkCode {
-  /** « ABCD-EFGH », à taper dans Discord : `/verify code:ABCD-EFGH`. */
+  /** « ABCD-EFGH », à coller dans Discord après `/verify`. */
   code: string;
   expiresAt: string;
 }
@@ -27,5 +27,10 @@ export class DiscordApi {
 
   createCode(): Observable<DiscordLinkCode> {
     return this.http.post<{ data: DiscordLinkCode }>(`${this.base}/link-code`, {}, SILENT()).pipe(map((r) => r.data));
+  }
+
+  /** Délie le Discord : rôles retirés sur le serveur, puis liaison effacée (503 si Discord échoue). */
+  unlink(): Observable<{ linked: boolean }> {
+    return this.http.delete<{ data: { linked: boolean } }>(`${this.base}/link`, SILENT()).pipe(map((r) => r.data));
   }
 }

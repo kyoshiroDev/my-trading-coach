@@ -20,14 +20,19 @@ import { SetupsStore } from '../../core/stores/setups.store';
 import { AnalyticsApi } from '../../core/api/analytics.api';
 import { DiscordApi } from '../../core/api/discord.api';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmService } from '@mtc/front-ui';
 
 const CODE = { code: 'ABCD-EFGH', expiresAt: '2026-10-25T10:10:00.000Z' };
 
-function mount(opts: { demo?: boolean; linked?: boolean; createCode?: () => unknown } = {}) {
+function mount(
+  opts: { demo?: boolean; linked?: boolean; createCode?: () => unknown; unlink?: () => unknown; confirm?: boolean } = {},
+) {
   const discordApi = {
     status: vi.fn(() => of({ linked: opts.linked ?? false })),
     createCode: vi.fn(opts.createCode ?? (() => of(CODE))),
+    unlink: vi.fn(opts.unlink ?? (() => of({ linked: false }))),
   };
+  const confirm = { ask: vi.fn(async () => opts.confirm ?? true) };
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
@@ -48,6 +53,7 @@ function mount(opts: { demo?: boolean; linked?: boolean; createCode?: () => unkn
       { provide: SetupsStore, useValue: { active: signal([]), archived: signal([]), load: vi.fn(), loaded: signal(true) } },
       { provide: AnalyticsApi, useValue: { getBySetup: vi.fn(() => of({ data: [] })) } },
       { provide: DiscordApi, useValue: discordApi },
+      { provide: ConfirmService, useValue: confirm },
     ],
   });
   TestBed.overrideComponent(ProfileComponent, {
@@ -62,7 +68,7 @@ function mount(opts: { demo?: boolean; linked?: boolean; createCode?: () => unkn
   const fixture = TestBed.createComponent(ProfileComponent);
   fixture.detectChanges();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { cmp: fixture.componentInstance as any, discordApi, toastError, toastSuccess };
+  return { cmp: fixture.componentInstance as any, discordApi, confirm, toastError, toastSuccess };
 }
 
 describe('Profil : liaison Discord par code (#741)', () => {
@@ -98,13 +104,43 @@ describe('Profil : liaison Discord par code (#741)', () => {
     expect(cmp.generatingDiscordCode()).toBe(false);
   });
 
-  it('« Copier » copie la commande complète à coller dans Discord', async () => {
-    const writeText = vi.fn(async () => undefined);
+  it('« Copier » copie le code seul, sans la commande', async () => {
+    const writeText = vi.fn(async (_text: string) => undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     const { cmp, toastSuccess } = mount();
     cmp.generateDiscordCode();
     await cmp.copyDiscordCode();
-    expect(writeText).toHaveBeenCalledWith('/verify code:ABCD-EFGH');
+    expect(writeText).toHaveBeenCalledWith('ABCD-EFGH');
+    // Contre-épreuve : l'ancien comportement copiait « /verify code:ABCD-EFGH ».
+    expect(writeText.mock.calls[0][0]).not.toContain('/verify');
     expect(toastSuccess).toHaveBeenCalled();
+  });
+
+  it('« Délier mon Discord » confirmé → API appelée, état « Non relié », code effacé', async () => {
+    const { cmp, discordApi, confirm, toastSuccess } = mount({ linked: true });
+    cmp.generateDiscordCode();
+    await cmp.unlinkDiscord();
+    expect(confirm.ask).toHaveBeenCalledTimes(1);
+    expect(discordApi.unlink).toHaveBeenCalledTimes(1);
+    expect(cmp.discordLinked()).toBe(false);
+    expect(cmp.discordCode()).toBeNull();
+    expect(cmp.unlinkingDiscord()).toBe(false);
+    expect(toastSuccess).toHaveBeenCalledWith('Ton Discord est délié');
+  });
+
+  it('contre-épreuve : confirmation annulée → aucun appel, toujours relié', async () => {
+    const { cmp, discordApi } = mount({ linked: true, confirm: false });
+    await cmp.unlinkDiscord();
+    expect(discordApi.unlink).not.toHaveBeenCalled();
+    expect(cmp.discordLinked()).toBe(true);
+  });
+
+  it('contre-épreuve : Discord a échoué (503) → message du serveur, toujours affiché « Relié »', async () => {
+    const message = "Ton Discord n'a pas pu être délié\u00a0: le retrait de ton rôle a échoué côté Discord.";
+    const { cmp, toastError } = mount({ linked: true, unlink: () => throwError(() => ({ error: { message } })) });
+    await cmp.unlinkDiscord();
+    expect(toastError).toHaveBeenCalledWith(message);
+    expect(cmp.discordLinked()).toBe(true);
+    expect(cmp.unlinkingDiscord()).toBe(false);
   });
 });
