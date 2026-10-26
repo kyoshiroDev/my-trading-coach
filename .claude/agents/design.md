@@ -93,6 +93,15 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > Intensité d'activité (pastilles de streak de Score) : `--streak-0` (aucune) à `--streak-4`
 > (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
 > `features/scoring/score-streak-couleurs.spec.ts`.
+>
+> **Carte « Streak & activité » de Score : activité RÉELLE** depuis le 25/10/2026 (`features/scoring/streak.ts`,
+> données de `GET /analytics/activity/range`, journées Paris, tous comptes actifs) : 35 derniers jours
+> OUVRÉS (week-ends absents), intensité = trades du jour 0 · 1 · 2-3 · 4-5 · 6+ → niveaux 0 à 4, série =
+> jours ouvrés consécutifs avec trade (week-end et journée en cours ne la cassent pas), comptée sur ~1 an.
+> Seule dans sa colonne, hauteur naturelle (`.right-col .streak-card`). Specs : `streak.spec.ts`,
+> `scoring-streak.spec.ts` (rendu, compte normal et démo).
+> **Carte « Badges obtenus » MASQUÉE** (`BADGES_VISIBLES = false`) : badges encore statiques ; ne la
+> réafficher qu'avec des règles d'obtention réelles (ticket à part).
 
 ---
 
