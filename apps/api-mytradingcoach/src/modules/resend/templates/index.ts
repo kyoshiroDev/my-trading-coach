@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { PLAN_BENEFITS, formatMoney } from '@mtc/shared';
+import { PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -324,11 +324,24 @@ function welcomeStep(n: number, title: string, text: string): string {
     </table>`;
 }
 
+/** Date longue en français (« 16 novembre 2026 »). */
+const longDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
 export function welcomeFreeTemplate(params: {
   userName: string;
   appUrl: string;
+  /** Fin de l'essai Premium d'inscription (#769), `null` si aucun essai (réinscription récente). */
+  trialEndsAt?: Date | null;
 }): { subject: string; html: string } {
-  const { userName, appUrl } = params;
+  const { userName, appUrl, trialEndsAt = null } = params;
+  // Pas de bouton ni d'offre : un rappel factuel de l'essai, sans prélèvement à la fin.
+  const trialNote = trialEndsAt
+    ? `<p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 20px 0;line-height:1.7;">
+        Tu as <strong style="color:#e2eaf5;">${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts</strong>
+        jusqu'au ${longDate(trialEndsAt)}&nbsp;: alertes avant ta limite, anti-tilt en direct, débrief de ta
+        semaine. Ensuite, ton compte repasse en Gratuit tout seul, sans aucun prélèvement.
+      </p>`
+    : '';
   const firstName = firstNameOf(userName);
   const link = (path: string) => onboardingLink(appUrl, path, 'welcome');
 
@@ -343,6 +356,7 @@ export function welcomeFreeTemplate(params: {
         ${firstName ? `Bonjour ${firstName}` : 'Bonjour'}, ton compte est prêt. Pour que MyTradingCoach te serve
         pendant ta séance, trois étapes suffisent :
       </p>
+      ${trialNote}
 
       ${welcomeStep(1, 'Connecte ton compte Tradovate', 'tes trades arrivent tout seuls, en lecture seule. Aucun ordre n\'est jamais passé.')}
       ${welcomeStep(2, 'Choisis ta prop firm et ton plan', 'la marge restante avant ta limite se calcule avec les vraies règles de ta firme.')}
@@ -602,7 +616,6 @@ export function renewalReminderTemplate(params: {
 }
 // ── Offre fondateur et codes partenaires (#525) ─────────────────────────────────
 
-const longDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
 function rulesList(rules: string[]): string {
   return `<div style="margin:16px 0;">${rules

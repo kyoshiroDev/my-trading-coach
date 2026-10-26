@@ -169,6 +169,8 @@ describe('AuthService', () => {
         const { data } = mockPrisma.user.create.mock.calls[0][0];
         const end = new Date(NOW.getTime() + 14 * DAY);
         expect(data).toMatchObject({ trialEndsAt: end, signupTrialEndsAt: end, trialSource: 'SIGNUP', trialUsed: true });
+        // L'e-mail de bienvenue annonce la même date de fin.
+        expect(mockResend.sendWelcomeFree).toHaveBeenCalledWith(expect.objectContaining({ trialEndsAt: end }));
       });
 
       it('réinscription après une suppression de moins de 90 jours : pas d’essai, trialUsed quand même', async () => {

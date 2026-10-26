@@ -205,9 +205,10 @@ export class AuthService {
       select: { id: true },
     });
 
+    const trial = signupTrialData(now, recentlyDeleted !== null);
     const user = await this.prisma.user.create({
       data: {
-        ...signupTrialData(now, recentlyDeleted !== null),
+        ...trial,
         email: data.email,
         password: data.password,
         name: data.name,
@@ -248,7 +249,7 @@ export class AuthService {
 
     // Email de bienvenue à l'utilisateur : fire-and-forget
     this.resend
-      .sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
+      .sendWelcomeFree({ to: user.email, userName: user.name ?? '', trialEndsAt: trial.trialEndsAt ?? null })
       .catch((err: unknown) =>
         this.logger.error(`Welcome email failed: ${String(err)}`),
       );

@@ -105,10 +105,13 @@ export class ResendService {
   async sendWelcomeFree(params: {
     to: string;
     userName: string;
+    /** Fin de l'essai Premium d'inscription (#769), `null` sans essai. */
+    trialEndsAt?: Date | null;
   }): Promise<void> {
     const { subject, html } = welcomeFreeTemplate({
       userName: params.userName,
       appUrl: this.frontendUrl,
+      trialEndsAt: params.trialEndsAt ?? null,
     });
     await this.send({ to: params.to, subject, html });
   }
