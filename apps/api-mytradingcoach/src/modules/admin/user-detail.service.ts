@@ -20,7 +20,7 @@ export class UserDetailService {
       select: {
         id: true, name: true, email: true, plan: true, role: true,
         stripeSubscriptionStatus: true, referralCode: true,
-        trialEndsAt: true, isDemo: true,
+        trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,

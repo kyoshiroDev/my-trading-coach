@@ -22,6 +22,12 @@ export const PREMIUM_ANNUAL_SAVINGS_EUR = PREMIUM_PRICE_EUR.monthly * 12 - PREMI
 export const TRIAL_PERIOD_DAYS = 30;
 
 /**
+ * Premium offert à l'inscription (#769) : 14 jours, sans carte ni abonnement Stripe, puis retour
+ * automatique au gratuit. Qui l'a reçu n'a plus l'essai Stripe de 30 jours (`trialUsed = true`).
+ */
+export const PREMIUM_SIGNUP_TRIAL_DAYS = 14;
+
+/**
  * Quota de comptes de trading par plan (`null` = illimité). Seuls les comptes NON archivés
  * comptent. FREE : 1 compte · PREMIUM : illimité.
  */

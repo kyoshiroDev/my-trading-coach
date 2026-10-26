@@ -16,6 +16,19 @@ model User {
   plan        Plan      @default(FREE)
   trialEndsAt DateTime?
   trialUsed   Boolean   @default(false)
+  /// Origine du `trialEndsAt` en cours (#769) : essai offert à l'inscription ou Premium offert par
+  /// l'admin. Null = aucun (les essais Stripe passent par `plan` + `stripeSubscriptionStatus`).
+  trialSource       TrialSource?
+  /// Fin de l'essai d'inscription, posée une fois à la création du compte et jamais modifiée
+  /// (un Premium offert ensuite par l'admin déplace `trialEndsAt`, pas cette date).
+  signupTrialEndsAt DateTime?
+  /// Fin d'un `trialEndsAt` traitée par le cron de fin d'essai (Discord réaligné). Retraitée si
+  /// `trialEndsAt` est repoussé après cette date.
+  trialEndHandledAt DateTime?
+  /// Compte de trading choisi pour rester actif en gratuit quand il y en a plusieurs (fin d'essai,
+  /// fin d'abonnement). Sans clé étrangère : un id périmé ou un compte non ACTIVE vaut null, et
+  /// null = le plus ancien compte ACTIVE (`accounts/kept-account.ts`).
+  keptAccountId     String?
 
   // ── Connexion Google (#618) ─────────────────────────────────────────────
   // googleId = `sub` du jeton Google, jamais renvoyé au front (seulement `googleLinked`).
@@ -841,6 +854,12 @@ enum AuthProvider {
 enum Plan {
   FREE
   PREMIUM
+}
+
+/// Origine d'un Premium sans abonnement Stripe (`User.trialEndsAt`).
+enum TrialSource {
+  SIGNUP
+  ADMIN
 }
 
 enum TradeSide {

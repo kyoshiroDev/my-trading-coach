@@ -37,7 +37,7 @@ describe('UsersService.offerPremium', () => {
     const expected = new Date(NOW.getTime() + 30 * DAY);
     expect(res).toEqual({ trialEndsAt: expected.toISOString() });
     const { data } = prisma.user.update.mock.calls[0][0];
-    expect(data).toEqual({ trialEndsAt: expected, trialUsed: true });
+    expect(data).toEqual({ trialEndsAt: expected, trialUsed: true, trialSource: 'ADMIN' });
     expect(data).not.toHaveProperty('plan');
     expect(cache.invalidate).toHaveBeenCalledWith('u1');
   });
@@ -47,6 +47,16 @@ describe('UsersService.offerPremium', () => {
     prisma.user.findUnique.mockResolvedValue({ ...base, trialEndsAt: end });
     const res = await service.offerPremium('u1', 30);
     expect(res.trialEndsAt).toBe(new Date(end.getTime() + 30 * DAY).toISOString());
+  });
+
+  it('pendant l’essai d’inscription : additionne, origine ADMIN, fin d’essai d’inscription intacte (#769)', async () => {
+    const end = new Date(NOW.getTime() + 9 * DAY);
+    prisma.user.findUnique.mockResolvedValue({ ...base, trialEndsAt: end, trialSource: 'SIGNUP', signupTrialEndsAt: end });
+    const res = await service.offerPremium('u1', 30);
+    expect(res.trialEndsAt).toBe(new Date(end.getTime() + 30 * DAY).toISOString());
+    const { data } = prisma.user.update.mock.calls[0][0];
+    expect(data.trialSource).toBe('ADMIN');
+    expect(data).not.toHaveProperty('signupTrialEndsAt');
   });
 
   it('repart de maintenant si l’ancienne fin est passée', async () => {
@@ -83,12 +93,16 @@ describe('UsersService.offerPremium', () => {
 
 describe('isOfferedPremium', () => {
   const future = new Date(NOW.getTime() + DAY);
-  it('vrai : fin future sans abonnement Stripe', () => {
-    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: null }, NOW)).toBe(true);
+  it('vrai : fin future sans abonnement Stripe, offerte par l’admin (ou avant #769, origine nulle)', () => {
+    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: null, trialSource: 'ADMIN' }, NOW)).toBe(true);
+    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: null, trialSource: null }, NOW)).toBe(true);
+  });
+  it('faux : essai d’inscription, qui n’est pas un cadeau de l’admin (#769)', () => {
+    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: null, trialSource: 'SIGNUP' }, NOW)).toBe(false);
   });
   it('faux : abonnement Stripe en cours, fin passée ou absente', () => {
-    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: 'trialing' }, NOW)).toBe(false);
-    expect(isOfferedPremium({ trialEndsAt: new Date(NOW.getTime() - DAY), stripeSubscriptionStatus: null }, NOW)).toBe(false);
-    expect(isOfferedPremium({ trialEndsAt: null, stripeSubscriptionStatus: null }, NOW)).toBe(false);
+    expect(isOfferedPremium({ trialEndsAt: future, stripeSubscriptionStatus: 'trialing', trialSource: 'ADMIN' }, NOW)).toBe(false);
+    expect(isOfferedPremium({ trialEndsAt: new Date(NOW.getTime() - DAY), stripeSubscriptionStatus: null, trialSource: 'ADMIN' }, NOW)).toBe(false);
+    expect(isOfferedPremium({ trialEndsAt: null, stripeSubscriptionStatus: null, trialSource: null }, NOW)).toBe(false);
   });
 });
