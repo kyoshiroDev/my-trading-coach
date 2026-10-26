@@ -314,6 +314,14 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 │   → analyzeReleasedEvent retourne null si event non publié (isReleased: false)
 │   → fetchEconomicEvents retourne [] si pas de clé API
 │
+├── tradovate-watch*.spec.ts + tradovate-live.service.spec.ts (veille serveur, #770)
+│   → éligibilité : démo, Free, sans appareil, sans séance, types coupés → fin ; heures silencieuses → pause
+│   → fin de veille : 10 h, bornée à la journée de trading ; variable absente → veille éteinte
+│   → dernier onglet fermé + éligible → WS gardé ; non titulaire du bail → rien gardé ici
+│   → balayage : fin, pause puis reprise, onglet ouvert jamais touché, reprise après déploiement,
+│     deux process → un seul WS ; int-spec : app fermée → trade suivi → clôture de séance → WS fermé
+│     (`tradovate-live.int-spec.ts`, vrai Redis : en local, REDIS_PASSWORD du .env et REDIS_DB isolée)
+│
 └── ai.service.spec.ts
     → insights avec mock Anthropic
     → cooldown 4h → 429 au 2ème appel

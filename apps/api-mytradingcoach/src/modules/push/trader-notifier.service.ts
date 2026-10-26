@@ -56,6 +56,11 @@ export class TraderNotifier {
     private readonly push: TraderPushService,
   ) {}
 
+  /** Push des traders allumé (les deux interrupteurs) : la veille serveur (#770) en dépend. */
+  get enabled(): boolean {
+    return this.push.enabled;
+  }
+
   notify(userId: string, type: PushAlertType, message: TraderPushMessage, options: TraderNotifyOptions): void {
     try {
       if (!this.push.enabled) return;

@@ -16,12 +16,13 @@ const freeBenefits = PLAN_BENEFITS.free.map((b) => b.text);
 const premiumBenefits = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts').map((b) => b.text);
 // Bloc « Ce que Premium ajoute au Gratuit » : le détail. Chaque ligne = une fonction LIVRÉE et
 // RÉSERVÉE au Premium (gating vérifié le 2026-10-19, cf. plans.md). Alertes et anti-tilt : synchro
-// Tradovate en direct, donc app ouverte et compte Tradovate connecté.
+// Tradovate en direct, donc compte Tradovate connecté, app ouverte ou en notification pendant la
+// séance (veille serveur #770, notifications activées).
 const premiumDetails = [
   ...(FEATURES.multiAccounts ? ['Comptes de trading illimités, chacun avec les règles de sa prop firm'] : []),
-  'Alertes prop firm en direct, app ouverte (compte Tradovate connecté) : perte du jour, drawdown, consistency, objectif atteint, payout possible',
+  'Alertes prop firm en direct, app ouverte ou en notification pendant ta séance (compte Tradovate connecté) : perte du jour, drawdown, consistency, objectif atteint, payout possible',
   'Alertes sonores et notifications pendant ta séance',
-  'Anti-tilt en direct, app ouverte (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
+  'Anti-tilt en direct, app ouverte ou en notification pendant ta séance (compte Tradovate connecté) : reprise de position après une perte, taille qui grossit, surtrading',
   'Débrief de ta semaine rédigé par le coach IA, chaque dimanche où tu as tradé, en PDF',
   'IA Insights : l’analyse de tes patterns, à la demande',
   'Chat avec le coach IA',

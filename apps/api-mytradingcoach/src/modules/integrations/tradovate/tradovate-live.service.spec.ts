@@ -11,6 +11,7 @@ import {
 } from './tradovate-live.service';
 import type { LiveSocket } from './tradovate-live.connection';
 import { TradovateException } from './tradovate.errors';
+import type { WatchVerdict } from './tradovate-watch';
 
 /**
  * Présence → WebSocket Tradovate (temps réel). Verrouille le contrat de portée :
@@ -55,7 +56,27 @@ function fakeRedis() {
   return { store, client };
 }
 
-function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typeof fakeRedis> } = {}) {
+/** Registre des veilles en mémoire (#770) : verdict par user, `watch` par défaut. */
+function fakeWatch() {
+  const ids = new Set<string>();
+  const verdict = new Map<string, WatchVerdict>();
+  return {
+    ids,
+    verdict,
+    active: true,
+    begin: vi.fn(async (u: string): Promise<WatchVerdict> => {
+      const v = verdict.get(u) ?? 'watch';
+      if (v === 'stop') ids.delete(u);
+      else ids.add(u);
+      return v;
+    }),
+    end: vi.fn(async (u: string) => { ids.delete(u); }),
+    current: vi.fn(async () => [...ids]),
+    verdicts: vi.fn(async (list: string[]) => new Map(list.map((u) => [u, verdict.get(u) ?? ('watch' as WatchVerdict)]))),
+  };
+}
+
+function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typeof fakeRedis>; watch?: ReturnType<typeof fakeWatch> } = {}) {
   const conns = opts.conns ?? [conn()];
   const redis = opts.redis ?? fakeRedis();
   const sockets: FakeSocket[] = [];
@@ -83,6 +104,7 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
   const service = new TradovateLiveService(
     prisma as never, redis as never, connections as never, sync as never, balance as never,
     (url) => { const s = new FakeSocket(url); sockets.push(s); return s; },
+    opts.watch as never,
   );
   const emitted: { userId: string; event: string; payload: unknown }[] = [];
   service.bindEmitter((userId, event, payload) => emitted.push({ userId, event, payload }));
@@ -390,5 +412,192 @@ describe('Tradovate live — ordres actifs SL / TP (#601)', () => {
     expect(redis.client.set.mock.calls.filter((c) => c[0] === 'tradovate:orders:bc-1')).toHaveLength(writes);
     expect(emitted.filter((e) => e.event === 'tradovate:orders')).toHaveLength(1);
     await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — veille serveur app fermée (#770)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('dernier onglet fermé, trader éligible → WebSocket GARDÉ, bail gardé, veille inscrite', async () => {
+    const watch = fakeWatch();
+    const { service, sockets, redis } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(watch.begin).toHaveBeenCalledWith('u1');
+    expect(watch.ids.has('u1')).toBe(true);
+    expect(sockets[0].closed).toBeNull();
+    expect(service.openConnectionCount()).toBe(1);
+    // Le bail continue d'être renouvelé : la synchro de fond voit le user « en direct ».
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(redis.store.has(liveLeaseKey('u1'))).toBe(true);
+    await service.onModuleDestroy();
+  });
+
+  it.each<WatchVerdict>(['stop', 'paused'])('verdict « %s » → WebSocket fermé, bail rendu', async (v) => {
+    const watch = fakeWatch();
+    watch.verdict.set('u1', v);
+    const { service, sockets, redis } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(sockets[0].closed).toBe(1000);
+    expect(redis.store.has(liveLeaseKey('u1'))).toBe(false);
+  });
+
+  it('évaluation de la veille en échec → comportement d’avant (tout s’arrête)', async () => {
+    const watch = fakeWatch();
+    watch.begin.mockRejectedValueOnce(new Error('redis'));
+    const { service, sockets } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(sockets[0].closed).toBe(1000);
+  });
+
+  it('push des traders éteint → aucune veille demandée, tout s’arrête', async () => {
+    const watch = fakeWatch();
+    watch.active = false;
+    const { service, sockets } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(watch.begin).not.toHaveBeenCalled();
+    expect(sockets[0].closed).toBe(1000);
+  });
+
+  it('pas titulaire du bail → rien gardé ici (le titulaire s’en charge)', async () => {
+    const redis = fakeRedis();
+    redis.store.set(liveLeaseKey('u1'), 'autre-worker');
+    const watch = fakeWatch();
+    const { service, sockets } = setup({ redis, watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    expect(sockets).toHaveLength(0);
+    redis.store.delete(liveLeaseKey('u1'));
+    await vi.advanceTimersByTimeAsync(LIVE_LEASE_RENEW_MS * 3);
+    expect(sockets).toHaveLength(0); // plus de tick : rien ne tourne ici
+  });
+
+  it('onglet rouvert pendant l’évaluation → la connexion reste', async () => {
+    const watch = fakeWatch();
+    watch.verdict.set('u1', 'stop');
+    let resolve!: (v: WatchVerdict) => void;
+    watch.begin.mockImplementationOnce(() => new Promise<WatchVerdict>((r) => { resolve = r; }));
+    const { service, sockets } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await service.attach('u1', 'tab-2');
+    resolve('stop');
+    await settle();
+    expect(sockets[0].closed).toBeNull();
+    await service.onModuleDestroy();
+  });
+
+  it('balayage : veille finie → WebSocket tenu sans onglet fermé, bail rendu', async () => {
+    const watch = fakeWatch();
+    const { service, sockets, redis } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    watch.verdict.set('u1', 'stop'); // séance clôturée, appareil retiré…
+    await service.sweepWatch();
+    await settle();
+    expect(watch.ids.has('u1')).toBe(false);
+    expect(sockets[0].closed).toBe(1000);
+    expect(redis.store.has(liveLeaseKey('u1'))).toBe(false);
+  });
+
+  it('balayage : heures silencieuses → fermé mais veille gardée ; à la fin de la plage → rouvert', async () => {
+    const watch = fakeWatch();
+    const { service, sockets } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    watch.verdict.set('u1', 'paused');
+    await service.sweepWatch();
+    await settle();
+    expect(sockets[0].closed).toBe(1000);
+    expect(watch.ids.has('u1')).toBe(true);
+    watch.verdict.set('u1', 'watch');
+    await service.sweepWatch();
+    await settle();
+    expect(sockets).toHaveLength(2);
+    expect(sockets[1].closed).toBeNull();
+    await service.onModuleDestroy();
+  });
+
+  it('balayage : onglet ouvert sur ce worker → jamais touché, même hors veille', async () => {
+    const watch = fakeWatch();
+    const { service, sockets } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    await service.sweepWatch();
+    await settle();
+    expect(sockets[0].closed).toBeNull();
+    await service.onModuleDestroy();
+  });
+
+  it('process disparu (déploiement) → veille reprise par le balayage, rattrapage compris', async () => {
+    const watch = fakeWatch();
+    watch.ids.add('u1');
+    const { service, sockets, sync } = setup({ watch, conns: [conn({ lastSyncAt: new Date(Date.now() - 5 * 60_000) })] });
+    await service.sweepWatch();
+    await settle();
+    expect(sync.sync).toHaveBeenCalledWith('u1', 'acc-1', { history: false });
+    expect(sockets).toHaveLength(1);
+    await service.onModuleDestroy();
+  });
+
+  it('bail tenu par un autre process → pas de reprise', async () => {
+    const redis = fakeRedis();
+    redis.store.set(liveLeaseKey('u1'), 'autre-worker');
+    const watch = fakeWatch();
+    watch.ids.add('u1');
+    const { service, sockets, sync } = setup({ redis, watch });
+    await service.sweepWatch();
+    await settle();
+    expect(sockets).toHaveLength(0);
+    expect(sync.sync).not.toHaveBeenCalled();
+  });
+
+  it('deux process balaient en même temps → UN seul WebSocket ; le perdant lâche au balayage suivant', async () => {
+    const redis = fakeRedis();
+    const watch = fakeWatch();
+    watch.ids.add('u1');
+    const a = setup({ redis, watch });
+    const b = setup({ redis, watch });
+    await Promise.all([a.service.sweepWatch(), b.service.sweepWatch()]);
+    await settle();
+    expect(a.sockets.length + b.sockets.length).toBe(1);
+    await Promise.all([a.service.sweepWatch(), b.service.sweepWatch()]);
+    await settle();
+    await vi.advanceTimersByTimeAsync(LIVE_LEASE_RENEW_MS * 3);
+    expect(a.sockets.length + b.sockets.length).toBe(1);
+    expect(a.service.openConnectionCount() + b.service.openConnectionCount()).toBe(1);
+    await a.service.onModuleDestroy();
+    await b.service.onModuleDestroy();
+  });
+
+  it('arrêt du process → WebSocket fermé, bail rendu, veille gardée pour la reprise', async () => {
+    const watch = fakeWatch();
+    const { service, redis } = setup({ watch });
+    await service.attach('u1', 'tab-1');
+    await settle();
+    service.detach('u1', 'tab-1');
+    await settle();
+    await service.onModuleDestroy();
+    expect(redis.store.has(liveLeaseKey('u1'))).toBe(false);
+    expect(watch.ids.has('u1')).toBe(true);
   });
 });

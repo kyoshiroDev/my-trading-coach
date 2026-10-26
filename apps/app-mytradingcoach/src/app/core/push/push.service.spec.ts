@@ -21,7 +21,7 @@ const env = (over: Partial<BrowserEnv> = {}): BrowserEnv => ({
 });
 
 const settings = (over: Partial<TraderPushSettings> = {}): TraderPushSettings => ({
-  enabled: true, publicKey: 'BPub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris', devices: [], ...over,
+  enabled: true, publicKey: 'BPub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris', liveWhileClosed: false, devices: [], ...over,
 });
 
 const fakeSub = (endpoint = 'https://fcm.googleapis.com/fcm/send/x') => ({
