@@ -378,6 +378,18 @@ La page `politique-confidentialite.astro` déclare, alignée sur le code :
   n'efface pas le texte.
 Toute évolution de ces champs, du payload push ou du prompt d'autopsie → mettre la page à jour.
 
+## Événements d'usage rattachés au compte (2026-10-25)
+
+`ProductEventDaily` porte le `userId` : ces compteurs ne sont PAS anonymes (≠ `LandingVisitDaily` et
+parcours d'inscription, sans identifiant). La politique (1.d, 2, 3) les déclare : offre Premium,
+installation de l'app, activation des notifications, plateforme seule (`android`, `ios`, `ios-other`,
+`desktop`) ou écran ; base intérêt légitime ; **13 mois, puis effacement automatique, ou à la
+suppression du compte** (purge quotidienne `RetentionCron.scheduledDailyPurge`, cascade
+`onDelete: Cascade`, `retention.int-spec.ts`). Les choix « Plus tard » / « Ne plus me proposer »
+restent dans le navigateur. Nouvel événement → liste blanche `PRODUCT_EVENTS` ET la page.
+Journal de `ProductEventsService.record` : nom de l'erreur seulement, jamais `err.message` (une
+erreur Prisma recopie la requête, donc l'identifiant du compte) ; testé avec contre-épreuve.
+
 ## Liaison Discord par code à usage unique (#741, 2026-10-25)
 
 Avant : `/verify email:` reliait au Discord de l'appelant le compte dont on tapait l'e-mail, sans

@@ -1455,6 +1455,52 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
 - Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
 
+## Installation PWA de l'app (2026-10-25, PR 2 : parcours guidé et mesure)
+
+Maquette qui fait foi : `maquettes/mockup-installation-pwa.html` (v4). Décisions de Greg (étape 0 et suivantes).
+- **Budget du bundle** : SEUL `core/install/install-capture.ts` (`InstallCapture`) est dans le bundle
+  initial : écouteurs `beforeinstallprompt` (gardé, `preventDefault`) et `appinstalled`, état de la
+  feuille (`sheet`), `load()` (import dynamique du parcours). Le reste est paresseux :
+  `core/install/install-prompt.service.ts` (`InstallPromptService` : états, règles, stockage,
+  événements), la feuille `features/install/install-sheet.component` (`@defer (on immediate)` dans
+  `App`, seulement quand `sheet()` s'ouvre), la ligne du Profil. Ne JAMAIS importer
+  `InstallPromptService` depuis le bundle initial (`App`, services root chargés au démarrage) : passer
+  par `InstallCapture.load()`. Mesure du 25/10/2026 : 495,04 ko (marge 4,96 ko, `dev` à 493,66 ko).
+- **Détection** : `core/push/push-device.ts` (`isInAppBrowser`, `isIos`, `isIosOtherBrowser`
+  CriOS/FxiOS/EdgiOS/OPiOS, `isAndroid`, `devicePlace`), partagée avec `push.service.ts`. Fichier séparé
+  de `push-browser.ts`, qui est dans le bundle initial (déconnexion) : ne pas y remettre ces fonctions.
+- **États** (`installState`) : `installed` (standalone ou `appinstalled`), `in-app-browser`,
+  `ios-manual` / `ios-other`, `can-prompt` (invite reçue), `android-manual` (menu ⋮), `unsupported`
+  (ordinateur sans invite : aucune ligne dans le Profil).
+- **Quand** : jamais à l'arrivée. Gratuit : après CHAQUE import réussi (`csv-import`, fichier ou
+  synchro Tradovate, `created > 0`). Premium : après la liaison d'un plan prop firm
+  (`account-plan-wizard`, `propFirmPlanId` posé). Pendant `/onboarding` : gardé, montré à la première
+  page hors onboarding. Ordinateur : jamais de lui-même. Délai de 600 ms (la modale se ferme d'abord).
+- **Fréquence** (`frequencyAllows`, stockage `INSTALL_STORAGE`, sur l'appareil, aucune route API) :
+  une fois par session (`sessionStorage`), « Plus tard » = 7 jours, « Ne plus me proposer » définitif
+  (`localStorage`). Le Profil (`openFromSettings`) passe outre et n'enregistre aucun report ; pas de
+  « Ne plus me proposer » dans une feuille ouverte depuis le Profil.
+- **Écrans** : Android/ordinateur = écran verrouillé aux 3 vrais textes (`LOCK_SCREEN_EXAMPLES`,
+  sans montant), ligne de gating masquée pour un Premium, « Installer » (invite) ou aide du menu ;
+  ordinateur = texte sans écran verrouillé. iPhone Safari = 3 étapes + flèche « Ici, en bas de
+  Safari » (iPhone seulement), « Je l'ai fait » revérifie le mode app, sinon « Ouvre MTC depuis ton
+  écran d'accueil » et report de 7 jours. iPhone autre navigateur = « Ouvre MyTradingCoach dans
+  Safari pour l'installer » + Copier le lien. Navigateur intégré = seulement « Ouvre dans ton
+  navigateur » (nom de l'appli déduit de l'UA, sinon « cette application »).
+- **Après installation** (lancement standalone, connecté) : `App` charge le parcours ; `install_done`
+  une fois par appareil, puis invitation aux alertes 3 s plus tard, une fois par session, seulement si
+  `PushService.init()` donne `supported` (donc `GET /push/settings` → `enabled: true`). « Activer les
+  alertes » mène à `/profil#notifications` (aucune permission demandée par la feuille). Déjà abonné :
+  plus jamais vérifié sur cet appareil.
+- **Mesure** : événements `install_*`, `inapp_seen`, `push_enabled` / `push_denied` (`PushService.enable`)
+  avec `place` = `devicePlace`. RATTACHÉS AU COMPTE (`ProductEventDaily.userId`), pas anonymes. Démo :
+  aucun envoi.
+- **Profil** : `mtc-install-settings` (onglet Paramètres, avant `mtc-push-settings`) : « Installer
+  l'app » ou « App installée · ACTIVE ».
+- Paliers : voile 1100, feuille 1101 (au-dessus des modales et du burger, sous les toasts) ;
+  `install.styles.spec.ts`. Tests : `install-capture.spec.ts` (événements reçus avant le chargement),
+  `install-prompt.service.spec.ts`, `install-sheet.component.spec.ts`, `install-settings.component.spec.ts`.
+
 ## Liaison Discord (#741, 2026-10-25)
 
 Bloc « Discord » de Profil → Paramètres (masqué en démo), directement dans `profile.component`

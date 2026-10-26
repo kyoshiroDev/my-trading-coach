@@ -77,8 +77,9 @@ GET    /api/session/active             JWT → session active en cours (null si 
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
-POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
-                                       `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
+POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
+                                       `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
+                                       installation de l'app, place = plateforme), 204, best-effort
 GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
@@ -2091,6 +2092,13 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+Installation de l'app (2026-10-25) : 8 événements de plus (`INSTALL_EVENTS` : `install_shown`,
+`install_click`, `install_done`, `install_later`, `install_never`, `inapp_seen`, `push_enabled`,
+`push_denied`), `place` = plateforme (`INSTALL_PLACES` : `android`, `ios`, `ios-other`, `desktop`).
+`getFunnel` renvoie `install` (users distincts par événement × plateforme, plateforme brute : `ios-other`
+jamais regroupé avec `ios`), tableau « Installation de l'app » de `/acquisition`. Conservation : 13 mois,
+purge QUOTIDIENNE (`DAILY_RETENTION_RULES` de `RetentionCron`, 4 h 45 Paris), cascade à la suppression
+du compte. Journal d'échec : nom de l'erreur seulement (jamais `err.message`, qui contient le `userId`).
 
 ## Suite d'e-mails d'onboarding (oct. 2026, NinjaTrader mi-novembre)
 
