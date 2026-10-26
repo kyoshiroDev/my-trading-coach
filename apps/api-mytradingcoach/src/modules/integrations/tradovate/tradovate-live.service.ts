@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '@api/prisma/prisma.service';
@@ -25,6 +25,9 @@ import {
   type LiveSocketFactory,
 } from './tradovate-live.connection';
 import { createLimiter } from '../../../common/utils/concurrency.util';
+import { appRole } from '../../../config/app-role';
+import { TRACKABLE_CONNECTION, TradovateWatchService } from './tradovate-watch.service';
+import { WATCH_SWEEP_MS, type WatchVerdict } from './tradovate-watch';
 
 /** Bail « un seul WebSocket Tradovate par user », tous workers du cluster confondus. */
 export const LIVE_LEASE_TTL_MS = 30_000;
@@ -106,12 +109,15 @@ const RELEASE_LUA = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.
  * - App ouverte (au moins un client sur `/tradovate-live`) → rattrapage REST immédiat, puis un
  *   WebSocket Tradovate par compte connecté. Plusieurs onglets / workers → un seul WebSocket
  *   par user (bail Redis ; si le worker titulaire perd ses clients, un autre reprend ≤ 10 s).
- * - Dernier onglet fermé → WebSockets fermés, bail rendu : plus rien ne tourne pour ce user.
+ * - Dernier onglet fermé → WebSockets fermés, bail rendu : plus rien ne tourne pour ce user. Sauf
+ *   VEILLE SERVEUR (#770) : trader Premium en séance, avec un appareil abonné au push → le worker
+ *   titulaire garde le WebSocket (10 h max), pour que les alertes en direct partent en push. Un
+ *   balayage (30 s) clôt les veilles finies et reprend celles d'un process disparu (déploiement).
  * - Les trades passent TOUJOURS par `TradovateSyncService.sync` (mapper, frais, dédup
  *   `importHash`, verrou) : aucun calcul de P&L dupliqué, le temps réel ne fait que déclencher.
  */
 @Injectable()
-export class TradovateLiveService implements OnModuleDestroy {
+export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TradovateLiveService.name);
   private readonly instanceId = randomUUID();
   /** Clients connectés SUR CE WORKER, par user. */
@@ -122,6 +128,8 @@ export class TradovateLiveService implements OnModuleDestroy {
   private readonly pending = new Set<ReturnType<typeof setTimeout>>();
   private readonly catchUpLimit = createLimiter(LIVE_CATCH_UP_CONCURRENCY);
   private emitter: LiveEmitter = () => undefined;
+  private sweepTimer: ReturnType<typeof setInterval> | null = null;
+  private sweeping = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -130,7 +138,19 @@ export class TradovateLiveService implements OnModuleDestroy {
     private readonly sync: TradovateSyncService,
     private readonly balance: TradovateBalanceService,
     @Optional() @Inject(LIVE_SOCKET_FACTORY) private readonly socketFactory?: LiveSocketFactory,
+    /** Veille serveur (#770) : optionnelle pour garder les tests unitaires légers. */
+    @Optional() private readonly watch?: TradovateWatchService,
   ) {}
+
+  /**
+   * Balayage des veilles sur les process qui portent les sockets (`web`, `all`), jamais sur le
+   * worker de crons : c'est là que les WebSockets naissent, et le bail empêche toute reprise en double.
+   */
+  onModuleInit(): void {
+    if (!this.watch?.active || appRole() === 'worker') return;
+    this.sweepTimer = setInterval(() => void this.sweepWatch(), WATCH_SWEEP_MS);
+    this.sweepTimer.unref?.();
+  }
 
   /** Branché par le gateway : relaie vers la room du user (tous workers via l'adapter Redis). */
   bindEmitter(emitter: LiveEmitter): void {
@@ -161,7 +181,67 @@ export class TradovateLiveService implements OnModuleDestroy {
     set.delete(clientId);
     if (set.size > 0) return;
     this.clients.delete(userId);
-    void this.stopUser(userId);
+    void this.release(userId);
+  }
+
+  /** Dernier onglet de ce worker fermé : veille si le trader y a droit (#770), sinon tout s'arrête. */
+  private async release(userId: string): Promise<void> {
+    let verdict: WatchVerdict = 'stop';
+    if (this.watch?.active) {
+      verdict = await this.watch.begin(userId).catch((err: unknown) => {
+        this.logger.warn(`Veille Tradovate non évaluée : ${(err as Error).message}`);
+        return 'stop' as const;
+      });
+    }
+    if (this.clients.get(userId)?.size) return; // revenu pendant la vérification
+    // Seul le titulaire du bail garde le WebSocket. Un autre worker le tient : il le garde ou le
+    // rendra, et le balayage le reprend s'il disparaît.
+    if (verdict === 'watch' && this.users.get(userId)?.owner) return;
+    await this.stopUser(userId);
+  }
+
+  /**
+   * Balayage des veilles (#770), toutes les 30 s sur chaque process web :
+   * - WebSocket tenu ici sans onglet → fermé si sa veille est finie, en pause (heures silencieuses)
+   *   ou si un autre worker tient le bail ;
+   * - veille en cours sans titulaire (process arrêté, déploiement) → reprise ici, rattrapage compris
+   *   (trades faits pendant le trou). Le bail `SET NX` garantit un seul repreneur.
+   */
+  async sweepWatch(now = new Date()): Promise<void> {
+    if (!this.watch?.active || this.sweeping) return;
+    this.sweeping = true;
+    try {
+      const keep = new Set<string>();
+      try {
+        const ids = await this.watch.current(now);
+        const verdicts = await this.watch.verdicts(ids, now);
+        for (const id of ids) {
+          const v = verdicts.get(id) ?? 'stop';
+          if (v === 'watch') keep.add(id);
+          else if (v === 'stop') await this.watch.end(id);
+        }
+      } catch (err) {
+        this.logger.warn(`Balayage des veilles Tradovate impossible : ${(err as Error).message}`);
+        return;
+      }
+      for (const [userId, u] of [...this.users]) {
+        if (this.clients.get(userId)?.size) continue;
+        if (!keep.has(userId) || !u.owner) await this.stopUser(userId);
+      }
+      let adopted = 0;
+      for (const userId of keep) {
+        if (this.users.has(userId) || this.clients.get(userId)?.size) continue;
+        if (await this.isLive(userId)) continue;
+        const conns = await this.eligible(userId);
+        if (conns.length === 0) continue;
+        void this.catchUpLimit(() => this.catchUp(userId, conns));
+        this.ensureLive(userId, conns);
+        adopted++;
+      }
+      if (adopted > 0) this.logger.log(`Veille Tradovate : ${adopted} reprise(s) sur ce worker`);
+    } finally {
+      this.sweeping = false;
+    }
   }
 
   /** Un WebSocket Tradovate est-il ouvert pour ce user (n'importe quel worker) ? */
@@ -181,6 +261,8 @@ export class TradovateLiveService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    // Registre des veilles intact : le balayage d'un autre process les reprend.
+    if (this.sweepTimer) clearInterval(this.sweepTimer);
     for (const t of this.pending) clearTimeout(t);
     this.pending.clear();
     await Promise.all([...this.users.keys()].map((u) => this.stopUser(u)));
@@ -424,14 +506,7 @@ export class TradovateLiveService implements OnModuleDestroy {
       return []; // intégration non configurée sur cet environnement
     }
     return this.prisma.brokerConnection.findMany({
-      where: {
-        userId,
-        provider: BrokerProvider.TRADOVATE,
-        status: BrokerConnectionStatus.CONNECTED,
-        externalAccountId: { not: null },
-        externalEnv: { not: null },
-        user: { isDemo: false },
-      },
+      where: { userId, ...TRACKABLE_CONNECTION, user: { isDemo: false } },
     });
   }
 

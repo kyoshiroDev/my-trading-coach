@@ -70,6 +70,8 @@ export const ENV_VARS: EnvVar[] = [
   { name: 'VAPID_PRIVATE_KEY', level: 'optional', check: (v) => (isVapidKey(v, 32) ? undefined : 'doit être une clé privée VAPID (base64url, 32 octets)') },
   // Push des traders (#666) : exige aussi PUSH_ENABLED ; éteint si absent (config/push-config.ts).
   { name: 'TRADER_PUSH_ENABLED', level: 'optional', check: isBoolean },
+  // Veille serveur (#770) : WebSockets Tradovate gardés app fermée, au plus N à la fois (défaut 500, 0 = coupée).
+  { name: 'TRADOVATE_WATCH_MAX', level: 'optional', check: (v) => (/^\d+$/.test(v) ? undefined : 'doit être un entier ≥ 0') },
   { name: 'VAPID_SUBJECT', level: 'optional', check: (v) => (/^(mailto:[^@\s]+@[^@\s]+|https:\/\/\S+)$/.test(v) ? undefined : 'doit être mailto:… ou https://…') },
   // Connexion Google (#618). Bouton visible seulement si FEATURE_GOOGLE_AUTH=true ET GOOGLE_CLIENT_ID
   // défini (client OAuth « application web » propre à l'environnement) ; off par défaut.
