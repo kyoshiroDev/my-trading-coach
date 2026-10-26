@@ -1,4 +1,4 @@
-import type { AdminFunnelData } from '@mtc/shared';
+import type { AdminFunnelData, AdminInstallEvent } from '@mtc/shared';
 
 export interface FunnelRow {
   label: string;
@@ -73,4 +73,50 @@ const PLACE_LABELS: Record<string, string> = {
 
 export function placeLabel(place: string): string {
   return PLACE_LABELS[place] ?? (place || '(sans écran)');
+}
+
+export interface InstallRow {
+  place: string;
+  label: string;
+  /** Users distincts par événement (0 si aucun). */
+  counts: Record<AdminInstallEvent, number>;
+}
+
+export const INSTALL_COLUMNS: { event: AdminInstallEvent; label: string }[] = [
+  { event: 'install_shown', label: 'Parcours affiché' },
+  { event: 'install_click', label: 'Clic installer' },
+  { event: 'install_done', label: 'Installée' },
+  { event: 'install_later', label: 'Plus tard' },
+  { event: 'install_never', label: 'Ne plus proposer' },
+  { event: 'inapp_seen', label: 'Navigateur intégré' },
+  { event: 'push_enabled', label: 'Alertes activées' },
+  { event: 'push_denied', label: 'Alertes refusées' },
+];
+
+const INSTALL_PLACE_LABELS: Record<string, string> = {
+  android: 'Android',
+  ios: 'iPhone (Safari)',
+  'ios-other': 'iPhone (autre navigateur)',
+  desktop: 'Ordinateur',
+};
+const INSTALL_ORDER = Object.keys(INSTALL_PLACE_LABELS);
+
+/**
+ * Installation de l'app par plateforme. Une ligne par plateforme ENREGISTRÉE : `ios-other` n'est
+ * jamais ajouté à `ios`, et une plateforme inconnue s'affiche telle quelle (jamais écartée).
+ */
+export function installRows(f: AdminFunnelData | null): InstallRow[] {
+  if (!f) return [];
+  const rows = new Map<string, InstallRow>();
+  for (const r of f.install) {
+    const row = rows.get(r.place) ?? {
+      place: r.place,
+      label: INSTALL_PLACE_LABELS[r.place] ?? (r.place || '(sans plateforme)'),
+      counts: Object.fromEntries(INSTALL_COLUMNS.map((c) => [c.event, 0])) as InstallRow['counts'],
+    };
+    row.counts[r.event] = r.users;
+    rows.set(r.place, row);
+  }
+  const rank = (p: string) => (INSTALL_ORDER.includes(p) ? INSTALL_ORDER.indexOf(p) : INSTALL_ORDER.length);
+  return [...rows.values()].sort((a, b) => rank(a.place) - rank(b.place) || a.place.localeCompare(b.place));
 }

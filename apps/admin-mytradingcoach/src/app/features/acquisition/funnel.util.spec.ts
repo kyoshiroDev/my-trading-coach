@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AdminFunnelData } from '@mtc/shared';
-import { funnelRows, placeLabel, placeRows } from './funnel.util';
+import { funnelRows, installRows, placeLabel, placeRows } from './funnel.util';
 
 const data: AdminFunnelData = {
   days: 30, landingVisits: 200, signups: 10,
@@ -15,6 +15,7 @@ const data: AdminFunnelData = {
     { event: 'premium_seen', place: 'analytics', users: 5 },
     { event: 'trial_click', place: 'profil', users: 1 },
   ],
+  install: [],
   current: { trialing: 0, paying: 0 },
 };
 
@@ -49,5 +50,40 @@ describe('entonnoir admin', () => {
   it('libellés d’écran en français, repli sur la route', () => {
     expect(placeLabel('ai-insights')).toBe('Insights IA');
     expect(placeLabel('nouvel-ecran')).toBe('nouvel-ecran');
+  });
+});
+
+describe('installation de l’app (admin)', () => {
+  const install: AdminFunnelData['install'] = [
+    { event: 'install_shown', place: 'ios-other', users: 2 },
+    { event: 'install_shown', place: 'ios', users: 5 },
+    { event: 'install_done', place: 'ios', users: 1 },
+    { event: 'install_shown', place: 'android', users: 3 },
+    { event: 'inapp_seen', place: 'tablet', users: 1 },
+  ];
+
+  it('iPhone hors Safari (`ios-other`) : sa propre ligne, ses propres chiffres, jamais regroupée avec `ios`', () => {
+    const rows = installRows({ ...data, install });
+    const ios = rows.find((r) => r.place === 'ios')!;
+    const other = rows.find((r) => r.place === 'ios-other')!;
+    expect(other.label).toBe('iPhone (autre navigateur)');
+    expect(other.counts.install_shown).toBe(2);
+    expect(ios.counts.install_shown).toBe(5);
+    expect(ios.counts.install_done).toBe(1);
+    expect(other.counts.install_done).toBe(0);
+  });
+
+  it('ordre fixe des plateformes connues, plateforme inconnue affichée telle quelle (jamais écartée)', () => {
+    expect(installRows({ ...data, install }).map((r) => r.label)).toEqual([
+      'Android',
+      'iPhone (Safari)',
+      'iPhone (autre navigateur)',
+      'tablet',
+    ]);
+  });
+
+  it('aucune donnée → aucune ligne', () => {
+    expect(installRows(data)).toEqual([]);
+    expect(installRows(null)).toEqual([]);
   });
 });

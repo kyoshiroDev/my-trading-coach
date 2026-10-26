@@ -5,7 +5,7 @@ import { catchError, of } from 'rxjs';
 import { acquisitionQueryParams } from '@mtc/shared';
 import type { ChartConfiguration } from 'chart.js';
 import { AdminApi, AcquisitionData, FunnelData, LandingEngagementData, SignupFunnelData, SignupMethodsData } from '../../core/api/admin.api';
-import { funnelRows, placeLabel, placeRows } from './funnel.util';
+import { INSTALL_COLUMNS, funnelRows, installRows, placeLabel, placeRows } from './funnel.util';
 import { SIGNUP_COLUMNS, signupErrors, signupLines, signupTotal, type BrowserFilter } from './signup-funnel.util';
 import { ENGAGEMENT_COLUMNS, engagementGroups } from './landing-engagement.util';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
@@ -36,6 +36,9 @@ export class AcquisitionComponent {
   protected readonly funnel = signal<FunnelData | null>(null);
   protected readonly funnelSteps = computed(() => funnelRows(this.funnel()));
   protected readonly funnelPlaces = computed(() => placeRows(this.funnel()));
+  /** Installation de l'app par plateforme (même réponse que l'entonnoir). */
+  protected readonly installs = computed(() => installRows(this.funnel()));
+  protected readonly installColumns = INSTALL_COLUMNS;
   protected readonly placeLabel = placeLabel;
 
   /** Inscriptions par méthode, e-mail / Google (GET /admin/signup-methods, #618) : chargé à part. */
