@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_WATCH_MAX, WATCH_MAX_MS, type WatchCandidate, watchEnd, watchMax, watchVerdict } from './tradovate-watch';
+import { WATCH_MAX_MS, type WatchCandidate, watchEnd, watchVerdict } from './tradovate-watch';
+import { resolveWatchMax } from '../../../config/tradovate-watch-config';
 
 /** Veille serveur (#770) : fin de veille et éligibilité, sans Redis ni base. */
 
@@ -61,15 +62,15 @@ describe('watchVerdict', () => {
   });
 });
 
-describe('watchMax', () => {
+describe('resolveWatchMax (TRADOVATE_WATCH_MAX)', () => {
   it.each([
-    [undefined, DEFAULT_WATCH_MAX],
-    ['', DEFAULT_WATCH_MAX],
-    ['abc', DEFAULT_WATCH_MAX],
-    ['-3', DEFAULT_WATCH_MAX],
+    [undefined, 0],
+    ['', 0],
+    ['abc', 0],
+    ['-3', 0],
     ['0', 0],
-    [' 1200 ', 1200],
-  ])('%s → %s', (raw, expected) => {
-    expect(watchMax(raw)).toBe(expected);
+    [' 500 ', 500],
+  ])('%s → %s (absent ou invalide : veille éteinte)', (raw, expected) => {
+    expect(resolveWatchMax({ TRADOVATE_WATCH_MAX: raw })).toBe(expected);
   });
 });

@@ -14,8 +14,6 @@ import { tradingDayEnd } from '../../session/active-session';
 export const WATCH_MAX_MS = 10 * 3600 * 1000;
 /** Balayage du registre : fin de veille, reprise après la perte d'un process. */
 export const WATCH_SWEEP_MS = 30_000;
-/** Plafond de veilles simultanées si `TRADOVATE_WATCH_MAX` est absent. */
-export const DEFAULT_WATCH_MAX = 500;
 /** Types d'alerte nés du direct : la veille ne sert que si l'un d'eux peut partir. */
 export const WATCH_PUSH_TYPES: readonly PushAlertType[] = ['PROP_RULES', 'BEHAVIOR'];
 
@@ -53,10 +51,4 @@ export function watchVerdict(c: WatchCandidate | undefined, now: Date): WatchVer
   if (WATCH_PUSH_TYPES.every((t) => muted.includes(t))) return 'stop';
   if (inQuietHours(now, c.preference?.quietStart, c.preference?.quietEnd)) return 'paused';
   return 'watch';
-}
-
-/** `TRADOVATE_WATCH_MAX` : entier ≥ 0 (0 = veille coupée) ; absent ou invalide → défaut. */
-export function watchMax(raw: string | undefined): number {
-  if (raw == null || !/^\d+$/.test(raw.trim())) return DEFAULT_WATCH_MAX;
-  return Number(raw.trim());
 }

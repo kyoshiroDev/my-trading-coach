@@ -27,6 +27,8 @@ process.env['TRADOVATE_OAUTH_CLIENT_SECRET'] = 'client-secret-de-test';
 process.env['TRADOVATE_OAUTH_REDIRECT_URI'] = 'https://api.test/integrations/tradovate/callback';
 process.env['BROKER_TOKEN_ENCRYPTION_KEY'] = randomBytes(32).toString('base64');
 process.env['FRONTEND_URL'] = 'https://app.test';
+// Veille serveur (#770) : éteinte par défaut, allumée ici pour son scénario.
+process.env['TRADOVATE_WATCH_MAX'] = '500';
 
 // ── Tradovate REST simulé ────────────────────────────────────────────────────
 const EXT_ACCOUNT = 777;

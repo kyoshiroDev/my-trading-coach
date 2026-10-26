@@ -4,7 +4,8 @@ import { PrismaService } from '@api/prisma/prisma.service';
 import { RedisService } from '../../infra/redis.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
 import { tradingDayStart } from '../../session/active-session';
-import { type WatchVerdict, watchEnd, watchMax, watchVerdict } from './tradovate-watch';
+import { resolveWatchMax } from '../../../config/tradovate-watch-config';
+import { type WatchVerdict, watchEnd, watchVerdict } from './tradovate-watch';
 
 /** Registre des veilles : ZSET, membre `userId`, score = fin de veille (ms epoch). Éphémère, rien en base. */
 export const WATCH_KEY = 'tradovate:watch';
@@ -24,7 +25,7 @@ export const TRACKABLE_CONNECTION: Prisma.BrokerConnectionWhereInput = {
 @Injectable()
 export class TradovateWatchService {
   private readonly logger = new Logger(TradovateWatchService.name);
-  private readonly max = watchMax(process.env['TRADOVATE_WATCH_MAX']);
+  private readonly max = resolveWatchMax();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -33,6 +34,7 @@ export class TradovateWatchService {
     @Optional() private readonly notifier?: TraderNotifier,
   ) {}
 
+  /** Allumée : push des traders actif ET `TRADOVATE_WATCH_MAX` > 0 (éteinte par défaut). */
   get active(): boolean {
     return this.max > 0 && this.notifier?.enabled === true;
   }

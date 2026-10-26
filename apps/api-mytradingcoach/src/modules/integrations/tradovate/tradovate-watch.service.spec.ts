@@ -30,7 +30,7 @@ const row = (id: string, over: Record<string, unknown> = {}) => ({
 });
 
 function setup(opts: { rows?: ReturnType<typeof row>[]; enabled?: boolean; max?: string } = {}) {
-  if (opts.max !== undefined) vi.stubEnv('TRADOVATE_WATCH_MAX', opts.max);
+  vi.stubEnv('TRADOVATE_WATCH_MAX', opts.max ?? '500');
   const redis = fakeRedis();
   const prisma = { user: { findMany: vi.fn(async () => opts.rows ?? [row('u1')]) } };
   const notifier = { enabled: opts.enabled ?? true };
@@ -44,8 +44,9 @@ const NOW = new Date('2026-10-27T08:00:00Z');
 describe('TradovateWatchService', () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it('push des traders éteint ou plafond à 0 → veille inactive, rien inscrit', async () => {
+  it('push des traders éteint, plafond absent ou à 0 → veille inactive, rien inscrit', async () => {
     expect(setup({ enabled: false }).service.active).toBe(false);
+    expect(setup({ max: '' }).service.active).toBe(false);
     const { service, redis } = setup({ max: '0' });
     expect(service.active).toBe(false);
     expect(await service.begin('u1', NOW)).toBe('stop');
