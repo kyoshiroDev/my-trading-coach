@@ -44,4 +44,17 @@ describe('Landing : essai Premium d’inscription (#769)', () => {
     expect(src).toContain('${APP_URL}/register?plan=premium');
     expect(src).toContain('Sans carte · puis Gratuit, sans engagement');
   });
+
+  it('politique de confidentialité : données de l’essai, comparaison 90 jours, trace d’un compte supprimé', () => {
+    const page = read('apps/landing-mytradingcoach/src/pages/politique-confidentialite.astro');
+    expect(page).toContain('Premium offert&nbsp;: date de fin de la période offerte');
+    expect(page).toContain("l'adresse e-mail d'un compte supprimé depuis moins de 90 jours est comparée");
+    expect(page).toContain('Nom et adresse e-mail effacés automatiquement 90 jours après la suppression');
+  });
+
+  it('CGU : une seule période offerte par personne, pas d’essai Stripe ensuite', () => {
+    const cgu = read('apps/landing-mytradingcoach/src/pages/cgu.astro');
+    expect(cgu).toContain('Cette période est accordée une fois par personne');
+    expect(cgu).toContain("un abonnement payant n'a pas de période d'essai supplémentaire");
+  });
 });
