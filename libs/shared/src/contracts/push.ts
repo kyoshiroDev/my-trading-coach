@@ -49,6 +49,11 @@ export interface TraderPushSettings {
   mutedTypes: PushAlertType[];
   quietHours: PushQuietHours | null;
   timeZone: string;
+  /**
+   * Veille serveur (#770) allumée : les alertes en direct partent aussi MTC fermé, pendant la séance.
+   * Sert seulement au texte « quand l'alerte part » (dit honnêtement).
+   */
+  liveWhileClosed: boolean;
   devices: TraderPushDeviceView[];
 }
 

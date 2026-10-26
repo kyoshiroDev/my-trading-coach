@@ -14,6 +14,8 @@ export interface PushTypeRow {
   hint: string;
   /** Quand l'alerte part (dit honnêtement, #666). */
   delay?: string;
+  /** Idem quand la veille serveur est allumée (#770) : en direct aussi MTC fermé, pendant la séance. */
+  delayWhileClosed?: string;
   premium: boolean;
 }
 
@@ -23,6 +25,7 @@ export const PUSH_TYPE_ROWS: readonly PushTypeRow[] = [
     label: 'Limites et objectifs',
     hint: 'Marge sous 10 %, limite franchie, objectif atteint, payout possible.',
     delay: 'En direct si MTC est ouvert. Sinon, relevé de la synchro automatique, jusqu’à 15 min de décalage.',
+    delayWhileClosed: 'En direct pendant ta séance, même MTC fermé. Hors séance, relevé de la synchro automatique, jusqu’à 15 min de décalage.',
     premium: true,
   },
   {
@@ -30,6 +33,7 @@ export const PUSH_TYPE_ROWS: readonly PushTypeRow[] = [
     label: 'Comportement',
     hint: 'Anti-tilt et alertes de comportement.',
     delay: 'Seulement en direct, pendant que MTC est ouvert.',
+    delayWhileClosed: 'En direct pendant ta séance, même MTC fermé.',
     premium: true,
   },
   { type: 'RECAP', label: 'Récap du jour', hint: 'Ton récap de 17h30 est prêt.', premium: true },
@@ -99,6 +103,11 @@ export class PushSettingsComponent implements OnInit {
         setTimeout(() => document.getElementById('notifications')?.scrollIntoView({ block: 'start' }));
       }
     });
+  }
+
+  /** Quand l'alerte part : le texte suit la veille serveur (#770), allumée ou non côté API. */
+  protected rowDelay(row: PushTypeRow): string | undefined {
+    return (this.settings()?.liveWhileClosed && row.delayWhileClosed) || row.delay;
   }
 
   /** Ligne utilisable : appareil abonné, pas en démo, et type compris dans le plan. */

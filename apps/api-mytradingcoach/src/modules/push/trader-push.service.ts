@@ -11,6 +11,7 @@ import {
 } from '@mtc/shared';
 import { PrismaService } from '@api/prisma/prisma.service';
 import type { PushConfigResult } from '../../config/push-config';
+import { resolveWatchMax } from '../../config/tradovate-watch-config';
 import { PUSH_CONFIG, PUSH_SENDER, TRADER_PUSH_FLAG, type PushSender } from './push-sender';
 import { deliverPush, hostOf } from './push-delivery';
 import { deviceLabel } from './device-label';
@@ -28,6 +29,8 @@ export const MAX_PUSH_DEVICES = PUSH_MAX_DEVICES;
 @Injectable()
 export class TraderPushService implements OnModuleInit {
   private readonly logger = new Logger(TraderPushService.name);
+  /** Veille serveur Tradovate (#770) allumée sur cet environnement. */
+  private readonly watchOn = resolveWatchMax() > 0;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -76,6 +79,7 @@ export class TraderPushService implements OnModuleInit {
           ? { start: pref.quietStart, end: pref.quietEnd }
           : null,
       timeZone: PUSH_TIME_ZONE,
+      liveWhileClosed: this.enabled && this.watchOn,
       devices: devices.map((d) => ({
         id: d.id,
         label: deviceLabel(d.userAgent),
