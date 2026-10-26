@@ -1,0 +1,138 @@
+<!-- Fond : un clic ou Échap vaut « Plus tard ». -->
+@if (sheet() === 'install' || pushReady()) {
+  <div class="is-scrim" aria-hidden="true" (click)="later()"></div>
+}
+
+@if (sheet() === 'install') {
+  @switch (state()) {
+    @case ('in-app-browser') {
+      <!-- Navigateur intégré : seulement ce message, rien d'autre. -->
+      <div class="is-banner" mtcDialog role="dialog" aria-modal="true" aria-labelledby="is-title"
+        (mtcDialogClose)="later()" data-testid="install-inapp">
+        <h2 id="is-title">Ouvre dans ton navigateur</h2>
+        <p>Pour installer MTC, il faut quitter {{ appName }}. Touche les <b>trois points</b> en haut à droite,
+          puis <b>«&nbsp;Ouvrir dans le navigateur&nbsp;»</b>.</p>
+        <div class="is-actions">
+          <button type="button" class="is-btn is-btn--primary" (click)="copyLink()">Copier le lien</button>
+          <button type="button" class="is-btn is-btn--ghost" (click)="later()">Fermer</button>
+        </div>
+      </div>
+    }
+
+    @case ('ios-other') {
+      <!-- iPhone sur Chrome ou Firefox : seul Safari sait ajouter à l'écran d'accueil. -->
+      <div class="is-sheet" mtcDialog role="dialog" aria-modal="true" aria-labelledby="is-title"
+        (mtcDialogClose)="later()" data-testid="install-ios-other">
+        <div class="is-grab" aria-hidden="true"></div>
+        <h2 id="is-title">Ouvre MyTradingCoach dans Safari pour l'installer</h2>
+        <p class="is-lead">Sur iPhone, seul Safari ajoute une app à l'écran d'accueil. Copie le lien, puis colle-le dans Safari.</p>
+        <div class="is-actions">
+          <button type="button" class="is-btn is-btn--primary" (click)="copyLink()">Copier le lien</button>
+          <button type="button" class="is-btn is-btn--ghost" (click)="later()">Plus tard</button>
+        </div>
+        @if (!install.fromSettings()) {
+          <button type="button" class="is-never" (click)="never()">Ne plus me proposer</button>
+        }
+      </div>
+    }
+
+    @case ('ios-manual') {
+      <!-- iPhone, Safari : trois étapes illustrées, flèche vers Partager. -->
+      <div class="is-sheet is-sheet--ios" [class.is-sheet--arrow]="showArrow" mtcDialog role="dialog" aria-modal="true"
+        aria-labelledby="is-title" (mtcDialogClose)="later()" data-testid="install-ios">
+        <div class="is-grab" aria-hidden="true"></div>
+        @if (iosOpenIcon()) {
+          <h2 id="is-title">Ouvre MTC depuis ton écran d'accueil</h2>
+          <p class="is-lead" data-testid="install-ios-open-icon">Touche l'icône MTC sur ton écran d'accueil&nbsp;: l'app s'ouvre en plein écran, et c'est là que tu pourras activer les alertes.</p>
+          <div class="is-actions">
+            <button type="button" class="is-btn is-btn--primary" (click)="install.close()">Compris</button>
+          </div>
+        } @else {
+          <h2 id="is-title">Ajoute MTC à ton écran d'accueil</h2>
+          <p class="is-lead">3 gestes, 15 secondes. Sur iPhone, c'est aussi ce qui permet de recevoir les alertes.</p>
+          <ol class="is-steps">
+            <li>
+              <span class="is-n" aria-hidden="true">1</span>
+              <span><b>Touche Partager</b>
+                <small>Le bouton <span class="is-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>Partager</span> en bas de Safari</small></span>
+            </li>
+            <li>
+              <span class="is-n" aria-hidden="true">2</span>
+              <span><b>«&nbsp;Sur l'écran d'accueil&nbsp;»</b><small>Fais défiler la liste si besoin</small></span>
+            </li>
+            <li>
+              <span class="is-n" aria-hidden="true">3</span>
+              <span><b>Touche «&nbsp;Ajouter&nbsp;»</b><small>MTC apparaît avec son icône</small></span>
+            </li>
+          </ol>
+          <div class="is-actions">
+            <button type="button" class="is-btn is-btn--primary" (click)="iosDone()" data-testid="install-ios-done">Je l'ai fait</button>
+            <button type="button" class="is-btn is-btn--ghost" (click)="later()">Plus tard</button>
+          </div>
+          @if (!install.fromSettings()) {
+            <button type="button" class="is-never" (click)="never()">Ne plus me proposer</button>
+          }
+        }
+      </div>
+      @if (showArrow && !iosOpenIcon()) {
+        <div class="is-arrow" aria-hidden="true">Ici, en bas de Safari</div>
+      }
+    }
+
+    @default {
+      <!-- Android et ordinateur : écran verrouillé, puis l'invite du navigateur (ou l'aide du menu). -->
+      <div class="is-sheet" mtcDialog role="dialog" aria-modal="true" aria-labelledby="is-title"
+        (mtcDialogClose)="later()" data-testid="install-main" [attr.data-state]="state()">
+        <div class="is-grab" aria-hidden="true"></div>
+        @if (isDesktop) {
+          <!-- Ordinateur (depuis le Profil seulement) : pas d'écran verrouillé, il n'y en a pas. -->
+          <h2 id="is-title">Installe MTC sur cet ordinateur</h2>
+          <p class="is-lead">Ouvre ton journal en un clic, dans sa propre fenêtre. Rien à télécharger sur un store.</p>
+        } @else {
+          <h2 id="is-title">Tes alertes, sur ton écran verrouillé</h2>
+          <p class="is-lead">Installe MTC pour recevoir tes alertes de séance sur ton téléphone.</p>
+          <div class="is-lock" aria-label="Exemples de notifications" role="group">
+            <p class="is-clock" aria-hidden="true">{{ clock().time }}</p>
+            <p class="is-date" aria-hidden="true">{{ clock().date }}</p>
+            @for (n of examples; track n.when) {
+              <div class="is-notif">
+                <span class="is-app" aria-hidden="true">M</span>
+                <span><small>MyTradingCoach · {{ n.when }}</small><b>{{ n.text }}</b></span>
+              </div>
+            }
+          </div>
+          @if (!isPremium()) {
+            <p class="is-upsell" data-testid="install-upsell">Alertes de limite et récap&nbsp;: Premium. Prévenir quand ta synchro s'arrête&nbsp;: gratuit.</p>
+          }
+        }
+        <div class="is-actions">
+          @if (state() === 'can-prompt') {
+            <button type="button" class="is-btn is-btn--primary" (click)="installNow()" data-testid="install-prompt">Installer</button>
+          } @else {
+            <p class="is-help" data-testid="install-android-help">Ouvre le menu <b>⋮</b> de ton navigateur, puis <b>«&nbsp;Installer l'application&nbsp;»</b> ou <b>«&nbsp;Ajouter à l'écran d'accueil&nbsp;»</b>.</p>
+          }
+          <button type="button" class="is-btn is-btn--ghost" (click)="later()">Plus tard</button>
+        </div>
+        @if (!install.fromSettings()) {
+          <button type="button" class="is-never" (click)="never()">Ne plus me proposer</button>
+        }
+      </div>
+    }
+  }
+}
+
+<!-- Après installation : on explique, puis la section Notifications du Profil demande la permission. -->
+@if (pushReady()) {
+  <div class="is-sheet" mtcDialog role="dialog" aria-modal="true" aria-labelledby="is-title"
+    (mtcDialogClose)="later()" data-testid="install-push">
+    <div class="is-grab" aria-hidden="true"></div>
+    <h2 id="is-title">Reçois tes alertes sur ce téléphone</h2>
+    <p class="is-lead">Quand MTC n'est pas ouvert, une notification peut te prévenir avant que tu atteignes ta limite.</p>
+    <div class="is-al"><b>EXEMPLE D'ALERTE</b>{{ examples[0].text }}</div>
+    <p class="is-note">App fermée, les alertes peuvent arriver avec jusqu'à 15&nbsp;min de décalage. Tu choisis lesquelles dans Paramètres.</p>
+    <div class="is-actions">
+      <button type="button" class="is-btn is-btn--primary" (click)="goToNotifications()" data-testid="install-push-go">Activer les alertes</button>
+      <button type="button" class="is-btn is-btn--ghost" (click)="later()">Pas maintenant</button>
+    </div>
+  </div>
+}

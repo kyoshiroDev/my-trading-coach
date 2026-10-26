@@ -34,6 +34,7 @@ import { apiErrorMessage } from '../../core/utils/api-error';
 import { TradesApi } from '../../core/api/trades.api';
 import { formatMoney } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
+import { InstallPromptService } from '@app/core/install/install-prompt.service';
 
 export interface ImportResult {
   created: number;
@@ -78,6 +79,7 @@ export class CsvImportComponent {
   private readonly toast = inject(ToastService);
   protected readonly accountStore = inject(SelectedAccountStore);
   private readonly setupsStore = inject(SetupsStore);
+  private readonly installPrompt = inject(InstallPromptService);
   protected readonly tv = inject(TradovateStore);
   protected readonly LinkIcon = Link2;
 
@@ -259,7 +261,10 @@ export class CsvImportComponent {
     if (!t) return;
     this.tv.sync(t.id, (r) => {
       if (!r) return; // échec : toast d'erreur déjà affiché par le store
-      if (r.created > 0) this.accountStore.load();
+      if (r.created > 0) {
+        this.accountStore.load();
+        this.installPrompt.offer('import');
+      }
       this.imported.emit({
         created: r.created,
         duplicates: r.duplicates,
@@ -464,6 +469,8 @@ export class CsvImportComponent {
           // un bloc à relire — il n'est PAS remplacé par ce toast.
           const n = res.data.created;
           this.toast.success(n > 0 ? `Import terminé · ${n} trade${n > 1 ? 's' : ''} importé${n > 1 ? 's' : ''}` : 'Import terminé');
+          // Compte gratuit : proposition d'installer l'app après un import réussi (règles de fréquence).
+          if (n > 0) this.installPrompt.offer('import');
           this.imported.emit(res.data);
         },
         error: (err) => {
