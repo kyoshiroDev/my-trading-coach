@@ -39,7 +39,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 | | Prix | Trades | Comptes | Essai |
 |---|---|---|---|---|
 | **FREE** | 0€ · sans CB | illimité | 1 | – |
-| **PREMIUM** | 49€/mois · 490€/an (−98€) | illimité | illimité | 30 j (mensuel uniquement, carte requise) |
+| **PREMIUM** | 49€/mois · 490€/an (−98€) | illimité | illimité | 14 j offerts à l'inscription, sans carte (#769) ; 30 j Stripe seulement pour les comptes antérieurs jamais essayés |
 
 ---
 
@@ -278,11 +278,12 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Coût IA** estimé (prod, coûts moyens par appel) : ≈ 0,10 à 0,20 $ par inscrit sur 14 j,
   ≈ 0,40 $ au pire ; 300 inscrits ≈ 30 à 60 $ (pire cas ≈ 120 $).
 
-## Essai 30 jours (mensuel uniquement)
+## Essai Stripe 30 jours (mensuel, comptes antérieurs à #769 seulement)
 - Accordé **si** `!user.trialUsed` **ET** prix **mensuel** (`isMonthlyPrice`). Constante `TRIAL_PERIOD_DAYS = 30`.
 - **Annuel** : aucun essai, facturation immédiate (un essai suivi d'un prélèvement de 490€ génère contestations).
 - **`trialUsed`** n'est marqué `true` **que** si un essai a réellement été accordé (`subscription.trial_end != null`) — un abonné annuel direct garde son droit à l'essai (fix PROMPT-169).
-- Messaging : **« 1 mois offert · carte requise · annulable en un clic »** partout (landing, register, emails, CGU). Pas de « sans CB » sur le payant (l'essai passe par Stripe checkout = carte requise).
+- Messaging (#769, remplace « 1 mois offert · carte requise ») : **« {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts · sans carte · puis gratuit, sans engagement »** (inscription, landing, FAQ, CGU, e-mail de bienvenue). Boutons « Essayer Premium · {N} jours offerts » (URL `/register?plan=premium` conservée, plus de paiement direct). Relances e-mail (`first_week_recap`, `premium_upsell`) : « Sans engagement, annulable en un clic », aucun essai promis. Fenêtre des offres pendant l'essai : « Si tu t'abonnes maintenant, tu paies dès aujourd'hui et les jours offerts restants ne sont pas reportés » (vérifié : la synchro Stripe ne touche pas `trialEndsAt`). « 1 mois offert » ne reste que pour le PARRAIN.
+- `first_week_recap` (J7-J14, essais en cours exclus) ne touche plus que les inscrits SANS essai (réinscription récente) : de fait, la suite n'a plus de bilan de 1re semaine pour les nouveaux inscrits. L'e-mail J+11 de B2 prend le relais.
 
 ---
 

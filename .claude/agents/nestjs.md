@@ -690,6 +690,10 @@ canActivate(ctx: ExecutionContext): boolean {
   L'arrêt de la synchro des comptes en trop arrive en B0 (journal seul d'abord).
 - Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
   par Greg seulement.
+- E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
+  paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
+  (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
+  plus d'essai promis (`NO_TRIAL_LINE`).
 
 ---
 
