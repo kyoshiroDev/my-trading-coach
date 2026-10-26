@@ -12,6 +12,8 @@ export class ProductEventsService {
   /**
    * Compte un événement (jour Paris × user × événement × écran). `INSERT … ON CONFLICT` :
    * atomique, sans course. Best-effort : une erreur ne remonte jamais à l'utilisateur.
+   * Journal : le NOM de l'erreur seulement. Le message d'une erreur Prisma recopie la requête et
+   * ses valeurs, donc l'identifiant du compte.
    */
   async record(userId: string, event: ProductEvent, place = ''): Promise<void> {
     const date = new Date(`${todayParis()}T00:00:00Z`);
@@ -23,7 +25,7 @@ export class ProductEventsService {
         DO UPDATE SET "count" = "ProductEventDaily"."count" + 1
       `;
     } catch (err) {
-      this.logger.warn(`Événement produit non enregistré (${event}) : ${(err as Error).message}`);
+      this.logger.warn(`Événement produit non enregistré (${event}) : ${err instanceof Error ? err.name : 'erreur inconnue'}`);
     }
   }
 }
