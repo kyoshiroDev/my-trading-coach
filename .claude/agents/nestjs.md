@@ -2144,6 +2144,8 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
   (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
   vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  **Essai Premium en cours exclu** (#769, `notInTrial(now)` : `trialEndsAt` nul ou passé) de
+  `first_week_recap`, `founder_followup` et `premium_upsell` : le plan reste FREE pendant l'essai.
   `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
   transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
 - **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET

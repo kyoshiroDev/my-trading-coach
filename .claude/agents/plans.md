@@ -272,7 +272,8 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Fin** : rien n'est supprimé. Le cron quotidien `TrialEndService` réaligne le rôle Discord (vaut
   aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
   (`overFreeLimit`), l'utilisateur choisit le compte gardé ; l'arrêt de leur synchro arrive en B0.
-- **Après l'essai** : mensuel 49 € sans essai Stripe (`trialUsed`), annuel inchangé. Les anciens
+- **Après l'essai** : mensuel 49 € sans essai Stripe (`trialUsed`), annuel inchangé. Garde : `stripe/stripe-signup-trial.spec.ts`.
+- **Relances Premium** (`first_week_recap`, `founder_followup`, `premium_upsell`) : jamais pendant un essai en cours. Les anciens
   comptes jamais essayés gardent les 30 j.
 - **Coût IA** estimé (prod, coûts moyens par appel) : ≈ 0,10 à 0,20 $ par inscrit sur 14 j,
   ≈ 0,40 $ au pire ; 300 inscrits ≈ 30 à 60 $ (pire cas ≈ 120 $).
