@@ -92,6 +92,9 @@ retire l'appareil → inéligible au balayage suivant.
   k6 habituel → CPU / RAM des conteneurs web et p95. Résultat consigné dans le doc de test de
   charge ; le plafond par défaut en découle.
 - Le balayage : 1 `ZRANGE` + lectures groupées toutes les 30 s par process, négligeable.
+- **Mesuré le 2026-10-26** (`docs/ops/test-charge-vps-prod.md` section 6, `tools/load/veille-ws-bench.ts`) :
+  ≈ 3 % d'un cœur et ≈ 25 Mo pour 1 000 veilles inactives. Le banc complet sur le VPS prod n'est pas
+  nécessaire au plafond de 500.
 
 ## 6. Textes (cohérence `plans.md`, 4 points)
 

@@ -257,9 +257,11 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Veille serveur (#770)** : WebSocket Tradovate gardé app fermée pendant la séance = **Premium**
   (`isPremiumAccess`, dans `watchVerdict`, côté API), comme les alertes en direct qu'elle relaie.
   Cohérence aux 4 points : guard = `watchVerdict` ; front = texte du délai selon `liveWhileClosed` ;
-  cron = synchro de fond inchangée ; **landing (`Pricing.astro`, 2 lignes « app ouverte ») à changer
-  SEULEMENT le jour où `TRADOVATE_WATCH_MAX` est posé en prod** (« app ouverte ou en notification
-  pendant ta séance »), pas avant : elle décrirait une fonction éteinte.
+  cron = synchro de fond inchangée ; landing + `PLAN_BENEFITS` + `SIGNUP_PITCH_POINTS` : « app ouverte
+  ou en notification pendant ta séance » (`plan-benefits.spec.ts` le vérifie). Ce texte n'est vrai
+  qu'avec `TRADOVATE_WATCH_MAX` posé en prod : **la variable est posée sur le VPS prod AVANT la
+  promotion qui apporte ce texte** (inerte sur l'ancien code). Retirer la veille en prod = remettre
+  « app ouverte » partout.
 - **Daily recap** : accès Premium réel (`isPremiumAccess` : PREMIUM, ADMIN, BETA_TESTER, essai / **mois offert**
   actif), même règle que le Weekly Debrief, au cron (`DailyRecapCron`) ET à la génération de la phrase IA
   (`DailyRecapService`). Avant #627, `plan: 'PREMIUM'` seul : un mois offert n'avait pas son récap.
