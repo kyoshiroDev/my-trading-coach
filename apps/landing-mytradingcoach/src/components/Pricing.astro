@@ -7,6 +7,7 @@ import {
   PREMIUM_ANNUAL_SAVINGS_EUR,
   PLAN_BENEFITS,
   PREMIUM_PRICE_EUR,
+  PREMIUM_SIGNUP_TRIAL_DAYS,
 } from '@mtc/shared';
 
 // Cartes Gratuit / Fondateur / Premium : listes courtes PARTAGÉES avec l'app et les e-mails
@@ -43,7 +44,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     <div class="reveal head">
       <span class="sec-label">Tarifs</span>
       <h2>Simple. <em>Transparent.</em></h2>
-      <p class="sec-sub">Gratuit pour vivre le compagnon au quotidien, trades illimités inclus. Premium pour la puissance IA personnelle. Premium mensuel à {PREMIUM_PRICE_EUR.monthly} € : 1 mois offert, aucun prélèvement avant la fin.</p>
+      <p class="sec-sub">Gratuit pour vivre le compagnon au quotidien, trades illimités inclus. Premium pour la puissance IA personnelle. À l'inscription, {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, sans carte&nbsp;: ensuite tu restes en Gratuit, sauf si tu choisis une offre.</p>
     </div>
     <div class="plus-box reveal" aria-labelledby="plus-title">
       <div id="plus-title" class="plus-title">Ce que Premium ajoute au Gratuit</div>
@@ -139,16 +140,16 @@ const FounderWrap = founderOpen ? 'div' : 'template';
           {premiumBenefits.map((f) => <li>{f}</li>)}
         </ul>
         <a href={`${APP_URL}/register?plan=premium`} class="price-cta prim" data-cta="premium" data-ga-event="cta_trial" data-ga-place="pricing">
-          <span class="cta-main">Essayer Premium · 1 mois offert →</span>
-          <span class="cta-sub-text">🔥 Carte requise · annulable en un clic</span>
+          <span class="cta-main">Essayer Premium · {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts →</span>
+          <span class="cta-sub-text">Sans carte · puis Gratuit, sans engagement</span>
         </a>
       </div>
 
     </div>
     <FounderWrap data-founder-note-tpl={founderOpen ? undefined : ''} class={founderOpen ? 'founder-slot' : undefined}>
       <p class="founder-note" data-founder-note>
-        Le tarif fondateur n'a pas d'essai : le plan Gratuit sert d'essai. L'essai de 30 jours reste
-        sur le Premium à {PREMIUM_PRICE_EUR.monthly} €/mois.
+        Le tarif fondateur n'a pas d'essai&nbsp;: le premier paiement est immédiat. Pour essayer avant,
+        tout nouvel inscrit a {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, sans carte.
       </p>
     </FounderWrap>
     {founderOpen && (
