@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import type { AccountPlanHint, PropFirmCatalogFirm, PropFirmPhaseSummary, PropFirmPlanSummary } from '@mtc/shared';
 import { AccountsApi, type TradingAccount, type UpdateAccountPayload } from '@app/core/api/accounts.api';
 import { PropFirmsApi } from '@app/core/api/prop-firms.api';
+import { InstallPromptService } from '@app/core/install/install-prompt.service';
 import { AccountPlanWizardComponent } from './account-plan-wizard.component';
 import TEMPLATE from './account-plan-wizard.component.html?raw';
 
@@ -35,8 +36,10 @@ function mount(hint: AccountPlanHint | null) {
       return of({ data: { id: 'a1', ...payload } as unknown as TradingAccount });
     }),
   };
+  const installPrompt = { offer: vi.fn() };
   TestBed.configureTestingModule({
     providers: [
+      { provide: InstallPromptService, useValue: installPrompt },
       { provide: AccountsApi, useValue: accountsApi },
       { provide: PropFirmsApi, useValue: { getCatalog: () => of({ data: CATALOG }) } },
     ],
@@ -59,7 +62,7 @@ function mount(hint: AccountPlanHint | null) {
     b.click();
     fixture.detectChanges();
   };
-  return { el, q, click, updates, done, accountsApi, fixture };
+  return { el, q, click, updates, done, accountsApi, fixture, installPrompt };
 }
 
 const APEX_HINT: AccountPlanHint = { externalName: 'APEX123456', env: 'demo', ownerIsLogin: false, startingBalance: 50_000 };
@@ -122,6 +125,19 @@ describe('AccountPlanWizardComponent — « Quel est ce compte ? »', () => {
     fixture.detectChanges();
     click('apw-unlisted-save');
     expect(updates).toEqual([{ propFirmPlanId: null, planLinkChoice: 'UNLISTED', unlistedFirm: 'FTMO', broker: 'FTMO' }]);
+  });
+
+  it('installation de l’app : proposée (Premium) seulement quand un plan prop firm est relié', () => {
+    const linked = mount(APEX_HINT);
+    linked.click('apw-guess-yes');
+    linked.click('apw-program-apex-intraday-50k');
+    expect(linked.installPrompt.offer).toHaveBeenCalledExactlyOnceWith('plan-linked');
+    TestBed.resetTestingModule();
+
+    const later = mount(null);
+    later.click('apw-later');
+    expect(later.updates).toHaveLength(1);
+    expect(later.installPrompt.offer).not.toHaveBeenCalled();
   });
 
   it('disclaimer d\'estimation toujours affiché', () => {
