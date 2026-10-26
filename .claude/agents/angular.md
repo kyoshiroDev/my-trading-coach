@@ -1446,6 +1446,9 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   d'installation (#715). Sans manifest (#715), l'app ajoutée à l'écran d'accueil d'un iPhone avant
   iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `TRADER_PUSH_ENABLED` reste
   coupé en production jusque-là (`deploy.md`) ; coupé, la section est absente de l'app.
+- Délai affiché par type (`rowDelay`) : `delay` (« si MTC est ouvert ») ou, si
+  `settings.liveWhileClosed` (veille serveur #770 allumée côté API), `delayWhileClosed` (« En direct
+  pendant ta séance, même MTC fermé »). Jamais le second sans le drapeau : dit honnêtement.
 
 ## Installation PWA de l'app (2026-10-25, PR 1 : manifest)
 

@@ -18,6 +18,7 @@ import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 import { TradovateBackgroundRefreshCron } from './tradovate-background-refresh.cron';
 import { LIVE_SOCKET_FACTORY, TradovateLiveService } from './tradovate-live.service';
+import { TradovateWatchService } from './tradovate-watch.service';
 import { nativeSocketFactory } from './tradovate-live.connection';
 import { TradovateLiveGateway } from './tradovate-live.gateway';
 import { PropAlertsService } from './prop-alerts.service';
@@ -56,6 +57,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     TradovateLiveService,
     // WebSocket natif (Node ≥ 22) ; remplacé par un faux serveur Tradovate en test.
     { provide: LIVE_SOCKET_FACTORY, useValue: nativeSocketFactory },
+    // Veille serveur (#770) : WebSocket gardé app fermée pour les alertes en push.
+    TradovateWatchService,
     TradovateLiveGateway,
     // Alertes prop firm « avant la casse » (Premium) sur chaque solde poussé.
     PropAlertsService,

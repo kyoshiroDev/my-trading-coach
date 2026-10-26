@@ -71,7 +71,8 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 - 🚨 **Alertes avant la limite** et 🧘 **anti-tilt** en direct (+ sons et notifications) : app ouverte,
   compte Tradovate connecté (synchro en direct uniquement, rien sur une saisie manuelle, pas d'e-mail ;
   push vers les appareils abonnés, #666 ; app fermée, limites, objectif et payout relevés par la
-  synchro de fond, jusqu'à 15 min de décalage)
+  synchro de fond, jusqu'à 15 min de décalage ; veille serveur #770, éteinte tant que
+  `TRADOVATE_WATCH_MAX` n'est pas posé : en direct aussi app fermée pendant la séance, Premium seulement)
 
 ### Avantages affichés : liste officielle (`PLAN_BENEFITS`, `@mtc/shared`, validée le 2026-10-19)
 
@@ -253,6 +254,12 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   `@mtc/shared`), `CONNECTION` (connexion Tradovate à renouveler) = **gratuit**, la synchro Tradovate
   l'étant. Gating CÔTÉ API dans `TraderNotifier` (`isPremiumAccess`), en plus des sources (déjà
   Premium). S'abonner est ouvert à tous (un Free reçoit `CONNECTION`).
+- **Veille serveur (#770)** : WebSocket Tradovate gardé app fermée pendant la séance = **Premium**
+  (`isPremiumAccess`, dans `watchVerdict`, côté API), comme les alertes en direct qu'elle relaie.
+  Cohérence aux 4 points : guard = `watchVerdict` ; front = texte du délai selon `liveWhileClosed` ;
+  cron = synchro de fond inchangée ; **landing (`Pricing.astro`, 2 lignes « app ouverte ») à changer
+  SEULEMENT le jour où `TRADOVATE_WATCH_MAX` est posé en prod** (« app ouverte ou en notification
+  pendant ta séance »), pas avant : elle décrirait une fonction éteinte.
 - **Daily recap** : accès Premium réel (`isPremiumAccess` : PREMIUM, ADMIN, BETA_TESTER, essai / **mois offert**
   actif), même règle que le Weekly Debrief, au cron (`DailyRecapCron`) ET à la génération de la phrase IA
   (`DailyRecapService`). Avant #627, `plan: 'PREMIUM'` seul : un mois offert n'avait pas son récap.
