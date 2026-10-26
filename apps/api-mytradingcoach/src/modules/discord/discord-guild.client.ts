@@ -28,6 +28,32 @@ export class DiscordGuildClient {
     await this.call(env, discordId, env.premium, 'DELETE');
   }
 
+  /**
+   * Retrait des deux rôles quand l'utilisateur délie son Discord : contrairement à
+   * `removePlanRoles`, renvoie `false` au moindre échec (réseau, délai, réponse HTTP en erreur,
+   * configuration absente) pour que l'appelant garde la liaison. 404 compte comme réussi : le
+   * membre a quitté le serveur, il n'a plus aucun rôle. Journal : nom de l'erreur ou statut HTTP
+   * seulement, jamais l'identifiant Discord ni l'URL.
+   */
+  async tryRemovePlanRoles(discordId: string): Promise<boolean> {
+    const env = this.env();
+    if (!env) return false;
+    for (const roleId of [env.membre, env.premium]) {
+      const url = `https://discord.com/api/v10/guilds/${env.guildId}/members/${discordId}/roles/${roleId}`;
+      try {
+        const res = await fetchWithTimeout(url, { method: 'DELETE', headers: { Authorization: `Bot ${env.botToken}` } });
+        if (!res.ok && res.status !== 404) {
+          this.logger.error(`Discord DELETE rôle refusé : HTTP ${res.status}`);
+          return false;
+        }
+      } catch (err: unknown) {
+        this.logger.error(`Discord DELETE rôle échoué : ${err instanceof Error ? err.name : 'inconnue'}`);
+        return false;
+      }
+    }
+    return true;
+  }
+
   private env() {
     const guildId = process.env['DISCORD_GUILD_ID'];
     const botToken = process.env['DISCORD_BOT_TOKEN'];

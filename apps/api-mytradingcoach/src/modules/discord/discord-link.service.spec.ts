@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ServiceUnavailableException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { RedisService } from '../infra/redis.service';
 import type { DiscordGuildClient } from './discord-guild.client';
 import {
   DISCORD_CODE_ALPHABET,
   DISCORD_CODE_TTL_S,
+  DISCORD_UNLINK_FAILED_MESSAGE,
   DiscordLinkService,
   REDEEM_LIMIT_PER_HOUR,
   REDEEM_LIMIT_PER_MINUTE,
@@ -69,10 +71,11 @@ function fakePrisma(users: Record<string, { discordId: string | null; plan?: str
       const r = rows.get(where.id);
       return r ? { ...r } : null;
     }),
-    updateMany: vi.fn(async ({ where, data }: { where: { discordId: string; NOT: { id: string } }; data: { discordId: null } }) => {
+    updateMany: vi.fn(async ({ where, data }: { where: { discordId: string; id?: string; NOT?: { id: string } }; data: { discordId: null } }) => {
       let count = 0;
       for (const [id, r] of rows) {
-        if (r.discordId === where.discordId && id !== where.NOT.id) { r.discordId = data.discordId; count++; }
+        const idOk = where.id !== undefined ? id === where.id : id !== where.NOT?.id;
+        if (r.discordId === where.discordId && idOk) { r.discordId = data.discordId; count++; }
       }
       return { count };
     }),
@@ -94,7 +97,11 @@ const DISCORD_B = '222222222222222222';
 describe('DiscordLinkService (#741)', () => {
   let r: ReturnType<typeof fakeRedis>;
   let db: ReturnType<typeof fakePrisma>;
-  let guild: { setPlanRole: ReturnType<typeof vi.fn>; removePlanRoles: ReturnType<typeof vi.fn> };
+  let guild: {
+    setPlanRole: ReturnType<typeof vi.fn>;
+    removePlanRoles: ReturnType<typeof vi.fn>;
+    tryRemovePlanRoles: ReturnType<typeof vi.fn>;
+  };
   let service: DiscordLinkService;
 
   const build = (users: Parameters<typeof fakePrisma>[0]) => {
@@ -104,7 +111,11 @@ describe('DiscordLinkService (#741)', () => {
 
   beforeEach(() => {
     r = fakeRedis();
-    guild = { setPlanRole: vi.fn(async () => undefined), removePlanRoles: vi.fn(async () => undefined) };
+    guild = {
+      setPlanRole: vi.fn(async () => undefined),
+      removePlanRoles: vi.fn(async () => undefined),
+      tryRemovePlanRoles: vi.fn(async () => true),
+    };
     build({ alice: { discordId: null }, bob: { discordId: null } });
   });
 
@@ -243,5 +254,46 @@ describe('DiscordLinkService (#741)', () => {
     build({ alice: { discordId: DISCORD_A }, bob: { discordId: null } });
     await expect(service.status('alice')).resolves.toEqual({ linked: true });
     await expect(service.status('bob')).resolves.toEqual({ linked: false });
+  });
+
+  describe('unlink : délier son Discord', () => {
+    it('relié → rôles retirés sur le serveur, liaison effacée, état « non relié »', async () => {
+      build({ alice: { discordId: DISCORD_A } });
+      await expect(service.unlink('alice')).resolves.toEqual({ linked: false });
+      expect(guild.tryRemovePlanRoles).toHaveBeenCalledWith(DISCORD_A);
+      expect(db.rows.get('alice')!.discordId).toBeNull();
+      await expect(service.status('alice')).resolves.toEqual({ linked: false });
+    });
+
+    it('contre-épreuve : retrait du rôle échoué → 503 avec un message clair, liaison gardée', async () => {
+      build({ alice: { discordId: DISCORD_A } });
+      guild.tryRemovePlanRoles.mockResolvedValue(false);
+      const err = await service.unlink('alice').catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ServiceUnavailableException);
+      expect((err as Error).message).toBe(DISCORD_UNLINK_FAILED_MESSAGE);
+      expect(DISCORD_UNLINK_FAILED_MESSAGE).not.toContain(DISCORD_A);
+      expect(db.rows.get('alice')!.discordId).toBe(DISCORD_A);
+    });
+
+    it('rien de relié → aucun appel à Discord', async () => {
+      await expect(service.unlink('alice')).resolves.toEqual({ linked: false });
+      expect(guild.tryRemovePlanRoles).not.toHaveBeenCalled();
+    });
+
+    it('n’efface que le compte qui délie, pas les autres', async () => {
+      build({ alice: { discordId: DISCORD_A }, bob: { discordId: DISCORD_B } });
+      await service.unlink('alice');
+      expect(db.rows.get('bob')!.discordId).toBe(DISCORD_B);
+    });
+
+    it('autre Discord relié pendant le retrait des rôles → la nouvelle liaison n’est pas effacée', async () => {
+      build({ alice: { discordId: DISCORD_A } });
+      guild.tryRemovePlanRoles.mockImplementation(async () => {
+        db.rows.get('alice')!.discordId = DISCORD_B;
+        return true;
+      });
+      await service.unlink('alice');
+      expect(db.rows.get('alice')!.discordId).toBe(DISCORD_B);
+    });
   });
 });
