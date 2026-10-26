@@ -5,6 +5,12 @@ import { ACCOUNT_LIMITS } from '../constants/pricing.const';
 
 const DAY_MS = 86_400_000;
 
+/** Jours de calendrier (heure locale) entre aujourd'hui et `end` : 0 si `end` tombe aujourd'hui. */
+export function calendarDaysUntil(end: Date, now: Date): number {
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.max(0, Math.round((day(end) - day(now)) / DAY_MS));
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserStore {
   private readonly auth = inject(AuthService);
@@ -37,13 +43,13 @@ export class UserStore {
   readonly isOfferedPremium = computed(() => this.freePremium() && this.user()?.trialSource !== 'SIGNUP');
 
   /**
-   * Essai d'inscription en cours (#769) : jours restants (arrondis au jour supérieur, 1 le dernier
-   * jour), sinon `null`. Démo, abonné Stripe et Premium offert par l'admin : `null`.
+   * Essai d'inscription en cours (#769) : jours de CALENDRIER (heure locale) jusqu'au jour de fin,
+   * 0 le jour de fin, sinon `null`. Démo, abonné Stripe et Premium offert par l'admin : `null`.
    */
   readonly signupTrialDaysLeft = computed<number | null>(() => {
     const user = this.user();
     if (!this.freePremium() || user?.trialSource !== 'SIGNUP' || !user.trialEndsAt) return null;
-    return Math.max(1, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / DAY_MS));
+    return calendarDaysUntil(new Date(user.trialEndsAt), new Date());
   });
 
   /**

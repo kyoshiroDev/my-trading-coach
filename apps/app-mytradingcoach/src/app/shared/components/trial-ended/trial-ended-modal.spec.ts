@@ -46,6 +46,8 @@ describe('Fenêtre de fin d’essai (#769)', () => {
     expect(el.textContent).toContain('Reste gratuit');
     expect(el.textContent).toContain('Demande Premium');
     expect(el.textContent).toContain('rien n\'est supprimé');
+    // Valable pour toute durée (essai de 14 jours ou Premium offert par l'admin) : aucune durée citée.
+    expect(el.textContent).not.toMatch(/\d+\s*jours/);
     expect(q('trial-ended-accounts')).toBeNull();
   });
 

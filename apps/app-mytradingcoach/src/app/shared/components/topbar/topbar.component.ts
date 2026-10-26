@@ -81,15 +81,15 @@ import { OfferIntentService } from '../../../core/services/offer-intent.service'
     </header>
 
     <!-- Essai d'inscription en cours (#769) : rappel discret, défile avec la page. -->
-    @if (trialDaysLeft(); as days) {
+    @if (trialDaysLeft() !== null) {
       <div class="trial-strip" data-testid="trial-strip">
         <svg [lucideIcon]="GiftIcon" [size]="14" class="trial-strip-ic"></svg>
         <span class="trial-strip-text">
           <strong>Premium offert</strong> ·
-          @if (days === 1) {
-            dernier jour
-          } @else {
-            il te reste <span class="trial-strip-days">{{ days }}</span> jours
+          @switch (trialDaysLeft()) {
+            @case (0) { dernier jour }
+            @case (1) { il te reste <span class="trial-strip-days">1</span> jour }
+            @default { il te reste <span class="trial-strip-days">{{ trialDaysLeft() }}</span> jours }
           }
         </span>
         <button type="button" class="trial-strip-cta" data-testid="trial-strip-offers" (click)="openOffers()">

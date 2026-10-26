@@ -32,10 +32,15 @@ describe('Bandeau « Premium offert » (#769)', () => {
     expect(mount(null).strip).toBeNull();
   });
 
-  it('jours restants, puis « dernier jour »', () => {
-    expect(mount(9).strip?.textContent?.replace(/\s+/g, ' ')).toContain('Premium offert · il te reste 9 jours');
-    TestBed.resetTestingModule();
-    expect(mount(1).strip?.textContent?.replace(/\s+/g, ' ')).toContain('dernier jour');
+  it.each([
+    [14, 'il te reste 14 jours'],
+    [2, 'il te reste 2 jours'],
+    [1, 'il te reste 1 jour'],
+    [0, 'dernier jour'],
+  ])('%i jour(s) de calendrier → « %s », jamais « 0 jours » ni « 1 jours »', (days, text) => {
+    const label = mount(days).strip?.textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(label).toContain(`Premium offert · ${text}`);
+    expect(label).not.toMatch(/\b0 jours?\b|\b1 jours\b/);
   });
 
   it('« Voir les offres » ouvre la fenêtre des offres (point de clic bandeau)', () => {

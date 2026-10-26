@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { UserStore } from './user.store';
+import { UserStore, calendarDaysUntil } from './user.store';
 import { AuthService, AuthUser } from '../auth/auth.service';
 
 // Essai d'inscription (#769) : jours restants (bandeau), fin d'essai (fenêtre), et le Premium offert
@@ -28,11 +28,20 @@ describe('UserStore : essai d’inscription (#769)', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('jours restants arrondis au jour supérieur, 1 le dernier jour', () => {
-    set({ trialSource: 'SIGNUP', trialEndsAt: inDays(9.2), signupTrialEndsAt: inDays(9.2) });
-    expect(store.signupTrialDaysLeft()).toBe(10);
-    set({ trialSource: 'SIGNUP', trialEndsAt: inDays(0.1), signupTrialEndsAt: inDays(0.1) });
-    expect(store.signupTrialDaysLeft()).toBe(1);
+  it('jours de calendrier jusqu’au jour de fin : 0 le jour de fin, 1 la veille', () => {
+    const at = (d: number, h: number) => {
+      const x = new Date(NOW);
+      x.setDate(x.getDate() + d);
+      x.setHours(h, 0, 0, 0);
+      return x;
+    };
+    expect(calendarDaysUntil(at(0, 23), at(0, 1))).toBe(0); // fin plus tard aujourd'hui
+    expect(calendarDaysUntil(at(1, 0), at(0, 23))).toBe(1); // fin demain, même dans 1 h
+    expect(calendarDaysUntil(at(1, 23), at(0, 1))).toBe(1);
+    expect(calendarDaysUntil(at(9, 3), at(0, 15))).toBe(9);
+    set({ trialSource: 'SIGNUP', trialEndsAt: at(0, 23).toISOString(), signupTrialEndsAt: at(0, 23).toISOString() });
+    vi.setSystemTime(at(0, 8));
+    expect(store.signupTrialDaysLeft()).toBe(0);
     expect(store.isPremium()).toBe(true);
   });
 

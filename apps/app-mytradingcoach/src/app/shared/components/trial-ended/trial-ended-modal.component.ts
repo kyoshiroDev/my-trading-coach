@@ -5,7 +5,6 @@ import { PLAN_BENEFITS } from '@mtc/shared';
 import { UserStore } from '../../../core/stores/user.store';
 import { SelectedAccountStore } from '../../../core/stores/selected-account.store';
 import { OfferIntentService } from '../../../core/services/offer-intent.service';
-import { PREMIUM_SIGNUP_TRIAL_DAYS } from '../../../core/constants/pricing.const';
 
 /** Clé du stockage local : la fenêtre ne s'affiche qu'une fois par compte et par appareil. */
 export const TRIAL_ENDED_SEEN_KEY = 'mtc_trial_ended_seen';
@@ -45,7 +44,6 @@ export class TrialEndedModalComponent {
   private readonly accounts = inject(SelectedAccountStore);
   private readonly offerIntent = inject(OfferIntentService);
 
-  protected readonly trialDays = PREMIUM_SIGNUP_TRIAL_DAYS;
   protected readonly freeBenefits = PLAN_BENEFITS.free;
   protected readonly premiumBenefits = PLAN_BENEFITS.premium;
 
