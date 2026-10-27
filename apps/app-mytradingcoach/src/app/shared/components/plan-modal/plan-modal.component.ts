@@ -126,6 +126,14 @@ export class PlanModalComponent implements OnInit {
     return FOUNDER_INELIGIBLE_MESSAGES[key];
   });
   protected readonly founderAvailable = this.offersStore.founderAvailable;
+  /**
+   * Réservation fondateur pendant le Premium offert (#769) : date (JJ/MM) du premier prélèvement,
+   * donnée par l'API (règle des 48 h de Stripe), sinon `null` (paiement immédiat).
+   */
+  protected readonly founderChargeDate = computed(() => {
+    const at = this.offersStore.offers()?.founder.firstChargeAt;
+    return at ? new Date(at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : null;
+  });
   protected readonly founderOffer = computed(() => this.offersStore.offers()?.founderOffer ?? null);
   /** Compteur de places (libellé partagé : « 200 places disponibles » tant qu'aucune n'est prise). */
   protected readonly seatsLabel = computed(() => {

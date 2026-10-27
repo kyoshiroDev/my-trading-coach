@@ -30,6 +30,17 @@ describe('checkoutCopy : une page, des textes par offre', () => {
     expect(c.legal).toBe('prélever 29,00 € par mois');
   });
 
+  it('fondateur pendant le Premium offert (#769) : réservation, rien avant la fin de l’essai, garantie ensuite', () => {
+    const c = checkoutCopy({ ...base, offer: 'founder', recurringEur: 29, seatsLeft: 150, firstChargeAt: '2026-11-16T10:00:00.000Z' }, NOW);
+    expect(c.note).toBe('Aucun prélèvement avant le 16 novembre : ton Premium offert continue jusque-là. Prix bloqué tant que ton abonnement reste actif.');
+    expect(c.assurances.map((a) => a.icon)).toEqual(['trial', 'refund', 'cancel', 'secure']);
+    expect(c.assurances[0]).toMatchObject({ strong: 'Annule avant le 16 novembre', text: 'et tu ne paies rien : la place est alors rendue.' });
+    expect(c.assurances[1].text).toBe('à partir du premier paiement, sans justification.');
+    expect(c.thenLabel).toBe('À partir du 16 novembre');
+    expect(c.cta).toBe('Réserver ma place');
+    expect(c.legal).toBe('prélever 29,00 € par mois à partir du 16 novembre');
+  });
+
   it('fondateur annuel : équivalent mensuel, une seule place au singulier', () => {
     const c = checkoutCopy({ ...base, offer: 'founder', interval: 'year', recurringEur: 290, normalEur: 490, seatsLeft: 1 }, NOW);
     expect(c.eyebrow).toBe("Offre fondateur · Plus qu'une place sur 200");

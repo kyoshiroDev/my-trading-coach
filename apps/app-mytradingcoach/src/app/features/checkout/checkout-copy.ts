@@ -58,6 +58,8 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
   const legalStart = s.trialDays > 0 ? ` à partir du ${trialEnd}` : '';
 
   if (s.offer === 'founder') {
+    // Réservation pendant le Premium offert (#769) : place prise maintenant, premier prélèvement plus tard.
+    const charge = s.firstChargeAt ? longDate(new Date(s.firstChargeAt)) : null;
     return {
       // Compteur : libellé partagé (« 200 places disponibles », « Plus que 154 places sur 200 »…).
       eyebrow: (() => {
@@ -67,15 +69,18 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
       title: 'Premium, au prix fondateur',
       lead: FOUNDER_LEAD,
       price: short(s.recurringEur), per, was: `${short(s.normalEur)} €`,
-      note: `Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`,
+      note: charge
+        ? `Aucun prélèvement avant le ${charge} : ton Premium offert continue jusque-là. Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`
+        : `Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`,
       assurances: [
-        { icon: 'refund', strong: `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours`, text: 'sur le premier paiement, sans justification.' },
+        ...(charge ? [{ icon: 'trial' as const, strong: `Annule avant le ${charge}`, text: 'et tu ne paies rien : la place est alors rendue.' }] : []),
+        { icon: 'refund', strong: `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours`, text: charge ? 'à partir du premier paiement, sans justification.' : 'sur le premier paiement, sans justification.' },
         cancel('le prix fondateur'),
         SECURE,
       ],
-      ...then,
-      cta: 'Devenir fondateur',
-      legal: `prélever ${eur(s.recurringEur)} ${perWord}`,
+      ...(charge ? { thenLabel: `À partir du ${charge}`, thenAmount: `${eur(s.recurringEur)} ${per}` } : then),
+      cta: charge ? 'Réserver ma place' : 'Devenir fondateur',
+      legal: `prélever ${eur(s.recurringEur)} ${perWord}${charge ? ` à partir du ${charge}` : ''}`,
     };
   }
 
