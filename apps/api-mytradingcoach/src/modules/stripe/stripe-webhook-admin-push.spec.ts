@@ -33,7 +33,7 @@ function makeSvc() {
     invalidateBillingCacheByCustomerId: vi.fn(),
   };
   const referrals = { processReferral: vi.fn() };
-  const founders = { markLost: vi.fn(), updateInterval: vi.fn() };
+  const founders = { markLost: vi.fn(), updateInterval: vi.fn(), releaseUnpaid: vi.fn().mockResolvedValue(null), markFirstPaid: vi.fn().mockResolvedValue(null) };
   const partners = { markLost: vi.fn(), release: vi.fn(), claim: vi.fn() };
   const queue = { add: vi.fn().mockResolvedValue({}) };
   const config = { getOrThrow: vi.fn(() => 'whsec_fake'), get: vi.fn() };

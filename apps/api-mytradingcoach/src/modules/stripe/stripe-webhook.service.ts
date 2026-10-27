@@ -136,6 +136,8 @@ export class StripeWebhookService {
         return this.onCustomerDeleted(event.data.object as Stripe.Customer);
       case 'invoice.payment_failed':
         return this.onPaymentFailed(event.data.object as Stripe.Invoice);
+      case 'invoice.payment_action_required':
+        return this.onPaymentActionRequired(event.data.object as Stripe.Invoice);
       case 'invoice.payment_succeeded':
         return this.onPaymentSucceeded(event.data.object as Stripe.Invoice);
       case 'checkout.session.expired':
@@ -219,8 +221,9 @@ export class StripeWebhookService {
 
   private async onSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
     // Fin RÉELLE de l'abonnement : tarif fondateur perdu (la place reste prise). Une résiliation
-    // programmée, elle, ne passe pas ici avant la fin de période.
-    await this.founders.markLost(subscription.id);
+    // programmée, elle, ne passe pas ici avant la fin de période. Réservation jamais payée (#769 :
+    // prélèvement de fin d'essai en échec, ou annulée avant) : place rendue au compteur.
+    if (!(await this.founders.releaseUnpaid(subscription.id))) await this.founders.markLost(subscription.id);
     // Remise partenaire : perdue ; mais si le 1er paiement réel a échoué (fin d'essai impayée),
     // l'utilisation revient au quota du code.
     const neverPaid =
@@ -363,7 +366,7 @@ export class StripeWebhookService {
       );
     }
     if (synced && invoice.billing_reason === 'subscription_create') {
-      if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced);
+      if (this.isFounderPrice(synced.priceId)) await this.onFounderFirstPayment(synced, invoice);
       // Code partenaire : utilisation comptée dès la 1re facture (0 € pendant l'essai compris).
       else if (synced.metadata['partnerCode']) {
         const redemption = await this.partners.claim({
@@ -375,6 +378,13 @@ export class StripeWebhookService {
         });
         if (redemption) await this.sendPartnerWelcome(synced, redemption);
       }
+    }
+    // Premier paiement RÉEL d'une place fondateur (immédiat, ou fin du Premium offert, #769) : la
+    // garantie part de cette date, la bienvenue fondateur part une seule fois.
+    if (synced && this.isFounderPrice(synced.priceId) && (invoice.amount_paid ?? 0) > 0) {
+      const paidAt = invoice.status_transitions?.paid_at ? new Date(invoice.status_transitions.paid_at * 1000) : new Date();
+      const seat = await this.founders.markFirstPaid(synced.id, paidAt);
+      if (seat?.firstPaidAt) await this.sendFounderWelcome(synced, seat.number, seat.firstPaidAt);
     }
     await this.referrals.processReferral(invoice);
 
@@ -412,7 +422,7 @@ export class StripeWebhookService {
    * Sans place (cas théorique : réservation expirée ET offre complète), l'abonnement est annulé et
    * l'admin alerté pour rembourser : personne ne garde un tarif fondateur sans place.
    */
-  private async onFounderFirstPayment(synced: SyncedSubscription): Promise<void> {
+  private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<void> {
     const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
     const seat = await this.founders.claimSeat({
       userId: synced.id,
@@ -433,15 +443,19 @@ export class StripeWebhookService {
         .catch(() => undefined);
       return;
     }
-    await this.resend
-      .sendFounderWelcome({
-        to: synced.email,
-        userName: synced.name ?? '',
-        number: seat.number,
-        priceLabel: priceLabel(interval === 'year' ? FOUNDER_OFFER.priceAnnualEur : FOUNDER_OFFER.priceMonthlyEur, interval),
-        refundUntil: new Date(seat.takenAt.getTime() + FOUNDER_REFUND_DAYS * 86_400_000),
-      })
-      .catch((err: Error) => this.logger.warn(`Confirmation fondateur non envoyée (user ${synced.id}) : ${err.message}`));
+    // Réservation pendant un Premium offert (facture d'essai à 0 €, #769) : place prise, prélèvement à
+    // la fin de l'essai. Paiement immédiat : la bienvenue part du bloc « premier paiement réel ».
+    if ((invoice.amount_paid ?? 0) <= 0 && synced.stripeSubscriptionStatus === 'trialing' && synced.currentPeriodEnd) {
+      await this.resend
+        .sendFounderReservation({
+          to: synced.email,
+          userName: synced.name ?? '',
+          number: seat.number,
+          priceLabel: this.founderPriceLabel(interval),
+          firstChargeAt: synced.currentPeriodEnd,
+        })
+        .catch((err: Error) => this.logger.warn(`Réservation fondateur non confirmée par e-mail : ${err.name}`));
+    }
     // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
     const trials = await this.stripe.subscriptions
       .list({ customer: synced.customerId, status: 'trialing', limit: 10 })
@@ -453,6 +467,44 @@ export class StripeWebhookService {
         );
       }
     }
+  }
+
+  private founderPriceLabel(interval: FounderInterval): string {
+    return priceLabel(interval === 'year' ? FOUNDER_OFFER.priceAnnualEur : FOUNDER_OFFER.priceMonthlyEur, interval);
+  }
+
+  /** Bienvenue fondateur au premier paiement réel : garantie datée de ce paiement (#769). */
+  private async sendFounderWelcome(synced: SyncedSubscription, number: number, firstPaidAt: Date): Promise<void> {
+    const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
+    await this.resend
+      .sendFounderWelcome({
+        to: synced.email,
+        userName: synced.name ?? '',
+        number,
+        priceLabel: this.founderPriceLabel(interval),
+        refundUntil: new Date(firstPaidAt.getTime() + FOUNDER_REFUND_DAYS * 86_400_000),
+      })
+      .catch((err: Error) => this.logger.warn(`Bienvenue fondateur non envoyée : ${err.name}`));
+  }
+
+  /**
+   * Prélèvement en attente d'une confirmation de la banque (3D Secure) : Stripe ne retente pas seul
+   * (constaté en mode test le 27/10, tentatives 0 puis annulation au bout des relances). On envoie le
+   * lien de la facture, où le client confirme. Aucun changement d'accès ici.
+   */
+  private async onPaymentActionRequired(invoice: Stripe.Invoice): Promise<void> {
+    const customerId = extractId(invoice.customer);
+    if (!customerId || !invoice.hosted_invoice_url) return;
+    const user = await this.prisma.user.findUnique({
+      where: { stripeCustomerId: customerId },
+      select: { email: true, name: true, isDemo: true },
+    });
+    if (!user || user.isDemo) return;
+    await this.resend.sendPaymentActionRequired({
+      to: user.email,
+      userName: user.name ?? '',
+      invoiceUrl: invoice.hosted_invoice_url,
+    });
   }
 
   /** Confirmation d'un abonnement avec code partenaire : conditions figées, essai éventuel. */

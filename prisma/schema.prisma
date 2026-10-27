@@ -1196,7 +1196,8 @@ enum FounderSeatStatus {
   RELEASED
 }
 
-/// Une place fondateur = un numéro (1 à 200), attribué au premier paiement réussi.
+/// Une place fondateur = un numéro (1 à 200), attribué au premier paiement réussi, ou dès la
+/// réservation pendant un Premium offert (facture d'essai à 0 €, #769).
 model FounderSeat {
   number               Int               @id
   userId               String?           @unique
@@ -1208,6 +1209,9 @@ model FounderSeat {
   cta                  String?
   stripeSubscriptionId String?
   takenAt              DateTime          @default(now())
+  /// Premier paiement réel (> 0 €). Différé pour une réservation pendant un Premium offert (#769) :
+  /// la garantie « satisfait ou remboursé » court à partir de cette date. Null = réservée, pas payée.
+  firstPaidAt          DateTime?
   /// Fin du tarif : perte (abonnement terminé), remboursement ou libération.
   endedAt              DateTime?
 

@@ -166,7 +166,7 @@ describe('checkout Premium au prix normal : inchangé', () => {
 
 // ── Webhooks ─────────────────────────────────────────────────────────────────
 
-function makeWebhook(sub: { id: string; price: string; interval?: string; metadata?: Record<string, string> }) {
+function makeWebhook(sub: { id: string; price: string; interval?: string; metadata?: Record<string, string>; status?: string; trialEnd?: number }) {
   const user = { id: 'u1', email: 'u1@test.com', name: 'U', trialUsed: false, stripeSubscriptionId: null, stripeSubscriptionStatus: null };
   const prisma = {
     user: {
@@ -180,8 +180,8 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
   };
   const stripeSub = {
-    id: sub.id, status: 'active', customer: 'cus_1', trial_end: null, metadata: sub.metadata ?? {},
-    items: { data: [{ price: { id: sub.price, recurring: { interval: sub.interval ?? 'month' } }, current_period_end: 1_900_000_000 }] },
+    id: sub.id, status: sub.status ?? 'active', customer: 'cus_1', trial_end: sub.trialEnd ?? null, metadata: sub.metadata ?? {},
+    items: { data: [{ price: { id: sub.price, recurring: { interval: sub.interval ?? 'month' } }, current_period_end: sub.trialEnd ?? 1_900_000_000 }] },
   };
   const cancel = vi.fn().mockResolvedValue({});
   const invoicesList = vi.fn().mockResolvedValue({ data: [] });
@@ -195,9 +195,13 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
   const resend = {
     sendAdminAlert: ok(), sendPaymentSucceeded: ok(), sendPaymentFailed: ok(), sendWelcomePremium: ok(),
     sendFounderWelcome: ok(), sendPartnerWelcome: ok(), sendTariffAtRisk: ok(), sendAnnualRenewalReminder: ok(),
+    sendFounderReservation: ok(), sendPaymentActionRequired: ok(),
   };
   const founders = {
     claimSeat: vi.fn().mockResolvedValue({ number: 12, takenAt: new Date('2026-10-08T10:00:00Z') }), markLost: vi.fn(), releaseReservation: vi.fn(),
+    // Premier paiement réel (#769) : la garantie part de firstPaidAt.
+    markFirstPaid: vi.fn().mockResolvedValue({ number: 12, firstPaidAt: new Date('2026-10-08T10:00:00Z') }),
+    releaseUnpaid: vi.fn().mockResolvedValue(null),
     refundFirstPayment: vi.fn().mockResolvedValue({ status: 'REFUNDED' }), updateInterval: vi.fn(),
   };
   const partners = {
@@ -439,7 +443,7 @@ describe('GET /billing/offers', () => {
     Object.assign(b.founders, {
       publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
       statusFor: vi.fn().mockResolvedValue({
-        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: since,
+        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: since, founderFirstPaidAt: since,
         founderEligible: false, founderIneligibleReason: 'already_founder',
       }),
     });
@@ -460,6 +464,7 @@ describe('GET /billing/offers', () => {
       publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
       statusFor: vi.fn().mockResolvedValue({
         isFounder: true, founderNumber: 3, founderInterval: 'year', founderSince: new Date(Date.now() - 20 * 86_400_000),
+        founderFirstPaidAt: new Date(Date.now() - 20 * 86_400_000),
         founderEligible: false, founderIneligibleReason: 'already_founder',
       }),
     });
@@ -494,7 +499,7 @@ describe('checkout sur la page de l’app (ui elements)', () => {
       publishableKey: 'pk_test_123',
       summary: {
         offer: 'founder', interval: 'month', recurringEur: 29, normalEur: 49, trialDays: 0,
-        partnerCode: null, partnerDurationMonths: null, referralDiscount: false, seatsLeft: 199,
+        partnerCode: null, partnerDurationMonths: null, referralDiscount: false, seatsLeft: 199, firstChargeAt: null,
       },
     });
   });
@@ -623,3 +628,121 @@ describe('e-mails fondateur et code partenaire', () => {
     expect(resend.sendAnnualRenewalReminder).not.toHaveBeenCalled();
   });
 });
+
+// ── Réservation fondateur pendant le Premium offert (#769, B1) ───────────────────────────────────
+
+describe('réservation fondateur pendant le Premium offert (#769)', () => {
+  const H = 3_600_000;
+  const inTrial = (hours: number) => ({ trialEndsAt: new Date(Date.now() + hours * H), stripeSubscriptionStatus: null });
+
+  it('essai d’au moins 49 h : carte maintenant, premier prélèvement à la fin du Premium offert', async () => {
+    const { svc, create, founders } = makeBilling({ user: inTrial(9 * 24) });
+    const res = await founder(svc);
+    const params = create.mock.calls[0][0];
+    expect(params.subscription_data.trial_end).toBeGreaterThan(Math.floor(Date.now() / 1000) + 8 * 24 * 3600);
+    expect(params.subscription_data).not.toHaveProperty('trial_period_days');
+    expect(params.custom_text.submit.message).toMatch(/^Aucun prélèvement avant le \d{2}\/\d{2}\. Satisfait ou remboursé 14 jours à partir de ce premier paiement\./);
+    expect(founders.reserve).toHaveBeenCalled(); // place comptée dès la réservation
+    expect(res).toHaveProperty('url');
+  });
+
+  it('moins de 49 h d’essai (Stripe exige 48 h) : prélèvement immédiat, comme hors essai', async () => {
+    const { svc, create } = makeBilling({ user: inTrial(48.5) });
+    await founder(svc);
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+  });
+
+  it('Premium au prix normal pendant l’essai : jamais différé', async () => {
+    const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialUsed: true } });
+    await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app');
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_period_days');
+  });
+
+  it('page de l’app : récapitulatif avec la date du premier prélèvement', async () => {
+    const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
+    const { svc } = makeBilling({ user: { trialEndsAt, stripeSubscriptionStatus: null }, pk: 'pk_test_1' });
+    const res = (await svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', ui: 'elements' })) as {
+      summary: { firstChargeAt: string | null; trialDays: number };
+    };
+    expect(res.summary.firstChargeAt).toBe(trialEndsAt.toISOString());
+    expect(res.summary.trialDays).toBe(0);
+  });
+
+  it('réservation (facture d’essai à 0 €) : place prise, e-mail de réservation, pas encore de bienvenue', async () => {
+    const trialEnd = Math.floor(Date.now() / 1000) + 9 * 86_400;
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'trialing', trialEnd });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 }));
+    expect(founders.claimSeat).toHaveBeenCalled();
+    expect(founders.markFirstPaid).not.toHaveBeenCalled();
+    expect(resend.sendFounderWelcome).not.toHaveBeenCalled();
+    expect(plain(resend.sendFounderReservation.mock.calls[0][0])).toMatchObject({
+      to: 'u1@test.com', number: 12, priceLabel: '29,00 € par mois', firstChargeAt: new Date(trialEnd * 1000).toISOString(),
+    });
+  });
+
+  it('premier prélèvement à la fin de l’essai (facture de cycle) : garantie datée de ce paiement', async () => {
+    const paidAt = Math.floor(Date.UTC(2026, 10, 16, 10) / 1000);
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.markFirstPaid.mockResolvedValueOnce({ number: 12, firstPaidAt: new Date(paidAt * 1000) });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', {
+      ...invoice('sub_f', 'subscription_cycle'), status_transitions: { paid_at: paidAt },
+    }));
+    expect(founders.claimSeat).not.toHaveBeenCalled();
+    expect(founders.markFirstPaid).toHaveBeenCalledWith('u1', new Date(paidAt * 1000));
+    expect(resend.sendFounderWelcome.mock.calls[0][0].refundUntil).toEqual(new Date((paidAt + 14 * 86_400) * 1000));
+  });
+
+  it('renouvellement d’une place déjà payée : aucune nouvelle bienvenue', async () => {
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.markFirstPaid.mockResolvedValueOnce(null);
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_cycle')));
+    expect(resend.sendFounderWelcome).not.toHaveBeenCalled();
+  });
+
+  it('abonnement terminé sans paiement (prélèvement refusé) : place rendue, tarif non « perdu »', async () => {
+    const { svc, founders } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.releaseUnpaid.mockResolvedValueOnce({ number: 12, status: 'RELEASED' });
+    await svc.processWebhookEvent(event('customer.subscription.deleted', {
+      id: 'sub_f', customer: 'cus_1', cancellation_details: { reason: 'payment_failed' }, items: { data: [] },
+    }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f');
+    expect(founders.markLost).not.toHaveBeenCalled();
+  });
+
+  it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_action_required', {
+      id: 'in_3ds', customer: 'cus_1', hosted_invoice_url: 'https://invoice.stripe.test/i',
+    }));
+    expect(resend.sendPaymentActionRequired).toHaveBeenCalledWith({
+      to: 'u1@test.com', userName: 'U', invoiceUrl: 'https://invoice.stripe.test/i',
+    });
+  });
+
+  it('offres : date du premier prélèvement si éligible pendant l’essai ; place réservée non remboursable', async () => {
+    const b = makeBilling();
+    const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: true, founderIneligibleReason: null }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: null, stripeSubscriptionStatus: null, trialEndsAt });
+    expect((await b.svc.offers('u1')).founder.firstChargeAt).toEqual(trialEndsAt);
+
+    Object.assign(b.founders, {
+      statusFor: vi.fn().mockResolvedValue({
+        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: new Date(), founderFirstPaidAt: null,
+        founderEligible: false, founderIneligibleReason: 'already_founder',
+      }),
+    });
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'trialing', trialEndsAt });
+    const reserved = (await b.svc.offers('u1')).founder;
+    expect(reserved.refundUntil).toBeNull();
+    expect(reserved.reservedUntilCharge).toBe(true);
+    expect(reserved.firstChargeAt).toBeNull();
+  });
+});
+

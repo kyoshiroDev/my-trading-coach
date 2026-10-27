@@ -21,6 +21,7 @@ import {
 } from './stripe.helpers';
 import { StripeCustomerService } from './stripe-customer.service';
 import { CHECKOUT_TTL_MS, FounderOfferService } from '../founder-offer/founder-offer.service';
+import { founderFirstChargeAt } from '../founder-offer/founder-deferred';
 import { StripeCouponService } from './stripe-coupon.service';
 import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import { partnerFirstYearCost, referralFirstYearCost } from '../partner-codes/partner-code.util';
@@ -66,11 +67,19 @@ export interface CheckoutSummary {
   referralDiscount: boolean;
   /** Places fondateur restantes (offre fondateur uniquement). */
   seatsLeft: number | null;
+  /**
+   * Réservation fondateur pendant un Premium offert (#769) : date ISO du premier prélèvement (fin du
+   * Premium offert). `null` = prélèvement immédiat.
+   */
+  firstChargeAt: string | null;
 }
 
 export type CheckoutStart =
   | { url: string }
   | { clientSecret: string; publishableKey: string; summary: CheckoutSummary };
+
+/** Date courte (JJ/MM), heure de Paris : celle que voit l'utilisateur dans l'app. */
+const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' });
 
 /** Refus du checkout fondateur : message clair, le Premium au prix normal reste possible. */
 const FOUNDER_REFUSALS = FOUNDER_INELIGIBLE_MESSAGES;
@@ -228,6 +237,9 @@ export class StripeBillingService {
     // (29 × 12 = 348 € contre 49 × 12 × 0,9 = 529,20 € ; 290 € contre 441 €).
     // Premium : essai 30j MENSUEL uniquement, si jamais utilisé ; l'annuel est facturé immédiatement.
     const trialGranted = !isFounder && !user.trialUsed && this.isMonthlyPrice(priceId);
+    // Réservation fondateur pendant un Premium offert (#769) : carte enregistrée maintenant, premier
+    // prélèvement à la fin du Premium offert (Stripe exige 48 h au moins, sinon immédiat).
+    const firstChargeAt = isFounder ? founderFirstChargeAt(user) : null;
     const normalEur = interval === 'year' ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly;
     const summary = async (): Promise<CheckoutSummary> => ({
       offer,
@@ -241,6 +253,7 @@ export class StripeBillingService {
       partnerDurationMonths: partnerTerms?.durationMonths ?? null,
       referralDiscount: !isFounder && !partnerCode && referralCoupon,
       seatsLeft: isFounder ? await this.founders.seatsLeft() : null,
+      firstChargeAt: firstChargeAt?.toISOString() ?? null,
     });
 
     // ── Une session Checkout par OFFRE ─────────────────────────────────────────
@@ -265,7 +278,9 @@ export class StripeBillingService {
 
     const subscriptionData = trialGranted
       ? { trial_period_days: TRIAL_PERIOD_DAYS, metadata }
-      : { metadata };
+      : firstChargeAt
+        ? { trial_end: Math.floor(firstChargeAt.getTime() / 1000), metadata }
+        : { metadata };
 
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
     // (annuel → coupon once, mensuel → coupon repeating 12 mois). RÉSERVÉ au parrainage
@@ -300,7 +315,9 @@ export class StripeBillingService {
         : { allow_promotion_codes: true };
     // Rappel des conditions juste au-dessus du bouton de paiement (fondateur et code partenaire).
     const submitMessage = isFounder
-      ? `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le 1er paiement. Si tu résilies, le prix fondateur est perdu.`
+      ? firstChargeAt
+        ? `Aucun prélèvement avant le ${frDate(firstChargeAt)}. Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir de ce premier paiement. Si tu résilies, le prix fondateur est perdu.`
+        : `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le 1er paiement. Si tu résilies, le prix fondateur est perdu.`
       : partnerCode
         ? `Code ${partnerCode} : tes conditions sont figées à la souscription, même si le code change ensuite.`
         : null;
@@ -437,11 +454,17 @@ export class StripeBillingService {
       this.partners.statusFor(userId),
       this.prisma.user.findUnique({
         where: { id: userId },
-        select: { stripeInterval: true, stripeSubscriptionStatus: true },
+        select: { stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true },
       }),
     ]);
     const since = founder?.isFounder ? founder.founderSince : null;
-    const refundUntil = since ? new Date(since.getTime() + FOUNDER_REFUND_DAYS * 86_400_000) : null;
+    // Garantie à partir du premier paiement réel (#769) : rien tant que la place n'est que réservée.
+    const paidAt = founder?.isFounder ? founder.founderFirstPaidAt : null;
+    const refundUntil = paidAt ? new Date(paidAt.getTime() + FOUNDER_REFUND_DAYS * 86_400_000) : null;
+    const firstChargeAt =
+      founder?.founderEligible && user
+        ? founderFirstChargeAt({ trialEndsAt: user.trialEndsAt, stripeSubscriptionStatus: user.stripeSubscriptionStatus })
+        : null;
     return {
       founderOffer: { open: pub.open, seatsLeft: pub.seatsLeft, seatsTotal: pub.seatsTotal },
       founder: {
@@ -451,8 +474,12 @@ export class StripeBillingService {
         since,
         eligible: founder?.founderEligible ?? false,
         ineligibleReason: founder?.founderIneligibleReason ?? null,
-        /** Fin du satisfait ou remboursé (null = plus remboursable). */
+        /** Fin du satisfait ou remboursé (null = plus remboursable, ou place réservée pas encore payée). */
         refundUntil: refundUntil && refundUntil > new Date() ? refundUntil : null,
+        /** Réservation possible pendant le Premium offert : premier prélèvement à cette date (#769). */
+        firstChargeAt,
+        /** Place réservée, premier prélèvement à venir (#769). */
+        reservedUntilCharge: !!founder?.isFounder && !paidAt,
       },
       partner: partner.partnerCode,
       subscription: {
