@@ -691,19 +691,32 @@ canActivate(ctx: ExecutionContext): boolean {
 - Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
   par Greg seulement.
 - **Réservation fondateur (B1)** : `founder-offer/founder-deferred.ts` (`founderFirstChargeAt`, 48 h + 1 h
-  de marge), `subscription_data.trial_end` au checkout, `summary.firstChargeAt` et
-  `GET /billing/offers` → `founder.firstChargeAt` / `reservedUntilCharge`. Webhook : facture d'essai à
-  0 € → `claimSeat` + e-mail « place réservée » ; toute facture fondateur > 0 € → `markFirstPaid`
-  (idempotent) + bienvenue fondateur (garantie = `firstPaidAt` + 14 j) ; `customer.subscription.deleted`
-  → `releaseUnpaid` (place non payée) sinon `markLost` ; `invoice.payment_action_required` → e-mail avec
-  `hosted_invoice_url`. Journaux : nom de l'erreur seulement.
+  de marge, essai d'inscription `trialSource` SIGNUP seulement : Premium offert par l'admin = immédiat),
+  `subscription_data.trial_end` au checkout, `summary.firstChargeAt` et
+  `GET /billing/offers` → `founder.firstChargeAt` / `reservedUntilCharge`. La date est aussi dans les
+  métadonnées de la session (`firstChargeAt`, secondes) : une session ouverte n'est reprise qu'avec la
+  même date. Webhook : facture d'essai à 0 € → `claimSeat` + e-mail « place réservée » ; abonnement
+  déjà terminé (`canceled` / `incomplete_expired`, fin reçue avant la facture) → aucune place pour une
+  facture à 0 €, place prise puis `markLost` pour une facture payée ; toute facture fondateur > 0 € →
+  `markFirstPaid` (idempotent) + bienvenue fondateur (garantie = `firstPaidAt` + 14 j) ;
+  `customer.subscription.deleted` → `releaseUnpaid` (place non payée) sinon `markLost` ;
+  `customer.subscription.updated` en `unpaid` → `releaseUnpaid` (réglage Stripe « marquer comme
+  impayé ») ; `invoice.payment_action_required` (hors facture `subscription_create`, le 3D Secure s'y
+  fait dans la page de paiement) → e-mail « Confirme ton paiement » avec `hosted_invoice_url`, Premium
+  en pause (`past_due`). `invoice.payment_failed` à **0 tentative** = 3D Secure en attente (constaté en
+  mode test le 27/10 : il arrive juste avant `payment_action_required` ; un refus de carte compte 1
+  tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
+  (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
+  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
 - **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
   `service` (sans consentement, désinscription « service », même plafond), bornées par
   `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
   `trial_ending` : fin dans 3 jours au plus, pas prolongé par l'admin, ni abonné ni réservé ;
   `trial_ended` : du lendemain de la fin (15 h après) à J+6, plan FREE. Écart ≥ 4 jours avec J+11 au
-  passage de 10 h, donc plafond respecté. Usage lu par `loadTrialUsage` (débriefs, alertes de séance =
-  `PropRiskEvent` + `BehaviorAlert`, connexions broker CONNECTED). Évaluateur de test : `gt` / `lt`.
+  passage de 10 h, donc plafond respecté. J+11 (décision du 27/10) : service neutre, objet avec la date
+  de fin (pas de compte à rebours), ce qui change en gratuit, bouton « Voir mon abonnement »
+  (`/profil?tab=params`), sans offre ni urgence ; contexte `loadTrialEnd` (date seule). Évaluateur de
+  test : `gt` / `lt`.
 - E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
   paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
   (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :

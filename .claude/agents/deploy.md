@@ -492,6 +492,10 @@ STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_t
 #   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded,
 #   invoice.payment_action_required (#769, B1 : 3D Secure d'un prélèvement de fin d'essai, À AJOUTER aux
 #   trois destinations au déploiement de la PR B).
+#   Récupération des paiements (live) : après les relances, l'abonnement doit être ANNULÉ (réglage
+#   recommandé) ; « marquer comme impayé » est aussi géré (place fondateur réservée rendue au statut
+#   unpaid). E-mail Stripe de confirmation 3D Secure : à désactiver (non vérifié au 27/10), l'API envoie
+#   le sien (#769).
 #   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
 # Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
