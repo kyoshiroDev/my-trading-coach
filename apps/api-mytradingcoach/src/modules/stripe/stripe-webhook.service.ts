@@ -31,6 +31,9 @@ function priceLabel(eur: number, interval: string | null): string {
   return `${formatInvoiceAmount(Math.round(eur * 100), 'eur')} ${interval === 'year' ? 'par an' : 'par mois'}`;
 }
 
+/** Abonnement terminé pour de bon : plus aucun prélèvement possible. */
+const ENDED_STATUSES = new Set<string>(['canceled', 'incomplete_expired']);
+
 /**
  * Webhooks Stripe, en deux temps :
  *  1. `handleWebhook` (requête HTTP) : signature, idempotence, enqueue BullMQ.
@@ -424,6 +427,14 @@ export class StripeWebhookService {
    */
   private async onFounderFirstPayment(synced: SyncedSubscription, invoice: Stripe.Invoice): Promise<void> {
     const interval: FounderInterval = synced.interval === 'year' ? 'year' : 'month';
+    // Abonnement déjà terminé (fin reçue avant cette facture : annulation immédiate, ou tâche rejouée
+    // en retard, #769) : une réservation jamais payée ne prend pas de place ; un paiement réel la prend
+    // puis la perd, comme une fin reçue après coup.
+    const ended = ENDED_STATUSES.has(synced.stripeSubscriptionStatus ?? '');
+    if (ended && (invoice.amount_paid ?? 0) <= 0) {
+      this.logger.log('Réservation fondateur ignorée : abonnement déjà terminé');
+      return;
+    }
     const seat = await this.founders.claimSeat({
       userId: synced.id,
       interval,
@@ -441,6 +452,10 @@ export class StripeWebhookService {
           `Abonnement ${synced.subscriptionId} (user ${synced.id}) payé sans place disponible : annulé, remboursement manuel requis.`,
         )
         .catch(() => undefined);
+      return;
+    }
+    if (ended) {
+      await this.founders.markLost(synced.subscriptionId);
       return;
     }
     // Réservation pendant un Premium offert (facture d'essai à 0 €, #769) : place prise, prélèvement à

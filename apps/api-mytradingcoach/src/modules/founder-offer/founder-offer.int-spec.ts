@@ -162,6 +162,31 @@ describe('réservation pendant le Premium offert (#769, B1)', () => {
     expect(again!.number).toBe(seat!.number + 1);
   });
 
+  it('fin d’abonnement reçue deux fois : place rendue une seule fois, jamais « perdue » ensuite', async () => {
+    await reset();
+    const a = await newUser('twice');
+    const initial = await founders.seatsLeft();
+    await founders.reserve(a.id, 'month', null);
+    await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_twice' });
+    // Même enchaînement que le webhook : rendre si jamais payée, sinon marquer perdue.
+    const end = async () => (await founders.releaseUnpaid('sub_twice')) ?? (await founders.markLost('sub_twice'));
+    expect(await end()).toMatchObject({ status: 'RELEASED' });
+    expect(await end()).toBeNull();
+    const seats = await prisma.founderSeat.findMany({ where: { stripeSubscriptionId: 'sub_twice' } });
+    expect(seats.map((s) => s.status)).toEqual(['RELEASED']);
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial);
+  });
+
+  it('fin d’abonnement reçue avant toute place : rien à rendre, compteur intact', async () => {
+    await reset();
+    const initial = await founders.seatsLeft();
+    expect(await founders.releaseUnpaid('sub_ghost')).toBeNull();
+    expect(await founders.markLost('sub_ghost')).toBeNull();
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial);
+  });
+
   it('premier paiement : daté une seule fois ; une place payée n’est jamais « rendue »', async () => {
     await reset();
     const a = await newUser('paid');

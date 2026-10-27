@@ -710,6 +710,26 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(founders.markLost).not.toHaveBeenCalled();
   });
 
+  it('fin d’abonnement reçue AVANT la facture d’essai à 0 € : aucune place prise, aucun e-mail', async () => {
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'canceled' });
+    await svc.processWebhookEvent(event('customer.subscription.deleted', {
+      id: 'sub_f', customer: 'cus_1', cancellation_details: { reason: 'cancellation_requested' }, items: { data: [] },
+    }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f'); // rien à rendre : aucune place encore
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 }));
+    expect(founders.claimSeat).not.toHaveBeenCalled();
+    expect(resend.sendFounderReservation).not.toHaveBeenCalled();
+  });
+
+  it('fin reçue avant une facture PAYÉE : place prise puis perdue (comme une fin reçue après)', async () => {
+    const { svc, founders, resend, cancel } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'canceled' });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(founders.claimSeat).toHaveBeenCalled();
+    expect(founders.markLost).toHaveBeenCalledWith('sub_f');
+    expect(cancel).not.toHaveBeenCalled(); // aucun essai annulé pour un abonnement déjà terminé
+    expect(resend.sendFounderReservation).not.toHaveBeenCalled();
+  });
+
   it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
     const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
     await svc.processWebhookEvent(event('invoice.payment_action_required', {
