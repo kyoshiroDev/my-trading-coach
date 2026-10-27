@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { matchWhere } from '@api/test/prisma-where';
-import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, parisDaysUntil, type CampaignLoadDeps } from './campaign-registry';
+import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } from './campaign-registry';
 
 // Suite d'onboarding (oct. 2026) : ciblage RÉEL de chaque campagne automatique (segments évalués en
 // mémoire), bornes d'âge, date de démarrage et états qui bloquent un envoi.
@@ -220,11 +220,6 @@ describe('e-mails de l’essai d’inscription (#769, B2)', () => {
     expect(matchWhere(u, CAMPAIGNS_BY_KEY.get('trial_ending')!.segment(j11) as User)).toBe(true);
     expect(matchWhere(u, CAMPAIGNS_BY_KEY.get('trial_ended')!.segment(fin) as User)).toBe(true);
     expect(fin.getTime() - j11.getTime()).toBeGreaterThanOrEqual(4 * 86_400_000);
-  });
-
-  it('jours de calendrier (Paris) jusqu’à la fin', () => {
-    expect(parisDaysUntil(new Date('2026-11-16T08:00:00Z'), new Date('2026-11-13T09:00:00Z'))).toBe(3);
-    expect(parisDaysUntil(new Date('2026-11-16T22:00:00Z'), new Date('2026-11-16T09:00:00Z'))).toBe(0);
   });
 });
 

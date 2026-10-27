@@ -49,8 +49,8 @@ export interface CampaignBuildCtx {
   propFirmCount?: number;
   /** Bilan des 7 premiers jours depuis l'inscription (first_week_recap), P&L net déjà formaté. */
   firstWeek?: { trades: number; days: number; pnl: string };
-  /** Essai d'inscription (#769, B2) : fin, jours de calendrier restants et usage pendant l'essai. */
-  trial?: { endsAt: Date; daysLeft: number; debriefs: number; alerts: number; connectedAccounts: number };
+  /** Essai d'inscription (#769, B2) : date de fin. */
+  trial?: { endsAt: Date };
 }
 
 const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;"`;
@@ -412,41 +412,24 @@ function escapeHtml(s: string): string {
 
 const longDateFr = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
 
-/** « dans 3 jours », « dans 2 jours », « demain », « aujourd'hui » (jours de calendrier). */
-export function trialEndsIn(daysLeft: number): string {
-  if (daysLeft <= 0) return "aujourd'hui";
-  if (daysLeft === 1) return 'demain';
-  return `dans ${daysLeft} jours`;
-}
-
-/** Ce que l'utilisateur a réellement utilisé pendant l'essai ; `null` s'il n'a rien utilisé. */
-export function trialUsageLine(t: NonNullable<CampaignBuildCtx['trial']>): string | null {
-  const parts = [
-    t.debriefs > 0 ? plural(t.debriefs, 'débrief de ta semaine', 'débriefs de ta semaine') : null,
-    t.alerts > 0 ? plural(t.alerts, 'alerte pendant ta séance', 'alertes pendant tes séances') : null,
-    t.connectedAccounts > 0 ? plural(t.connectedAccounts, 'compte relié en direct', 'comptes reliés en direct') : null,
-  ].filter((p): p is string => p !== null);
-  return parts.length ? `Pendant ton essai : ${parts.join(', ')}.` : null;
-}
-
 export function trialEndingTemplate({ userName, appUrl, unsubUrl, trial }: CampaignBuildCtx): CampaignContent {
-  const t = trial ?? { endsAt: new Date(), daysLeft: 3, debriefs: 0, alerts: 0, connectedAccounts: 0 };
-  const when = trialEndsIn(t.daysLeft);
-  const usage = trialUsageLine(t);
+  // Service, ton neutre (décision du 27/10) : la date de fin et ce qui change, aucune offre ni urgence.
+  const end = longDateFr(trial?.endsAt ?? new Date());
   const content =
     card(`
-      ${heading('Ton essai', `Ton Premium offert se termine ${when}`)}
-      <p ${P}>${hello(userName)} ton Premium offert se termine le ${longDateFr(t.endsAt)}. Ensuite, ton compte
-        repasse en gratuit tout seul : rien n'est supprimé et rien n'est prélevé.</p>
-      ${usage ? `<p ${P}>${usage}</p>` : ''}
-      <p ${P}>Pour garder les alertes avant ta limite, l'anti-tilt en direct et le débrief de ta semaine, tu
-        peux choisir une offre avant la fin.</p>
-      ${cta('Voir les offres →', onboardingLink(appUrl, '/dashboard', 'trial_ending', { plan: 'premium', cta: 'email' }))}
+      ${heading('Ton essai', `Ton Premium offert se termine le ${end}`)}
+      <p ${P}>${hello(userName)} ton Premium offert se termine le ${end}. Ensuite, ton compte repasse en
+        gratuit tout seul&nbsp;: rien n'est supprimé et rien n'est prélevé.</p>
+      <p ${P}>Ce qui change en gratuit&nbsp;: les alertes avant ta limite, l'anti-tilt en direct et le débrief
+        de ta semaine s'arrêtent. Tu gardes ton journal, tout ton historique, la synchro Tradovate et un
+        compte avec les règles de sa prop firm suivi en direct. Si tu as plusieurs comptes, tu choisis
+        celui que tu gardes&nbsp;; les autres restent visibles avec tout leur historique.</p>
+      ${cta('Voir mon abonnement', onboardingLink(appUrl, '/profil', 'trial_ending', { tab: 'params' }))}
     `) + serviceFooter(unsubUrl);
 
   return {
-    subject: `Ton Premium offert se termine ${when}`,
-    html: emailWrapper(content, `Fin le ${longDateFr(t.endsAt)} : rien n'est supprimé ni prélevé.`, ACCENT.brand, unsubUrl),
+    subject: `Ton Premium offert se termine le ${end}`,
+    html: emailWrapper(content, `Fin le ${end}&nbsp;: rien n'est supprimé ni prélevé.`, ACCENT.brand, unsubUrl),
   };
 }
 
