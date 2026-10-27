@@ -26,7 +26,8 @@ export interface CheckoutCopy {
 
 const eur = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
 const short = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(2).replace('.', ','));
-const longDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+/** Heure de Paris, comme l'API et Stripe : la date ne change pas selon le fuseau du navigateur. */
+const longDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
 
 const FOUNDER_LEAD =
   'Tout MyTradingCoach Premium, y compris les nouveautés à venir, à un prix qui ne bougera plus tant que tu restes abonné.';

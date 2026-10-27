@@ -70,6 +70,12 @@ describe('Fenêtre des offres pendant l’essai d’inscription (#769)', () => {
     expect((await setup({ daysLeft: 9, trialEndsAt: '2026-11-16T10:00:00.000Z' }, '2026-11-16T10:00:00.000Z')).founderChargeDate()).toBe('16/11');
   });
 
+  it('dates en heure de Paris, quel que soit le fuseau du navigateur (23 h 30 UTC = lendemain à Paris)', async () => {
+    const c = await setup({ daysLeft: 9, trialEndsAt: '2026-11-15T23:30:00.000Z' }, '2026-11-15T23:30:00.000Z');
+    expect(c.offeredPremiumEnd()).toBe('16/11');
+    expect(c.founderChargeDate()).toBe('16/11');
+  });
+
   it('pas de date de l’API (moins de 48 h, hors essai) : paiement immédiat', async () => {
     expect((await setup({ daysLeft: 1, trialEndsAt: '2026-11-16T10:00:00.000Z' })).founderChargeDate()).toBeNull();
   });

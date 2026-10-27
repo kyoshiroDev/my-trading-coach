@@ -41,6 +41,12 @@ describe('checkoutCopy : une page, des textes par offre', () => {
     expect(c.legal).toBe('prélever 29,00 € par mois à partir du 16 novembre');
   });
 
+  it('date du premier prélèvement en heure de Paris (23 h 30 UTC = lendemain à Paris)', () => {
+    const c = checkoutCopy({ ...base, offer: 'founder', recurringEur: 29, seatsLeft: 150, firstChargeAt: '2026-11-15T23:30:00.000Z' }, NOW);
+    expect(c.cta).toBe('Réserver ma place');
+    expect(c.note).toContain('Aucun prélèvement avant le 16 novembre');
+  });
+
   it('fondateur annuel : équivalent mensuel, une seule place au singulier', () => {
     const c = checkoutCopy({ ...base, offer: 'founder', interval: 'year', recurringEur: 290, normalEur: 490, seatsLeft: 1 }, NOW);
     expect(c.eyebrow).toBe("Offre fondateur · Plus qu'une place sur 200");

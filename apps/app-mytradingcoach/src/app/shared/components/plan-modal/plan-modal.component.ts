@@ -40,6 +40,9 @@ export function partnerDurationLabel(durationMonths: number | null, interval: In
   return `pendant ${durationMonths} mois, puis ${normal}`;
 }
 
+/** JJ/MM en heure de Paris, comme l'API et Stripe : la date ne change pas selon le fuseau du navigateur. */
+const PARIS_SHORT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' };
+
 @Component({
   selector: 'mtc-plan-modal',
   imports: [DialogDirective, LucideDynamicIcon, ErrorStateComponent],
@@ -87,7 +90,7 @@ export class PlanModalComponent implements OnInit {
   protected readonly offeredPremiumEnd = computed(() => {
     const store = this.userStore;
     const end = store.signupTrialDaysLeft() !== null || store.isOfferedPremium() ? store.user()?.trialEndsAt : null;
-    return end ? new Date(end).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : null;
+    return end ? new Date(end).toLocaleDateString('fr-FR', PARIS_SHORT_DATE) : null;
   });
 
   // ── Code partenaire : validation en direct ──
@@ -133,7 +136,7 @@ export class PlanModalComponent implements OnInit {
    */
   protected readonly founderChargeDate = computed(() => {
     const at = this.offersStore.offers()?.founder.firstChargeAt;
-    return at ? new Date(at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : null;
+    return at ? new Date(at).toLocaleDateString('fr-FR', PARIS_SHORT_DATE) : null;
   });
   protected readonly founderOffer = computed(() => this.offersStore.offers()?.founderOffer ?? null);
   /** Compteur de places (libellé partagé : « 200 places disponibles » tant qu'aucune n'est prise). */
