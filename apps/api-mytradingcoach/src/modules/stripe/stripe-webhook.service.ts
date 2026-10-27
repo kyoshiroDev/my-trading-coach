@@ -187,6 +187,9 @@ export class StripeWebhookService {
     if (synced && this.isFounderPrice(synced.priceId) && (synced.interval === 'month' || synced.interval === 'year')) {
       await this.founders.updateInterval(synced.id, synced.interval);
     }
+    // Relances épuisées et compte Stripe réglé sur « impayé » au lieu d'« annuler » : une réservation
+    // jamais payée est rendue comme à l'annulation (#769). Une place déjà payée n'est pas concernée.
+    if (subscription.status === 'unpaid') await this.founders.releaseUnpaid(subscription.id);
     if (synced?.id)
       await this.discord.syncDiscordRole(synced.id).catch(() => undefined);
 

@@ -730,6 +730,16 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(resend.sendFounderReservation).not.toHaveBeenCalled();
   });
 
+  it('abonnement passé en « impayé » (relances épuisées) : réservation jamais payée rendue', async () => {
+    const { svc, founders } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'unpaid' });
+    await svc.processWebhookEvent(event('customer.subscription.updated', { id: 'sub_f', status: 'unpaid', customer: 'cus_1' }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f');
+
+    const pastDue = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'past_due' });
+    await pastDue.svc.processWebhookEvent(event('customer.subscription.updated', { id: 'sub_f', status: 'past_due', customer: 'cus_1' }));
+    expect(pastDue.founders.releaseUnpaid).not.toHaveBeenCalled(); // relances en cours : la place reste
+  });
+
   it('3D Secure : invoice.payment_failed à 0 tentative → aucun e-mail d’échec ; un vrai refus en envoie un', async () => {
     // Ordre constaté en mode test le 27/10 : payment_failed (0 tentative) puis payment_action_required.
     const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
