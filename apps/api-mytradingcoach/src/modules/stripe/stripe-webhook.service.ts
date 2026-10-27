@@ -22,6 +22,7 @@ import { PartnerCodeService } from '../partner-codes/partner-code.service';
 import type { SyncedSubscription } from './stripe-subscription.service';
 import { StripeWebhookJobPayload } from './stripe.types';
 import { AuthUserCacheService } from '../infra/auth-user-cache.service';
+import { RedisService } from '../infra/redis.service';
 import { AdminNotifier } from '../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
@@ -30,6 +31,9 @@ import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shar
 function priceLabel(eur: number, interval: string | null): string {
   return `${formatInvoiceAmount(Math.round(eur * 100), 'eur')} ${interval === 'year' ? 'par an' : 'par mois'}`;
 }
+
+/** Un e-mail « une seule fois » reste marqué 30 jours (réservation, paiement à confirmer). */
+const MAIL_ONCE_TTL_S = 30 * 86_400;
 
 /** Abonnement terminé pour de bon : plus aucun prélèvement possible. */
 const ENDED_STATUSES = new Set<string>(['canceled', 'incomplete_expired']);
@@ -59,7 +63,26 @@ export class StripeWebhookService {
     // Push admin (événements business). Appelé APRÈS l'idempotence StripeEvent (traitement de la
     // file) et en fin de handler : une redélivrance ou un nouvel essai ne double pas le push.
     @Optional() private readonly adminNotifier?: AdminNotifier,
+    @Optional() private readonly redisService?: RedisService,
   ) {}
+
+  /**
+   * Un e-mail par clé, même si la tâche est rejouée par BullMQ ou l'événement renvoyé par Stripe
+   * (#769). Envoi raté : la marque est retirée pour que le nouvel essai l'envoie. Sans Redis, l'e-mail
+   * part quand même (un doublon plutôt qu'aucun e-mail).
+   */
+  private async sendOnce(key: string, send: () => Promise<unknown>): Promise<void> {
+    const client = this.redisService?.client;
+    const fullKey = `stripe:mail-once:${key}`;
+    const first = client ? await client.set(fullKey, '1', 'EX', MAIL_ONCE_TTL_S, 'NX').catch(() => 'OK') : 'OK';
+    if (first !== 'OK') return;
+    try {
+      await send();
+    } catch (err) {
+      await client?.del(fullKey).catch(() => undefined);
+      throw err;
+    }
+  }
 
   // ── Validation + enqueue async ──────────────────────────────────────────────
 
@@ -470,15 +493,16 @@ export class StripeWebhookService {
     // Réservation pendant un Premium offert (facture d'essai à 0 €, #769) : place prise, prélèvement à
     // la fin de l'essai. Paiement immédiat : la bienvenue part du bloc « premier paiement réel ».
     if ((invoice.amount_paid ?? 0) <= 0 && synced.stripeSubscriptionStatus === 'trialing' && synced.currentPeriodEnd) {
-      await this.resend
-        .sendFounderReservation({
+      const firstChargeAt = synced.currentPeriodEnd;
+      await this.sendOnce(`founder-reservation:${synced.subscriptionId}`, () =>
+        this.resend.sendFounderReservation({
           to: synced.email,
           userName: synced.name ?? '',
           number: seat.number,
           priceLabel: this.founderPriceLabel(interval),
-          firstChargeAt: synced.currentPeriodEnd,
-        })
-        .catch((err: Error) => this.logger.warn(`Réservation fondateur non confirmée par e-mail : ${err.name}`));
+          firstChargeAt,
+        }),
+      ).catch((err: Error) => this.logger.warn(`Réservation fondateur non confirmée par e-mail : ${err.name}`));
     }
     // Bascule depuis un essai au prix normal : l'essai s'arrête, sans prolongation ni cumul.
     const trials = await this.stripe.subscriptions
@@ -524,11 +548,10 @@ export class StripeWebhookService {
       select: { email: true, name: true, isDemo: true },
     });
     if (!user || user.isDemo) return;
-    await this.resend.sendPaymentActionRequired({
-      to: user.email,
-      userName: user.name ?? '',
-      invoiceUrl: invoice.hosted_invoice_url,
-    });
+    const invoiceUrl = invoice.hosted_invoice_url;
+    await this.sendOnce(`payment-action:${invoice.id}`, () =>
+      this.resend.sendPaymentActionRequired({ to: user.email, userName: user.name ?? '', invoiceUrl }),
+    );
   }
 
   /** Confirmation d'un abonnement avec code partenaire : conditions figées, essai éventuel. */

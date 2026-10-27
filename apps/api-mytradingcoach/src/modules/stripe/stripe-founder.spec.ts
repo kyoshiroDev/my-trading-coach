@@ -208,13 +208,21 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null),
   };
   const redis = { client: { del: vi.fn().mockResolvedValue(1) } };
+  // Redis réel en miniature pour les e-mails « une seule fois » (SET NX + DEL).
+  const keys = new Set<string>();
+  const mailOnce = {
+    client: {
+      set: vi.fn(async (k: string, _v: string, _ex: string, _ttl: number, _nx: string) => (keys.has(k) ? null : (keys.add(k), 'OK'))),
+      del: vi.fn(async (k: string) => Number(keys.delete(k))),
+    },
+  };
   const subscriptions = new StripeSubscriptionService(prisma as never, redis as never, stripe);
   const referrals = { processReferral: vi.fn() } as unknown as StripeReferralService;
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, { syncDiscordRole: vi.fn().mockResolvedValue(undefined) } as never,
     subscriptions, referrals, founders as never,
     partners as never,
-    { add: vi.fn() } as never, stripe,
+    { add: vi.fn() } as never, stripe, undefined, undefined, mailOnce as never,
   );
   return { svc, founders, partners, cancel, resend, prisma, invoicesList };
 }
@@ -689,6 +697,15 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     });
   });
 
+  it('tâche rejouée (BullMQ) : l’e-mail de réservation ne part qu’une fois', async () => {
+    const trialEnd = Math.floor(Date.now() / 1000) + 9 * 86_400;
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'trialing', trialEnd });
+    const ev = event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 });
+    await svc.processWebhookEvent(ev);
+    await svc.processWebhookEvent(ev);
+    expect(resend.sendFounderReservation).toHaveBeenCalledTimes(1);
+  });
+
   it('premier prélèvement à la fin de l’essai (facture de cycle) : garantie datée de ce paiement', async () => {
     const paidAt = Math.floor(Date.UTC(2026, 10, 16, 10) / 1000);
     const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
@@ -758,6 +775,16 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
 
     await svc.processWebhookEvent(event('invoice.payment_failed', { id: 'in_ko', customer: 'cus_1', attempt_count: 1 }));
     expect(resend.sendPaymentFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it('3D Secure : un seul e-mail par facture ; envoi raté → renvoyé au nouvel essai', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    const ev = event('invoice.payment_action_required', { id: 'in_3ds', customer: 'cus_1', hosted_invoice_url: 'https://invoice.stripe.test/i' });
+    resend.sendPaymentActionRequired.mockRejectedValueOnce(new Error('resend down'));
+    await expect(svc.processWebhookEvent(ev)).rejects.toThrow('resend down');
+    await svc.processWebhookEvent(ev); // nouvel essai BullMQ
+    await svc.processWebhookEvent(ev); // tâche rejouée après un succès
+    expect(resend.sendPaymentActionRequired).toHaveBeenCalledTimes(2); // 1 raté + 1 envoyé
   });
 
   it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
