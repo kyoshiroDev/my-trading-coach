@@ -541,6 +541,8 @@ export class StripeWebhookService {
    * lien de la facture, où le client confirme. Aucun changement d'accès ici.
    */
   private async onPaymentActionRequired(invoice: Stripe.Invoice): Promise<void> {
+    // Première facture : le 3D Secure se fait dans la page de paiement, pendant la souscription.
+    if (invoice.billing_reason === 'subscription_create') return;
     const customerId = extractId(invoice.customer);
     if (!customerId || !invoice.hosted_invoice_url) return;
     const user = await this.prisma.user.findUnique({

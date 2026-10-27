@@ -787,10 +787,18 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(resend.sendPaymentActionRequired).toHaveBeenCalledTimes(2); // 1 raté + 1 envoyé
   });
 
+  it('3D Secure de la première facture (page de paiement) : pas d’e-mail, la page s’en charge', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_action_required', {
+      id: 'in_first', customer: 'cus_1', billing_reason: 'subscription_create', hosted_invoice_url: 'https://invoice.stripe.test/i',
+    }));
+    expect(resend.sendPaymentActionRequired).not.toHaveBeenCalled();
+  });
+
   it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
     const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
     await svc.processWebhookEvent(event('invoice.payment_action_required', {
-      id: 'in_3ds', customer: 'cus_1', hosted_invoice_url: 'https://invoice.stripe.test/i',
+      id: 'in_3ds', customer: 'cus_1', billing_reason: 'subscription_cycle', hosted_invoice_url: 'https://invoice.stripe.test/i',
     }));
     expect(resend.sendPaymentActionRequired).toHaveBeenCalledWith({
       to: 'u1@test.com', userName: 'U', invoiceUrl: 'https://invoice.stripe.test/i',
