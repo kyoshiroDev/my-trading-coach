@@ -1,6 +1,6 @@
 // ── Templates emails MyTradingCoach ─────────────────────────────────────────
 // Templates HTML inline : pas de dépendance externe pour le rendu
-import { PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, formatMoney } from '@mtc/shared';
+import { FOUNDER_REFUND_DAYS, PLAN_BENEFITS, PREMIUM_SIGNUP_TRIAL_DAYS, formatMoney } from '@mtc/shared';
 
 // ── Base système ──────────────────────────────────────────────────────────────
 
@@ -657,6 +657,72 @@ export function founderWelcomeTemplate(params: {
   return {
     subject: `🎉 Tu es fondateur n° ${number}`,
     html: emailWrapper(content, `Prix bloqué à ${priceLabel} tant que ton abonnement reste actif.`),
+  };
+}
+
+/**
+ * Réservation fondateur pendant un Premium offert (#769, B1) : place prise, premier prélèvement à la
+ * fin du Premium offert. La bienvenue fondateur (garantie datée) part au premier prélèvement réel.
+ */
+export function founderReservationTemplate(params: {
+  userName: string;
+  number: number;
+  /** Ex. « 29,00 € par mois ». */
+  priceLabel: string;
+  firstChargeAt: Date;
+  appUrl: string;
+}): { subject: string; html: string } {
+  const { userName, number, priceLabel, firstChargeAt, appUrl } = params;
+  const date = longDate(firstChargeAt);
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Offre fondateur</p>
+    <h1 style="${FONT}font-size:24px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Ta place fondateur n° ${number} est réservée
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Salut ${userName || 'Trader'}, ton Premium continue. Premier prélèvement de
+      <strong style="color:#e2eaf5;">${priceLabel}</strong> le ${date}, pas avant.
+    </p>
+    ${rulesList([
+      'Prix bloqué tant que ton abonnement reste actif, même si le prix normal augmente.',
+      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, la place est rendue.`,
+      'Si le prélèvement échoue définitivement, la place est rendue.',
+      `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier prélèvement.`,
+    ])}
+    ${cta('Ouvrir MyTradingCoach →', `${appUrl}/dashboard`)}
+  `, 'rgba(59,130,246,.35)');
+  return {
+    subject: `Ta place fondateur n° ${number} est réservée`,
+    html: emailWrapper(content, `Premier prélèvement le ${date}, pas avant.`),
+  };
+}
+
+/**
+ * Prélèvement qui attend une confirmation de la banque (3D Secure, `invoice.payment_action_required`) :
+ * Stripe ne retente pas seul (constaté en mode test le 27/10), le lien de la facture permet de confirmer.
+ */
+export function paymentActionRequiredTemplate(params: {
+  userName: string;
+  invoiceUrl: string;
+}): { subject: string; html: string } {
+  const { userName, invoiceUrl } = params;
+  const content = card(`
+    <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
+    <h1 style="${FONT}font-size:22px;font-weight:700;color:#e2eaf5;margin:0 0 16px 0;letter-spacing:-.5px;">
+      Confirme ton paiement
+    </h1>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Bonjour ${userName || 'Trader'}, ta banque demande une confirmation pour ce prélèvement.
+    </p>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Ton Premium est en pause jusqu'à ta confirmation. Tes trades et ton historique restent là. Sans
+      confirmation dans les prochains jours, ton abonnement s'arrêtera.
+    </p>
+    ${cta('Confirmer mon paiement →', invoiceUrl)}
+  `, 'rgba(245,158,11,.3)');
+  return {
+    subject: 'Confirme ton paiement',
+    html: emailWrapper(content, 'Ton Premium est en pause jusqu’à la confirmation de ce prélèvement.'),
   };
 }
 

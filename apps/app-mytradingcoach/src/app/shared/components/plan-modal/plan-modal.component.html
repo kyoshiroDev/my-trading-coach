@@ -12,7 +12,9 @@
     <div class="plan-modal-header">
       <h2 id="plan-modal-title">Passer à Premium <svg [lucideIcon]="ZapIcon" [size]="19"></svg></h2>
       <p>
-        @if (choice() === 'founder') {
+        @if (choice() === 'founder' && founderChargeDate(); as d) {
+          Aucun prélèvement avant le {{ d }} · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours ensuite
+        } @else if (choice() === 'founder') {
           Paiement immédiat · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
         } @else if (choice()) {
           {{ trialFor(choice()) ? '1 mois offert · carte requise · annulable en un clic' : 'Sans engagement · annulable en un clic' }}
@@ -20,9 +22,9 @@
           &nbsp;
         }
       </p>
-      @if (signupTrialEnd(); as end) {
+      @if (offeredPremiumEnd() && !(choice() === 'founder' && founderChargeDate())) {
         <p class="plan-trial-note" data-testid="plan-trial-note">
-          Ton Premium offert continue jusqu'au <span class="plan-trial-date">{{ end }}</span>.
+          Ton Premium offert continue jusqu'au <span class="plan-trial-date">{{ offeredPremiumEnd() }}</span>.
           Si tu t'abonnes maintenant, tu paies dès aujourd'hui et les jours offerts restants ne sont pas
           reportés.
         </p>
@@ -88,7 +90,11 @@
               }
             </span>
           </span>
-          <span class="offer-sum">Sans essai · statut fondateur numéroté (n° attribué au paiement)</span>
+          @if (founderChargeDate(); as d) {
+            <span class="offer-sum" data-testid="founder-reserve">Réserve ta place maintenant, tu ne paies qu'à la fin de ton essai (le {{ d }})</span>
+          } @else {
+            <span class="offer-sum">Sans essai · statut fondateur numéroté (n° attribué au paiement)</span>
+          }
           <span class="offer-detail">🔒 Prix bloqué tant que ton abonnement reste actif · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours</span>
           @if (seatsLabel(); as seats) {
             <span class="offer-seats">{{ seats }}</span>
@@ -206,7 +212,7 @@
         Choisis ton offre
       } @else {
         @switch (choice()) {
-          @case ('founder') { Devenir fondateur → }
+          @case ('founder') { {{ founderChargeDate() ? 'Réserver ma place →' : 'Devenir fondateur →' }} }
           @default {
             @if (interval() === 'monthly') { {{ trialAvailable() ? 'Essayer Premium · 1 mois offert →' : 'Passer à Premium mensuel →' }} }
             @else { Passer à Premium annuel → }

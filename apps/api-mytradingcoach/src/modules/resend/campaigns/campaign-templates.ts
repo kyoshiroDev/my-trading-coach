@@ -49,6 +49,8 @@ export interface CampaignBuildCtx {
   propFirmCount?: number;
   /** Bilan des 7 premiers jours depuis l'inscription (first_week_recap), P&L net déjà formaté. */
   firstWeek?: { trades: number; days: number; pnl: string };
+  /** Essai d'inscription (#769, B2) : date de fin. */
+  trial?: { endsAt: Date };
 }
 
 const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;"`;
@@ -405,3 +407,46 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
+
+// ── Essai Premium d'inscription (#769, B2) : e-mails de service, ton neutre ─────────────────
+
+const longDateFr = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
+
+export function trialEndingTemplate({ userName, appUrl, unsubUrl, trial }: CampaignBuildCtx): CampaignContent {
+  // Service, ton neutre (décision du 27/10) : la date de fin et ce qui change, aucune offre ni urgence.
+  const end = longDateFr(trial?.endsAt ?? new Date());
+  const content =
+    card(`
+      ${heading('Ton essai', `Ton Premium offert se termine le ${end}`)}
+      <p ${P}>${hello(userName)} ton Premium offert se termine le ${end}. Ensuite, ton compte repasse en
+        gratuit tout seul&nbsp;: rien n'est supprimé et rien n'est prélevé.</p>
+      <p ${P}>Ce qui change en gratuit&nbsp;: les alertes avant ta limite, l'anti-tilt en direct et le débrief
+        de ta semaine s'arrêtent. Tu gardes ton journal, tout ton historique, la synchro Tradovate et un
+        compte avec les règles de sa prop firm suivi en direct. Si tu as plusieurs comptes, tu choisis
+        celui que tu gardes&nbsp;; les autres restent visibles avec tout leur historique.</p>
+      ${cta('Voir mon abonnement', onboardingLink(appUrl, '/profil', 'trial_ending', { tab: 'params' }))}
+    `) + serviceFooter(unsubUrl);
+
+  return {
+    subject: `Ton Premium offert se termine le ${end}`,
+    html: emailWrapper(content, `Fin le ${end}&nbsp;: rien n'est supprimé ni prélevé.`, ACCENT.brand, unsubUrl),
+  };
+}
+
+export function trialEndedTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx): CampaignContent {
+  const content =
+    card(`
+      ${heading('Ton essai', 'Ton Premium offert est terminé')}
+      <p ${P}>${hello(userName)} ton compte est repassé en gratuit. Tes trades, tes comptes et ton historique
+        restent là&nbsp;: rien n'est supprimé.</p>
+      <p ${P}>En gratuit, tu gardes la synchro Tradovate, un compte avec les règles de sa prop firm suivi en
+        direct, ton journal et la préparation de tes séances.</p>
+      ${cta('Voir les offres Premium →', onboardingLink(appUrl, '/dashboard', 'trial_ended', { plan: 'premium', cta: 'email' }))}
+    `) + serviceFooter(unsubUrl);
+
+  return {
+    subject: 'Ton Premium offert est terminé',
+    html: emailWrapper(content, 'Ton compte est repassé en gratuit, rien n’est supprimé.', ACCENT.brand, unsubUrl),
+  };
+}
+

@@ -139,3 +139,64 @@ describe('numéros jamais réattribués, places rendues ou gardées', () => {
     expect(await founders.seatsLeft()).toBe(FOUNDER_OFFER.seats);
   });
 });
+
+describe('réservation pendant le Premium offert (#769, B1)', () => {
+  it('place comptée dès la réservation ; prélèvement refusé → place rendue, numéro jamais réattribué, nouvelle réservation possible', async () => {
+    await reset();
+    const a = await newUser('resa');
+    const initial = await founders.seatsLeft();
+    await founders.reserve(a.id, 'month', 'modale');
+    const seat = await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_resa' });
+    expect(seat?.firstPaidAt).toBeNull();
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial - 1);
+
+    const released = await founders.releaseUnpaid('sub_resa');
+    expect(released).toMatchObject({ status: 'RELEASED', userId: null });
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial);
+    // Le compte peut réserver de nouveau, avec un numéro neuf.
+    expect((await founders.eligibility({ ...a, role: a.role, stripeSubscriptionStatus: null, stripePriceId: null }, [])).eligible).toBe(true);
+    await founders.reserve(a.id, 'month', null);
+    const again = await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_resa2' });
+    expect(again!.number).toBe(seat!.number + 1);
+  });
+
+  it('fin d’abonnement reçue deux fois : place rendue une seule fois, jamais « perdue » ensuite', async () => {
+    await reset();
+    const a = await newUser('twice');
+    const initial = await founders.seatsLeft();
+    await founders.reserve(a.id, 'month', null);
+    await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_twice' });
+    // Même enchaînement que le webhook : rendre si jamais payée, sinon marquer perdue.
+    const end = async () => (await founders.releaseUnpaid('sub_twice')) ?? (await founders.markLost('sub_twice'));
+    expect(await end()).toMatchObject({ status: 'RELEASED' });
+    expect(await end()).toBeNull();
+    const seats = await prisma.founderSeat.findMany({ where: { stripeSubscriptionId: 'sub_twice' } });
+    expect(seats.map((s) => s.status)).toEqual(['RELEASED']);
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial);
+  });
+
+  it('fin d’abonnement reçue avant toute place : rien à rendre, compteur intact', async () => {
+    await reset();
+    const initial = await founders.seatsLeft();
+    expect(await founders.releaseUnpaid('sub_ghost')).toBeNull();
+    expect(await founders.markLost('sub_ghost')).toBeNull();
+    await founders.invalidateSeatsLeft();
+    expect(await founders.seatsLeft()).toBe(initial);
+  });
+
+  it('premier paiement : daté une seule fois ; une place payée n’est jamais « rendue »', async () => {
+    await reset();
+    const a = await newUser('paid');
+    await founders.reserve(a.id, 'month', null);
+    await founders.claimSeat({ userId: a.id, interval: 'month', stripeSubscriptionId: 'sub_paid' });
+    const at = new Date('2026-11-16T10:00:00Z');
+    expect((await founders.markFirstPaid(a.id, at))?.firstPaidAt).toEqual(at);
+    expect(await founders.markFirstPaid(a.id, new Date())).toBeNull(); // renouvellement : rien ne change
+    expect(await founders.releaseUnpaid('sub_paid')).toBeNull();
+    expect((await prisma.founderSeat.findUnique({ where: { userId: a.id } }))?.status).toBe('ACTIVE');
+  });
+});
+

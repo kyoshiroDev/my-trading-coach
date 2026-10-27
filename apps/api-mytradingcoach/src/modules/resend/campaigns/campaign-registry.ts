@@ -1,4 +1,4 @@
-import { AccountStatus, AccountType, BrokerConnectionStatus, Plan, PlanLinkChoice, Prisma, Role } from '@prisma/client';
+import { AccountStatus, AccountType, BrokerConnectionStatus, Plan, PlanLinkChoice, Prisma, Role, TrialSource } from '@prisma/client';
 import { formatMoney } from '@mtc/shared';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -15,6 +15,8 @@ import {
   profileTemplate,
   propFirmRulesTemplate,
   reengagementTemplate,
+  trialEndedTemplate,
+  trialEndingTemplate,
 } from './campaign-templates';
 
 /**
@@ -141,6 +143,20 @@ export async function loadFirstWeek(deps: CampaignLoadDeps, userIds: string[]): 
   );
 }
 
+/** Ni abonné Stripe en cours, ni réservation fondateur : le Premium offert est le seul accès. */
+const noStripeSubscription: Prisma.UserWhereInput = {
+  OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'trialing', 'past_due'] } }],
+};
+
+/** Essai d'inscription qui se termine (#769, B2) : date de fin, une lecture pour la page. */
+export async function loadTrialEnd(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {
+  if (userIds.length === 0) return new Map();
+  const users = await deps.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, signupTrialEndsAt: true } });
+  return new Map(
+    users.filter((u) => u.signupTrialEndsAt).map((u) => [u.id, { trial: { endsAt: u.signupTrialEndsAt! } }]),
+  );
+}
+
 /** Offre fondateur vérifiée AU MOMENT de l'envoi : fermée ou complète → personne. */
 async function loadFounderSeats(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {
   const state = await deps.founderState();
@@ -150,6 +166,48 @@ async function loadFounderSeats(deps: CampaignLoadDeps, userIds: string[]): Prom
 
 export const CAMPAIGNS: EmailCampaign[] = [
   // ── Automatisées (cron) : suite d'onboarding, 1 e-mail max / 4 jours (plafond) ─────────────────
+  // Essai d'inscription (#769, B2) : priorités les plus hautes, fenêtres bornées par la fin de l'essai
+  // (pas par l'inscription : un essai offert plus tard par le script de relance compte aussi). J+11
+  // part entre 3 jours avant la fin et la fin ; l'e-mail de fin part le lendemain de la fin au plus
+  // tôt, donc 4 jours après J+11 : le plafond est respecté sans exception.
+  {
+    key: 'trial_ending',
+    label: 'Fin du Premium offert dans 3 jours (J+11)',
+    description: "Service : date de fin de l'essai d'inscription et ce qui change en gratuit, rien n'est prélevé.",
+    kind: 'service',
+    requiresConsent: false,
+    automated: true,
+    priority: 120,
+    segment: (now) => ({
+      AND: [
+        { trialSource: TrialSource.SIGNUP },
+        { signupTrialEndsAt: { gt: now, lte: new Date(now.getTime() + 3 * DAY) } },
+        { trialEndsAt: { lte: new Date(now.getTime() + 3 * DAY) } }, // pas prolongé par l'admin
+        noStripeSubscription,
+      ],
+    }),
+    loadContext: loadTrialEnd,
+    build: trialEndingTemplate,
+  },
+  {
+    key: 'trial_ended',
+    label: 'Premium offert terminé (J+15)',
+    description: "Service : l'essai d'inscription est terminé, retour au gratuit sans rien perdre.",
+    kind: 'service',
+    requiresConsent: false,
+    automated: true,
+    priority: 110,
+    segment: (now) => ({
+      AND: [
+        { trialSource: TrialSource.SIGNUP },
+        // Au plus tôt le lendemain de la fin (le cron passe à 10 h, la fin tombe à l'heure d'inscription).
+        { signupTrialEndsAt: { gte: new Date(now.getTime() - 6 * DAY), lte: new Date(now.getTime() - 15 * 3600e3) } },
+        { plan: Plan.FREE },
+        noStripeSubscription,
+      ],
+    }),
+    build: trialEndedTemplate,
+  },
   {
     key: 'connect_tradovate',
     label: 'Connecter Tradovate (J+1)',

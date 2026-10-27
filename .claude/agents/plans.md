@@ -319,6 +319,21 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
   l'abonnement reste actif ; tout le Premium, nouveautés futures comprises.
 - Mensuel ↔ annuel fondateur autorisé (`POST /billing/interval`) : même place, même numéro.
 - **Aucun essai** (premier paiement immédiat) ; l'essai 30 j du 49 € est inchangé.
+- **Réservation pendant l'essai d'inscription (#769, B1)** : essai d'inscription (`trialSource`
+  SIGNUP) qui finit dans **49 h ou plus** (Stripe refuse un `trial_end` de Checkout à moins de 48 h,
+  constaté en mode test le 27/10 : « at least 2 days in the future ») → Checkout avec `trial_end` =
+  fin du Premium offert, carte obligatoire (`payment_method_collection: always`). La place est prise
+  dès la facture d'essai à 0 € (`subscription_create`) ; `FounderSeat.firstPaidAt` reste vide jusqu'au
+  premier paiement réel, qui arrive en facture **`subscription_cycle`** (pas `subscription_create`).
+  Garantie de 14 jours à partir de `firstPaidAt`. Abonnement terminé sans paiement (refus, 3D Secure
+  non confirmé, annulation avant la date) → place **RELEASED** et détachée du compte (`userId` null :
+  le compte peut réserver de nouveau ; le numéro n'est jamais réattribué). Moins de 49 h : immédiat.
+  Premium offert par l'admin (ou essai prolongé par lui, `trialSource` ADMIN) : **jamais de report**,
+  prélèvement immédiat comme hors essai, et la fenêtre des offres affiche « jours offerts non reportés ».
+  Comportement Stripe constaté (horloges de test) : refus de carte → `past_due`, 3 tentatives, puis
+  `canceled (payment_failed)` entre J+10 et J+20 ; 3D Secure hors session → facture `open`,
+  paiement `requires_action`, AUCUNE nouvelle tentative, même annulation → e-mail « Confirme ton
+  paiement » sur `invoice.payment_action_required` (événement à inscrire aux 3 webhooks).
 - **Satisfait ou remboursé 14 jours** sur le 1er paiement (engagement affiché). Côté code, **tout
   remboursement INTÉGRAL du 1er paiement, quel que soit le délai** (c'est Greg qui décide) → place
   `REFUNDED` (rendue), tarif perdu, abonnement annulé. Partiel ou renouvellement remboursé : rien.

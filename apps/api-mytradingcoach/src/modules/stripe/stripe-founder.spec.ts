@@ -166,7 +166,7 @@ describe('checkout Premium au prix normal : inchangé', () => {
 
 // ── Webhooks ─────────────────────────────────────────────────────────────────
 
-function makeWebhook(sub: { id: string; price: string; interval?: string; metadata?: Record<string, string> }) {
+function makeWebhook(sub: { id: string; price: string; interval?: string; metadata?: Record<string, string>; status?: string; trialEnd?: number }) {
   const user = { id: 'u1', email: 'u1@test.com', name: 'U', trialUsed: false, stripeSubscriptionId: null, stripeSubscriptionStatus: null };
   const prisma = {
     user: {
@@ -180,8 +180,8 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
     partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
   };
   const stripeSub = {
-    id: sub.id, status: 'active', customer: 'cus_1', trial_end: null, metadata: sub.metadata ?? {},
-    items: { data: [{ price: { id: sub.price, recurring: { interval: sub.interval ?? 'month' } }, current_period_end: 1_900_000_000 }] },
+    id: sub.id, status: sub.status ?? 'active', customer: 'cus_1', trial_end: sub.trialEnd ?? null, metadata: sub.metadata ?? {},
+    items: { data: [{ price: { id: sub.price, recurring: { interval: sub.interval ?? 'month' } }, current_period_end: sub.trialEnd ?? 1_900_000_000 }] },
   };
   const cancel = vi.fn().mockResolvedValue({});
   const invoicesList = vi.fn().mockResolvedValue({ data: [] });
@@ -195,22 +195,34 @@ function makeWebhook(sub: { id: string; price: string; interval?: string; metada
   const resend = {
     sendAdminAlert: ok(), sendPaymentSucceeded: ok(), sendPaymentFailed: ok(), sendWelcomePremium: ok(),
     sendFounderWelcome: ok(), sendPartnerWelcome: ok(), sendTariffAtRisk: ok(), sendAnnualRenewalReminder: ok(),
+    sendFounderReservation: ok(), sendPaymentActionRequired: ok(),
   };
   const founders = {
     claimSeat: vi.fn().mockResolvedValue({ number: 12, takenAt: new Date('2026-10-08T10:00:00Z') }), markLost: vi.fn(), releaseReservation: vi.fn(),
+    // Premier paiement réel (#769) : la garantie part de firstPaidAt.
+    markFirstPaid: vi.fn().mockResolvedValue({ number: 12, firstPaidAt: new Date('2026-10-08T10:00:00Z') }),
+    releaseUnpaid: vi.fn().mockResolvedValue(null),
     refundFirstPayment: vi.fn().mockResolvedValue({ status: 'REFUNDED' }), updateInterval: vi.fn(),
   };
   const partners = {
     claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null),
   };
   const redis = { client: { del: vi.fn().mockResolvedValue(1) } };
+  // Redis réel en miniature pour les e-mails « une seule fois » (SET NX + DEL).
+  const keys = new Set<string>();
+  const mailOnce = {
+    client: {
+      set: vi.fn(async (k: string, _v: string, _ex: string, _ttl: number, _nx: string) => (keys.has(k) ? null : (keys.add(k), 'OK'))),
+      del: vi.fn(async (k: string) => Number(keys.delete(k))),
+    },
+  };
   const subscriptions = new StripeSubscriptionService(prisma as never, redis as never, stripe);
   const referrals = { processReferral: vi.fn() } as unknown as StripeReferralService;
   const svc = new StripeWebhookService(
     config as never, prisma as never, resend as never, { syncDiscordRole: vi.fn().mockResolvedValue(undefined) } as never,
     subscriptions, referrals, founders as never,
     partners as never,
-    { add: vi.fn() } as never, stripe,
+    { add: vi.fn() } as never, stripe, undefined, undefined, mailOnce as never,
   );
   return { svc, founders, partners, cancel, resend, prisma, invoicesList };
 }
@@ -439,7 +451,7 @@ describe('GET /billing/offers', () => {
     Object.assign(b.founders, {
       publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
       statusFor: vi.fn().mockResolvedValue({
-        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: since,
+        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: since, founderFirstPaidAt: since,
         founderEligible: false, founderIneligibleReason: 'already_founder',
       }),
     });
@@ -460,6 +472,7 @@ describe('GET /billing/offers', () => {
       publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
       statusFor: vi.fn().mockResolvedValue({
         isFounder: true, founderNumber: 3, founderInterval: 'year', founderSince: new Date(Date.now() - 20 * 86_400_000),
+        founderFirstPaidAt: new Date(Date.now() - 20 * 86_400_000),
         founderEligible: false, founderIneligibleReason: 'already_founder',
       }),
     });
@@ -494,7 +507,7 @@ describe('checkout sur la page de l’app (ui elements)', () => {
       publishableKey: 'pk_test_123',
       summary: {
         offer: 'founder', interval: 'month', recurringEur: 29, normalEur: 49, trialDays: 0,
-        partnerCode: null, partnerDurationMonths: null, referralDiscount: false, seatsLeft: 199,
+        partnerCode: null, partnerDurationMonths: null, referralDiscount: false, seatsLeft: 199, firstChargeAt: null,
       },
     });
   });
@@ -623,3 +636,219 @@ describe('e-mails fondateur et code partenaire', () => {
     expect(resend.sendAnnualRenewalReminder).not.toHaveBeenCalled();
   });
 });
+
+// ── Réservation fondateur pendant le Premium offert (#769, B1) ───────────────────────────────────
+
+describe('réservation fondateur pendant le Premium offert (#769)', () => {
+  const H = 3_600_000;
+  const inTrial = (hours: number) => ({ trialEndsAt: new Date(Date.now() + hours * H), trialSource: 'SIGNUP', stripeSubscriptionStatus: null });
+
+  it('essai d’au moins 49 h : carte maintenant, premier prélèvement à la fin du Premium offert', async () => {
+    const { svc, create, founders } = makeBilling({ user: inTrial(9 * 24) });
+    const res = await founder(svc);
+    const params = create.mock.calls[0][0];
+    expect(params.subscription_data.trial_end).toBeGreaterThan(Math.floor(Date.now() / 1000) + 8 * 24 * 3600);
+    expect(params.subscription_data).not.toHaveProperty('trial_period_days');
+    expect(params.custom_text.submit.message).toMatch(/^Aucun prélèvement avant le \d{2}\/\d{2}\. Satisfait ou remboursé 14 jours à partir de ce premier paiement\./);
+    expect(founders.reserve).toHaveBeenCalled(); // place comptée dès la réservation
+    expect(res).toHaveProperty('url');
+  });
+
+  it('moins de 49 h d’essai (Stripe exige 48 h) : prélèvement immédiat, comme hors essai', async () => {
+    const { svc, create } = makeBilling({ user: inTrial(48.5) });
+    await founder(svc);
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+  });
+
+  it('Premium offert par l’admin : réservation fondateur avec prélèvement immédiat, comme hors essai', async () => {
+    const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialSource: 'ADMIN' } });
+    await founder(svc);
+    const params = create.mock.calls[0][0];
+    expect(params.subscription_data).not.toHaveProperty('trial_end');
+    expect(params.custom_text.submit.message).toMatch(/^Satisfait ou remboursé 14 jours sur le 1er paiement\./);
+  });
+
+  it('Premium au prix normal pendant l’essai : jamais différé', async () => {
+    const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialUsed: true } });
+    await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app');
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+    expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_period_days');
+  });
+
+  it('session ouverte reprise seulement avec la même date de premier prélèvement', async () => {
+    const user = inTrial(9 * 24);
+    const key = String(Math.floor(user.trialEndsAt.getTime() / 1000));
+    const meta = { offer: 'founder', priceId: 'price_29' };
+
+    const same = makeBilling({ user, openSessions: [{ id: 'cs_same', url: 'https://x/same', metadata: { ...meta, firstChargeAt: key } }] });
+    expect(await founder(same.svc)).toEqual({ url: 'https://x/same' });
+    expect(same.create).not.toHaveBeenCalled();
+
+    // Session créée en paiement immédiat, essai maintenant reportable (ou l'inverse) : expirée, nouvelle session.
+    const immediate = makeBilling({ user, openSessions: [{ id: 'cs_now', url: 'https://x/now', metadata: meta }] });
+    await founder(immediate.svc);
+    expect(immediate.expire).toHaveBeenCalledWith('cs_now');
+    expect(immediate.create.mock.calls[0][0].metadata.firstChargeAt).toBe(key);
+
+    const crossed = makeBilling({ user: inTrial(48.5), openSessions: [{ id: 'cs_old', url: 'https://x/old', metadata: { ...meta, firstChargeAt: key } }] });
+    await founder(crossed.svc);
+    expect(crossed.expire).toHaveBeenCalledWith('cs_old');
+    expect(crossed.create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+  });
+
+  it('page de l’app : récapitulatif avec la date du premier prélèvement', async () => {
+    const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
+    const { svc } = makeBilling({ user: { trialEndsAt, trialSource: 'SIGNUP', stripeSubscriptionStatus: null }, pk: 'pk_test_1' });
+    const res = (await svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', ui: 'elements' })) as {
+      summary: { firstChargeAt: string | null; trialDays: number };
+    };
+    expect(res.summary.firstChargeAt).toBe(trialEndsAt.toISOString());
+    expect(res.summary.trialDays).toBe(0);
+  });
+
+  it('réservation (facture d’essai à 0 €) : place prise, e-mail de réservation, pas encore de bienvenue', async () => {
+    const trialEnd = Math.floor(Date.now() / 1000) + 9 * 86_400;
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'trialing', trialEnd });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 }));
+    expect(founders.claimSeat).toHaveBeenCalled();
+    expect(founders.markFirstPaid).not.toHaveBeenCalled();
+    expect(resend.sendFounderWelcome).not.toHaveBeenCalled();
+    expect(plain(resend.sendFounderReservation.mock.calls[0][0])).toMatchObject({
+      to: 'u1@test.com', number: 12, priceLabel: '29,00 € par mois', firstChargeAt: new Date(trialEnd * 1000).toISOString(),
+    });
+  });
+
+  it('tâche rejouée (BullMQ) : l’e-mail de réservation ne part qu’une fois', async () => {
+    const trialEnd = Math.floor(Date.now() / 1000) + 9 * 86_400;
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'trialing', trialEnd });
+    const ev = event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 });
+    await svc.processWebhookEvent(ev);
+    await svc.processWebhookEvent(ev);
+    expect(resend.sendFounderReservation).toHaveBeenCalledTimes(1);
+  });
+
+  it('premier prélèvement à la fin de l’essai (facture de cycle) : garantie datée de ce paiement', async () => {
+    const paidAt = Math.floor(Date.UTC(2026, 10, 16, 10) / 1000);
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.markFirstPaid.mockResolvedValueOnce({ number: 12, firstPaidAt: new Date(paidAt * 1000) });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', {
+      ...invoice('sub_f', 'subscription_cycle'), status_transitions: { paid_at: paidAt },
+    }));
+    expect(founders.claimSeat).not.toHaveBeenCalled();
+    expect(founders.markFirstPaid).toHaveBeenCalledWith('u1', new Date(paidAt * 1000));
+    expect(resend.sendFounderWelcome.mock.calls[0][0].refundUntil).toEqual(new Date((paidAt + 14 * 86_400) * 1000));
+  });
+
+  it('renouvellement d’une place déjà payée : aucune nouvelle bienvenue', async () => {
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.markFirstPaid.mockResolvedValueOnce(null);
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_cycle')));
+    expect(resend.sendFounderWelcome).not.toHaveBeenCalled();
+  });
+
+  it('abonnement terminé sans paiement (prélèvement refusé) : place rendue, tarif non « perdu »', async () => {
+    const { svc, founders } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    founders.releaseUnpaid.mockResolvedValueOnce({ number: 12, status: 'RELEASED' });
+    await svc.processWebhookEvent(event('customer.subscription.deleted', {
+      id: 'sub_f', customer: 'cus_1', cancellation_details: { reason: 'payment_failed' }, items: { data: [] },
+    }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f');
+    expect(founders.markLost).not.toHaveBeenCalled();
+  });
+
+  it('fin d’abonnement reçue AVANT la facture d’essai à 0 € : aucune place prise, aucun e-mail', async () => {
+    const { svc, founders, resend } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'canceled' });
+    await svc.processWebhookEvent(event('customer.subscription.deleted', {
+      id: 'sub_f', customer: 'cus_1', cancellation_details: { reason: 'cancellation_requested' }, items: { data: [] },
+    }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f'); // rien à rendre : aucune place encore
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', { ...invoice('sub_f', 'subscription_create'), amount_paid: 0 }));
+    expect(founders.claimSeat).not.toHaveBeenCalled();
+    expect(resend.sendFounderReservation).not.toHaveBeenCalled();
+  });
+
+  it('fin reçue avant une facture PAYÉE : place prise puis perdue (comme une fin reçue après)', async () => {
+    const { svc, founders, resend, cancel } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'canceled' });
+    await svc.processWebhookEvent(event('invoice.payment_succeeded', invoice('sub_f', 'subscription_create')));
+    expect(founders.claimSeat).toHaveBeenCalled();
+    expect(founders.markLost).toHaveBeenCalledWith('sub_f');
+    expect(cancel).not.toHaveBeenCalled(); // aucun essai annulé pour un abonnement déjà terminé
+    expect(resend.sendFounderReservation).not.toHaveBeenCalled();
+  });
+
+  it('abonnement passé en « impayé » (relances épuisées) : réservation jamais payée rendue', async () => {
+    const { svc, founders } = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'unpaid' });
+    await svc.processWebhookEvent(event('customer.subscription.updated', { id: 'sub_f', status: 'unpaid', customer: 'cus_1' }));
+    expect(founders.releaseUnpaid).toHaveBeenCalledWith('sub_f');
+
+    const pastDue = makeWebhook({ id: 'sub_f', price: 'price_29', status: 'past_due' });
+    await pastDue.svc.processWebhookEvent(event('customer.subscription.updated', { id: 'sub_f', status: 'past_due', customer: 'cus_1' }));
+    expect(pastDue.founders.releaseUnpaid).not.toHaveBeenCalled(); // relances en cours : la place reste
+  });
+
+  it('3D Secure : invoice.payment_failed à 0 tentative → aucun e-mail d’échec ; un vrai refus en envoie un', async () => {
+    // Ordre constaté en mode test le 27/10 : payment_failed (0 tentative) puis payment_action_required.
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_failed', { id: 'in_3ds', customer: 'cus_1', attempt_count: 0 }));
+    expect(resend.sendPaymentFailed).not.toHaveBeenCalled();
+    expect(resend.sendTariffAtRisk).not.toHaveBeenCalled();
+    expect(resend.sendAdminAlert.mock.calls[0][1]).toContain('confirmation 3D Secure');
+
+    await svc.processWebhookEvent(event('invoice.payment_failed', { id: 'in_ko', customer: 'cus_1', attempt_count: 1 }));
+    expect(resend.sendPaymentFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it('3D Secure : un seul e-mail par facture ; envoi raté → renvoyé au nouvel essai', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    const ev = event('invoice.payment_action_required', { id: 'in_3ds', customer: 'cus_1', hosted_invoice_url: 'https://invoice.stripe.test/i' });
+    resend.sendPaymentActionRequired.mockRejectedValueOnce(new Error('resend down'));
+    await expect(svc.processWebhookEvent(ev)).rejects.toThrow('resend down');
+    await svc.processWebhookEvent(ev); // nouvel essai BullMQ
+    await svc.processWebhookEvent(ev); // tâche rejouée après un succès
+    expect(resend.sendPaymentActionRequired).toHaveBeenCalledTimes(2); // 1 raté + 1 envoyé
+  });
+
+  it('3D Secure de la première facture (page de paiement) : pas d’e-mail, la page s’en charge', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_action_required', {
+      id: 'in_first', customer: 'cus_1', billing_reason: 'subscription_create', hosted_invoice_url: 'https://invoice.stripe.test/i',
+    }));
+    expect(resend.sendPaymentActionRequired).not.toHaveBeenCalled();
+  });
+
+  it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_action_required', {
+      id: 'in_3ds', customer: 'cus_1', billing_reason: 'subscription_cycle', hosted_invoice_url: 'https://invoice.stripe.test/i',
+    }));
+    expect(resend.sendPaymentActionRequired).toHaveBeenCalledWith({
+      to: 'u1@test.com', userName: 'U', invoiceUrl: 'https://invoice.stripe.test/i',
+    });
+  });
+
+  it('offres : date du premier prélèvement si éligible pendant l’essai ; place réservée non remboursable', async () => {
+    const b = makeBilling();
+    const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
+    Object.assign(b.founders, {
+      publicState: vi.fn().mockResolvedValue({ open: true, ended: false, seatsLeft: 150, seatsTotal: 200 }),
+      statusFor: vi.fn().mockResolvedValue({ isFounder: false, founderEligible: true, founderIneligibleReason: null }),
+    });
+    Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
+    const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: null, stripeSubscriptionStatus: null, trialEndsAt, trialSource: 'SIGNUP' });
+    expect((await b.svc.offers('u1')).founder.firstChargeAt).toEqual(trialEndsAt);
+
+    Object.assign(b.founders, {
+      statusFor: vi.fn().mockResolvedValue({
+        isFounder: true, founderNumber: 12, founderInterval: 'month', founderSince: new Date(), founderFirstPaidAt: null,
+        founderEligible: false, founderIneligibleReason: 'already_founder',
+      }),
+    });
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'trialing', trialEndsAt, trialSource: 'SIGNUP' });
+    const reserved = (await b.svc.offers('u1')).founder;
+    expect(reserved.refundUntil).toBeNull();
+    expect(reserved.reservedUntilCharge).toBe(true);
+    expect(reserved.firstChargeAt).toBeNull();
+  });
+});
+

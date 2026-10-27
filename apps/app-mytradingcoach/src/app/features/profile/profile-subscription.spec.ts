@@ -43,10 +43,10 @@ function offers(over: Partial<BillingOffers> = {}): BillingOffers {
   };
 }
 
-function render(opts: { offered: boolean; paying?: boolean; offers?: BillingOffers }) {
+function render(opts: { offered: boolean; signup?: boolean; paying?: boolean; offers?: BillingOffers }) {
   const user = {
     email: 'alex@test.com', plan: 'FREE', trialEndsAt: opts.paying ? null : IN_20_DAYS, trialUsed: true,
-    stripeSubscriptionStatus: opts.paying ? 'active' : opts.offered ? null : 'trialing',
+    stripeSubscriptionStatus: opts.paying ? 'active' : opts.offered || opts.signup ? null : 'trialing',
     notificationsEmail: true, debriefAutomatic: true, marketingConsent: false,
   };
   TestBed.configureTestingModule({
@@ -59,7 +59,7 @@ function render(opts: { offered: boolean; paying?: boolean; offers?: BillingOffe
         provide: UserStore,
         useValue: {
           user: () => user,
-          isPremium: () => true, isDemo: () => false, isOfferedPremium: () => opts.offered,
+          isPremium: () => true, isDemo: () => false, isOfferedPremium: () => opts.offered, signupTrialDaysLeft: () => (opts.signup ? 20 : null),
           trialAvailable: () => false,
           displayName: () => 'Alex', startingCapital: () => 0, refreshUser: vi.fn(),
         },
@@ -90,6 +90,15 @@ describe('Profil > Abonnement', () => {
     expect(text).toContain('Premium offert : il te reste 20 jours');
     expect(text).toContain('Aucun prélèvement, tu repasses en gratuit automatiquement.');
     expect(text).toContain('Continuer en Premium →');
+    expect(text).not.toContain('Premier prélèvement');
+    expect(text).not.toContain('annuler mon essai');
+    expect(text).not.toContain('Gérer mon abonnement');
+  });
+
+  it('Essai d’inscription (#769, sans carte) : Premium offert, aucun prélèvement, pas de portail Stripe', () => {
+    const text = render({ offered: false, signup: true }).textContent ?? '';
+    expect(text).toContain('Premium offert : il te reste 20 jours');
+    expect(text).toContain('Aucun prélèvement, tu repasses en gratuit automatiquement.');
     expect(text).not.toContain('Premier prélèvement');
     expect(text).not.toContain('annuler mon essai');
     expect(text).not.toContain('Gérer mon abonnement');

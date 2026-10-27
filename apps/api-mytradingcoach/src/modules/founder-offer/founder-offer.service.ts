@@ -197,6 +197,7 @@ export class FounderOfferService {
       founderStatus: seat?.status ?? null,
       founderInterval: seat?.interval ?? null,
       founderSince: seat?.takenAt ?? null,
+      founderFirstPaidAt: seat?.firstPaidAt ?? null,
       founderEligible: elig.eligible,
       founderIneligibleReason: elig.reason,
     };
@@ -319,6 +320,37 @@ export class FounderOfferService {
       }
     }
     return result.seat;
+  }
+
+  /**
+   * Premier paiement réel (> 0 €) d'une place fondateur : la garantie part de là. Idempotent : seule
+   * une place pas encore payée change. Renvoie la place mise à jour, ou `null` si rien n'a changé.
+   */
+  async markFirstPaid(userId: string, at: Date): Promise<FounderSeat | null> {
+    const { count } = await this.prisma.founderSeat.updateMany({
+      where: { userId, status: FounderSeatStatus.ACTIVE, firstPaidAt: null },
+      data: { firstPaidAt: at },
+    });
+    return count ? this.prisma.founderSeat.findUnique({ where: { userId } }) : null;
+  }
+
+  /**
+   * Réservation jamais payée (premier prélèvement en échec définitif, #769) : place RELEASED, rendue
+   * au compteur. Le numéro n'est jamais réattribué ; la place est détachée du compte, qui peut donc
+   * réserver de nouveau. Une place déjà payée n'est jamais concernée (voir `markLost`).
+   */
+  async releaseUnpaid(stripeSubscriptionId: string, now = new Date()): Promise<FounderSeat | null> {
+    const seat = await this.prisma.founderSeat.findFirst({
+      where: { stripeSubscriptionId, status: FounderSeatStatus.ACTIVE, firstPaidAt: null },
+    });
+    if (!seat) return null;
+    const updated = await this.prisma.founderSeat.update({
+      where: { number: seat.number },
+      data: { status: FounderSeatStatus.RELEASED, endedAt: now, userId: null },
+    });
+    await this.invalidateSeatsLeft();
+    this.logger.log(`Fondateur n° ${seat.number} : premier prélèvement en échec, place rendue`);
+    return updated;
   }
 
   /** Changement mensuel ↔ annuel : même place, même numéro. */

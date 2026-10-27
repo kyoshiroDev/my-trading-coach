@@ -73,6 +73,8 @@ describe('UsersService.offerPremium', () => {
   it.each([
     ['abonnement Stripe actif', { stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active' }, 'abonnement Stripe'],
     ['essai Stripe', { stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'trialing' }, 'abonnement Stripe'],
+    ['paiement Stripe en attente (past_due, #769)', { stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'past_due' }, 'Paiement Stripe en attente'],
+    ['abonnement impayé (unpaid, #769)', { stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'unpaid' }, 'Paiement Stripe en attente'],
     ['plan PREMIUM', { plan: 'PREMIUM' }, 'déjà Premium'],
     ['ADMIN', { role: 'ADMIN' }, 'rôle'],
     ['BETA_TESTER', { role: 'BETA_TESTER' }, 'rôle'],
