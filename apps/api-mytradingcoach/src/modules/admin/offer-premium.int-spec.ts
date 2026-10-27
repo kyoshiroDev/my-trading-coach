@@ -49,7 +49,13 @@ beforeAll(async () => {
   userToken = await register(USER_EMAIL);
   const admin = await prisma.user.update({ where: { email: ADMIN_EMAIL }, data: { role: 'ADMIN' } });
   await app.get(AuthUserCacheService).invalidate(admin.id);
-  userId = (await prisma.user.findUniqueOrThrow({ where: { email: USER_EMAIL } })).id;
+  // Compte gratuit SANS essai d'inscription (#769 : tout inscrit en a un) : le Premium offert part de zéro.
+  const user = await prisma.user.update({
+    where: { email: USER_EMAIL },
+    data: { trialEndsAt: null, trialSource: null, signupTrialEndsAt: null },
+  });
+  userId = user.id;
+  await app.get(AuthUserCacheService).invalidate(userId);
 }, 120_000);
 
 afterAll(async () => {
@@ -111,5 +117,19 @@ describe('POST /admin/users/:id/offer-premium', () => {
     await prisma.user.update({ where: { id: userId }, data: { trialEndsAt: new Date(Date.now() - 1000) } });
     await app.get(AuthUserCacheService).invalidate(userId);
     expect(await premiumRoute()).toBe(403);
+  });
+
+  it('pendant l’essai d’inscription : durées additionnées, origine ADMIN, fin d’essai d’inscription intacte (#769)', async () => {
+    const signupEnd = new Date(Date.now() + 9 * DAY);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { trialEndsAt: signupEnd, signupTrialEndsAt: signupEnd, trialSource: 'SIGNUP' },
+    });
+    const res = await offer(adminToken, userId, { days: 30 });
+    const end = Date.parse(((await res.json()) as { data: { trialEndsAt: string } }).data.trialEndsAt);
+    expect(end).toBe(signupEnd.getTime() + 30 * DAY);
+    const u = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    expect(u.trialSource).toBe('ADMIN');
+    expect(u.signupTrialEndsAt?.getTime()).toBe(signupEnd.getTime());
   });
 });
