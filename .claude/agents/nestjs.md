@@ -708,6 +708,11 @@ canActivate(ctx: ExecutionContext): boolean {
   tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
   (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
   rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
+  Premium offert par l'admin (`offerPremium`) : 409 si abonnement `active` / `trialing` (une réservation
+  est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
+  l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
+  `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
+  prélèvement).
 - **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
   `service` (sans consentement, désinscription « service », même plafond), bornées par
   `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
