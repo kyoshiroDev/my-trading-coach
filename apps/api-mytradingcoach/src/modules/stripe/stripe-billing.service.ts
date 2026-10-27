@@ -261,8 +261,11 @@ export class StripeBillingService {
     // Une session encore ouverte n'est reprise que pour la MÊME offre, le MÊME prix et la MÊME page
     // de paiement ; sinon elle est expirée (sa réservation fondateur rendue). Avant : n'importe quelle
     // session ouverte était reprise, un fondateur pouvait retomber sur sa session à 49 € et inversement.
+    // Même date de premier prélèvement aussi (#769) : le seuil des 48 h peut passer pendant les 30 min
+    // d'une session, et le récapitulatif doit dire ce que la session prélèvera.
+    const chargeKey = firstChargeAt ? String(Math.floor(firstChargeAt.getTime() / 1000)) : '';
     if (user.stripeCustomerId) {
-      const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId, partnerCode, ui);
+      const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId, partnerCode, ui, chargeKey);
       if (reused) {
         this.logger.log(`Session checkout existante réutilisée | user: ${userId}, offer: ${offer}, ui: ${ui}`);
         return 'url' in reused ? reused : { clientSecret: reused.clientSecret, publishableKey, summary: await summary() };
@@ -275,12 +278,13 @@ export class StripeBillingService {
     const cta = opts.cta ?? null;
     const metadata: Record<string, string> = {
       userId, offer, priceId, ui, ...(cta ? { cta } : {}), ...(partnerCode ? { partnerCode } : {}),
+      ...(chargeKey ? { firstChargeAt: chargeKey } : {}),
     };
 
     const subscriptionData = trialGranted
       ? { trial_period_days: TRIAL_PERIOD_DAYS, metadata }
       : firstChargeAt
-        ? { trial_end: Math.floor(firstChargeAt.getTime() / 1000), metadata }
+        ? { trial_end: Number(chargeKey), metadata }
         : { metadata };
 
     // Réduc filleul : -10% sur la première année, routée selon l'intervalle
@@ -397,6 +401,7 @@ export class StripeBillingService {
     priceId: string,
     partnerCode: string | null = null,
     ui: CheckoutUi = 'hosted',
+    chargeKey = '',
   ): Promise<{ url: string } | { clientSecret: string } | null> {
     const open = await this.stripe.checkout.sessions
       .list({ customer: customerId, status: 'open', limit: 10 })
@@ -406,7 +411,8 @@ export class StripeBillingService {
         (s.metadata?.['offer'] ?? 'premium') === offer &&
         s.metadata?.['priceId'] === priceId &&
         (s.metadata?.['partnerCode'] ?? null) === partnerCode &&
-        (s.metadata?.['ui'] ?? 'hosted') === ui;
+        (s.metadata?.['ui'] ?? 'hosted') === ui &&
+        (s.metadata?.['firstChargeAt'] ?? '') === chargeKey;
       const reservationOk = offer === 'premium' || (await this.founders.hasValidReservation(s.id));
       if (sameOffer && reservationOk) {
         if (ui === 'hosted' && s.url) return { url: s.url };

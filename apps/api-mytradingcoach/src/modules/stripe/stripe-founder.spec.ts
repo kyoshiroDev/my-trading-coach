@@ -675,6 +675,27 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_period_days');
   });
 
+  it('session ouverte reprise seulement avec la même date de premier prélèvement', async () => {
+    const user = inTrial(9 * 24);
+    const key = String(Math.floor(user.trialEndsAt.getTime() / 1000));
+    const meta = { offer: 'founder', priceId: 'price_29' };
+
+    const same = makeBilling({ user, openSessions: [{ id: 'cs_same', url: 'https://x/same', metadata: { ...meta, firstChargeAt: key } }] });
+    expect(await founder(same.svc)).toEqual({ url: 'https://x/same' });
+    expect(same.create).not.toHaveBeenCalled();
+
+    // Session créée en paiement immédiat, essai maintenant reportable (ou l'inverse) : expirée, nouvelle session.
+    const immediate = makeBilling({ user, openSessions: [{ id: 'cs_now', url: 'https://x/now', metadata: meta }] });
+    await founder(immediate.svc);
+    expect(immediate.expire).toHaveBeenCalledWith('cs_now');
+    expect(immediate.create.mock.calls[0][0].metadata.firstChargeAt).toBe(key);
+
+    const crossed = makeBilling({ user: inTrial(48.5), openSessions: [{ id: 'cs_old', url: 'https://x/old', metadata: { ...meta, firstChargeAt: key } }] });
+    await founder(crossed.svc);
+    expect(crossed.expire).toHaveBeenCalledWith('cs_old');
+    expect(crossed.create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
+  });
+
   it('page de l’app : récapitulatif avec la date du premier prélèvement', async () => {
     const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
     const { svc } = makeBilling({ user: { trialEndsAt, trialSource: 'SIGNUP', stripeSubscriptionStatus: null }, pk: 'pk_test_1' });
