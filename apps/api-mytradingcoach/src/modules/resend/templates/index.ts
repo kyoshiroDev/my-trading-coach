@@ -712,14 +712,17 @@ export function paymentActionRequiredTemplate(params: {
       Confirme ton paiement
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ta banque demande une confirmation pour ce prélèvement. Sans
+      Bonjour ${userName || 'Trader'}, ta banque demande une confirmation pour ce prélèvement.
+    </p>
+    <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
+      Ton Premium est en pause jusqu'à ta confirmation. Tes trades et ton historique restent là. Sans
       confirmation dans les prochains jours, ton abonnement s'arrêtera.
     </p>
     ${cta('Confirmer mon paiement →', invoiceUrl)}
   `, 'rgba(245,158,11,.3)');
   return {
     subject: 'Confirme ton paiement',
-    html: emailWrapper(content, 'Ta banque demande une confirmation pour ce prélèvement.'),
+    html: emailWrapper(content, 'Ton Premium est en pause jusqu’à la confirmation de ce prélèvement.'),
   };
 }
 

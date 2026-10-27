@@ -329,9 +329,15 @@ export class StripeWebhookService {
     });
     if (!user) return;
 
+    // Paiement qui attend une confirmation de la banque (3D Secure) : Stripe envoie cet événement avec
+    // 0 tentative, juste avant `invoice.payment_action_required` (constaté en mode test le 27/10 ; un
+    // refus de carte compte 1 tentative). L'utilisateur reçoit « Confirme ton paiement », pas un échec.
+    const awaitingConfirmation = invoice.attempt_count === 0;
     // Fondateur ou code partenaire : rien n'est perdu pendant les relances, mais le tarif est en jeu.
-    const kept = await this.keptTariff(user.id);
-    if (kept) {
+    const kept = awaitingConfirmation ? null : await this.keptTariff(user.id);
+    if (awaitingConfirmation) {
+      this.logger.log('Paiement en attente de confirmation (3D Secure) : pas d’e-mail d’échec');
+    } else if (kept) {
       await this.resend.sendTariffAtRisk({
         to: user.email,
         userName: user.name ?? '',
@@ -349,7 +355,7 @@ export class StripeWebhookService {
     await this.resend
       .sendAdminAlert(
         `⚠️ Paiement échoué : ${user.email}`,
-        `Email     : ${user.email}\nTentative : ${attemptCount}/3\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
+        `Email     : ${user.email}\n${awaitingConfirmation ? 'Attente   : confirmation 3D Secure' : `Tentative : ${attemptCount}/3`}\nDate      : ${new Date().toLocaleDateString('fr-FR')}`,
       )
       .catch(() => undefined);
     this.adminNotifier?.notify(AdminPushEvent.BILLING_ISSUE, ADMIN_PUSH_MESSAGES.paymentFailed());

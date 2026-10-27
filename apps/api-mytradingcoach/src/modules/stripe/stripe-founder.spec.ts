@@ -730,6 +730,18 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(resend.sendFounderReservation).not.toHaveBeenCalled();
   });
 
+  it('3D Secure : invoice.payment_failed à 0 tentative → aucun e-mail d’échec ; un vrai refus en envoie un', async () => {
+    // Ordre constaté en mode test le 27/10 : payment_failed (0 tentative) puis payment_action_required.
+    const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
+    await svc.processWebhookEvent(event('invoice.payment_failed', { id: 'in_3ds', customer: 'cus_1', attempt_count: 0 }));
+    expect(resend.sendPaymentFailed).not.toHaveBeenCalled();
+    expect(resend.sendTariffAtRisk).not.toHaveBeenCalled();
+    expect(resend.sendAdminAlert.mock.calls[0][1]).toContain('confirmation 3D Secure');
+
+    await svc.processWebhookEvent(event('invoice.payment_failed', { id: 'in_ko', customer: 'cus_1', attempt_count: 1 }));
+    expect(resend.sendPaymentFailed).toHaveBeenCalledTimes(1);
+  });
+
   it('paiement en attente de 3D Secure : e-mail avec le lien de la facture', async () => {
     const { svc, resend } = makeWebhook({ id: 'sub_f', price: 'price_29' });
     await svc.processWebhookEvent(event('invoice.payment_action_required', {

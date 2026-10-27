@@ -25,5 +25,8 @@ describe('paiement à confirmer (3D Secure)', () => {
     expect(mail.subject).toBe('Confirme ton paiement');
     expect(mail.html).toContain('href="https://invoice.stripe.test/i"');
     expect(text(mail.html)).toContain('ta banque demande une confirmation pour ce prélèvement');
+    // Le Premium est coupé (abonnement past_due) tant que la banque n'a pas eu la confirmation.
+    expect(text(mail.html)).toContain("Ton Premium est en pause jusqu'à ta confirmation.");
+    expect(text(mail.html)).not.toMatch(/€/);
   });
 });
