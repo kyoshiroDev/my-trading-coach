@@ -685,7 +685,7 @@ export function founderReservationTemplate(params: {
     </p>
     ${rulesList([
       'Prix bloqué tant que ton abonnement reste actif, même si le prix normal augmente.',
-      `Tu peux annuler avant le ${date} depuis ton profil : aucun prélèvement, la place est rendue.`,
+      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, la place est rendue.`,
       'Si le prélèvement échoue définitivement, la place est rendue.',
       `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier prélèvement.`,
     ])}

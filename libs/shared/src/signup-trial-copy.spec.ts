@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import ts from 'typescript';
 
 // Garde (#769) : la landing annonce l'essai d'inscription (PREMIUM_SIGNUP_TRIAL_DAYS), plus l'essai
 // Stripe de 30 jours ni « 1 mois offert ». Seul le mois offert au PARRAIN (parrainage) reste.
@@ -69,3 +70,54 @@ describe('Landing : essai Premium d’inscription (#769)', () => {
   });
 });
 
+// Typographie (#769, C4) : espace insécable avant « : ; ! ? » dans les textes ajoutés pour la réservation
+// fondateur et les e-mails de l'essai (`&nbsp;` dans le HTML, `\u00a0` dans les chaînes). Les gabarits
+// plus anciens ne sont pas concernés. Les chaînes sont lues par le compilateur TypeScript : rien ne
+// passe entre les gouttes (gabarits imbriqués, chaînes concaténées).
+describe('Typographie des textes de l’essai et de la réservation (#769)', () => {
+  /** Chaînes du fichier (les ${…} remplacés par X, balises HTML retirées), limitées aux fonctions citées. */
+  function literals(file: string, functions?: string[]): string[] {
+    const sf = ts.createSourceFile(file, read(file), ts.ScriptTarget.Latest, true);
+    const out: string[] = [];
+    const visit = (node: ts.Node, inside: boolean): void => {
+      const named = ts.isFunctionDeclaration(node) && node.name && functions?.includes(node.name.text);
+      const take = inside || !functions || !!named;
+      if (take && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))) out.push(node.text);
+      if (take && ts.isTemplateExpression(node)) out.push([node.head.text, ...node.templateSpans.map((s) => s.literal.text)].join('X'));
+      ts.forEachChild(node, (child) => visit(child, take));
+    };
+    visit(sf, false);
+    return out.map((t) => t.replace(/<[^>]*>/g, ' '));
+  }
+  /** Espace ordinaire avant : ; ! ? (ou ponctuation en début de ligne) : la faute cherchée. */
+  const faults = (texts: string[]) => texts.filter((t) => /\S[ \t]+[:;!?](?=\s|$)/.test(t) || /\n[ \t]*[:;!?](?=\s)/.test(t));
+
+  it('e-mails réservation, 3D Secure, J+11 et fin d’essai', () => {
+    const mails = [
+      ...literals('apps/api-mytradingcoach/src/modules/resend/templates/index.ts', ['founderReservationTemplate', 'paymentActionRequiredTemplate']),
+      ...literals('apps/api-mytradingcoach/src/modules/resend/campaigns/campaign-templates.ts', ['trialEndingTemplate', 'trialEndedTemplate']),
+    ];
+    expect(mails.join(' ')).toContain('depuis ton profil'); // les fonctions ont bien été trouvées
+    expect(mails.join(' ')).toContain('Ce qui change en gratuit');
+    expect(faults(mails)).toEqual([]);
+  });
+
+  it('page de paiement et FAQ : textes de la réservation', () => {
+    const reservation = /Aucun prélèvement avant le|tu ne paies rien|tu peux réserver ta place|à partir du premier paiement/;
+    const texts = [
+      ...literals('apps/app-mytradingcoach/src/app/features/checkout/checkout-copy.ts'),
+      ...literals('apps/landing-mytradingcoach/src/data/faq.ts'),
+    ].filter((t) => reservation.test(t));
+    expect(texts.length).toBeGreaterThanOrEqual(4);
+    expect(faults(texts)).toEqual([]);
+  });
+
+  it('CGU fondateur : lignes de la réservation', () => {
+    const cgu = read('apps/landing-mytradingcoach/src/pages/cgu.astro')
+      .split('\n')
+      .filter((l) => l.includes('avec un premier prélèvement à la fin de cette période') || l.includes('suivant le premier paiement effectivement prélevé'))
+      .map((l) => l.replace(/<[^>]*>/g, ' '));
+    expect(cgu).toHaveLength(2);
+    expect(faults(cgu)).toEqual([]);
+  });
+});

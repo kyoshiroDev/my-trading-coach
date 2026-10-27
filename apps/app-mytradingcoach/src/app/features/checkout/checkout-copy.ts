@@ -71,10 +71,10 @@ export function checkoutCopy(s: CheckoutSummary, now: Date = new Date()): Checko
       lead: FOUNDER_LEAD,
       price: short(s.recurringEur), per, was: `${short(s.normalEur)} €`,
       note: charge
-        ? `Aucun prélèvement avant le ${charge} : ton Premium offert continue jusque-là. Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`
+        ? `Aucun prélèvement avant le ${charge}\u00a0: ton Premium offert continue jusque-là. Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`
         : `Prix bloqué tant que ton abonnement reste actif.${monthlyEquivalent}`,
       assurances: [
-        ...(charge ? [{ icon: 'trial' as const, strong: `Annule avant le ${charge}`, text: 'et tu ne paies rien : la place est alors rendue.' }] : []),
+        ...(charge ? [{ icon: 'trial' as const, strong: `Annule avant le ${charge}`, text: 'et tu ne paies rien\u00a0: la place est alors rendue.' }] : []),
         { icon: 'refund', strong: `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours`, text: charge ? 'à partir du premier paiement, sans justification.' : 'sur le premier paiement, sans justification.' },
         cancel('le prix fondateur'),
         SECURE,

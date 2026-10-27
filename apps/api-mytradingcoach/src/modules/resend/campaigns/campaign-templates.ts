@@ -438,7 +438,7 @@ export function trialEndedTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
     card(`
       ${heading('Ton essai', 'Ton Premium offert est terminé')}
       <p ${P}>${hello(userName)} ton compte est repassé en gratuit. Tes trades, tes comptes et ton historique
-        restent là : rien n'est supprimé.</p>
+        restent là&nbsp;: rien n'est supprimé.</p>
       <p ${P}>En gratuit, tu gardes la synchro Tradovate, un compte avec les règles de sa prop firm suivi en
         direct, ton journal et la préparation de tes séances.</p>
       ${cta('Voir les offres Premium →', onboardingLink(appUrl, '/dashboard', 'trial_ended', { plan: 'premium', cta: 'email' }))}
