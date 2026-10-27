@@ -3,6 +3,14 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ACCOUNT_LIMITS } from '../constants/pricing.const';
 
+const DAY_MS = 86_400_000;
+
+/** Jours de calendrier (heure locale) entre aujourd'hui et `end` : 0 si `end` tombe aujourd'hui. */
+export function calendarDaysUntil(end: Date, now: Date): number {
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.max(0, Math.round((day(end) - day(now)) / DAY_MS));
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserStore {
   private readonly auth = inject(AuthService);
@@ -21,14 +29,37 @@ export class UserStore {
   });
 
   /**
-   * Premium offert par l'admin : `trialEndsAt` futur SANS abonnement Stripe en cours.
-   * Aucun prélèvement prévu, retour en gratuit automatique (≠ essai Stripe, qui a un abonnement).
+   * Premium sans abonnement : `trialEndsAt` futur SANS abonnement Stripe en cours (essai
+   * d'inscription ou Premium offert par l'admin). Aucun prélèvement, retour en gratuit automatique.
    */
-  readonly isOfferedPremium = computed(() => {
+  private readonly freePremium = computed(() => {
     const user = this.user();
-    if (!user?.trialEndsAt || new Date() >= new Date(user.trialEndsAt)) return false;
+    if (!user?.trialEndsAt || user.isDemo || new Date() >= new Date(user.trialEndsAt)) return false;
     const status = user.stripeSubscriptionStatus;
     return status !== 'active' && status !== 'trialing';
+  });
+
+  /** Premium offert par l'admin (hors essai d'inscription, #769). Mêmes règles côté API. */
+  readonly isOfferedPremium = computed(() => this.freePremium() && this.user()?.trialSource !== 'SIGNUP');
+
+  /**
+   * Essai d'inscription en cours (#769) : jours de CALENDRIER (heure locale) jusqu'au jour de fin,
+   * 0 le jour de fin, sinon `null`. Démo, abonné Stripe et Premium offert par l'admin : `null`.
+   */
+  readonly signupTrialDaysLeft = computed<number | null>(() => {
+    const user = this.user();
+    if (!this.freePremium() || user?.trialSource !== 'SIGNUP' || !user.trialEndsAt) return null;
+    return calendarDaysUntil(new Date(user.trialEndsAt), new Date());
+  });
+
+  /**
+   * Essai d'inscription terminé et pas d'autre accès Premium (#769) : fenêtre de fin d'essai.
+   * Un Premium offert ensuite passe l'origine à ADMIN : la fenêtre attend sa propre fin.
+   */
+  readonly signupTrialEnded = computed(() => {
+    const user = this.user();
+    if (!user?.signupTrialEndsAt || user.isDemo || user.trialSource !== 'SIGNUP') return false;
+    return new Date() >= new Date(user.signupTrialEndsAt) && !this.isPremium();
   });
 
   /** L'essai Stripe de 30 j est encore disponible au checkout (miroir de `trialUsed` côté API). */

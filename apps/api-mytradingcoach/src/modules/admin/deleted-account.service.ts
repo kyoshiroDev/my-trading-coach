@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const ANONYMIZE_AFTER_DAYS = 90;
+/** E-mail gardé 90 j puis anonymisé ; sert aussi à refuser l'essai d'une réinscription (#769). */
+export const ANONYMIZE_AFTER_DAYS = 90;
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 /**

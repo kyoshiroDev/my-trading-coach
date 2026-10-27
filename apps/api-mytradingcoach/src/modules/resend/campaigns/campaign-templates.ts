@@ -6,7 +6,6 @@ import {
   FOUNDER_OFFER,
   FOUNDER_REFUND_DAYS,
   PREMIUM_PRICE_EUR,
-  TRIAL_PERIOD_DAYS,
   founderSeatsLabel,
 } from '@mtc/shared';
 import {
@@ -60,8 +59,11 @@ const hello = (userName: string) => {
 };
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** « 1 mois offert » tant que l'essai fait 30 jours, sinon « N jours offerts » (valeur de @mtc/shared). */
-const trialLabel = () => (TRIAL_PERIOD_DAYS === 30 ? '1 mois offert' : `${TRIAL_PERIOD_DAYS} jours offerts`);
+/**
+ * Plus aucun essai Stripe promis dans les relances (#769) : tout inscrit depuis l'essai d'inscription a
+ * `trialUsed`, le mensuel est facturé dès la souscription.
+ */
+const NO_TRIAL_LINE = 'Sans engagement, annulable en un clic.';
 
 function heading(eyebrow: string, title: string): string {
   return `<p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">${eyebrow}</p>
@@ -123,7 +125,7 @@ export function firstWeekRecapTemplate({ userName, appUrl, unsubUrl, firstWeek }
       <p ${P}>${hello(userName)} cette semaine : ${trades}, ${days}, P&amp;L ${week.pnl}.</p>
       <p ${P}>Avec Premium, tu reçois des alertes avant d'atteindre ta limite, la détection des reprises de
         position après une perte, et un débrief de ta semaine rédigé par le coach IA.</p>
-      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;">${trialLabel()} sur l'abonnement mensuel, carte requise, annulable en un clic.</p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;">${NO_TRIAL_LINE}</p>
       ${cta('Voir ce que Premium ajoute →', onboardingLink(appUrl, '/dashboard', 'first_week_recap', { plan: 'premium', cta: 'email' }))}
     `) + RISK_NOTICE + marketingFooter(unsubUrl);
 
@@ -256,14 +258,14 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         coach IA et les analyses avancées.
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
-        1 mois offert · Carte requise · Annulable en un clic.
+        ${NO_TRIAL_LINE}
       </p>
       ${divider}
       ${cta('Essayer Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
-    subject: '⚡ Passe à Premium · 1 mois offert',
+    subject: '⚡ Passe à Premium',
     html: emailWrapper(content, 'Alertes avant ta limite, anti-tilt, débrief IA de ta semaine.', ACCENT.brand, unsubUrl),
   };
 }

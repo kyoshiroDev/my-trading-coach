@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import '../styles/legal.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
 
 const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 ---
@@ -23,7 +23,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 
     <h1>Conditions générales d'utilisation</h1>
     <p class="legal-lead">
-      Dernière mise à jour : 8 octobre 2026 &nbsp;·&nbsp;
+      Dernière mise à jour : 27 octobre 2026 &nbsp;·&nbsp;
       Éditeur : Grégory Tahir (My Trading Coach) :       <a href="mailto:contact@mytradingcoach.app">contact@mytradingcoach.app</a>
     </p>
 
@@ -89,7 +89,8 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
         <li>IA Insights &amp; Chat Coach (powered by Claude)</li>
         <li>Weekly Debrief automatique chaque dimanche où l'utilisateur a tradé</li>
         <li>Score Trader et PDF du débrief de la semaine</li>
-        <li>Essai gratuit de <strong>30 jours</strong> sur l'abonnement mensuel uniquement, carte bancaire requise, annulable en un clic (aucun prélèvement si annulation avant la fin de l'essai). L'abonnement annuel est facturé immédiatement, sans période d'essai.</li>
+        <li><strong>{PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts</strong> à l'inscription, sans carte bancaire ni abonnement&nbsp;: à la fin de cette période, le compte repasse automatiquement au plan Gratuit, sans prélèvement ni perte de données. Cette période est accordée une fois par personne&nbsp;; elle n'est pas accordée à une nouvelle inscription faite avec l'adresse e-mail d'un compte supprimé depuis moins de 90 jours.</li>
+        <li>Après les jours de Premium offerts, un abonnement payant n'a pas de période d'essai supplémentaire&nbsp;: le premier paiement est prélevé à la souscription. L'abonnement annuel est toujours facturé immédiatement.</li>
       </ul>
 
       <h3>Tarification</h3>
@@ -187,7 +188,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       </p>
 
       <p class="legal-updated">
-        Dernière mise à jour : 8 octobre 2026
+        Dernière mise à jour : 27 octobre 2026
       </p>
     </div>
   </main>

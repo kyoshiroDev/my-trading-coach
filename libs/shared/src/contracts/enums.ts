@@ -69,6 +69,10 @@ export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider];
 export const Plan = { FREE: 'FREE', PREMIUM: 'PREMIUM' } as const;
 export type Plan = (typeof Plan)[keyof typeof Plan];
 
+// Origine d'un Premium sans abonnement Stripe (#769) : essai d'inscription ou offert par l'admin.
+export const TrialSource = { SIGNUP: 'SIGNUP', ADMIN: 'ADMIN' } as const;
+export type TrialSource = (typeof TrialSource)[keyof typeof TrialSource];
+
 export const BrokerProvider = { TRADOVATE: 'TRADOVATE' } as const;
 export type BrokerProvider = (typeof BrokerProvider)[keyof typeof BrokerProvider];
 
@@ -128,6 +132,7 @@ export const CONTRACT_ENUMS = {
   Role,
   AuthProvider,
   Plan,
+  TrialSource,
   BrokerProvider,
   BrokerConnectionStatus,
   FounderSeatStatus,

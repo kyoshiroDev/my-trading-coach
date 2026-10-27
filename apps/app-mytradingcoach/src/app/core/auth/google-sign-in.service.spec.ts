@@ -42,33 +42,33 @@ describe('GoogleSignInService (#618)', () => {
 
   it('transmet le parrain et les UTM mémorisés avec le jeton', async () => {
     auth.googleAuth.mockReturnValue(response('login'));
-    await firstValueFrom(service.signIn('jeton', { premium: false }));
+    await firstValueFrom(service.signIn('jeton'));
     expect(auth.googleAuth).toHaveBeenCalledWith('jeton', 'VAL', { acquisitionSource: 'instagram' });
   });
 
-  it('compte créé → écran de finalisation (Premium conservé), pas encore la suite du parcours', async () => {
+  it('compte créé → écran de finalisation, pas encore la suite du parcours', async () => {
     auth.googleAuth.mockReturnValue(response('created', { needsSignupFinalization: true }));
-    expect(await firstValueFrom(service.signIn('jeton', { premium: true }))).toBe('created');
-    expect(router.navigate).toHaveBeenCalledWith([GOOGLE_FINALIZE_PATH], { queryParams: { plan: 'premium' } });
+    expect(await firstValueFrom(service.signIn('jeton'))).toBe('created');
+    expect(router.navigate).toHaveBeenCalledWith([GOOGLE_FINALIZE_PATH]);
     expect(postSignup.afterLogin).not.toHaveBeenCalled();
   });
 
   it('compte e-mail relié → message au 1er passage, puis parcours de connexion', async () => {
     auth.googleAuth.mockReturnValue(response('linked'));
-    await firstValueFrom(service.signIn('jeton', { premium: false }));
+    await firstValueFrom(service.signIn('jeton'));
     expect(toast.success).toHaveBeenCalledWith('Ton compte Google est maintenant relié', expect.anything());
     expect(postSignup.afterLogin).toHaveBeenCalledOnce();
   });
 
   it('liaison avec mot de passe retiré → le message le dit et renvoie au profil', async () => {
     auth.googleAuth.mockReturnValue(response('linked', {}, true));
-    await firstValueFrom(service.signIn('jeton', { premium: false }));
+    await firstValueFrom(service.signIn('jeton'));
     expect(toast.success.mock.calls[0][0]).toMatch(/ancien mot de passe a été retiré/);
   });
 
   it('simple connexion → aucun message', async () => {
     auth.googleAuth.mockReturnValue(response('login'));
-    await firstValueFrom(service.signIn('jeton', { premium: false }));
+    await firstValueFrom(service.signIn('jeton'));
     expect(toast.success).not.toHaveBeenCalled();
     expect(postSignup.afterLogin).toHaveBeenCalledOnce();
   });

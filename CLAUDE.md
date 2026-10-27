@@ -10,7 +10,7 @@
 
 **MyTradingCoach** — SaaS freemium de journal de trading intelligent pour traders particuliers (crypto, forex, actions). L'IA analyse émotions et comportements pour aider les traders à progresser.
 
-**Plans** — 2 paliers (PROMPT-169) : FREE (0€, trades illimités, IA mutualisée), PREMIUM (49€/mois · 490€/an, IA personnelle). Essai 30 j, mensuel uniquement (carte requise).
+**Plans** — 2 paliers (PROMPT-169) : FREE (0€, trades illimités, IA mutualisée), PREMIUM (49€/mois · 490€/an, IA personnelle). 14 jours de Premium offerts à l'inscription, sans carte, puis retour au gratuit (#769) ; ensuite aucun essai Stripe (mensuel prélevé à la souscription).
 ➡️ **Source de vérité plans / prix / features / gating / coût IA : `.claude/agents/plans.md`.** Ne pas dupliquer ni redéfinir les règles de plan ici.
 
 ---
@@ -101,7 +101,7 @@ Détails : `.claude/agents/deploy.md`.
 - `npm` / `npx` → `pnpm` / `pnpm dlx`
 - `console.log` NestJS → Logger NestJS
 - Prisma dans controllers → passer par les services
-- Trial 7/14 jours → **30 jours** (mensuel uniquement ; annuel facturé direct)
+- Essai = **14 jours offerts à l'inscription** (`PREMIUM_SIGNUP_TRIAL_DAYS`, sans carte) ; plus d'essai Stripe de 30 j pour les nouveaux inscrits (`trialUsed`), « 1 mois offert » = parrain seulement
 - Quota FREE 30 trades/mois → **illimité** · Historique FREE → illimité
 - Palier STARTER **supprimé** (PROMPT-169) : ne subsiste que FREE + PREMIUM
 - Prix Premium = **49 €** · 490 €/an · valeurs en dur → `pricing.const.ts`

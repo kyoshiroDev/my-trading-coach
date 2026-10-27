@@ -77,7 +77,17 @@ export class PlanModalComponent implements OnInit {
   /** La page de paiement prend le relais aussitôt (navigation) : pas d'attente dans la modale. */
   protected readonly isLoading = signal(false);
   /** Essai déjà consommé (ou Premium offert reçu) : le checkout facture tout de suite, ne rien promettre. */
-  protected readonly trialAvailable = inject(UserStore).trialAvailable;
+  private readonly userStore = inject(UserStore);
+  protected readonly trialAvailable = this.userStore.trialAvailable;
+  /**
+   * Essai d'inscription en cours (#769) : date de fin (JJ/MM), sinon `null`. S'abonner maintenant
+   * facture tout de suite : la modale le dit au lieu de promettre un essai.
+   */
+  protected readonly signupTrialEnd = computed(() => {
+    const store = this.userStore;
+    const end = store.signupTrialDaysLeft() !== null ? store.user()?.trialEndsAt : null;
+    return end ? new Date(end).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : null;
+  });
 
   // ── Code partenaire : validation en direct ──
   protected readonly code = signal('');

@@ -96,7 +96,7 @@ export class LoginComponent {
     this.googleLoading.set(true);
     this.googleError.set(null);
     this.googleSignIn
-      .signIn(credential, { premium: false })
+      .signIn(credential)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         error: (err: unknown) => {

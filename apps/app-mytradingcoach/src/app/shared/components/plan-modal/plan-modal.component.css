@@ -279,3 +279,21 @@
 .partner-msg { font-size: 11px; color: var(--text-3); margin-top: 4px; }
 .partner-msg.ok { color: var(--green); }
 .partner-msg.ko { color: var(--red); }
+
+/* Essai d'inscription en cours (#769) : pas d'essai Stripe en plus, paiement dès la souscription. */
+.plan-modal-header .plan-trial-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--badge-premium-bg);
+  border: 1px solid var(--badge-premium-border);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.plan-trial-date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

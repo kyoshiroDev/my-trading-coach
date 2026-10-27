@@ -22,6 +22,10 @@ export interface AuthUser {
   trialEndsAt?: string | null;
   /** Essai Stripe déjà consommé (ou Premium offert reçu) : plus d'essai de 30 j au checkout. */
   trialUsed?: boolean;
+  /** Origine du `trialEndsAt` en cours (#769) : essai offert à l'inscription ou Premium offert par l'admin. */
+  trialSource?: 'SIGNUP' | 'ADMIN' | null;
+  /** Fin de l'essai d'inscription, fixe (un Premium offert ensuite ne la déplace pas). */
+  signupTrialEndsAt?: string | null;
   /** Statut de l'abonnement Stripe (`active`, `trialing`, `canceled`…), jamais d'identifiant. */
   stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd?: string | null;

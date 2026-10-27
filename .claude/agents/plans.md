@@ -30,6 +30,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
   `daily_loss` en Premium seulement ; le plancher vaut pour tous.
 - **Trades FREE** : **illimités** — le quota mensuel (`checkMonthlyLimit` / `FREE_LIMIT_REACHED`) a été **supprimé**.
 - **Essai** : `TRIAL_PERIOD_DAYS = 30` (api pricing.const). Accordé **uniquement** sur le prix **mensuel** ET si `!user.trialUsed`. L'annuel est facturé immédiatement, sans essai.
+- **Essai d'inscription (#769)** : `PREMIUM_SIGNUP_TRIAL_DAYS = 14` (`@mtc/shared`), sans carte, posé à la création du compte, puis retour automatique au gratuit. Il pose `trialUsed = true` : **pas de second essai** de 30 j au checkout (prélèvement immédiat du mensuel). Voir « Essai d'inscription » plus bas.
 
 ---
 
@@ -38,7 +39,7 @@ Toute feature gated DOIT être cohérente aux **4 endroits** (voir Règle d'or).
 | | Prix | Trades | Comptes | Essai |
 |---|---|---|---|---|
 | **FREE** | 0€ · sans CB | illimité | 1 | – |
-| **PREMIUM** | 49€/mois · 490€/an (−98€) | illimité | illimité | 30 j (mensuel uniquement, carte requise) |
+| **PREMIUM** | 49€/mois · 490€/an (−98€) | illimité | illimité | 14 j offerts à l'inscription, sans carte (#769) ; 30 j Stripe seulement pour les comptes antérieurs jamais essayés |
 
 ---
 
@@ -236,7 +237,8 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Premium offert par l'admin** (2026-10-03) : `POST /admin/users/:id/offer-premium` écrit
   `trialEndsAt = max(now, trialEndsAt) + N j` (défaut 30, max 90) et `trialUsed = true` ; **le plan reste
   FREE**. Aucun abonnement Stripe, aucun prélèvement : l'accès retombe seul à la date de fin. C'est la
-  **seule** source réelle de `trialEndsAt` aujourd'hui : l'essai Stripe, lui, ne l'écrit pas (il passe par
+  source de `trialEndsAt` avec l'essai d'inscription (#769, `trialSource` distingue `ADMIN` / `SIGNUP` ;
+  offert pendant l'essai = durées additionnées). L'essai Stripe, lui, ne l'écrit pas (il passe par
   `plan = PREMIUM` + `stripeSubscriptionStatus = trialing`). « Offert » = `trialEndsAt` futur **et** pas
   d'abonnement Stripe actif/trialing (`isOfferedPremium`, `users/premium-offer.util.ts`). Refusé (409) si
   abonnement Stripe en cours, plan PREMIUM, rôle ADMIN/BETA_TESTER ou compte démo. `trialUsed = true` →
@@ -271,11 +273,26 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - **Synchro Tradovate par API** (PROMPT-207) : **FREE**, aucun guard — même règle que l'import CSV d'un broker connu (socle « import »), zéro coût IA. Décision Greg 2026-09-11. Le FREE reste borné à 1 compte, donc à 1 connexion. Aucune « sync crypto » n'existe (retirée de la grille et des listes le 2026-10-19) : si une synchro Binance/Bybit arrive, trancher explicitement son palier et l'ajouter à `PLAN_BENEFITS`.
 - **Front** : `isPremium` = PREMIUM / trial / admin / beta (l'alias `isStarterOrAbove` a été supprimé).
 
-## Essai 30 jours (mensuel uniquement)
+## Essai d'inscription : 14 jours de Premium offerts (#769, 2026-10-26)
+- Tout nouvel inscrit (e-mail ou Google, hors démo) : `trialEndsAt = signupTrialEndsAt = J+14`,
+  `trialSource = SIGNUP`, `trialUsed = true`, plan **FREE** inchangé. Aucune carte, aucun Stripe.
+- Réinscription avec l'e-mail d'un compte supprimé depuis moins de 90 j : pas d'essai.
+- L'accès passe par les contrôles existants (`trialEndsAt`) : aucun chemin Premium parallèle.
+- **Fin** : rien n'est supprimé. Le cron quotidien `TrialEndService` réaligne le rôle Discord (vaut
+  aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
+  (`overFreeLimit`), l'utilisateur choisit le compte gardé ; l'arrêt de leur synchro arrive en B0.
+- **Après l'essai** : mensuel 49 € sans essai Stripe (`trialUsed`), annuel inchangé. Garde : `stripe/stripe-signup-trial.spec.ts`.
+- **Relances Premium** (`first_week_recap`, `founder_followup`, `premium_upsell`) : jamais pendant un essai en cours. Les anciens
+  comptes jamais essayés gardent les 30 j.
+- **Coût IA** estimé (prod, coûts moyens par appel) : ≈ 0,10 à 0,20 $ par inscrit sur 14 j,
+  ≈ 0,40 $ au pire ; 300 inscrits ≈ 30 à 60 $ (pire cas ≈ 120 $).
+
+## Essai Stripe 30 jours (mensuel, comptes antérieurs à #769 seulement)
 - Accordé **si** `!user.trialUsed` **ET** prix **mensuel** (`isMonthlyPrice`). Constante `TRIAL_PERIOD_DAYS = 30`.
 - **Annuel** : aucun essai, facturation immédiate (un essai suivi d'un prélèvement de 490€ génère contestations).
 - **`trialUsed`** n'est marqué `true` **que** si un essai a réellement été accordé (`subscription.trial_end != null`) — un abonné annuel direct garde son droit à l'essai (fix PROMPT-169).
-- Messaging : **« 1 mois offert · carte requise · annulable en un clic »** partout (landing, register, emails, CGU). Pas de « sans CB » sur le payant (l'essai passe par Stripe checkout = carte requise).
+- Messaging (#769, remplace « 1 mois offert · carte requise ») : **« {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts · sans carte · puis gratuit, sans engagement »** (inscription, landing, FAQ, CGU, e-mail de bienvenue). Boutons « Essayer Premium · {N} jours offerts » (URL `/register?plan=premium` conservée, plus de paiement direct). Relances e-mail (`first_week_recap`, `premium_upsell`) : « Sans engagement, annulable en un clic », aucun essai promis. Fenêtre des offres pendant l'essai : « Si tu t'abonnes maintenant, tu paies dès aujourd'hui et les jours offerts restants ne sont pas reportés » (vérifié : la synchro Stripe ne touche pas `trialEndsAt`). « 1 mois offert » ne reste que pour le PARRAIN.
+- `first_week_recap` (J7-J14, essais en cours exclus) ne touche plus que les inscrits SANS essai (réinscription récente) : de fait, la suite n'a plus de bilan de 1re semaine pour les nouveaux inscrits. L'e-mail J+11 de B2 prend le relais.
 
 ---
 

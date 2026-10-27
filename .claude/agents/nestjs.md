@@ -669,6 +669,32 @@ canActivate(ctx: ExecutionContext): boolean {
 }
 ```
 
+### Essai Premium d'inscription (#769, 2026-10-26)
+
+- Posé dans `AuthService.createAccount`, **seul** point d'entrée des inscriptions e-mail et Google :
+  `signupTrialData(now, recentlyDeleted)` (`modules/trial/signup-trial.ts`) → `trialEndsAt` et
+  `signupTrialEndsAt` à J+`PREMIUM_SIGNUP_TRIAL_DAYS` (14, `@mtc/shared`), `trialSource = SIGNUP`,
+  `trialUsed = true` (plus d'essai Stripe de 30 j ensuite, sans toucher au checkout).
+- Refusé (mais `trialUsed = true` quand même) si l'e-mail, casse ignorée, a supprimé un compte depuis
+  moins de 90 jours (`DeletedAccount.email`, non anonymisé, `ANONYMIZE_AFTER_DAYS`). Au-delà, aucune
+  trace : pas de hash d'e-mail (décision du 26/10).
+- Aucun nouveau chemin d'accès : tous les contrôles lisent déjà `trialEndsAt` (guard, débrief,
+  comptes, import, Discord, alertes). Le compte démo ne passe pas par `createAccount` (seed).
+- Premium offert par l'admin pendant l'essai : durées **additionnées**, `trialSource = ADMIN`,
+  `signupTrialEndsAt` intact. `isOfferedPremium` exclut `SIGNUP` (l'admin n'affiche pas l'essai
+  d'inscription comme un cadeau).
+- Fin : `TrialEndService` (cron ci-dessous). Comptes en trop : `GET /accounts` renvoie
+  `overFreeLimit` par compte (ACTIVE au-delà du quota gratuit, jamais en Premium) et
+  `POST /accounts/:id/keep` enregistre le compte gardé (`User.keptAccountId`, ACTIVE seulement, sinon
+  400 ; 404 si pas à l'utilisateur). Défaut : le plus ancien ACTIVE (`accounts/kept-account.ts`).
+  L'arrêt de la synchro des comptes en trop arrive en B0 (journal seul d'abord).
+- Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
+  par Greg seulement.
+- E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
+  paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
+  (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
+  plus d'essai promis (`NO_TRIAL_LINE`).
+
 ---
 
 ## AiService — logging automatique obligatoire
@@ -705,6 +731,7 @@ une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` s
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
+| `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
@@ -2141,6 +2168,8 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
   (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
   vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  **Essai Premium en cours exclu** (#769, `notInTrial(now)` : `trialEndsAt` nul ou passé) de
+  `first_week_recap`, `founder_followup` et `premium_upsell` : le plan reste FREE pendant l'essai.
   `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
   transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
 - **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET

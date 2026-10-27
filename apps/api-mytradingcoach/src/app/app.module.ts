@@ -16,6 +16,7 @@ import { DebriefModule } from '../modules/debrief/debrief.module';
 import { UsersModule } from '../modules/users/users.module';
 import { StripeModule } from '../modules/stripe/stripe.module';
 import { DiscordModule } from '../modules/discord/discord.module';
+import { TrialModule } from '../modules/trial/trial.module';
 import { VpsModule } from '../modules/vps/vps.module';
 import { AdminModule } from '../modules/admin/admin.module';
 import { SessionModule } from '../modules/session/session.module';
@@ -97,6 +98,7 @@ import { RedisService } from '../modules/infra/redis.service';
     UsersModule,
     StripeModule,
     DiscordModule,
+    TrialModule,
     VpsModule,
     AdminModule,
     SessionModule,

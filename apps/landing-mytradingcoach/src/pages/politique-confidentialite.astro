@@ -42,6 +42,8 @@ import { GA_ID } from '../config';
         <li>Mot de passe, si vous en définissez un (hashé argon2, jamais stocké en clair)</li>
         <li>Si vous utilisez « Continuer avec Google » : identifiant technique de votre compte Google (voir f)</li>
         <li>Date d'inscription</li>
+        <li>Premium offert&nbsp;: date de fin de la période offerte à l'inscription, origine de la période en cours (inscription ou geste de notre part) et date à laquelle sa fin a été traitée</li>
+        <li>Compte de trading que vous choisissez de garder actif en plan Gratuit, quand vous en avez plusieurs</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
       </ul>
 
@@ -138,6 +140,8 @@ import { GA_ID } from '../config';
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
           <tr><td>Événements d'usage rattachés au compte (offre Premium, installation de l'application, activation des notifications)</td><td>Intérêt légitime (Art. 6.1.f RGPD)&nbsp;: comprendre ce qui aide ou gêne l'usage de l'application</td></tr>
+          <tr><td>Premium offert à l'inscription et retour au plan Gratuit à sa fin (dont la mise à jour du rôle sur le Discord, si vous l'avez relié)</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr><td>Ne pas accorder plusieurs fois le Premium offert&nbsp;: l'adresse e-mail d'un compte supprimé depuis moins de 90 jours est comparée à celle d'une nouvelle inscription</td><td>Intérêt légitime (Art. 6.1.f RGPD)&nbsp;: éviter les inscriptions répétées pour obtenir l'offre</td></tr>
           <tr><td>Communications marketing</td><td>Consentement (Art. 6.1.a RGPD)</td></tr>
           <tr><td>E-mails d'aide à la prise en main</td><td>Intérêt légitime (Art. 6.1.f RGPD), désinscription dans chaque e-mail</td></tr>
           <tr><td>Sécurité et prévention fraude</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
@@ -155,6 +159,7 @@ import { GA_ID } from '../config';
         <tbody>
           <tr><td>Compte et trades</td><td>Durée de l'abonnement + 3 ans</td></tr>
           <tr><td>Données de facturation</td><td>10 ans (obligation comptable)</td></tr>
+          <tr><td>Trace d'un compte supprimé (nom, adresse e-mail, dates d'inscription et de suppression, plan, nombre de trades, motif s'il est donné)</td><td>Nom et adresse e-mail effacés automatiquement 90 jours après la suppression&nbsp;; le reste, sans identité, sert aux statistiques</td></tr>
           <tr><td>Logs techniques</td><td>12 mois</td></tr>
           <tr><td>IP anonymisées</td><td>30 jours</td></tr>
           <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
