@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { matchWhere } from '@api/test/prisma-where';
-import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, type CampaignLoadDeps } from './campaign-registry';
+import { CAMPAIGNS, CAMPAIGNS_BY_KEY, loadFirstWeek, parisDaysUntil, type CampaignLoadDeps } from './campaign-registry';
 
 // Suite d'onboarding (oct. 2026) : ciblage RÉEL de chaque campagne automatique (segments évalués en
 // mémoire), bornes d'âge, date de démarrage et états qui bloquent un envoi.
@@ -54,6 +54,8 @@ describe('registre : suite automatique', () => {
   it('priorités, types et consentement validés', () => {
     const auto = CAMPAIGNS.filter((c) => c.automated).sort((a, b) => b.priority - a.priority);
     expect(auto.map((c) => [c.key, c.priority, c.kind, c.requiresConsent])).toEqual([
+      ['trial_ending', 120, 'service', false],
+      ['trial_ended', 110, 'service', false],
       ['connect_tradovate', 100, 'service', false],
       ['prop_firm_rules', 90, 'service', false],
       ['first_week_recap', 80, 'marketing', true],
@@ -68,10 +70,12 @@ describe('registre : suite automatique', () => {
     expect(CAMPAIGNS_BY_KEY.get('first_trade_nudge')).toMatchObject({ automated: false });
   });
 
-  it('toute campagne automatique a une borne basse ET haute sur la date d’inscription', () => {
+  it('toute campagne automatique a une borne basse ET haute (inscription, ou fin de l’essai pour #769)', () => {
     for (const c of CAMPAIGNS.filter((x) => x.automated)) {
       const json = JSON.stringify(c.segment(NOW));
-      expect(json, c.key).toMatch(/"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}/);
+      expect(json, c.key).toMatch(
+        /"createdAt":\{"gte":"[^"]+","lte":"[^"]+"\}|"signupTrialEndsAt":\{"(gt|gte)":"[^"]+","lte":"[^"]+"\}/,
+      );
     }
   });
 
@@ -177,6 +181,50 @@ describe('états qui bloquent un envoi', () => {
     expect(f({ role: 'BETA_TESTER' })).toBe(false);
     expect(f({ emailSends: [{ campaignKey: 'founder_launch' }] })).toBe(false);
     expect(f({ emailSends: [{ campaignKey: 'discord_invite' }] })).toBe(true);
+  });
+});
+
+describe('e-mails de l’essai d’inscription (#769, B2)', () => {
+  const HOUR = 3600e3;
+  const trialUser = (endsInHours: number, over: User = {}) => {
+    const end = new Date(NOW.getTime() + endsInHours * HOUR);
+    return user({ createdAt: daysAgo(12), trialSource: 'SIGNUP', signupTrialEndsAt: end, trialEndsAt: end, ...over });
+  };
+
+  it('trial_ending : 3 jours avant la fin au plus, jamais après ; essai prolongé par l’admin, abonné ou réservé : rien', () => {
+    expect(matches('trial_ending', trialUser(71))).toBe(true);
+    expect(matches('trial_ending', trialUser(2))).toBe(true);
+    expect(matches('trial_ending', trialUser(73))).toBe(false); // trop tôt
+    expect(matches('trial_ending', trialUser(-1))).toBe(false); // déjà fini
+    expect(matches('trial_ending', trialUser(48, { trialSource: 'ADMIN' }))).toBe(false);
+    expect(matches('trial_ending', trialUser(48, { trialEndsAt: new Date(NOW.getTime() + 30 * 86_400_000) }))).toBe(false);
+    expect(matches('trial_ending', trialUser(48, { stripeSubscriptionStatus: 'trialing' }))).toBe(false); // réservation fondateur
+    expect(matches('trial_ending', trialUser(48, { stripeSubscriptionStatus: 'active' }))).toBe(false);
+  });
+
+  it('trial_ended : du lendemain de la fin à J+6, en gratuit seulement', () => {
+    expect(matches('trial_ended', trialUser(-16))).toBe(true);
+    expect(matches('trial_ended', trialUser(-5 * 24))).toBe(true);
+    expect(matches('trial_ended', trialUser(-10))).toBe(false); // trop tôt (même jour que la fin)
+    expect(matches('trial_ended', trialUser(-7 * 24))).toBe(false); // trop tard
+    expect(matches('trial_ended', trialUser(-24, { plan: 'PREMIUM', stripeSubscriptionStatus: 'active' }))).toBe(false);
+    expect(matches('trial_ended', trialUser(-24, { trialSource: 'ADMIN' }))).toBe(false);
+  });
+
+  it('plafond respecté : l’e-mail de fin part au plus tôt 4 jours après J+11 sur le passage de 10 h', () => {
+    // Fin à 09:00 le 14e jour : J+11 part le 11e jour à 10:00 (71 h avant), la fin le 15e jour à 10:00.
+    const end = new Date('2026-11-16T08:00:00Z'); // 09:00 Paris
+    const j11 = new Date('2026-11-13T09:00:00Z'); // 10:00 Paris
+    const fin = new Date('2026-11-17T09:00:00Z');
+    const u = user({ createdAt: new Date('2026-11-02T08:00:00Z'), trialSource: 'SIGNUP', signupTrialEndsAt: end, trialEndsAt: end });
+    expect(matchWhere(u, CAMPAIGNS_BY_KEY.get('trial_ending')!.segment(j11) as User)).toBe(true);
+    expect(matchWhere(u, CAMPAIGNS_BY_KEY.get('trial_ended')!.segment(fin) as User)).toBe(true);
+    expect(fin.getTime() - j11.getTime()).toBeGreaterThanOrEqual(4 * 86_400_000);
+  });
+
+  it('jours de calendrier (Paris) jusqu’à la fin', () => {
+    expect(parisDaysUntil(new Date('2026-11-16T08:00:00Z'), new Date('2026-11-13T09:00:00Z'))).toBe(3);
+    expect(parisDaysUntil(new Date('2026-11-16T22:00:00Z'), new Date('2026-11-16T09:00:00Z'))).toBe(0);
   });
 });
 

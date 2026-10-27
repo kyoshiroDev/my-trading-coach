@@ -1,6 +1,6 @@
 /**
  * Évaluateur EN MÉMOIRE d'un `where` Prisma, limité aux opérateurs des segments de campagnes
- * (AND / OR / NOT, égalité, null, gte / lte / not / in / notIn, relations none / some / is).
+ * (AND / OR / NOT, égalité, null, gte / lte / gt / lt / not / in / notIn, relations none / some / is).
  * Sert aux tests qui font tourner les vraies règles de ciblage sur des utilisateurs fictifs.
  */
 type Row = Record<string, unknown>;
@@ -30,6 +30,12 @@ function matchField(value: unknown, cond: unknown): boolean {
         break;
       case 'lte':
         if (value == null || (comparable(value) as number) > (comparable(arg) as number)) return false;
+        break;
+      case 'gt':
+        if (value == null || (comparable(value) as number) <= (comparable(arg) as number)) return false;
+        break;
+      case 'lt':
+        if (value == null || (comparable(value) as number) >= (comparable(arg) as number)) return false;
         break;
       case 'not':
         if (matchField(value, arg)) return false;
