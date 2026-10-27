@@ -52,6 +52,9 @@ const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', mont
  */
 export function offerBlockReason(i: UserDetailData['identity']): string | null {
   if (i.subscriptionStatus === 'active' || i.subscriptionStatus === 'trialing') return 'Abonnement Stripe en cours';
+  if (i.subscriptionStatus === 'past_due' || i.subscriptionStatus === 'unpaid') {
+    return 'Paiement Stripe en attente\u00a0: régler d’abord l’abonnement';
+  }
   if (i.plan === 'PREMIUM') return 'Déjà Premium (accès manuel)';
   if (i.role === 'ADMIN' || i.role === 'BETA_TESTER') return 'Premium déjà inclus par le rôle';
   if (i.isDemo) return 'Compte démo';

@@ -451,6 +451,11 @@ export class UsersService {
     if (user.stripeSubscriptionId && hasActiveStripeSubscription(user.stripeSubscriptionStatus)) {
       throw new ConflictException('Cet utilisateur a déjà un abonnement Stripe.');
     }
+    // Prélèvement en attente (3D Secure non confirmé, carte refusée, #769) : le Premium offert passerait
+    // devant un abonnement que Stripe peut encore encaisser.
+    if (user.stripeSubscriptionStatus === 'past_due' || user.stripeSubscriptionStatus === 'unpaid') {
+      throw new ConflictException('Paiement Stripe en attente\u00a0: régler d’abord l’abonnement.');
+    }
     if (user.plan === Plan.PREMIUM) {
       throw new ConflictException('Cet utilisateur est déjà Premium.');
     }

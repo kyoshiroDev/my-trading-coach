@@ -152,6 +152,14 @@ describe('offerWarning (#769)', () => {
 });
 
 describe('offerBlockReason', () => {
+  it('paiement Stripe en attente (past_due, unpaid) : offre refusée avec le message', () => {
+    for (const status of ['past_due', 'unpaid']) {
+      expect(offerBlockReason(makeData({ subscriptionStatus: status }).identity)?.replace(/\u00a0/g, ' ')).toBe(
+        'Paiement Stripe en attente : régler d’abord l’abonnement',
+      );
+    }
+  });
+
   it('null pour un FREE standard, même avec un ancien abonnement résilié', () => {
     expect(offerBlockReason(makeData().identity)).toBeNull();
     expect(offerBlockReason(makeData({ subscriptionStatus: 'canceled' }).identity)).toBeNull();
