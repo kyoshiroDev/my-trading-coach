@@ -128,6 +128,20 @@
     }
   </div>
 
+  @if (trialTiles().length) {
+    <!-- Essai Premium de l'inscription (#769, B3) : hors démo et admin -->
+    <div class="kpi-strip cols-4" data-testid="signup-trial">
+      @for (t of trialTiles(); track t.label) {
+        <div class="kpi">
+          <div [class]="'kpi-top ' + t.tone"></div>
+          <div class="kpi-label">{{ t.label }}</div>
+          <div [class]="'kpi-value ' + t.tone">{{ t.value }}</div>
+          <div class="kpi-sub">{{ t.sub }}</div>
+        </div>
+      }
+    </div>
+  }
+
   @if (funnel(); as f) {
     <div class="card funnel-card">
       <div class="card-head">

@@ -199,7 +199,7 @@ export class AdminService {
     const from = new Date(`${todayParis()}T00:00:00Z`);
     from.setUTCDate(from.getUTCDate() - (days - 1));
 
-    const [[visits], [signups], demoRows, stepRows, placeRows, [current], installRows] = await Promise.all([
+    const [[visits], [signups], demoRows, stepRows, placeRows, [current], installRows, [trial]] = await Promise.all([
       this.prisma.$queryRaw<{ n: bigint | null }[]>`
         SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date`,
       this.prisma.$queryRaw<{ n: bigint }[]>`
@@ -236,6 +236,21 @@ export class AdminService {
           AND e."event" IN (${Prisma.join([...INSTALL_EVENTS])})
         GROUP BY e."event", e."place"
         ORDER BY e."place", e."event"`,
+      // Essai de l'inscription (#769, B3) : `signupTrialEndsAt` n'est posé que par l'inscription.
+      this.prisma.$queryRaw<{
+        in_progress: bigint; ended: bigint; converted: bigint; reservations: bigint; awaiting: bigint; next_charge: Date | null;
+      }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" > NOW() AND u."stripeSubscriptionStatus" IS DISTINCT FROM 'active') AS in_progress,
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" <= NOW() AND u."signupTrialEndsAt" >= ${from}) AS ended,
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" <= NOW() AND u."signupTrialEndsAt" >= ${from}
+            AND u."stripeSubscriptionStatus" = 'active') AS converted,
+          COUNT(s."number") AS reservations,
+          COUNT(s."number") FILTER (WHERE u."stripeSubscriptionStatus" IN ('past_due', 'unpaid')) AS awaiting,
+          MIN(u."stripeCurrentPeriodEnd") FILTER (WHERE s."number" IS NOT NULL AND u."stripeSubscriptionStatus" = 'trialing') AS next_charge
+        FROM "User" u
+        LEFT JOIN "FounderSeat" s ON s."userId" = u."id" AND s."status" = 'ACTIVE' AND s."firstPaidAt" IS NULL
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND u."signupTrialEndsAt" IS NOT NULL`,
     ]);
 
     const step = new Map(stepRows.map((r) => [r.key, Number(r.n)]));
@@ -250,6 +265,14 @@ export class AdminService {
       byPlace: placeRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
       install: installRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
       current: { trialing: Number(current?.trialing ?? 0), paying: Number(current?.paying ?? 0) },
+      signupTrial: {
+        inProgress: Number(trial?.in_progress ?? 0),
+        ended: Number(trial?.ended ?? 0),
+        converted: Number(trial?.converted ?? 0),
+        reservations: Number(trial?.reservations ?? 0),
+        reservationsAwaitingPayment: Number(trial?.awaiting ?? 0),
+        nextChargeAt: trial?.next_charge ? new Date(trial.next_charge).toISOString() : null,
+      },
     };
   }
 

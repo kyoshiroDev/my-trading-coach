@@ -1,4 +1,4 @@
-import type { AdminFunnelData, AdminInstallEvent } from '@mtc/shared';
+import { PREMIUM_SIGNUP_TRIAL_DAYS, type AdminFunnelData, type AdminInstallEvent } from '@mtc/shared';
 
 export interface FunnelRow {
   label: string;
@@ -33,6 +33,38 @@ export function funnelRows(f: AdminFunnelData | null): FunnelRow[] {
     rate: i === 0 ? null : pct(r.value, raw[i - 1].value),
     width: Math.round((r.value / top) * 100),
   }));
+}
+
+export interface TrialTile {
+  label: string;
+  value: number;
+  sub: string;
+  tone: 'teal' | 'blue' | 'purple' | 'amber';
+}
+
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' });
+
+/**
+ * Essai Premium de l'inscription (#769, B3) : en cours, terminés sur la période, conversions après
+ * essai (part des terminés) et réservations fondateur jamais payées. Hors démo et admin.
+ */
+export function signupTrialTiles(f: AdminFunnelData | null): TrialTile[] {
+  if (!f) return [];
+  const t = f.signupTrial;
+  const rate = pct(t.converted, t.ended);
+  const resa = [
+    t.reservationsAwaitingPayment > 0 ? `${t.reservationsAwaitingPayment} paiement(s) en attente` : null,
+    t.nextChargeAt ? `prochain prélèvement le ${shortDate(t.nextChargeAt)}` : null,
+  ].filter(Boolean);
+  return [
+    { label: 'Essais en cours', value: t.inProgress, sub: `${PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts, sans abonnement payant`, tone: 'teal' },
+    { label: `Essais terminés · ${f.days} j`, value: t.ended, sub: 'fin d’essai sur la période', tone: 'blue' },
+    {
+      label: 'Conversions après essai', value: t.converted,
+      sub: rate === null ? 'aucun essai terminé' : `${rate}\u00a0% des essais terminés, abonnement payant`, tone: 'purple',
+    },
+    { label: 'Réservations fondateur', value: t.reservations, sub: resa.length ? resa.join(' · ') : 'en attente du premier paiement', tone: 'amber' },
+  ];
 }
 
 export interface PlaceRow {

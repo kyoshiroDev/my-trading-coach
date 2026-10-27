@@ -209,7 +209,8 @@ describe('AdminService.getFunnel', () => {
       .mockResolvedValueOnce([
         { event: 'install_shown', place: 'ios', n: 5n },
         { event: 'install_shown', place: 'ios-other', n: 2n },
-      ]);
+      ])
+      .mockResolvedValueOnce([{ in_progress: 4n, ended: 5n, converted: 2n, reservations: 1n, awaiting: 0n, next_charge: new Date('2026-11-16T10:00:00Z') }]);
 
     const f = await service.getFunnel(30);
 
@@ -217,6 +218,7 @@ describe('AdminService.getFunnel', () => {
       days: 30, landingVisits: 120, signups: 9,
       demo: { opens: 14, signupClicks: 3 },
       current: { trialing: 0, paying: 0 },
+      signupTrial: { inProgress: 4, ended: 5, converted: 2, reservations: 1, reservationsAwaitingPayment: 0, nextChargeAt: '2026-11-16T10:00:00.000Z' },
       byPlace: [{ event: 'premium_seen', place: 'ai-insights', users: 4 }],
       // iPhone hors Safari : sa propre ligne, jamais additionnée à `ios`.
       install: [
@@ -241,9 +243,10 @@ describe('AdminService.getFunnel', () => {
     q.mockReset();
     q.mockResolvedValueOnce([{ n: null }]).mockResolvedValueOnce([{ n: 0n }]).mockResolvedValueOnce([])
       .mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ trialing: 0n, paying: 0n }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     const f = await service.getFunnel(30);
     expect(f.install).toEqual([]);
+    expect(f.signupTrial).toEqual({ inProgress: 0, ended: 0, converted: 0, reservations: 0, reservationsAwaitingPayment: 0, nextChargeAt: null });
     expect(f.landingVisits).toBe(0);
     expect(f.steps.every((s) => s.users === 0)).toBe(true);
   });
