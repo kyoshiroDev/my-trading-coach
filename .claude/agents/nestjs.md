@@ -80,7 +80,7 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
                                        `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
                                        installation de l'app, place = plateforme), 204, best-effort
-GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3)
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
@@ -713,6 +713,12 @@ canActivate(ctx: ExecutionContext): boolean {
   l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
   `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
   prélèvement).
+- **Suivi admin de l'essai (B3)** : `GET /admin/funnel` → `signupTrial` (une requête, démo et ADMIN
+  exclus, cohorte = `signupTrialEndsAt` non nul) : `inProgress` (fin à venir, pas `active`), `ended`
+  (fin dans la période), `converted` (parmi `ended`, `active` aujourd'hui), `reservations` (place ACTIVE
+  sans `firstPaidAt`), `reservationsAwaitingPayment` (`past_due` / `unpaid`), `nextChargeAt` (plus petit
+  `stripeCurrentPeriodEnd` d'une réservation en `trialing`). Affiché en bande au-dessus de l'entonnoir
+  Premium (page Acquisition). Test SQL : `admin/signup-trial-funnel.int-spec.ts`.
 - **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
   `service` (sans consentement, désinscription « service », même plafond), bornées par
   `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
