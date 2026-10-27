@@ -390,6 +390,10 @@ en gratuit, **sans clé étrangère** : un id périmé ou non ACTIVE vaut « le 
 Rattrapage dans la migration : `trialSource = ADMIN` pour tout `trialEndsAt` existant (seul l'admin
 l'écrivait) et `trialEndHandledAt = now()` pour les fins déjà passées. Détails : nestjs.md.
 
+Migration `20261027120000_founder_first_paid` (#769, B1, additive) : `FounderSeat.firstPaidAt`
+(premier paiement réel ; null = place réservée pendant le Premium offert, pas encore payée).
+Rattrapage : `firstPaidAt = takenAt` pour les places existantes (toutes payées à la prise de place).
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`

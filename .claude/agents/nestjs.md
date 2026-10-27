@@ -690,6 +690,20 @@ canActivate(ctx: ExecutionContext): boolean {
   L'arrêt de la synchro des comptes en trop arrive en B0 (journal seul d'abord).
 - Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
   par Greg seulement.
+- **Réservation fondateur (B1)** : `founder-offer/founder-deferred.ts` (`founderFirstChargeAt`, 48 h + 1 h
+  de marge), `subscription_data.trial_end` au checkout, `summary.firstChargeAt` et
+  `GET /billing/offers` → `founder.firstChargeAt` / `reservedUntilCharge`. Webhook : facture d'essai à
+  0 € → `claimSeat` + e-mail « place réservée » ; toute facture fondateur > 0 € → `markFirstPaid`
+  (idempotent) + bienvenue fondateur (garantie = `firstPaidAt` + 14 j) ; `customer.subscription.deleted`
+  → `releaseUnpaid` (place non payée) sinon `markLost` ; `invoice.payment_action_required` → e-mail avec
+  `hosted_invoice_url`. Journaux : nom de l'erreur seulement.
+- **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
+  `service` (sans consentement, désinscription « service », même plafond), bornées par
+  `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
+  `trial_ending` : fin dans 3 jours au plus, pas prolongé par l'admin, ni abonné ni réservé ;
+  `trial_ended` : du lendemain de la fin (15 h après) à J+6, plan FREE. Écart ≥ 4 jours avec J+11 au
+  passage de 10 h, donc plafond respecté. Usage lu par `loadTrialUsage` (débriefs, alertes de séance =
+  `PropRiskEvent` + `BehaviorAlert`, connexions broker CONNECTED). Évaluateur de test : `gt` / `lt`.
 - E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
   paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
   (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
