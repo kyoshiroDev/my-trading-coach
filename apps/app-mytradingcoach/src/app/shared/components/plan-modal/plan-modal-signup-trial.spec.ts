@@ -20,7 +20,7 @@ beforeAll(async () => {
   await resolveComponentResources(() => Promise.resolve({ text: () => Promise.resolve('') } as unknown as Response));
 });
 
-async function setup(user: { daysLeft: number | null; trialEndsAt: string | null }, firstChargeAt: string | null = null) {
+async function setup(user: { daysLeft: number | null; trialEndsAt: string | null; offered?: boolean }, firstChargeAt: string | null = null) {
   TestBed.configureTestingModule({
     imports: [PlanModalComponent],
     providers: [
@@ -38,6 +38,7 @@ async function setup(user: { daysLeft: number | null; trialEndsAt: string | null
         useValue: {
           trialAvailable: signal(false),
           signupTrialDaysLeft: signal(user.daysLeft),
+          isOfferedPremium: signal(user.offered ?? false),
           user: signal({ id: 'u1', trialEndsAt: user.trialEndsAt }),
         },
       },
@@ -52,7 +53,7 @@ async function setup(user: { daysLeft: number | null; trialEndsAt: string | null
   inputs['cta'] = signal('modale');
   fixture.detectChanges();
   return fixture.componentInstance as unknown as {
-    signupTrialEnd: () => string | null;
+    offeredPremiumEnd: () => string | null;
     trialFor: (c: string) => boolean;
     founderChargeDate: () => string | null;
   };
@@ -61,7 +62,7 @@ async function setup(user: { daysLeft: number | null; trialEndsAt: string | null
 describe('Fenêtre des offres pendant l’essai d’inscription (#769)', () => {
   it('date de fin (JJ/MM) pendant l’essai, aucun essai Stripe promis', async () => {
     const c = await setup({ daysLeft: 5, trialEndsAt: '2026-11-16T10:00:00.000Z' });
-    expect(c.signupTrialEnd()).toBe('16/11');
+    expect(c.offeredPremiumEnd()).toBe('16/11');
     expect(c.trialFor('premium')).toBe(false);
   });
 
@@ -73,14 +74,20 @@ describe('Fenêtre des offres pendant l’essai d’inscription (#769)', () => {
     expect((await setup({ daysLeft: 1, trialEndsAt: '2026-11-16T10:00:00.000Z' })).founderChargeDate()).toBeNull();
   });
 
-  it('hors essai d’inscription : pas de ligne', async () => {
+  it('Premium offert par l’admin : même ligne (paiement immédiat, jours offerts non reportés)', async () => {
+    const c = await setup({ daysLeft: null, trialEndsAt: '2026-11-16T10:00:00.000Z', offered: true });
+    expect(c.offeredPremiumEnd()).toBe('16/11');
+    expect(c.founderChargeDate()).toBeNull(); // l'API ne donne pas de date : prélèvement immédiat
+  });
+
+  it('sans Premium offert : pas de ligne', async () => {
     const c = await setup({ daysLeft: null, trialEndsAt: '2026-11-16T10:00:00.000Z' });
-    expect(c.signupTrialEnd()).toBeNull();
+    expect(c.offeredPremiumEnd()).toBeNull();
   });
 
   it('la ligne du gabarit dit la vérité : paiement dès la souscription, jours offerts non reportés', () => {
     const note = TEMPLATE.slice(TEMPLATE.indexOf('plan-trial-note'), TEMPLATE.indexOf('</p>', TEMPLATE.indexOf('plan-trial-note')));
-    expect(TEMPLATE).toContain("@if (signupTrialEnd() && !(choice() === 'founder' && founderChargeDate()))");
+    expect(TEMPLATE).toContain("@if (offeredPremiumEnd() && !(choice() === 'founder' && founderChargeDate()))");
     expect(note.replace(/\s+/g, ' ')).toContain(
       'Si tu t\'abonnes maintenant, tu paies dès aujourd\'hui et les jours offerts restants ne sont pas reportés.',
     );

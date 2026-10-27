@@ -22,9 +22,9 @@
           &nbsp;
         }
       </p>
-      @if (signupTrialEnd() && !(choice() === 'founder' && founderChargeDate())) {
+      @if (offeredPremiumEnd() && !(choice() === 'founder' && founderChargeDate())) {
         <p class="plan-trial-note" data-testid="plan-trial-note">
-          Ton Premium offert continue jusqu'au <span class="plan-trial-date">{{ signupTrialEnd() }}</span>.
+          Ton Premium offert continue jusqu'au <span class="plan-trial-date">{{ offeredPremiumEnd() }}</span>.
           Si tu t'abonnes maintenant, tu paies dès aujourd'hui et les jours offerts restants ne sont pas
           reportés.
         </p>

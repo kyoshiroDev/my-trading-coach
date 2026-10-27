@@ -237,8 +237,9 @@ export class StripeBillingService {
     // (29 × 12 = 348 € contre 49 × 12 × 0,9 = 529,20 € ; 290 € contre 441 €).
     // Premium : essai 30j MENSUEL uniquement, si jamais utilisé ; l'annuel est facturé immédiatement.
     const trialGranted = !isFounder && !user.trialUsed && this.isMonthlyPrice(priceId);
-    // Réservation fondateur pendant un Premium offert (#769) : carte enregistrée maintenant, premier
-    // prélèvement à la fin du Premium offert (Stripe exige 48 h au moins, sinon immédiat).
+    // Réservation fondateur pendant l'essai d'inscription (#769) : carte enregistrée maintenant, premier
+    // prélèvement à la fin de l'essai (Stripe exige 48 h au moins, sinon immédiat). Premium offert par
+    // l'admin : prélèvement immédiat.
     const firstChargeAt = isFounder ? founderFirstChargeAt(user) : null;
     const normalEur = interval === 'year' ? PREMIUM_PRICE_EUR.annual : PREMIUM_PRICE_EUR.monthly;
     const summary = async (): Promise<CheckoutSummary> => ({
@@ -454,7 +455,7 @@ export class StripeBillingService {
       this.partners.statusFor(userId),
       this.prisma.user.findUnique({
         where: { id: userId },
-        select: { stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true },
+        select: { stripeInterval: true, stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true },
       }),
     ]);
     const since = founder?.isFounder ? founder.founderSince : null;
@@ -463,7 +464,7 @@ export class StripeBillingService {
     const refundUntil = paidAt ? new Date(paidAt.getTime() + FOUNDER_REFUND_DAYS * 86_400_000) : null;
     const firstChargeAt =
       founder?.founderEligible && user
-        ? founderFirstChargeAt({ trialEndsAt: user.trialEndsAt, stripeSubscriptionStatus: user.stripeSubscriptionStatus })
+        ? founderFirstChargeAt(user)
         : null;
     return {
       founderOffer: { open: pub.open, seatsLeft: pub.seatsLeft, seatsTotal: pub.seatsTotal },

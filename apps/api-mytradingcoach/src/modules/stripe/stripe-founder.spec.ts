@@ -633,7 +633,7 @@ describe('e-mails fondateur et code partenaire', () => {
 
 describe('réservation fondateur pendant le Premium offert (#769)', () => {
   const H = 3_600_000;
-  const inTrial = (hours: number) => ({ trialEndsAt: new Date(Date.now() + hours * H), stripeSubscriptionStatus: null });
+  const inTrial = (hours: number) => ({ trialEndsAt: new Date(Date.now() + hours * H), trialSource: 'SIGNUP', stripeSubscriptionStatus: null });
 
   it('essai d’au moins 49 h : carte maintenant, premier prélèvement à la fin du Premium offert', async () => {
     const { svc, create, founders } = makeBilling({ user: inTrial(9 * 24) });
@@ -652,6 +652,14 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(create.mock.calls[0][0].subscription_data).not.toHaveProperty('trial_end');
   });
 
+  it('Premium offert par l’admin : réservation fondateur avec prélèvement immédiat, comme hors essai', async () => {
+    const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialSource: 'ADMIN' } });
+    await founder(svc);
+    const params = create.mock.calls[0][0];
+    expect(params.subscription_data).not.toHaveProperty('trial_end');
+    expect(params.custom_text.submit.message).toMatch(/^Satisfait ou remboursé 14 jours sur le 1er paiement\./);
+  });
+
   it('Premium au prix normal pendant l’essai : jamais différé', async () => {
     const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialUsed: true } });
     await svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app');
@@ -661,7 +669,7 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
 
   it('page de l’app : récapitulatif avec la date du premier prélèvement', async () => {
     const trialEndsAt = new Date(Date.now() + 9 * 24 * H);
-    const { svc } = makeBilling({ user: { trialEndsAt, stripeSubscriptionStatus: null }, pk: 'pk_test_1' });
+    const { svc } = makeBilling({ user: { trialEndsAt, trialSource: 'SIGNUP', stripeSubscriptionStatus: null }, pk: 'pk_test_1' });
     const res = (await svc.createCheckoutSession('u1', 'u1@test.com', 'price_29', 'https://app', { offer: 'founder', ui: 'elements' })) as {
       summary: { firstChargeAt: string | null; trialDays: number };
     };
@@ -771,7 +779,7 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     });
     Object.assign(b.partners, { statusFor: vi.fn().mockResolvedValue({ partnerCode: null }) });
     const prisma = (b.svc as unknown as { prisma: { user: { findUnique: ReturnType<typeof vi.fn> } } }).prisma;
-    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: null, stripeSubscriptionStatus: null, trialEndsAt });
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: null, stripeSubscriptionStatus: null, trialEndsAt, trialSource: 'SIGNUP' });
     expect((await b.svc.offers('u1')).founder.firstChargeAt).toEqual(trialEndsAt);
 
     Object.assign(b.founders, {
@@ -780,7 +788,7 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
         founderEligible: false, founderIneligibleReason: 'already_founder',
       }),
     });
-    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'trialing', trialEndsAt });
+    prisma.user.findUnique.mockResolvedValueOnce({ stripeInterval: 'month', stripeSubscriptionStatus: 'trialing', trialEndsAt, trialSource: 'SIGNUP' });
     const reserved = (await b.svc.offers('u1')).founder;
     expect(reserved.refundUntil).toBeNull();
     expect(reserved.reservedUntilCharge).toBe(true);

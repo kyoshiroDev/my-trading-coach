@@ -80,12 +80,13 @@ export class PlanModalComponent implements OnInit {
   private readonly userStore = inject(UserStore);
   protected readonly trialAvailable = this.userStore.trialAvailable;
   /**
-   * Essai d'inscription en cours (#769) : date de fin (JJ/MM), sinon `null`. S'abonner maintenant
-   * facture tout de suite : la modale le dit au lieu de promettre un essai.
+   * Premium offert en cours (#769) : essai d'inscription ou Premium offert par l'admin. Date de fin
+   * (JJ/MM), sinon `null`. S'abonner maintenant facture tout de suite : la modale le dit au lieu de
+   * promettre un essai.
    */
-  protected readonly signupTrialEnd = computed(() => {
+  protected readonly offeredPremiumEnd = computed(() => {
     const store = this.userStore;
-    const end = store.signupTrialDaysLeft() !== null ? store.user()?.trialEndsAt : null;
+    const end = store.signupTrialDaysLeft() !== null || store.isOfferedPremium() ? store.user()?.trialEndsAt : null;
     return end ? new Date(end).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : null;
   });
 
