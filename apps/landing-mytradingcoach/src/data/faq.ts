@@ -65,8 +65,8 @@ export const FOUNDER_FAQ = {
   open:
     `Les ${founder.seats} premiers abonnés ont le Premium à ${founder.priceMonthlyEur} €/mois ou ${founder.priceAnnualEur} €/an TTC, au lieu de ${monthly} € et ${annual} €. ` +
     `Mensuel et annuel comptent dans les mêmes ${founder.seats} places. Le prix est bloqué à vie tant que ton abonnement reste actif : les renouvellements gardent ce prix, une hausse future du prix normal ne te touche pas, et tu as tout le Premium, nouveautés comprises. ` +
-    `Tu peux passer du mensuel à l'annuel fondateur (ou l'inverse) en gardant ta place et ton numéro. Pas d'essai\u00a0: le premier paiement est immédiat. Pour essayer avant, tout nouvel inscrit a ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, sans carte. ` +
-    `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le premier paiement : l'abonnement est annulé et le tarif fondateur perdu. Pendant tes jours de Premium offerts, tu peux devenir fondateur\u00a0: tu es prélevé tout de suite au tarif fondateur. ` +
+    `Tu peux passer du mensuel à l'annuel fondateur (ou l'inverse) en gardant ta place et ton numéro. Pas d'essai\u00a0: le premier paiement est immédiat. Pendant tes ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription, tu peux réserver ta place\u00a0: elle est comptée tout de suite, et tu n'es prélevé qu'à la fin de ton essai (s'il reste plus de 2 jours). ` +
+    `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier paiement : l'abonnement est annulé et le tarif fondateur perdu. ` +
     `Si ton abonnement se termine, le tarif est perdu définitivement. Non cumulable avec un code partenaire ni avec le parrainage. L'offre s'arrête quand les ${founder.seats} places sont prises.`,
   ended:
     `L'offre fondateur est clôturée. Les fondateurs gardent leur tarif de ${founder.priceMonthlyEur} €/mois ou ${founder.priceAnnualEur} €/an tant que leur abonnement reste actif, nouveautés Premium comprises. ` +

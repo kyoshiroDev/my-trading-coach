@@ -57,4 +57,15 @@ describe('Landing : essai Premium d’inscription (#769)', () => {
     expect(cgu).toContain('Cette période est accordée une fois par personne');
     expect(cgu).toContain("un abonnement payant n'a pas de période d'essai supplémentaire");
   });
+
+  it('réservation fondateur pendant l’essai (#769, B1) : tarifs, /prop-firm, FAQ et CGU l’annoncent', () => {
+    for (const f of ['components/Pricing.astro', 'components/prop-firm-page/PfPricing.astro']) {
+      expect(read(`apps/landing-mytradingcoach/src/${f}`)).toContain('Paiement à la fin de tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts');
+    }
+    expect(read('apps/landing-mytradingcoach/src/data/faq.ts')).toContain('tu peux réserver ta place');
+    const cgu = read('apps/landing-mytradingcoach/src/pages/cgu.astro');
+    expect(cgu).toContain('avec un premier prélèvement à la fin de cette période');
+    expect(cgu).toContain('suivant le premier paiement effectivement prélevé');
+  });
 });
+
