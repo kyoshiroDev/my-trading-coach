@@ -515,7 +515,7 @@
                     Tarif partenaire {{ offersStore.partner()?.code }} : {{ tariff }}
                   </p>
                 }
-                @if (userStore.isOfferedPremium()) {
+                @if (freePremium()) {
                   <div class="trial-status" data-testid="offered-premium">
                     <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
@@ -534,7 +534,7 @@
                     Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
                   </p>
                 }
-                @if (userStore.isOfferedPremium()) {
+                @if (freePremium()) {
                   <div class="plan-actions">
                     <button class="btn btn-primary" (click)="showPlanModal.set(true)">
                       @if (offersStore.founderAvailable()) {
