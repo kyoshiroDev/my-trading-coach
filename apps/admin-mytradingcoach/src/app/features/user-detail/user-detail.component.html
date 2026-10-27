@@ -102,6 +102,9 @@
                 [attr.title]="offerBlocked()"
                 (click)="offerPremium()">{{ offering() ? 'En cours…' : offerLabel() }}</button>
             </div>
+            @if (offerWarning(); as w) {
+              <p class="ud-offer-warn" data-testid="offer-warning">{{ w }}</p>
+            }
             @if (d.offer?.founder; as f) {
               <!-- Offre fondateur (#525) -->
               <div class="srow" data-testid="founder-row">

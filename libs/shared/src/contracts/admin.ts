@@ -67,6 +67,10 @@ export interface AdminUserDetail {
       /** Date de perte du tarif (fin d'abonnement ou remboursement). */
       endedAt: string | null;
       cta: string | null;
+      /** Réservée pendant l'essai d'inscription, pas encore payée (#769) : abonnement Stripe en essai. */
+      reserved: boolean;
+      /** Date du premier prélèvement d'une place réservée (fin de l'essai Stripe), sinon null. */
+      firstChargeAt: string | null;
     } | null;
     partner: {
       code: string;

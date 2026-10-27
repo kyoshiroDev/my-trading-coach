@@ -125,6 +125,7 @@ describe('UserDetailComponent — rendu densifié', () => {
         founder: {
           number: 12, status: 'LOST', interval: 'year', cta: 'bandeau',
           takenAt: '2026-10-10T10:00:00.000Z', endedAt: '2027-10-10T10:00:00.000Z',
+          reserved: false, firstChargeAt: null,
         },
         partner: null,
       },

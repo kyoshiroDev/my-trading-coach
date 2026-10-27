@@ -19,7 +19,7 @@ export class UserDetailService {
       where: { id },
       select: {
         id: true, name: true, email: true, plan: true, role: true,
-        stripeSubscriptionStatus: true, referralCode: true,
+        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, referralCode: true,
         trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
         createdAt: true, lastSeenAt: true,
@@ -118,6 +118,9 @@ export class UserDetailService {
       this.prisma.founderSeat.findUnique({ where: { userId: id } }),
       this.prisma.partnerRedemption.findUnique({ where: { userId: id }, include: { partnerCode: { select: { code: true } } } }),
     ]);
+    // Réservation fondateur pendant l'essai (#769) : place prise, premier prélèvement à la fin de l'essai
+    // Stripe (fin de la période en cours). L'admin le voit avant d'offrir du Premium.
+    const reserved = seat?.status === 'ACTIVE' && !seat.firstPaidAt && user.stripeSubscriptionStatus === 'trialing';
     const offer = {
       founder: seat
         ? {
@@ -127,6 +130,8 @@ export class UserDetailService {
             takenAt: seat.takenAt.toISOString(),
             endedAt: seat.endedAt?.toISOString() ?? null,
             cta: seat.cta,
+            reserved,
+            firstChargeAt: reserved ? (user.stripeCurrentPeriodEnd?.toISOString() ?? null) : null,
           }
         : null,
       partner: redemption
