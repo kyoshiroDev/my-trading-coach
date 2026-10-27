@@ -489,7 +489,9 @@ STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_t
 #   dev   → compte de test, we_1UOOBL3gvVCzVhyJP7gXcDZ4 (https://dev.api…) → STRIPE_WEBHOOK_SECRET de .env.dev
 #   beta  → compte de test, we_1UOOBM3gvVCzVhyJNT0ODsMl (https://beta.api…) → STRIPE_WEBHOOK_SECRET de .env.beta
 #   Événements : charge.refunded, checkout.session.completed, checkout.session.expired, customer.deleted,
-#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded.
+#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded,
+#   invoice.payment_action_required (#769, B1 : 3D Secure d'un prélèvement de fin d'essai, À AJOUTER aux
+#   trois destinations au déploiement de la PR B).
 #   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
 # Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
