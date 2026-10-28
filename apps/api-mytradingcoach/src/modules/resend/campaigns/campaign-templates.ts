@@ -26,6 +26,8 @@ import {
 import { GREG_FROM, GREG_LOGO_ATTACHMENT, GREG_REPLY_TO, gregLetter } from './greg-letter';
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
+/** Mention de bas des e-mails de l'essai d'inscription (#769) : ton neutre, sans promesse. */
+const TRIAL_FOOTER_REASON = 'Tu reçois cet e-mail parce que tu as un compte MyTradingCoach.';
 
 export interface CampaignContent {
   subject: string;
@@ -425,7 +427,7 @@ export function trialEndingTemplate({ userName, appUrl, unsubUrl, trial }: Campa
         compte avec les règles de sa prop firm suivi en direct. Si tu as plusieurs comptes, tu choisis
         celui que tu gardes&nbsp;; les autres restent visibles avec tout leur historique.</p>
       ${cta('Voir mon abonnement', onboardingLink(appUrl, '/profil', 'trial_ending', { tab: 'params' }))}
-    `) + serviceFooter(unsubUrl);
+    `) + serviceFooter(unsubUrl, TRIAL_FOOTER_REASON);
 
   return {
     subject: `Ton Premium offert se termine le ${end}`,
@@ -442,7 +444,7 @@ export function trialEndedTemplate({ userName, appUrl, unsubUrl }: CampaignBuild
       <p ${P}>En gratuit, tu gardes la synchro Tradovate, un compte avec les règles de sa prop firm suivi en
         direct, ton journal et la préparation de tes séances.</p>
       ${cta('Voir les offres Premium →', onboardingLink(appUrl, '/dashboard', 'trial_ended', { plan: 'premium', cta: 'email' }))}
-    `) + serviceFooter(unsubUrl);
+    `) + serviceFooter(unsubUrl, TRIAL_FOOTER_REASON);
 
   return {
     subject: 'Ton Premium offert est terminé',
