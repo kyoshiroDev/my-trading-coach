@@ -243,12 +243,20 @@ export function parseTradovatePnl(raw: string): number {
  * Le séparateur de milliers est retiré AVANT `parseFloat`, qui s'arrête à la première virgule :
  * `"$1,125.00"` donnait 1 (trade de +1 125 $ importé à +1 $, constaté en prod le 2026-10-28).
  * Le suffixe d'unité reste toléré (`parseFloat` s'arrête dessus), comme avant.
+ *
+ * La virgule n'est un séparateur de milliers que dans un regroupement VALIDE (1 à 3 chiffres puis
+ * des groupes d'exactement trois : `1,234`, `12,345,678.9`). Sinon c'est peut-être une décimale
+ * européenne (`12,50`) : la retirer lirait 1 250, cent fois trop. Comportement d'origine conservé
+ * (`parseFloat` s'arrête à la virgule). Les CSV européens à `;` sont convertis en amont
+ * (`normalizeSeparator`) ; `1.234,56` y reste lu 1,234, défaut connu (ticket format européen).
  */
 export function parseUsNumber(raw: string | null | undefined): number {
   let s = String(raw ?? '').replace(/[$€£\s\u00a0\u202f]/g, '');
   const negatifParParentheses = s.startsWith('(') && s.endsWith(')');
   if (negatifParParentheses) s = s.slice(1, -1);
-  const n = parseFloat(s.replace(/,/g, ''));
+  const milliers = /^[+-]?\d{1,3}(?:,\d{3})+(?![\d,])/.exec(s);
+  if (milliers) s = milliers[0].replace(/,/g, '') + s.slice(milliers[0].length);
+  const n = parseFloat(s);
   if (!Number.isFinite(n)) return NaN;
   return negatifParParentheses && n !== 0 ? -n : n;
 }
