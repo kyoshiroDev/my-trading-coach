@@ -18,13 +18,17 @@ par `HttpExceptionFilter` et part à Sentry comme en prod.
 
 - Un checkout de la branche du correctif (ou de `dev` une fois mergé) avec le `.env` local habituel.
 - Postgres et Redis locaux lancés (`docker compose up -d postgres redis`).
-- Le DSN du projet Sentry de l'API (page « Client Keys » du projet). **Il ne va dans aucun
-  fichier** : on le passe seulement dans la commande, le temps du test.
+- Un DSN Sentry (page « Client Keys » du projet), choisi ainsi :
+  - **s'il existe un projet Sentry séparé pour dev**, prendre le DSN de ce projet de dev ;
+  - **sinon**, prendre le DSN du projet actuel de l'API : l'événement y sera isolé dans
+    l'environnement dédié `verif-746` (étape 1), sans se mêler aux erreurs de prod.
+- **Le DSN ne va dans aucun fichier et n'est jamais envoyé dans le chat** (ni à Claude, ni dans
+  une issue ou une PR) : Greg le colle lui-même dans la commande, le temps du test.
 
 ## Étapes
 
-1. Démarrer l'API avec Sentry actif, dans un environnement Sentry dédié pour retrouver
-   l'événement sans bruit :
+1. Démarrer l'API avec Sentry actif (DSN du projet de dev s'il existe, sinon du projet actuel),
+   toujours dans l'environnement dédié `verif-746` pour retrouver l'événement sans bruit :
 
    ```bash
    SENTRY_DSN='<dsn collé ici, pas dans un fichier>' SENTRY_ENVIRONMENT=verif-746 \
