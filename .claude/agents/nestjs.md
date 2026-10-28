@@ -1354,6 +1354,9 @@ sont en direct.
   (pas `conn.apiHosts` en mémoire, possiblement périmé). Le WS relit son URL à chaque reconnexion.
   Repli : constantes historiques (`FALLBACK_HOSTS`) ; filet REST : `fetchFollowingRedirect` suit
   une 307/308 https en gardant `Authorization`. WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`).
+  Connexion OAuth sur hôte demo dédié verrouillée de bout en bout (vrai client, `fetch` simulé)
+  par `tradovate-oauth-hosts.spec.ts` : `renewAccessToken` avant `/account/list`, liste sur l'hôte
+  dédié, hôte dédié et jeton renouvelé enregistrés.
 - **WS refusé avant ouverture (`421`, correctif du 2026-10-28)** : sur Node 22, une poignée de main
   refusée émet `error` **sans `close`** (readyState bloqué à CONNECTING, mesuré). `TradovateLiveConnection`
   traite donc un `error` avant toute trame comme une fermeture : socket abandonnée, puis
