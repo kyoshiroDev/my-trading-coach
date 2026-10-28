@@ -672,6 +672,16 @@ describe('réservation fondateur pendant le Premium offert (#769)', () => {
     expect(charges).toEqual([`reporté au ${deferred.trialEndsAt.toISOString().slice(0, 10)}`, 'immédiat', 'essai 30 j']);
   });
 
+  it('journal « Checkout créé » : aucun identifiant d’utilisateur', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation((m: unknown) => void logs.push(String(m)));
+    await founder(makeBilling({ user: inTrial(9 * 24) }).svc);
+    spy.mockRestore();
+    const created = logs.filter((l) => l.startsWith('Checkout créé'));
+    expect(created).toHaveLength(1);
+    expect(created[0]).not.toMatch(/user:|\bu1\b/);
+  });
+
   it('Premium offert par l’admin : réservation fondateur avec prélèvement immédiat, comme hors essai', async () => {
     const { svc, create } = makeBilling({ user: { ...inTrial(9 * 24), trialSource: 'ADMIN' } });
     await founder(svc);
