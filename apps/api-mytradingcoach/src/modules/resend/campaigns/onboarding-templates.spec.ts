@@ -103,11 +103,11 @@ describe('contenu de chaque e-mail', () => {
     expect(text(welcomeFreeTemplate({ userName: ' ', appUrl: APP }).html)).toContain('Bonjour, ton compte est prêt');
   });
 
-  it('e-mails de service : aucune offre payante, lien « ne plus recevoir ces conseils »', () => {
+  it('e-mails de service : aucune offre payante, lien « ne plus recevoir les e-mails d’aide au démarrage »', () => {
     for (const email of [EMAILS.connect_tradovate, EMAILS.prop_firm_rules]) {
       const t = text(email.html);
       expect(t).not.toMatch(/Premium|fondateur|€|offert|essai/i);
-      expect(email.html).toContain('Ne plus recevoir ces conseils');
+      expect(email.html).toContain("Ne plus recevoir les e-mails d'aide au démarrage");
       expect(email.html).toContain('href="https://api.test/api/emails/unsubscribe?token=t&scope=service"');
     }
   });

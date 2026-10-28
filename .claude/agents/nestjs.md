@@ -2194,7 +2194,7 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
   (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
   propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
-  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir les e-mails d'aide au démarrage », lien
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
@@ -2229,9 +2229,11 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
   `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
   requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
-- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
-  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
-  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+- **Pied commun** (`emailWrapper(content, preheader, accent, _unsubUrl?)`) : TOUJOURS « Gérer mes
+  e-mails » → `${FRONTEND_URL}/profil?tab=params` (décision du 28/10, #769). Un seul lien qui désinscrit
+  par e-mail : celui du texte (`serviceFooter` ou `marketingFooter`) ; le pied ne répète plus la même URL
+  sous « Se désabonner » (libellé trompeur : un lien de service ne coupe que l'aide au démarrage).
+  Garde : `email-unsub-links.spec.ts`. Aucun lien ne coupe les e-mails de paiement (transactionnels). Plus aucun lien en dur vers l'app de prod. Garde :
   `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
   route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
 - Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
