@@ -1414,10 +1414,15 @@ sont en direct.
 - **Nombres des parseurs : toujours `parseUsNumber`**, jamais `parseFloat` brut (bug prod du
   2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
   mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
-  de +1 125 $ a été importé à +1 $. Même règle pour découper une ligne : jamais `split(',')`, un
+  de +1 125 $ a été importé à +1 $. La virgule n'est retirée que dans un regroupement VALIDE
+  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250) ; le format européen
+  complet (`1.234,56`) est le ticket #781. Même règle pour découper une ligne : jamais `split(',')`, un
   champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
   ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
-  `pnl-milliers.util.ts` (détection) et `scripts/repair-tradovate-pnl-milliers.ts` (réparation).
+  `pnl-milliers.util.ts` (détection, `casReparation`) et `scripts/repair-tradovate-pnl-milliers.ts`
+  (réparation). Règle du script : ne jamais supprimer une ligne qui ne peut pas revenir de chez
+  Tradovate (connexion active, jeton utilisable, synchro < 10 j sans erreur, mois relu à coup sûr) ;
+  sinon P&L corrigé sur place et tag `sens-heure-non-verifies`.
 - `CsvImportService` garde l'orchestration : plan / accès IA, formats inconnus, fusion des
   frais Tradovate, persistance.
 - **Nouveau broker : passer par le REGISTRE, pas par du code** (2026-09-28). Écrire un
