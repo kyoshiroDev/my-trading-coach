@@ -1410,7 +1410,14 @@ sont en direct.
 - `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
-  PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
+  PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **Nombres des parseurs : toujours `parseUsNumber`**, jamais `parseFloat` brut (bug prod du
+  2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
+  mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
+  de +1 125 $ a été importé à +1 $. Même règle pour découper une ligne : jamais `split(',')`, un
+  champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
+  ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
+  `pnl-milliers.util.ts` (détection) et `scripts/repair-tradovate-pnl-milliers.ts` (réparation).
 - `CsvImportService` garde l'orchestration : plan / accès IA, formats inconnus, fusion des
   frais Tradovate, persistance.
 - **Nouveau broker : passer par le REGISTRE, pas par du code** (2026-09-28). Écrire un
@@ -1924,8 +1931,8 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   une clôture qu'après la fermeture.
 - **Format réel** (mesuré) : `Account ID, Account Name, Trade Date (AAAA-MM-JJ), Total Amount
   ("50,000.00"), Total Realized PNL` ; une ligne seulement les jours où le solde a bougé. Colonnes
-  lues par leur nom ; montants par `parseReportAmount` (⚠️ `parseTradovatePnl` ne retire pas les
-  séparateurs de milliers : `"50,000.00"` y vaudrait 50).
+  lues par leur nom ; montants par `parseReportAmount` (strict : `NaN` si illisible). Les
+  parseurs d'import utilisent `parseUsNumber` (`csv-parsers.ts`), qui retire aussi les milliers.
 - **Métriques** : trailing EOD → plus haut = max des clôtures officielles si elles couvrent la
   séance précédente (`previousSession`, week-end sauté) ET que le solde broker est dans le
   référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`
