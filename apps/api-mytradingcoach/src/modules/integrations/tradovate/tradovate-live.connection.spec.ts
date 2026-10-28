@@ -36,7 +36,7 @@ class FakeSocket implements LiveSocket {
 
 const EXT = 777;
 
-function setup(opts: { getToken?: () => Promise<string> } = {}) {
+function setup(opts: { getToken?: () => Promise<string>; onHandshakeRefused?: () => Promise<void> } = {}) {
   const sockets: FakeSocket[] = [];
   const onTradeEvent = vi.fn();
   const onFatal = vi.fn();
@@ -46,6 +46,7 @@ function setup(opts: { getToken?: () => Promise<string> } = {}) {
     getToken: opts.getToken ?? (async () => 'AT-1'),
     onTradeEvent,
     onFatal,
+    onHandshakeRefused: opts.onHandshakeRefused,
     socketFactory: (url) => {
       const s = new FakeSocket(url);
       sockets.push(s);
@@ -159,6 +160,38 @@ describe('Connexion WebSocket Tradovate', () => {
     last().drop();
     await vi.advanceTimersByTimeAsync(1000);
     expect(sockets).toHaveLength(4);
+  });
+
+  it('poignée de main refusée (421 : Node 22 émet error SANS close) → hôtes invalidés PUIS reconnexion', async () => {
+    const order: string[] = [];
+    const onHandshakeRefused = vi.fn(async () => { order.push('hôtes invalidés'); });
+    const getToken = vi.fn(async () => { order.push('jeton'); return 'AT-1'; });
+    const { conn, sockets, last } = setup({ getToken, onHandshakeRefused });
+    conn.start();
+    await vi.advanceTimersByTimeAsync(0);
+    last().readyState = 0; // CONNECTING, et aucune trame reçue
+    last().onerror?.({});
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onHandshakeRefused).toHaveBeenCalledTimes(1);
+    expect(sockets[0].onclose).toBeNull(); // socket abandonnée : un close tardif ne double rien
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sockets).toHaveLength(2);
+    expect(order).toEqual(['jeton', 'hôtes invalidés', 'jeton']);
+  });
+
+  it('erreur APRÈS ouverture → rien d’invalidé, la reconnexion part du close', async () => {
+    const onHandshakeRefused = vi.fn(async () => undefined);
+    const { conn, sockets, authorize, last } = setup({ onHandshakeRefused });
+    conn.start();
+    await vi.advanceTimersByTimeAsync(0);
+    authorize();
+    last().onerror?.({});
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sockets).toHaveLength(1);
+    last().drop();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sockets).toHaveLength(2);
+    expect(onHandshakeRefused).not.toHaveBeenCalled();
   });
 
   it('quota de connexions atteint (shutdown) → attente longue avant de réessayer', async () => {

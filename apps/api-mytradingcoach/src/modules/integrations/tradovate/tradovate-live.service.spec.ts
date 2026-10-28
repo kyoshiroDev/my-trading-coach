@@ -85,6 +85,11 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
       findMany: vi.fn(async () => conns),
       findUnique: vi.fn(async ({ where }: { where: { id?: string; accountId_provider?: { accountId: string } } }) =>
         conns.find((c) => (where.id ? c.id === where.id : c.accountId === where.accountId_provider?.accountId)) ?? null),
+      updateMany: vi.fn(async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+        const found = conns.filter((c) => c.id === where.id);
+        found.forEach((c) => Object.assign(c, data));
+        return { count: found.length };
+      }),
     },
   };
   const connections = {
@@ -302,6 +307,37 @@ describe('Tradovate live — événements → synchro existante', () => {
     const { service, connections } = await live(0);
     expect(connections.tryLock).toHaveBeenCalledWith('bc-1');
     expect(connections.unlock).toHaveBeenCalledWith('bc-1');
+    await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — WebSocket refusé (421) avec des hôtes en cache', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('apiHostsAt remis à null → la reconnexion relit les hôtes et part sur l’hôte dédié', async () => {
+    const ANCIEN = { live: 'live.tradovateapi.com', demo: 'demo.tradovateapi.com' };
+    const DEDIE = { live: 'live.tradovateapi.com', demo: 'apex-demo.tradovateapi.com' };
+    // Hôtes lus il y a 5 min : frais pour le TTL de 30 min, mais NinjaTrader a basculé depuis.
+    const c = conn({ lastSyncAt: new Date(), apiHosts: ANCIEN, apiHostsAt: new Date(Date.now() - 5 * 60_000) });
+    const { service, sockets, prisma, connections } = setup({ conns: [c] });
+    // Comme TradovateTokenManager : hôtes en cache tant que `apiHostsAt` est frais, relus sinon.
+    connections.getSession.mockImplementation((async (x: { apiHostsAt: Date | null }) => ({
+      token: 'AT-1',
+      apiHosts: x.apiHostsAt ? ANCIEN : DEDIE,
+    })) as never);
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sockets[0].url).toBe('wss://demo.tradovateapi.com/v1/websocket');
+
+    sockets[0].readyState = 0;
+    sockets[0].onerror?.({}); // 421 : error sans close (Node 22)
+    await settle();
+    expect(prisma.brokerConnection.updateMany).toHaveBeenCalledWith({ where: { id: 'bc-1' }, data: { apiHostsAt: null } });
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sockets).toHaveLength(2);
+    expect(sockets[1].url).toBe('wss://apex-demo.tradovateapi.com/v1/websocket');
     await service.onModuleDestroy();
   });
 });

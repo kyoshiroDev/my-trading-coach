@@ -1354,6 +1354,13 @@ sont en direct.
   (pas `conn.apiHosts` en mémoire, possiblement périmé). Le WS relit son URL à chaque reconnexion.
   Repli : constantes historiques (`FALLBACK_HOSTS`) ; filet REST : `fetchFollowingRedirect` suit
   une 307/308 https en gardant `Authorization`. WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`).
+- **WS refusé avant ouverture (`421`, correctif du 2026-10-28)** : sur Node 22, une poignée de main
+  refusée émet `error` **sans `close`** (readyState bloqué à CONNECTING, mesuré). `TradovateLiveConnection`
+  traite donc un `error` avant toute trame comme une fermeture : socket abandonnée, puis
+  `onHandshakeRefused` → `TradovateLiveService.forgetHosts` remet `apiHostsAt` à null AVANT la
+  reconnexion, qui relit ainsi `apiHosts` sans attendre le TTL de 30 min. Un `error` après ouverture
+  ne fait rien (le `close` qui suit relance). Verrouillé par `tradovate-live.connection.spec.ts` et
+  `tradovate-live.service.spec.ts` (« hôtes en cache »).
 - **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
   appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
   documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à
