@@ -137,6 +137,49 @@ describe('TradovateHistoryService — import de l’historique', () => {
     expect(new Date(persiste[0][0].tradedAt as string).toISOString()).toBe('2026-09-23T13:35:05.000Z');
   });
 
+  describe('P&L à séparateur de milliers (compte « test NT8 », 27/10, bug prod du 2026-10-28)', () => {
+    // Achat de 5 ES à 7753,75 (18:53:50 UTC), vente à 7758,25 (19:01:29 UTC) : LONG, +1 125 $.
+    // Importé en prod en SHORT, P&L 1 $, clôture 18:53:50 : le `split(',')` de la conversion UTC
+    // coupait `"$1,125.00"` en deux, la vente restait en heure locale et passait avant l'achat.
+    const PERF_MILLIERS = [
+      PERFORMANCE_CSV.split('\n')[0],
+      'ESZ6,-2,0,0.25,700000000001,700000000002,5,7753.75,7758.25,"$1,125.00",10/27/2026 18:53:50,10/27/2026 19:01:29,7min39sec',
+    ].join('\n');
+
+    it('la conversion UTC touche les bonnes colonnes, à l’octet près ailleurs', () => {
+      const { service } = setup();
+      const sortie = (service as unknown as { horodatagesEnUtc: (c: string) => string })
+        .horodatagesEnUtc(PERF_MILLIERS)
+        .split('\n')[1];
+      expect(sortie).toBe(
+        'ESZ6,-2,0,0.25,700000000001,700000000002,5,7753.75,7758.25,"$1,125.00",2026-10-27T18:53:50Z,2026-10-27T19:01:29Z,7min39sec',
+      );
+    });
+
+    it('trade importé LONG, P&L entier, clôture à la vente', async () => {
+      const { service, persiste } = setup({ Performance: PERF_MILLIERS });
+
+      await service.importHistory('u1', conn(), { months: 1 });
+
+      expect(persiste[0][0]).toMatchObject({ side: 'LONG', entry: 7753.75, exit: 7758.25, quantity: 5, pnl: 1125 });
+      expect(new Date(persiste[0][0].tradedAt as string).toISOString()).toBe('2026-10-27T19:01:29.000Z');
+    });
+
+    it('rapport Fills : un champ entre guillemets ne décale pas la colonne commission', async () => {
+      const fills = [
+        '_id,_orderId,Fill ID,Order ID,Timestamp,Account,B/S,Quantity,Price,Contract,Product,commission',
+        '700000000001,1,700000000001,1,10/27/2026 18:53:50,APEX,Buy,5,"7,753.75",ESZ6,ES,2.95',
+        '700000000002,2,700000000002,2,10/27/2026 19:01:29,APEX,Sell,5,"7,758.25",ESZ6,ES,2.95',
+      ].join('\n');
+      const { service, persiste } = setup({ Performance: PERF_MILLIERS, Fills: fills });
+
+      const r = await service.importHistory('u1', conn(), { months: 1 });
+
+      expect(persiste[0][0].commission).toBe(5.9);
+      expect(r.feesExpected).toBe(5.9);
+    });
+  });
+
   it('interroge Tradovate avec le nom RELU du compte, pas celui stocké en base', async () => {
     const { service, reporting } = setup({ Performance: PERFORMANCE_CSV });
 
