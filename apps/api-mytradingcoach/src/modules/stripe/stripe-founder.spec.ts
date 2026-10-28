@@ -142,6 +142,17 @@ describe('une session Checkout par offre', () => {
     expect(expire).not.toHaveBeenCalled();
   });
 
+  it('session reprise : journal sans identifiant d’utilisateur', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation((m: unknown) => void logs.push(String(m)));
+    const open = [{ id: 'cs_old', url: 'https://checkout.stripe.test/old', metadata: { offer: 'founder', priceId: 'price_29' } }];
+    await founder(makeBilling({ openSessions: open }).svc);
+    spy.mockRestore();
+    const reused = logs.filter((l) => l.startsWith('Session checkout existante réutilisée'));
+    expect(reused).toHaveLength(1);
+    expect(reused[0]).not.toMatch(/user:|\bu1\b/);
+  });
+
   it('session ouverte à 49 € et achat fondateur → l’ancienne est expirée, une nouvelle créée', async () => {
     const open = [{ id: 'cs_49', url: 'https://x', metadata: { offer: 'premium', priceId: 'price_49' } }];
     const { svc, create, expire, founders } = makeBilling({ openSessions: open });
