@@ -18,10 +18,14 @@ export function marketingFooter(unsubUrl: string): string {
 }
 
 // Pied des e-mails de service (aide à la prise en main, intérêt légitime) : lien qui n'arrête QUE
-// ces conseils (`scope=service`, construit par EmailDispatchService).
-export function serviceFooter(unsubUrl: string): string {
+// ces conseils (`scope=service`, construit par EmailDispatchService). `reason` : la mention avant le
+// lien (les e-mails de l'essai d'inscription ne sont pas une aide au démarrage).
+export function serviceFooter(
+  unsubUrl: string,
+  reason = "Tu reçois cet email pour t'aider à démarrer avec ton compte MyTradingCoach.",
+): string {
   return `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">
-    Tu reçois cet email pour t'aider à démarrer avec ton compte MyTradingCoach.
+    ${reason}
     <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Ne plus recevoir ces conseils</a>.
   </p>`;
 }

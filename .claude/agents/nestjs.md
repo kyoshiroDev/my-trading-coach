@@ -727,7 +727,9 @@ canActivate(ctx: ExecutionContext): boolean {
   passage de 10 h, donc plafond respecté. J+11 (décision du 27/10) : service neutre, objet avec la date
   de fin (pas de compte à rebours), ce qui change en gratuit, bouton « Voir mon abonnement »
   (`/profil?tab=params`), sans offre ni urgence ; contexte `loadTrialEnd` (date seule). Évaluateur de
-  test : `gt` / `lt`.
+  test : `gt` / `lt`. Mention de bas des deux e-mails (décision du 28/10) : « Tu reçois cet e-mail parce
+  que tu as un compte MyTradingCoach. » (`serviceFooter(unsubUrl, reason)`), pas « pour t'aider à
+  démarrer ». Aperçu avant l'envoi réel : `tools/scripts/ops/preview-trial-emails.ts`.
 - E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
   paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
   (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
