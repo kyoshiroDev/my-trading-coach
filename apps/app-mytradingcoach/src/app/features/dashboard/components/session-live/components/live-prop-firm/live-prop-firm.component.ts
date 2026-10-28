@@ -30,7 +30,7 @@ import { PlanModalComponent } from '@app/shared/components/plan-modal/plan-modal
 import { relativeTime } from '@app/core/utils/tradovate-return.util';
 import { progressTitle } from '@app/features/accounts/account-progress.util';
 import { AccountPlanWizardComponent } from '@app/features/accounts/account-plan-wizard/account-plan-wizard.component';
-import { barWidth, drawdownTone, objectiveRatio } from './live-prop-firm.util';
+import { barWidth, drawdownTone, missedAlert, missedAlertPct, objectiveRatio } from './live-prop-firm.util';
 
 /**
  * Suivi prop firm de la session live (FREE) : à la place de « Trade rapide » quand le compte de
@@ -51,6 +51,8 @@ export class LivePropFirmComponent {
   readonly accountId = input.required<string>();
   /** P&L réalisé de la session (trades clôturés, frais déduits), affiché sous l'equity en PC. */
   readonly realized = input<number | null>(null);
+  /** Séance en cours : l'encart « tu aurais été alerté » ne revient qu'une fois par seuil et par séance. */
+  readonly sessionId = input<string | null>(null);
 
   private readonly accounts = inject(SelectedAccountStore);
   private readonly tv = inject(TradovateStore);
@@ -100,6 +102,51 @@ export class LivePropFirmComponent {
   protected readonly premiumTeaser = computed(() => !this.userStore.isPremium() && !!this.account()?.propFirmPlanId);
   protected readonly ddWidth = computed(() => barWidth(this.drawdown()?.pct));
 
+  // ── Encart du gratuit « avec Premium, tu aurais été alerté » (#769, B4) ──
+  // Mêmes seuils que les alertes Premium, sur la marge avant le plancher (la perte du jour n'est
+  // calculée que pour le Premium). Aucune alerte n'est envoyée : un texte discret, jamais bloquant.
+  /** Plus haut seuil atteint pendant la séance et plus haut seuil déjà fermé (rangs 0, 1, 2). */
+  private readonly missed = signal({ reached: 0, closed: 0 });
+  private readonly missedEligible = computed(
+    () => !this.userStore.isPremium() && !this.userStore.isDemo() && !!this.account()?.propFirmPlanId && !this.needsPlan(),
+  );
+  /** Seuil (en %) à afficher, ou `null` : rien de nouveau depuis la dernière fermeture. */
+  protected readonly missedBanner = computed(() => {
+    const m = this.missed();
+    return this.missedEligible() && m.reached > m.closed ? missedAlertPct(m.reached) : null;
+  });
+
+  protected closeMissed(): void {
+    this.missed.update((m) => ({ ...m, closed: m.reached }));
+    this.saveMissed();
+  }
+
+  private missedKey(): string | null {
+    const id = this.sessionId();
+    return id ? `mtc_missed_alert:${id}` : null;
+  }
+
+  private loadMissed(): void {
+    const key = this.missedKey();
+    if (!key) return;
+    try {
+      const raw = JSON.parse(localStorage.getItem(key) ?? 'null') as { reached?: number; closed?: number } | null;
+      if (raw) this.missed.set({ reached: Number(raw.reached) || 0, closed: Number(raw.closed) || 0 });
+    } catch {
+      /* stockage indisponible : l'encart vit le temps de la page */
+    }
+  }
+
+  private saveMissed(): void {
+    const key = this.missedKey();
+    if (!key) return;
+    try {
+      localStorage.setItem(key, JSON.stringify(this.missed()));
+    } catch {
+      /* stockage indisponible */
+    }
+  }
+
   protected readonly objRatio = computed(() => {
     const m = this.metrics();
     return m ? objectiveRatio(m) : null;
@@ -136,6 +183,19 @@ export class LivePropFirmComponent {
   private refreshed = false;
 
   constructor() {
+    // Encart du gratuit (#769, B4) : état de la séance relu, puis tout nouveau seuil franchi est retenu.
+    effect(() => {
+      this.sessionId();
+      untracked(() => this.loadMissed());
+    });
+    effect(() => {
+      const hit = this.missedEligible() ? missedAlert(this.drawdown()) : null;
+      untracked(() => {
+        if (!hit || hit.rank <= this.missed().reached) return;
+        this.missed.update((m) => ({ ...m, reached: hit.rank }));
+        this.saveMissed();
+      });
+    });
     // Connexions Tradovate pas encore chargées (on arrive directement sur la session).
     if (!this.tv.loaded()) this.tv.load();
     // Une relecture du solde à l'ouverture, pour ne pas afficher un relevé d'hier en attendant

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AccountRuleMetrics, TradingAccount } from '@app/core/api/accounts.api';
 import type { TradovateConnection } from '@app/core/api/tradovate.api';
-import { barWidth, drawdownTone, isLivePropAccount, objectiveRatio } from './live-prop-firm.util';
+import { barWidth, drawdownTone, isLivePropAccount, objectiveRatio, missedAlert, missedAlertPct } from './live-prop-firm.util';
 
 const metrics = (p: Partial<AccountRuleMetrics> = {}): AccountRuleMetrics => ({
   startingBalance: 50000, realizedPnl: 0, currentBalance: 50000, tradesCount: 0,
@@ -91,5 +91,16 @@ describe('objectiveRatio', () => {
   it('sans plan : objectif saisi ; rien → null', () => {
     expect(objectiveRatio(metrics({ objective: { current: 750, target: 3000, pct: 0.25 } }))).toBe(0.25);
     expect(objectiveRatio(metrics())).toBeNull();
+  });
+});
+
+describe('missedAlert (#769, B4) : mêmes seuils que les alertes Premium', () => {
+  it('au-dessus de 25 % : rien ; 25 % : premier seuil ; 10 % ou dépassé : second', () => {
+    expect(missedAlert(null)).toBeNull();
+    expect(missedAlert({ pct: 0.26, breached: false })).toBeNull();
+    expect(missedAlert({ pct: 0.25, breached: false })).toEqual({ rank: 1, pct: 25 });
+    expect(missedAlert({ pct: 0.1, breached: false })).toEqual({ rank: 2, pct: 10 });
+    expect(missedAlert({ pct: 0, breached: true })).toEqual({ rank: 2, pct: 10 });
+    expect([missedAlertPct(1), missedAlertPct(2)]).toEqual([25, 10]);
   });
 });
