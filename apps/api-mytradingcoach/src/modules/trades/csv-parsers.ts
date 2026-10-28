@@ -200,9 +200,9 @@ export function parseTradovate(lines: string[]): string {
     if (cols.length < 12) continue;
 
     const rawSymbol = cols[0].trim();
-    const qty = parseInt(cols[6].trim(), 10) || 1;
-    const buyPrice = parseFloat(cols[7].trim());
-    const sellPrice = parseFloat(cols[8].trim());
+    const qty = Math.trunc(parseUsNumber(cols[6])) || 1;
+    const buyPrice = parseUsNumber(cols[7]);
+    const sellPrice = parseUsNumber(cols[8]);
     const rawPnl = cols[9].trim();
     const boughtAt = cols[10].trim();
     const soldAt = cols[11].trim();
@@ -230,12 +230,27 @@ export function parseTradovate(lines: string[]): string {
   return result.join('\n');
 }
 
+/** P&L comptable de l'export Performance (`$1,125.00`, `$(25.00)`) ; 0 si illisible. */
 export function parseTradovatePnl(raw: string): number {
-  const cleaned = raw.replace(/\$/g, '').trim();
-  if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
-    return -parseFloat(cleaned.slice(1, -1));
-  }
-  return parseFloat(cleaned) || 0;
+  const n = parseUsNumber(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Nombre au format US tel que l'écrivent les exports et les conversions Excel : `$1,125.00`,
+ * `$(1,125.00)` (négatif comptable), `-1 234.5`, `0.001BTC`. NaN si aucun chiffre.
+ *
+ * Le séparateur de milliers est retiré AVANT `parseFloat`, qui s'arrête à la première virgule :
+ * `"$1,125.00"` donnait 1 (trade de +1 125 $ importé à +1 $, constaté en prod le 2026-10-28).
+ * Le suffixe d'unité reste toléré (`parseFloat` s'arrête dessus), comme avant.
+ */
+export function parseUsNumber(raw: string | null | undefined): number {
+  let s = String(raw ?? '').replace(/[$€£\s\u00a0\u202f]/g, '');
+  const negatifParParentheses = s.startsWith('(') && s.endsWith(')');
+  if (negatifParParentheses) s = s.slice(1, -1);
+  const n = parseFloat(s.replace(/,/g, ''));
+  if (!Number.isFinite(n)) return NaN;
+  return negatifParParentheses && n !== 0 ? -n : n;
 }
 
 export function parseBinanceFutures(lines: string[]): string {
@@ -249,9 +264,9 @@ export function parseBinanceFutures(lines: string[]): string {
 
     const rawSymbol = cols[0].trim();
     const side = cols[1].trim().toUpperCase();
-    const price = parseFloat(cols[2].trim());
-    const qty = parseFloat(cols[3].trim());
-    const pnl = parseFloat(cols[4].replace(/,/g, '').trim()) || 0;
+    const price = parseUsNumber(cols[2]);
+    const qty = parseUsNumber(cols[3]);
+    const pnl = parseUsNumber(cols[4]) || 0;
     const timeStr = cols[5]?.trim() || '';
 
     if (pnl === 0 || isNaN(price) || isNaN(qty)) continue;
@@ -282,13 +297,13 @@ export function parseBinanceSpot(lines: string[]): string {
     const type = (cols[idxType] ?? '').toUpperCase();
     if (!['BUY', 'SELL'].some((t) => type.includes(t))) continue;
 
-    const pnl = idxPnl >= 0 ? parseFloat(cols[idxPnl]?.replace(/,/g, '') ?? '') : 0;
+    const pnl = idxPnl >= 0 ? parseUsNumber(cols[idxPnl]) : 0;
     if (isNaN(pnl) || pnl === 0) continue;
 
     const symbol = normalizeBinanceSymbol(cols[idxMarket]);
     const side = type.includes('BUY') ? 'LONG' : 'SHORT';
-    const price = parseFloat(cols[idxPrice] ?? '');
-    const qty = idxQty >= 0 ? parseFloat(cols[idxQty] ?? '') || 1 : 1;
+    const price = parseUsNumber(cols[idxPrice]);
+    const qty = idxQty >= 0 ? parseUsNumber(cols[idxQty]) || 1 : 1;
     const tradedAt =
       idxDate >= 0 && cols[idxDate]
         ? new Date(cols[idxDate]).toISOString()
@@ -311,14 +326,14 @@ export function parseMT5(lines: string[]): string {
     const type = cols[2]?.trim().toLowerCase();
     if (!type || !['buy', 'sell'].includes(type)) continue;
 
-    const lots = parseFloat(cols[3]?.trim() ?? '');
+    const lots = parseUsNumber(cols[3]);
     const symbol = cols[4]?.trim() ?? '';
-    const openPrice = parseFloat(cols[5]?.trim() ?? '');
+    const openPrice = parseUsNumber(cols[5]);
     const closeTime = cols[8]?.trim() ?? '';
-    const closePrice = parseFloat(cols[9]?.trim() ?? '');
-    const commission = parseFloat(cols[10]?.trim() ?? '') || 0;
-    const swap = parseFloat(cols[11]?.trim() ?? '') || 0;
-    const profit = parseFloat(cols[12]?.trim() ?? '') || 0;
+    const closePrice = parseUsNumber(cols[9]);
+    const commission = parseUsNumber(cols[10]) || 0;
+    const swap = parseUsNumber(cols[11]) || 0;
+    const profit = parseUsNumber(cols[12]) || 0;
 
     if (isNaN(openPrice) || isNaN(closePrice) || isNaN(lots)) continue;
 
@@ -346,10 +361,10 @@ export function parseBybit(lines: string[]): string {
     const timeStr = cols[0]?.trim() ?? '';
     const rawSymbol = cols[1]?.trim() ?? '';
     const rawSide = cols[2]?.trim() ?? '';
-    const entry = parseFloat(cols[3]?.trim() ?? '');
-    const exit = parseFloat(cols[4]?.trim() ?? '');
-    const qty = parseFloat(cols[5]?.trim() ?? '');
-    const pnl = parseFloat(cols[6]?.replace(/,/g, '').trim() ?? '') || 0;
+    const entry = parseUsNumber(cols[3]);
+    const exit = parseUsNumber(cols[4]);
+    const qty = parseUsNumber(cols[5]);
+    const pnl = parseUsNumber(cols[6]) || 0;
 
     if (isNaN(entry) || isNaN(exit)) continue;
 
@@ -392,12 +407,12 @@ export function parseIBKR(lines: string[]): string {
     if (!line.startsWith('Trades,Data,')) break;
 
     const cols = splitCsvLine(line);
-    const pnl = parseFloat(cols[pnlCol]?.trim() ?? '') || 0;
+    const pnl = parseUsNumber(cols[pnlCol]) || 0;
     if (pnl === 0) continue;
 
     const symbol = (cols[symbolCol]?.trim() ?? '').replace('.', '/');
-    const qty = Math.abs(parseFloat(cols[quantityCol]?.trim() ?? '') || 0);
-    const price = parseFloat(cols[priceCol]?.trim() ?? '') || 0;
+    const qty = Math.abs(parseUsNumber(cols[quantityCol]) || 0);
+    const price = parseUsNumber(cols[priceCol]) || 0;
     const dateStr = cols[dateCol]?.trim() ?? '';
     const tradedAt = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
     const side = cols[buySellCol]?.trim() === 'BUY' ? 'LONG' : 'SHORT';
