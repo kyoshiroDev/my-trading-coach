@@ -267,7 +267,7 @@ export class StripeBillingService {
     if (user.stripeCustomerId) {
       const reused = await this.reuseOrExpireOpenSessions(user.stripeCustomerId, offer, priceId, partnerCode, ui, chargeKey);
       if (reused) {
-        this.logger.log(`Session checkout existante réutilisée | user: ${userId}, offer: ${offer}, ui: ${ui}`);
+        this.logger.log(`Session checkout existante réutilisée | offer: ${offer}, ui: ${ui}`); // jamais d'identifiant
         return 'url' in reused ? reused : { clientSecret: reused.clientSecret, publishableKey, summary: await summary() };
       }
     }
