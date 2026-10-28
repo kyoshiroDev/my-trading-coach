@@ -56,6 +56,17 @@ describe('Écran de réassurance Tradovate', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('étape 2 : identifiants de la plateforme ou de la prop firm, une connexion par firm', () => {
+    const { q } = mount();
+    const step = q('tradovate-connect-step-login')!.textContent!;
+    expect(step).toContain('identifiants de ta plateforme (NinjaTrader ou Tradovate)');
+    expect(step).toContain('ceux fournis par ta prop firm');
+    expect(step).toContain('lecture seule');
+    // Espace insécable avant « : », jamais de tiret cadratin.
+    expect(step).toContain('Une prop firm = une connexion : répète l\'opération pour chaque firm.');
+    expect(step).not.toContain('—');
+  });
+
   it('« Connecter avec Tradovate » : demande l’URL pour CE compte et CETTE origine, puis redirige', () => {
     store.authorizeUrl.mockReturnValue(of('https://trader.tradovate.com/oauth?state=x'));
     const { q, navigate, fixture } = mount({ accountId: 'acc-9', origin: 'wizard' });
