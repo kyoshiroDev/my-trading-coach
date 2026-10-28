@@ -280,7 +280,14 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
 - L'accès passe par les contrôles existants (`trialEndsAt`) : aucun chemin Premium parallèle.
 - **Fin** : rien n'est supprimé. Le cron quotidien `TrialEndService` réaligne le rôle Discord (vaut
   aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
-  (`overFreeLimit`), l'utilisateur choisit le compte gardé ; l'arrêt de leur synchro arrive en B0.
+  (`overFreeLimit`), l'utilisateur choisit le compte gardé. Arrêt de leur synchro (B0) : **journal
+  seul** au 28/10 (comptés, rien bloqué), activation après lecture du décompte.
+- **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
+  marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
+  25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis
+  10 %, `@mtc/shared` `alert-levels.ts`) : le 50 % de la jauge n'est qu'une couleur, aucune alerte
+  Premium n'y part. Une fois par seuil et par séance, fermable, jamais bloquant, aucune alerte envoyée ;
+  jamais pour un Premium ni la démo.
 - **Après l'essai** : mensuel 49 € sans essai Stripe (`trialUsed`), annuel inchangé. Garde : `stripe/stripe-signup-trial.spec.ts`.
 - **Relances Premium** (`first_week_recap`, `founder_followup`, `premium_upsell`) : jamais pendant un essai en cours. Les anciens
   comptes jamais essayés gardent les 30 j.

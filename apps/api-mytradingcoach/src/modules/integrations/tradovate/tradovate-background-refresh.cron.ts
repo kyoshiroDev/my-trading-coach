@@ -4,6 +4,7 @@ import { BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateLiveService } from './tradovate-live.service';
+import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { RedisService } from '../../infra/redis.service';
@@ -75,6 +76,8 @@ export class TradovateBackgroundRefreshCron {
     private readonly redis: RedisService,
     /** Alertes de limite, objectif et payout relevées app fermée (#666) : push seulement. */
     @Optional() private readonly alerts?: PropAlertsService,
+    // Comptes au-delà de la limite gratuite (#769, B0) : décompte du jour dans le bilan.
+    @Optional() private readonly freeLimit?: FreeLimitSyncService,
   ) {}
 
   @Cron('*/15 * * * *', { timeZone: 'Europe/Paris' })
@@ -149,11 +152,13 @@ export class TradovateBackgroundRefreshCron {
     });
 
     if (due.length > 0) {
+      const horsLimite = (await this.freeLimit?.countToday(now)) ?? 0;
       this.logger.log(
         `Tradovate (fond${avecHistorique ? ' + historique' : ''}) : ${result.synced} synchronisée(s), ` +
           `${result.created} trade(s) créé(s), ${result.live} en direct, ${result.failed} en échec ` +
           `(sur ${due.length})` +
-          `${result.backfilled > 0 ? ` · ${result.backfilled} passé(s) complet(s) remonté(s)` : ''}.`,
+          `${result.backfilled > 0 ? ` · ${result.backfilled} passé(s) complet(s) remonté(s)` : ''}` +
+          `${horsLimite > 0 ? ` · ${horsLimite} compte(s) au-delà de la limite gratuite aujourd'hui (journal seul)` : ''}.`,
       );
     }
     return result;

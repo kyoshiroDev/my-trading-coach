@@ -382,8 +382,12 @@ export class StripeBillingService {
     }
     if (reservation) await this.founders.attachSession(reservation.id, session.id);
 
+    // « trial: false » pour une réservation reportée laissait croire à un prélèvement immédiat (#769).
+    const charge = trialGranted
+      ? `essai ${TRIAL_PERIOD_DAYS} j`
+      : firstChargeAt ? `reporté au ${firstChargeAt.toISOString().slice(0, 10)}` : 'immédiat';
     this.logger.log(
-      `Checkout créé | user: ${userId}, offer: ${offer}${partnerCode ? ` (${partnerCode})` : ''}, trial: ${trialGranted}, price: ${priceId}, ui: ${ui}`,
+      `Checkout créé | user: ${userId}, offer: ${offer}${partnerCode ? ` (${partnerCode})` : ''}, prélèvement: ${charge}, price: ${priceId}, ui: ${ui}`,
     );
 
     return clientSecret
