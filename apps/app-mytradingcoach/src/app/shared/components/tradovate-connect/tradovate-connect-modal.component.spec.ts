@@ -45,7 +45,7 @@ describe('Écran de réassurance Tradovate', () => {
   it('affiche le compte cible, les 3 étapes et l’encadré lecture seule AVANT toute redirection', () => {
     const { el, q, navigate } = mount();
     expect(el.textContent).toContain('Connecter ton compte');
-    expect(el.textContent).toContain('Pour le compte : Apex 50k · Éval');
+    expect(el.textContent).toContain('Pour le compte : Apex 50k · Éval');
     expect(el.querySelectorAll('.tvc-steps li')).toHaveLength(3);
     const note = q('tradovate-connect-security')!.textContent!;
     expect(note).toContain('ne voit jamais ton mot de passe');
