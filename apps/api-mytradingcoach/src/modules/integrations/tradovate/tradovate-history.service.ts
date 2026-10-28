@@ -40,7 +40,7 @@ export const HISTORY_FALLBACK_MONTHS = 6;
  * compte prop firm, création le 2026-02-12 et premier trade en juillet, soit **cinq mois vides
  * entre les deux**. L'arrêt aurait tronqué l'historique à mai en annonçant l'avoir tout remonté.
  */
-const EMPTY_WINDOWS_BEFORE_STOP = 2;
+export const EMPTY_WINDOWS_BEFORE_STOP = 2;
 /** Petite pause entre fenêtres : la limite documentée est de 5 000 requêtes/h, on en fait 12. */
 const PAUSE_BETWEEN_WINDOWS_MS = 300;
 

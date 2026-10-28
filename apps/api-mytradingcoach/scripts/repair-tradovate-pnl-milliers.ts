@@ -12,12 +12,14 @@
  *  - CSV            (CSV_IMPORT) : seul le P&L est faux → P&L et empreinte d'import corrigés.
  *  - JUMEAU         (historique) : le trade juste existe déjà (réimporté depuis le déploiement) →
  *                   annotations recopiées sur lui, le faux est supprimé.
- *  - REIMPORT       (historique, connexion CONNECTED) : le sens et l'heure de clôture peuvent aussi
- *                   être faux (la vente restait en heure locale) et l'heure réelle n'est PAS en base →
- *                   trade supprimé, historique de la connexion remis à réimporter (`historyImportedAt`
- *                   vide, le cron de fond le reprend). Annotations reposées ensuite par `--reattach`.
- *  - FIGE           (historique, connexion absente ou à reconnecter) : P&L et empreinte corrigés ;
- *                   sens et heure non vérifiables. `--reattach` fusionne plus tard si un jumeau apparaît.
+ *  - REIMPORT       (historique) : le sens et l'heure de clôture peuvent aussi être faux (la vente
+ *                   restait en heure locale) et l'heure réelle n'est PAS en base → trade supprimé,
+ *                   historique de la connexion remis à réimporter (`historyImportedAt` vide, le cron de
+ *                   fond le reprend). Annotations reposées ensuite par `--reattach`. SEULEMENT si la
+ *                   ligne peut revenir (`casReparation`) : connexion active, jeton utilisable, synchro
+ *                   récente sans erreur, mois du trade relu à coup sûr.
+ *  - FIGE           (historique, tout le reste) : P&L et empreinte corrigés, marque
+ *                   `sens-heure-non-verifies` posée. `--reattach` fusionne plus tard si un jumeau apparaît.
  *
  * Puis, pour ce qui a bougé : barème comportemental des comptes, totaux des séances clôturées,
  * chiffres des récaps quotidiens (texte IA conservé), référence comportementale supprimée (elle se
@@ -38,11 +40,21 @@
  *   … node /app/repair-pnl.js --reattach /app/repair-pnl-backup.jsonl [--restore-pending] [--apply]
  */
 import { closeSync, fsyncSync, openSync, readFileSync, writeSync } from 'node:fs';
-import { BrokerConnectionStatus, Prisma, PrismaClient, SessionStatus, TradeSource } from '@prisma/client';
+import { Prisma, PrismaClient, SessionStatus, TradeSource } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { computeTradeStats, roundCents } from '@mtc/shared';
-import { brutDepuisPrix, estTronque, VALEUR_DU_POINT } from '../src/modules/trades/pnl-milliers.util';
+import {
+  brutDepuisPrix,
+  casReparation,
+  estTronque,
+  moisUtc,
+  TAG_SENS_NON_VERIFIE,
+  VALEUR_DU_POINT,
+  type CasReparation,
+  type EtatConnexion,
+  type MotifFige,
+} from '../src/modules/trades/pnl-milliers.util';
 import { parseTradovatePnl } from '../src/modules/trades/csv-parsers';
 import { dedupeKey, occurrenceHash } from '../src/modules/trades/trade-identity.util';
 import { calculateRiskReward } from '../src/modules/trades/trade-metrics.util';
@@ -54,7 +66,7 @@ import type { CreateTradeDto } from '../src/modules/trades/dto/create-trade.dto'
 import type { PrismaService } from '../src/prisma/prisma.service';
 
 type Trade = Prisma.TradeGetPayload<object>;
-type Cas = 'CSV' | 'JUMEAU' | 'REIMPORT' | 'FIGE';
+type Cas = CasReparation;
 type LigneSauvegarde =
   | { type: 'trade'; cas: Cas; jumeauId?: string; row: Trade }
   | { type: 'session'; row: unknown }
@@ -111,7 +123,9 @@ function annotations(de: Trade, vers: Trade): Prisma.TradeUncheckedUpdateInput {
   const data: Prisma.TradeUncheckedUpdateInput = {};
   if (de.emotion && !vers.emotion) data.emotion = de.emotion;
   if (de.notes && !vers.notes) data.notes = de.notes;
-  if (de.tags.length && !vers.tags.length) data.tags = de.tags;
+  // La marque FIGE ne suit jamais : le trade juste, lui, est vérifié.
+  const tags = de.tags.filter((t) => t !== TAG_SENS_NON_VERIFIE);
+  if (tags.length && !vers.tags.length) data.tags = tags;
   if (de.setupId !== vers.setupId) data.setupId = de.setupId;
   if (de.sessionId && !vers.sessionId) data.sessionId = de.sessionId;
   if (de.stopLoss != null && vers.stopLoss == null) data.stopLoss = de.stopLoss;
@@ -216,8 +230,31 @@ async function reparer(prisma: PrismaClient, apply: boolean, sauvegarde: Sauvega
     },
   })).filter((t) => estTronque(t));
 
-  const connexions = new Map<string, { id: string; status: BrokerConnectionStatus; historyImportedAt: Date | null }>();
+  // État des connexions et mois couverts, lus AVANT toute écriture : une suppression REIMPORT ne
+  // doit pas vider un mois et faire basculer le sort des trades suivants.
+  const now = new Date();
+  const connexions = new Map<string, EtatConnexion & { id: string; historyImportedAt: Date | null }>();
+  const moisParCompte = new Map<string, Set<string>>();
+  for (const accountId of new Set(touches.filter((t) => t.source === TradeSource.BROKER_HISTORY && t.accountId).map((t) => t.accountId as string))) {
+    const c = await prisma.brokerConnection.findFirst({
+      where: { accountId, provider: 'TRADOVATE' },
+      select: {
+        id: true, status: true, historyImportedAt: true, accessTokenExpiresAt: true,
+        refreshTokenEnc: true, refreshTokenExpiresAt: true, lastSyncAt: true, lastSyncError: true,
+      },
+    });
+    if (c) connexions.set(accountId, c);
+    const dates = await prisma.trade.findMany({
+      where: { accountId, source: { in: [TradeSource.BROKER_HISTORY, TradeSource.BROKER_SYNC] } },
+      select: { tradedAt: true },
+    });
+    moisParCompte.set(accountId, new Set(dates.map((d) => moisUtc(d.tradedAt))));
+  }
   const parCas: Record<Cas, number> = { CSV: 0, JUMEAU: 0, REIMPORT: 0, FIGE: 0 };
+  const parMotifFige: Record<MotifFige, number> = {
+    connexion_absente: 0, connexion_a_reconnecter: 0, jeton_inutilisable: 0,
+    synchro_ancienne_ou_en_erreur: 0, hors_fenetre_historique: 0,
+  };
   let ecart = 0;
   const comptes = new Set<string>();
   const sessions = new Set<string>();
@@ -228,25 +265,20 @@ async function reparer(prisma: PrismaClient, apply: boolean, sauvegarde: Sauvega
   for (const t of touches) {
     const juste = brut(t);
     ecart += juste - (t.pnl as number);
-    let cas: Cas = 'CSV';
-    let jumeau: Trade | null = null;
-    if (t.source === TradeSource.BROKER_HISTORY) {
-      jumeau = await chercherJumeau(prisma, t, jumeauxPris);
-      if (jumeau) cas = 'JUMEAU';
-      else {
-        if (t.accountId && !connexions.has(t.accountId)) {
-          const c = await prisma.brokerConnection.findFirst({
-            where: { accountId: t.accountId, provider: 'TRADOVATE' },
-            select: { id: true, status: true, historyImportedAt: true },
-          });
-          if (c) connexions.set(t.accountId, c);
-        }
-        const c = t.accountId ? connexions.get(t.accountId) : undefined;
-        cas = c?.status === BrokerConnectionStatus.CONNECTED ? 'REIMPORT' : 'FIGE';
-        if (cas === 'REIMPORT' && c) aReimporter.add(c.id);
-      }
-    }
+    const historique = t.source === TradeSource.BROKER_HISTORY;
+    const jumeau = historique ? await chercherJumeau(prisma, t, jumeauxPris) : null;
+    const connexion = t.accountId ? connexions.get(t.accountId) ?? null : null;
+    const { cas, motif } = casReparation({
+      source: historique ? 'BROKER_HISTORY' : 'CSV_IMPORT',
+      aJumeau: !!jumeau,
+      connexion,
+      tradedAt: t.tradedAt,
+      moisAvecTrades: (t.accountId && moisParCompte.get(t.accountId)) || new Set<string>(),
+      now,
+    });
+    if (cas === 'REIMPORT' && connexion) aReimporter.add(connexion.id);
     parCas[cas]++;
+    if (motif) parMotifFige[motif]++;
     if (t.accountId) comptes.add(t.accountId);
     if (t.sessionId) sessions.add(t.sessionId);
     if (jumeau?.sessionId) sessions.add(jumeau.sessionId);
@@ -255,8 +287,17 @@ async function reparer(prisma: PrismaClient, apply: boolean, sauvegarde: Sauvega
     if (!apply) continue;
 
     sauvegarde.ecrire({ type: 'trade', cas, jumeauId: jumeau?.id, row: t });
-    if (cas === 'CSV' || cas === 'FIGE') {
+    if (cas === 'CSV') {
       await prisma.trade.update({ where: { id: t.id }, data: { pnl: juste, importHash: await empreinteLibre(prisma, t, juste) } });
+    } else if (cas === 'FIGE') {
+      await prisma.trade.update({
+        where: { id: t.id },
+        data: {
+          pnl: juste,
+          importHash: await empreinteLibre(prisma, t, juste),
+          tags: t.tags.includes(TAG_SENS_NON_VERIFIE) ? t.tags : [...t.tags, TAG_SENS_NON_VERIFIE],
+        },
+      });
     } else if (cas === 'JUMEAU' && jumeau) {
       await prisma.$transaction([
         prisma.trade.update({ where: { id: jumeau.id }, data: annotations(t, jumeau) }),
@@ -285,6 +326,7 @@ async function reparer(prisma: PrismaClient, apply: boolean, sauvegarde: Sauvega
       BROKER_HISTORY: touches.filter((t) => t.source === TradeSource.BROKER_HISTORY).length,
     },
     parCas,
+    parMotifFige,
     connexionsAReimporter: aReimporter.size,
     recalcul,
   };
@@ -340,7 +382,9 @@ async function rattacher(prisma: PrismaClient, apply: boolean, fichier: string, 
     noter(jours, row);
     if (!apply) continue;
     const pnl = brut(row);
-    await prisma.trade.create({ data: { ...row, pnl, importHash: await empreinteLibre(prisma, row, pnl) } as Prisma.TradeUncheckedCreateInput });
+    // Jamais relu chez Tradovate : même statut qu'un FIGE (P&L corrigé, sens et heure non vérifiés).
+    const tags = row.tags.includes(TAG_SENS_NON_VERIFIE) ? row.tags : [...row.tags, TAG_SENS_NON_VERIFIE];
+    await prisma.trade.create({ data: { ...row, pnl, tags, importHash: await empreinteLibre(prisma, row, pnl) } as Prisma.TradeUncheckedCreateInput });
   }
   const recalcul = await recalculer(prisma, apply, sauvegarde, comptes, sessions, jours);
   return { ...bilan, recalcul };
