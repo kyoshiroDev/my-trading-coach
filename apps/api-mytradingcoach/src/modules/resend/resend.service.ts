@@ -435,7 +435,10 @@ export class ResendService {
           queued ? { idempotencyKey: queued.idempotencyKey } : undefined,
         )
         // Le SDK renvoie d'ordinaire l'erreur ; une exception (réseau) est traitée comme passagère.
-        .catch((err: unknown) => ({ data: null, error: { name: 'application_error', message: String(err) } }));
+        .catch((err: unknown) => ({
+          data: null,
+          error: { name: 'application_error', message: String(err), statusCode: null },
+        }));
 
       if (!error) {
         this.logger.log(`[RESEND OK] "${params.subject}" → ${to} (id: ${data?.id})`);
@@ -457,11 +460,12 @@ export class ResendService {
       // Un échec d'envoi était silencieux (logs seulement). Sentry, regroupé par type d'erreur :
       // un quota dépassé = une seule issue, pas une par e-mail. Jamais l'objet ni le destinataire :
       // l'objet peut contenir un P&L ou un nom d'ambassadeur (il reste dans le log ci-dessus).
+      // Ni le message d'erreur (#746) : texte libre de Resend, son contenu n'est pas maîtrisé.
       Sentry.captureMessage(`Resend : ${error.name}`, {
         level: QUOTA_ERRORS.has(error.name) ? 'fatal' : 'error',
         fingerprint: ['resend-send-failed', error.name],
         tags: { resend_error: error.name },
-        extra: { message: error.message, attempts: attempt + 1, queued: !!queued },
+        extra: { name: error.name, statusCode: error.statusCode, attempts: attempt + 1, queued: !!queued },
       });
       return;
     }
