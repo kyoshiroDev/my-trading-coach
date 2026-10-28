@@ -181,10 +181,13 @@ export class VpsService implements OnModuleDestroy {
     if (!first) return;
     const detail = error instanceof Error ? error.message : String(error);
     this.logger.warn(`${server.label} injoignable en SSH : ${reason} (${detail})`);
+    // Sentry : la raison classée, le nom et le code de l'erreur, jamais son message (#746), qui
+    // peut contenir l'adresse et le port du serveur ; le détail reste dans le log ci-dessus.
+    const err = (error ?? {}) as { name?: string; code?: string; level?: string };
     Sentry.captureMessage(`VPS injoignable en SSH : ${server.label}`, {
       level: 'warning',
       tags: { vps: server.id },
-      extra: { reason, detail },
+      extra: { reason, name: err.name ?? null, code: err.code ?? err.level ?? null },
       fingerprint: ['vps-unreachable', server.id],
     });
   }

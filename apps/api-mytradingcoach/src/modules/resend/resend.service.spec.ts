@@ -194,7 +194,22 @@ describe('ResendService', () => {
       expect(sent).not.toContain(params.to);
       expect(vi.mocked(Sentry.captureMessage).mock.calls[0][1]).toMatchObject({
         tags: { resend_error: 'rate_limit_exceeded' },
-        extra: { message: 'rate_limit_exceeded', attempts: 1, queued: true },
+        extra: { name: 'rate_limit_exceeded', statusCode: 429, attempts: 1, queued: true },
+      });
+    });
+
+    it('abandon signalé à Sentry : nom et code de l’erreur, jamais son message (#746)', async () => {
+      const message = 'The address refus@exemple.invalid is on the suppression list';
+      mockSend.mockResolvedValue({ data: null, error: { name: 'validation_error', message, statusCode: 422 } });
+
+      await service.deliver(params, { lastAttempt: true, idempotencyKey: 'k' });
+
+      expect(JSON.stringify(vi.mocked(Sentry.captureMessage).mock.calls)).not.toContain('refus@exemple.invalid');
+      expect((vi.mocked(Sentry.captureMessage).mock.calls[0][1] as { extra?: unknown }).extra).toEqual({
+        name: 'validation_error',
+        statusCode: 422,
+        attempts: 1,
+        queued: true,
       });
     });
 
