@@ -692,7 +692,9 @@ canActivate(ctx: ExecutionContext): boolean {
   rattrapage du direct) et `TradovateHistoryService.importHistory` : compte gratuit (ni Premium, ni
   essai, ni rôle, ni démo) dont le compte n'est pas le compte gardé → ajouté à l'ensemble Redis
   `free-limit-sync:<jour de trading>` (8 j) et une ligne de journal sans identifiant, une fois par
-  compte et par jour ; rien n'est bloqué, une erreur ne bloque jamais. Le bilan du cron de fond (15 min)
+  compte et par jour ; rien n'est bloqué. Une erreur (base, Redis) ne bloque jamais, et l'évaluation
+  rend la main en 1 s au plus (`OBSERVE_TIMEOUT_MS`, journal « TimeoutError ») : le client Redis n'a pas
+  de `commandTimeout`, un Redis muet bloquerait sinon la synchro qui attend `observe`. Le bilan du cron de fond (15 min)
   ajoute « N compte(s) au-delà de la limite gratuite aujourd'hui (journal seul) ». Pour ACTIVER l'arrêt,
   il faudra aussi filtrer `TradovateLiveService.eligible` (WebSocket) et le relevé de solde.
 - Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
