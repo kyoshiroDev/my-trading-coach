@@ -1362,7 +1362,10 @@ sont en direct.
   traite donc un `error` avant toute trame comme une fermeture : socket abandonnée, puis
   `onHandshakeRefused` → `TradovateLiveService.forgetHosts` remet `apiHostsAt` à null AVANT la
   reconnexion, qui relit ainsi `apiHosts` sans attendre le TTL de 30 min. Un `error` après ouverture
-  ne fait rien (le `close` qui suit relance). Verrouillé par `tradovate-live.connection.spec.ts` et
+  ne fait rien (le `close` qui suit relance). **Une seule invalidation par série d'échecs**
+  (`hostsForgotten`, remis à false par une autorisation 200) : Node ne donne pas le statut, un
+  refus réseau / 401 / 503 ressemble à un 421, donc refus persistant = 1 `renewAccessToken` et
+  1 écriture par compte, puis backoff seul (1 s → 60 s) ; N comptes = N appels d'auth par série. Verrouillé par `tradovate-live.connection.spec.ts` et
   `tradovate-live.service.spec.ts` (« hôtes en cache »).
 - **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
   appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application

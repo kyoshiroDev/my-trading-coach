@@ -179,6 +179,31 @@ describe('Connexion WebSocket Tradovate', () => {
     expect(order).toEqual(['jeton', 'hôtes invalidés', 'jeton']);
   });
 
+  it('refus répétés (réseau, 401, 503 : statut invisible) → backoff croissant, hôtes invalidés UNE fois par série', async () => {
+    const onHandshakeRefused = vi.fn(async () => undefined);
+    const { conn, sockets, last, authorize } = setup({ onHandshakeRefused });
+    const refuser = () => { last().readyState = 0; last().onerror?.({}); };
+    conn.start();
+    await vi.advanceTimersByTimeAsync(0);
+    // Écarts attendus entre tentatives : 1 s, 2 s, 4 s, 8 s, 16 s (backoff existant).
+    for (const [i, delai] of [1000, 2000, 4000, 8000, 16_000].entries()) {
+      refuser();
+      await vi.advanceTimersByTimeAsync(delai - 1);
+      expect(sockets).toHaveLength(i + 1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(sockets).toHaveLength(i + 2);
+    }
+    expect(onHandshakeRefused).toHaveBeenCalledTimes(1);
+    // Autorisation réussie = fin de série : un nouveau refus relit les hôtes une fois de plus.
+    authorize();
+    last().drop();
+    await vi.advanceTimersByTimeAsync(1000); // compteur remis à zéro : 1 s
+    expect(sockets).toHaveLength(7);
+    refuser();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onHandshakeRefused).toHaveBeenCalledTimes(2);
+  });
+
   it('erreur APRÈS ouverture → rien d’invalidé, la reconnexion part du close', async () => {
     const onHandshakeRefused = vi.fn(async () => undefined);
     const { conn, sockets, authorize, last } = setup({ onHandshakeRefused });

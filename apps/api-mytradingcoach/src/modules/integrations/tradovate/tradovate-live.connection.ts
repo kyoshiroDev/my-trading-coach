@@ -81,6 +81,8 @@ export class TradovateLiveConnection {
   private stopped = true;
   private authorized = false;
   private quotaReached = false;
+  /** Hôtes déjà invalidés pendant cette série d'échecs (remis à false par une autorisation). */
+  private hostsForgotten = false;
 
   constructor(private readonly opts: LiveConnectionOptions) {}
 
@@ -168,6 +170,7 @@ export class TradovateLiveConnection {
         this.authorized = true;
         this.attempt = 0;
         this.quotaReached = false;
+        this.hostsForgotten = false;
         this.startHeartbeat();
         this.send(syncRequestMessage(SYNC_REQUEST_ID, this.opts.externalAccountId));
       } else {
@@ -224,8 +227,16 @@ export class TradovateLiveConnection {
     } catch {
       /* déjà fermée */
     }
+    // UNE relecture par série d'échecs : si le refus persiste (même hôte relu, réseau, 503…),
+    // le backoff seul s'applique, sans appel d'auth ni écriture à chaque tentative.
+    if (this.hostsForgotten || !this.opts.onHandshakeRefused) {
+      this.scheduleReconnect();
+      return;
+    }
+    this.hostsForgotten = true;
     this.opts.logger?.warn('Tradovate WS : connexion refusée avant ouverture, hôtes à relire');
-    void (this.opts.onHandshakeRefused?.() ?? Promise.resolve())
+    void this.opts
+      .onHandshakeRefused()
       .catch(() => undefined)
       .finally(() => this.scheduleReconnect());
   }
