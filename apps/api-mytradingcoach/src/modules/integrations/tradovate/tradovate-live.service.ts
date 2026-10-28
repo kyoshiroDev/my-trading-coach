@@ -364,6 +364,7 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
         },
         onOrder: (e) => this.onOrder(userId, c, u, e),
         onFatal: () => this.emitter(userId, 'tradovate:status', { accountId: c.accountId, status: 'NEEDS_RECONNECT' }),
+        onHandshakeRefused: () => this.forgetHosts(c.id),
         socketFactory: this.socketFactory,
         logger: this.logger,
       });
@@ -451,6 +452,19 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
         void this.syncAndNotify(userId, accountId, 'live');
       }, LIVE_EVENT_DEBOUNCE_MS),
     );
+  }
+
+  /**
+   * WebSocket refusé avant ouverture (`421` d'un hôte périmé, encore frais pour le TTL de 30 min) :
+   * `apiHostsAt` remis à null, le prochain `tokenFor` relit les hôtes avant de rouvrir.
+   */
+  private async forgetHosts(connectionId: string): Promise<void> {
+    this.hosts.delete(connectionId);
+    try {
+      await this.prisma.brokerConnection.updateMany({ where: { id: connectionId }, data: { apiHostsAt: null } });
+    } catch (err) {
+      this.logger.warn(`Hôtes Tradovate non invalidés (connexion ${connectionId}) : ${(err as Error).message}`);
+    }
   }
 
   /**

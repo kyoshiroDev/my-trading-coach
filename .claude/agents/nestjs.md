@@ -687,7 +687,16 @@ canActivate(ctx: ExecutionContext): boolean {
   `overFreeLimit` par compte (ACTIVE au-delà du quota gratuit, jamais en Premium) et
   `POST /accounts/:id/keep` enregistre le compte gardé (`User.keptAccountId`, ACTIVE seulement, sinon
   400 ; 404 si pas à l'utilisateur). Défaut : le plus ancien ACTIVE (`accounts/kept-account.ts`).
-  L'arrêt de la synchro des comptes en trop arrive en B0 (journal seul d'abord).
+  Synchro des comptes en trop (B0) : **journal seul** pour l'instant. `FreeLimitSyncService.observe`
+  (module Tradovate) est appelé par `TradovateSyncService.sync` (bouton, retour OAuth, cron de fond,
+  rattrapage du direct) et `TradovateHistoryService.importHistory` : compte gratuit (ni Premium, ni
+  essai, ni rôle, ni démo) dont le compte n'est pas le compte gardé → ajouté à l'ensemble Redis
+  `free-limit-sync:<jour de trading>` (8 j) et une ligne de journal sans identifiant, une fois par
+  compte et par jour ; rien n'est bloqué. Une erreur (base, Redis) ne bloque jamais, et l'évaluation
+  rend la main en 1 s au plus (`OBSERVE_TIMEOUT_MS`, journal « TimeoutError ») : le client Redis n'a pas
+  de `commandTimeout`, un Redis muet bloquerait sinon la synchro qui attend `observe`. Le bilan du cron de fond (15 min)
+  ajoute « N compte(s) au-delà de la limite gratuite aujourd'hui (journal seul) ». Pour ACTIVER l'arrêt,
+  il faudra aussi filtrer `TradovateLiveService.eligible` (WebSocket) et le relevé de solde.
 - Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
   par Greg seulement.
 - **Réservation fondateur (B1)** : `founder-offer/founder-deferred.ts` (`founderFirstChargeAt`, 48 h + 1 h
@@ -1356,6 +1365,19 @@ sont en direct.
   (pas `conn.apiHosts` en mémoire, possiblement périmé). Le WS relit son URL à chaque reconnexion.
   Repli : constantes historiques (`FALLBACK_HOSTS`) ; filet REST : `fetchFollowingRedirect` suit
   une 307/308 https en gardant `Authorization`. WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`).
+  Connexion OAuth sur hôte demo dédié verrouillée de bout en bout (vrai client, `fetch` simulé)
+  par `tradovate-oauth-hosts.spec.ts` : `renewAccessToken` avant `/account/list`, liste sur l'hôte
+  dédié, hôte dédié et jeton renouvelé enregistrés.
+- **WS refusé avant ouverture (`421`, correctif du 2026-10-28)** : sur Node 22, une poignée de main
+  refusée émet `error` **sans `close`** (readyState bloqué à CONNECTING, mesuré). `TradovateLiveConnection`
+  traite donc un `error` avant toute trame comme une fermeture : socket abandonnée, puis
+  `onHandshakeRefused` → `TradovateLiveService.forgetHosts` remet `apiHostsAt` à null AVANT la
+  reconnexion, qui relit ainsi `apiHosts` sans attendre le TTL de 30 min. Un `error` après ouverture
+  ne fait rien (le `close` qui suit relance). **Une seule invalidation par série d'échecs**
+  (`hostsForgotten`, remis à false par une autorisation 200) : Node ne donne pas le statut, un
+  refus réseau / 401 / 503 ressemble à un 421, donc refus persistant = 1 `renewAccessToken` et
+  1 écriture par compte, puis backoff seul (1 s → 60 s) ; N comptes = N appels d'auth par série. Verrouillé par `tradovate-live.connection.spec.ts` et
+  `tradovate-live.service.spec.ts` (« hôtes en cache »).
 - **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
   appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
   documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à

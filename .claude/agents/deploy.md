@@ -484,18 +484,23 @@ STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_t
 # Absente → l'API retombe sur la page Stripe hébergée (avertissement au boot en prod).
 # Apple Pay sur la page de l'app : vérifier le domaine app.mytradingcoach.app dans Stripe
 # (Paramètres → Moyens de paiement → Domaines). Link et Klarna doivent être activés dans Stripe.
-# Webhooks Stripe (10 événements, version 2026-03-25.dahlia, état au 2026-10-08) :
+# Webhooks Stripe (version 2026-03-25.dahlia, état relevé le 2026-10-28) :
 #   prod  → compte live, destination api_prod (https://api.mytradingcoach.app/api/billing/webhook)
 #   dev   → compte de test, we_1UOOBL3gvVCzVhyJP7gXcDZ4 (https://dev.api…) → STRIPE_WEBHOOK_SECRET de .env.dev
 #   beta  → compte de test, we_1UOOBM3gvVCzVhyJNT0ODsMl (https://beta.api…) → STRIPE_WEBHOOK_SECRET de .env.beta
 #   Événements : charge.refunded, checkout.session.completed, checkout.session.expired, customer.deleted,
 #   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded,
-#   invoice.payment_action_required (#769, B1 : 3D Secure d'un prélèvement de fin d'essai, À AJOUTER aux
-#   trois destinations au déploiement de la PR B).
-#   Récupération des paiements (live) : après les relances, l'abonnement doit être ANNULÉ (réglage
-#   recommandé) ; « marquer comme impayé » est aussi géré (place fondateur réservée rendue au statut
-#   unpaid). E-mail Stripe de confirmation 3D Secure : à désactiver (non vérifié au 27/10), l'API envoie
-#   le sien (#769).
+#   invoice.upcoming (live depuis toujours, dev et beta depuis le 28/10), invoice.payment_action_required
+#   (#769, B1 : 3D Secure ; dev et beta depuis le 28/10 ; live à ajouter APRÈS le déploiement de la PR B
+#   en prod, jamais avant). Live : 11 événements au 28/10, dev et beta : 12.
+#   Récupération des paiements (live, relevé le 28/10) : Smart Retries 8 fois en 2 semaines, puis
+#   abonnement ANNULÉ ; paiement à confirmer (3D Secure) non finalisé sous 15 jours : abonnement annulé.
+#   « Marquer comme impayé » est aussi géré (place fondateur réservée rendue au statut unpaid).
+#   E-mails clients de Stripe Billing (dont le lien de confirmation 3D Secure) : tous DÉSACTIVÉS en
+#   live au 28/10, à laisser ainsi : l'API envoie les siens (#769). Moyens de paiement live : carte,
+#   Apple Pay, Google Pay, Link, Revolut Pay, Klarna. Réservation fondateur reportée testée en local
+#   avec Klarna (28/10) : abonnement en essai, facture à 0 €, place prise ; Link ouvre une fenêtre
+#   séparée (non testé de bout en bout).
 #   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
 # Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...

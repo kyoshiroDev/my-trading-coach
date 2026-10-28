@@ -482,6 +482,14 @@ Deux modes via `E2E_STRIPE_MODE` : `webhook` (défaut, déterministe) et `ui` (v
 Stripe hébergée, exige `stripe listen`). Le test skippe avec la raison si l'infra manque,
 et refuse de tourner sur une clé qui n'est pas `sk_test_`.
 
+**Retour de Stripe sur un banc local : même hôte que l'app.** Les URL de retour du Checkout
+(`return_url`, `success_url`, portail) partent de `FRONTEND_URL`, qui vaut `http://localhost:4200`
+par défaut. Une app servie sur `127.0.0.1:4200` est une AUTRE origine : au retour de Stripe, le
+navigateur arrive sur `localhost` sans la session (stockage propre à l'origine) et le navigateur
+peut proposer l'autoremplissage du formulaire de connexion. Vu au test Klarna du 28/10 (#769) :
+servir l'app et régler `FRONTEND_URL` sur le même hôte, ou vérifier la fin du parcours par les
+journaux et la base. Sans effet en dev, beta et prod (`FRONTEND_URL` = l'URL publique de l'app).
+
 ### Pattern d'auth E2E pour BETA_TESTER
 
 Mock `/api/auth/me` AVANT `loginUser()` pour retourner `role: 'BETA_TESTER'`.

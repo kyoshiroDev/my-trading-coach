@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { Logger } from '@nestjs/common';
 import {
   BACKGROUND_LOCK_KEY,
   BACKGROUND_USER_CONCURRENCY,
@@ -280,5 +281,24 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
       expect(peak).toBe(BACKGROUND_USER_CONCURRENCY);
       expect(sameUserOverlap).toBe(false);
     });
+  });
+});
+
+describe('Tradovate — fond : comptes au-delà de la limite gratuite (#769, B0, journal seul)', () => {
+  it('le bilan du passage donne le décompte du jour, sans identifiant', async () => {
+    const { prisma, connections, sync, history, live, redis, alerts } = setup([{ id: 'c1', userId: 'u1', accountId: 'a1' }]);
+    const freeLimit = { countToday: vi.fn(async () => 3) };
+    const cron = new TradovateBackgroundRefreshCron(
+      prisma as never, connections as never, sync as never, history as never, live as never, redis as never, alerts as never,
+      freeLimit as never,
+    );
+    const logs: string[] = [];
+    const spy = vi.spyOn(Logger.prototype, 'log').mockImplementation((m: unknown) => void logs.push(String(m)));
+    await cron.refreshStale(new Date('2026-09-26T10:37:00Z'));
+    spy.mockRestore();
+    const bilan = logs.find((l) => l.startsWith('Tradovate (fond'));
+    expect(bilan).toContain("3 compte(s) au-delà de la limite gratuite aujourd'hui (journal seul)");
+    expect(bilan).not.toMatch(/u1|a1|c1/);
+    expect(sync.sync).toHaveBeenCalledTimes(1); // journal seul : la synchro a lieu
   });
 });

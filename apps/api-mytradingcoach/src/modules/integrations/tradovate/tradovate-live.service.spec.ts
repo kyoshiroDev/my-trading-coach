@@ -85,6 +85,11 @@ function setup(opts: { conns?: ReturnType<typeof conn>[]; redis?: ReturnType<typ
       findMany: vi.fn(async () => conns),
       findUnique: vi.fn(async ({ where }: { where: { id?: string; accountId_provider?: { accountId: string } } }) =>
         conns.find((c) => (where.id ? c.id === where.id : c.accountId === where.accountId_provider?.accountId)) ?? null),
+      updateMany: vi.fn(async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+        const found = conns.filter((c) => c.id === where.id);
+        found.forEach((c) => Object.assign(c, data));
+        return { count: found.length };
+      }),
     },
   };
   const connections = {
@@ -303,6 +308,87 @@ describe('Tradovate live — événements → synchro existante', () => {
     expect(connections.tryLock).toHaveBeenCalledWith('bc-1');
     expect(connections.unlock).toHaveBeenCalledWith('bc-1');
     await service.onModuleDestroy();
+  });
+});
+
+describe('Tradovate live — WebSocket refusé (421) avec des hôtes en cache', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('apiHostsAt remis à null → la reconnexion relit les hôtes et part sur l’hôte dédié', async () => {
+    const ANCIEN = { live: 'live.tradovateapi.com', demo: 'demo.tradovateapi.com' };
+    const DEDIE = { live: 'live.tradovateapi.com', demo: 'apex-demo.tradovateapi.com' };
+    // Hôtes lus il y a 5 min : frais pour le TTL de 30 min, mais NinjaTrader a basculé depuis.
+    const c = conn({ lastSyncAt: new Date(), apiHosts: ANCIEN, apiHostsAt: new Date(Date.now() - 5 * 60_000) });
+    const { service, sockets, prisma, connections } = setup({ conns: [c] });
+    // Comme TradovateTokenManager : hôtes en cache tant que `apiHostsAt` est frais, relus sinon.
+    connections.getSession.mockImplementation((async (x: { apiHostsAt: Date | null }) => ({
+      token: 'AT-1',
+      apiHosts: x.apiHostsAt ? ANCIEN : DEDIE,
+    })) as never);
+    await service.attach('u1', 'tab-1');
+    await settle();
+    expect(sockets[0].url).toBe('wss://demo.tradovateapi.com/v1/websocket');
+
+    sockets[0].readyState = 0;
+    sockets[0].onerror?.({}); // 421 : error sans close (Node 22)
+    await settle();
+    expect(prisma.brokerConnection.updateMany).toHaveBeenCalledWith({ where: { id: 'bc-1' }, data: { apiHostsAt: null } });
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(sockets).toHaveLength(2);
+    expect(sockets[1].url).toBe('wss://apex-demo.tradovateapi.com/v1/websocket');
+    await service.onModuleDestroy();
+  });
+
+  /**
+   * Refus persistant (421 malgré la relecture, ou panne réseau : Node ne donne pas le statut) sur
+   * N comptes. `getSession` imite TradovateTokenManager : `apiHostsAt` null → UNE relecture
+   * (`renewAccessToken`, appel d'auth Tradovate) puis horodatage ; hôtes frais → aucun appel.
+   */
+  async function refusPersistant(n: number) {
+    const MEME = { live: 'live.tradovateapi.com', demo: 'demo.tradovateapi.com' };
+    const conns = Array.from({ length: n }, (_, i) =>
+      conn({ id: `bc-${i + 1}`, accountId: `acc-${i + 1}`, lastSyncAt: new Date(), apiHosts: MEME, apiHostsAt: new Date() }));
+    const ctx = setup({ conns });
+    let relectures = 0;
+    ctx.connections.getSession.mockImplementation((async (x: { apiHostsAt: Date | null }) => {
+      if (!x.apiHostsAt) {
+        relectures++;
+        x.apiHostsAt = new Date(); // relu : même hôte renvoyé
+      }
+      return { token: 'AT-1', apiHosts: MEME };
+    }) as never);
+    await ctx.service.attach('u1', 'tab-1');
+    await settle();
+    // Chaque socket ouverte est refusée aussitôt, pendant une minute.
+    const refusees = new Set<LiveSocket>();
+    for (let t = 0; t < 60_000; t += 100) {
+      for (const s of ctx.sockets) {
+        if (refusees.has(s)) continue;
+        refusees.add(s);
+        s.readyState = 0;
+        s.onerror?.({});
+      }
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    await ctx.service.onModuleDestroy();
+    return { ...ctx, relectures: () => relectures };
+  }
+
+  it('421 qui persiste (même hôte relu) : UNE relecture et UNE écriture par compte, puis backoff seul', async () => {
+    const { relectures, prisma, sockets } = await refusPersistant(1);
+    expect(relectures()).toBe(1);
+    expect(prisma.brokerConnection.updateMany).toHaveBeenCalledTimes(1);
+    // Backoff conservé : tentatives à 0, 1, 3, 7, 15, 31 s → 6 sockets sur la minute.
+    expect(sockets).toHaveLength(6);
+  });
+
+  it('N comptes refusés en même temps : N appels d’auth sur la minute (un par compte), pas plus', async () => {
+    const { relectures, prisma, sockets } = await refusPersistant(5);
+    expect(relectures()).toBe(5);
+    expect(prisma.brokerConnection.updateMany).toHaveBeenCalledTimes(5);
+    expect(sockets).toHaveLength(30);
   });
 });
 

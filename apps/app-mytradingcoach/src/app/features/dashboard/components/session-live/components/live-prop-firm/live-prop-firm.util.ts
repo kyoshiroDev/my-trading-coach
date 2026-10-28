@@ -1,5 +1,6 @@
 import type { AccountRuleMetrics, TradingAccount } from '@app/core/api/accounts.api';
 import type { TradovateConnection } from '@app/core/api/tradovate.api';
+import { ALERT_CRITICAL_PCT, ALERT_LEVEL_RANK, ALERT_WARNING_PCT, alertLevel } from '@mtc/shared';
 
 /**
  * Le suivi prop firm remplace « Trade rapide » seulement quand ses trades arrivent seuls :
@@ -32,6 +33,22 @@ export function drawdownTone(gauge: { pct: number; breached: boolean } | null): 
   if (gauge.pct <= 0.5) return 'yellow';
   return 'green';
 }
+
+/**
+ * Encart du gratuit (#769, B4) : seuil d'alerte Premium franchi par la marge avant le plancher,
+ * avec les MÊMES seuils que les alertes Premium (25 % puis 10 %, le dépassement compte comme 10 %).
+ * `rank` 1 ou 2 (ordre des seuils), `pct` le seuil en %. `null` tant qu'aucun seuil n'est franchi.
+ */
+export function missedAlert(gauge: { pct: number; breached: boolean } | null): { rank: 1 | 2; pct: number } | null {
+  const level = gauge ? alertLevel(gauge.pct, gauge.breached) : null;
+  if (!level || ALERT_LEVEL_RANK[level] > ALERT_LEVEL_RANK.breached) return null;
+  return level === 'warning'
+    ? { rank: 1, pct: Math.round(ALERT_WARNING_PCT * 100) }
+    : { rank: 2, pct: Math.round(ALERT_CRITICAL_PCT * 100) };
+}
+
+/** Seuil (en %) d'un rang de l'encart : 1 → 25, 2 → 10. */
+export const missedAlertPct = (rank: number): number => Math.round((rank >= 2 ? ALERT_CRITICAL_PCT : ALERT_WARNING_PCT) * 100);
 
 /**
  * Avancement vers l'objectif (évaluation) ou le prochain payout (funded), en ratio 0 à 1.
