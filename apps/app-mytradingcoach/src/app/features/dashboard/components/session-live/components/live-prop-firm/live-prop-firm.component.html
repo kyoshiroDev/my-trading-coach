@@ -138,6 +138,17 @@
       }
     }
 
+    <!-- Gratuit : le moment où l'alerte Premium aurait servi (#769, B4), une fois par seuil et par séance -->
+    @if (missedBanner(); as pct) {
+      <div class="pf-missed" role="status" data-testid="live-prop-firm-missed-alert">
+        <p class="pf-note">
+          Avec Premium, tu aurais été alerté à {{ pct }}&nbsp;% de ta marge avant le plancher.
+          <button type="button" class="pf-link pf-missed-cta" (click)="showPlanModal.set(true)">Voir Premium</button>
+        </p>
+        <button type="button" class="pf-missed-close" aria-label="Fermer" data-testid="live-prop-firm-missed-close" (click)="closeMissed()">×</button>
+      </div>
+    }
+
     <!-- Alertes Premium : notification système (l'utilisateur regarde sa plateforme) -->
     @if (userStore.isPremium() && (drawdown() || dailyLoss())) {
       @switch (alerts.permission()) {

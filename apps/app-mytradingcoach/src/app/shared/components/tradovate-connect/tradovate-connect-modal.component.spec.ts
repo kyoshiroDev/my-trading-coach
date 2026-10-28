@@ -45,7 +45,7 @@ describe('Écran de réassurance Tradovate', () => {
   it('affiche le compte cible, les 3 étapes et l’encadré lecture seule AVANT toute redirection', () => {
     const { el, q, navigate } = mount();
     expect(el.textContent).toContain('Connecter ton compte');
-    expect(el.textContent).toContain('Pour le compte : Apex 50k · Éval');
+    expect(el.textContent).toContain('Pour le compte : Apex 50k · Éval');
     expect(el.querySelectorAll('.tvc-steps li')).toHaveLength(3);
     const note = q('tradovate-connect-security')!.textContent!;
     expect(note).toContain('ne voit jamais ton mot de passe');
@@ -54,6 +54,17 @@ describe('Écran de réassurance Tradovate', () => {
     // Rien n'est parti tant que l'utilisateur n'a pas confirmé.
     expect(store.authorizeUrl).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('étape 2 : identifiants de la plateforme ou de la prop firm, une connexion par firm', () => {
+    const { q } = mount();
+    const step = q('tradovate-connect-step-login')!.textContent!;
+    expect(step).toContain('identifiants de ta plateforme (NinjaTrader ou Tradovate)');
+    expect(step).toContain('ceux fournis par ta prop firm');
+    expect(step).toContain('lecture seule');
+    // Espace insécable avant « : », jamais de tiret cadratin.
+    expect(step).toContain('Une prop firm = une connexion : répète l\'opération pour chaque firm.');
+    expect(step).not.toContain('—');
   });
 
   it('« Connecter avec Tradovate » : demande l’URL pour CE compte et CETTE origine, puis redirige', () => {

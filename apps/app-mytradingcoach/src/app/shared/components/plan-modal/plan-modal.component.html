@@ -223,7 +223,9 @@
     }
     @if (choice()) {
     <p class="plan-modal-hint">
-      @if (choice() === 'founder') {
+      @if (choice() === 'founder' && founderChargeDate(); as d) {
+        {{ ctaPriceLabel() }} · à partir du {{ d }} · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours ensuite
+      } @else if (choice() === 'founder') {
         {{ ctaPriceLabel() }} · facturé aujourd'hui · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours
       } @else if (trialFor(choice())) {
         Puis {{ ctaPriceLabel() }} · carte requise · annulable en un clic

@@ -49,7 +49,7 @@
 
       <div class="lv-account">
         @if (propFirmAccountId(); as accountId) {
-          <mtc-live-prop-firm [accountId]="accountId" [realized]="totals().realized" />
+          <mtc-live-prop-firm [accountId]="accountId" [realized]="totals().realized" [sessionId]="session()?.id ?? null" />
         } @else {
           <!-- Pas de compte prop firm synchronisé : le P&L du jour et un lien pour en lier un -->
           <section class="lv-summary" data-testid="live-account-summary" aria-label="Suivi du compte">

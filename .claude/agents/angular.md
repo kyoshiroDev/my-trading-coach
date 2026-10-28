@@ -1278,6 +1278,12 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
 
 ## Essai Premium d'inscription (#769, 2026-10-26)
 
+- **Encart « tu aurais été alerté » (B4)** : `mtc-live-prop-firm` (session live), entrée `sessionId`
+  passée par `session-live` ; `missedAlert()` / `missedAlertPct()` (`live-prop-firm.util.ts`) sur les
+  seuils partagés `alertLevel` de `@mtc/shared`. État par séance en localStorage
+  `mtc_missed_alert:<sessionId>` `{ reached, closed }` (rangs 1 = 25 %, 2 = 10 %) : l'encart revient
+  seulement pour un seuil plus profond que le dernier fermé. Gratuit, plan relié, hors démo.
+
 - **`UserStore`** : `signupTrialDaysLeft()` (jours restants arrondis au supérieur, 1 le dernier jour ;
   `null` hors essai d'inscription, démo, abonné Stripe, Premium offert par l'admin),
   `signupTrialEnded()` (essai d'inscription fini, `trialSource` encore `SIGNUP`, aucun autre accès

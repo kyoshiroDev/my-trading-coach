@@ -25,6 +25,10 @@ describe('trial_ending (J+11)', () => {
     expect(mail.html).toContain('href="https://app.test/profil?tab=params&utm_source=email&utm_medium=onboarding&utm_campaign=trial_ending"');
     expect(mail.html).toContain('U-SERVICE');
   });
+  it('mention de bas neutre, sans « aide au démarrage »', () => {
+    expect(text(mail.html)).toContain('Tu reçois cet e-mail parce que tu as un compte MyTradingCoach.');
+    expect(text(mail.html)).not.toMatch(/démarrer/);
+  });
   it('aucun ton promotionnel ni urgence : ni offre, ni prix, ni compte à rebours', () => {
     const t = text(mail.html) + ' ' + mail.subject;
     expect(t).not.toMatch(/€|offre|plan=premium|dans \d+ jours|demain|vite|dernier|profite|ne rate/i);
@@ -41,6 +45,8 @@ describe('trial_ended (fin d’essai)', () => {
     expect(buttons(mail.html)).toBe(1);
     expect(mail.html).toContain('U-SERVICE');
     expect(t).not.toMatch(/€/);
+    expect(t).toContain('Tu reçois cet e-mail parce que tu as un compte MyTradingCoach.');
+    expect(t).not.toMatch(/démarrer/);
   });
 });
 

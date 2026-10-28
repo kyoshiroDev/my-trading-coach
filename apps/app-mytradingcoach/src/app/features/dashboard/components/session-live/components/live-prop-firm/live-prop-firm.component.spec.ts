@@ -12,6 +12,7 @@ import { TradovateLiveSocketService } from '@app/core/services/tradovate-live-so
 import { PropAlertsService } from '@app/core/services/prop-alerts.service';
 import { AlertSoundService } from '@app/core/services/alert-sound.service';
 import TEMPLATE from './live-prop-firm.component.html?raw';
+import SESSION_TEMPLATE from '../../session-live.component.html?raw';
 
 /** Panneau de suivi prop firm de la session live, sur son VRAI template. */
 
@@ -50,7 +51,7 @@ const account = (m: AccountRuleMetrics): TradingAccount => ({
 
 function setup(
   m: AccountRuleMetrics,
-  opts: { demo?: boolean; premium?: boolean; permission?: string; account?: Partial<TradingAccount> } = {},
+  opts: { demo?: boolean; premium?: boolean; permission?: string; account?: Partial<TradingAccount>; sessionId?: string } = {},
 ) {
   const store = { accounts: signal([{ ...account(m), ...opts.account }]), load: vi.fn() };
   const tvApi = { refreshBalance: vi.fn(() => of({ data: {} })) };
@@ -75,6 +76,7 @@ function setup(
   const fixture = TestBed.createComponent(LivePropFirmComponent);
   // Entrées signal non alimentées en JIT (cf. angular.md) : remplacées avant le premier rendu.
   (fixture.componentInstance as unknown as { accountId: () => string }).accountId = signal('a');
+  (fixture.componentInstance as unknown as { sessionId: () => string | null }).sessionId = signal(opts.sessionId ?? null);
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const text = (id: string) => (el.querySelector(`[data-testid="${id}"]`)?.textContent ?? '').replace(/\s+/g, ' ').trim();
@@ -283,5 +285,61 @@ describe('Session live — suivi prop firm', () => {
       expect(q('live-prop-firm-daily-loss')).toBeNull();
       expect(q('live-prop-firm-premium-teaser')).toBeNull();
     });
+  });
+});
+
+describe('Session live — encart du gratuit « tu aurais été alerté » (#769, B4)', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
+  const withMargin = (pct: number, breached = false) => {
+    const m = metrics();
+    return metrics({ drawdown: { ...m.drawdown!, pct, breached } });
+  };
+  const banner = (el: HTMLElement) =>
+    (el.querySelector('[data-testid="live-prop-firm-missed-alert"]')?.textContent ?? '').replace(/\s+/g, ' ').replace(/\u00a0/g, ' ').trim();
+
+  it('la page de séance transmet l’identifiant de la séance (mémoire « une fois par séance »)', () => {
+    expect(SESSION_TEMPLATE).toContain('[sessionId]="session()?.id ?? null"');
+  });
+
+  it('marge sous 25 % : « Avec Premium, tu aurais été alerté à 25 % », sans aucune alerte envoyée', () => {
+    const { el, alerts } = setup(withMargin(0.2), { sessionId: 's1' });
+    expect(banner(el)).toContain('Avec Premium, tu aurais été alerté à 25 % de ta marge avant le plancher.');
+    expect(alerts.requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('au-dessus de 25 % : rien ; Premium ou démo : jamais', () => {
+    expect(setup(withMargin(0.6), { sessionId: 's1' }).q('live-prop-firm-missed-alert')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(setup(withMargin(0.05), { sessionId: 's1', premium: true }).q('live-prop-firm-missed-alert')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(setup(withMargin(0.05), { sessionId: 's1', demo: true }).q('live-prop-firm-missed-alert')).toBeNull();
+  });
+
+  it('une fois par seuil et par séance : fermé à 25 %, revient à 10 %, plus jamais ensuite dans la séance', () => {
+    const { el, fixture, store } = setup(withMargin(0.2), { sessionId: 's1' });
+    (el.querySelector('[data-testid="live-prop-firm-missed-close"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(banner(el)).toBe('');
+    // La marge remonte puis redescend sous 25 % : même seuil, pas de nouvel encart.
+    store.accounts.set([{ ...account(withMargin(0.4)) }]);
+    fixture.detectChanges();
+    store.accounts.set([{ ...account(withMargin(0.22)) }]);
+    fixture.detectChanges();
+    expect(banner(el)).toBe('');
+    // Nouveau seuil : 10 % (dépassement compris).
+    store.accounts.set([{ ...account(withMargin(0, true)) }]);
+    fixture.detectChanges();
+    expect(banner(el)).toContain('alerté à 10 %');
+    (el.querySelector('[data-testid="live-prop-firm-missed-close"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // Même séance rouverte (rechargement) : rien ; autre séance : l'encart revient.
+    TestBed.resetTestingModule();
+    expect(setup(withMargin(0.05), { sessionId: 's1' }).q('live-prop-firm-missed-alert')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(banner(setup(withMargin(0.05), { sessionId: 's2' }).el)).toContain('alerté à 10 %');
   });
 });
