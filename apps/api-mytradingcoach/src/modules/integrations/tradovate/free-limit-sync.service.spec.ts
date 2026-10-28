@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Logger } from '@nestjs/common';
-import { FreeLimitSyncService } from './free-limit-sync.service';
+import { FreeLimitSyncService, OBSERVE_TIMEOUT_MS } from './free-limit-sync.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 
@@ -84,6 +84,82 @@ describe('FreeLimitSyncService (#769, B0, journal seul)', () => {
     prisma.user.findUnique.mockRejectedValueOnce(new Error('connexion perdue vers u1'));
     expect(await svc.observe('u1', 'acc-recent', 'synchro', NOW)).toBe(false);
     expect(logs).toEqual(['Limite gratuite de la synchro non évaluée (Error)']);
+  });
+
+  it.each([
+    ['SADD rejeté (Redis indisponible)', 'sadd'],
+    ['EXPIRE rejeté', 'expire'],
+  ] as const)('Redis : %s, jamais bloquant', async (_l, cmd) => {
+    const { svc, client } = setup(freeUser());
+    client[cmd].mockRejectedValueOnce(new Error("Stream isn't writeable and enableOfflineQueue options is false"));
+    expect(await svc.observe('u1', 'acc-recent', 'synchro', NOW)).toBe(false);
+    expect(logs).toEqual(['Limite gratuite de la synchro non évaluée (Error)']);
+  });
+
+  describe('Redis muet (aucune réponse)', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('observe rend la main après le délai maximal, journal « TimeoutError »', async () => {
+      const { svc, client } = setup(freeUser());
+      client.sadd.mockReturnValueOnce(new Promise(() => undefined));
+      const result = svc.observe('u1', 'acc-recent', 'synchro', NOW);
+      await vi.advanceTimersByTimeAsync(OBSERVE_TIMEOUT_MS);
+      expect(await result).toBe(false);
+      expect(logs).toEqual(['Limite gratuite de la synchro non évaluée (TimeoutError)']);
+    });
+
+    it('countToday rend 0 après le délai maximal (bilan du cron jamais bloqué)', async () => {
+      const { svc, client } = setup(freeUser());
+      client.scard.mockReturnValueOnce(new Promise(() => undefined));
+      const result = svc.countToday(NOW);
+      await vi.advanceTimersByTimeAsync(OBSERVE_TIMEOUT_MS);
+      expect(await result).toBe(0);
+    });
+  });
+});
+
+/** Le VRAI service de limite, branché sur un Redis en panne (rejet ou aucune réponse). */
+function brokenRedisFreeLimit(mode: 'rejet' | 'muet') {
+  const fail = () => (mode === 'rejet' ? Promise.reject(new Error('ECONNREFUSED')) : new Promise(() => undefined));
+  const client = { sadd: vi.fn(fail), expire: vi.fn(fail), scard: vi.fn(fail) };
+  const prisma = { user: { findUnique: vi.fn().mockResolvedValue(freeUser()) } };
+  return new FreeLimitSyncService(prisma as never, { client } as never);
+}
+
+describe('Redis en panne : la synchro et l’import continuent (#769, B0)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it.each(['rejet', 'muet'] as const)('synchro, Redis %s : le verrou est quand même demandé', async (mode) => {
+    const connections = {
+      assertConfigured: vi.fn(),
+      getConnection: vi.fn().mockResolvedValue({ id: 'c1', externalAccountId: 'x', externalEnv: 'demo' }),
+      tryLock: vi.fn().mockResolvedValue(false),
+    };
+    const svc = new TradovateSyncService(
+      {} as never, {} as never, connections as never, {} as never, {} as never, {} as never, {} as never, {} as never, {} as never,
+      brokenRedisFreeLimit(mode) as never,
+    );
+    const run = expect(svc.sync('u1', 'acc-recent')).rejects.toMatchObject({ code: 'TRADOVATE_SYNC_IN_PROGRESS' });
+    await vi.advanceTimersByTimeAsync(OBSERVE_TIMEOUT_MS);
+    await run;
+    expect(connections.tryLock).toHaveBeenCalled();
+  });
+
+  it.each(['rejet', 'muet'] as const)('import d’historique, Redis %s : la session est quand même demandée', async (mode) => {
+    const connections = { getSession: vi.fn().mockRejectedValue(new Error('arrêt du test après le contrôle')) };
+    const svc = new TradovateHistoryService(
+      {} as never, {} as never, connections as never, {} as never, {} as never, {} as never, brokenRedisFreeLimit(mode) as never,
+    );
+    const conn = { id: 'c1', accountId: 'acc-recent', externalAccountId: 'x', externalEnv: 'demo' };
+    const run = expect(svc.importHistory('u1', conn as never)).rejects.toThrow('arrêt du test après le contrôle');
+    await vi.advanceTimersByTimeAsync(OBSERVE_TIMEOUT_MS);
+    await run;
+    expect(connections.getSession).toHaveBeenCalled();
   });
 });
 
