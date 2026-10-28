@@ -106,6 +106,12 @@ describe('Carte fondateur pendant le Premium offert (#769, B1)', () => {
     expect(flat).toContain("Réserve ta place maintenant, tu ne paies qu'à la fin de ton essai (le {{ d }})");
     expect(flat).toContain('Aucun prélèvement avant le {{ d }} · satisfait ou remboursé {{ PRICING.founder.refundDays }} jours ensuite');
     expect(flat).toContain("{{ founderChargeDate() ? 'Réserver ma place →' : 'Devenir fondateur →' }}");
+    // Ligne sous le bouton : jamais « facturé aujourd'hui » quand le prélèvement est reporté (vu en local le 28/10).
+    const hint = flat.slice(flat.indexOf('plan-modal-hint'));
+    const deferred = hint.indexOf("@if (choice() === 'founder' && founderChargeDate(); as d) {");
+    expect(deferred).toBeGreaterThan(-1);
+    expect(hint.slice(deferred, hint.indexOf('} @else if', deferred))).toContain('à partir du {{ d }}');
+    expect(hint.slice(deferred, hint.indexOf('} @else if', deferred))).not.toContain('facturé aujourd');
   });
 });
 
