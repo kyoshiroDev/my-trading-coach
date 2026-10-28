@@ -80,7 +80,7 @@ POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, not
 POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
                                        `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
                                        installation de l'app, place = plateforme), 204, best-effort
-GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3)
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
@@ -669,6 +669,70 @@ canActivate(ctx: ExecutionContext): boolean {
 }
 ```
 
+### Essai Premium d'inscription (#769, 2026-10-26)
+
+- Posé dans `AuthService.createAccount`, **seul** point d'entrée des inscriptions e-mail et Google :
+  `signupTrialData(now, recentlyDeleted)` (`modules/trial/signup-trial.ts`) → `trialEndsAt` et
+  `signupTrialEndsAt` à J+`PREMIUM_SIGNUP_TRIAL_DAYS` (14, `@mtc/shared`), `trialSource = SIGNUP`,
+  `trialUsed = true` (plus d'essai Stripe de 30 j ensuite, sans toucher au checkout).
+- Refusé (mais `trialUsed = true` quand même) si l'e-mail, casse ignorée, a supprimé un compte depuis
+  moins de 90 jours (`DeletedAccount.email`, non anonymisé, `ANONYMIZE_AFTER_DAYS`). Au-delà, aucune
+  trace : pas de hash d'e-mail (décision du 26/10).
+- Aucun nouveau chemin d'accès : tous les contrôles lisent déjà `trialEndsAt` (guard, débrief,
+  comptes, import, Discord, alertes). Le compte démo ne passe pas par `createAccount` (seed).
+- Premium offert par l'admin pendant l'essai : durées **additionnées**, `trialSource = ADMIN`,
+  `signupTrialEndsAt` intact. `isOfferedPremium` exclut `SIGNUP` (l'admin n'affiche pas l'essai
+  d'inscription comme un cadeau).
+- Fin : `TrialEndService` (cron ci-dessous). Comptes en trop : `GET /accounts` renvoie
+  `overFreeLimit` par compte (ACTIVE au-delà du quota gratuit, jamais en Premium) et
+  `POST /accounts/:id/keep` enregistre le compte gardé (`User.keptAccountId`, ACTIVE seulement, sinon
+  400 ; 404 si pas à l'utilisateur). Défaut : le plus ancien ACTIVE (`accounts/kept-account.ts`).
+  L'arrêt de la synchro des comptes en trop arrive en B0 (journal seul d'abord).
+- Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
+  par Greg seulement.
+- **Réservation fondateur (B1)** : `founder-offer/founder-deferred.ts` (`founderFirstChargeAt`, 48 h + 1 h
+  de marge, essai d'inscription `trialSource` SIGNUP seulement : Premium offert par l'admin = immédiat),
+  `subscription_data.trial_end` au checkout, `summary.firstChargeAt` et
+  `GET /billing/offers` → `founder.firstChargeAt` / `reservedUntilCharge`. La date est aussi dans les
+  métadonnées de la session (`firstChargeAt`, secondes) : une session ouverte n'est reprise qu'avec la
+  même date. Webhook : facture d'essai à 0 € → `claimSeat` + e-mail « place réservée » ; abonnement
+  déjà terminé (`canceled` / `incomplete_expired`, fin reçue avant la facture) → aucune place pour une
+  facture à 0 €, place prise puis `markLost` pour une facture payée ; toute facture fondateur > 0 € →
+  `markFirstPaid` (idempotent) + bienvenue fondateur (garantie = `firstPaidAt` + 14 j) ;
+  `customer.subscription.deleted` → `releaseUnpaid` (place non payée) sinon `markLost` ;
+  `customer.subscription.updated` en `unpaid` → `releaseUnpaid` (réglage Stripe « marquer comme
+  impayé ») ; `invoice.payment_action_required` (hors facture `subscription_create`, le 3D Secure s'y
+  fait dans la page de paiement) → e-mail « Confirme ton paiement » avec `hosted_invoice_url`, Premium
+  en pause (`past_due`). `invoice.payment_failed` à **0 tentative** = 3D Secure en attente (constaté en
+  mode test le 27/10 : il arrive juste avant `payment_action_required` ; un refus de carte compte 1
+  tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
+  (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
+  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
+  Premium offert par l'admin (`offerPremium`) : 409 si abonnement `active` / `trialing` (une réservation
+  est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
+  l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
+  `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
+  prélèvement).
+- **Suivi admin de l'essai (B3)** : `GET /admin/funnel` → `signupTrial` (une requête, démo et ADMIN
+  exclus, cohorte = `signupTrialEndsAt` non nul) : `inProgress` (fin à venir, pas `active`), `ended`
+  (fin dans la période), `converted` (parmi `ended`, `active` aujourd'hui), `reservations` (place ACTIVE
+  sans `firstPaidAt`), `reservationsAwaitingPayment` (`past_due` / `unpaid`), `nextChargeAt` (plus petit
+  `stripeCurrentPeriodEnd` d'une réservation en `trialing`). Affiché en bande au-dessus de l'entonnoir
+  Premium (page Acquisition). Test SQL : `admin/signup-trial-funnel.int-spec.ts`.
+- **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
+  `service` (sans consentement, désinscription « service », même plafond), bornées par
+  `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
+  `trial_ending` : fin dans 3 jours au plus, pas prolongé par l'admin, ni abonné ni réservé ;
+  `trial_ended` : du lendemain de la fin (15 h après) à J+6, plan FREE. Écart ≥ 4 jours avec J+11 au
+  passage de 10 h, donc plafond respecté. J+11 (décision du 27/10) : service neutre, objet avec la date
+  de fin (pas de compte à rebours), ce qui change en gratuit, bouton « Voir mon abonnement »
+  (`/profil?tab=params`), sans offre ni urgence ; contexte `loadTrialEnd` (date seule). Évaluateur de
+  test : `gt` / `lt`.
+- E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
+  paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
+  (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
+  plus d'essai promis (`NO_TRIAL_LINE`).
+
 ---
 
 ## AiService — logging automatique obligatoire
@@ -705,6 +769,7 @@ une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` s
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
+| `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
@@ -2141,6 +2206,8 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
   (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
   vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  **Essai Premium en cours exclu** (#769, `notInTrial(now)` : `trialEndsAt` nul ou passé) de
+  `first_week_recap`, `founder_followup` et `premium_upsell` : le plan reste FREE pendant l'essai.
   `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
   transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
 - **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET

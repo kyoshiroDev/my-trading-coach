@@ -3,7 +3,7 @@
     @if (offerFlow()) {
       Crée ton compte
     } @else if (isPremiumFlow()) {
-      Créer ton compte Premium
+      Essaie Premium {{ trialDays }} jours
     } @else {
       Commence gratuitement
     }
@@ -16,7 +16,7 @@
         Tu choisis ton offre (fondateur ou Premium) juste après l'inscription
       }
     } @else if (isPremiumFlow()) {
-      Tu seras redirigé vers le paiement après l'inscription
+      Tout Premium dès ton inscription, sans carte bancaire
     } @else {
       Protège ton compte prop firm de tes propres erreurs
     }
@@ -24,8 +24,8 @@
 
   @if (referralCode()) {
     <div class="referral-notice">
-      🎉 Invitation de <strong>{{ referralCode() }}</strong> : 1 mois d'essai
-      Premium offert
+      🎉 Invitation de <strong>{{ referralCode() }}</strong> : {{ trialDays }} jours de
+      Premium offerts
     </div>
   }
 
@@ -178,16 +178,12 @@
     >
       @if (isLoading()) {
         <span class="spinner"></span>
-        @if (isPremiumFlow()) {
-          Création et redirection...
-        } @else {
-          Création...
-        }
+        Création...
       } @else {
         @if (offerFlow()) {
           Créer mon compte et choisir mon offre →
         } @else if (isPremiumFlow()) {
-          Créer mon compte et continuer vers le paiement →
+          Créer mon compte et essayer Premium →
         } @else {
           Créer mon compte gratuit
         }
@@ -204,15 +200,13 @@
   <p class="free-note">
     @if (offerFlow()) {
       Rien n'est prélevé avant que tu confirmes ton offre
-    } @else if (isPremiumFlow()) {
-      1 mois offert · carte requise · annulable en un clic
     } @else {
-      Gratuit · trades illimités · sans carte
+      {{ trialDays }} jours de Premium offerts · sans carte · puis gratuit, sans engagement
     }
   </p>
 
-  <!-- Parcours gratuit seulement : un lien d'offre ou Premium garde un seul chemin, vers le paiement. -->
-  @if (!offerFlow() && !isPremiumFlow()) {
+  <!-- Hors lien d'offre (fondateur, code) : un seul chemin, vers le choix de l'offre. -->
+  @if (!offerFlow()) {
     <div class="sep"><span>Pas encore sûr ?</span></div>
     <!-- Compte démo partagé, en lecture seule (même route que le bouton démo de la landing) : aucun compte créé. -->
     <a class="btn-demo" routerLink="/demo" data-testid="register-demo">

@@ -9,6 +9,8 @@ import { EMAIL_JOB_OPTIONS, EMAIL_QUEUE, RETRYABLE_EMAIL_ERRORS, RetryableEmailE
 import {
   annualRenewalReminderTemplate,
   founderWelcomeTemplate,
+  founderReservationTemplate,
+  paymentActionRequiredTemplate,
   partnerWelcomeTemplate,
   tariffAtRiskTemplate,
   dailyRecapTemplate,
@@ -105,10 +107,13 @@ export class ResendService {
   async sendWelcomeFree(params: {
     to: string;
     userName: string;
+    /** Fin de l'essai Premium d'inscription (#769), `null` sans essai. */
+    trialEndsAt?: Date | null;
   }): Promise<void> {
     const { subject, html } = welcomeFreeTemplate({
       userName: params.userName,
       appUrl: this.frontendUrl,
+      trialEndsAt: params.trialEndsAt ?? null,
     });
     await this.send({ to: params.to, subject, html });
   }
@@ -239,6 +244,24 @@ export class ResendService {
   }): Promise<void> {
     const { to, ...rest } = params;
     const { subject, html } = founderWelcomeTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendFounderReservation(params: {
+    to: string;
+    userName: string;
+    number: number;
+    priceLabel: string;
+    firstChargeAt: Date;
+  }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = founderReservationTemplate({ ...rest, appUrl: this.frontendUrl });
+    await this.send({ to, subject, html });
+  }
+
+  async sendPaymentActionRequired(params: { to: string; userName: string; invoiceUrl: string }): Promise<void> {
+    const { to, ...rest } = params;
+    const { subject, html } = paymentActionRequiredTemplate(rest);
     await this.send({ to, subject, html });
   }
 

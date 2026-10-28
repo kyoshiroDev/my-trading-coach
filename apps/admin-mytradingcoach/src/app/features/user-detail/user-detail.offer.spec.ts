@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ConfirmService } from '@mtc/front-ui';
-import { UserDetailComponent, offerBlockReason } from './user-detail.component';
+import { UserDetailComponent, offerBlockReason, offerWarning } from './user-detail.component';
 import { UserDetailData } from '../../core/api/admin.api';
 import { environment } from '@admin/environments/environment';
 
@@ -112,7 +112,54 @@ describe('Fiche admin — Premium offert', () => {
   });
 });
 
+const founder = (over: object = {}) => ({
+  number: 7, status: 'ACTIVE' as const, interval: 'month' as const, takenAt: '2026-11-02T10:00:00.000Z',
+  endedAt: null, cta: null, reserved: true, firstChargeAt: '2026-11-16T10:00:00.000Z', ...over,
+});
+const reservedData = (over: object = {}) => ({
+  ...makeData({ plan: 'PREMIUM', subscriptionStatus: 'trialing' }),
+  offer: { founder: founder(over), partner: null },
+});
+
+describe('Fiche admin — réservation fondateur en cours (#769)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); confirm.ask.mockReset(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('bouton désactivé et avertissement visible avec la date du premier prélèvement', async () => {
+    const { el, button } = await render(reservedData());
+    expect(button().disabled).toBe(true);
+    expect(el.querySelector('[data-testid="offer-warning"]')?.textContent?.replace(/\u00a0/g, ' ').trim()).toBe(
+      'Réservation fondateur en cours : premier prélèvement le 16/11/2026. Offrir du Premium ne décalerait pas ce prélèvement.',
+    );
+  });
+
+  it('offre possible : aucun avertissement', async () => {
+    const { el } = await render(makeData());
+    expect(el.querySelector('[data-testid="offer-warning"]')).toBeNull();
+  });
+});
+
+describe('offerWarning (#769)', () => {
+  it('date inconnue : même avertissement, sans date', () => {
+    expect(offerWarning(reservedData({ firstChargeAt: null }) as UserDetailData)).toBe(
+      'Réservation fondateur en cours. Offrir du Premium ne décalerait pas le premier prélèvement.',
+    );
+  });
+
+  it('place déjà payée : raison habituelle, pas de mention de réservation', () => {
+    expect(offerWarning(reservedData({ reserved: false, firstChargeAt: null }) as UserDetailData)).toBe('Abonnement Stripe en cours');
+  });
+});
+
 describe('offerBlockReason', () => {
+  it('paiement Stripe en attente (past_due, unpaid) : offre refusée avec le message', () => {
+    for (const status of ['past_due', 'unpaid']) {
+      expect(offerBlockReason(makeData({ subscriptionStatus: status }).identity)?.replace(/\u00a0/g, ' ')).toBe(
+        'Paiement Stripe en attente : régler d’abord l’abonnement',
+      );
+    }
+  });
+
   it('null pour un FREE standard, même avec un ancien abonnement résilié', () => {
     expect(offerBlockReason(makeData().identity)).toBeNull();
     expect(offerBlockReason(makeData({ subscriptionStatus: 'canceled' }).identity)).toBeNull();

@@ -1,7 +1,7 @@
 ---
 import { APP_URL, TRADERS_PUBLIC_THRESHOLD } from '../config';
 import NinjaTraderTrust from './NinjaTraderTrust.astro';
-import { FOUNDER_OFFER, PREMIUM_PRICE_EUR, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+import { FOUNDER_OFFER, PREMIUM_SIGNUP_TRIAL_DAYS, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 // Sous le seuil, on n'affiche pas le compteur : « 14 traders » est une preuve sociale qui
 // dessert plus qu'elle ne sert, et le prix vient de la lib partagée (aucune valeur en dur).
 // `founderOpen` : offre fondateur ouverte au build (src/lib/founder-build.ts).
@@ -109,7 +109,7 @@ const firmCount = PROP_FIRM_CATALOG_FILES.length;
       🔍 Tester la démo
     </a>
   </div>
-  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · Premium {PREMIUM_PRICE_EUR.monthly}€/mois, 1 mois offert avec carte · Données en France 🇫🇷</p>
+  <p class="hero-cta-sub">Gratuit, trades illimités, sans CB · {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription · Données en France 🇫🇷</p>
   {/*
     Preuve factuelle (audit 2026-10-06 : aucune preuve sociale sur la home). Jamais de
     « partenaire officiel » (clause 17, astro.md) ; le logo est dans le bloc `.hero-eco` dessous.

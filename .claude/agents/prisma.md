@@ -381,6 +381,19 @@ désinscription des e-mails d'aide à la prise en main (type `service`, sans con
 reçus. Rempli par « Ne plus recevoir ces conseils », la désinscription marketing ou la coupure du
 consentement dans le profil. Détails : nestjs.md, « Suite d'e-mails d'onboarding ».
 
+## Essai Premium d'inscription (#769, 2026-10-26)
+
+Migration `20261026120000_signup_trial` (additive, compatible N-1) : enum `TrialSource` (`SIGNUP`,
+`ADMIN`) et colonnes nullables `User.trialSource`, `signupTrialEndsAt` (fin de l'essai d'inscription,
+jamais modifiée), `trialEndHandledAt` (fin traitée par le cron) et `keptAccountId` (compte gardé actif
+en gratuit, **sans clé étrangère** : un id périmé ou non ACTIVE vaut « le plus ancien ACTIVE »).
+Rattrapage dans la migration : `trialSource = ADMIN` pour tout `trialEndsAt` existant (seul l'admin
+l'écrivait) et `trialEndHandledAt = now()` pour les fins déjà passées. Détails : nestjs.md.
+
+Migration `20261027120000_founder_first_paid` (#769, B1, additive) : `FounderSeat.firstPaidAt`
+(premier paiement réel ; null = place réservée pendant le Premium offert, pas encore payée).
+Rattrapage : `firstPaidAt = takenAt` pour les places existantes (toutes payées à la prise de place).
+
 ## Migrations — bonnes pratiques
 
 - Toujours nommer clairement : `add_stripe_customer_id`, `add_trade_tags`

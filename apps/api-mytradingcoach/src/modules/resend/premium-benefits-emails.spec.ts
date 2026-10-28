@@ -20,4 +20,10 @@ describe('e-mails Premium : avantages réels', () => {
     expect(t).not.toMatch(/import CSV/i);
     expect(t).toContain('alertes avant ta limite de perte');
   });
+
+  it('« Passe à Premium » : aucun essai promis (tout inscrit a déjà eu ses jours offerts, #769)', () => {
+    const mail = premiumTemplate({ userName: 'Alex', appUrl: 'https://app.test', unsubUrl: 'U' });
+    expect(text(mail.html)).toContain('Sans engagement, annulable en un clic.');
+    expect(`${mail.subject} ${text(mail.html)}`).not.toMatch(/mois offert|jours offerts|carte requise/i);
+  });
 });

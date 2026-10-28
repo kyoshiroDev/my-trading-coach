@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AdminFunnelData } from '@mtc/shared';
-import { funnelRows, installRows, placeLabel, placeRows } from './funnel.util';
+import { funnelRows, installRows, placeLabel, placeRows, signupTrialTiles } from './funnel.util';
 
 const data: AdminFunnelData = {
   days: 30, landingVisits: 200, signups: 10,
@@ -17,6 +17,7 @@ const data: AdminFunnelData = {
   ],
   install: [],
   current: { trialing: 0, paying: 0 },
+  signupTrial: { inProgress: 0, ended: 0, converted: 0, reservations: 0, reservationsAwaitingPayment: 0, nextChargeAt: null },
 };
 
 describe('entonnoir admin', () => {
@@ -85,5 +86,28 @@ describe('installation de l’app (admin)', () => {
   it('aucune donnée → aucune ligne', () => {
     expect(installRows(data)).toEqual([]);
     expect(installRows(null)).toEqual([]);
+  });
+});
+
+describe('essai Premium de l’inscription (#769, B3)', () => {
+  const nb = (t: string) => t.replace(/\u00a0/g, ' ');
+  it('en cours, terminés, conversions (part des terminés), réservations avec paiement en attente et prochaine date', () => {
+    const tiles = signupTrialTiles({
+      ...data,
+      signupTrial: { inProgress: 12, ended: 8, converted: 2, reservations: 3, reservationsAwaitingPayment: 1, nextChargeAt: '2026-11-15T23:30:00.000Z' },
+    });
+    expect(tiles.map((t) => [t.label, t.value, nb(t.sub)])).toEqual([
+      ['Essais en cours', 12, '14 jours offerts, sans abonnement payant'],
+      ['Essais terminés · 30 j', 8, 'fin d’essai sur la période'],
+      ['Conversions après essai', 2, '25 % des essais terminés, abonnement payant'],
+      // Date en heure de Paris : 23 h 30 UTC le 15 = le 16.
+      ['Réservations fondateur', 3, '1 paiement(s) en attente · prochain prélèvement le 16/11'],
+    ]);
+  });
+
+  it('aucun essai terminé : pas de taux ; aucune réservation : libellé neutre', () => {
+    const tiles = signupTrialTiles(data);
+    expect(tiles[2].sub).toBe('aucun essai terminé');
+    expect(tiles[3].sub).toBe('en attente du premier paiement');
   });
 });

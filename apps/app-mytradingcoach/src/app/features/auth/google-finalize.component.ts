@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { environment } from '@app/environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { PostSignupService } from '../../core/auth/post-signup.service';
@@ -29,7 +28,6 @@ export class GoogleFinalizeComponent {
   protected readonly HandIcon = Hand;
   private readonly auth = inject(AuthService);
   private readonly postSignup = inject(PostSignupService);
-  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly firstName = (this.auth.currentUser()?.name ?? '').split(' ')[0];
@@ -39,7 +37,6 @@ export class GoogleFinalizeComponent {
   protected readonly apiError = signal<string | null>(null);
   protected readonly cguUrl = `${landing}/cgu`;
   protected readonly privacyUrl = `${landing}/politique-confidentialite`;
-  private readonly premium = this.route.snapshot.queryParamMap.get('plan') === 'premium';
 
   constructor() {
     // Déjà finalisée (retour arrière, autre onglet) : pas de second choix, on continue.
@@ -53,7 +50,7 @@ export class GoogleFinalizeComponent {
       .finalizeGoogleSignup(this.marketingConsent())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => this.postSignup.afterSignup({ premium: this.premium }),
+        next: () => this.postSignup.afterSignup(),
         error: () => {
           this.apiError.set('Une erreur est survenue, réessaie dans un instant');
           this.isLoading.set(false);

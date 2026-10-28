@@ -403,6 +403,15 @@ autres ») en sortent tous les deux, ils ne peuvent pas diverger.
 
 ---
 
+## Essai Premium d'inscription (#769, 2026-10-26)
+
+Tout nouvel inscrit a `PREMIUM_SIGNUP_TRIAL_DAYS` (14, `@mtc/shared`) jours de Premium, sans carte,
+puis repasse en Gratuit. La landing ne parle plus de l'essai Stripe de 30 jours ni de « 1 mois offert »
+(sauf le mois offert au PARRAIN, `Referral.astro`, inchangé). Boutons « Essayer Premium · {jours}
+jours offerts » + « Sans carte · puis Gratuit, sans engagement » (tarifs, `/prop-firm`), URL
+`/register?plan=premium` CONSERVÉE (déjà diffusée ; l'app n'envoie plus au paiement). Durée toujours
+par la constante, jamais écrite. Garde : `libs/shared/src/signup-trial-copy.spec.ts`.
+
 ## Pricing — limites IA à afficher
 
 Dans la section pricing PREMIUM, mentionner les limites de façon positive :

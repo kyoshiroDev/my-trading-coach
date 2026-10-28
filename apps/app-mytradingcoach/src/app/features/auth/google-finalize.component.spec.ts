@@ -40,15 +40,15 @@ describe('GoogleFinalizeComponent (#618)', () => {
     expect(c.marketingConsent()).toBe(false);
     c.onContinue();
     expect(auth.finalizeGoogleSignup).toHaveBeenCalledWith(false);
-    expect(postSignup.afterSignup).toHaveBeenCalledWith({ premium: false });
+    expect(postSignup.afterSignup).toHaveBeenCalledOnce();
   });
 
-  it('case cochée → true, et le parcours Premium du lien est repris', () => {
-    const c = create({ plan: 'premium' });
+  it('case cochée → true, puis la suite du parcours', () => {
+    const c = create();
     c.marketingConsent.set(true);
     c.onContinue();
     expect(auth.finalizeGoogleSignup).toHaveBeenCalledWith(true);
-    expect(postSignup.afterSignup).toHaveBeenCalledWith({ premium: true });
+    expect(postSignup.afterSignup).toHaveBeenCalledOnce();
   });
 
   it('déjà finalisée → pas de second choix, suite du parcours', () => {

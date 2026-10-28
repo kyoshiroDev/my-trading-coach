@@ -90,6 +90,14 @@ export class ProfileComponent implements OnInit {
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
 
+  /**
+   * Premium sans abonnement Stripe (essai d'inscription #769, ou offert par l'admin) : aucun
+   * prélèvement à annoncer ni portail Stripe à ouvrir (le compte n'a pas de client Stripe).
+   */
+  protected readonly freePremium = computed(
+    () => this.userStore.isOfferedPremium() || this.userStore.signupTrialDaysLeft() !== null,
+  );
+
   // Statut d'essai : N calculé depuis trialEndsAt Stripe, pas l'inscription.
   protected readonly isInTrial = computed(() => {
     const end = this.userStore.user()?.trialEndsAt;

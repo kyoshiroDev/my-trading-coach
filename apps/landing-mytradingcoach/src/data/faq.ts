@@ -1,4 +1,4 @@
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
 
 /**
  * FAQ de la home : SOURCE UNIQUE du texte affiché (`FAQ.astro`) et du JSON-LD `FAQPage`
@@ -35,9 +35,9 @@ export const FAQ: readonly FaqItem[] = [
       "Oui. Si tu trades sur Tradovate, tu peux connecter ton compte directement : tes trades et leurs frais se synchronisent automatiquement, en lecture seule (MyTradingCoach ne voit jamais ton mot de passe et ne peut passer aucun ordre). L'import CSV reconnaît automatiquement les exports Tradovate, Binance, Bybit, MetaTrader 4/5, IBKR et MEXC, en gratuit. Pour un autre broker, l'import IA lit ton fichier tel quel et structure ton historique : il est réservé au Premium.",
   },
   {
-    question: 'Comment fonctionne le trial ?',
+    question: "Comment fonctionne l'essai Premium\u00a0?",
     answer:
-      "L'abonnement Premium mensuel offre 1 mois d'essai (carte requise, aucun prélèvement avant la fin). Tu peux annuler en un clic depuis les paramètres, sans frais : si tu annules pendant l'essai, tu reviens au plan Gratuit à la fin du mois. L'abonnement annuel est facturé immédiatement, sans période d'essai.",
+      `À l'inscription, tu as ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, sans carte bancaire. À la fin, ton compte repasse automatiquement en Gratuit, sans rien perdre et sans aucun prélèvement. Si tu veux continuer en Premium, tu choisis une offre\u00a0: l'abonnement démarre alors, sans nouvel essai.`,
   },
   {
     question: 'Quelle est la différence entre Gratuit et Premium ?',
@@ -65,10 +65,10 @@ export const FOUNDER_FAQ = {
   open:
     `Les ${founder.seats} premiers abonnés ont le Premium à ${founder.priceMonthlyEur} €/mois ou ${founder.priceAnnualEur} €/an TTC, au lieu de ${monthly} € et ${annual} €. ` +
     `Mensuel et annuel comptent dans les mêmes ${founder.seats} places. Le prix est bloqué à vie tant que ton abonnement reste actif : les renouvellements gardent ce prix, une hausse future du prix normal ne te touche pas, et tu as tout le Premium, nouveautés comprises. ` +
-    `Tu peux passer du mensuel à l'annuel fondateur (ou l'inverse) en gardant ta place et ton numéro. Pas d'essai : le premier paiement est immédiat, le plan Gratuit sert d'essai (l'essai d'un mois reste sur le Premium à ${monthly} €). ` +
-    `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours sur le premier paiement : l'abonnement est annulé et le tarif fondateur perdu. En essai Premium ou en mois offert, tu peux basculer : l'essai s'arrête et tu es prélevé tout de suite au tarif fondateur. ` +
+    `Tu peux passer du mensuel à l'annuel fondateur (ou l'inverse) en gardant ta place et ton numéro. Pas d'essai\u00a0: le premier paiement est immédiat. Pendant tes ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription, tu peux réserver ta place\u00a0: elle est comptée tout de suite, et tu n'es prélevé qu'à la fin de ton essai (s'il reste plus de 2 jours). ` +
+    `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier paiement\u00a0: l'abonnement est annulé et le tarif fondateur perdu. ` +
     `Si ton abonnement se termine, le tarif est perdu définitivement. Non cumulable avec un code partenaire ni avec le parrainage. L'offre s'arrête quand les ${founder.seats} places sont prises.`,
   ended:
     `L'offre fondateur est clôturée. Les fondateurs gardent leur tarif de ${founder.priceMonthlyEur} €/mois ou ${founder.priceAnnualEur} €/an tant que leur abonnement reste actif, nouveautés Premium comprises. ` +
-    `Le Premium reste disponible au prix normal, avec un mois d'essai sur le mensuel.`,
+    `Le Premium reste disponible au prix normal. Tout nouvel inscrit a ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, sans carte.`,
 } as const;

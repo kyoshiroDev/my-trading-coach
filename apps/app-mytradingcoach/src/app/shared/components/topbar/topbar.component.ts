@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
   output,
 } from '@angular/core';
@@ -9,8 +10,11 @@ import {
   LucidePlus as Plus,
   LucideBell as Bell,
   LucideMessageCircle as MessageCircle,
+  LucideGift as Gift,
 } from '@lucide/angular';
 import { AccountSelectorComponent } from '../account-selector/account-selector.component';
+import { UserStore } from '../../../core/stores/user.store';
+import { OfferIntentService } from '../../../core/services/offer-intent.service';
 
 @Component({
   selector: 'mtc-topbar',
@@ -76,6 +80,24 @@ import { AccountSelectorComponent } from '../account-selector/account-selector.c
       </div>
     </header>
 
+    <!-- Essai d'inscription en cours (#769) : rappel discret, défile avec la page. -->
+    @if (trialDaysLeft() !== null) {
+      <div class="trial-strip" data-testid="trial-strip">
+        <svg [lucideIcon]="GiftIcon" [size]="14" class="trial-strip-ic"></svg>
+        <span class="trial-strip-text">
+          <strong>Premium offert</strong> ·
+          @switch (trialDaysLeft()) {
+            @case (0) { dernier jour }
+            @case (1) { il te reste <span class="trial-strip-days">1</span> jour }
+            @default { il te reste <span class="trial-strip-days">{{ trialDaysLeft() }}</span> jours }
+          }
+        </span>
+        <button type="button" class="trial-strip-cta" data-testid="trial-strip-offers" (click)="openOffers()">
+          Voir les offres →
+        </button>
+      </div>
+    }
+
     <!-- Sélecteur de compte global (multi-comptes, accessible à tous) : source unique. -->
     @if (showAccountSelector()) {
       <div class="topbar-accounts">
@@ -118,7 +140,15 @@ export class TopbarComponent {
   globalScopeNote = input(false);
   addClick = output<void>();
 
+  private readonly offerIntent = inject(OfferIntentService);
+  protected readonly trialDaysLeft = inject(UserStore).signupTrialDaysLeft;
+
   protected readonly PlusIcon = Plus;
+  protected readonly GiftIcon = Gift;
+
+  protected openOffers(): void {
+    this.offerIntent.open('bandeau');
+  }
   protected readonly BellIcon = Bell;
   protected readonly DiscordIcon = MessageCircle;
 }

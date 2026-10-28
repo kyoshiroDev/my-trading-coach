@@ -61,6 +61,7 @@ const mockPrisma = {
     create: vi.fn(),
     update: vi.fn(),
   },
+  deletedAccount: { findFirst: vi.fn() },
 };
 
 const mockJwt = {
@@ -89,6 +90,7 @@ describe('AuthService', () => {
     // login/register renvoient désormais l'utilisateur issu d'un update(select: ME_SELECT).
     // Les tests startTrial/forgotPassword/resetPassword surchargent ce mock au besoin.
     mockPrisma.user.update.mockResolvedValue(mockSafeUser);
+    mockPrisma.deletedAccount.findFirst.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -149,6 +151,58 @@ describe('AuthService', () => {
       expect(result.access_token).toBeDefined();
       // refresh_token géré par cookie httpOnly dans le controller — service retourne les deux tokens
       expect(result.refresh_token).toBeDefined();
+    });
+
+    describe('essai Premium d’inscription (#769)', () => {
+      const NOW = new Date('2026-11-02T10:00:00.000Z');
+      const DAY = 86_400_000;
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(NOW);
+        mockPrisma.user.findUnique.mockResolvedValue(null);
+        mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
+      });
+      afterEach(() => vi.useRealTimers());
+
+      it('pose trialEndsAt à J+14, origine SIGNUP, fin d’essai figée et trialUsed (pas de 30 j Stripe en plus)', async () => {
+        await service.register({ email: 'new@test.com', password: 'password123' });
+        const { data } = mockPrisma.user.create.mock.calls[0][0];
+        const end = new Date(NOW.getTime() + 14 * DAY);
+        expect(data).toMatchObject({ trialEndsAt: end, signupTrialEndsAt: end, trialSource: 'SIGNUP', trialUsed: true });
+        // L'e-mail de bienvenue annonce la même date de fin.
+        expect(mockResend.sendWelcomeFree).toHaveBeenCalledWith(expect.objectContaining({ trialEndsAt: end }));
+      });
+
+      it('réinscription après une suppression de moins de 90 jours : pas d’essai, trialUsed quand même', async () => {
+        mockPrisma.deletedAccount.findFirst.mockResolvedValue({ id: 'del-1' });
+        await service.register({ email: 'Revenu@Test.com', password: 'password123' });
+        const { data } = mockPrisma.user.create.mock.calls[0][0];
+        expect(data.trialUsed).toBe(true);
+        expect(data).not.toHaveProperty('trialEndsAt');
+        expect(data).not.toHaveProperty('trialSource');
+        expect(data).not.toHaveProperty('signupTrialEndsAt');
+        // Casse ignorée, traces anonymisées exclues, fenêtre de 90 jours.
+        expect(mockPrisma.deletedAccount.findFirst.mock.calls[0][0].where).toEqual({
+          email: { equals: 'Revenu@Test.com', mode: 'insensitive' },
+          anonymizedAt: null,
+          deletedAt: { gte: new Date(NOW.getTime() - 90 * DAY) },
+        });
+      });
+
+      it('inscription Google : même essai, posé au même endroit', async () => {
+        process.env['FEATURE_GOOGLE_AUTH'] = 'true';
+        process.env['GOOGLE_CLIENT_ID'] = 'mtc-test.apps.googleusercontent.com';
+        mockVerifier.verify.mockResolvedValue(GOOGLE_IDENTITY);
+        mockPrisma.user.findFirst.mockResolvedValue(null);
+        try {
+          await service.googleAuth({ credential: 'x'.repeat(40) });
+        } finally {
+          delete process.env['FEATURE_GOOGLE_AUTH'];
+          delete process.env['GOOGLE_CLIENT_ID'];
+        }
+        const { data } = mockPrisma.user.create.mock.calls[0][0];
+        expect(data).toMatchObject({ trialSource: 'SIGNUP', trialEndsAt: new Date(NOW.getTime() + 14 * DAY), trialUsed: true });
+      });
     });
 
     it('une inscription = un seul e-mail (bienvenue), plus d’alerte admin par inscription', async () => {
