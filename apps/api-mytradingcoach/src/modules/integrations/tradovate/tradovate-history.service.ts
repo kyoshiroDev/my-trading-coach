@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { BrokerConnection, Prisma, TradeSource } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradesService } from '../../trades/trades.service';
@@ -7,6 +7,7 @@ import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trad
 import { assignFeesOncePerFill } from '../../trades/tradovate-pair.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import type { TradovateAccount, TradovateApiHosts, TradovateEnv } from './tradovate.types';
@@ -83,6 +84,7 @@ export class TradovateHistoryService {
     private readonly reporting: TradovateReportingClient,
     private readonly setups: SetupsService,
     private readonly trades: TradesService,
+    @Optional() private readonly freeLimit?: FreeLimitSyncService,
   ) {}
 
   /**
@@ -120,6 +122,8 @@ export class TradovateHistoryService {
     if (!conn.externalAccountId || !conn.externalEnv) {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
     }
+    // Compte au-delà de la limite gratuite (#769, B0) : compté et journalisé, l'import continue.
+    await this.freeLimit?.observe(userId, conn.accountId, 'historique');
     const env = conn.externalEnv as TradovateEnv;
     // Hôtes frais avec le jeton : le reporting demo est propre à l'organisation (prop firm).
     const { token, apiHosts } = await this.connections.getSession(conn);

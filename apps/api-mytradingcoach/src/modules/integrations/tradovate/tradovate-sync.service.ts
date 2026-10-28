@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { BrokerConnection, BrokerConnectionStatus } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradeSource } from '@prisma/client';
@@ -12,6 +12,7 @@ import { TradovateBalanceService } from './tradovate-balance.service';
 import { TradovateClosingsService } from './tradovate-closings.service';
 import { TradovatePayoutsService } from './tradovate-payouts.service';
 import { TradovateHistoryService } from './tradovate-history.service';
+import { FreeLimitSyncService } from './free-limit-sync.service';
 import { toOpenPositions } from './tradovate-open-positions';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
@@ -75,6 +76,7 @@ export class TradovateSyncService {
     private readonly payouts: TradovatePayoutsService,
     private readonly trades: TradesService,
     private readonly setups: SetupsService,
+    @Optional() private readonly freeLimit?: FreeLimitSyncService,
   ) {}
 
   /**
@@ -117,6 +119,8 @@ export class TradovateSyncService {
     if (!conn.externalAccountId || !conn.externalEnv) {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
     }
+    // Compte au-delà de la limite gratuite (#769, B0) : compté et journalisé, la synchro continue.
+    await this.freeLimit?.observe(userId, accountId, 'synchro');
 
     // Verrou de la connexion : double-clic, et cron de renouvellement des tokens (rotation).
     const locked = await this.connections.tryLock(conn.id);

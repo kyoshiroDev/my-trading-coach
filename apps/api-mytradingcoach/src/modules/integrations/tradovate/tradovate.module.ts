@@ -32,6 +32,7 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
  * mapper pur → `TradesService.importTrades`) est documenté dans `.claude/agents/nestjs.md`
  * pour les suivants (Binance, Bybit).
  */
+import { FreeLimitSyncService } from './free-limit-sync.service';
 @Module({
   // AuthModule : JwtService pour authentifier le handshake du canal temps réel.
   // AccountsModule : métriques des règles prop firm, base des alertes (#370).
@@ -67,6 +68,8 @@ import { TradovateCallbackController, TradovateController } from './tradovate.co
     // Journal des séances prop firm (marges, plancher, alertes, tilt) pour l'IA (#373).
     PropRiskJournalService,
     TradovateBackgroundRefreshCron,
+    // Comptes au-delà de la limite gratuite (#769, B0) : journal seul, rien n'est bloqué.
+    FreeLimitSyncService,
   ],
 })
 export class TradovateModule {}
