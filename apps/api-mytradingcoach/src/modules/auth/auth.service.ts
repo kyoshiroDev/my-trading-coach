@@ -25,6 +25,7 @@ import { LoginDto } from './dto/login.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleIdTokenVerifier, GoogleTokenRefusedException } from './google-id-token.verifier';
 import { resolveGoogleAuthConfig } from '../../config/google-auth-config';
+import { redeleteCutoff, signupTrialData } from '../trial/signup-trial';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 heure
 
@@ -67,6 +68,8 @@ const ME_SELECT = {
   marketingConsent: true,
   trialEndsAt: true,
   trialUsed: true,
+  trialSource: true,
+  signupTrialEndsAt: true,
   stripeSubscriptionStatus: true,
   stripeCurrentPeriodEnd: true,
   tradingStyle: true,
@@ -191,8 +194,21 @@ export class AuthService {
       if (ambassador?.referralCode) referredBy = ambassador.referralCode;
     }
 
+    // Essai Premium d'inscription (#769), refusé si l'e-mail vient de supprimer un compte.
+    const now = new Date();
+    const recentlyDeleted = await this.prisma.deletedAccount.findFirst({
+      where: {
+        email: { equals: data.email, mode: 'insensitive' },
+        anonymizedAt: null,
+        deletedAt: { gte: redeleteCutoff(now) },
+      },
+      select: { id: true },
+    });
+
+    const trial = signupTrialData(now, recentlyDeleted !== null);
     const user = await this.prisma.user.create({
       data: {
+        ...trial,
         email: data.email,
         password: data.password,
         name: data.name,
@@ -225,7 +241,6 @@ export class AuthService {
     await this.setups.seedDefaults(user.id);
 
     const tokens = await this.generateTokens(user);
-    const now = new Date();
     const me = await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: now, lastSeenAt: now },
@@ -234,7 +249,7 @@ export class AuthService {
 
     // Email de bienvenue à l'utilisateur : fire-and-forget
     this.resend
-      .sendWelcomeFree({ to: user.email, userName: user.name ?? '' })
+      .sendWelcomeFree({ to: user.email, userName: user.name ?? '', trialEndsAt: trial.trialEndsAt ?? null })
       .catch((err: unknown) =>
         this.logger.error(`Welcome email failed: ${String(err)}`),
       );

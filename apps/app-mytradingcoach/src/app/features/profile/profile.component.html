@@ -355,12 +355,28 @@
                   <div class="settings-row-left">
                     <span class="settings-row-label">Ton code</span>
                     <span class="discord-code" data-testid="discord-code">{{ c.code }}</span>
-                    <span class="settings-row-hint">
-                      Dans le serveur Discord, tape <code>/verify code:{{ c.code }}</code>.
+                    <span class="settings-row-hint" data-testid="discord-code-hint">
+                      Puis tape <code>/verify</code> dans Discord et colle ce code. Ne le partage pas.
                       Valable jusqu'à {{ c.expiresAt | date: 'HH:mm' }}, une seule fois.
                     </span>
                   </div>
                   <button class="settings-edit-btn" data-testid="discord-copy" (click)="copyDiscordCode()">Copier</button>
+                </div>
+              }
+              @if (discordLinked()) {
+                <div class="settings-row">
+                  <div class="settings-row-left">
+                    <span class="settings-row-label">Délier</span>
+                    <span class="settings-row-hint">Retire ton rôle sur le serveur et efface la liaison.</span>
+                  </div>
+                  <button
+                    class="settings-edit-btn"
+                    data-testid="discord-unlink"
+                    [disabled]="unlinkingDiscord()"
+                    (click)="unlinkDiscord()"
+                  >
+                    {{ unlinkingDiscord() ? 'Un instant…' : 'Délier mon Discord' }}
+                  </button>
                 </div>
               }
             </div>
@@ -499,7 +515,7 @@
                     Tarif partenaire {{ offersStore.partner()?.code }} : {{ tariff }}
                   </p>
                 }
-                @if (userStore.isOfferedPremium()) {
+                @if (freePremium()) {
                   <div class="trial-status" data-testid="offered-premium">
                     <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
@@ -518,7 +534,7 @@
                     Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
                   </p>
                 }
-                @if (userStore.isOfferedPremium()) {
+                @if (freePremium()) {
                   <div class="plan-actions">
                     <button class="btn btn-primary" (click)="showPlanModal.set(true)">
                       @if (offersStore.founderAvailable()) {
@@ -627,6 +643,9 @@
       </div> <!-- /pcol droite params -->
 
     </div>
+
+    <!-- ══ APPLICATION : installer l'app sur l'écran d'accueil (maquette installation n° 5) ══ -->
+    <mtc-install-settings />
 
     <!-- ══ NOTIFICATIONS PUSH (#666) : chargée à la demande, masquée si le push est coupé ══ -->
     @defer (on viewport; when openNotifications) {

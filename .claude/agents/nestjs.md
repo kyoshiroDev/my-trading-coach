@@ -77,9 +77,10 @@ GET    /api/session/active             JWT → session active en cours (null si 
 GET    /api/session/today              JWT → session du jour : l'active, sinon la dernière clôturée aujourd'hui
                                        (avec ses trades) — utilisée par l'app au chargement (#456)
 POST   /api/session/:id/close          JWT → clôturer, { mood: MoodState, notes? }
-POST   /api/events                     JWT + @DemoAllowed → entonnoir Premium { event, place } (liste blanche
-                                       `PRODUCT_EVENTS`, place = 1er segment de route), 204, best-effort
-GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe
+POST   /api/events                     JWT + @DemoAllowed → événements d'usage { event, place } (liste blanche
+                                       `PRODUCT_EVENTS` : entonnoir Premium, place = 1er segment de route ;
+                                       installation de l'app, place = plateforme), 204, best-effort
+GET    /api/admin/funnel               ADMIN → visites → inscrits → Premium vu → offres → clic essai → retour Stripe ; signupTrial (#769, B3)
 POST   /api/public/funnel              PUBLIC (60/min/IP), 204 → étape du parcours d'inscription ou engagement landing { step, source?, medium?, campaign?, inApp?, detail?, path? }
 GET    /api/admin/signup-funnel        ADMIN (?days=7|30, défaut 30) → visites + étapes par source/medium/campagne × inApp, erreurs par code
 GET    /api/admin/landing-engagement   ADMIN (?days=7|30, défaut 30) → vues + défilement/temps/sélecteur de / et /prop-firm par page × source/medium/campagne
@@ -304,6 +305,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
     60 s (`VPS_RETRY_DELAY_MS`), une seule tentative pour les requêtes simultanées. **Une seule alerte
     Sentry par panne** (`warning`, au passage joignable → injoignable, dédupliquée entre process par
     la clé Redis `vps:down:<id>`) ; le filtre global n'envoie pas `ExpectedOutageException` à Sentry.
+    `extra` = `{ reason, name, code }` : jamais le message SSH (hôte et port), qui reste dans le log.
   - `VpsService.exec()` lève **502 `VPS_COMMAND_FAILED`** si le code de sortie n'est pas 0 (avant, une
     commande refusée passait pour un succès). `getStats` reste tolérant (sortie vide → 0).
   - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
@@ -668,6 +670,81 @@ canActivate(ctx: ExecutionContext): boolean {
 }
 ```
 
+### Essai Premium d'inscription (#769, 2026-10-26)
+
+- Posé dans `AuthService.createAccount`, **seul** point d'entrée des inscriptions e-mail et Google :
+  `signupTrialData(now, recentlyDeleted)` (`modules/trial/signup-trial.ts`) → `trialEndsAt` et
+  `signupTrialEndsAt` à J+`PREMIUM_SIGNUP_TRIAL_DAYS` (14, `@mtc/shared`), `trialSource = SIGNUP`,
+  `trialUsed = true` (plus d'essai Stripe de 30 j ensuite, sans toucher au checkout).
+- Refusé (mais `trialUsed = true` quand même) si l'e-mail, casse ignorée, a supprimé un compte depuis
+  moins de 90 jours (`DeletedAccount.email`, non anonymisé, `ANONYMIZE_AFTER_DAYS`). Au-delà, aucune
+  trace : pas de hash d'e-mail (décision du 26/10).
+- Aucun nouveau chemin d'accès : tous les contrôles lisent déjà `trialEndsAt` (guard, débrief,
+  comptes, import, Discord, alertes). Le compte démo ne passe pas par `createAccount` (seed).
+- Premium offert par l'admin pendant l'essai : durées **additionnées**, `trialSource = ADMIN`,
+  `signupTrialEndsAt` intact. `isOfferedPremium` exclut `SIGNUP` (l'admin n'affiche pas l'essai
+  d'inscription comme un cadeau).
+- Fin : `TrialEndService` (cron ci-dessous). Comptes en trop : `GET /accounts` renvoie
+  `overFreeLimit` par compte (ACTIVE au-delà du quota gratuit, jamais en Premium) et
+  `POST /accounts/:id/keep` enregistre le compte gardé (`User.keptAccountId`, ACTIVE seulement, sinon
+  400 ; 404 si pas à l'utilisateur). Défaut : le plus ancien ACTIVE (`accounts/kept-account.ts`).
+  Synchro des comptes en trop (B0) : **journal seul** pour l'instant. `FreeLimitSyncService.observe`
+  (module Tradovate) est appelé par `TradovateSyncService.sync` (bouton, retour OAuth, cron de fond,
+  rattrapage du direct) et `TradovateHistoryService.importHistory` : compte gratuit (ni Premium, ni
+  essai, ni rôle, ni démo) dont le compte n'est pas le compte gardé → ajouté à l'ensemble Redis
+  `free-limit-sync:<jour de trading>` (8 j) et une ligne de journal sans identifiant, une fois par
+  compte et par jour ; rien n'est bloqué. Une erreur (base, Redis) ne bloque jamais, et l'évaluation
+  rend la main en 1 s au plus (`OBSERVE_TIMEOUT_MS`, journal « TimeoutError ») : le client Redis n'a pas
+  de `commandTimeout`, un Redis muet bloquerait sinon la synchro qui attend `observe`. Le bilan du cron de fond (15 min)
+  ajoute « N compte(s) au-delà de la limite gratuite aujourd'hui (journal seul) ». Pour ACTIVER l'arrêt,
+  il faudra aussi filtrer `TradovateLiveService.eligible` (WebSocket) et le relevé de solde.
+- Relance des anciens inscrits : `tools/scripts/backfill/signup-trial-existing.ts --dry-run`, lancé
+  par Greg seulement.
+- **Réservation fondateur (B1)** : `founder-offer/founder-deferred.ts` (`founderFirstChargeAt`, 48 h + 1 h
+  de marge, essai d'inscription `trialSource` SIGNUP seulement : Premium offert par l'admin = immédiat),
+  `subscription_data.trial_end` au checkout, `summary.firstChargeAt` et
+  `GET /billing/offers` → `founder.firstChargeAt` / `reservedUntilCharge`. La date est aussi dans les
+  métadonnées de la session (`firstChargeAt`, secondes) : une session ouverte n'est reprise qu'avec la
+  même date. Webhook : facture d'essai à 0 € → `claimSeat` + e-mail « place réservée » ; abonnement
+  déjà terminé (`canceled` / `incomplete_expired`, fin reçue avant la facture) → aucune place pour une
+  facture à 0 €, place prise puis `markLost` pour une facture payée ; toute facture fondateur > 0 € →
+  `markFirstPaid` (idempotent) + bienvenue fondateur (garantie = `firstPaidAt` + 14 j) ;
+  `customer.subscription.deleted` → `releaseUnpaid` (place non payée) sinon `markLost` ;
+  `customer.subscription.updated` en `unpaid` → `releaseUnpaid` (réglage Stripe « marquer comme
+  impayé ») ; `invoice.payment_action_required` (hors facture `subscription_create`, le 3D Secure s'y
+  fait dans la page de paiement) → e-mail « Confirme ton paiement » avec `hosted_invoice_url`, Premium
+  en pause (`past_due`). `invoice.payment_failed` à **0 tentative** = 3D Secure en attente (constaté en
+  mode test le 27/10 : il arrive juste avant `payment_action_required` ; un refus de carte compte 1
+  tentative) → pas d'e-mail d'échec. E-mails réservation et 3D Secure « une seule fois »
+  (`sendOnce`, marque Redis `stripe:mail-once:*` 30 j, retirée si l'envoi échoue) : une tâche BullMQ
+  rejouée ne les renvoie pas. Journaux : nom de l'erreur seulement.
+  Premium offert par l'admin (`offerPremium`) : 409 si abonnement `active` / `trialing` (une réservation
+  est en `trialing`) ou `past_due` / `unpaid` (« Paiement Stripe en attente : régler d'abord
+  l'abonnement »). La fiche admin (`GET /admin/users/:id`) expose `offer.founder.reserved` et
+  `firstChargeAt` ; l'admin affiche la raison sous le bouton désactivé (réservation : date du premier
+  prélèvement).
+- **Suivi admin de l'essai (B3)** : `GET /admin/funnel` → `signupTrial` (une requête, démo et ADMIN
+  exclus, cohorte = `signupTrialEndsAt` non nul) : `inProgress` (fin à venir, pas `active`), `ended`
+  (fin dans la période), `converted` (parmi `ended`, `active` aujourd'hui), `reservations` (place ACTIVE
+  sans `firstPaidAt`), `reservationsAwaitingPayment` (`past_due` / `unpaid`), `nextChargeAt` (plus petit
+  `stripeCurrentPeriodEnd` d'une réservation en `trialing`). Affiché en bande au-dessus de l'entonnoir
+  Premium (page Acquisition). Test SQL : `admin/signup-trial-funnel.int-spec.ts`.
+- **E-mails de l'essai (B2)** : campagnes `trial_ending` (priorité 120) et `trial_ended` (110), type
+  `service` (sans consentement, désinscription « service », même plafond), bornées par
+  `signupTrialEndsAt` et non par `createdAt` (un essai posé par le script de relance compte aussi).
+  `trial_ending` : fin dans 3 jours au plus, pas prolongé par l'admin, ni abonné ni réservé ;
+  `trial_ended` : du lendemain de la fin (15 h après) à J+6, plan FREE. Écart ≥ 4 jours avec J+11 au
+  passage de 10 h, donc plafond respecté. J+11 (décision du 27/10) : service neutre, objet avec la date
+  de fin (pas de compte à rebours), ce qui change en gratuit, bouton « Voir mon abonnement »
+  (`/profil?tab=params`), sans offre ni urgence ; contexte `loadTrialEnd` (date seule). Évaluateur de
+  test : `gt` / `lt`. Mention de bas des deux e-mails (décision du 28/10) : « Tu reçois cet e-mail parce
+  que tu as un compte MyTradingCoach. » (`serviceFooter(unsubUrl, reason)`), pas « pour t'aider à
+  démarrer ». Aperçu avant l'envoi réel : `tools/scripts/ops/preview-trial-emails.ts`.
+- E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
+  paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
+  (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
+  plus d'essai promis (`NO_TRIAL_LINE`).
+
 ---
 
 ## AiService — logging automatique obligatoire
@@ -704,6 +781,7 @@ une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` s
 | `DailyRecapCron` | `30 17 * * 1-5` Paris | Génère recap + envoie email aux users actifs du jour |
 | `EcoCalendarCron` | `0 7 * * 1-5` Paris | Pré-génère le calendrier pour tous les users Premium |
 | `SessionCloseCron` | `5 17 * * *` **America/Chicago** | Bascule CME : clôture les sessions `ACTIVE` d'une journée précédente (`startedAt < tradingDayStart(now)`, même fonction que `activeSessionWhere`), `endedAt` = fin de leur journée, totaux sur leurs propres trades (`autoCloseData`, `session-totals.ts`), `moodEnd` vide, hors démo (#595). Clôture ponctuelle par id : `scripts/close-sessions.ts` (même logique, dry-run sans `--apply`) |
+| `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
@@ -1240,7 +1318,27 @@ sont en direct.
   (`AuthModule` importé) ; invalide ou `isDemo` → `disconnect(true)`. Room `user:<id>`.
 - `TradovateLiveService` : 1er client d'un user sur le worker → **rattrapage REST** (la synchro
   existante, sautée si `lastSyncAt` < 60 s) puis **un WebSocket Tradovate par compte connecté**.
-  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée.
+  Dernier client parti → WebSockets fermés (1000). Rien ne tourne app fermée, SAUF veille serveur.
+- **Veille serveur (#770, 2026-10-26)** : dernier onglet fermé, trader éligible → le worker
+  titulaire du bail GARDE le WebSocket, et les alertes du gateway (prop firm, anti-tilt,
+  comportement) partent en push app fermée (émission vers une room vide : les services d'alertes
+  et le push ne changent pas). Plan : `docs/audit-push-veille-serveur.md`.
+  - Allumée seulement si push des traders actif ET `TRADOVATE_WATCH_MAX` > 0 (`config/tradovate-watch-config.ts`,
+    absente = **éteinte**). Éligibilité (`tradovate-watch.ts`, PUR) : pas démo, `isPremiumAccess`,
+    ≥ 1 `UserPushDevice`, `PROP_RULES` ou `BEHAVIOR` non coupé, séance ouverte du jour, ≥ 1 connexion
+    suivable (`TRACKABLE_CONNECTION`). Heures silencieuses → `paused` (WS fermé, veille gardée,
+    rouvert après). Fin : 10 h max, jamais après la journée de trading (17:00 Chicago).
+  - Registre Redis `tradovate:watch` (ZSET, score = fin ms), plafonné à `TRADOVATE_WATCH_MAX`
+    (`TradovateWatchService`). Un aller-retour dans l'app ne repousse pas la fin.
+  - `sweepWatch()` toutes les 30 s sur les process `web`/`all` (pas le worker de crons) : WS tenu
+    sans onglet fermé si veille finie, en pause, ou bail tenu ailleurs ; veille sans titulaire
+    (déploiement blue/green, crash) **reprise** avec rattrapage (trades du trou, sans anti-tilt).
+    Arrêt du process : WS fermé et bail rendu, registre intact. Clôture de séance → fin ≤ 30 s
+    (pas de branchement dans `SessionService`).
+  - En veille, le chemin des alertes est le « direct » : journal de séance (#373), incident `live`
+    (#669), marqueur « affichée » posé (pas de bandeau à la réouverture : le push l'a portée). La
+    synchro de fond voit `isLive` vrai et saute la séance.
+  - `GET /push/settings` → `liveWhileClosed` (push actif ET veille allumée) : le texte du délai suit.
 - Rattrapages **bornés à `LIVE_CATCH_UP_CONCURRENCY` (5) par process** (`createLimiter`,
   `common/utils/concurrency.util.ts`, SCA-B6-02) : après un redémarrage, tous les clients reviennent
   en même temps ; les suivants attendent leur tour (le WebSocket, lui, s'ouvre sans attendre).
@@ -1268,6 +1366,19 @@ sont en direct.
   (pas `conn.apiHosts` en mémoire, possiblement périmé). Le WS relit son URL à chaque reconnexion.
   Repli : constantes historiques (`FALLBACK_HOSTS`) ; filet REST : `fetchFollowingRedirect` suit
   une 307/308 https en gardant `Authorization`. WebSocket natif Node 22 (`LIVE_SOCKET_FACTORY`).
+  Connexion OAuth sur hôte demo dédié verrouillée de bout en bout (vrai client, `fetch` simulé)
+  par `tradovate-oauth-hosts.spec.ts` : `renewAccessToken` avant `/account/list`, liste sur l'hôte
+  dédié, hôte dédié et jeton renouvelé enregistrés.
+- **WS refusé avant ouverture (`421`, correctif du 2026-10-28)** : sur Node 22, une poignée de main
+  refusée émet `error` **sans `close`** (readyState bloqué à CONNECTING, mesuré). `TradovateLiveConnection`
+  traite donc un `error` avant toute trame comme une fermeture : socket abandonnée, puis
+  `onHandshakeRefused` → `TradovateLiveService.forgetHosts` remet `apiHostsAt` à null AVANT la
+  reconnexion, qui relit ainsi `apiHosts` sans attendre le TTL de 30 min. Un `error` après ouverture
+  ne fait rien (le `close` qui suit relance). **Une seule invalidation par série d'échecs**
+  (`hostsForgotten`, remis à false par une autorisation 200) : Node ne donne pas le statut, un
+  refus réseau / 401 / 503 ressemble à un 421, donc refus persistant = 1 `renewAccessToken` et
+  1 écriture par compte, puis backoff seul (1 s → 60 s) ; N comptes = N appels d'auth par série. Verrouillé par `tradovate-live.connection.spec.ts` et
+  `tradovate-live.service.spec.ts` (« hôtes en cache »).
 - **Limites documentées** : 50 connexions WebSocket simultanées **par user Tradovate**, 15
   appareils, `shutdown ConnectionQuotaReached`. **Aucune limite par `cid` / application
   documentée** → à confirmer avec NinjaTrader avant la montée en charge prod (pas bloquant à
@@ -1324,7 +1435,19 @@ sont en direct.
 - `trades/csv-parsers.ts` : détection du broker, normalisation au CSV pivot (Tradovate, Binance
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
-  PURES : aucun service injecté, testables directement (`csv-import.service.spec.ts` les importe).
+  PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **Nombres des parseurs : toujours `parseUsNumber`**, jamais `parseFloat` brut (bug prod du
+  2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
+  mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
+  de +1 125 $ a été importé à +1 $. La virgule n'est retirée que dans un regroupement VALIDE
+  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250) ; le format européen
+  complet (`1.234,56`) est le ticket #781. Même règle pour découper une ligne : jamais `split(',')`, un
+  champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
+  ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
+  `pnl-milliers.util.ts` (détection, `casReparation`) et `scripts/repair-tradovate-pnl-milliers.ts`
+  (réparation). Règle du script : ne jamais supprimer une ligne qui ne peut pas revenir de chez
+  Tradovate (connexion active, jeton utilisable, synchro < 10 j sans erreur, mois relu à coup sûr) ;
+  sinon P&L corrigé sur place et tag `sens-heure-non-verifies`.
 - `CsvImportService` garde l'orchestration : plan / accès IA, formats inconnus, fusion des
   frais Tradovate, persistance.
 - **Nouveau broker : passer par le REGISTRE, pas par du code** (2026-09-28). Écrire un
@@ -1412,6 +1535,16 @@ part de lignes et non la perfection.
   `CONFLICT`, P2025 → 404 `NOT_FOUND` ; le reste → 500 `INTERNAL` sans détail (pile dans les
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
+  Options dans `common/sentry/sentry-options.ts` (#746). `sendDefaultPii: false` ne suffit PAS
+  (SDK 10.x) : il retire l'IP mais joint le corps (10 ko), les cookies, tous les en-têtes et la
+  query string. D'où `httpIntegration({ maxIncomingRequestBodySize: 'none' })`, `beforeSend`
+  (`scrubEvent` : retire `request.data`, `cookies`, `query_string`, en-têtes `authorization` /
+  `cookie`, coupe l'URL au `?`) et `beforeBreadcrumb` (`scrubBreadcrumb` : retire `http.query`
+  des appels sortants, où passent les `apikey=` FMP / calendrier). Ne jamais utiliser l'option
+  `dataCollection` : posée, elle repart de « tout collecter », IP comprise. Gardés : erreur,
+  méthode, chemin, en-têtes techniques, `user.id`, tags. Dans un `captureMessage` / `extra` :
+  nom et code de l'erreur, **jamais son message** (texte libre : adresse, hôte, port…).
+  Vérification sur un vrai événement : `docs/ops/verif-sentry-donnees-requete.md`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
 - **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
   alias local (`AI_MODELS.analysis` = `claude-sonnet-4-6`, `AI_MODELS.fast` = `claude-haiku-5-5`) ;
@@ -1487,6 +1620,7 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   - `rate_limit_exceeded` (Resend : **10 requêtes/s par équipe**) → 3 nouveaux essais (1 s, 2 s, 4 s) ;
   - tout autre échec → `logger.error` **et Sentry** (`fingerprint ['resend-send-failed', <erreur>]` :
     un quota dépassé = une seule issue ; `daily_quota_exceeded` / `monthly_quota_exceeded` en `fatal`) ;
+    `extra` = `{ name, statusCode, attempts, queued }`, ni le message de Resend, ni l'objet, ni le destinataire ;
   - jamais de throw (un e-mail raté ne fait pas échouer un job) ;
   - compteur du jour `resend:sent:<AAAA-MM-JJ UTC>` dans Redis ; au **80e** envoi
     (`RESEND_DAILY_WARN`), alerte Sentry de niveau **`error`** (la règle d'alerte n'envoie d'e-mail que pour la priorité haute ; `warning` = priorité moyenne = aucune notification) : seuil décidé pour passer du plan gratuit
@@ -1838,8 +1972,8 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   une clôture qu'après la fermeture.
 - **Format réel** (mesuré) : `Account ID, Account Name, Trade Date (AAAA-MM-JJ), Total Amount
   ("50,000.00"), Total Realized PNL` ; une ligne seulement les jours où le solde a bougé. Colonnes
-  lues par leur nom ; montants par `parseReportAmount` (⚠️ `parseTradovatePnl` ne retire pas les
-  séparateurs de milliers : `"50,000.00"` y vaudrait 50).
+  lues par leur nom ; montants par `parseReportAmount` (strict : `NaN` si illisible). Les
+  parseurs d'import utilisent `parseUsNumber` (`csv-parsers.ts`), qui retire aussi les milliers.
 - **Métriques** : trailing EOD → plus haut = max des clôtures officielles si elles couvrent la
   séance précédente (`previousSession`, week-end sauté) ET que le solde broker est dans le
   référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`
@@ -2091,6 +2225,13 @@ global à la file ; Resend = 10 req/s par équipe, clé partagée entre environn
 `AdminService.getFunnel(30)` : étapes en users DISTINCTS hors démo et ADMIN, démo en occurrences,
 détail par écran, état Stripe actuel. But : savoir où le Premium donne envie, avant de toucher à la durée
 de l'essai (0 essai en prod au 2026-10-07, décision : garder 30 jours).
+Installation de l'app (2026-10-25) : 8 événements de plus (`INSTALL_EVENTS` : `install_shown`,
+`install_click`, `install_done`, `install_later`, `install_never`, `inapp_seen`, `push_enabled`,
+`push_denied`), `place` = plateforme (`INSTALL_PLACES` : `android`, `ios`, `ios-other`, `desktop`).
+`getFunnel` renvoie `install` (users distincts par événement × plateforme, plateforme brute : `ios-other`
+jamais regroupé avec `ios`), tableau « Installation de l'app » de `/acquisition`. Conservation : 13 mois,
+purge QUOTIDIENNE (`DAILY_RETENTION_RULES` de `RetentionCron`, 4 h 45 Paris), cascade à la suppression
+du compte. Journal d'échec : nom de l'erreur seulement (jamais `err.message`, qui contient le `userId`).
 
 ## Suite d'e-mails d'onboarding (oct. 2026, NinjaTrader mi-novembre)
 
@@ -2099,7 +2240,7 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
   (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
   propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
-  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir les e-mails d'aide au démarrage », lien
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
@@ -2113,6 +2254,8 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   J7-J14 (FREE, bilan J0-J7 depuis l'inscription) ; `founder_followup` 60 · marketing · J10-J30
   (exclusions de `founder_launch` + FREE + pas de `founder_launch` reçu ; offre ouverte avec places
   vérifiée À L'ENVOI) ; `profile_reminder` 45 · J3-J14 ; `discord_invite` 40 · J5-J21.
+  **Essai Premium en cours exclu** (#769, `notInTrial(now)` : `trialEndsAt` nul ou passé) de
+  `first_week_recap`, `founder_followup` et `premium_upsell` : le plan reste FREE pendant l'essai.
   `first_trade_nudge` : `automated: false` (admin seulement). Bienvenue (`welcomeFreeTemplate`,
   transactionnel, envoyée par `createAccount` : e-mail ET Google) = 3 étapes.
 - **Toute campagne automatique a une fenêtre d'âge** (`ageWindow(now, min, max)`, borne basse ET
@@ -2132,9 +2275,11 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
   `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
   requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
-- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
-  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
-  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+- **Pied commun** (`emailWrapper(content, preheader, accent, _unsubUrl?)`) : TOUJOURS « Gérer mes
+  e-mails » → `${FRONTEND_URL}/profil?tab=params` (décision du 28/10, #769). Un seul lien qui désinscrit
+  par e-mail : celui du texte (`serviceFooter` ou `marketingFooter`) ; le pied ne répète plus la même URL
+  sous « Se désabonner » (libellé trompeur : un lien de service ne coupe que l'aide au démarrage).
+  Garde : `email-unsub-links.spec.ts`. Aucun lien ne coupe les e-mails de paiement (transactionnels). Plus aucun lien en dur vers l'app de prod. Garde :
   `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
   route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
 - Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),
@@ -2256,7 +2401,8 @@ Module `modules/push/` (`TraderPushModule`). Plan et décisions : `docs/audit-pu
   `BehaviorAlertsService` (`BEHAVIOR` ; comportement seulement si `BEHAVIOR_ALERTS_UI=true`),
   `DailyRecapProcessor` (`RECAP`, après l'e-mail), `TradovateConnectionService.markNeedsReconnect`
   (`CONNECTION`, gratuit, au passage seulement, jamais démo). ⚠️ Les alertes en direct ne naissent que
-  si l'app est ouverte (WebSocket Tradovate calé sur la présence).
+  si un WebSocket Tradovate est ouvert : app ouverte, ou veille serveur pendant la séance (#770, voir
+  « Temps réel »).
 - **App fermée : relevé par la synchro de fond** (`TradovateBackgroundRefreshCron`, 15 min, 0 appel
   Tradovate en plus) : après chaque synchro de fond réussie, `PropAlertsService.checkFromBackground`.
   Seulement `BACKGROUND_ALERT_KINDS` (drawdown, perte du jour, objectif, payout ; pas la consistency),

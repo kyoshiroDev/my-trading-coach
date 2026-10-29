@@ -154,9 +154,26 @@ describe('UserDetailService', () => {
       founder: {
         number: 12, status: 'LOST', interval: 'year', cta: 'bandeau',
         takenAt: '2026-10-10T10:00:00.000Z', endedAt: '2027-10-10T10:00:00.000Z',
+        reserved: false, firstChargeAt: null,
       },
       partner: null,
     });
+  });
+
+  it('réservation fondateur pendant l’essai (#769) : place réservée et date du premier prélèvement', async () => {
+    const base = {
+      id: 'u1', name: null, email: 'r@test.com', plan: 'PREMIUM', role: 'USER', referralCode: null,
+      createdAt: new Date(), lastSeenAt: null, tradingStrategy: [], tradingSessions: [], startingCapital: 0,
+    };
+    const seat = { number: 7, status: 'ACTIVE', interval: 'month', cta: null, takenAt: new Date(), endedAt: null, firstPaidAt: null };
+    prisma.user.findUnique.mockResolvedValue({ ...base, stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: new Date('2026-11-16T10:00:00Z') });
+    prisma.founderSeat.findUnique.mockResolvedValue(seat);
+    expect((await service.getUserDetail('u1')).offer.founder).toMatchObject({ reserved: true, firstChargeAt: '2026-11-16T10:00:00.000Z' });
+
+    // Place déjà payée : plus une réservation, pas de date.
+    prisma.founderSeat.findUnique.mockResolvedValue({ ...seat, firstPaidAt: new Date() });
+    prisma.user.findUnique.mockResolvedValue({ ...base, stripeSubscriptionStatus: 'active', stripeCurrentPeriodEnd: new Date('2026-12-16T10:00:00Z') });
+    expect((await service.getUserDetail('u1')).offer.founder).toMatchObject({ reserved: false, firstChargeAt: null });
   });
 });
 

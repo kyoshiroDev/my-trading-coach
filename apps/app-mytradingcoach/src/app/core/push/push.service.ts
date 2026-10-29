@@ -11,6 +11,8 @@ import { PushApi } from '../api/push.api';
 import { AuthService } from '../auth/auth.service';
 import { UserScopedReset } from '../auth/user-scoped-reset';
 import { PUSH_BROWSER, type BrowserEnv } from './push-browser';
+import { devicePlace, isInAppBrowser, isIos } from './push-device';
+import { ProductEventsService, type InstallEvent } from '../services/product-events.service';
 
 /**
  * Où en est le push sur CET appareil (#666). Ordre de diagnostic : serveur, navigateur intégré,
@@ -35,16 +37,9 @@ interface PendingChange {
   input: (s: TraderPushSettings) => TraderPushPreferencesInput;
 }
 
-/** Navigateurs intégrés aux applis (Instagram, Facebook, TikTok…) : pas de push fiable. */
-const IN_APP_BROWSER = /Instagram|FBAN|FBAV|FB_IAB|Line\/|Snapchat|musical_ly|BytedanceWebview|LinkedInApp|Twitter/i;
-
-export function isIos(env: BrowserEnv): boolean {
-  return /iPhone|iPad|iPod/.test(env.userAgent) || (env.userAgent.includes('Macintosh') && env.maxTouchPoints > 1);
-}
-
 /** Diagnostic côté navigateur seul (sans l'avis du serveur ni l'abonnement). */
 export function browserState(env: BrowserEnv): Exclude<PushState, 'server-disabled' | 'subscribed'> {
-  if (IN_APP_BROWSER.test(env.userAgent)) return 'in-app-browser';
+  if (isInAppBrowser(env)) return 'in-app-browser';
   // Sur iPhone et iPad, rien n'est proposé tant que la page n'a pas de manifest (#715) : sans lui,
   // l'app ajoutée à l'écran d'accueil ne donne pas de push vérifié, même ouverte en mode app (iOS 26).
   // Le critère est le lien réel dans le document : l'activation revient seule avec le manifest.
@@ -71,6 +66,7 @@ export class PushService {
   private readonly api = inject(PushApi);
   private readonly browser = inject(PUSH_BROWSER);
   private readonly auth = inject(AuthService);
+  private readonly events = inject(ProductEventsService);
 
   /** Compte à qui appartient l'état affiché, et génération de cet état (changée à chaque remise à zéro). */
   private owner: string | null = null;
@@ -199,9 +195,12 @@ export class PushService {
       this.currentDeviceId.set(device.id);
       this.state.set('subscribed');
       this.setServer(fresh);
+      this.track('push_enabled');
     } catch {
       if (!this.current(gen)) return;
       const permission = this.browser.env().notificationPermission;
+      // Refus, ou demande fermée sans réponse : la permission n'est pas accordée.
+      if (permission !== 'granted') this.track('push_denied');
       if (permission === 'denied') {
         this.state.set('denied');
       } else if (permission === 'default') {
@@ -213,6 +212,12 @@ export class PushService {
     } finally {
       if (gen === this.generation) this.busy.set(false);
     }
+  }
+
+  /** Mesure de l'activation (plateforme seulement). Jamais pour le compte démo. */
+  private track(event: InstallEvent): void {
+    if (this.auth.currentUser()?.isDemo) return;
+    this.events.track(event, devicePlace(this.browser.env()));
   }
 
   /** « J'ai changé le réglage » : relit la permission du navigateur. */

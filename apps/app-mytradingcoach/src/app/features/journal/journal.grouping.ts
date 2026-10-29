@@ -14,11 +14,13 @@ export interface DayGroup {
   key: string;
   label: string;
   trades: Trade[];
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
+  totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
+  totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
+  totalCommission: number; // affichage seul
   count: number;
   winCount: number;
+  /** Jour peut-être coupé par la pagination : ses totaux ne portent que sur les trades chargés (#796). */
+  partial: boolean;
 }
 
 export interface WeekGroup {
@@ -27,9 +29,11 @@ export interface WeekGroup {
   days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
   count: number;
   winCount: number;
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
+  totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
+  totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
+  totalCommission: number; // affichage seul
+  /** Contient le jour partiel : totaux sur les seuls trades chargés (#796). */
+  partial: boolean;
 }
 
 /** Clé jour locale 'YYYY-MM-DD' d'une date de trade. */
@@ -38,8 +42,19 @@ function dayKeyOf(tradedAt: string | Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Regroupe les trades par jour (du plus récent au plus ancien), avec les stats du jour. */
-export function groupByDay(trades: Trade[]): DayGroup[] {
+/**
+ * Regroupe les trades par jour (du plus récent au plus ancien), avec les stats du jour.
+ *
+ * `hasMore` = il reste des pages côté serveur. La liste est triée par `tradedAt` desc et paginée
+ * par 20 : le DERNIER jour chargé (le plus ancien) peut se poursuivre sur la page suivante, et le
+ * front ne peut pas le savoir sans la charger (le curseur n'est qu'un id). Par prudence, il est
+ * marqué `partial` dès qu'il reste des pages (#796). Les jours plus récents sont complets.
+ *
+ * Vraie correction, à faire plus tard : des totaux par jour (et par semaine) calculés par le
+ * serveur avec le même filtre que la liste (buildTradeFilterSql, comme /trades/stats), les lignes
+ * restant paginées. Le marquage « partiel » deviendrait alors inutile.
+ */
+export function groupByDay(trades: Trade[], hasMore = false): DayGroup[] {
   if (!trades.length) return [];
 
   const groups = new Map<string, Trade[]>();
@@ -59,18 +74,19 @@ export function groupByDay(trades: Trade[]): DayGroup[] {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
       });
       const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-      // Stats du jour via le helper unique (BE exclus du win rate).
+      // Stats du jour via le helper unique (BE exclus du win rate). st.totalPnl est déjà NET
+      // (Σ netPnl) : le re-déduire des frais les comptait deux fois (#795).
       const st              = computeTradeStats(dayTrades);
-      const totalPnl        = st.totalPnl;
-      const totalPnlNet     = totalPnl - totalCommission;
       return {
         key, label,
         trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
-        totalPnl, totalPnlNet, totalCommission,
+        totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
         count: dayTrades.length, winCount: st.wins,
         lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
+        partial: false,
       };
-    });
+    })
+    .map((day, i, all) => (hasMore && i === all.length - 1 ? { ...day, partial: true } : day));
 }
 
 /**
@@ -94,14 +110,30 @@ export function groupByWeek(days: DayGroup[]): WeekGroup[] {
       const allTrades = weekDays.flatMap((d) => d.trades);
       const st = computeTradeStats(allTrades);
       const totalCommission = weekDays.reduce((s, d) => s + d.totalCommission, 0);
-      const totalPnl = st.totalPnl;
+      // st.totalPnl déjà NET : pas de seconde déduction des frais (#795).
       return {
         key, label, days: weekDays,
         count: st.total, winCount: st.wins,
-        totalPnl, totalPnlNet: totalPnl - totalCommission, totalCommission,
+        totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
+        partial: weekDays.some((d) => d.partial),
       };
     });
 }
+
+/**
+ * Libellé du nombre de trades d'un en-tête jour/semaine, écrit EN ENTIER (pas de morceaux
+ * concaténés) : « 1 trade », « 2 trades », « 20+ trades » si le groupe est partiel (#796).
+ */
+export function tradeCountLabel(count: number, partial: boolean): string {
+  if (partial) return `${count}+ trades`;
+  return count > 1 ? `${count} trades` : `${count} trade`;
+}
+
+/** Info-bulles de la pastille « partiel » (#796), phrases complètes. */
+export const PARTIAL_HINT = {
+  day: 'Charge plus de trades pour voir le total du jour.',
+  week: 'Charge plus de trades pour voir le total de la semaine.',
+} as const;
 
 /** Semaine ISO (lundi → dimanche) d'une clé jour 'YYYY-MM-DD'. Clé = lundi, libellé = plage. */
 export function isoWeek(dayKey: string): { key: string; label: string } {

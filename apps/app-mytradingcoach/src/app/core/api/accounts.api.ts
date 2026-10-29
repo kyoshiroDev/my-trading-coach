@@ -168,6 +168,8 @@ export interface TradingAccount {
   floorReached?: boolean;
   /** Autopsie ouverte la plus récente (#669), pour « Voir l'autopsie ». Absent hors de la liste. */
   openIncidentId?: string | null;
+  /** Compte ACTIF au-delà du quota gratuit (fin d'essai ou d'abonnement, #769). Absent hors de la liste. */
+  overFreeLimit?: boolean;
 }
 
 /** Payout d'un compte : détecté chez le broker, ou saisi à la main (`manual`, supprimable). */
@@ -226,6 +228,11 @@ export class AccountsApi {
   }
 
   /** Indices stockés pour deviner le plan du compte connecté ; `data: null` sans sous-compte choisi. */
+  /** Compte gardé actif en gratuit quand il y en a plusieurs (#769). */
+  keep(id: string): Observable<{ data: { keptAccountId: string } }> {
+    return this.http.post<{ data: { keptAccountId: string } }>(`${this.base}/${id}/keep`, {});
+  }
+
   planHint(id: string): Observable<{ data: AccountPlanHint | null }> {
     return this.http.get<{ data: AccountPlanHint | null }>(`${this.base}/${id}/plan-hint`);
   }

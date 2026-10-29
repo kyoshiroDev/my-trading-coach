@@ -1,0 +1,30 @@
+@if (visible()) {
+  <section class="ka-panel" aria-labelledby="ka-title" data-testid="kept-account-panel">
+    <div class="ka-lbl">OFFRE GRATUITE · 1 COMPTE</div>
+    <h2 id="ka-title" class="ka-title">Quel compte gardes-tu en gratuit&nbsp;?</h2>
+    <p class="ka-text">
+      Ton accès Premium est terminé. L'offre gratuite inclut un seul compte&nbsp;: choisis celui que tu
+      gardes. Les autres restent visibles, avec tout leur historique.
+    </p>
+    <div class="ka-list" role="radiogroup" aria-labelledby="ka-title">
+      @for (a of active(); track a.id) {
+        <label class="ka-row" [class.is-selected]="selected() === a.id" [attr.data-testid]="'kept-option-' + a.id">
+          <input type="radio" name="kept-account" [checked]="selected() === a.id" (change)="pick(a.id)" />
+          <span class="ka-name">{{ a.label }}</span>
+          @if (a.id === kept()) {
+            <span class="ka-tag">gardé</span>
+          }
+        </label>
+      }
+    </div>
+    <button
+      type="button"
+      class="ka-btn"
+      data-testid="kept-account-save"
+      [disabled]="saving() || selected() === kept()"
+      (click)="save()"
+    >
+      {{ saving() ? 'Enregistrement…' : 'Garder ce compte' }}
+    </button>
+  </section>
+}

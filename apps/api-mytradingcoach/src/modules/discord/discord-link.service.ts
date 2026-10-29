@@ -1,5 +1,5 @@
 import { createHash, randomInt } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { isPremiumAccess } from './discord-access.util';
@@ -18,6 +18,9 @@ export const DISCORD_CODE_LENGTH = 8;
 export const DISCORD_CODE_TTL_S = 10 * 60;
 export const REDEEM_LIMIT_PER_MINUTE = 5;
 export const REDEEM_LIMIT_PER_HOUR = 20;
+
+export const DISCORD_UNLINK_FAILED_MESSAGE =
+  "Ton Discord n'a pas pu être délié\u00a0: le retrait de ton rôle a échoué côté Discord. Ton compte reste relié, réessaie dans quelques minutes.";
 
 export type DiscordRedeemResult =
   | { status: 'linked'; premium: boolean }
@@ -57,6 +60,23 @@ export class DiscordLinkService {
   async status(userId: string): Promise<{ linked: boolean }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { discordId: true } });
     return { linked: !!user?.discordId };
+  }
+
+  /**
+   * Délie le Discord de ce compte : rôles Membre et Premium retirés sur le serveur, puis liaison
+   * effacée. Si Discord refuse ou ne répond pas, la liaison reste en base (503) : effacée seule,
+   * elle laisserait un rôle que plus rien ne retire (abonnement, suppression du compte).
+   */
+  async unlink(userId: string): Promise<{ linked: false }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { discordId: true } });
+    if (!user?.discordId) return { linked: false };
+    if (!(await this.guild.tryRemovePlanRoles(user.discordId))) {
+      throw new ServiceUnavailableException(DISCORD_UNLINK_FAILED_MESSAGE);
+    }
+    // Conditionnée à l'identifiant lu : un autre Discord relié entre-temps n'est pas effacé.
+    await this.prisma.user.updateMany({ where: { id: userId, discordId: user.discordId }, data: { discordId: null } });
+    this.logger.log(`Discord délié | user: ${userId}`);
+    return { linked: false };
   }
 
   /** Nouveau code pour ce compte ; le précédent, s'il existe, ne vaut plus rien. */

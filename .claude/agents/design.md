@@ -24,7 +24,11 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 - **Bleu = signal** (#3b82f6) : CTA et éléments interactifs uniquement.
 - **Vert = gains uniquement · Rouge = pertes uniquement.** Jamais inversé, jamais décoratif.
 - Toute **valeur numérique** et tout **label** = JetBrains Mono + `tabular-nums`.
-- Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono) — Google Fonts.
+- Polices : **Space Grotesk** (display), **Inter** (body), **JetBrains Mono** (mono), auto-hébergées
+  (`@fontsource`) et déclarées dans `src/styles/fonts.css` (GÉNÉRÉ par `tools/scripts/generate-font-faces.mjs`,
+  sous-ensembles latin + latin-ext : é, œ, €, ·, « », ’ compris). Nouvelle graisse : l'ajouter au
+  script, le relancer ; `fonts.spec.ts` vérifie chaque famille et graisse. Une police ou une graisse
+  ajoutée alourdit le CSS initial : budget du bundle (plafond 500 ko) avec marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget (`angular.md`).
 - Ton produit : français, tutoiement, direct et concret (nommer le vrai problème, chiffres réels).
 - **Typographie** : espace insécable (`&nbsp;` dans les gabarits) avant `:` `;` `!` `?` et `%`. Vérifié
   sur Parrainage, Ambassadeur et Devenir ambassadeur par `src/app/typographie-parrainage.spec.ts`.
@@ -94,11 +98,14 @@ description: "Système visuel « The Terminal » : couleurs, typographies, compo
 > (`--green`), appliquées par la classe `niveau-N`, jamais en style lié. Vérifié par
 > `features/scoring/score-streak-couleurs.spec.ts`.
 >
-> **Cartes « Badges obtenus » et « Streak & activité » MASQUÉES** depuis le 25/10/2026
-> (`STREAK_ET_BADGES_VISIBLES = false`, `scoring.component.ts`) : données inventées (pastilles au
-> hasard, série en dur, badges statiques). La carte du score passe alors sur toute la largeur
-> (`.grid-2.une-colonne`) ; le conseil des 10 trades reste. Ne les réafficher qu'avec de vraies
-> données (ticket « brancher le Streak »). Vérifié par `scoring-streak-masque.spec.ts` (compte normal et démo).
+> **Carte « Streak & activité » de Score : activité RÉELLE** depuis le 25/10/2026 (`features/scoring/streak.ts`,
+> données de `GET /analytics/activity/range`, journées Paris, tous comptes actifs) : 35 derniers jours
+> OUVRÉS (week-ends absents), intensité = trades du jour 0 · 1 · 2-3 · 4-5 · 6+ → niveaux 0 à 4, série =
+> jours ouvrés consécutifs avec trade (week-end et journée en cours ne la cassent pas), comptée sur ~1 an.
+> Seule dans sa colonne, hauteur naturelle (`.right-col .streak-card`). Specs : `streak.spec.ts`,
+> `scoring-streak.spec.ts` (rendu, compte normal et démo).
+> **Carte « Badges obtenus » MASQUÉE** (`BADGES_VISIBLES = false`) : badges encore statiques ; ne la
+> réafficher qu'avec des règles d'obtention réelles (ticket à part).
 
 ---
 
@@ -487,6 +494,13 @@ Nouvelle page sans topbar : lui mettre ces classes ; le spec tient l'inventaire 
 - **Icônes de l'app installée (PWA)** : `apps/app-mytradingcoach/public/pwa/`, générées depuis le
   tracé de `logo.svg` par `tools/scripts/generate-app-icons.mjs` (dégradé `--blue` → `--purple`,
   courbe `--text`, lus dans `theme.css`). Jamais retouchées à la main : modifier le script et relancer.
+- **Feuille d'installation** (`features/install/`, maquette `mockup-installation-pwa.html`) : feuille en
+  bas d'écran sur mobile (iPhone : flottante au-dessus de la barre de Safari, flèche vers Partager),
+  boîte centrée de 440 px à partir de 768 px (une feuille n'est pas une page : son plafond est permis).
+  Variables de `theme.css` uniquement, sauf le blanc des boutons `--primary` ; écran verrouillé en
+  `--bg-3` → `--bg-2`, icône d'appli en `--grad-brand`, exemple d'alerte bordé `--yellow`. Boutons 44 px
+  au moins. Ligne « Installer l'app » du Profil : toute la largeur, comme la section Notifications
+  (mesuré de 360 à 2560 px, aucun défilement horizontal). Vérifié par `install.styles.spec.ts`.
 
 ---
 

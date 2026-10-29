@@ -42,6 +42,8 @@ import { GA_ID } from '../config';
         <li>Mot de passe, si vous en définissez un (hashé argon2, jamais stocké en clair)</li>
         <li>Si vous utilisez « Continuer avec Google » : identifiant technique de votre compte Google (voir f)</li>
         <li>Date d'inscription</li>
+        <li>Premium offert&nbsp;: date de fin de la période offerte à l'inscription, origine de la période en cours (inscription ou geste de notre part) et date à laquelle sa fin a été traitée</li>
+        <li>Compte de trading que vous choisissez de garder actif en plan Gratuit, quand vous en avez plusieurs</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
       </ul>
 
@@ -67,7 +69,21 @@ import { GA_ID } from '../config';
         <li>Adresse IP (anonymisée après 30 jours)</li>
         <li>Type de navigateur et système d'exploitation</li>
         <li>Pages visitées et durée de visite</li>
-        <li>Dans l'application : compteur journalier des écrans où une offre Premium est affichée ou ouverte, et des clics vers le paiement (aucun cookie, aucun outil tiers), pour améliorer l'offre</li>
+        <li>
+          Dans l'application, des <strong>événements d'usage rattachés à votre compte</strong> (identifiant
+          interne du compte, jour, nom de l'événement et un seul repère : l'écran, ou la plateforme de
+          l'appareil), comptés par jour, sans cookie ni outil tiers&nbsp;:
+          <ul>
+            <li>offre Premium&nbsp;: écrans où elle est affichée ou ouverte, clics vers le paiement, retour du paiement&nbsp;;</li>
+            <li>installation de l'application sur l'écran d'accueil&nbsp;: parcours affiché, bouton «&nbsp;Installer&nbsp;» ou «&nbsp;Je l'ai fait&nbsp;» touché, installation constatée, «&nbsp;Plus tard&nbsp;», «&nbsp;Ne plus me proposer&nbsp;», message «&nbsp;Ouvre dans ton navigateur&nbsp;» affiché&nbsp;;</li>
+            <li>notifications&nbsp;: activation acceptée ou refusée sur un appareil.</li>
+          </ul>
+          La plateforme se limite à Android, iPhone (Safari ou un autre navigateur) ou ordinateur. Ce ne
+          sont pas des statistiques anonymes&nbsp;: elles sont liées à votre compte, servent à améliorer
+          l'offre et l'application, et ne sont ni vendues ni utilisées à des fins publicitaires. Vos choix
+          «&nbsp;Plus tard&nbsp;» et «&nbsp;Ne plus me proposer&nbsp;» restent dans le stockage de votre navigateur, sur
+          l'appareil, et ne nous sont pas transmis.
+        </li>
         <li>Cookies de session et d'authentification</li>
       </ul>
 
@@ -123,6 +139,9 @@ import { GA_ID } from '../config';
           <tr><td>Notifications push</td><td>Consentement (Art. 6.1.a RGPD)&nbsp;: vous les activez, puis votre navigateur vous demande l'autorisation. Retrait à tout moment&nbsp;: bouton «&nbsp;Retirer&nbsp;» dans Profil, Notifications, interrupteurs par type de notification, ou réglages du navigateur</td></tr>
           <tr><td>Facturation et abonnement</td><td>Obligation légale (Art. 6.1.c RGPD)</td></tr>
           <tr><td>Amélioration du service</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
+          <tr><td>Événements d'usage rattachés au compte (offre Premium, installation de l'application, activation des notifications)</td><td>Intérêt légitime (Art. 6.1.f RGPD)&nbsp;: comprendre ce qui aide ou gêne l'usage de l'application</td></tr>
+          <tr><td>Premium offert à l'inscription et retour au plan Gratuit à sa fin (dont la mise à jour du rôle sur le Discord, si vous l'avez relié)</td><td>Exécution du contrat (Art. 6.1.b RGPD)</td></tr>
+          <tr><td>Ne pas accorder plusieurs fois le Premium offert&nbsp;: l'adresse e-mail d'un compte supprimé depuis moins de 90 jours est comparée à celle d'une nouvelle inscription</td><td>Intérêt légitime (Art. 6.1.f RGPD)&nbsp;: éviter les inscriptions répétées pour obtenir l'offre</td></tr>
           <tr><td>Communications marketing</td><td>Consentement (Art. 6.1.a RGPD)</td></tr>
           <tr><td>E-mails d'aide à la prise en main</td><td>Intérêt légitime (Art. 6.1.f RGPD), désinscription dans chaque e-mail</td></tr>
           <tr><td>Sécurité et prévention fraude</td><td>Intérêt légitime (Art. 6.1.f RGPD)</td></tr>
@@ -140,12 +159,14 @@ import { GA_ID } from '../config';
         <tbody>
           <tr><td>Compte et trades</td><td>Durée de l'abonnement + 3 ans</td></tr>
           <tr><td>Données de facturation</td><td>10 ans (obligation comptable)</td></tr>
+          <tr><td>Trace d'un compte supprimé (nom, adresse e-mail, dates d'inscription et de suppression, plan, nombre de trades, motif s'il est donné)</td><td>Nom et adresse e-mail effacés automatiquement 90 jours après la suppression&nbsp;; le reste, sans identité, sert aux statistiques</td></tr>
           <tr><td>Logs techniques</td><td>12 mois</td></tr>
           <tr><td>IP anonymisées</td><td>30 jours</td></tr>
           <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
           <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
           <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
           <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>
+          <tr><td>Événements d'usage rattachés au compte</td><td>13 mois, puis effacement automatique, ou à la suppression du compte</td></tr>
           <tr><td>Analyse IA d'une autopsie de compte</td><td>Jusqu'à la suppression du compte de trading concerné ou de votre compte. «&nbsp;Retirer cette autopsie&nbsp;» la masque sans l'effacer</td></tr>
         </tbody>
       </table>
@@ -179,7 +200,8 @@ import { GA_ID } from '../config';
         <strong>Discord (USA)</strong>, si vous reliez votre compte Discord avec le code à usage unique
         affiché dans votre Profil&nbsp;: nous enregistrons votre identifiant Discord et le transmettons
         à Discord pour vous attribuer le rôle correspondant à votre plan (membre ou Premium). Ce rôle
-        est retiré si vous reliez un autre compte Discord ou supprimez votre compte.
+        est retiré si vous reliez un autre compte Discord, déliez votre Discord depuis votre Profil
+        (l'identifiant est alors effacé) ou supprimez votre compte.
       </p>
       <p>
         <strong>Service de notification de l'éditeur de votre navigateur</strong> (Google, Apple, Mozilla

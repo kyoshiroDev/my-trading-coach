@@ -46,6 +46,7 @@ function makeSvc() {
   );
   const founders = {
     claimSeat: vi.fn(), markLost: vi.fn(), releaseReservation: vi.fn(),
+    markFirstPaid: vi.fn().mockResolvedValue(null), releaseUnpaid: vi.fn().mockResolvedValue(null),
     refundWithinWindow: vi.fn(), updateInterval: vi.fn(),
   };
   const svc = new StripeWebhookService(

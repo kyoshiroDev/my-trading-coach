@@ -82,6 +82,7 @@ import { AccountPlanWizardComponent } from './account-plan-wizard/account-plan-w
 import { progressTitle, requirementLabel } from './account-progress.util';
 import { assignBrokerTones, brokerBadge } from './broker-badge.util';
 import { FloorReachedBannerComponent } from './lost-account/floor-reached-banner.component';
+import { KeptAccountPanelComponent } from './kept-account/kept-account-panel.component';
 import { AccountPayoutsComponent } from './account-payouts/account-payouts.component';
 import { LostAccountFlowService } from '../../core/services/lost-account-flow.service';
 import { countsInAggregate, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
@@ -132,7 +133,7 @@ function emptyForm(): AccountFormState {
     DialogDirective,
     FormsModule, LucideDynamicIcon, TopbarComponent, PlanModalComponent,
     TradovateConnectModalComponent, TradovateAccountPickerComponent, PropFirmPlanPickerComponent,
-    PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, AccountPayoutsComponent,
+    PropFirmRulesComponent, AccountPlanWizardComponent, NgTemplateOutlet, FloorReachedBannerComponent, KeptAccountPanelComponent, AccountPayoutsComponent,
     RouterLink,
   ],
   templateUrl: './accounts.component.html',

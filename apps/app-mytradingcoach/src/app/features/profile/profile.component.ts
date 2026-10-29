@@ -27,6 +27,7 @@ import {
 import { TopbarComponent } from '../../shared/components/topbar/topbar.component';
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { PushSettingsComponent } from './notifications/push-settings.component';
+import { InstallSettingsComponent } from '../install/install-settings.component';
 import { UserStore } from '../../core/stores/user.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
@@ -59,7 +60,7 @@ type ProfileTab = 'trader' | 'params';
 
 @Component({
   selector: 'mtc-profile',
-  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent],
+  imports: [DialogDirective, TopbarComponent, DatePipe, DecimalPipe, PlanModalComponent, SetupFormModalComponent, LucideDynamicIcon, PushSettingsComponent, InstallSettingsComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +89,14 @@ export class ProfileComponent implements OnInit {
 
   // Onglets Profil trader / Paramètres (deep-link ?tab=params)
   protected readonly activeProfileTab = signal<ProfileTab>('trader');
+
+  /**
+   * Premium sans abonnement Stripe (essai d'inscription #769, ou offert par l'admin) : aucun
+   * prélèvement à annoncer ni portail Stripe à ouvrir (le compte n'a pas de client Stripe).
+   */
+  protected readonly freePremium = computed(
+    () => this.userStore.isOfferedPremium() || this.userStore.signupTrialDaysLeft() !== null,
+  );
 
   // Statut d'essai : N calculé depuis trialEndsAt Stripe, pas l'inscription.
   protected readonly isInTrial = computed(() => {
@@ -125,6 +134,7 @@ export class ProfileComponent implements OnInit {
   protected readonly discordLinked = signal<boolean | null>(null);
   protected readonly discordCode = signal<DiscordLinkCode | null>(null);
   protected readonly generatingDiscordCode = signal(false);
+  protected readonly unlinkingDiscord = signal(false);
 
   // Préférences (plus de devise : elle est portée par chaque compte)
   protected readonly prefNotifications = signal(true);
@@ -520,11 +530,38 @@ export class ProfileComponent implements OnInit {
     const code = this.discordCode()?.code;
     if (!code) return;
     try {
-      await navigator.clipboard.writeText(`/verify code:${code}`);
-      this.toast.success('Commande copiée : colle-la dans le serveur Discord');
+      // Le code seul : la commande /verify se tape dans Discord, qui propose ensuite le champ code.
+      await navigator.clipboard.writeText(code);
+      this.toast.success('Code copié\u00a0: colle-le après /verify dans Discord');
     } catch {
       this.toast.error('Copie impossible : sélectionne le code à la main');
     }
+  }
+
+  /** Rôles retirés sur le serveur puis liaison effacée ; si Discord échoue, le compte reste relié. */
+  protected async unlinkDiscord() {
+    const ok = await this.confirm.ask({
+      title: 'Délier mon Discord',
+      message: 'Tu perdras ton rôle Membre ou Premium sur le serveur. Tu pourras le relier de nouveau avec un nouveau code.',
+      confirmLabel: 'Délier',
+    });
+    if (!ok) return;
+    this.unlinkingDiscord.set(true);
+    this.discordApi
+      .unlink()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (s) => {
+          this.unlinkingDiscord.set(false);
+          this.discordLinked.set(s.linked);
+          this.discordCode.set(null);
+          this.toast.success('Ton Discord est délié');
+        },
+        error: (err: unknown) => {
+          this.unlinkingDiscord.set(false);
+          this.toast.error(apiErrorMessage(err, "Ton Discord n'a pas pu être délié, réessaie dans quelques minutes."));
+        },
+      });
   }
 
   protected async unlinkGoogle() {

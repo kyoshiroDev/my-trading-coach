@@ -1,0 +1,18 @@
+@if (state() !== 'unsupported') {
+  <section class="ia" aria-labelledby="ia-title" data-testid="install-settings" [attr.data-state]="state()">
+    <h2 class="ia-title" id="ia-title">Application</h2>
+    <div class="ia-card">
+      @if (state() === 'installed') {
+        <div class="ia-row" data-testid="install-settings-installed">
+          <span class="ia-main"><b>App installée</b><small>Tu l'utilises depuis ton écran d'accueil</small></span>
+          <span class="ia-tag">ACTIVE</span>
+        </div>
+      } @else {
+        <button type="button" class="ia-row ia-row--btn" data-testid="install-settings-open" (click)="install.openFromSettings()">
+          <span class="ia-main"><b>Installer l'app</b><small>Ouvre MTC comme une application</small></span>
+          <span class="ia-chev" aria-hidden="true">›</span>
+        </button>
+      }
+    </div>
+  </section>
+}

@@ -17,7 +17,7 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebK
 
 const dev = (id: string, label = 'Chrome · Android') => ({ id, label, createdAt: '2026-10-23T10:00:00.000Z', lastSuccessAt: null });
 const settings = (over: Partial<TraderPushSettings> = {}): TraderPushSettings => ({
-  enabled: true, publicKey: 'BPub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris',
+  enabled: true, publicKey: 'BPub', mutedTypes: ['RECAP'], quietHours: null, timeZone: 'Europe/Paris', liveWhileClosed: false,
   devices: [dev('d1'), dev('d2', 'Chrome · Windows')], ...over,
 });
 
@@ -76,6 +76,14 @@ describe('Section Notifications du profil', () => {
     expect(q('push-types')!.textContent).toContain('Seulement en direct, pendant que MTC est ouvert.');
     expect(el.textContent).toContain('Appareils · 2 sur 10');
     expect(q('push-devices')!.textContent).toContain('CET APPAREIL');
+    expect(el.textContent).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  it('veille serveur allumée (#770) → délais « même MTC fermé », pendant la séance', async () => {
+    const { q, el } = await mount({ settings: settings({ liveWhileClosed: true }) });
+    expect(q('push-types')!.textContent).toContain('En direct pendant ta séance, même MTC fermé. Hors séance, relevé de la synchro automatique, jusqu’à 15 min de décalage.');
+    expect(q('push-types')!.textContent).toContain('En direct pendant ta séance, même MTC fermé.');
+    expect(q('push-types')!.textContent).not.toContain('pendant que MTC est ouvert');
     expect(el.textContent).not.toMatch(/[\u2013\u2014]/);
   });
 

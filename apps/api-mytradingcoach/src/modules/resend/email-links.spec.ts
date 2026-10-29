@@ -60,11 +60,13 @@ describe('liens des e-mails vers l’app', () => {
     }
   });
 
-  it('pied commun : désinscription en un clic quand l’e-mail en a une, sinon préférences du profil', () => {
+  it('pied commun : toujours les préférences du profil, la désinscription reste dans le texte (un seul lien)', () => {
     const c = CAMPAIGNS.find((x) => x.key === 'discord_invite')!;
     const html = c.build({ userName: '', appUrl: 'https://app.test', unsubUrl: 'https://api.test/u?token=t' }).html;
     const footer = html.slice(html.indexOf('<!-- FOOTER -->'));
-    expect(footer).toContain('href="https://api.test/u?token=t"');
+    expect(footer).not.toContain('https://api.test/u?token=t');
+    expect(footer).toContain('/profil?tab=params');
+    expect(html.split('https://api.test/u?token=t').length - 1).toBe(1);
     const welcome = welcomeFreeTemplate({ userName: '', appUrl: 'https://app.test' }).html;
     expect(welcome.slice(welcome.indexOf('<!-- FOOTER -->'))).toContain('/profil?tab=params');
   });

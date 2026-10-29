@@ -23,10 +23,10 @@ describe('PLAN_BENEFITS', () => {
     for (const b of all) expect(b.text, b.id).not.toMatch(/le seul|le premier|gagne|garanti/i);
   });
 
-  it('les alertes et l’anti-tilt disent leur condition réelle (app ouverte, Tradovate connecté)', () => {
+  it('les alertes et l’anti-tilt disent leur condition réelle (app ouverte ou notification, Tradovate connecté)', () => {
     for (const id of ['loss_alerts', 'anti_tilt']) {
       const text = PLAN_BENEFITS.premium.find((b) => b.id === id)!.text;
-      expect(text, id).toContain('app ouverte');
+      expect(text, id).toContain('app ouverte ou en notification');
       expect(text, id).toContain('Tradovate connecté');
     }
   });
@@ -48,7 +48,7 @@ describe('SIGNUP_PITCH_POINTS', () => {
 
   it('l’alerte après une perte dit sa condition réelle, comme PLAN_BENEFITS', () => {
     const text = SIGNUP_PITCH_POINTS.find((p) => p.benefitId === 'anti_tilt')!.text;
-    expect(text).toContain('app ouverte');
+    expect(text).toContain('app ouverte ou en notification');
     expect(text).toContain('Tradovate connecté');
   });
 

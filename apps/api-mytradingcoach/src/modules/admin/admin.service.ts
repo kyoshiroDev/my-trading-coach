@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import { INSTALL_EVENTS } from '../product-events/product-events.const';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StripeSubscriptionService } from '../stripe/stripe-subscription.service';
@@ -8,6 +9,7 @@ import {
   type AdminAcquisitionData,
   type AdminFunnelData,
   type AdminFunnelPlace,
+  type AdminInstallRow,
   type AdminSignupMethodsData,
 } from '@mtc/shared';
 
@@ -190,13 +192,14 @@ export class AdminService {
    * Entonnoir Premium sur `days` jours (Paris) : visites landing → inscrits → Premium vu →
    * offres ouvertes → clic essai → retour Stripe, plus la démo. Étapes en users DISTINCTS,
    * hors démo et hors ADMIN (`ProductEventDaily`) ; la démo, elle, est comptée en occurrences
-   * (un seul user partagé).
+   * (un seul user partagé). Installation de l'app : users distincts par événement et plateforme,
+   * plateforme telle qu'enregistrée (`ios-other` reste distinct de `ios`).
    */
   async getFunnel(days = 30): Promise<AdminFunnelData> {
     const from = new Date(`${todayParis()}T00:00:00Z`);
     from.setUTCDate(from.getUTCDate() - (days - 1));
 
-    const [[visits], [signups], demoRows, stepRows, placeRows, [current]] = await Promise.all([
+    const [[visits], [signups], demoRows, stepRows, placeRows, [current], installRows, [trial]] = await Promise.all([
       this.prisma.$queryRaw<{ n: bigint | null }[]>`
         SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date`,
       this.prisma.$queryRaw<{ n: bigint }[]>`
@@ -226,6 +229,28 @@ export class AdminService {
         SELECT COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" = 'trialing') AS trialing,
           COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" IN ('active', 'past_due')) AS paying
         FROM "User" WHERE "isDemo" = false AND "role" <> 'ADMIN'`,
+      this.prisma.$queryRaw<{ event: AdminInstallRow['event']; place: string; n: bigint }[]>`
+        SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
+        FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+          AND e."event" IN (${Prisma.join([...INSTALL_EVENTS])})
+        GROUP BY e."event", e."place"
+        ORDER BY e."place", e."event"`,
+      // Essai de l'inscription (#769, B3) : `signupTrialEndsAt` n'est posé que par l'inscription.
+      this.prisma.$queryRaw<{
+        in_progress: bigint; ended: bigint; converted: bigint; reservations: bigint; awaiting: bigint; next_charge: Date | null;
+      }[]>`
+        SELECT
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" > NOW() AND u."stripeSubscriptionStatus" IS DISTINCT FROM 'active') AS in_progress,
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" <= NOW() AND u."signupTrialEndsAt" >= ${from}) AS ended,
+          COUNT(*) FILTER (WHERE u."signupTrialEndsAt" <= NOW() AND u."signupTrialEndsAt" >= ${from}
+            AND u."stripeSubscriptionStatus" = 'active') AS converted,
+          COUNT(s."number") AS reservations,
+          COUNT(s."number") FILTER (WHERE u."stripeSubscriptionStatus" IN ('past_due', 'unpaid')) AS awaiting,
+          MIN(u."stripeCurrentPeriodEnd") FILTER (WHERE s."number" IS NOT NULL AND u."stripeSubscriptionStatus" = 'trialing') AS next_charge
+        FROM "User" u
+        LEFT JOIN "FounderSeat" s ON s."userId" = u."id" AND s."status" = 'ACTIVE' AND s."firstPaidAt" IS NULL
+        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND u."signupTrialEndsAt" IS NOT NULL`,
     ]);
 
     const step = new Map(stepRows.map((r) => [r.key, Number(r.n)]));
@@ -238,7 +263,16 @@ export class AdminService {
       demo: { opens: demo.get('demo_open') ?? 0, signupClicks: demo.get('demo_signup_click') ?? 0 },
       steps: keys.map((key) => ({ key, users: step.get(key) ?? 0 })),
       byPlace: placeRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
+      install: installRows.map((r) => ({ event: r.event, place: r.place, users: Number(r.n) })),
       current: { trialing: Number(current?.trialing ?? 0), paying: Number(current?.paying ?? 0) },
+      signupTrial: {
+        inProgress: Number(trial?.in_progress ?? 0),
+        ended: Number(trial?.ended ?? 0),
+        converted: Number(trial?.converted ?? 0),
+        reservations: Number(trial?.reservations ?? 0),
+        reservationsAwaitingPayment: Number(trial?.awaiting ?? 0),
+        nextChargeAt: trial?.next_charge ? new Date(trial.next_charge).toISOString() : null,
+      },
     };
   }
 

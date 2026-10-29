@@ -5,7 +5,7 @@
 // arrivent. Rien d'autre n'en dépend : la supprimer = ce fichier + components/prop-firm-page/ +
 // la ligne du filtre sitemap (astro.config.mjs). Même layout que la home : script d'acquisition
 // (UTM, /public/visit, cta_click), bandeau cookies, mode interne. Pas d'emoji hors footer.
-import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
+import { PREMIUM_SIGNUP_TRIAL_DAYS, PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
 import { APP_URL } from '../config';
 import Base from '../layouts/Base.astro';
 import Footer from '../components/Footer.astro';
@@ -40,7 +40,7 @@ const extras = [
 ];
 // Réponses alignées sur la FAQ de la home (src/data/faq.ts) et plans.md.
 const faq = [
-  { q: "C'est vraiment gratuit ?", a: "Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire." },
+  { q: "C'est vraiment gratuit ?", a: `Oui. Le plan Gratuit n'a pas de limite de durée et ne demande aucune carte bancaire. À l'inscription, tu as en plus ${PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts, puis tu repasses en Gratuit automatiquement.` },
   { q: 'MyTradingCoach peut-il toucher à mon compte ?', a: "Non. La connexion est en lecture seule : aucun ordre, aucun mouvement d'argent." },
   { q: 'Je ne suis pas sur Tradovate.', a: 'Tu peux importer tes trades en CSV. Binance, Bybit, MetaTrader 4/5, IBKR et MEXC sont reconnus automatiquement, en gratuit. Pour une autre plateforme, l’import IA lit ton fichier tel quel : il est réservé au Premium.' },
   { q: 'Le calcul remplace la plateforme de ma firme ?', a: 'Non, il est indicatif : la plateforme de ta firme fait toujours foi.' },
@@ -72,7 +72,7 @@ const faq = [
           <a href={register} class="pf-btn" data-ga-event="cta_signup" data-ga-place="pf-hero">Commencer gratuitement</a>
           <a href={`${APP_URL}/demo`} class="pf-demo" data-ga-event="cta_demo" data-ga-place="pf-hero">Voir la démo</a>
         </div>
-        <p class="pf-reassure">Gratuit, sans carte bancaire · Lecture seule, aucun ordre passé</p>
+        <p class="pf-reassure">Gratuit, sans carte bancaire · {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts · Lecture seule, aucun ordre passé</p>
         {/* Seul emoji de la page hors footer (demande du 18/10). NinjaTrader : formulation factuelle
             de la clause 17 ; le logo est dans le bloc NinjaTraderTrust de `.pf-hero-side`. */}
         <p class="pf-trustline">🇫🇷 Fait en France · Indépendant · Sans publicité · Référencé dans l'écosystème NinjaTrader</p>
@@ -220,7 +220,7 @@ const faq = [
       <div class="pf-in pf-narrow">
         <h2 class="pf-h2">Sache toujours ce qu'il te reste.</h2>
         <a href={register} class="pf-btn" data-ga-event="cta_signup" data-ga-place="pf-final">Commencer gratuitement</a>
-        <span class="pf-reassure">Gratuit, sans carte bancaire</span>
+        <span class="pf-reassure">Gratuit, sans carte bancaire · {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts</span>
       </div>
     </section>
   </main>

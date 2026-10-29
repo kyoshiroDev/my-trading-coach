@@ -102,7 +102,7 @@
                       }
                     </b>
                     <span class="pn-s">{{ row.hint }}</span>
-                    @if (row.delay && active() && !rowLocked(row)) { <span class="pn-s">{{ row.delay }}</span> }
+                    @if (rowDelay(row); as delay) { @if (active() && !rowLocked(row)) { <span class="pn-s">{{ delay }}</span> } }
                   </div>
                   <button type="button" class="pn-switch" role="switch" [attr.aria-labelledby]="'pn-type-' + row.type"
                     [attr.data-testid]="'push-type-' + row.type" [attr.aria-checked]="rowOn(row)" [disabled]="rowDisabled(row)"

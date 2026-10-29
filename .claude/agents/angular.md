@@ -27,6 +27,24 @@ Angular 22 · Signals · Standalone Components · @lucide/angular · Vitest · N
 - CSS dans `.css` uniquement — jamais inline dans `.ts`
 - `OnPush` sur les composants sans signals
 
+## Budget du bundle initial (règle du 2026-10-26)
+
+- Plafond bloquant 500 ko (`project.json`, jamais relevé). **Tout ajout au bundle initial se mesure**
+  (`nx run app-mytradingcoach:build:production`, ligne « Initial total ») avant/après, chiffre dans la PR.
+- Sous le plafond de 500 ko : **marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget**.
+- Ce qui n'est pas au premier écran part à la demande : route `loadComponent`, `@defer`, `import()`.
+  Un composant exporté par un barrel chargé au démarrage (`@mtc/front-ui`) reste dans le bundle
+  initial même derrière `@defer` : l'importer par un chemin direct (ex. `@mtc/front-ui/confirm-dialog`,
+  alias dans `tsconfig.base.json` ET `vitest.config.mts`).
+- **Point sensible : la page d'inscription** est volontairement chargée d'office (fae5a8c8, −1,3 s en
+  4G lente) et embarque `@angular/forms` (~43 ko) pour son formulaire. N'y toucher qu'avec l'accord
+  de Greg (conversion des inscriptions).
+- Polices : `src/styles/fonts.css` GÉNÉRÉ (`tools/scripts/generate-font-faces.mjs`), latin + latin-ext
+  seulement ; `src/styles/fonts.spec.ts`. Verrous du chargement à la demande : `src/app/bundle-initial.spec.ts`.
+- Mesures : 495,04 ko le 26/10 (`dev` ce2d8f2e) → 479,17 ko après le lot 1 (polices −13,19 ; page 404
+  paresseuse −1,33 ; dialogue de confirmation à la première demande −1,35 ; `RouterOutlet` à la place
+  de `RouterModule` dans `App` : 0, non retenu). Marge 20,83 ko.
+
 ---
 
 ## Structure
@@ -1258,6 +1276,39 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   campagne. Colonnes `ENGAGEMENT_COLUMNS` : Vues · 25/50/75/100 % · 10/30/60 s · Règles, taux = valeur
   / vues de la ligne (pas l'étape précédente). Mêmes classes que le parcours (`signup-*`).
 
+## Essai Premium d'inscription (#769, 2026-10-26)
+
+- **Encart « tu aurais été alerté » (B4)** : `mtc-live-prop-firm` (session live), entrée `sessionId`
+  passée par `session-live` ; `missedAlert()` / `missedAlertPct()` (`live-prop-firm.util.ts`) sur les
+  seuils partagés `alertLevel` de `@mtc/shared`. État par séance en localStorage
+  `mtc_missed_alert:<sessionId>` `{ reached, closed }` (rangs 1 = 25 %, 2 = 10 %) : l'encart revient
+  seulement pour un seuil plus profond que le dernier fermé. Gratuit, plan relié, hors démo.
+
+- **`UserStore`** : `signupTrialDaysLeft()` (jours restants arrondis au supérieur, 1 le dernier jour ;
+  `null` hors essai d'inscription, démo, abonné Stripe, Premium offert par l'admin),
+  `signupTrialEnded()` (essai d'inscription fini, `trialSource` encore `SIGNUP`, aucun autre accès
+  Premium, hors démo). `isOfferedPremium()` exclut `trialSource = SIGNUP` (même règle que l'API).
+  `AuthUser` porte `trialSource` et `signupTrialEndsAt`.
+- **Bandeau** « Premium offert · il te reste N jours » + « Voir les offres → » (`OfferIntentService.open('bandeau')`) :
+  dans `mtc-topbar`, sous l'en-tête, NON collant (les vues calées sur le viewport n'ont pas de topbar
+  et `--demo-banner-h` n'est pas touché). Spec : `topbar-trial-strip.spec.ts`.
+- **Fenêtre des offres** pendant l'essai : plus de « 1 mois offert » (`trialUsed` posé à l'inscription)
+  et une ligne `plan-trial-note` : fin du Premium offert (JJ/MM) et paiement dès la souscription.
+- **Fin d'essai** : `mtc-trial-ended-modal` (shell, `@defer (when userStore.signupTrialEnded())`), une
+  seule fois par compte et par appareil (localStorage `mtc_trial_ended_seen`, liste d'ids ; pas de
+  colonne, décision du 26/10). Contenu = `PLAN_BENEFITS` (gratuit / Premium) ; renvoi vers Mes comptes
+  si des comptes sont en trop. Téléphone : boutons collés en bas de la fenêtre.
+- **Compte gardé** : `mtc-kept-account-panel` en haut de Mes comptes, visible seulement si un compte a
+  `overFreeLimit` (API). Choix radio parmi les comptes ACTIVE, `POST /accounts/:id/keep`, puis
+  `SelectedAccountStore.load()`. Libellé « gardé » (pas « actif », déjà le statut du compte).
+- **Lien `/register?plan=premium`** (URL conservée, diffusée par la landing) : plus de paiement direct.
+  `PostSignupService.afterSignup()` n'a plus d'option `premium` : tableau de bord, et l'intention
+  `plan=premium` est effacée (aucune modale d'offres à l'arrivée). Textes de l'inscription : titre
+  « Essaie Premium 14 jours » pour ce lien, ligne « 14 jours de Premium offerts · sans carte · puis
+  gratuit, sans engagement » pour tous (`PREMIUM_SIGNUP_TRIAL_DAYS`). Garde :
+  `features/auth/register-premium-link.spec.ts`. Formulaire d'inscription inchangé.
+- Bundle initial : 478,74 ko (−0,43 ko, le paiement ne fait plus partie du retour d'inscription).
+
 ## Offre fondateur et codes partenaires (#525, 2026-10-08)
 
 - **Offres de l'utilisateur** : `OffersStore` (core/stores) ← `GET /billing/offers` (offre ouverte +
@@ -1428,6 +1479,9 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
   d'installation (#715). Sans manifest (#715), l'app ajoutée à l'écran d'accueil d'un iPhone avant
   iOS 26 ne s'ouvre pas en mode app, donc pas de push iOS avant #715 : `TRADER_PUSH_ENABLED` reste
   coupé en production jusque-là (`deploy.md`) ; coupé, la section est absente de l'app.
+- Délai affiché par type (`rowDelay`) : `delay` (« si MTC est ouvert ») ou, si
+  `settings.liveWhileClosed` (veille serveur #770 allumée côté API), `delayWhileClosed` (« En direct
+  pendant ta séance, même MTC fermé »). Jamais le second sans le drapeau : dit honnêtement.
 
 ## Installation PWA de l'app (2026-10-25, PR 1 : manifest)
 
@@ -1454,6 +1508,52 @@ Maquette qui fait foi : `maquettes/mockup-push.html` (6 états + bureau). API : 
 - `push-sw.js` reste le seul service worker : ni `@angular/service-worker`, ni `SwUpdate`, ni page
   hors ligne (rien n'est mis en cache, il n'y a rien à mettre à jour).
 - Poids : aucun (fichiers statiques). Bundle initial 492,76 ko au 25/10/2026, marge 7,24 ko.
+
+## Installation PWA de l'app (2026-10-25, PR 2 : parcours guidé et mesure)
+
+Maquette qui fait foi : `maquettes/mockup-installation-pwa.html` (v4). Décisions de Greg (étape 0 et suivantes).
+- **Budget du bundle** : SEUL `core/install/install-capture.ts` (`InstallCapture`) est dans le bundle
+  initial : écouteurs `beforeinstallprompt` (gardé, `preventDefault`) et `appinstalled`, état de la
+  feuille (`sheet`), `load()` (import dynamique du parcours). Le reste est paresseux :
+  `core/install/install-prompt.service.ts` (`InstallPromptService` : états, règles, stockage,
+  événements), la feuille `features/install/install-sheet.component` (`@defer (on immediate)` dans
+  `App`, seulement quand `sheet()` s'ouvre), la ligne du Profil. Ne JAMAIS importer
+  `InstallPromptService` depuis le bundle initial (`App`, services root chargés au démarrage) : passer
+  par `InstallCapture.load()`. Mesure du 25/10/2026 : 495,04 ko (marge 4,96 ko, `dev` à 493,66 ko).
+- **Détection** : `core/push/push-device.ts` (`isInAppBrowser`, `isIos`, `isIosOtherBrowser`
+  CriOS/FxiOS/EdgiOS/OPiOS, `isAndroid`, `devicePlace`), partagée avec `push.service.ts`. Fichier séparé
+  de `push-browser.ts`, qui est dans le bundle initial (déconnexion) : ne pas y remettre ces fonctions.
+- **États** (`installState`) : `installed` (standalone ou `appinstalled`), `in-app-browser`,
+  `ios-manual` / `ios-other`, `can-prompt` (invite reçue), `android-manual` (menu ⋮), `unsupported`
+  (ordinateur sans invite : aucune ligne dans le Profil).
+- **Quand** : jamais à l'arrivée. Gratuit : après CHAQUE import réussi (`csv-import`, fichier ou
+  synchro Tradovate, `created > 0`). Premium : après la liaison d'un plan prop firm
+  (`account-plan-wizard`, `propFirmPlanId` posé). Pendant `/onboarding` : gardé, montré à la première
+  page hors onboarding. Ordinateur : jamais de lui-même. Délai de 600 ms (la modale se ferme d'abord).
+- **Fréquence** (`frequencyAllows`, stockage `INSTALL_STORAGE`, sur l'appareil, aucune route API) :
+  une fois par session (`sessionStorage`), « Plus tard » = 7 jours, « Ne plus me proposer » définitif
+  (`localStorage`). Le Profil (`openFromSettings`) passe outre et n'enregistre aucun report ; pas de
+  « Ne plus me proposer » dans une feuille ouverte depuis le Profil.
+- **Écrans** : Android/ordinateur = écran verrouillé aux 3 vrais textes (`LOCK_SCREEN_EXAMPLES`,
+  sans montant), ligne de gating masquée pour un Premium, « Installer » (invite) ou aide du menu ;
+  ordinateur = texte sans écran verrouillé. iPhone Safari = 3 étapes + flèche « Ici, en bas de
+  Safari » (iPhone seulement), « Je l'ai fait » revérifie le mode app, sinon « Ouvre MTC depuis ton
+  écran d'accueil » et report de 7 jours. iPhone autre navigateur = « Ouvre MyTradingCoach dans
+  Safari pour l'installer » + Copier le lien. Navigateur intégré = seulement « Ouvre dans ton
+  navigateur » (nom de l'appli déduit de l'UA, sinon « cette application »).
+- **Après installation** (lancement standalone, connecté) : `App` charge le parcours ; `install_done`
+  une fois par appareil, puis invitation aux alertes 3 s plus tard, une fois par session, seulement si
+  `PushService.init()` donne `supported` (donc `GET /push/settings` → `enabled: true`). « Activer les
+  alertes » mène à `/profil#notifications` (aucune permission demandée par la feuille). Déjà abonné :
+  plus jamais vérifié sur cet appareil.
+- **Mesure** : événements `install_*`, `inapp_seen`, `push_enabled` / `push_denied` (`PushService.enable`)
+  avec `place` = `devicePlace`. RATTACHÉS AU COMPTE (`ProductEventDaily.userId`), pas anonymes. Démo :
+  aucun envoi.
+- **Profil** : `mtc-install-settings` (onglet Paramètres, avant `mtc-push-settings`) : « Installer
+  l'app » ou « App installée · ACTIVE ».
+- Paliers : voile 1100, feuille 1101 (au-dessus des modales et du burger, sous les toasts) ;
+  `install.styles.spec.ts`. Tests : `install-capture.spec.ts` (événements reçus avant le chargement),
+  `install-prompt.service.spec.ts`, `install-sheet.component.spec.ts`, `install-settings.component.spec.ts`.
 
 ## Liaison Discord (#741, 2026-10-25)
 

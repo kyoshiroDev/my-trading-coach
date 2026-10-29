@@ -26,7 +26,7 @@ const ctx: CampaignBuildCtx = {
 };
 
 const EMAILS = {
-  welcome: welcomeFreeTemplate({ userName: ctx.userName, appUrl: APP }),
+  welcome: welcomeFreeTemplate({ userName: ctx.userName, appUrl: APP, trialEndsAt: new Date('2026-11-16T10:00:00Z') }),
   connect_tradovate: connectTradovateTemplate(ctx),
   prop_firm_rules: propFirmRulesTemplate(ctx),
   first_week_recap: firstWeekRecapTemplate({ ...ctx, unsubUrl: 'U-MKT' }),
@@ -81,19 +81,33 @@ describe('contenu de chaque e-mail', () => {
     expect(t).toContain('Connecter mon compte');
     expect(t).toContain('Tu ne trades pas sur Tradovate ?');
     expect(t).toContain('La communauté des utilisateurs : questions, retours, entraide.');
-    expect(t).not.toMatch(/Premium|Multi-marché|Forex/);
+    expect(t).not.toMatch(/Multi-marché|Forex/);
+    // Pas de pub Premium : sa seule mention est le rappel de l'essai d'inscription (#769).
+    expect(text(welcomeFreeTemplate({ userName: 'Alex', appUrl: APP, trialEndsAt: null }).html)).not.toMatch(/Premium/);
+    expect(t.replace(/Tu as 14 jours de Premium offerts/, '')).not.toMatch(/Premium/);
     expect(appLinks(html)[0]).toContain(`${APP}/accounts?`);
+  });
+
+  it('bienvenue : essai d’inscription annoncé avec sa date de fin, sans prélèvement (#769)', () => {
+    const t = text(EMAILS.welcome.html);
+    expect(t).toContain('Tu as 14 jours de Premium offerts jusqu\'au 16 novembre 2026 :');
+    expect(t).toContain('sans aucun prélèvement');
+  });
+
+  it('bienvenue sans essai (réinscription récente) : aucune mention d’essai', () => {
+    const t = text(welcomeFreeTemplate({ userName: 'Alex', appUrl: APP, trialEndsAt: null }).html);
+    expect(t).not.toMatch(/Premium offerts|jours offerts/);
   });
 
   it('bienvenue : sans prénom → « Bonjour, »', () => {
     expect(text(welcomeFreeTemplate({ userName: ' ', appUrl: APP }).html)).toContain('Bonjour, ton compte est prêt');
   });
 
-  it('e-mails de service : aucune offre payante, lien « ne plus recevoir ces conseils »', () => {
+  it('e-mails de service : aucune offre payante, lien « ne plus recevoir les e-mails d’aide au démarrage »', () => {
     for (const email of [EMAILS.connect_tradovate, EMAILS.prop_firm_rules]) {
       const t = text(email.html);
       expect(t).not.toMatch(/Premium|fondateur|€|offert|essai/i);
-      expect(email.html).toContain('Ne plus recevoir ces conseils');
+      expect(email.html).toContain("Ne plus recevoir les e-mails d'aide au démarrage");
       expect(email.html).toContain('href="https://api.test/api/emails/unsubscribe?token=t&scope=service"');
     }
   });
@@ -113,12 +127,13 @@ describe('contenu de chaque e-mail', () => {
     expect(text(propFirmRulesTemplate({ ...ctx, propFirmCount: undefined }).html)).not.toContain('intégrée');
   });
 
-  it('first_week_recap : chiffres neutres (même ton si négatif), Premium, essai, mention de risque', () => {
+  it('first_week_recap : chiffres neutres (même ton si négatif), Premium sans essai promis (#769), mention de risque', () => {
     const t = text(EMAILS.first_week_recap.html);
     expect(EMAILS.first_week_recap.subject).toBe('Ta première semaine sur MyTradingCoach');
     expect(t).toContain('cette semaine : 12 trades, 4 jours de trading, P&amp;L -$85.50.');
     expect(t).not.toMatch(/bravo|félicit|dommage|attention/i);
-    expect(t).toContain('1 mois offert sur l\'abonnement mensuel, carte requise, annulable en un clic.');
+    expect(t).toContain('Sans engagement, annulable en un clic.');
+    expect(t).not.toMatch(/mois offert|jours offerts|carte requise/i);
     expect(t).toContain('Le trading comporte un risque de perte en capital.');
     expect(EMAILS.first_week_recap.html).toContain('href="U-MKT"');
     const singular = text(firstWeekRecapTemplate({ ...ctx, firstWeek: { trades: 1, days: 1, pnl: '+$10.00' } }).html);

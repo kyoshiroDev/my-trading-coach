@@ -18,17 +18,34 @@ import { filter, first, map } from 'rxjs/operators';
 import { SeoService } from './core/seo/seo.service';
 import { ProductEventsService } from './core/services/product-events.service';
 import { OfferIntentService } from './core/services/offer-intent.service';
-import { ConfirmDialogComponent } from '@mtc/front-ui';
+import { ConfirmService } from '@mtc/front-ui';
+// Chemin direct, pas le barrel : un composant importé par `@mtc/front-ui` resterait dans le bundle
+// initial, même derrière `@defer`.
+import { ConfirmDialogComponent } from '@mtc/front-ui/confirm-dialog';
 import { ToastsComponent } from './shared/components/toasts/toasts.component';
 import { InternalBadgeComponent } from './shared/components/internal-badge/internal-badge.component';
 import { SignupFunnelService } from './core/services/signup-funnel.service';
+import { InstallCapture } from './core/install/install-capture';
+import { PUSH_BROWSER } from './core/push/push-browser';
+import { AuthService } from './core/auth/auth.service';
+import { InstallSheetComponent } from './features/install/install-sheet.component';
 
 @Component({
-  imports: [RouterModule, ToastsComponent, ConfirmDialogComponent, InternalBadgeComponent],
+  imports: [RouterModule, ToastsComponent, ConfirmDialogComponent, InternalBadgeComponent, InstallSheetComponent],
   selector: 'mtc-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Toasts et dialogue de confirmation montés UNE fois, hors du routeur : ils survivent aux navigations.
-  template: `<router-outlet /><mtc-toasts /><mtc-confirm-dialog /><mtc-internal-badge />`,
+  // Dialogue de confirmation et feuille d'installation : chargés à la demande (`@defer`, budget du
+  // bundle), à leur première ouverture. Le dialogue reste ensuite monté.
+  template: `<router-outlet /><mtc-toasts /><mtc-internal-badge />
+    @defer (when confirm.pending()) {
+      <mtc-confirm-dialog />
+    }
+    @if (install.sheet()) {
+      @defer (on immediate) {
+        <mtc-install-sheet />
+      }
+    }`,
 })
 export class App implements OnInit {
   private readonly router = inject(Router);
@@ -36,6 +53,13 @@ export class App implements OnInit {
   private readonly seo = inject(SeoService);
   private readonly events = inject(ProductEventsService);
   private readonly injector = inject(Injector);
+  /** Créé au démarrage : il garde `beforeinstallprompt`, envoyé tôt par Chrome (le parcours, lui, est paresseux). */
+  protected readonly install = inject(InstallCapture);
+  /** Lu par le `@defer` du dialogue : la première demande de confirmation le charge. */
+  protected readonly confirm = inject(ConfirmService);
+  private readonly browser = inject(PUSH_BROWSER);
+  private readonly auth = inject(AuthService);
+  private installLoaded = false;
 
   constructor() {
     // Offre visée par le lien d'arrivée (#525 : plan=founder, promo=CODE, cta) : capturée AVANT
@@ -63,6 +87,12 @@ export class App implements OnInit {
         // Entonnoir : retour de Stripe (success_url / cancel_url de l'API).
         const checkout = route.snapshot.queryParamMap.get('checkout');
         if (checkout === 'success' || checkout === 'canceled') this.events.once('checkout_return', checkout);
+        // Lancée depuis l'écran d'accueil, connecté : le parcours (paresseux) compte l'installation
+        // et peut inviter aux alertes. Il suit ensuite lui-même les navigations.
+        if (!this.installLoaded && this.auth.currentUser() && this.browser.env().standalone) {
+          this.installLoaded = true;
+          void this.install.load();
+        }
       });
   }
 

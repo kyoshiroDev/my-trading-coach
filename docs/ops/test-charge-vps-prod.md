@@ -179,3 +179,35 @@ pendant 10 min, chien de garde actif. Montage + vague + nettoyage : ~25 min.
 - Prod pendant la vague : 99-180 ms vue de l'extérieur, 26-35 ms mesurée sur le serveur ; charge
   ≤ 0,3.
 - Résultats rapatriés avant le nettoyage (leçon du passage n° 1), environnement entièrement supprimé.
+
+## 6. Veille serveur Tradovate (#770) · coût d'un WebSocket en veille (2026-10-26)
+
+Mesure isolée, **sans le banc ni la prod** : la veille n'ajoute qu'une chose, des WebSockets
+Tradovate sortants qui restent ouverts sans activité (trame de vie toutes les 2,5 s, aucun trade).
+`tools/load/veille-ws-bench.ts` ouvre N connexions avec la vraie classe `TradovateLiveConnection` et
+le WebSocket natif de Node (comme l'API), vers un faux Tradovate lancé dans un autre process : seul le
+coût côté API est compté, aucun appel sortant. Contrôle intégré : connexions souscrites et rythme des
+trames relevés côté serveur.
+
+```sh
+ulimit -n 65535 && pnpm exec tsx tools/load/veille-ws-bench.ts 0,500,1000,2000,3000 30
+```
+
+PC de Greg (8 cœurs, Node 22), un seul process, 30 s par palier :
+
+| Veilles | Souscrites | Trame de vie | CPU (un cœur) | Mémoire en plus |
+|---:|---:|---:|---:|---:|
+| 0 | 0 | | 0,9 % | |
+| 500 | 500 | 2,5 s | 3,7 % | +24 Mo |
+| 1 000 | 1 000 | 2,5 s | 5,8 % | +11 Mo |
+| 2 000 | 2 000 | 2,5 s | 6,6 % | +49 Mo |
+| 3 000 | 3 000 | 2,5 s | 8,9 % | +79 Mo |
+
+Lecture : **≈ 3 % d'un cœur et ≈ 25 Mo pour 1 000 veilles** (écart d'un palier à l'autre = bruit du
+ramasse-miettes). Même en comptant un cœur de VPS deux fois plus lent, le plafond
+`TRADOVATE_WATCH_MAX=500` coûte moins de 5 % d'un des 3 cœurs de l'API prod (goulot mesuré section
+5) et quelques dizaines de Mo sur 2 Go par conteneur web. Non compté : le bail Redis (1 commande / 10 s
+/ veille) et la synchro REST déclenchée par un trade, qui existent déjà app ouverte. Conclusion : pas
+de banc complet nécessaire pour activer la veille avec ce plafond ; le refaire avant de le monter
+au-delà de 3 000.
+

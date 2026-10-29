@@ -19,6 +19,7 @@ import { PostSignupService } from '../../core/auth/post-signup.service';
 import { REFERRAL_STORAGE_KEY, UTM_STORAGE_KEY } from '../../core/auth/signup-context';
 import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
 import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
+import { PREMIUM_SIGNUP_TRIAL_DAYS } from '../../core/constants/pricing.const';
 
 /** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
 export function referrerHost(referrer: string): string {
@@ -63,9 +64,11 @@ export class RegisterComponent {
   protected readonly emailTouched = signal(false);
   protected readonly passwordTouched = signal(false);
   protected readonly confirmTouched = signal(false);
+  /** Lien « Essayer Premium » de la landing : textes seulement, l'essai d'inscription suffit (#769). */
   protected readonly isPremiumFlow = signal(
     this.route.snapshot.queryParamMap.get('plan') === 'premium',
   );
+  protected readonly trialDays = PREMIUM_SIGNUP_TRIAL_DAYS;
   /**
    * Lien d'offre (#525 : plan=founder ou promo=CODE) : pas de checkout direct, la modale de plans
    * s'ouvre après l'inscription avec l'offre du lien présélectionnée (choix sans cumul).
@@ -209,7 +212,7 @@ export class RegisterComponent {
       .subscribe({
         next: () => {
           this.funnel.track('register_success');
-          this.postSignup.afterSignup({ premium: this.isPremiumFlow() });
+          this.postSignup.afterSignup();
         },
         error: (err) => {
           const status = err.status;
@@ -236,7 +239,7 @@ export class RegisterComponent {
     );
     this.injector
       .get(GoogleSignInService)
-      .signIn(credential, { premium: this.isPremiumFlow() })
+      .signIn(credential)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (status) => {

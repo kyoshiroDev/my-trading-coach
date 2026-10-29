@@ -7,7 +7,7 @@ import {
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { Plan, Role, Prisma } from '@prisma/client';
+import { Plan, Role, Prisma, TrialSource } from '@prisma/client';
 import { UTM_NONE, type AcquisitionUtm } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
@@ -34,6 +34,8 @@ const USER_SELECT = {
   role: true,
   trialEndsAt: true,
   trialUsed: true,
+  trialSource: true,
+  signupTrialEndsAt: true,
   onboardingCompleted: true,
   market: true,
   goal: true,
@@ -431,7 +433,7 @@ export class UsersService {
    * Premium offert par l'admin, sans carte ni abonnement Stripe : `trialEndsAt` dans le futur
    * (reconnu partout comme accès Premium), le plan reste FREE et l'accès tombe tout seul à la
    * date de fin. `trialUsed = true` : pas de second essai Stripe de 30 j au checkout.
-   * Un mois déjà en cours est prolongé à partir de sa date de fin.
+   * Un mois déjà en cours, ou l'essai d'inscription, est prolongé à partir de sa date de fin.
    */
   async offerPremium(
     userId: string,
@@ -449,6 +451,11 @@ export class UsersService {
     if (user.stripeSubscriptionId && hasActiveStripeSubscription(user.stripeSubscriptionStatus)) {
       throw new ConflictException('Cet utilisateur a déjà un abonnement Stripe.');
     }
+    // Prélèvement en attente (3D Secure non confirmé, carte refusée, #769) : le Premium offert passerait
+    // devant un abonnement que Stripe peut encore encaisser.
+    if (user.stripeSubscriptionStatus === 'past_due' || user.stripeSubscriptionStatus === 'unpaid') {
+      throw new ConflictException('Paiement Stripe en attente\u00a0: régler d’abord l’abonnement.');
+    }
     if (user.plan === Plan.PREMIUM) {
       throw new ConflictException('Cet utilisateur est déjà Premium.');
     }
@@ -464,7 +471,8 @@ export class UsersService {
     const trialEndsAt = new Date(from + days * 86_400_000);
     await this.prisma.user.update({
       where: { id: userId },
-      data: { trialEndsAt, trialUsed: true },
+      // Origine ADMIN ; la fin de l'essai d'inscription (`signupTrialEndsAt`) ne bouge pas (#769).
+      data: { trialEndsAt, trialUsed: true, trialSource: TrialSource.ADMIN },
     });
     await this.userCache?.invalidate(userId); // le Premium doit s'ouvrir immédiatement
     this.logger.log(

@@ -12,9 +12,11 @@ Typecheck : `pnpm nx typecheck tools-scripts`.
 | `backfill/referral-codes.ts` | Donne un code de parrainage à chaque utilisateur qui n'en a pas (idempotent). | `pnpm exec tsx --env-file=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/backfill/referral-codes.ts` |
 | `backfill/ambassador-codes.ts` | Garantit un code à chaque ambassadeur (idempotent). | idem, `backfill/ambassador-codes.ts` |
 | `backfill/snapshot-signups.ts` | Recalcule les inscriptions du jour des snapshots de métriques (`--dry-run` pour voir sans écrire). | idem, `backfill/snapshot-signups.ts [--dry-run]` |
+| `backfill/signup-trial-existing.ts` | Offre l'essai Premium d'inscription (14 j) aux inscrits gratuits qui n'ont jamais eu d'essai ni d'abonnement (#769). **Lancé par Greg seulement.** | idem, `backfill/signup-trial-existing.ts --dry-run` |
 | `validate-prop-firm-rules.ts` | Valide le catalogue des règles prop firm (schéma + contrôles métier). | `pnpm prop-firms:validate` |
 | `watch-prop-firm-sources.ts` | Veille des sources du catalogue prop firm (articles modifiés, firms à revérifier) ; `--update` enregistre le relevé. Lancé chaque lundi par le workflow « Veille règles prop firm ». | `pnpm prop-firms:watch [--update]` |
 | `ops/ensure-referral-coupon.ts` | Crée (idempotent) les deux coupons de parrainage dans Stripe. | idem, `ops/ensure-referral-coupon.ts` |
+| `ops/preview-trial-emails.ts` | Aperçu des e-mails J+11 et fin d'essai d'inscription (#769) avec les vrais gabarits : HTML dans `--out`, envoi `[APERÇU]` à `--to` (refusé avec l'env de prod). | `pnpm exec tsx --env-file=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/ops/preview-trial-emails.ts --out <dossier> [--to <adresse>]` |
 | `ops/send-welcome.mjs` | Envoie l'email de bienvenue (test de rendu Resend). | `node tools/scripts/ops/send-welcome.mjs <email>` |
 | `ops/send-debrief-email.mjs` | Envoie un email de débrief hebdo d'exemple. | `node tools/scripts/ops/send-debrief-email.mjs <email>` |
 | `ops/send-discord-invite.mjs` | Invite Discord aux utilisateurs (dry-run par défaut). | `node tools/scripts/ops/send-discord-invite.mjs` |

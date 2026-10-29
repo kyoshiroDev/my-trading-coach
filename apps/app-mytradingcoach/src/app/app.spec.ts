@@ -1,4 +1,5 @@
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockBehavior, TestBed } from '@angular/core/testing';
+import { ConfirmService } from '@mtc/front-ui';
 import * as angularCore from '@angular/core';
 import { App } from './app';
 import { provideRouter, Router } from '@angular/router';
@@ -23,6 +24,7 @@ describe('App', () => {
     TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([]), provideHttpClient()],
+      deferBlockBehavior: DeferBlockBehavior.Playthrough,
     });
     // Icônes Lucide neutralisées (ne compilent pas en JIT) ; surcharge AVANT compileComponents().
     TestBed.overrideComponent(ToastsComponent, {
@@ -53,5 +55,19 @@ describe('App', () => {
     await TestBed.inject(Router).navigateByUrl('/');
     await fixture.whenStable();
     expect(document.getElementById('mtc-boot')).toBeNull();
+  });
+
+  it('dialogue de confirmation chargé à la première demande seulement (budget du bundle)', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('mtc-confirm-dialog')).toBeNull();
+
+    void TestBed.inject(ConfirmService).ask({ title: 'Supprimer ?', message: 'Ce trade sera supprimé.' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('mtc-confirm-dialog')).toHaveLength(1);
   });
 });

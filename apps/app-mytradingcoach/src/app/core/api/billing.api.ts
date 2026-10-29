@@ -37,6 +37,8 @@ export interface CheckoutSummary {
   /** −10 % filleul sur la première année. */
   referralDiscount: boolean;
   seatsLeft: number | null;
+  /** Réservation fondateur pendant le Premium offert (#769) : premier prélèvement (ISO), sinon null. */
+  firstChargeAt?: string | null;
 }
 
 /** `POST /billing/checkout` : clé de session (page de l'app) ou URL (page Stripe, repli). */
@@ -54,8 +56,12 @@ export interface BillingOffers {
     since: string | null;
     eligible: boolean;
     ineligibleReason: string | null;
-    /** Fin du satisfait ou remboursé (null = plus remboursable). */
+    /** Fin du satisfait ou remboursé (null = plus remboursable, ou place réservée pas encore payée). */
     refundUntil: string | null;
+    /** Réservation possible pendant le Premium offert : premier prélèvement à cette date (#769). */
+    firstChargeAt?: string | null;
+    /** Place réservée, premier prélèvement à venir (#769). */
+    reservedUntilCharge?: boolean;
   };
   partner: (PartnerConditions & { since: string; endsAt: string | null }) | null;
   subscription: { interval: BillingInterval | null; status: string | null };

@@ -56,6 +56,11 @@ export interface LiveConnectionOptions {
   onOrder?: (event: OrderEvent) => void;
   /** La connexion renonce : l'app retombe sur le bouton « Synchroniser ». */
   onFatal?: (reason: string) => void;
+  /**
+   * Socket refusée avant toute trame (`421` d'un hôte demo périmé, réseau…) : l'appelant invalide
+   * ses hôtes pour que la reconnexion, lancée une fois la promesse tenue, les relise.
+   */
+  onHandshakeRefused?: () => Promise<void>;
   socketFactory?: LiveSocketFactory;
   logger?: { warn(message: string): void; debug?(message: string): void };
 }
@@ -76,6 +81,8 @@ export class TradovateLiveConnection {
   private stopped = true;
   private authorized = false;
   private quotaReached = false;
+  /** Hôtes déjà invalidés pendant cette série d'échecs (remis à false par une autorisation). */
+  private hostsForgotten = false;
 
   constructor(private readonly opts: LiveConnectionOptions) {}
 
@@ -136,10 +143,17 @@ export class TradovateLiveConnection {
       return;
     }
     this.socket = socket;
-    socket.onmessage = (ev) => this.onMessage(String(ev.data), token);
-    socket.onclose = () => this.onClosed(socket);
+    let opened = false;
+    socket.onmessage = (ev) => {
+      opened = true;
+      this.onMessage(String(ev.data), token);
+    };
+    socket.onclose = () => this.onClosed(socket, opened);
+    // Socket ouverte : `error` est toujours suivi de `close`, la reconnexion part de là. Poignée de
+    // main refusée (`421`…) : Node 22 émet `error` SANS `close` (mesuré le 2026-10-28, readyState
+    // bloqué à CONNECTING) ; sans ce relais, plus aucune reconnexion.
     socket.onerror = () => {
-      /* toujours suivi de onclose : la reconnexion part de là */
+      if (!opened) this.onClosed(socket, false);
     };
   }
 
@@ -156,6 +170,7 @@ export class TradovateLiveConnection {
         this.authorized = true;
         this.attempt = 0;
         this.quotaReached = false;
+        this.hostsForgotten = false;
         this.startHeartbeat();
         this.send(syncRequestMessage(SYNC_REQUEST_ID, this.opts.externalAccountId));
       } else {
@@ -194,12 +209,36 @@ export class TradovateLiveConnection {
     if (isTradeEvent(m, this.opts.externalAccountId)) this.opts.onTradeEvent();
   }
 
-  private onClosed(socket: LiveSocket): void {
+  private onClosed(socket: LiveSocket, opened: boolean): void {
     if (this.socket !== socket) return; // ancienne socket (déjà remplacée ou arrêtée)
     this.socket = null;
     this.authorized = false;
     this.clearTimers();
-    this.scheduleReconnect();
+    if (opened) {
+      this.scheduleReconnect();
+      return;
+    }
+    // Refusée avant toute trame : socket abandonnée (elle peut rester en CONNECTING), hôtes invalidés.
+    socket.onmessage = null;
+    socket.onclose = null;
+    socket.onerror = null;
+    try {
+      socket.close();
+    } catch {
+      /* déjà fermée */
+    }
+    // UNE relecture par série d'échecs : si le refus persiste (même hôte relu, réseau, 503…),
+    // le backoff seul s'applique, sans appel d'auth ni écriture à chaque tentative.
+    if (this.hostsForgotten || !this.opts.onHandshakeRefused) {
+      this.scheduleReconnect();
+      return;
+    }
+    this.hostsForgotten = true;
+    this.opts.logger?.warn('Tradovate WS : connexion refusée avant ouverture, hôtes à relire');
+    void this.opts
+      .onHandshakeRefused()
+      .catch(() => undefined)
+      .finally(() => this.scheduleReconnect());
   }
 
   private scheduleReconnect(): void {

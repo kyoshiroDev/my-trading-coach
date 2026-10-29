@@ -113,7 +113,7 @@ export class CheckoutPageComponent {
   });
   protected readonly today = computed(() => {
     const s = this.summary();
-    const t = this.todayEur() ?? (s ? (s.trialDays > 0 ? 0 : s.recurringEur) : null);
+    const t = this.todayEur() ?? (s ? (s.trialDays > 0 || s.firstChargeAt ? 0 : s.recurringEur) : null);
     return t === null ? '' : eur(t);
   });
   protected readonly ctaLabel = computed(() => {

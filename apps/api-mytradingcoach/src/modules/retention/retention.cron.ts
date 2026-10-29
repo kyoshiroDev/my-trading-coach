@@ -17,10 +17,19 @@ export const RETENTION_RULES = [
   { table: 'UserDailyActivity', column: 'date', days: 730 }, // 24 mois
 ] as const;
 
+/**
+ * Purge QUOTIDIENNE (décision du 2026-10-25) : événements d'usage rattachés au compte, 13 mois
+ * (politique de confidentialité, « 13 mois, puis effacement automatique »). Quotidienne pour qu'une
+ * ligne ne dépasse jamais 13 mois d'un jour, là où la purge mensuelle laisserait un mois de plus.
+ */
+export const DAILY_RETENTION_RULES = [
+  { table: 'ProductEventDaily', column: 'date', days: 396 }, // 13 mois
+] as const;
+
 /** Lignes supprimées par requête : de courtes transactions, pas un DELETE géant qui verrouille. */
 export const RETENTION_BATCH = 5_000;
 
-/** Purge mensuelle des tables qui grossissent sans fin. Worker cron seulement (ScheduleModule). */
+/** Purges mensuelle et quotidienne des tables qui grossissent sans fin. Worker cron seulement (ScheduleModule). */
 @Injectable()
 export class RetentionCron {
   private readonly logger = new Logger(RetentionCron.name);
@@ -33,9 +42,18 @@ export class RetentionCron {
     await this.purgeAll();
   }
 
-  async purgeAll(now = new Date()): Promise<Record<string, number>> {
+  // Chaque jour, 4 h 45 Paris : après les sauvegardes de 3 h et la purge mensuelle de 4 h 30.
+  @Cron('45 4 * * *', { timeZone: 'Europe/Paris' })
+  async scheduledDailyPurge(): Promise<void> {
+    await this.purgeAll(new Date(), DAILY_RETENTION_RULES);
+  }
+
+  async purgeAll(
+    now = new Date(),
+    rules: readonly { table: string; column: string; days: number }[] = RETENTION_RULES,
+  ): Promise<Record<string, number>> {
     const deleted: Record<string, number> = {};
-    for (const rule of RETENTION_RULES) {
+    for (const rule of rules) {
       try {
         deleted[rule.table] = await this.purge(rule.table, rule.column, new Date(now.getTime() - rule.days * DAY_MS));
       } catch (err) {

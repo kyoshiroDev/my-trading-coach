@@ -37,7 +37,7 @@ import { InactiveAccountsToggleComponent } from '../../shared/components/inactiv
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
   DatePreset, DayGroup, FilterEmotion, FilterExecution, FilterResult, FilterSide,
-  gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange,
+  gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange, PARTIAL_HINT, tradeCountLabel,
 } from './journal.grouping';
 
 
@@ -202,6 +202,8 @@ export class JournalComponent {
   protected readonly ReassignIcon     = ArrowRightLeft;
 
   protected readonly gradeLabel = gradeLabel;
+  protected readonly tradeCountLabel = tradeCountLabel;
+  protected readonly partialHint = PARTIAL_HINT;
   protected readonly gradeTooltip = gradeTooltip;
 
   protected readonly showModal        = signal(false);
@@ -282,7 +284,9 @@ export class JournalComponent {
   // simplement les trades renvoyés. « Charger plus » révèle des jours plus anciens
   // dans le même filtre, sans changer les KPIs (qui viennent de l'agrégat backend).
 
-  protected readonly tradesByDay = computed(() => groupByDay(this.tradesStore.trades()));
+  // Le dernier jour chargé est « partiel » tant qu'il reste des pages (#796).
+  protected readonly tradesByDay = computed(() =>
+    groupByDay(this.tradesStore.trades(), this.tradesStore.hasNextPage()));
 
   // ── Vue par semaine (niveau au-dessus des jours) ────────────────────────────
   // Regroupe les DayGroup en semaines ISO (lundi → dimanche). Les agrégats sont

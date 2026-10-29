@@ -128,6 +128,20 @@
     }
   </div>
 
+  @if (trialTiles().length) {
+    <!-- Essai Premium de l'inscription (#769, B3) : hors démo et admin -->
+    <div class="kpi-strip cols-4" data-testid="signup-trial">
+      @for (t of trialTiles(); track t.label) {
+        <div class="kpi">
+          <div [class]="'kpi-top ' + t.tone"></div>
+          <div class="kpi-label">{{ t.label }}</div>
+          <div [class]="'kpi-value ' + t.tone">{{ t.value }}</div>
+          <div class="kpi-sub">{{ t.sub }}</div>
+        </div>
+      }
+    </div>
+  }
+
   @if (funnel(); as f) {
     <div class="card funnel-card">
       <div class="card-head">
@@ -172,6 +186,40 @@
           <div class="empty">Aucun contact avec le Premium enregistré pour l'instant</div>
         }
       </div>
+    </div>
+  }
+
+  @if (funnel(); as f) {
+    <div class="card funnel-card" data-testid="install-funnel">
+      <div class="card-head">
+        <span class="card-label">Installation de l'app · {{ f.days }} jours</span>
+        <span class="card-label muted">users distincts par plateforme, hors démo et admin</span>
+      </div>
+      @if (installs().length) {
+        <table class="tbl">
+          <caption class="sr-only">Installation de l'app par plateforme</caption>
+          <thead>
+            <tr>
+              <th scope="col">Plateforme</th>
+              @for (c of installColumns; track c.event) {
+                <th scope="col" class="num">{{ c.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of installs(); track r.place) {
+              <tr [attr.data-testid]="'install-row-' + r.place">
+                <td data-label="Plateforme">{{ r.label }}</td>
+                @for (c of installColumns; track c.event) {
+                  <td [attr.data-label]="c.label" class="td-mono num">{{ r.counts[c.event] }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <div class="empty">Aucun parcours d'installation enregistré pour l'instant</div>
+      }
     </div>
   }
 

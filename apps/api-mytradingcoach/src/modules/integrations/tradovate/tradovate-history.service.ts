@@ -1,12 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { BrokerConnection, Prisma, TradeSource } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
 import { TradesService } from '../../trades/trades.service';
 import { SetupsService } from '../../setups/setups.service';
-import { preprocessCsv, mapNormalizedCsvToDto, type ImportDto } from '../../trades/csv-parsers';
+import {
+  preprocessCsv,
+  mapNormalizedCsvToDto,
+  parseUsNumber,
+  splitCsvLine,
+  type ImportDto,
+} from '../../trades/csv-parsers';
 import { assignFeesOncePerFill } from '../../trades/tradovate-pair.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
+import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
 import { TradovateApiError, TradovateException } from './tradovate.errors';
 import type { TradovateAccount, TradovateApiHosts, TradovateEnv } from './tradovate.types';
@@ -34,9 +41,27 @@ export const HISTORY_FALLBACK_MONTHS = 6;
  * compte prop firm, création le 2026-02-12 et premier trade en juillet, soit **cinq mois vides
  * entre les deux**. L'arrêt aurait tronqué l'historique à mai en annonçant l'avoir tout remonté.
  */
-const EMPTY_WINDOWS_BEFORE_STOP = 2;
+export const EMPTY_WINDOWS_BEFORE_STOP = 2;
 /** Petite pause entre fenêtres : la limite documentée est de 5 000 requêtes/h, on en fait 12. */
 const PAUSE_BETWEEN_WINDOWS_MS = 300;
+
+/** Champs d'une ligne CSV coupés hors guillemets, texte brut conservé : `join(',')` la refait à l'octet près. */
+function champsBruts(ligne: string): string[] {
+  const champs: string[] = [];
+  let courant = '';
+  let entreGuillemets = false;
+  for (const ch of ligne) {
+    if (ch === '"') entreGuillemets = !entreGuillemets;
+    if (ch === ',' && !entreGuillemets) {
+      champs.push(courant);
+      courant = '';
+    } else {
+      courant += ch;
+    }
+  }
+  champs.push(courant);
+  return champs;
+}
 
 export interface HistoryImportResult {
   created: number;
@@ -83,6 +108,7 @@ export class TradovateHistoryService {
     private readonly reporting: TradovateReportingClient,
     private readonly setups: SetupsService,
     private readonly trades: TradesService,
+    @Optional() private readonly freeLimit?: FreeLimitSyncService,
   ) {}
 
   /**
@@ -120,6 +146,8 @@ export class TradovateHistoryService {
     if (!conn.externalAccountId || !conn.externalEnv) {
       throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
     }
+    // Compte au-delà de la limite gratuite (#769, B0) : compté et journalisé, l'import continue.
+    await this.freeLimit?.observe(userId, conn.accountId, 'historique');
     const env = conn.externalEnv as TradovateEnv;
     // Hôtes frais avec le jeton : le reporting demo est propre à l'organisation (prop firm).
     const { token, apiHosts } = await this.connections.getSession(conn);
@@ -281,7 +309,9 @@ export class TradovateHistoryService {
     return lignes
       .map((ligne, i) => {
         if (i === 0 || !ligne.trim()) return ligne;
-        const cols = ligne.split(',');
+        // Découpage hors guillemets : un P&L `"$1,125.00"` coupé en deux décalait les colonnes,
+        // la vente restait en heure locale et la paire changeait de sens (prod, 2026-10-28).
+        const cols = champsBruts(ligne);
         for (const c of colonnes) if (cols[c] != null) cols[c] = enIso(cols[c]);
         return cols.join(',');
       })
@@ -299,7 +329,7 @@ export class TradovateHistoryService {
     const csv = await this.reporting.fetchCsv(env, token, 'Fills', window, apiHosts);
     if (!csv) return 0;
     const lines = csv.split(/\r?\n/).filter((l) => l.trim());
-    const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const header = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
     const iId = header.indexOf('fill id');
     const iFee = header.indexOf('commission');
     if (iId < 0 || iFee < 0) {
@@ -309,9 +339,9 @@ export class TradovateHistoryService {
     const feeByFill = new Map<string, number>();
     let expected = 0;
     for (const line of lines.slice(1)) {
-      const cols = line.split(',');
+      const cols = splitCsvLine(line);
       const id = (cols[iId] ?? '').trim();
-      const fee = Math.abs(parseFloat((cols[iFee] ?? '').trim()) || 0);
+      const fee = Math.abs(parseUsNumber(cols[iFee]) || 0);
       if (!id || fee <= 0) continue;
       feeByFill.set(id, fee);
       expected += fee;

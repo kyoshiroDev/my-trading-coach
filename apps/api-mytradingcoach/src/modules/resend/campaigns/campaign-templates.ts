@@ -6,7 +6,6 @@ import {
   FOUNDER_OFFER,
   FOUNDER_REFUND_DAYS,
   PREMIUM_PRICE_EUR,
-  TRIAL_PERIOD_DAYS,
   founderSeatsLabel,
 } from '@mtc/shared';
 import {
@@ -27,6 +26,8 @@ import {
 import { GREG_FROM, GREG_LOGO_ATTACHMENT, GREG_REPLY_TO, gregLetter } from './greg-letter';
 
 const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';
+/** Mention de bas des e-mails de l'essai d'inscription (#769) : ton neutre, sans promesse. */
+const TRIAL_FOOTER_REASON = 'Tu reçois cet e-mail parce que tu as un compte MyTradingCoach.';
 
 export interface CampaignContent {
   subject: string;
@@ -50,6 +51,8 @@ export interface CampaignBuildCtx {
   propFirmCount?: number;
   /** Bilan des 7 premiers jours depuis l'inscription (first_week_recap), P&L net déjà formaté. */
   firstWeek?: { trades: number; days: number; pnl: string };
+  /** Essai d'inscription (#769, B2) : date de fin. */
+  trial?: { endsAt: Date };
 }
 
 const P = `style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;"`;
@@ -60,8 +63,11 @@ const hello = (userName: string) => {
 };
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** « 1 mois offert » tant que l'essai fait 30 jours, sinon « N jours offerts » (valeur de @mtc/shared). */
-const trialLabel = () => (TRIAL_PERIOD_DAYS === 30 ? '1 mois offert' : `${TRIAL_PERIOD_DAYS} jours offerts`);
+/**
+ * Plus aucun essai Stripe promis dans les relances (#769) : tout inscrit depuis l'essai d'inscription a
+ * `trialUsed`, le mensuel est facturé dès la souscription.
+ */
+const NO_TRIAL_LINE = 'Sans engagement, annulable en un clic.';
 
 function heading(eyebrow: string, title: string): string {
   return `<p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">${eyebrow}</p>
@@ -123,7 +129,7 @@ export function firstWeekRecapTemplate({ userName, appUrl, unsubUrl, firstWeek }
       <p ${P}>${hello(userName)} cette semaine : ${trades}, ${days}, P&amp;L ${week.pnl}.</p>
       <p ${P}>Avec Premium, tu reçois des alertes avant d'atteindre ta limite, la détection des reprises de
         position après une perte, et un débrief de ta semaine rédigé par le coach IA.</p>
-      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;">${trialLabel()} sur l'abonnement mensuel, carte requise, annulable en un clic.</p>
+      <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0;">${NO_TRIAL_LINE}</p>
       ${cta('Voir ce que Premium ajoute →', onboardingLink(appUrl, '/dashboard', 'first_week_recap', { plan: 'premium', cta: 'email' }))}
     `) + RISK_NOTICE + marketingFooter(unsubUrl);
 
@@ -256,14 +262,14 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         coach IA et les analyses avancées.
       </p>
       <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 16px 0;">
-        1 mois offert · Carte requise · Annulable en un clic.
+        ${NO_TRIAL_LINE}
       </p>
       ${divider}
       ${cta('Essayer Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
-    subject: '⚡ Passe à Premium · 1 mois offert',
+    subject: '⚡ Passe à Premium',
     html: emailWrapper(content, 'Alertes avant ta limite, anti-tilt, débrief IA de ta semaine.', ACCENT.brand, unsubUrl),
   };
 }
@@ -403,3 +409,46 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
+
+// ── Essai Premium d'inscription (#769, B2) : e-mails de service, ton neutre ─────────────────
+
+const longDateFr = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
+
+export function trialEndingTemplate({ userName, appUrl, unsubUrl, trial }: CampaignBuildCtx): CampaignContent {
+  // Service, ton neutre (décision du 27/10) : la date de fin et ce qui change, aucune offre ni urgence.
+  const end = longDateFr(trial?.endsAt ?? new Date());
+  const content =
+    card(`
+      ${heading('Ton essai', `Ton Premium offert se termine le ${end}`)}
+      <p ${P}>${hello(userName)} ton Premium offert se termine le ${end}. Ensuite, ton compte repasse en
+        gratuit tout seul&nbsp;: rien n'est supprimé et rien n'est prélevé.</p>
+      <p ${P}>Ce qui change en gratuit&nbsp;: les alertes avant ta limite, l'anti-tilt en direct et le débrief
+        de ta semaine s'arrêtent. Tu gardes ton journal, tout ton historique, la synchro Tradovate et un
+        compte avec les règles de sa prop firm suivi en direct. Si tu as plusieurs comptes, tu choisis
+        celui que tu gardes&nbsp;; les autres restent visibles avec tout leur historique.</p>
+      ${cta('Voir mon abonnement', onboardingLink(appUrl, '/profil', 'trial_ending', { tab: 'params' }))}
+    `) + serviceFooter(unsubUrl, TRIAL_FOOTER_REASON);
+
+  return {
+    subject: `Ton Premium offert se termine le ${end}`,
+    html: emailWrapper(content, `Fin le ${end}&nbsp;: rien n'est supprimé ni prélevé.`, ACCENT.brand, unsubUrl),
+  };
+}
+
+export function trialEndedTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx): CampaignContent {
+  const content =
+    card(`
+      ${heading('Ton essai', 'Ton Premium offert est terminé')}
+      <p ${P}>${hello(userName)} ton compte est repassé en gratuit. Tes trades, tes comptes et ton historique
+        restent là&nbsp;: rien n'est supprimé.</p>
+      <p ${P}>En gratuit, tu gardes la synchro Tradovate, un compte avec les règles de sa prop firm suivi en
+        direct, ton journal et la préparation de tes séances.</p>
+      ${cta('Voir les offres Premium →', onboardingLink(appUrl, '/dashboard', 'trial_ended', { plan: 'premium', cta: 'email' }))}
+    `) + serviceFooter(unsubUrl, TRIAL_FOOTER_REASON);
+
+  return {
+    subject: 'Ton Premium offert est terminé',
+    html: emailWrapper(content, 'Ton compte est repassé en gratuit, rien n’est supprimé.', ACCENT.brand, unsubUrl),
+  };
+}
+

@@ -314,6 +314,14 @@ await page.route('**/api/debrief/generate', route => route.fulfill({
 │   → analyzeReleasedEvent retourne null si event non publié (isReleased: false)
 │   → fetchEconomicEvents retourne [] si pas de clé API
 │
+├── tradovate-watch*.spec.ts + tradovate-live.service.spec.ts (veille serveur, #770)
+│   → éligibilité : démo, Free, sans appareil, sans séance, types coupés → fin ; heures silencieuses → pause
+│   → fin de veille : 10 h, bornée à la journée de trading ; variable absente → veille éteinte
+│   → dernier onglet fermé + éligible → WS gardé ; non titulaire du bail → rien gardé ici
+│   → balayage : fin, pause puis reprise, onglet ouvert jamais touché, reprise après déploiement,
+│     deux process → un seul WS ; int-spec : app fermée → trade suivi → clôture de séance → WS fermé
+│     (`tradovate-live.int-spec.ts`, vrai Redis : en local, REDIS_PASSWORD du .env et REDIS_DB isolée)
+│
 └── ai.service.spec.ts
     → insights avec mock Anthropic
     → cooldown 4h → 429 au 2ème appel
@@ -473,6 +481,14 @@ devinent pas, tous vérifiés en exécution :
 Deux modes via `E2E_STRIPE_MODE` : `webhook` (défaut, déterministe) et `ui` (vraie page
 Stripe hébergée, exige `stripe listen`). Le test skippe avec la raison si l'infra manque,
 et refuse de tourner sur une clé qui n'est pas `sk_test_`.
+
+**Retour de Stripe sur un banc local : même hôte que l'app.** Les URL de retour du Checkout
+(`return_url`, `success_url`, portail) partent de `FRONTEND_URL`, qui vaut `http://localhost:4200`
+par défaut. Une app servie sur `127.0.0.1:4200` est une AUTRE origine : au retour de Stripe, le
+navigateur arrive sur `localhost` sans la session (stockage propre à l'origine) et le navigateur
+peut proposer l'autoremplissage du formulaire de connexion. Vu au test Klarna du 28/10 (#769) :
+servir l'app et régler `FRONTEND_URL` sur le même hôte, ou vérifier la fin du parcours par les
+journaux et la base. Sans effet en dev, beta et prod (`FRONTEND_URL` = l'URL publique de l'app).
 
 ### Pattern d'auth E2E pour BETA_TESTER
 

@@ -67,6 +67,10 @@ export interface AdminUserDetail {
       /** Date de perte du tarif (fin d'abonnement ou remboursement). */
       endedAt: string | null;
       cta: string | null;
+      /** Réservée pendant l'essai d'inscription, pas encore payée (#769) : abonnement Stripe en essai. */
+      reserved: boolean;
+      /** Date du premier prélèvement d'une place réservée (fin de l'essai Stripe), sinon null. */
+      firstChargeAt: string | null;
     } | null;
     partner: {
       code: string;
@@ -193,6 +197,27 @@ export interface AdminFunnelPlace {
   users: number;
 }
 
+/** Événements de l'installation de l'app (même liste que `INSTALL_EVENTS` côté API). */
+export type AdminInstallEvent =
+  | 'install_shown'
+  | 'install_click'
+  | 'install_done'
+  | 'install_later'
+  | 'install_never'
+  | 'inapp_seen'
+  | 'push_enabled'
+  | 'push_denied';
+
+/**
+ * Installation de l'app : users DISTINCTS par événement et par plateforme (`android`, `ios`,
+ * `ios-other` = iPhone hors Safari, `desktop`), hors démo et admin. Plateforme brute, jamais regroupée.
+ */
+export interface AdminInstallRow {
+  event: AdminInstallEvent;
+  place: string;
+  users: number;
+}
+
 /** GET /admin/funnel — de la visite au paiement, sur `days` jours (Paris). */
 export interface AdminFunnelData {
   days: number;
@@ -201,8 +226,24 @@ export interface AdminFunnelData {
   demo: { opens: number; signupClicks: number };
   steps: AdminFunnelStep[];
   byPlace: AdminFunnelPlace[];
+  install: AdminInstallRow[];
   /** État Stripe actuel (hors démo et admin) : essais en cours, abonnés payants. */
   current: { trialing: number; paying: number };
+  /**
+   * Essai Premium de l'inscription (#769, B3), hors démo et admin. `inProgress` : fin à venir, sans
+   * abonnement payant. `ended` : fin dans la période. `converted` : parmi `ended`, abonnement payant
+   * (`active`) aujourd'hui. `reservations` : places fondateur réservées jamais payées, dont
+   * `reservationsAwaitingPayment` en `past_due` / `unpaid` (3D Secure non confirmé, carte refusée) ;
+   * `nextChargeAt` : prochain premier prélèvement d'une réservation encore en essai.
+   */
+  signupTrial: {
+    inProgress: number;
+    ended: number;
+    converted: number;
+    reservations: number;
+    reservationsAwaitingPayment: number;
+    nextChargeAt: string | null;
+  };
 }
 
 /**

@@ -3,18 +3,32 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '@app/environments/environment';
 
-/** Événements de l'entonnoir Premium (même liste blanche que l'API, `PRODUCT_EVENTS`). */
+/** Événements d'usage (même liste blanche que l'API, `PRODUCT_EVENTS`). */
 export type ProductEvent =
   | 'premium_seen'
   | 'plan_modal_open'
   | 'trial_click'
   | 'checkout_return'
-  | 'demo_signup_click';
+  | 'demo_signup_click'
+  | InstallEvent;
+
+/** Installation de l'app et activation des alertes, `place` = plateforme (`devicePlace`). */
+export type InstallEvent =
+  | 'install_shown'
+  | 'install_click'
+  | 'install_done'
+  | 'install_later'
+  | 'install_never'
+  | 'inapp_seen'
+  | 'push_enabled'
+  | 'push_denied';
 
 /**
- * Entonnoir Premium : où les inscrits rencontrent le Premium, ouvrent les offres, cliquent.
- * Envoi best-effort (jamais d'erreur affichée, jamais bloquant), aucune donnée personnelle :
- * un nom d'événement et l'écran (1er segment de la route). Agrégé par jour côté API.
+ * Événements d'usage : entonnoir Premium (où les inscrits rencontrent le Premium, ouvrent les
+ * offres, cliquent) et installation de l'app. Envoi best-effort (jamais d'erreur affichée, jamais
+ * bloquant) : un nom d'événement et l'écran (1er segment de la route) ou la plateforme. Agrégé par
+ * jour côté API et RATTACHÉ AU COMPTE (`ProductEventDaily.userId`) : ce ne sont pas des compteurs
+ * anonymes. Conservés 13 mois, effacés avec le compte (politique de confidentialité).
  */
 @Injectable({ providedIn: 'root' })
 export class ProductEventsService {

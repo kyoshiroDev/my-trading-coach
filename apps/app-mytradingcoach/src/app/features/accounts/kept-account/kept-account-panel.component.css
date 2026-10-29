@@ -1,0 +1,105 @@
+/* Choix du compte gardé en gratuit (#769). Pleine largeur de la colonne de Mes comptes. */
+:host {
+  display: block;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+:host(.is-empty) {
+  display: none;
+}
+
+.ka-panel {
+  padding: 16px;
+  border: 1px solid var(--border-hover);
+  border-radius: 14px;
+  background: var(--bg-card);
+  font-family: var(--font-body);
+}
+
+.ka-lbl {
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+
+.ka-title {
+  margin: 6px 0 4px;
+  font: 600 16px var(--font-display);
+  color: var(--text);
+}
+
+.ka-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.ka-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ka-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-2);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ka-row.is-selected {
+  border-color: var(--blue-bright);
+  background: var(--blue-glow);
+}
+
+.ka-row input {
+  accent-color: var(--blue);
+  flex: none;
+}
+
+.ka-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.ka-tag {
+  flex: none;
+  font: 500 11px var(--font-mono);
+  color: var(--text-3);
+}
+
+.ka-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font: 600 14px var(--font-body);
+  cursor: pointer;
+}
+
+.ka-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .ka-btn {
+    width: 100%;
+  }
+}

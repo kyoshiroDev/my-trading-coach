@@ -52,10 +52,28 @@ const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', mont
  */
 export function offerBlockReason(i: UserDetailData['identity']): string | null {
   if (i.subscriptionStatus === 'active' || i.subscriptionStatus === 'trialing') return 'Abonnement Stripe en cours';
+  if (i.subscriptionStatus === 'past_due' || i.subscriptionStatus === 'unpaid') {
+    return 'Paiement Stripe en attente\u00a0: régler d’abord l’abonnement';
+  }
   if (i.plan === 'PREMIUM') return 'Déjà Premium (accès manuel)';
   if (i.role === 'ADMIN' || i.role === 'BETA_TESTER') return 'Premium déjà inclus par le rôle';
   if (i.isDemo) return 'Compte démo';
   return null;
+}
+
+/**
+ * Message affiché sous le bouton quand l'offre est impossible : la réservation fondateur en cours
+ * (#769) est nommée, avec la date du premier prélèvement quand elle est connue ; sinon la raison du
+ * refus. `null` si l'offre est possible. Pure, testable.
+ */
+export function offerWarning(d: UserDetailData): string | null {
+  const reason = offerBlockReason(d.identity);
+  if (!reason) return null;
+  const f = d.offer.founder;
+  if (!f?.reserved) return reason;
+  return f.firstChargeAt
+    ? `Réservation fondateur en cours\u00a0: premier prélèvement le ${frDate(new Date(f.firstChargeAt))}. Offrir du Premium ne décalerait pas ce prélèvement.`
+    : 'Réservation fondateur en cours. Offrir du Premium ne décalerait pas le premier prélèvement.';
 }
 
 function lbl(map: Record<string, string>, v: string | null | undefined): string {
@@ -173,6 +191,10 @@ export class UserDetailComponent {
   protected readonly offerBlocked = computed(() => {
     const i = this.data()?.identity;
     return i ? offerBlockReason(i) : null;
+  });
+  protected readonly offerWarning = computed(() => {
+    const d = this.data();
+    return d ? offerWarning(d) : null;
   });
   protected readonly offerLabel = computed(() =>
     this.offeredUntil() ? 'Prolonger d’1 mois' : 'Offrir 1 mois de Premium',

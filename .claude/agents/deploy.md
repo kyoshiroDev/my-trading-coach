@@ -314,7 +314,13 @@ workers (`ngsw-worker.js`, `push-sw.js`, …) en `no-cache`, sinon la règle des
 cache immuable d'un an ; `manifest.webmanifest` en `application/manifest+json`, cache 1 h, 404 s'il
 manque (pas l'`index.html` de la SPA). Les icônes PWA (`/pwa/*.png`) gardent le cache d'un an : changer
 leur nom si le dessin change. Modification du 25/10/2026 : **à reporter à la main sur les deux VPS**
-(ancien : dev, beta, admin ; prod : app), selon la procédure ci-dessous.
+(ancien : dev, beta, admin ; prod : app), selon la procédure ci-dessous. Appliquée sur les deux VPS le
+25/10/2026 (prod : feu vert de Greg).
+
+**Budget du bundle de l'app** (plafond bloquant 500 ko, avertissement 450 ko dépassé) : 495,04 ko après
+le parcours d'installation (25/10/2026), 479,17 ko après le lot 1 du budget (26/10/2026), marge
+20,83 ko. Règle : marge cible 20 ko, alerte sous 10 ko : au-dessous, on s'arrête et on ouvre une PR budget (`angular.md`, « Budget du bundle initial »). Mesurer au build de production
+(`nx run app-mytradingcoach:build:production`, ligne « Initial total »).
 
 Après modification d'une conf sur le VPS, **sans coupure** : la réécrire EN PLACE (même inode :
 `cat nouvelle.conf > /opt/infra/static/nginx/<conf>`, jamais `cp`, `rsync` ni `sed -i` qui en créent
@@ -478,12 +484,23 @@ STRIPE_PUBLIC_KEY=pk_live_...                  # page de paiement de l'app (pk_t
 # Absente → l'API retombe sur la page Stripe hébergée (avertissement au boot en prod).
 # Apple Pay sur la page de l'app : vérifier le domaine app.mytradingcoach.app dans Stripe
 # (Paramètres → Moyens de paiement → Domaines). Link et Klarna doivent être activés dans Stripe.
-# Webhooks Stripe (10 événements, version 2026-03-25.dahlia, état au 2026-10-08) :
+# Webhooks Stripe (version 2026-03-25.dahlia, état relevé le 2026-10-28) :
 #   prod  → compte live, destination api_prod (https://api.mytradingcoach.app/api/billing/webhook)
 #   dev   → compte de test, we_1UOOBL3gvVCzVhyJP7gXcDZ4 (https://dev.api…) → STRIPE_WEBHOOK_SECRET de .env.dev
 #   beta  → compte de test, we_1UOOBM3gvVCzVhyJNT0ODsMl (https://beta.api…) → STRIPE_WEBHOOK_SECRET de .env.beta
 #   Événements : charge.refunded, checkout.session.completed, checkout.session.expired, customer.deleted,
-#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded.
+#   customer.subscription.created/deleted/paused/updated, invoice.payment_failed, invoice.payment_succeeded,
+#   invoice.upcoming (live depuis toujours, dev et beta depuis le 28/10), invoice.payment_action_required
+#   (#769, B1 : 3D Secure ; dev et beta depuis le 28/10 ; live à ajouter APRÈS le déploiement de la PR B
+#   en prod, jamais avant). Live : 11 événements au 28/10, dev et beta : 12.
+#   Récupération des paiements (live, relevé le 28/10) : Smart Retries 8 fois en 2 semaines, puis
+#   abonnement ANNULÉ ; paiement à confirmer (3D Secure) non finalisé sous 15 jours : abonnement annulé.
+#   « Marquer comme impayé » est aussi géré (place fondateur réservée rendue au statut unpaid).
+#   E-mails clients de Stripe Billing (dont le lien de confirmation 3D Secure) : tous DÉSACTIVÉS en
+#   live au 28/10, à laisser ainsi : l'API envoie les siens (#769). Moyens de paiement live : carte,
+#   Apple Pay, Google Pay, Link, Revolut Pay, Klarna. Réservation fondateur reportée testée en local
+#   avec Klarna (28/10) : abonnement en essai, facture à 0 €, place prise ; Link ouvre une fenêtre
+#   séparée (non testé de bout en bout).
 #   Nouveau type traité par l'API → l'ajouter aux TROIS destinations, sinon il n'arrive jamais.
 # Domaines des moyens de paiement : app.mytradingcoach.app (live), dev.app et beta.app (test).
 RESEND_API_KEY=re_...
@@ -926,6 +943,15 @@ manuel, le bot Discord et `deployed/prod` restent en retard jusqu'au prochain CD
   ```
   Couper : `TRADER_PUSH_ENABLED=false` (l'admin de beta, s'il en a, garde son push), puis recréer
   l'API. Changer la paire invalide les abonnements beta (réabonner depuis le profil).
+- **Veille serveur (#770) : `TRADOVATE_WATCH_MAX`**, plafond de WebSockets Tradovate gardés app
+  fermée. Absente ou `0` = **éteinte** (défaut partout), conseillé `500`. Exige aussi le push des
+  traders. Beta : `TRADOVATE_WATCH_MAX=500` dans `.env.beta` puis recréer l'API (même procédure
+  que ci-dessus). Dev : posée le 2026-10-26. **Prod** : coût mesuré (`docs/ops/test-charge-vps-prod.md`
+  section 6 : ≈ 3 % d'un cœur pour 1 000 veilles) ; poser `TRADOVATE_WATCH_MAX=500` dans le `.env` de
+  l'API prod (blue, green, worker) AVANT la promotion qui apporte le texte « en notification » de la
+  landing et de `PLAN_BENEFITS` (`plans.md`, veille serveur) : inerte sur l'ancien code. Couper : retirer la variable ou `0`, recréer l'API (les WS en veille
+  se ferment à l'arrêt ; le registre Redis `tradovate:watch` expire seul en ≤ 10 h, inerte éteint).
+  Journal : `Veille Tradovate : N reprise(s)` (après un déploiement), `plafond … atteint` en warn.
 - Service worker de l'**app** (`push-sw.js`, #666) : fichier fixe à la racine, push seulement. Il est
   enregistré avec `updateViaCache: 'none'` : le navigateur le revérifie sur le réseau même si la
   règle des `.js` le met en cache un an. Une `location = /push-sw.js` en `no-cache` reste possible
