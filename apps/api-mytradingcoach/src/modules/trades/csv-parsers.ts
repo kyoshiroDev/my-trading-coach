@@ -68,7 +68,12 @@ export function preprocessCsv(raw: string): {
     .filter((l) => l.trim());
   if (lines.length < 2) return { broker: 'unknown', csv: cleaned };
 
-  const broker = detectBroker(lines[0]);
+  // Un relevé IBKR (Activity Statement) commence par sa section `Statement` : la section `Trades`
+  // arrive plus bas, la 1ʳᵉ ligne seule ne la voit jamais (#784).
+  const broker =
+    detectBroker(lines[0]) === 'unknown' && lines.some(isIbkrTradesHeader)
+      ? 'ibkr'
+      : detectBroker(lines[0]);
 
   // MEXC découpe lui-même sur `;` → traiter avant la normalisation du séparateur.
   if (broker === 'mexc') return { broker, csv: parseMexc(lines) };
@@ -526,47 +531,69 @@ export function parseBybit(lines: string[]): string {
   return result.join('\n');
 }
 
+/** En-tête de la section `Trades` d'un relevé IBKR (une par catégorie d'actif). */
+function isIbkrTradesHeader(line: string): boolean {
+  return line.startsWith('Trades,Header,') && line.toLowerCase().includes('asset category');
+}
+
+/**
+ * IBKR Activity Statement, section `Trades` (#784). Un trade = une exécution qui CLÔTURE
+ * (P/L réalisé ≠ 0 ou code `C`) : un achat ferme un short, une vente ferme un long. Avant, `BUY`
+ * donnait LONG, soit le sens inverse, et l'entrée estimée depuis le P&L était fausse aussi.
+ *
+ * - Un en-tête par catégorie d'actif (Stocks, Futures…) : chaque `Trades,Header` remplace le
+ *   précédent. Les lignes `SubTotal` / `Total` et les autres sections sont sautées, la lecture
+ *   continue (avant : arrêt au premier `SubTotal`, les symboles suivants étaient perdus).
+ * - `ClosedLot` détaille les lots d'une clôture déjà comptée sur sa ligne `Order` : ignoré.
+ * - Sens lu sur `Buy/Sell` s'il existe, sinon sur le signe de `Quantity` (relevé standard).
+ * - Entrée = prix × |Basis| / |Proceeds| : coût de la position ramené au prix, multiplicateur
+ *   compris (futures, options) ; à défaut, estimée en aval depuis le P&L.
+ * - Date illisible : ligne ignorée, jamais datée d'aujourd'hui.
+ *
+ * Format reconstruit d'après la documentation IBKR (fixture `ibkr-activity-statement.csv`),
+ * pas encore confronté à un relevé réel.
+ */
 export function parseIBKR(lines: string[]): string {
   const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt'];
+  let headers: string[] = [];
 
-  let headerLine = '';
-  let headerIndex = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('Trades,Header,')) {
-      headerLine = lines[i];
-      headerIndex = i;
-      break;
+  for (const line of lines) {
+    if (isIbkrTradesHeader(line)) {
+      headers = splitCsvLine(line).map((h) => h.trim().toLowerCase());
+      continue;
     }
-  }
-  if (headerIndex === -1) return result.join('\n');
-
-  const headers = headerLine.split(',').map((h) => h.trim().toLowerCase());
-  const col = (name: string) => headers.indexOf(name);
-
-  const symbolCol = col('symbol');
-  const buySellCol = col('buy/sell');
-  const quantityCol = col('quantity');
-  const priceCol = col('t. price');
-  const pnlCol = col('realized p/l');
-  const dateCol = col('date/time');
-
-  for (let i = headerIndex + 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.startsWith('Trades,Data,')) break;
+    if (!line.startsWith('Trades,Data,') || !headers.length) continue;
 
     const cols = splitCsvLine(line);
-    const pnl = parseUsNumber(cols[pnlCol]) || 0;
-    if (pnl === 0) continue;
+    const at = (name: string): string => {
+      const i = headers.indexOf(name);
+      return i >= 0 ? (cols[i] ?? '').trim() : '';
+    };
 
-    const symbol = (cols[symbolCol]?.trim() ?? '').replace('.', '/');
-    const qty = Math.abs(parseUsNumber(cols[quantityCol]) || 0);
-    const price = parseUsNumber(cols[priceCol]) || 0;
-    const dateStr = cols[dateCol]?.trim() ?? '';
-    const tradedAt = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
-    const side = cols[buySellCol]?.trim() === 'BUY' ? 'LONG' : 'SHORT';
+    const discriminator = at('datadiscriminator').toLowerCase();
+    if (discriminator && discriminator !== 'order' && discriminator !== 'trade') continue;
 
-    result.push(`${symbol},${side},0,${price},${qty},${pnl},${tradedAt}`);
+    const pnl = parseUsNumber(at('realized p/l')) || 0;
+    const codes = at('code').toUpperCase().split(/[;\s]+/);
+    if (pnl === 0 && !codes.includes('C')) continue; // ouverture
+
+    const date = new Date(at('date/time'));
+    if (!at('date/time') || Number.isNaN(date.getTime())) continue;
+
+    const signedQty = parseUsNumber(at('quantity')) || 0;
+    const buySell = at('buy/sell').toUpperCase();
+    const achat = buySell ? buySell === 'BUY' : signedQty > 0;
+    const side = achat ? 'SHORT' : 'LONG';
+
+    const price = parseUsNumber(at('t. price')) || 0;
+    const proceeds = Math.abs(parseUsNumber(at('proceeds')) || 0);
+    const basis = Math.abs(parseUsNumber(at('basis')) || 0);
+    const entry = price > 0 && proceeds > 0 && basis > 0 ? +((price * basis) / proceeds).toFixed(8) : 0;
+
+    // `EUR.USD` (forex) → `EUR/USD` ; une action `BRK.B` garde son point.
+    const symbol = /forex/i.test(at('asset category')) ? at('symbol').replace('.', '/') : at('symbol');
+
+    result.push(`${symbol},${side},${entry},${price},${Math.abs(signedQty)},${pnl},${date.toISOString()}`);
   }
   return result.join('\n');
 }

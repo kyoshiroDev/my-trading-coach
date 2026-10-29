@@ -1436,6 +1436,13 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
+- **IBKR (`parseIBKR`, #784)** : relevé Activity Statement, détecté même si la 1ʳᵉ ligne est la
+  section `Statement` (on cherche un `Trades,Header` avec `Asset Category`). Un trade = une exécution
+  de CLÔTURE (P/L ≠ 0 ou code `C`) : achat = ferme un SHORT, vente = ferme un LONG (sens via
+  `Buy/Sell` sinon signe de `Quantity`). `ClosedLot`, `SubTotal`, `Total` sautés sans arrêter la
+  lecture ; un `Trades,Header` par catégorie. Entrée = prix × |Basis| / |Proceeds| (multiplicateur
+  absorbé). Fixture `__fixtures__/ibkr-activity-statement.csv` **reconstruite** d'après la doc IBKR :
+  à remplacer par un relevé réel anonymisé dès qu'on en a un. Heures lues dans le fuseau du serveur.
 - **Nombres des parseurs : toujours `parseUsNumber`** (mode `strict` pour les rapports Tradovate, une seule fonction depuis #782), jamais `parseFloat` brut (bug prod du
   2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
   mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
