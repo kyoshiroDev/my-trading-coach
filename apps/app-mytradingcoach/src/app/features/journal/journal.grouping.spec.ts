@@ -55,4 +55,63 @@ describe('journal.grouping', () => {
       expect(day.totalPnlNet).toBe(788.59);
     });
   });
+
+  describe('jour coupé par la pagination : marqué partiel (#796)', () => {
+    /** Trade du `day` octobre 2026 à 9 h + `min` minutes (heure locale). */
+    const at = (id: string, day: number, min: number, pnl: number, commission: number) =>
+      ({ id, pnl, commission, tradedAt: new Date(2026, 9, day, 9, min).toISOString() }) as unknown as Trade;
+    // Page 1 (20 trades, tri tradedAt desc) : 2 le mer. 28/10, 18 le mar. 27/10 ; il reste des pages.
+    const page1 = [
+      at('w1', 28, 30, 100, 2), at('w2', 28, 10, -40, 2),
+      ...Array.from({ length: 18 }, (_, i) => at(`t${i}`, 27, 50 - i, 50, 1.5)),
+    ];
+    // Page 2 : 3 trades de plus le 27/10, puis 2 le ven. 23/10 (semaine précédente).
+    const page2 = [
+      at('t18', 27, 5, 50, 1.5), at('t19', 27, 4, 50, 1.5), at('t20', 27, 3, -20, 1.5),
+      at('f1', 23, 20, 30, 1), at('f2', 23, 10, -10, 1),
+    ];
+
+    it('liste vide → aucun jour ni semaine', () => {
+      expect(groupByDay([], true)).toEqual([]);
+      expect(groupByWeek(groupByDay([], true))).toEqual([]);
+    });
+
+    it('une seule page sans suite → aucun jour ni semaine partiel', () => {
+      const days = groupByDay(page1, false);
+      expect(days.map((d) => d.partial)).toEqual([false, false]);
+      expect(groupByWeek(days)[0].partial).toBe(false);
+    });
+
+    it('page suivante annoncée → seul le dernier jour chargé est partiel, totaux sur 18 trades', () => {
+      const [wed, tue] = groupByDay(page1, true);
+      expect(wed).toMatchObject({ key: '2026-10-28', partial: false, count: 2, totalPnlNet: 56, totalCommission: 4 });
+      expect(tue).toMatchObject({ key: '2026-10-27', partial: true, count: 18, winCount: 18 });
+      expect(tue.totalPnlNet).toBe(873); // 18 × (50 − 1,5)
+      expect(tue.totalCommission).toBe(27);
+    });
+
+    it('la semaine qui contient le jour partiel est partielle', () => {
+      const [week] = groupByWeek(groupByDay(page1, true));
+      expect(week).toMatchObject({ key: 'week-2026-10-26', partial: true, count: 20, totalPnlNet: 929 });
+    });
+
+    it('après « Charger plus » → le 27/10 redevient complet, le nouveau dernier jour devient partiel', () => {
+      const days = groupByDay([...page1, ...page2], true);
+      const tue = days.find((d) => d.key === '2026-10-27')!;
+      expect(tue).toMatchObject({ partial: false, count: 21, winCount: 20 });
+      expect(tue.totalPnlNet).toBe(948.5); // 873 + 48,5 + 48,5 − 21,5
+      expect(tue.totalCommission).toBe(31.5);
+      expect(days.at(-1)).toMatchObject({ key: '2026-10-23', partial: true, count: 2 });
+
+      const [current, previous] = groupByWeek(days);
+      expect(current).toMatchObject({ key: 'week-2026-10-26', partial: false, count: 23, totalPnlNet: 1004.5 });
+      expect(previous).toMatchObject({ key: 'week-2026-10-19', partial: true, count: 2, totalPnlNet: 18 });
+    });
+
+    it('dernière page chargée → plus rien de partiel', () => {
+      const days = groupByDay([...page1, ...page2], false);
+      expect(days.some((d) => d.partial)).toBe(false);
+      expect(groupByWeek(days).some((w) => w.partial)).toBe(false);
+    });
+  });
 });

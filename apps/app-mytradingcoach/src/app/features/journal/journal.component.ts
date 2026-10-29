@@ -282,7 +282,9 @@ export class JournalComponent {
   // simplement les trades renvoyés. « Charger plus » révèle des jours plus anciens
   // dans le même filtre, sans changer les KPIs (qui viennent de l'agrégat backend).
 
-  protected readonly tradesByDay = computed(() => groupByDay(this.tradesStore.trades()));
+  // Le dernier jour chargé est « partiel » tant qu'il reste des pages (#796).
+  protected readonly tradesByDay = computed(() =>
+    groupByDay(this.tradesStore.trades(), this.tradesStore.hasNextPage()));
 
   // ── Vue par semaine (niveau au-dessus des jours) ────────────────────────────
   // Regroupe les DayGroup en semaines ISO (lundi → dimanche). Les agrégats sont
