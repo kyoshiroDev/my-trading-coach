@@ -23,6 +23,7 @@
 .sub-badge--monthly { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(74,158,255,.25); }
 .sub-badge--annual  { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.25); }
 .sub-badge--trial   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,.25); }
+.sub-badge--signup  { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-dim); }
 .sub-badge--manual  { background: rgba(255,255,255,.04); color: var(--text2); border: 1px solid var(--border2); }
 
 /* ── Pagination ── */

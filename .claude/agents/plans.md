@@ -282,6 +282,11 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
   (`overFreeLimit`), l'utilisateur choisit le compte gardé. Arrêt de leur synchro (B0) : **journal
   seul** au 28/10 (comptés, rien bloqué), activation après lecture du décompte.
+- **Affichage admin de l'essai** : plan FREE + `trialEndsAt` futur = essai en cours (`activeTrial`,
+  `admin core/utils/trial.util.ts`). Fiche : « Premium (essai) », « Essai jusqu'au JJ/MM/AAAA » et la
+  source (inscription = `trialSource` SIGNUP, sinon admin) ; ligne IA sur `identity.premiumAccess`
+  (`isPremiumAccess`), jamais sur le plan brut. Liste : badge « Essai » (inscription) distinct de
+  « Offert » (admin). `isOfferedPremium` et le bouton « Offrir » ne changent pas.
 - **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
   marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
   25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis

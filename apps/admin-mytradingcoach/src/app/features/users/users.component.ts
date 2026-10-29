@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { activeTrial } from '../../core/utils/trial.util';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import {
   LucideDynamicIcon,
@@ -147,10 +148,11 @@ export class UsersComponent implements OnInit {
     return !!dateStr && new Date(dateStr) > new Date();
   }
 
-  /** Mois Premium offert par l'admin : plan FREE + `trialEndsAt` futur (sans abonnement Stripe). */
-  protected isOffered(user: AdminUser): boolean {
-    return user.plan === 'FREE' && this.isFuture(user.trialEndsAt);
-  }
+  /**
+   * Essai en cours (plan FREE + `trialEndsAt` futur) : badge « Essai » pour l'essai d'inscription,
+   * « Offert » pour le Premium offert par l'admin (#769).
+   */
+  protected readonly trial = activeTrial;
 
   protected subType(user: AdminUser): string {
     if (user.trialEndsAt && this.isFuture(user.trialEndsAt)) return 'trial';

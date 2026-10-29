@@ -1,4 +1,4 @@
-import type { AuthProvider, Plan, Role } from './enums';
+import type { AuthProvider, Plan, Role, TrialSource } from './enums';
 import type { SignupFunnelStep } from '../signup-funnel';
 import type { LandingEngagementPage } from '../landing-engagement';
 import type { AcquisitionUtm } from '../acquisition-filter';
@@ -18,6 +18,10 @@ export interface AdminUserDetail {
     trialEndsAt: string | null;
     /** Premium offert par l'admin en cours : `trialEndsAt` futur ET aucun abonnement Stripe. */
     offeredPremium: boolean;
+    /** Origine de `trialEndsAt` (#769) : SIGNUP = essai d'inscription, ADMIN = Premium offert ; null = aucune. */
+    trialSource: TrialSource | null;
+    /** Accès Premium réel (plan, rôle ADMIN / BETA_TESTER ou essai en cours), même règle que les guards. */
+    premiumAccess: boolean;
     isDemo: boolean;
     ambassadorRefCode: string | null;
     /** UTM enregistrés à l'inscription (#625) ; null = non renseigné. */

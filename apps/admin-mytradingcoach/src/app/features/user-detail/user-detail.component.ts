@@ -125,6 +125,7 @@ export function buildSignals(
 }
 
 import { partnerConditions } from '../../core/utils/offers.util';
+import { activeTrial } from '../../core/utils/trial.util';
 
 @Component({
   selector: 'mtc-admin-user-detail',
@@ -181,6 +182,17 @@ export class UserDetailComponent {
     if (d.identity.offeredPremium) return 'offert';
     if (d.identity.subscriptionStatus) return 'payant';
     return d.identity.plan === 'FREE' ? 'gratuit' : 'accès manuel';
+  });
+  /** Essai en cours (#769) : inscription ou Premium offert, plan FREE + `trialEndsAt` futur. */
+  protected readonly trial = computed(() => {
+    const i = this.data()?.identity;
+    return i ? activeTrial(i) : null;
+  });
+  /** Plan affiché : l'accès réel pendant un essai, pas le plan FREE stocké. */
+  protected readonly planLabel = computed(() => {
+    const d = this.data();
+    if (!d) return '';
+    return this.trial() ? 'Premium (essai)' : `${d.identity.plan} · ${this.planSub()}`;
   });
   // ── Premium offert ──
   /** Fin du Premium offert en cours, sinon null. */

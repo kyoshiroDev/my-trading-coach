@@ -15,7 +15,11 @@
         <div class="ud-mailrow">
           <span class="ud-mail">{{ pseudo() }} · {{ d.identity.email }}</span>
           <span class="ud-badges">
-            <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-free]="d.identity.plan==='FREE'">{{ d.identity.plan }}</span>
+            @if (trial()) {
+              <span class="badge b-premium" data-testid="plan-badge">PREMIUM (essai)</span>
+            } @else {
+              <span class="badge" [class.b-premium]="d.identity.plan==='PREMIUM'" [class.b-free]="d.identity.plan==='FREE'" data-testid="plan-badge">{{ d.identity.plan }}</span>
+            }
             <span class="badge" [class.b-ok]="status()==='actif'" [class.b-free]="status()!=='actif'">● {{ statusLabel() }}</span>
             @if (d.identity.role !== 'USER') { <span class="role-tag purple">{{ d.identity.role }}</span> }
             @if (d.offer?.founder; as f) {
@@ -92,7 +96,11 @@
         <div class="card-head"><span class="card-label">Compte &amp; engagement</span></div>
         <div class="card-body">
           <div class="slist">
-            <div class="srow"><span class="s-l">Plan</span><span class="s-v" [class.purple]="d.identity.plan !== 'FREE'">{{ d.identity.plan }} · {{ planSub() }}</span></div>
+            <div class="srow"><span class="s-l">Plan</span><span class="s-v" [class.purple]="d.identity.plan !== 'FREE' || !!trial()" data-testid="plan-row">{{ planLabel() }}</span></div>
+            @if (trial(); as t) {
+              <!-- Essai en cours (#769) : date de fin et origine (inscription ou admin) -->
+              <div class="srow" data-testid="trial-row"><span class="s-l">Essai jusqu'au {{ t.until | date:'dd/MM/yyyy' }}</span><span class="s-v">source&nbsp;: {{ t.origin }}</span></div>
+            }
             <div class="srow ud-offer">
               <span class="s-l">
                 @if (offeredUntil(); as until) { Premium offert jusqu'au <span class="s-v purple">{{ until | date:'dd/MM/yyyy' }}</span> } @else { Mois Premium offert }
@@ -166,7 +174,7 @@
         <div class="card-head"><span class="card-label">Consommation IA</span><span class="card-action ud-static">{{ aiHead() }}</span></div>
         <div class="card-body">
           @if (d.aiByFeature.length === 0) {
-            <div class="ud-ai-empty">Aucun appel IA : {{ d.identity.plan === 'FREE' ? 'plan FREE (IA réservée au Premium)' : 'pas encore utilisé' }}.</div>
+            <div class="ud-ai-empty">Aucun appel IA&nbsp;: {{ d.identity.premiumAccess ? 'pas encore utilisé' : 'plan FREE (IA réservée au Premium)' }}.</div>
           } @else {
             <div class="donut" [style.background]="donutGradient()">
               <div class="donut-c"><b>{{ '$' + d.kpis.ai.usd.toFixed(2) }}</b><span>{{ totalKTokens() }}k tokens</span></div>

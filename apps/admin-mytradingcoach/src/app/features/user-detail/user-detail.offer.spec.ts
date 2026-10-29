@@ -17,7 +17,7 @@ function makeData(identity: Partial<Identity> = {}): UserDetailData {
     identity: {
       id: 'u1', name: 'Alex', email: 'alex@test.com', plan: 'FREE', role: 'USER',
       subscriptionStatus: null, ambassadorRefCode: null, acquisition: { source: null, medium: null, campaign: null },
-      trialEndsAt: null, offeredPremium: false, isDemo: false,
+      trialEndsAt: null, offeredPremium: false, trialSource: null, premiumAccess: false, isDemo: false,
       createdAt: '2026-09-01T00:00:00.000Z', lastActivityAt: null,
       ...identity,
     },
@@ -53,6 +53,56 @@ async function render(data: UserDetailData) {
   return { fixture, httpMock, el, button };
 }
 
+const q = (el: HTMLElement, id: string) => el.querySelector(`[data-testid="${id}"]`)?.textContent?.trim() ?? null;
+
+describe('Fiche admin — essai en cours (#769)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); confirm.ask.mockReset(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  const FUTURE = '2099-11-12T08:00:00.000Z';
+  const PAST = '2020-01-01T00:00:00.000Z';
+
+  it('essai d’inscription : « Premium (essai) », fin et source inscription, « Offrir » inchangé, IA ouverte', async () => {
+    const { el, button } = await render(makeData({ trialEndsAt: FUTURE, trialSource: 'SIGNUP', premiumAccess: true }));
+    expect(q(el, 'plan-badge')).toBe('PREMIUM (essai)');
+    expect(q(el, 'plan-row')).toBe('Premium (essai)');
+    expect(q(el, 'trial-row')).toBe("Essai jusqu'au 12/11/2099source\u00a0: inscription");
+    expect(button().textContent).toContain('Offrir 1 mois de Premium');
+    expect(button().disabled).toBe(false);
+    expect(el.textContent).toContain('Mois Premium offert');
+    expect(el.textContent).not.toContain('Premium offert jusqu');
+    expect(el.textContent).toContain('Aucun appel IA\u00a0: pas encore utilisé');
+    expect(el.textContent).not.toContain('IA réservée au Premium');
+  });
+
+  it('essai prolongé par l’admin : source admin, bouton « Prolonger »', async () => {
+    const { el, button } = await render(makeData({ trialEndsAt: FUTURE, trialSource: 'ADMIN', offeredPremium: true, premiumAccess: true }));
+    expect(q(el, 'plan-row')).toBe('Premium (essai)');
+    expect(q(el, 'trial-row')).toContain('source\u00a0: admin');
+    expect(button().textContent).toContain('Prolonger d’1 mois');
+  });
+
+  it('essai expiré : « FREE · gratuit », aucune ligne d’essai, IA réservée au Premium', async () => {
+    const { el } = await render(makeData({ trialEndsAt: PAST, trialSource: 'SIGNUP', premiumAccess: false }));
+    expect(q(el, 'plan-badge')).toBe('FREE');
+    expect(q(el, 'plan-row')).toBe('FREE · gratuit');
+    expect(q(el, 'trial-row')).toBeNull();
+    expect(el.textContent).toContain('Aucun appel IA\u00a0: plan FREE (IA réservée au Premium)');
+  });
+
+  it('gratuit sans essai : « FREE · gratuit », aucune ligne d’essai', async () => {
+    const { el } = await render(makeData());
+    expect(q(el, 'plan-row')).toBe('FREE · gratuit');
+    expect(q(el, 'trial-row')).toBeNull();
+  });
+
+  it('Premium Stripe sans appel IA : « pas encore utilisé », pas de ligne d’essai', async () => {
+    const { el } = await render(makeData({ plan: 'PREMIUM', subscriptionStatus: 'active', premiumAccess: true }));
+    expect(q(el, 'trial-row')).toBeNull();
+    expect(el.textContent).toContain('Aucun appel IA\u00a0: pas encore utilisé');
+  });
+});
+
 describe('Fiche admin — Premium offert', () => {
   beforeEach(() => { TestBed.resetTestingModule(); confirm.ask.mockReset(); });
   afterEach(() => TestBed.inject(HttpTestingController).verify());
@@ -64,11 +114,14 @@ describe('Fiche admin — Premium offert', () => {
     expect(el.textContent).toContain('FREE · gratuit');
   });
 
-  it('offre en cours : « Premium offert jusqu’au », bouton « Prolonger », plan « offert »', async () => {
-    const { el, button } = await render(makeData({ trialEndsAt: '2026-11-02T12:00:00.000Z', offeredPremium: true }));
+  it('offre en cours : « Premium offert jusqu’au », bouton « Prolonger », plan « Premium (essai) » source admin', async () => {
+    const { el, button } = await render(makeData({
+      trialEndsAt: '2099-11-02T12:00:00.000Z', offeredPremium: true, trialSource: 'ADMIN', premiumAccess: true,
+    }));
     expect(el.textContent).toContain("Premium offert jusqu'au");
-    expect(el.textContent).toContain('02/11/2026');
-    expect(el.textContent).toContain('FREE · offert');
+    expect(el.textContent).toContain('02/11/2099');
+    expect(q(el, 'plan-row')).toBe('Premium (essai)');
+    expect(q(el, 'trial-row')).toBe("Essai jusqu'au 02/11/2099source\u00a0: admin");
     expect(button().textContent).toContain('Prolonger d’1 mois');
   });
 

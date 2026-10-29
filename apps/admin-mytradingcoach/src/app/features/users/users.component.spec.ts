@@ -91,4 +91,20 @@ describe('UsersComponent — inscrits d’une campagne', () => {
     const badges = [...fixture.nativeElement.querySelectorAll('.sub-badge')].map((b) => (b as HTMLElement).textContent?.trim());
     expect(badges).toEqual(['Offert']);
   });
+
+  it('essai d’inscription : badge « Essai » distinct, « Offert » réservé au Premium offert par l’admin (#769)', async () => {
+    const { fixture, http } = setup();
+    const soon = new Date(Date.now() + 10 * DAY).toISOString();
+    await flushList(fixture, http, [
+      user({ trialEndsAt: soon, trialSource: 'SIGNUP' }),
+      user({ id: 'u2', email: 'b@test.local', trialEndsAt: soon, trialSource: 'ADMIN' }),
+      user({ id: 'u3', email: 'c@test.local', trialEndsAt: new Date(Date.now() - DAY).toISOString(), trialSource: 'SIGNUP' }),
+      user({ id: 'u4', email: 'd@test.local' }),
+    ]);
+    const el = fixture.nativeElement as HTMLElement;
+    const badges = [...el.querySelectorAll('.sub-badge')].map((b) => (b as HTMLElement).textContent?.trim());
+    expect(badges).toEqual(['Essai', 'Offert']);
+    expect(el.querySelectorAll('[data-testid="badge-signup-trial"]')).toHaveLength(1);
+    expect(el.querySelector('[data-testid="badge-signup-trial"]')?.getAttribute('title')).toContain("Essai d'inscription jusqu'au");
+  });
 });

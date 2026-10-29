@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -9,6 +9,8 @@ export interface AdminUser {
   id: string; email: string; name: string | null;
   plan: Plan; role: Role;
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
+  /** Origine de `trialEndsAt` (#769) : essai d'inscription ou Premium offert par l'admin. */
+  trialSource?: TrialSource | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
