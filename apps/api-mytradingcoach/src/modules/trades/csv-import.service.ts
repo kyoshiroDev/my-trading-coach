@@ -145,10 +145,21 @@ export class CsvImportService {
       throw new BadRequestException(this.emptyMessage());
 
     // 2. Détecter le broker et pré-normaliser
-    const { broker, csv, formatChanged } = preprocessCsv(content);
+    const { broker, csv, formatChanged, numbersAmbiguous } = preprocessCsv(content);
     const normalizedLines = csv.split('\n').filter((l) => l.trim());
     if (normalizedLines.length < 2)
       throw new BadRequestException(this.emptyMessage());
+
+    // Nombres aux deux formats dans le même fichier (souvent retouché dans Excel) : en lire un
+    // seul faux donnerait un P&L 1 000 fois trop petit ou trop grand, sans erreur. Refus, pas d'IA.
+    if (numbersAmbiguous) {
+      this.logger.warn(`CSV "${filename}" refusé : nombres au format US et européen mélangés`);
+      throw new BadRequestException(
+        'Les nombres de ce fichier mélangent deux formats (1 234,56 et 1,234.56) : ' +
+        'impossible de les lire sans risque d\'erreur. Réexporte le fichier depuis ton broker ' +
+        'sans le modifier, ou contacte support@mytradingcoach.app.',
+      );
+    }
 
     let dtos: ImportDto[];
 

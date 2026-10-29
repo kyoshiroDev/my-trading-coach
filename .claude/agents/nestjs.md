@@ -1436,12 +1436,18 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
-- **Nombres des parseurs : toujours `parseUsNumber`**, jamais `parseFloat` brut (bug prod du
+- **Nombres des parseurs : toujours `parseUsNumber`** (mode `strict` pour les rapports Tradovate, une seule fonction depuis #782), jamais `parseFloat` brut (bug prod du
   2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
   mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
   de +1 125 $ a été importé à +1 $. La virgule n'est retirée que dans un regroupement VALIDE
-  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250) ; le format européen
-  complet (`1.234,56`) est le ticket #781. Même règle pour découper une ligne : jamais `split(',')`, un
+  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250). Ce garde-fou ne joue qu'en
+  appel direct : à l'import, `normalizeSeparator` (`preprocessCsv`) décide le format des nombres
+  UNE FOIS pour tout le fichier (#781, `detectNumberFormat`) et réécrit les cellules numériques au
+  pivot (`1.234,56` → `1234.56`, `1 234,56 USD` → `1234.56 USD`). `1,085` / `151.234` (milliers ou
+  3 décimales) suivent le reste du fichier ; sans indice, virgule seule = décimale si `;`, milliers
+  si `,` ; point seul = décimale. US et européen mélangés (fichier retouché dans Excel) →
+  `numbersAmbiguous` → import refusé (400, sans IA), jamais deviné. Un CSV `,` au format US repart
+  intact. MEXC garde son parseur propre (traité avant). Même règle pour découper une ligne : jamais `split(',')`, un
   champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
   ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
   `pnl-milliers.util.ts` (détection, `casReparation`) et `scripts/repair-tradovate-pnl-milliers.ts`
@@ -1972,8 +1978,8 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   une clôture qu'après la fermeture.
 - **Format réel** (mesuré) : `Account ID, Account Name, Trade Date (AAAA-MM-JJ), Total Amount
   ("50,000.00"), Total Realized PNL` ; une ligne seulement les jours où le solde a bougé. Colonnes
-  lues par leur nom ; montants par `parseReportAmount` (strict : `NaN` si illisible). Les
-  parseurs d'import utilisent `parseUsNumber` (`csv-parsers.ts`), qui retire aussi les milliers.
+  lues par leur nom ; montants par `parseUsNumber(…, { strict: true })` (`NaN` si illisible ; ex-`parseReportAmount`, fusionné #782). Les
+  parseurs d'import utilisent la même fonction en mode tolérant (unité en suffixe acceptée).
 - **Métriques** : trailing EOD → plus haut = max des clôtures officielles si elles couvrent la
   séance précédente (`previousSession`, week-end sauté) ET que le solde broker est dans le
   référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`

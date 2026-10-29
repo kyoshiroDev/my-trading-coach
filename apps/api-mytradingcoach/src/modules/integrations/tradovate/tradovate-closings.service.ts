@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
-import { splitCsvLine } from '../../trades/csv-parsers';
+import { parseUsNumber, splitCsvLine } from '../../trades/csv-parsers';
 import { tradingDay } from '../../accounts/account-rules';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateReportingClient } from './tradovate-reporting.client';
@@ -26,22 +26,6 @@ export interface DailyClose {
 }
 
 /**
- * Montant du rapport : `"50,000.00"` (guillemets, séparateur de milliers), `(125.50)` pour un
- * négatif, `$` possible. `NaN` si illisible.
- */
-export function parseReportAmount(raw: string | undefined): number {
-  if (raw == null) return Number.NaN;
-  let s = raw.replace(/["$\s]/g, '').replace(/,/g, '');
-  let sign = 1;
-  if (s.startsWith('(') && s.endsWith(')')) {
-    sign = -1;
-    s = s.slice(1, -1);
-  }
-  if (s === '' || !/^-?\d+(\.\d+)?$/.test(s)) return Number.NaN;
-  return sign * Number(s);
-}
-
-/**
  * CSV du rapport `Account Balance History` → clôtures. Colonnes mesurées le 2026-10-03 :
  * `Account ID, Account Name, Trade Date, Total Amount, Total Realized PNL`. Repérées par leur nom
  * (l'ordre n'est pas contractuel) ; ligne illisible ignorée, jamais devinée.
@@ -61,8 +45,8 @@ export function parseAccountBalanceHistory(csv: string, accountName: string): Da
     const cells = splitCsvLine(line);
     if (iName >= 0 && cells[iName]?.trim() && cells[iName].trim() !== accountName) continue;
     const tradeDate = cells[iDate]?.trim() ?? '';
-    const closingBalance = parseReportAmount(cells[iTotal]);
-    const realizedPnl = iPnl >= 0 ? parseReportAmount(cells[iPnl]) : 0;
+    const closingBalance = parseUsNumber(cells[iTotal], { strict: true });
+    const realizedPnl = iPnl >= 0 ? parseUsNumber(cells[iPnl], { strict: true }) : 0;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tradeDate) || Number.isNaN(closingBalance)) continue;
     rows.push({ tradeDate, closingBalance, realizedPnl: Number.isNaN(realizedPnl) ? 0 : realizedPnl });
   }

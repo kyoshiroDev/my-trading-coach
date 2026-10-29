@@ -135,12 +135,17 @@ describe('CsvImportService — séparateur européen & limites', () => {
 
   it('normalise le séparateur `;` et les décimales `,`→`.`', () => {
     const input = 'a;b;c\n1,5;2,5;x';
-    expect(normalizeSeparator(input)).toBe('a,b,c\n1.5,2.5,x');
+    expect(normalizeSeparator(input)).toEqual({ csv: 'a,b,c\n1.5,2.5,x', format: 'eu' });
   });
 
   it('laisse intact un CSV déjà en virgules', () => {
     const input = 'a,b,c\n1.5,2.5,x';
-    expect(normalizeSeparator(input)).toBe(input);
+    expect(normalizeSeparator(input)).toEqual({ csv: input, format: 'us' });
+  });
+
+  it('refuse un fichier aux nombres US et européens mélangés, sans appel IA (#781)', async () => {
+    const csv = 'Date;Symbole;Prix;Profit\n2026-10-27;EURUSD;1.234,56;12,50\n2026-10-28;EURUSD;1,234.56;12.50';
+    await expect(svc.parseCSV(Buffer.from(csv), 'retouche.csv')).rejects.toThrow(/mélangent deux formats/);
   });
 
   it('refuse le chemin IA au-delà de 2000 lignes avec un message clair', async () => {
