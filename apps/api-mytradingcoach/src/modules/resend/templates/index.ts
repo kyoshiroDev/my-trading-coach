@@ -26,7 +26,7 @@ export function serviceFooter(
 ): string {
   return `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">
     ${reason}
-    <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Ne plus recevoir ces conseils</a>.
+    <a href="${unsubUrl}" style="color:#9db4ce;text-decoration:underline;">Ne plus recevoir les e-mails d'aide au démarrage</a>.
   </p>`;
 }
 
@@ -64,19 +64,19 @@ function logo(): string {
 }
 
 /**
- * `unsubUrl` : lien de désinscription en un clic de l'e-mail (campagnes marketing / service). Sans lui
- * (e-mails liés au compte), le pied mène aux préférences e-mail du profil.
+ * Pied commun : « Gérer mes e-mails » (préférences du profil), pour TOUS les e-mails. Un seul lien
+ * qui désinscrit par e-mail, celui du texte (`marketingFooter` / `serviceFooter`) ; avant, le pied
+ * répétait la même URL sous « Se désabonner », qui laissait croire à une désinscription totale.
+ * `_unsubUrl` : accepté pour les appels existants, plus affiché ici.
  */
 export function emailWrapper(
   content: string,
   preheader = '',
   accentGradient: string = ACCENT.brand,
-  unsubUrl?: string,
+  _unsubUrl?: string,
 ): string {
   const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
-  const footerLink = unsubUrl
-    ? `<a href="${unsubUrl}" style="color:#9db4ce;text-decoration:none;">Se désabonner</a>`
-    : `<a href="${appUrl}/profil?tab=params" style="color:#9db4ce;text-decoration:none;">Gérer mes e-mails</a>`;
+  const footerLink = `<a href="${appUrl}/profil?tab=params" style="color:#9db4ce;text-decoration:none;">Gérer mes e-mails</a>`;
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>

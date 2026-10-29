@@ -378,7 +378,7 @@ un incident sur le compte échoué, recréé à chaque seed (cascade). Détails 
 
 `User.serviceEmailsOptOutAt` (migration `20261019120000_service_emails_opt_out`, additive, nullable) :
 désinscription des e-mails d'aide à la prise en main (type `service`, sans consentement). Null =
-reçus. Rempli par « Ne plus recevoir ces conseils », la désinscription marketing ou la coupure du
+reçus. Rempli par « Ne plus recevoir les e-mails d'aide au démarrage », la désinscription marketing ou la coupure du
 consentement dans le profil. Détails : nestjs.md, « Suite d'e-mails d'onboarding ».
 
 ## Essai Premium d'inscription (#769, 2026-10-26)

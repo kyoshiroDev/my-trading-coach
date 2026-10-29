@@ -305,6 +305,7 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
     60 s (`VPS_RETRY_DELAY_MS`), une seule tentative pour les requêtes simultanées. **Une seule alerte
     Sentry par panne** (`warning`, au passage joignable → injoignable, dédupliquée entre process par
     la clé Redis `vps:down:<id>`) ; le filtre global n'envoie pas `ExpectedOutageException` à Sentry.
+    `extra` = `{ reason, name, code }` : jamais le message SSH (hôte et port), qui reste dans le log.
   - `VpsService.exec()` lève **502 `VPS_COMMAND_FAILED`** si le code de sortie n'est pas 0 (avant, une
     commande refusée passait pour un succès). `getStats` reste tolérant (sortie vide → 0).
   - `?server=principal|secondaire` sur `/vps/stats`, `/docker/*`, `/vps/logs/:container` (absent =
@@ -1534,6 +1535,16 @@ part de lignes et non la perfection.
   `CONFLICT`, P2025 → 404 `NOT_FOUND` ; le reste → 500 `INTERNAL` sans détail (pile dans les
   logs + Sentry). `path` et les logs n'incluent jamais la query string.
 - **Sentry** : `src/instrument.ts`, premier import de `main.ts`, actif seulement si `SENTRY_DSN`.
+  Options dans `common/sentry/sentry-options.ts` (#746). `sendDefaultPii: false` ne suffit PAS
+  (SDK 10.x) : il retire l'IP mais joint le corps (10 ko), les cookies, tous les en-têtes et la
+  query string. D'où `httpIntegration({ maxIncomingRequestBodySize: 'none' })`, `beforeSend`
+  (`scrubEvent` : retire `request.data`, `cookies`, `query_string`, en-têtes `authorization` /
+  `cookie`, coupe l'URL au `?`) et `beforeBreadcrumb` (`scrubBreadcrumb` : retire `http.query`
+  des appels sortants, où passent les `apikey=` FMP / calendrier). Ne jamais utiliser l'option
+  `dataCollection` : posée, elle repart de « tout collecter », IP comprise. Gardés : erreur,
+  méthode, chemin, en-têtes techniques, `user.id`, tags. Dans un `captureMessage` / `extra` :
+  nom et code de l'erreur, **jamais son message** (texte libre : adresse, hôte, port…).
+  Vérification sur un vrai événement : `docs/ops/verif-sentry-donnees-requete.md`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
 - **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
   alias local (`AI_MODELS.analysis` = `claude-sonnet-4-6`, `AI_MODELS.fast` = `claude-haiku-5-5`) ;
@@ -1609,6 +1620,7 @@ Pas de cache Redis des PDF : Redis prod (256 Mo, `noeviction`) porte les files B
   - `rate_limit_exceeded` (Resend : **10 requêtes/s par équipe**) → 3 nouveaux essais (1 s, 2 s, 4 s) ;
   - tout autre échec → `logger.error` **et Sentry** (`fingerprint ['resend-send-failed', <erreur>]` :
     un quota dépassé = une seule issue ; `daily_quota_exceeded` / `monthly_quota_exceeded` en `fatal`) ;
+    `extra` = `{ name, statusCode, attempts, queued }`, ni le message de Resend, ni l'objet, ni le destinataire ;
   - jamais de throw (un e-mail raté ne fait pas échouer un job) ;
   - compteur du jour `resend:sent:<AAAA-MM-JJ UTC>` dans Redis ; au **80e** envoi
     (`RESEND_DAILY_WARN`), alerte Sentry de niveau **`error`** (la règle d'alerte n'envoie d'e-mail que pour la priorité haute ; `warning` = priorité moyenne = aucune notification) : seuil décidé pour passer du plan gratuit
@@ -2228,7 +2240,7 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Trois types** : `transactional` (jamais filtré), `marketing` (consentement + plafond), **`service`**
   (aide à utiliser le compte gratuit, intérêt légitime 6.1.f) : SANS consentement, MAIS désinscription
   propre (`User.serviceEmailsOptOutAt`) et **même plafond** que le marketing. Un e-mail de service ne
-  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir ces conseils », lien
+  parle JAMAIS d'offre payante. Pied `serviceFooter` (« Ne plus recevoir les e-mails d'aide au démarrage », lien
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
@@ -2263,9 +2275,11 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
 - **Admin** : la suite est en tête de la liste ; `sentTotal` (EmailSend) et, pour `connect_tradovate`,
   `connectedWithin3d` (envois de plus de 3 j suivis d'une `BrokerConnection` créée sous 3 j, une
   requête SQL). Aperçu / test : données communes réelles (firmes, places), bilan d'exemple.
-- **Pied commun** (`emailWrapper(content, preheader, accent, unsubUrl?)`) : avec `unsubUrl` (campagnes),
-  « Se désabonner » = désinscription en un clic ; sans (e-mails liés au compte), « Gérer mes e-mails »
-  → `${FRONTEND_URL}/profil?tab=params`. Plus aucun lien en dur vers l'app de prod. Garde :
+- **Pied commun** (`emailWrapper(content, preheader, accent, _unsubUrl?)`) : TOUJOURS « Gérer mes
+  e-mails » → `${FRONTEND_URL}/profil?tab=params` (décision du 28/10, #769). Un seul lien qui désinscrit
+  par e-mail : celui du texte (`serviceFooter` ou `marketingFooter`) ; le pied ne répète plus la même URL
+  sous « Se désabonner » (libellé trompeur : un lien de service ne coupe que l'aide au démarrage).
+  Garde : `email-unsub-links.spec.ts`. Aucun lien ne coupe les e-mails de paiement (transactionnels). Plus aucun lien en dur vers l'app de prod. Garde :
   `email-links.spec.ts` vérifie que chaque lien vers l'app (code et rendu des campagnes) mène à une
   route déclarée dans `app.routes.ts` (ex-liens morts `/parametres`, `/trades`).
 - Tests : `campaign-registry.spec.ts` (segments évalués en mémoire par `src/test/prisma-where.ts`),

@@ -112,6 +112,19 @@ describe('VpsService · indisponibilité du serveur', () => {
     );
   });
 
+  it('alerte Sentry : raison, nom et code de l’erreur, jamais son message (#746)', async () => {
+    const refused = Object.assign(new Error('connect ECONNREFUSED 192.0.2.10:22'), { code: 'ECONNREFUSED' });
+    ssh.connect.mockRejectedValue(refused);
+    await service().getConnection('secondaire').catch(() => undefined);
+
+    expect(JSON.stringify(sentry.captureMessage.mock.calls)).not.toContain('192.0.2.10');
+    expect(sentry.captureMessage.mock.calls[0][1].extra).toEqual({
+      reason: 'connexion refusée',
+      name: 'Error',
+      code: 'ECONNREFUSED',
+    });
+  });
+
   it('retour puis nouvelle panne → nouvelle alerte', async () => {
     const vps = service();
     ssh.connect.mockRejectedValueOnce(authFailure());
