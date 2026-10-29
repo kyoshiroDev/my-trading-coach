@@ -224,7 +224,7 @@
             </div>
             <div class="week-label">{{ week.label }}</div>
             <div class="day-stats">
-              <span class="day-count" data-testid="week-count">{{ week.count }}{{ week.partial ? '+' : '' }} trades</span>
+              <span class="day-count" data-testid="week-count">{{ tradeCountLabel(week.count, week.partial) }}</span>
               <span class="day-dot">·</span>
               <span class="day-winrate">{{ week.winCount }}/{{ week.count }}</span>
               @if (!money.mixed()) {
@@ -245,7 +245,7 @@
               @if (week.partial) {
                 <span class="day-partial" data-testid="week-partial">partiel</span>
                 <mtc-info-tooltip class="align-end" label="Pourquoi ces totaux sont partiels"
-                  text="Charge plus de trades pour voir le total la semaine." />
+                  [text]="partialHint.week" />
               }
             </div>
           </div>
@@ -267,7 +267,7 @@
             </div>
             <div class="day-label">{{ day.label }}</div>
             <div class="day-stats">
-              <span class="day-count" data-testid="day-count">{{ day.count }}{{ day.partial ? '+' : '' }} trade{{ day.count > 1 || day.partial ? 's' : '' }}</span>
+              <span class="day-count" data-testid="day-count">{{ tradeCountLabel(day.count, day.partial) }}</span>
               <span class="day-dot">·</span>
               <span class="day-winrate">{{ day.winCount }}/{{ day.count }}</span>
               @if (!money.mixed()) {
@@ -288,7 +288,7 @@
               @if (day.partial) {
                 <span class="day-partial" data-testid="day-partial">partiel</span>
                 <mtc-info-tooltip class="align-end" label="Pourquoi ces totaux sont partiels"
-                  text="Charge plus de trades pour voir le total du jour." />
+                  [text]="partialHint.day" />
               }
             </div>
             @if (canReassign()) {

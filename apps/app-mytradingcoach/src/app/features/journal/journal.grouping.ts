@@ -120,6 +120,21 @@ export function groupByWeek(days: DayGroup[]): WeekGroup[] {
     });
 }
 
+/**
+ * Libellé du nombre de trades d'un en-tête jour/semaine, écrit EN ENTIER (pas de morceaux
+ * concaténés) : « 1 trade », « 2 trades », « 20+ trades » si le groupe est partiel (#796).
+ */
+export function tradeCountLabel(count: number, partial: boolean): string {
+  if (partial) return `${count}+ trades`;
+  return count > 1 ? `${count} trades` : `${count} trade`;
+}
+
+/** Info-bulles de la pastille « partiel » (#796), phrases complètes. */
+export const PARTIAL_HINT = {
+  day: 'Charge plus de trades pour voir le total du jour.',
+  week: 'Charge plus de trades pour voir le total de la semaine.',
+} as const;
+
 /** Semaine ISO (lundi → dimanche) d'une clé jour 'YYYY-MM-DD'. Clé = lundi, libellé = plage. */
 export function isoWeek(dayKey: string): { key: string; label: string } {
   const date = new Date(dayKey + 'T12:00:00'); // midi → insensible au fuseau/DST
