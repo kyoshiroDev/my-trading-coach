@@ -19,6 +19,8 @@ export interface DayGroup {
   totalCommission: number; // affichage seul
   count: number;
   winCount: number;
+  /** Jour peut-être coupé par la pagination : ses totaux ne portent que sur les trades chargés (#796). */
+  partial: boolean;
 }
 
 export interface WeekGroup {
@@ -30,6 +32,8 @@ export interface WeekGroup {
   totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
   totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
   totalCommission: number; // affichage seul
+  /** Contient le jour partiel : totaux sur les seuls trades chargés (#796). */
+  partial: boolean;
 }
 
 /** Clé jour locale 'YYYY-MM-DD' d'une date de trade. */
@@ -38,8 +42,19 @@ function dayKeyOf(tradedAt: string | Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Regroupe les trades par jour (du plus récent au plus ancien), avec les stats du jour. */
-export function groupByDay(trades: Trade[]): DayGroup[] {
+/**
+ * Regroupe les trades par jour (du plus récent au plus ancien), avec les stats du jour.
+ *
+ * `hasMore` = il reste des pages côté serveur. La liste est triée par `tradedAt` desc et paginée
+ * par 20 : le DERNIER jour chargé (le plus ancien) peut se poursuivre sur la page suivante, et le
+ * front ne peut pas le savoir sans la charger (le curseur n'est qu'un id). Par prudence, il est
+ * marqué `partial` dès qu'il reste des pages (#796). Les jours plus récents sont complets.
+ *
+ * Vraie correction, à faire plus tard : des totaux par jour (et par semaine) calculés par le
+ * serveur avec le même filtre que la liste (buildTradeFilterSql, comme /trades/stats), les lignes
+ * restant paginées. Le marquage « partiel » deviendrait alors inutile.
+ */
+export function groupByDay(trades: Trade[], hasMore = false): DayGroup[] {
   if (!trades.length) return [];
 
   const groups = new Map<string, Trade[]>();
@@ -68,8 +83,10 @@ export function groupByDay(trades: Trade[]): DayGroup[] {
         totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
         count: dayTrades.length, winCount: st.wins,
         lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
+        partial: false,
       };
-    });
+    })
+    .map((day, i, all) => (hasMore && i === all.length - 1 ? { ...day, partial: true } : day));
 }
 
 /**
@@ -98,6 +115,7 @@ export function groupByWeek(days: DayGroup[]): WeekGroup[] {
         key, label, days: weekDays,
         count: st.total, winCount: st.wins,
         totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
+        partial: weekDays.some((d) => d.partial),
       };
     });
 }
