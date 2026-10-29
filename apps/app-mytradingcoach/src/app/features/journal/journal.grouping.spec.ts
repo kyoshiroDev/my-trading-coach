@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { netPnl } from '@mtc/shared';
 import type { Trade } from '../../core/stores/trades.store';
-import { groupByDay, groupByWeek, isoWeek, presetRange } from './journal.grouping';
+import {
+  groupByDay, groupByWeek, isoWeek, PARTIAL_HINT, presetRange, tradeCountLabel,
+} from './journal.grouping';
 
 /** Trade clôturé minimal : pnl BRUT + frais, à une heure donnée du 27/10/2026 (heure locale). */
 const trade = (id: string, pnl: number, commission: number, hour = 10) =>
@@ -112,6 +114,33 @@ describe('journal.grouping', () => {
       const days = groupByDay([...page1, ...page2], false);
       expect(days.some((d) => d.partial)).toBe(false);
       expect(groupByWeek(days).some((w) => w.partial)).toBe(false);
+    });
+  });
+
+  describe('libellés des en-têtes jour et semaine (textes exacts)', () => {
+    it('nombre de trades : singulier, pluriel, partiel', () => {
+      expect(tradeCountLabel(1, false)).toBe('1 trade');
+      expect(tradeCountLabel(2, false)).toBe('2 trades');
+      expect(tradeCountLabel(21, false)).toBe('21 trades');
+      expect(tradeCountLabel(20, true)).toBe('20+ trades');
+      expect(tradeCountLabel(1, true)).toBe('1+ trades');
+    });
+
+    it('jour et semaine accordent de la même façon', () => {
+      const one = groupByDay([trade('a', 10, 0)]);
+      expect(tradeCountLabel(one[0].count, one[0].partial)).toBe('1 trade');
+      const [w1] = groupByWeek(one);
+      expect(tradeCountLabel(w1.count, w1.partial)).toBe('1 trade');
+
+      const two = groupByDay([trade('a', 10, 0, 9), trade('b', 5, 0, 11)], true);
+      expect(tradeCountLabel(two[0].count, two[0].partial)).toBe('2+ trades');
+      const [w2] = groupByWeek(two);
+      expect(tradeCountLabel(w2.count, w2.partial)).toBe('2+ trades');
+    });
+
+    it('info-bulles de la pastille « partiel » : phrases complètes', () => {
+      expect(PARTIAL_HINT.day).toBe('Charge plus de trades pour voir le total du jour.');
+      expect(PARTIAL_HINT.week).toBe('Charge plus de trades pour voir le total de la semaine.');
     });
   });
 });
