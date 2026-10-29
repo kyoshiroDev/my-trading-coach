@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   detectNumberFormat,
   mapNormalizedCsvToDto,
@@ -194,7 +196,8 @@ describe('virgule décimale européenne — jamais lue 10 ou 100 fois trop grand
   it('IBKR', () => {
     const csv = parseIBKR([
       'Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Realized P/L,Buy/Sell',
-      'Trades,Data,Order,Stocks,EUR,SAP,2026-10-27 10:00:00,"-2,5","1.234,56","12,50",SELL',
+      // Achat de clôture (short) : l'entrée estimée reste positive avec ces montants tronqués (#784).
+      'Trades,Data,Order,Stocks,EUR,SAP,2026-10-27 10:00:00,"2,5","1.234,56","12,50",BUY',
     ]);
     expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ exit: 1.234, quantity: 2, pnl: 12 });
   });
@@ -331,5 +334,51 @@ describe('parseUsNumber — mode strict des rapports', () => {
     expect(parseUsNumber('0.001BTC')).toBe(0.001);
     expect(parseUsNumber('12,50')).toBe(12);
     expect(parseUsNumber('"$1,125.00"')).toBe(1125);
+  });
+});
+
+/**
+ * IBKR Activity Statement (#784). Fixture reconstruite d'après la documentation IBKR (pas de
+ * relevé réel à ce jour) : section `Statement` en tête, un en-tête `Trades` par catégorie,
+ * lignes `ClosedLot` / `SubTotal` / `Total` entre les symboles.
+ */
+describe('IBKR — relevé Activity Statement', () => {
+  const statement = readFileSync(join(__dirname, '__fixtures__/ibkr-activity-statement.csv'), 'utf8');
+
+  it('détecté IBKR malgré la section Statement en 1ʳᵉ ligne', () => {
+    expect(preprocessCsv(statement).broker).toBe('ibkr');
+  });
+
+  it('une ligne par clôture, sens de la position fermée, lecture jusqu’au bout', () => {
+    const dtos = mapNormalizedCsvToDto(preprocessCsv(statement).csv);
+    expect(dtos).toHaveLength(3); // ni ouvertures, ni ClosedLot, ni arrêt au 1er SubTotal
+    expect(dtos[0]).toMatchObject({ asset: 'AAPL', side: 'LONG', exit: 152, quantity: 100, pnl: 198 });
+    expect(dtos[0].entry).toBeCloseTo(150.01, 2); // coût 15 001 $ / 100
+    expect(dtos[1]).toMatchObject({ asset: 'TSLA', side: 'SHORT', exit: 245, quantity: 10, pnl: 48 });
+    expect(dtos[1].entry).toBeCloseTo(249.9, 2);
+    // Futures : multiplicateur 50 absorbé par Proceeds / Basis, l'entrée reste un prix.
+    expect(dtos[2]).toMatchObject({ asset: 'ESZ6', side: 'LONG', exit: 5810, quantity: 1, pnl: 495.5 });
+    expect(dtos[2].entry).toBeCloseTo(5800, 1);
+  });
+
+  it('colonne Buy/Sell (variante) : BUY de clôture = SHORT', () => {
+    const csv = parseIBKR([
+      'Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Realized P/L,Buy/Sell',
+      'Trades,Data,Order,Stocks,USD,MSFT,2026-10-27 10:00:00,5,400,-20,BUY',
+      'Trades,Data,Order,Forex,USD,EUR.USD,2026-10-27 11:00:00,-1000,1.09,3,SELL',
+    ]);
+    const [msft, eur] = mapNormalizedCsvToDto(csv);
+    expect(msft).toMatchObject({ asset: 'MSFT', side: 'SHORT', entry: 396 }); // entrée estimée : 400 − 20 / 5
+    expect(eur).toMatchObject({ asset: 'EUR/USD', side: 'LONG' });
+  });
+
+  it('clôture à 0 (code C) gardée ; date illisible ignorée', () => {
+    const header = 'Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Realized P/L,Code';
+    const csv = parseIBKR([
+      header,
+      'Trades,Data,Order,Stocks,USD,AMD,2026-10-27 10:00:00,-5,100,0,C',
+      'Trades,Data,Order,Stocks,USD,NVDA,pas une date,-5,100,12,C',
+    ]);
+    expect(mapNormalizedCsvToDto(csv).map((d) => d.asset)).toEqual(['AMD']);
   });
 });

@@ -1,0 +1,24 @@
+Statement,Header,Field Name,Field Value
+Statement,Data,BrokerName,Interactive Brokers LLC
+Statement,Data,Title,Activity Statement
+Statement,Data,Period,"October 27, 2026"
+Account Information,Header,Field Name,Field Value
+Account Information,Data,Name,Compte Test
+Account Information,Data,Base Currency,USD
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Stocks,USD,AAPL,"2026-10-27, 10:00:00",100,150,150.5,-15000,-1,15001,0,50,O
+Trades,Data,Order,Stocks,USD,AAPL,"2026-10-27, 11:00:00",-100,152,152,15200,-1,-15001,198,0,C
+Trades,Data,ClosedLot,Stocks,USD,AAPL,2026-10-27,100,150,,,,15001,198,,
+Trades,SubTotal,,Stocks,USD,AAPL,,0,,,200,-2,0,198,50,
+Trades,Data,Order,Stocks,USD,TSLA,"2026-10-27, 12:00:00",-10,250,249,2500,-1,-2499,0,10,O
+Trades,Data,Order,Stocks,USD,TSLA,"2026-10-27, 13:00:00",10,245,245,-2450,-1,2499,48,0,C
+Trades,Data,ClosedLot,Stocks,USD,TSLA,2026-10-27,-10,250,,,,-2499,48,,
+Trades,SubTotal,,Stocks,USD,TSLA,,0,,,50,-2,0,48,10,
+Trades,Total,,Stocks,USD,,,,,,250,-4,0,246,60,
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Futures,USD,ESZ6,"2026-10-27, 14:00:00",1,5800,5801,-290000,-2.25,290002.25,0,50,O
+Trades,Data,Order,Futures,USD,ESZ6,"2026-10-27, 15:00:00",-1,5810,5810,290500,-2.25,-290002.25,495.5,0,C
+Trades,SubTotal,,Futures,USD,ESZ6,,0,,,500,-4.5,0,495.5,50,
+Trades,Total,,Futures,USD,,,,,,500,-4.5,0,495.5,50,
+Financial Instrument Information,Header,Asset Category,Symbol,Description,Multiplier
+Financial Instrument Information,Data,Futures,ESZ6,ES 18DEC26,50
