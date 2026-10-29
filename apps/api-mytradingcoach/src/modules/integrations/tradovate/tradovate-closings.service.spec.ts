@@ -3,7 +3,6 @@ import {
   CLOSINGS_WINDOW_DAYS,
   TradovateClosingsService,
   parseAccountBalanceHistory,
-  parseReportAmount,
 } from './tradovate-closings.service';
 import { TradovateApiError } from './tradovate.errors';
 
@@ -14,17 +13,6 @@ import { TradovateApiError } from './tradovate.errors';
  */
 
 const HEADER = 'Account ID,Account Name,Trade Date,Total Amount,Total Realized PNL';
-
-describe('parseReportAmount', () => {
-  it('guillemets, milliers, négatif entre parenthèses, dollar', () => {
-    expect(parseReportAmount('"50,000.00"')).toBe(50_000);
-    expect(parseReportAmount('(125.50)')).toBe(-125.5);
-    expect(parseReportAmount('$1,234.5')).toBe(1_234.5);
-    expect(parseReportAmount('-42.10')).toBe(-42.1);
-    expect(parseReportAmount('n/a')).toBeNaN();
-    expect(parseReportAmount('')).toBeNaN();
-  });
-});
 
 describe('parseAccountBalanceHistory', () => {
   it('lignes du compte demandé ; ligne illisible ou autre compte ignorés', () => {

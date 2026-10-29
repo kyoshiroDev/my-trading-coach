@@ -300,3 +300,36 @@ describe('format des nombres décidé pour tout le fichier', () => {
     expect(detectNumberFormat(lignes, ';')).toBe(attendu);
   });
 });
+
+/**
+ * Mode strict (#782) : remplace `parseReportAmount` des rapports Tradovate (soldes de clôture,
+ * payouts). Même lecture des milliers que l'import ; tout ce qui n'est pas un nombre entier vaut NaN.
+ */
+describe('parseUsNumber — mode strict des rapports', () => {
+  it.each([
+    ['"50,000.00"', 50_000],
+    ['(125.50)', -125.5],
+    ['$1,234.5', 1_234.5],
+    ['$(1,250.00)', -1_250],
+    ['-42.10', -42.1],
+    ['1,234,567.89', 1_234_567.89],
+  ])('%j → %d', (brut, attendu) => {
+    expect(parseUsNumber(brut, { strict: true })).toBe(attendu);
+  });
+
+  it.each([
+    ['n/a'],
+    [''],
+    ['12,50'], // l'ancien parseReportAmount y lisait 1 250
+    ['0.001BTC'],
+    ['1.2.3'],
+  ])('%j → NaN', (brut) => {
+    expect(parseUsNumber(brut, { strict: true })).toBeNaN();
+  });
+
+  it('le mode tolérant (import) garde son comportement', () => {
+    expect(parseUsNumber('0.001BTC')).toBe(0.001);
+    expect(parseUsNumber('12,50')).toBe(12);
+    expect(parseUsNumber('"$1,125.00"')).toBe(1125);
+  });
+});

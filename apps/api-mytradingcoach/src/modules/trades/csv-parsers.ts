@@ -384,13 +384,19 @@ export function parseTradovatePnl(raw: string): number {
  * (`parseFloat` s'arrête à la virgule). À l'import, les nombres européens sont déjà convertis en
  * amont, format décidé pour tout le fichier (`normalizeSeparator`, #781) : ce garde-fou ne joue
  * que pour un appel direct.
+ *
+ * `strict` (rapports Tradovate : soldes de clôture, payouts) : la cellule entière doit être un
+ * nombre, sinon NaN. Pas d'unité tolérée, et `12,50` vaut NaN plutôt que 12 : une ligne de
+ * rapport illisible est ignorée, jamais devinée. Seule lecture des montants US depuis #782
+ * (l'ancien `parseReportAmount` retirait TOUTES les virgules : `12,50` y valait 1 250).
  */
-export function parseUsNumber(raw: string | null | undefined): number {
-  let s = String(raw ?? '').replace(/[$€£\s\u00a0\u202f]/g, '');
+export function parseUsNumber(raw: string | null | undefined, { strict = false } = {}): number {
+  let s = String(raw ?? '').replace(/["$€£\s\u00a0\u202f]/g, '');
   const negatifParParentheses = s.startsWith('(') && s.endsWith(')');
   if (negatifParParentheses) s = s.slice(1, -1);
   const milliers = /^[+-]?\d{1,3}(?:,\d{3})+(?![\d,])/.exec(s);
   if (milliers) s = milliers[0].replace(/,/g, '') + s.slice(milliers[0].length);
+  if (strict && !/^[+-]?\d+(?:\.\d+)?$/.test(s)) return NaN;
   const n = parseFloat(s);
   if (!Number.isFinite(n)) return NaN;
   return negatifParParentheses && n !== 0 ? -n : n;
