@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  detectNumberFormat,
   mapNormalizedCsvToDto,
+  normalizeSeparator,
   parseBinanceFutures,
   parseBinanceSpot,
   parseBybit,
@@ -204,5 +206,97 @@ describe('virgule décimale européenne — jamais lue 10 ou 100 fois trop grand
     ].join('\n'));
     expect(broker).toBe('mt5');
     expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 1.085, exit: 1.0862, quantity: 0.5, pnl: 11.8 });
+  });
+});
+
+/**
+ * Format des nombres décidé une fois par fichier (#781) : `1.234,56` était lu 1,234 dans un CSV
+ * européen à `;` (1 000 fois trop petit). Fichier ambigu → refusé plutôt que deviné.
+ */
+describe('format des nombres décidé pour tout le fichier', () => {
+  const MT5_HEADER =
+    'Ticket;Open Time;Type;Lots;Symbol;Open Price;S/L;T/P;Close Time;Close Price;Commission;Swap;Profit';
+
+  it('CSV européen à « ; » : 1.234,56 lu 1 234,56, pas 1,234', () => {
+    const { broker, csv } = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;buy;1,00;XAUUSD;2.650,10;0;0;2026.10.27 10:00:00;2.662,44;-7,00;0;1.234,56',
+    ].join('\n'));
+    expect(broker).toBe('mt5');
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({
+      entry: 2650.1,
+      exit: 2662.44,
+      quantity: 1,
+      pnl: 1227.56, // Profit 1 234,56 + commission -7,00
+    });
+  });
+
+  it('espace de milliers et unité en suffixe (« 1 234,56 USD »)', () => {
+    const { csv } = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;buy;0,50;EURUSD;1,0850;0;0;2026.10.27 10:00:00;1,0862;0;0;1 234,56 USD',
+    ].join('\n'));
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 1.085, exit: 1.0862, quantity: 0.5, pnl: 1234.56 });
+  });
+
+  it('151.234 (yen, 3 décimales) reste 151,234 quand le fichier écrit ses décimales au point', () => {
+    const { csv } = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;sell;0.10;USDJPY;151.234;0;0;2026.10.27 10:00:00;151.012;0;0;14.70',
+    ].join('\n'));
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 151.234, exit: 151.012, quantity: 0.1, pnl: 14.7 });
+  });
+
+  it('151.234 vaut 151 234 dans un fichier européen (le point y est un séparateur de milliers)', () => {
+    const { csv } = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;buy;0,10;BTCJPY;151.234;0;0;2026.10.27 10:00:00;152.000;0;0;76,60',
+    ].join('\n'));
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 151234, exit: 152000, quantity: 0.1, pnl: 76.6 });
+  });
+
+  it('CSV à « ; » au format US : 1,234.56 n’est plus lu 1,234', () => {
+    const { csv } = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;buy;1.00;XAUUSD;2,650.10;0;0;2026.10.27 10:00:00;2,662.44;0;0;1,234.56',
+    ].join('\n'));
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 2650.1, exit: 2662.44, pnl: 1234.56 });
+  });
+
+  it('CSV à virgules aux valeurs européennes entre guillemets : converties', () => {
+    const { broker, csv } = preprocessCsv([
+      'Time,Contracts,Side,Entry Price,Exit Price,Qty,Closed P&L',
+      '2026-10-27 10:00:00,BTCUSDT,Buy,"1.200,50","1.234,56","2,5","1.085,00"',
+    ].join('\n'));
+    expect(broker).toBe('bybit');
+    expect(mapNormalizedCsvToDto(csv)[0]).toMatchObject({ entry: 1200.5, exit: 1234.56, quantity: 2.5, pnl: 1085 });
+  });
+
+  it('CSV à virgules au format US : intact, « 1,085 » reste 1 085', () => {
+    const raw = [
+      'Time,Contracts,Side,Entry Price,Exit Price,Qty,Closed P&L',
+      '2026-10-27 10:00:00,BTCUSDT,Buy,"1,200.50","1,234.56",2.5,"1,085"',
+    ].join('\n');
+    expect(normalizeSeparator(raw)).toEqual({ csv: raw, format: 'us' });
+    expect(mapNormalizedCsvToDto(preprocessCsv(raw).csv)[0]).toMatchObject({ entry: 1200.5, pnl: 1085 });
+  });
+
+  it('formats mélangés dans un même fichier : refusé, rien n’est lu', () => {
+    const res = preprocessCsv([
+      MT5_HEADER,
+      '1;2026.10.27 09:00:00;buy;1,00;XAUUSD;2.650,10;0;0;2026.10.27 10:00:00;2.662,44;0;0;1.234,56',
+      '2;2026.10.28 09:00:00;buy;1.00;XAUUSD;2,650.10;0;0;2026.10.28 10:00:00;2,662.44;0;0;1,234.56',
+    ].join('\n'));
+    expect(res).toMatchObject({ broker: 'unknown', numbersAmbiguous: true });
+  });
+
+  it.each([
+    ['dates, heures et symboles ne votent pas', ['2026.10.27;10:00;EURUSD.r;US30.cash;12,50'], 'eu'],
+    ['virgule seule à 3 chiffres dans un fichier à « ; » : décimale', ['1,085;x'], 'eu'],
+    ['point seul à 3 chiffres : décimale', ['151.234;x'], 'us'],
+    ['les deux à 3 chiffres, sans autre indice : ambigu', ['1,085;151.234'], 'ambigu'],
+    ['0,125 n’est pas un regroupement de milliers', ['0,125;151.234'], 'eu'],
+  ])('%s', (_libelle, lignes, attendu) => {
+    expect(detectNumberFormat(lignes, ';')).toBe(attendu);
   });
 });

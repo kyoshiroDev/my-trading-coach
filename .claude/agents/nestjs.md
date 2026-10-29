@@ -1440,8 +1440,14 @@ sont en direct.
   2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
   mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
   de +1 125 $ a été importé à +1 $. La virgule n'est retirée que dans un regroupement VALIDE
-  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250) ; le format européen
-  complet (`1.234,56`) est le ticket #781. Même règle pour découper une ligne : jamais `split(',')`, un
+  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250). Ce garde-fou ne joue qu'en
+  appel direct : à l'import, `normalizeSeparator` (`preprocessCsv`) décide le format des nombres
+  UNE FOIS pour tout le fichier (#781, `detectNumberFormat`) et réécrit les cellules numériques au
+  pivot (`1.234,56` → `1234.56`, `1 234,56 USD` → `1234.56 USD`). `1,085` / `151.234` (milliers ou
+  3 décimales) suivent le reste du fichier ; sans indice, virgule seule = décimale si `;`, milliers
+  si `,` ; point seul = décimale. US et européen mélangés (fichier retouché dans Excel) →
+  `numbersAmbiguous` → import refusé (400, sans IA), jamais deviné. Un CSV `,` au format US repart
+  intact. MEXC garde son parseur propre (traité avant). Même règle pour découper une ligne : jamais `split(',')`, un
   champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
   ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
   `pnl-milliers.util.ts` (détection, `casReparation`) et `scripts/repair-tradovate-pnl-milliers.ts`
