@@ -37,7 +37,7 @@ import { InactiveAccountsToggleComponent } from '../../shared/components/inactiv
 import { isInactiveStatus, statusBadgeClass, statusLabel } from '../../core/utils/account-status.util';
 import {
   DatePreset, DayGroup, FilterEmotion, FilterExecution, FilterResult, FilterSide,
-  gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange,
+  gradeLabel, gradeTooltip, groupByDay, groupByWeek, presetRange, PARTIAL_HINT, tradeCountLabel,
 } from './journal.grouping';
 
 
@@ -202,6 +202,8 @@ export class JournalComponent {
   protected readonly ReassignIcon     = ArrowRightLeft;
 
   protected readonly gradeLabel = gradeLabel;
+  protected readonly tradeCountLabel = tradeCountLabel;
+  protected readonly partialHint = PARTIAL_HINT;
   protected readonly gradeTooltip = gradeTooltip;
 
   protected readonly showModal        = signal(false);
