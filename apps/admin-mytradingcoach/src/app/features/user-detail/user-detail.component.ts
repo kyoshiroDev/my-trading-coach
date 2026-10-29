@@ -208,8 +208,8 @@ export class UserDetailComponent {
     const from = Math.max(Date.now(), this.offeredUntil() ? Date.parse(this.offeredUntil()!) : 0);
     const end = frDate(new Date(from + OFFER_DAYS * DAY_MS));
     const confirmed = await this.confirm.ask({
-      title: this.offeredUntil() ? 'Prolonger le Premium offert ?' : 'Offrir 1 mois de Premium ?',
-      message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email} ? Fin le ${end}. Aucun prélèvement.`,
+      title: this.offeredUntil() ? 'Prolonger le Premium offert\u00a0?' : 'Offrir 1 mois de Premium\u00a0?',
+      message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email}\u00a0? Fin le ${end}. Aucun prélèvement.`,
       confirmLabel: 'Confirmer',
     });
     if (!confirmed) return;

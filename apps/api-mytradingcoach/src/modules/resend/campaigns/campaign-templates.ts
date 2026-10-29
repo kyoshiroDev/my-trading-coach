@@ -150,7 +150,7 @@ export function founderFollowupTemplate({ userName, appUrl, unsubUrl, seatsLeft,
       <p ${P}>${hello(userName)} MyTradingCoach a ouvert une offre pour ses premiers utilisateurs : Premium à
         <strong style="color:#e2eaf5;">${m}&nbsp;€/mois tant que ton abonnement reste actif</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
       <p ${P}><strong style="color:#e2eaf5;">${seatsText}</strong>.</p>
-      <p ${P}>Pas d'essai sur cette offre : satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
+      <p ${P}>Pas d'essai sur cette offre&nbsp;: satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
       ${cta('Devenir fondateur →', onboardingLink(appUrl, '/dashboard', 'founder_followup', { plan: 'founder', cta: 'email' }))}
     `, 'rgba(139,92,246,.4)') + RISK_NOTICE + marketingFooter(unsubUrl);
 

@@ -91,7 +91,8 @@ describe('Fiche admin — Premium offert', () => {
     button().click();
     await fixture.whenStable();
     expect(confirm.ask).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringMatching(/Offrir 30 jours de Premium à alex@test\.com \? Fin le \d{2}\/\d{2}\/\d{4}\. Aucun prélèvement\./),
+      title: 'Offrir 1 mois de Premium\u00a0?',
+      message: expect.stringMatching(/Offrir 30 jours de Premium à alex@test\.com\u00a0\? Fin le \d{2}\/\d{2}\/\d{4}\. Aucun prélèvement\./),
     }));
     const req = httpMock.expectOne(`${URL}/offer-premium`);
     expect(req.request.method).toBe('POST');

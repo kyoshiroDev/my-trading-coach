@@ -499,7 +499,7 @@
                     }
                   }
                 </div>
-                <p class="plan-desc">Accès à tout : Insights IA, Chat coach IA, Débrief hebdo, analytics avancés, comptes illimités.</p>
+                <p class="plan-desc">Accès à tout&nbsp;: Insights IA, Chat coach IA, Débrief hebdo, analytics avancés, comptes illimités.</p>
                 @if (offersStore.isFounder()) {
                   <p class="plan-tariff" data-testid="founder-tariff">
                     {{ founderPrice() }} bloqué tant que ton abonnement reste actif. Si tu résilies, tu perds ce tarif.
@@ -517,14 +517,14 @@
                 }
                 @if (freePremium()) {
                   <div class="trial-status" data-testid="offered-premium">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Premium offert&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
                     </p>
                   </div>
                 } @else if (isInTrial()) {
                   <div class="trial-status">
-                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit : il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
+                    <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>
@@ -567,7 +567,7 @@
                 <div class="plan-badge free">GRATUIT</div>
                 <p class="plan-desc">Trades illimités · Journal complet · Import · Historique illimité · IA mutualisée (contexte marché, calendrier éco, news).</p>
                 <p class="plan-upgrade-hint">
-                  Passe à Premium pour l'IA personnelle : Débrief hebdo, Chat coach, Insights IA, analytics avancés &amp; comptes illimités.
+                  Passe à Premium pour l'IA personnelle&nbsp;: Débrief hebdo, Chat coach, Insights IA, analytics avancés &amp; comptes illimités.
                 </p>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="showPlanModal.set(true)">
