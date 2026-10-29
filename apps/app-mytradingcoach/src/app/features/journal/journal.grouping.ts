@@ -14,9 +14,9 @@ export interface DayGroup {
   key: string;
   label: string;
   trades: Trade[];
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
+  totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
+  totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
+  totalCommission: number; // affichage seul
   count: number;
   winCount: number;
 }
@@ -27,9 +27,9 @@ export interface WeekGroup {
   days: DayGroup[];   // jours de la semaine, du plus récent au plus ancien
   count: number;
   winCount: number;
-  totalPnl: number;
-  totalPnlNet: number;
-  totalCommission: number;
+  totalPnl: number;        // Σ P&L NET des trades (computeTradeStats), frais déjà déduits
+  totalPnlNet: number;     // = totalPnl : les frais ne sont PAS re-déduits (#795)
+  totalCommission: number; // affichage seul
 }
 
 /** Clé jour locale 'YYYY-MM-DD' d'une date de trade. */
@@ -59,14 +59,13 @@ export function groupByDay(trades: Trade[]): DayGroup[] {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
       });
       const totalCommission = dayTrades.reduce((s, t) => s + Math.abs(t.commission ?? 0), 0);
-      // Stats du jour via le helper unique (BE exclus du win rate).
+      // Stats du jour via le helper unique (BE exclus du win rate). st.totalPnl est déjà NET
+      // (Σ netPnl) : le re-déduire des frais les comptait deux fois (#795).
       const st              = computeTradeStats(dayTrades);
-      const totalPnl        = st.totalPnl;
-      const totalPnlNet     = totalPnl - totalCommission;
       return {
         key, label,
         trades: dayTrades.sort((a, b) => new Date(b.tradedAt).getTime() - new Date(a.tradedAt).getTime()),
-        totalPnl, totalPnlNet, totalCommission,
+        totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
         count: dayTrades.length, winCount: st.wins,
         lossCount: st.losses, breakeven: st.breakeven, winRate: st.winRate,
       };
@@ -94,11 +93,11 @@ export function groupByWeek(days: DayGroup[]): WeekGroup[] {
       const allTrades = weekDays.flatMap((d) => d.trades);
       const st = computeTradeStats(allTrades);
       const totalCommission = weekDays.reduce((s, d) => s + d.totalCommission, 0);
-      const totalPnl = st.totalPnl;
+      // st.totalPnl déjà NET : pas de seconde déduction des frais (#795).
       return {
         key, label, days: weekDays,
         count: st.total, winCount: st.wins,
-        totalPnl, totalPnlNet: totalPnl - totalCommission, totalCommission,
+        totalPnl: st.totalPnl, totalPnlNet: st.totalPnl, totalCommission,
       };
     });
 }
