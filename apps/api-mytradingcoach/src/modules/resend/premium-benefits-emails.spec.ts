@@ -26,4 +26,10 @@ describe('e-mails Premium : avantages réels', () => {
     expect(text(mail.html)).toContain('Sans engagement, annulable en un clic.');
     expect(`${mail.subject} ${text(mail.html)}`).not.toMatch(/mois offert|jours offerts|carte requise/i);
   });
+
+  it('« Passe à Premium » : bouton « Découvrir Premium », plus « Essayer » (aucun essai promis, #792)', () => {
+    const t = text(premiumTemplate({ userName: 'Alex', appUrl: 'https://app.test', unsubUrl: 'U' }).html);
+    expect(t).toContain('Découvrir Premium →');
+    expect(t).not.toMatch(/Essayer/i);
+  });
 });

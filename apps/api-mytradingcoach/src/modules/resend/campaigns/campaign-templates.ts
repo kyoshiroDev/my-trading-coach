@@ -265,7 +265,7 @@ export function premiumTemplate({ userName, appUrl, unsubUrl }: CampaignBuildCtx
         ${NO_TRIAL_LINE}
       </p>
       ${divider}
-      ${cta('Essayer Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
+      ${cta('Découvrir Premium →', `${appUrl}/dashboard?plan=premium&cta=email`)}
     `, 'rgba(99,92,246,.4)') + marketingFooter(unsubUrl);
 
   return {
