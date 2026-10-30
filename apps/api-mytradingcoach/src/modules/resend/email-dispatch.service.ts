@@ -161,7 +161,10 @@ export class EmailDispatchService {
       campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
     const { subject, html, text, from, replyTo, attachments } = content;
 
-    await this.resend.send({ to: user.email, subject, html, text, from, replyTo, attachments });
+    // Désinscription en un clic (RFC 8058, #791) : marketing et service seulement, même portée que le
+    // lien du texte. Jamais sur un transactionnel (paiement, sécurité, réservation).
+    const headers = isCapped(campaign) ? oneClickUnsubHeaders(unsubUrl) : undefined;
+    await this.resend.send({ to: user.email, subject, html, text, from, replyTo, attachments, headers });
     await this.prisma.emailSend.create({
       data: { campaignKey: campaign.key, userId: user.id, kind: campaign.kind },
     });
@@ -186,6 +189,14 @@ export class EmailDispatchService {
     user.unsubToken = token;
     return token;
   }
+}
+
+/** En-têtes de désinscription en un clic : Gmail et Yahoo les exigent des gros expéditeurs. */
+export function oneClickUnsubHeaders(unsubUrl: string): Record<string, string> {
+  return {
+    'List-Unsubscribe': `<${unsubUrl}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
 }
 
 function isCapped(campaign: EmailCampaign): boolean {

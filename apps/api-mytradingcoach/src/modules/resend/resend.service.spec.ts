@@ -155,6 +155,17 @@ describe('ResendService', () => {
     const err = (name: string) => ({ data: null, error: { name, message: name, statusCode: 429 } });
     const params = { to: 'a@test.com', subject: 's', html: 'h' };
 
+    it('transmet les en-têtes de désinscription en un clic tels quels à Resend (#791)', async () => {
+      const headers = { 'List-Unsubscribe': '<https://api.test/u?token=t>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+      await service.deliver({ ...params, headers }, { lastAttempt: false, idempotencyKey: 'email/43' });
+      expect(mockSend.mock.calls[0][0].headers).toEqual(headers);
+    });
+
+    it('sans en-têtes (transactionnel) : aucun champ headers envoyé à Resend (#791)', async () => {
+      await service.deliver(params, { lastAttempt: false, idempotencyKey: 'email/44' });
+      expect(mockSend.mock.calls[0][0]).not.toHaveProperty('headers');
+    });
+
     it('passe la clé d’idempotence du job à Resend', async () => {
       await service.deliver(params, { lastAttempt: false, idempotencyKey: 'email/42' });
 

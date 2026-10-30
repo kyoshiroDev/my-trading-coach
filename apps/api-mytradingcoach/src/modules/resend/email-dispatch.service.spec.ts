@@ -262,4 +262,33 @@ describe('EmailDispatchService', () => {
     expect(html).toContain(`token=${user.unsubToken}"`);
     expect(html).not.toContain('token="');
   });
+
+  describe('désinscription en un clic (RFC 8058, #791)', () => {
+    const user = () => ({ id: 'u3', email: 'c@test.com', name: 'Cy', marketingConsent: true, unsubToken: 'tok' });
+    const sentHeaders = () => mockResend.send.mock.calls[0][0].headers as Record<string, string> | undefined;
+
+    it('marketing : en-têtes avec le lien complet (sans scope)', async () => {
+      await service.dispatch(baseCampaign({ kind: 'marketing' }), user());
+      expect(sentHeaders()).toEqual({
+        'List-Unsubscribe': '<https://api.test/api/emails/unsubscribe?token=tok>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      });
+    });
+
+    it('service : même portée que le lien du texte (scope=service)', async () => {
+      await service.dispatch(baseCampaign({ kind: 'service', requiresConsent: false }), user());
+      expect(sentHeaders()?.['List-Unsubscribe']).toBe('<https://api.test/api/emails/unsubscribe?token=tok&scope=service>');
+      expect(sentHeaders()?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+    });
+
+    it('transactionnel : jamais d’en-tête de désinscription', async () => {
+      await service.dispatch(baseCampaign({ kind: 'transactional', requiresConsent: false }), user());
+      expect(sentHeaders()).toBeUndefined();
+    });
+
+    it('annonce (override en fonction) : en-têtes présents aussi', async () => {
+      await service.dispatch(baseCampaign({ key: 'announcement', kind: 'marketing' }), user(), () => ({ subject: 'A', html: 'h' }));
+      expect(sentHeaders()?.['List-Unsubscribe']).toBe('<https://api.test/api/emails/unsubscribe?token=tok>');
+    });
+  });
 });

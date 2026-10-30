@@ -39,4 +39,13 @@ describe('EmailProcessor (SCA-B5-02)', () => {
 
     await expect(processor.process(job(0))).rejects.toThrow('rate_limit_exceeded');
   });
+
+  it('les en-têtes de désinscription survivent à la file (données sérialisées en JSON par BullMQ, #791)', async () => {
+    const deliver = vi.fn().mockResolvedValue(undefined);
+    const processor = new EmailProcessor({ deliver } as unknown as ResendService);
+    const withHeaders: EmailJob = { ...data, headers: { 'List-Unsubscribe': '<https://api.test/u?token=t>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } };
+    const stored = JSON.parse(JSON.stringify(withHeaders)) as EmailJob;
+    await processor.process({ id: '7', timestamp: 1, data: stored, attemptsMade: 0, opts: { attempts: 5 } } as unknown as Job<EmailJob>);
+    expect(deliver.mock.calls[0][0].headers).toEqual(withHeaders.headers);
+  });
 });

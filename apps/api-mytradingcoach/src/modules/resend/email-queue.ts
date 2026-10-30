@@ -15,6 +15,8 @@ export interface EmailJob {
   replyTo?: string;
   /** Images intégrées (`cid:`), contenu en base64 : la signature de Greg. */
   attachments?: { filename: string; content: string; contentId: string }[];
+  /** En-têtes transmis tels quels à Resend : désinscription en un clic (RFC 8058, #791). */
+  headers?: Record<string, string>;
 }
 
 // 5 essais, 2 s → 4 s → 8 s → 16 s entre eux (~30 s en tout, au-delà d'une fenêtre de 429).
