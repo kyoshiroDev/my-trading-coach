@@ -1,6 +1,8 @@
 .topbar {
   position: sticky;
-  top: 0;
+  /* Sous le bandeau « Mode démo », collant lui aussi (z-index 50) : à top 0, la barre passait
+     dessous en défilant et son titre disparaissait (#721). --demo-banner-h vaut 0 hors démo. */
+  top: var(--demo-banner-h, 0px);
   background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -48,7 +50,7 @@
 /* Sélecteur de compte global, sous l'en-tête (écrans scopés par compte) */
 .topbar-accounts {
   position: sticky;
-  top: var(--topbar-h);
+  top: calc(var(--topbar-h) + var(--demo-banner-h, 0px));
   background: rgba(8, 12, 20, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

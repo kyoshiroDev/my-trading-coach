@@ -180,3 +180,31 @@ describe('pages du shell sans topbar commune', () => {
     expect(rules, `${root} ne doit plus porter de plafond`).not.toMatch(/max-width\s*:/);
   });
 });
+
+/**
+ * Compte démo (#721) : le bandeau « Mode démo » est collant en haut de la zone de contenu,
+ * au-dessus de tout (z-index 50). Collée elle aussi à top 0, la topbar passait dessous en
+ * défilant et son titre devenait illisible (vu à 390 px). Elle se cale sous le bandeau, et le
+ * sélecteur de compte sous elle ; hors démo, --demo-banner-h vaut 0 et rien ne bouge.
+ */
+describe('compte démo : topbar sous le bandeau collant', () => {
+  const sansVar = (v: string) => v.replace(/var\(--demo-banner-h,\s*0px\)/g, '0px');
+
+  it('le bandeau est collant à top 0 et passe au-dessus de la topbar', () => {
+    expect(decl(sidebarCss, '.demo-banner', 'position')).toBe('sticky');
+    expect(px(decl(sidebarCss, '.demo-banner', 'top'))).toBe(0);
+    expect(Number(decl(sidebarCss, '.demo-banner', 'z-index'))).toBeGreaterThan(
+      Number(decl(topbarCss, '.topbar', 'z-index')),
+    );
+  });
+
+  it('la topbar colle sous le bandeau, le sélecteur de compte sous la topbar', () => {
+    expect(decl(topbarCss, '.topbar', 'top')).toContain('var(--demo-banner-h');
+    expect(decl(topbarCss, '.topbar-accounts', 'top')).toContain('var(--demo-banner-h');
+  });
+
+  it('hors démo (bandeau à 0 px), positions inchangées', () => {
+    expect(px(sansVar(decl(topbarCss, '.topbar', 'top')))).toBe(0);
+    expect(px(sansVar(decl(topbarCss, '.topbar-accounts', 'top')))).toBe(px(tokens['--topbar-h']));
+  });
+});
