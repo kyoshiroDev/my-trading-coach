@@ -381,6 +381,12 @@ Règles :
 - **Toute clé de stockage navigateur de la landing** (localStorage / sessionStorage) est listée
   nommément en section 6 de la politique (« Stockage du navigateur sur le site vitrine »), avec sa
   durée. Nouvelle clé = nouvelle ligne, dans le même commit (#745).
+- Stockage de **l'app** : déclaré par familles dans la même section 6 (« Stockage du navigateur
+  dans l'application » : `access_token`, `user`, clés `mtc.*` / `mtc_*`, `sidebar_collapsed`,
+  `ambassador_last_seen`), avec Stripe.js (`__stripe_mid`, `__stripe_sid`) et le script Google
+  chargé à l'affichage du bouton. Nouvelle clé hors de ces familles → l'ajouter (#747).
+- Listes Gratuit / Premium des CGU (section 5) : alignées à la main sur `PLAN_BENEFITS`
+  (`@mtc/shared`) et le détail Premium de `Pricing.astro`. Changer un avantage → les CGU aussi (#747).
 - Pages légales : n'y écrire que ce que le code fait (audit du 25/10, #745/#747). Pas d'export CSV
   libre-service (portabilité **sur demande**), conservation « jusqu'à la suppression du compte »,
   hébergeur unique OVH (pas de Vercel), l'IA s'appuie AUSSI sur des annonces économiques publiques

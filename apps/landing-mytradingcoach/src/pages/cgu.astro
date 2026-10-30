@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import '../styles/legal.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
+import { ACCOUNT_LIMITS, FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
 
 const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 ---
@@ -74,22 +74,28 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       <h2>5. Plans et facturation</h2>
 
       <h3>Plan gratuit (FREE)</h3>
+      {/* Listes alignées sur PLAN_BENEFITS (@mtc/shared) et le détail Premium de Pricing.astro : à tenir en phase. */}
       <ul>
-        <li>Trades illimités</li>
-        <li>Historique illimité</li>
-        <li>Statistiques de base (win rate, P&L, sessions)</li>
-        <li>Journal complet avec tracking émotionnel</li>
-        <li>IA mutualisée : contexte marché, calendrier éco, news</li>
+        <li>Trades illimités, historique complet</li>
+        <li>Journal avec suivi des émotions, statistiques de base (win rate, P&L, sessions)</li>
+        <li>Import de fichiers CSV des brokers reconnus</li>
+        <li>Synchronisation automatique d'un compte Tradovate, en lecture seule</li>
+        <li>{ACCOUNT_LIMITS.free} compte de trading actif, avec les règles de sa prop firm suivies en direct pendant la séance</li>
+        <li>Préparation et débrief de chaque séance</li>
+        <li>IA mutualisée&nbsp;: contexte marché, calendrier économique, news</li>
         <li>Sans engagement, sans carte bancaire</li>
       </ul>
 
       <h3>Plan Premium</h3>
       <ul>
-        <li>Trades illimités</li>
+        <li>Tout le plan gratuit, avec des comptes de trading illimités, chacun avec les règles de sa prop firm</li>
+        <li>Alertes prop firm en direct (perte du jour, drawdown, consistency, objectif atteint, payout possible) et anti-tilt (reprise de position après une perte, taille qui grossit, surtrading), application ouverte ou en notification pendant la séance, pour un compte Tradovate connecté</li>
+        <li>Alertes sonores et notifications pendant la séance</li>
         <li>Analyses avancées (par setup, par heure, drawdown détaillé)</li>
-        <li>IA Insights &amp; Chat Coach (powered by Claude)</li>
-        <li>Weekly Debrief automatique chaque dimanche où l'utilisateur a tradé</li>
-        <li>Score Trader et PDF du débrief de la semaine</li>
+        <li>Coach IA (powered by Claude)&nbsp;: insights, chat et récap du jour par e-mail à 17&nbsp;h&nbsp;30</li>
+        <li>Débrief de la semaine rédigé par le coach IA, chaque dimanche, si l'utilisateur a tradé dans la semaine et a laissé le débrief automatique activé, avec son PDF</li>
+        <li>Score Trader sur 5 axes</li>
+        <li>Import par l'IA des fichiers de brokers non reconnus</li>
         <li><strong>{PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts</strong> à l'inscription, sans carte bancaire ni abonnement&nbsp;: à la fin de cette période, le compte repasse automatiquement au plan Gratuit, sans prélèvement ni perte de données. Cette période est accordée une fois par personne&nbsp;; elle n'est pas accordée à une nouvelle inscription faite avec l'adresse e-mail d'un compte supprimé depuis moins de 90 jours.</li>
         <li>Après les jours de Premium offerts, un abonnement payant n'a pas de période d'essai supplémentaire&nbsp;: le premier paiement est prélevé à la souscription. L'abonnement annuel est toujours facturé immédiatement.</li>
       </ul>
