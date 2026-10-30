@@ -348,6 +348,10 @@ vaut `0px` hors démo, et le bandeau a une **hauteur fixe égale à la variable*
 mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA reste.
 
 **Toute nouvelle vue calée sur `100vh` doit retrancher `var(--demo-banner-h, 0px)`.**
+**Tout élément `position: sticky` du contenu (topbar, sélecteur de compte, en-tête propre d'une
+page) se cale sous le bandeau : `top: var(--demo-banner-h, 0px)` (+ ce qu'il y a au-dessus).** Le
+bandeau est collant à `top: 0` avec `z-index: 50` : un élément collé à 0 passe dessous en défilant
+(titre de la topbar illisible en démo à 390 px, #721). Verrouillé par `topbar-burger-alignment.spec.ts`.
 
 ---
 
