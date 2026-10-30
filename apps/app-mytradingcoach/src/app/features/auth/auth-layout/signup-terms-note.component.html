@@ -1,0 +1,19 @@
+<p class="terms-note" data-testid="signup-terms-note">
+  @switch (variant()) {
+    @case ('google-login') {
+      Pas encore de compte ? Continuer avec Google le crée : tu acceptes alors les
+    }
+    @case ('google') {
+      En continuant avec Google, tu acceptes les
+    }
+    @default {
+      En créant ton compte, tu acceptes les
+    }
+  }
+  <a [href]="cguUrl" target="_blank" rel="noopener">CGU</a>
+  et confirmes avoir 18 ans ou plus.
+  @if (variant() === 'email') {
+    Tes données :
+    <a [href]="privacyUrl" target="_blank" rel="noopener">politique de confidentialité</a>.
+  }
+</p>

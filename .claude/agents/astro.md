@@ -386,6 +386,8 @@ Règles :
   hébergeur unique OVH (pas de Vercel), l'IA s'appuie AUSSI sur des annonces économiques publiques
   (calendrier éco) : jamais « exclusivement vos données ». Changer un texte → date « Dernière mise
   à jour » de la page.
+- **Modifier les CGU (`cgu.astro`) → changer `CGU_VERSION` (`libs/shared/src/terms.ts`) dans le même
+  commit** : c'est la version enregistrée sur chaque compte créé (`User.termsVersion`, #745 F2).
 
 ---
 

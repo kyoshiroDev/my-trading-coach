@@ -49,6 +49,10 @@ model User {
   // pour les comptes existants au 1er besoin).
   marketingConsent   Boolean   @default(false)
   marketingConsentAt DateTime?
+  // CGU acceptées et majorité confirmée à la création du compte (#745, F2) : date et version
+  // (`CGU_VERSION` de @mtc/shared). null = compte créé avant l'enregistrement.
+  termsAcceptedAt DateTime?
+  termsVersion    String?
   // E-mails de service d'aide à la prise en main (connect_tradovate, prop_firm_rules) : intérêt
   // légitime, sans consentement. Rempli par « ne plus recevoir ces conseils » ou par la
   // désinscription marketing ; null = reçus.

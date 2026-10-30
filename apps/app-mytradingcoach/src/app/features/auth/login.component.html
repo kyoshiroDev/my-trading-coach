@@ -9,6 +9,7 @@
     [busy]="googleLoading()"
     (credential)="onGoogleCredential($event)"
   />
+  <mtc-signup-terms-note variant="google-login" />
   @if (googleError()) {
     <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
   }
