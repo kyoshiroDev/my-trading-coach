@@ -46,6 +46,7 @@ import { GA_ID } from '../config';
         <li>Premium offert&nbsp;: date de fin de la période offerte à l'inscription, origine de la période en cours (inscription ou geste de notre part) et date à laquelle sa fin a été traitée</li>
         <li>Compte de trading que vous choisissez de garder actif en plan Gratuit, quand vous en avez plusieurs</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
+        <li>E-mails&nbsp;: votre choix de recevoir les offres et nouveautés, avec la date du consentement et, si vous le retirez, la date du retrait (la date du consentement est gardée comme preuve)&nbsp;; l'historique des e-mails de suivi et des annonces envoyés (nom de l'e-mail et date), qui sert à ne pas renvoyer le même e-mail et à limiter leur fréquence</li>
       </ul>
 
       <h3>b) Données de trading (saisies par l'utilisateur)</h3>
@@ -162,7 +163,7 @@ import { GA_ID } from '../config';
           <tr><td>Sauvegardes de la base de données</td><td>Une donnée supprimée y reste jusqu'à leur renouvellement&nbsp;: 14 jours pour les sauvegardes quotidiennes, 8 semaines pour les hebdomadaires, 6 mois pour les mensuelles</td></tr>
           <tr><td>Journaux techniques du serveur (dont l'adresse IP)</td><td>Effacés au fil d'une rotation automatique selon leur volume, sans durée fixe</td></tr>
           <tr><td>Adresse IP pour la limite de requêtes</td><td>60 secondes</td></tr>
-          <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
+          <tr><td>Données marketing</td><td>Envois arrêtés au retrait du consentement&nbsp;; les dates du consentement et du retrait, et l'historique des e-mails envoyés, sont gardés jusqu'à la suppression du compte</td></tr>
           <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
           <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
           <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>

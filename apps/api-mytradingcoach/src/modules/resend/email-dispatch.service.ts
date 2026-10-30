@@ -142,12 +142,13 @@ export class EmailDispatchService {
 
   /**
    * Envoie + logge. Renvoie true si envoyé.
-   * `override` permet à l'admin de fournir un sujet/HTML personnalisé (annonce).
+   * `override` permet à l'admin de fournir un sujet/HTML personnalisé (annonce). En fonction, il
+   * reçoit l'URL de désinscription construite APRÈS la création du jeton (sinon lien `?token=` mort, #747).
    */
   async dispatch(
     campaign: EmailCampaign,
     user: DispatchUser,
-    override?: { subject: string; html: string },
+    override?: { subject: string; html: string } | ((unsubUrl: string) => { subject: string; html: string }),
     extra: Partial<CampaignBuildCtx> = {},
   ): Promise<boolean> {
     const appUrl = this.config.get<string>('FRONTEND_URL') ?? 'https://app.mytradingcoach.app';
@@ -156,7 +157,8 @@ export class EmailDispatchService {
     const unsubUrl = this.buildUnsubUrl(unsubToken, campaign.kind === 'service' ? 'service' : undefined);
 
     const content: CampaignContent =
-      override ?? campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
+      (typeof override === 'function' ? override(unsubUrl) : override) ??
+      campaign.build({ ...extra, userName: user.name ?? '', appUrl, unsubUrl });
     const { subject, html, text, from, replyTo, attachments } = content;
 
     await this.resend.send({ to: user.email, subject, html, text, from, replyTo, attachments });

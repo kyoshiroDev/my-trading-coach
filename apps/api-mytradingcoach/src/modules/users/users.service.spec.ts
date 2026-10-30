@@ -178,14 +178,15 @@ describe('UsersService', () => {
       expect(await save(false, true)).toEqual({
         marketingConsent: true,
         marketingConsentAt: expect.any(Date),
+        marketingConsentWithdrawnAt: null,
         serviceEmailsOptOutAt: null,
       });
     });
 
-    it('le couper arrête aussi les conseils (le réglage du profil les couvre)', async () => {
+    it('le couper arrête aussi les conseils et date le retrait, sans effacer la date du consentement (#747)', async () => {
       expect(await save(true, false)).toEqual({
         marketingConsent: false,
-        marketingConsentAt: null,
+        marketingConsentWithdrawnAt: expect.any(Date),
         serviceEmailsOptOutAt: expect.any(Date),
       });
     });

@@ -379,13 +379,15 @@ export class EmailCampaignService {
         continue;
       }
       try {
-        // Annonce : contenu personnalisé fourni par l'admin (override).
+        // Annonce : contenu personnalisé fourni par l'admin (override), construit par le dispatch une
+        // fois le jeton de désinscription créé (un compte sans jeton recevait un lien `?token=` mort, #747).
         const override =
           type === 'announcement'
-            ? announcementTemplate(
-                { userName: user.name ?? '', appUrl, unsubUrl: this.dispatch.buildUnsubUrl(user.unsubToken ?? '') },
-                { subject, bodyHtml: renderEmailMarkdown(body ?? '') },
-              )
+            ? (unsubUrl: string) =>
+                announcementTemplate(
+                  { userName: user.name ?? '', appUrl, unsubUrl },
+                  { subject, bodyHtml: renderEmailMarkdown(body ?? '') },
+                )
             : undefined;
         await this.dispatch.dispatch(c, user, override, extra);
         success++;

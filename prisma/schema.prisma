@@ -49,6 +49,9 @@ model User {
   // pour les comptes existants au 1er besoin).
   marketingConsent   Boolean   @default(false)
   marketingConsentAt DateTime?
+  // Retrait du consentement (désinscription ou réglage coupé) : `marketingConsentAt` est GARDÉ comme
+  // preuve du consentement donné, le retrait est daté ici (#747). Remis à null au nouveau consentement.
+  marketingConsentWithdrawnAt DateTime?
   // CGU acceptées et majorité confirmée à la création du compte (#745, F2) : date et version
   // (`CGU_VERSION` de @mtc/shared). null = compte créé avant l'enregistrement.
   termsAcceptedAt DateTime?

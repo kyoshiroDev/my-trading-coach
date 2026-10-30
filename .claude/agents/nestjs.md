@@ -2257,6 +2257,15 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Retrait du consentement** (#747) : la désinscription et le réglage coupé gardent
+  `marketingConsentAt` et datent `marketingConsentWithdrawnAt` (seulement s'il y avait consentement).
+  Jamais remettre `marketingConsentAt` à null.
+- **Lien de désinscription d'un contenu fourni par l'admin** (annonce) : passer à `dispatch` un
+  override en FONCTION `(unsubUrl) => contenu`, construit après `ensureUnsubToken`. Construire l'URL
+  avant avec `user.unsubToken ?? ''` donnait un lien `?token=` mort pour un compte sans jeton (#747).
+- Aucun envoi de masse hors du moteur de campagnes : pas de script qui lit la base et appelle Resend
+  (`send-discord-invite.mjs` supprimé, #747 : ni consentement, ni démo, ni désinscription). Une
+  invitation Discord passe par la campagne `discord_invite`.
 - **Plafond** : 1 e-mail marketing OU service / `MARKETING_COOLDOWN_DAYS` (4) par personne, à
   **1 h près** (`CAP_TOLERANCE_MS`) : le cron examine les campagnes par priorité, un e-mail plus
   prioritaire que le précédent est vu quelques secondes avant 4 j pile et glissait d'un jour. Une

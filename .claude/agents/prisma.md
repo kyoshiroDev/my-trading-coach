@@ -613,3 +613,9 @@ Migration `20261018140000_google_auth`, additive et compatible N-1 :
 additive, nullable, compatible N-1) : posés par `AuthService.createAccount` (e-mail ET Google) à la
 création du compte, version = `CGU_VERSION` de `@mtc/shared`. Pas de rattrapage : null = compte créé
 avant l'enregistrement (acceptation jamais tracée), ne pas le remplir après coup.
+
+`User.marketingConsentWithdrawnAt` (migration `20261030140000_marketing_consent_withdrawn`, #747,
+additive, nullable, compatible N-1) : date du RETRAIT du consentement marketing (lien de
+désinscription ou réglage du profil coupé). `marketingConsentAt` n'est plus jamais remis à null au
+retrait : c'est la preuve du consentement donné. Nouveau consentement → `marketingConsentAt` = maintenant,
+`marketingConsentWithdrawnAt` = null. Les comptes désinscrits avant le 30/10 ont les deux à null.
