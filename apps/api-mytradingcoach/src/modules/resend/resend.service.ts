@@ -431,6 +431,7 @@ export class ResendService {
             replyTo: params.replyTo ?? this.replyTo,
             ...(params.text ? { text: params.text } : {}),
             ...(params.attachments?.length ? { attachments: params.attachments } : {}),
+            ...(params.headers ? { headers: params.headers } : {}),
           },
           queued ? { idempotencyKey: queued.idempotencyKey } : undefined,
         )

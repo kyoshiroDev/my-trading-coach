@@ -2257,6 +2257,14 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Désinscription en un clic** (RFC 8058, #791) : `EmailDispatchService.dispatch` ajoute
+  `List-Unsubscribe: <url>` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` aux e-mails
+  `marketing` et `service` (même URL, même portée que le lien du texte), JAMAIS aux transactionnels.
+  `EmailJob.headers` est transmis tel quel à Resend par `deliver` (et survit à la file BullMQ).
+  `POST /api/emails/unsubscribe?token=…[&scope=service]` (public, 200 sans corps, réponse neutre
+  si jeton inconnu, `@Throttle` 120/min : les appels viennent des serveurs Gmail/Yahoo) ; le `GET`
+  reste pour le lien du texte et les anciens e-mails. Un envoi hors `dispatch` (`ResendService.send`
+  direct) n'a pas d'en-tête : n'y faire passer que du transactionnel.
 - **Retrait du consentement** (#747) : la désinscription et le réglage coupé gardent
   `marketingConsentAt` et datent `marketingConsentWithdrawnAt` (seulement s'il y avait consentement).
   Jamais remettre `marketingConsentAt` à null.
