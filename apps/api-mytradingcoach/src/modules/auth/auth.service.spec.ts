@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { CGU_VERSION } from '@mtc/shared';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   ConflictException,
@@ -151,6 +152,15 @@ describe('AuthService', () => {
       expect(result.access_token).toBeDefined();
       // refresh_token géré par cookie httpOnly dans le controller — service retourne les deux tokens
       expect(result.refresh_token).toBeDefined();
+    });
+
+    it('enregistre l’acceptation des CGU : date et version (#745, F2)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue({ ...mockSafeUser });
+      await service.register({ email: 'cgu@test.com', password: 'password123' });
+      const { data } = mockPrisma.user.create.mock.calls[0][0];
+      expect(data.termsAcceptedAt).toBeInstanceOf(Date);
+      expect(data.termsVersion).toBe(CGU_VERSION);
     });
 
     describe('essai Premium d’inscription (#769)', () => {
@@ -596,6 +606,12 @@ describe('AuthService', () => {
       const { data } = mockPrisma.user.create.mock.calls[0][0];
       expect(data.marketingConsent).toBe(false);
       expect(data.marketingConsentAt).toBeNull();
+    });
+
+    it('inscription Google → CGU acceptées enregistrées comme par e-mail (#745, F2)', async () => {
+      await service.googleAuth(dto);
+      const { data } = mockPrisma.user.create.mock.calls[0][0];
+      expect(data).toMatchObject({ termsAcceptedAt: expect.any(Date), termsVersion: CGU_VERSION });
     });
 
     it('double clic : la 2de création échoue sur l’unicité → connexion au compte créé', async () => {

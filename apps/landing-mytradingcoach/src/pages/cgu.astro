@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import '../styles/legal.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
+import { ACCOUNT_LIMITS, FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, PREMIUM_SIGNUP_TRIAL_DAYS } from '@mtc/shared';
 
 const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 ---
@@ -23,7 +23,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 
     <h1>Conditions générales d'utilisation</h1>
     <p class="legal-lead">
-      Dernière mise à jour : 27 octobre 2026 &nbsp;·&nbsp;
+      Dernière mise à jour : 30 octobre 2026 &nbsp;·&nbsp;
       Éditeur : Grégory Tahir (My Trading Coach) :       <a href="mailto:contact@mytradingcoach.app">contact@mytradingcoach.app</a>
     </p>
 
@@ -57,7 +57,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       <p>L'utilisateur reconnaît expressément et irrévocablement que :</p>
       <ul>
         <li>MyTradingCoach ne fournit aucun conseil en investissement au sens de la directive MiFID II (2014/65/UE).</li>
-        <li>Les analyses générées par l'IA sont exclusivement basées sur les données saisies par l'utilisateur lui-même et ne constituent pas des recommandations d'investissement.</li>
+        <li>Les analyses générées par l'IA reposent sur les données saisies par l'utilisateur lui-même et, pour le calendrier économique, sur des annonces économiques publiques. Elles ne constituent pas des recommandations d'investissement.</li>
         <li>L'utilisateur est seul responsable de ses décisions de trading.</li>
         <li>L'utilisation de MyTradingCoach comme base de décision d'investissement est expressément interdite et contraire à l'objet du service.</li>
       </ul>
@@ -65,6 +65,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       <h2>4. Création de compte et accès</h2>
       <ul>
         <li>L'utilisateur doit être majeur (18 ans minimum)</li>
+        <li>En créant son compte (formulaire ou « Continuer avec Google »), l'utilisateur accepte les présentes CGU et confirme être majeur ; la date et la version des CGU acceptées sont enregistrées</li>
         <li>Un compte par personne physique</li>
         <li>L'utilisateur est responsable de la confidentialité de ses identifiants</li>
         <li>Grégory Tahir (My Trading Coach) se réserve le droit de suspendre tout compte en cas de violation des présentes CGU</li>
@@ -73,22 +74,28 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       <h2>5. Plans et facturation</h2>
 
       <h3>Plan gratuit (FREE)</h3>
+      {/* Listes alignées sur PLAN_BENEFITS (@mtc/shared) et le détail Premium de Pricing.astro : à tenir en phase. */}
       <ul>
-        <li>Trades illimités</li>
-        <li>Historique illimité</li>
-        <li>Statistiques de base (win rate, P&L, sessions)</li>
-        <li>Journal complet avec tracking émotionnel</li>
-        <li>IA mutualisée : contexte marché, calendrier éco, news</li>
+        <li>Trades illimités, historique complet</li>
+        <li>Journal avec suivi des émotions, statistiques de base (win rate, P&L, sessions)</li>
+        <li>Import de fichiers CSV des brokers reconnus</li>
+        <li>Synchronisation automatique d'un compte Tradovate, en lecture seule</li>
+        <li>{ACCOUNT_LIMITS.free} compte de trading actif, avec les règles de sa prop firm suivies en direct pendant la séance</li>
+        <li>Préparation et débrief de chaque séance</li>
+        <li>IA mutualisée&nbsp;: contexte marché, calendrier économique, news</li>
         <li>Sans engagement, sans carte bancaire</li>
       </ul>
 
       <h3>Plan Premium</h3>
       <ul>
-        <li>Trades illimités</li>
+        <li>Tout le plan gratuit, avec des comptes de trading illimités, chacun avec les règles de sa prop firm</li>
+        <li>Alertes prop firm en direct (perte du jour, drawdown, consistency, objectif atteint, payout possible) et anti-tilt (reprise de position après une perte, taille qui grossit, surtrading), application ouverte ou en notification pendant la séance, pour un compte Tradovate connecté</li>
+        <li>Alertes sonores et notifications pendant la séance</li>
         <li>Analyses avancées (par setup, par heure, drawdown détaillé)</li>
-        <li>IA Insights &amp; Chat Coach (powered by Claude)</li>
-        <li>Weekly Debrief automatique chaque dimanche où l'utilisateur a tradé</li>
-        <li>Score Trader et PDF du débrief de la semaine</li>
+        <li>Coach IA (powered by Claude)&nbsp;: insights, chat et récap du jour par e-mail à 17&nbsp;h&nbsp;30</li>
+        <li>Débrief de la semaine rédigé par le coach IA, chaque dimanche, si l'utilisateur a tradé dans la semaine et a laissé le débrief automatique activé, avec son PDF</li>
+        <li>Score Trader sur 5 axes</li>
+        <li>Import par l'IA des fichiers de brokers non reconnus</li>
         <li><strong>{PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts</strong> à l'inscription, sans carte bancaire ni abonnement&nbsp;: à la fin de cette période, le compte repasse automatiquement au plan Gratuit, sans prélèvement ni perte de données. Cette période est accordée une fois par personne&nbsp;; elle n'est pas accordée à une nouvelle inscription faite avec l'adresse e-mail d'un compte supprimé depuis moins de 90 jours.</li>
         <li>Après les jours de Premium offerts, un abonnement payant n'a pas de période d'essai supplémentaire&nbsp;: le premier paiement est prélevé à la souscription. L'abonnement annuel est toujours facturé immédiatement.</li>
       </ul>
@@ -128,7 +135,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       <h2>6. Données utilisateur</h2>
       <p>
         L'utilisateur conserve la propriété de toutes les données qu'il saisit dans MyTradingCoach.
-        Il peut à tout moment exporter ses données au format CSV ou supprimer son compte et toutes ses données.
+        Il peut obtenir une copie de ses données au format CSV sur simple demande à <a href="mailto:contact@mytradingcoach.app">contact@mytradingcoach.app</a> (réponse sous 30 jours), et supprimer son compte à tout moment depuis Profil → Paramètres → Zone de danger. Ce qui subsiste après la suppression (trace anonymisée, facturation, sauvegardes) est décrit dans la <a href="/politique-confidentialite">politique de confidentialité</a>.
         Grégory Tahir (My Trading Coach) ne vend pas les données utilisateur à des tiers.
       </p>
 
@@ -161,7 +168,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
 
       <h2>10. Résiliation</h2>
       <p>
-        L'utilisateur peut résilier son compte à tout moment depuis Paramètres → Gérer mon abonnement.
+        L'utilisateur peut supprimer son compte à tout moment depuis Profil → Paramètres → Zone de danger → Supprimer mon compte ; un abonnement en cours est alors résilié immédiatement. Pour arrêter seulement son abonnement, il passe par Profil → Paramètres → Gérer mon abonnement.
         Grégory Tahir (My Trading Coach) peut suspendre ou résilier un compte en cas de violation des CGU, non-paiement ou usage frauduleux.
       </p>
 
@@ -188,7 +195,7 @@ const annualPerMonth = Math.round(PREMIUM_PRICE_EUR.annual / 12);
       </p>
 
       <p class="legal-updated">
-        Dernière mise à jour : 27 octobre 2026
+        Dernière mise à jour : 30 octobre 2026
       </p>
     </div>
   </main>

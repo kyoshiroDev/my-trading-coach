@@ -1578,6 +1578,11 @@ Lien direct utilisé par le bot : `/profil?tab=params`. Commande en `white-space
   navigateur + « Copier le lien », pas de bouton. Zone toujours présente (classe `.gone`) : le
   script y dessine, un `viewChild` dans un `@if` n'était pas résolu à temps. Bouton Google = iframe
   de 40 px (non modifiable) centrée dans une zone de 44 px.
+- `mtc-signup-terms-note` (`features/auth/auth-layout`, #745 F2) : « tu acceptes les CGU et confirmes
+  avoir 18 ans » **avant chaque bouton qui crée un compte** (variantes `email`, `google`,
+  `google-login` : sur la connexion, Google crée le compte au 1er passage). L'API enregistre date et
+  version (`CGU_VERSION`) à la création : nouveau bouton de création = la mention avec, sinon
+  l'enregistrement ment. Verrouillé par `signup-terms-note.spec.ts`.
 - `GoogleSignInService` : parrain (`mtc_ref`) et UTM (`mtc_utm`) lus dans le stockage
   (`signup-context.ts`) ; compte créé → `/inscription/finaliser` (`GoogleFinalizeComponent`, opt-in
   non coché, `plan=premium` repassé) ; compte relié → toast au 1er passage (mention du mot de passe

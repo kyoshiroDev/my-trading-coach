@@ -20,7 +20,9 @@ import { GA_ID } from '../config';
     // gtag.js attend l'objet `arguments` tel quel, pas un tableau.
     w.gtag = function () { w.dataLayer.push(arguments); };
     w.gtag('js', new Date());
-    w.gtag('config', id);
+    // 13 mois au plus (recommandation CNIL, annoncé dans la politique de confidentialité) :
+    // GA4 garde ses cookies 2 ans par défaut. Durée en secondes.
+    w.gtag('config', id, { cookie_expires: 13 * 30 * 24 * 60 * 60 });
     const s = document.createElement('script');
     s.id = 'ga4-src';
     s.async = true;

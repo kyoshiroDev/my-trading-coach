@@ -34,6 +34,7 @@
     [busy]="googleLoading()"
     (credential)="onGoogleCredential($event)"
   />
+  <mtc-signup-terms-note variant="google" />
   @if (googleError()) {
     <div class="error-msg google-error" role="alert">{{ googleError() }}</div>
   }
@@ -161,7 +162,7 @@
       />
       <span>
         <strong class="consent-title"
-          >Recevoir les conseils pour bien démarrer et les offres
+          >Recevoir les offres et nouveautés
           MyTradingCoach</strong
         >
         <span class="consent-hint"
@@ -189,6 +190,8 @@
         }
       }
     </button>
+
+    <mtc-signup-terms-note />
 
     @if (apiError()) {
       <div class="error-msg" role="alert" data-testid="error-message">

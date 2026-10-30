@@ -376,6 +376,24 @@ Règles :
   `security.md`. Guillemets français de la page : `«&nbsp;…&nbsp;»` (sinon « » orphelin à 390 px).
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
+- Cookies GA : `cookie_expires` à 13 mois dans `gtag('config')` (GA4 met 2 ans par défaut ; la
+  politique annonce 13 mois, #745).
+- **Toute clé de stockage navigateur de la landing** (localStorage / sessionStorage) est listée
+  nommément en section 6 de la politique (« Stockage du navigateur sur le site vitrine »), avec sa
+  durée. Nouvelle clé = nouvelle ligne, dans le même commit (#745).
+- Stockage de **l'app** : déclaré par familles dans la même section 6 (« Stockage du navigateur
+  dans l'application » : `access_token`, `user`, clés `mtc.*` / `mtc_*`, `sidebar_collapsed`,
+  `ambassador_last_seen`), avec Stripe.js (`__stripe_mid`, `__stripe_sid`) et le script Google
+  chargé à l'affichage du bouton. Nouvelle clé hors de ces familles → l'ajouter (#747).
+- Listes Gratuit / Premium des CGU (section 5) : alignées à la main sur `PLAN_BENEFITS`
+  (`@mtc/shared`) et le détail Premium de `Pricing.astro`. Changer un avantage → les CGU aussi (#747).
+- Pages légales : n'y écrire que ce que le code fait (audit du 25/10, #745/#747). Pas d'export CSV
+  libre-service (portabilité **sur demande**), conservation « jusqu'à la suppression du compte »,
+  hébergeur unique OVH (pas de Vercel), l'IA s'appuie AUSSI sur des annonces économiques publiques
+  (calendrier éco) : jamais « exclusivement vos données ». Changer un texte → date « Dernière mise
+  à jour » de la page.
+- **Modifier les CGU (`cgu.astro`) → changer `CGU_VERSION` (`libs/shared/src/terms.ts`) dans le même
+  commit** : c'est la version enregistrée sur chaque compte créé (`User.termsVersion`, #745 F2).
 
 ---
 

@@ -21,7 +21,7 @@ import { GA_ID } from '../config';
 
     <h1>Politique de confidentialité</h1>
     <p class="legal-lead">
-      Dernière mise à jour : Octobre 2026 &nbsp;·&nbsp;
+      Dernière mise à jour : 30 octobre 2026 &nbsp;·&nbsp;
       Responsable du traitement : Grégory Tahir (My Trading Coach) :       <a href="mailto:contact@mytradingcoach.app">contact@mytradingcoach.app</a>
     </p>
 
@@ -42,9 +42,11 @@ import { GA_ID } from '../config';
         <li>Mot de passe, si vous en définissez un (hashé argon2, jamais stocké en clair)</li>
         <li>Si vous utilisez « Continuer avec Google » : identifiant technique de votre compte Google (voir f)</li>
         <li>Date d'inscription</li>
+        <li>Date et version des CGU acceptées en créant le compte (preuve de l'acceptation, gardée jusqu'à la suppression du compte)</li>
         <li>Premium offert&nbsp;: date de fin de la période offerte à l'inscription, origine de la période en cours (inscription ou geste de notre part) et date à laquelle sa fin a été traitée</li>
         <li>Compte de trading que vous choisissez de garder actif en plan Gratuit, quand vous en avez plusieurs</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
+        <li>E-mails&nbsp;: votre choix de recevoir les offres et nouveautés, avec la date du consentement et, si vous le retirez, la date du retrait (la date du consentement est gardée comme preuve)&nbsp;; l'historique des e-mails de suivi et des annonces envoyés (nom de l'e-mail et date), qui sert à ne pas renvoyer le même e-mail et à limiter leur fréquence</li>
       </ul>
 
       <h3>b) Données de trading (saisies par l'utilisateur)</h3>
@@ -66,9 +68,7 @@ import { GA_ID } from '../config';
 
       <h3>d) Données techniques</h3>
       <ul>
-        <li>Adresse IP (anonymisée après 30 jours)</li>
-        <li>Type de navigateur et système d'exploitation</li>
-        <li>Pages visitées et durée de visite</li>
+        <li>Adresse IP&nbsp;: compteur de requêtes pour limiter les abus (effacé après 60 secondes), et journaux techniques du serveur</li>
         <li>
           Dans l'application, des <strong>événements d'usage rattachés à votre compte</strong> (identifiant
           interne du compte, jour, nom de l'événement et un seul repère : l'écran, ou la plateforme de
@@ -89,8 +89,8 @@ import { GA_ID } from '../config';
 
       <h3>e) Données de facturation</h3>
       <ul>
-        <li>Historique des abonnements via Stripe</li>
-        <li>Statut d'abonnement</li>
+        <li>Statut et dates de votre abonnement, identifiant de client Stripe</li>
+        <li>Factures et historique des paiements&nbsp;: conservés chez Stripe, notre prestataire de paiement&nbsp;; nous n'en gardons pas de copie</li>
         <li>Aucune donnée de carte bancaire (gérée exclusivement par Stripe PCI-DSS)</li>
       </ul>
 
@@ -157,12 +157,13 @@ import { GA_ID } from '../config';
           </tr>
         </thead>
         <tbody>
-          <tr><td>Compte et trades</td><td>Durée de l'abonnement + 3 ans</td></tr>
-          <tr><td>Données de facturation</td><td>10 ans (obligation comptable)</td></tr>
-          <tr><td>Trace d'un compte supprimé (nom, adresse e-mail, dates d'inscription et de suppression, plan, nombre de trades, motif s'il est donné)</td><td>Nom et adresse e-mail effacés automatiquement 90 jours après la suppression&nbsp;; le reste, sans identité, sert aux statistiques</td></tr>
-          <tr><td>Logs techniques</td><td>12 mois</td></tr>
-          <tr><td>IP anonymisées</td><td>30 jours</td></tr>
-          <tr><td>Données marketing</td><td>Jusqu'au retrait du consentement</td></tr>
+          <tr><td>Compte et trades</td><td>Jusqu'à la suppression du compte</td></tr>
+          <tr><td>Trace d'un compte supprimé (nom, adresse e-mail, dates d'inscription et de suppression, plan, nombre de trades, motif s'il est donné)</td><td>Nom et adresse e-mail effacés automatiquement 90 jours après la suppression&nbsp;; le reste, sans identité, sert aux statistiques, sans limite de durée</td></tr>
+          <tr><td>Factures et client Stripe (identifiant, adresse e-mail, historique des paiements)</td><td>10 ans chez Stripe (obligation comptable), y compris après la suppression du compte, abonnements résiliés. MyTradingCoach n'en garde pas d'archive</td></tr>
+          <tr><td>Sauvegardes de la base de données</td><td>Une donnée supprimée y reste jusqu'à leur renouvellement&nbsp;: 14 jours pour les sauvegardes quotidiennes, 8 semaines pour les hebdomadaires, 6 mois pour les mensuelles</td></tr>
+          <tr><td>Journaux techniques du serveur (dont l'adresse IP)</td><td>Effacés au fil d'une rotation automatique selon leur volume, sans durée fixe</td></tr>
+          <tr><td>Adresse IP pour la limite de requêtes</td><td>60 secondes</td></tr>
+          <tr><td>Données marketing</td><td>Envois arrêtés au retrait du consentement&nbsp;; les dates du consentement et du retrait, et l'historique des e-mails envoyés, sont gardés jusqu'à la suppression du compte</td></tr>
           <tr><td>Identifiant de compte Google</td><td>Jusqu'à la déliaison de Google ou la suppression du compte</td></tr>
           <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
           <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>
@@ -194,7 +195,11 @@ import { GA_ID } from '../config';
       </p>
       <p>
         <strong>Tradovate (USA)</strong>, si vous connectez votre compte de trading : la connexion passe par
-        Tradovate, qui nous transmet la liste de vos comptes, vos exécutions et votre solde.
+        Tradovate, qui nous transmet la liste de vos comptes, vos exécutions, votre solde, vos positions
+        ouvertes, vos frais et vos retraits (payouts). Nous enregistrons aussi votre identifiant
+        d'utilisateur Tradovate et les jetons de connexion, chiffrés, qui ne sortent jamais de notre
+        serveur&nbsp;: ils sont effacés quand vous déconnectez Tradovate, supprimez le compte de trading
+        concerné ou votre compte.
       </p>
       <p>
         <strong>Discord (USA)</strong>, si vous reliez votre compte Discord avec le code à usage unique
@@ -217,8 +222,8 @@ import { GA_ID } from '../config';
       <ul>
         <li><strong>Droit d'accès</strong> : obtenir une copie de vos données</li>
         <li><strong>Droit de rectification</strong> : corriger des données inexactes</li>
-        <li><strong>Droit à l'effacement</strong> : supprimer votre compte et vos données</li>
-        <li><strong>Droit à la portabilité</strong> : recevoir vos données en format CSV</li>
+        <li><strong>Droit à l'effacement</strong> : supprimer votre compte depuis Profil → Paramètres → Zone de danger (ce qui subsiste ensuite est décrit en 3)</li>
+        <li><strong>Droit à la portabilité</strong> : recevoir vos données au format CSV, sur demande par e-mail</li>
         <li><strong>Droit d'opposition</strong> : vous opposer au traitement marketing et aux e-mails d'aide à la prise en main (lien de désinscription dans chaque e-mail)</li>
         <li><strong>Droit à la limitation</strong> : restreindre certains traitements</li>
       </ul>
@@ -244,11 +249,20 @@ import { GA_ID } from '../config';
         60 secondes) et l'utilisation du sélecteur de règles des prop firms. Aucun
         cookie, aucune adresse IP, aucun identifiant ni aucune donnée permettant de vous
         reconnaître ne sont conservés, et ces chiffres ne sont croisés avec aucune autre donnée.
-        Seule une marque technique de session (stockage de session du navigateur, effacée à la
-        fermeture de l'onglet) évite de compter deux fois la même visite. Conformément aux
-        lignes directrices de la CNIL, cette mesure strictement statistique est exemptée de
-        consentement.
+        Une marque technique de session (<code>mtc_visit</code>, voir ci-dessous) évite de compter
+        deux fois la même visite. Conformément aux lignes directrices de la CNIL, cette mesure
+        strictement statistique est exemptée de consentement.
       </p>
+      <p>
+        <strong>Stockage du navigateur sur le site vitrine.</strong> Sans cookie et sans transmission
+        à un tiers, le site garde dans votre navigateur&nbsp;:
+      </p>
+      <ul>
+        <li><code>mtc_cookie_consent</code>&nbsp;: votre choix sur les cookies de mesure, 6 mois&nbsp;;</li>
+        <li><code>mtc_ref</code> et <code>mtc_promo</code>&nbsp;: le code de parrainage ou le code promo du lien que vous avez suivi, 30 jours, pour l'appliquer à votre inscription&nbsp;;</li>
+        <li><code>mtc_internal</code>&nbsp;: réservé à l'équipe, exclut son navigateur de la mesure d'audience&nbsp;;</li>
+        <li>effacés à la fermeture de l'onglet&nbsp;: <code>mtc_visit</code> (visite déjà comptée), <code>mtc_utm</code> (provenance du lien), <code>mtc_founder</code> (places restantes de l'offre fondateur, gardées 1 minute), <code>mtc_cta</code> (bouton d'inscription cliqué) et <code>mtc_offer_bar_closed</code> (bandeau d'offre fermé).</li>
+      </ul>
       {GA_ID ? (
         <>
           <p>
@@ -266,31 +280,58 @@ import { GA_ID } from '../config';
           </p>
           <p>
             L'application (app.mytradingcoach.app) n'utilise que des cookies techniques
-            strictement nécessaires (session d'authentification, sécurité CSRF), exemptés de
-            consentement.
+            strictement nécessaires, exemptés de consentement&nbsp;: <code>refresh_token</code>
+            (maintien de la connexion, 7 jours, illisible par les scripts de la page) et, pendant la
+            connexion d'un compte Tradovate, <code>mtc_tradovate_oauth</code> (vérification du retour
+            de connexion, 10 minutes).
           </p>
         </>
       ) : (
         <p>
           MyTradingCoach n'utilise aucun cookie de traçage ou publicitaire.
-          Les seuls cookies déposés sont des cookies techniques strictement nécessaires
-          au fonctionnement du service (session d'authentification, sécurité CSRF).
+          Les seuls cookies qu'il dépose sont des cookies techniques strictement nécessaires
+          au fonctionnement du service&nbsp;: <code>refresh_token</code> (maintien de la connexion,
+          7 jours) et, pendant la connexion d'un compte Tradovate, <code>mtc_tradovate_oauth</code>
+          (vérification du retour de connexion, 10 minutes).
           Aucun consentement n'est requis et aucun bandeau de cookies n'est affiché,
           conformément aux recommandations de la CNIL.
         </p>
       )}
+      <p>
+        <strong>Stockage du navigateur dans l'application.</strong> Sans cookie et sans transmission
+        à un tiers, l'application garde dans votre navigateur&nbsp;: votre jeton d'accès
+        (<code>access_token</code>, valable 15 minutes, envoyé seulement à notre serveur) et votre
+        profil affiché (<code>user</code>), effacés à la déconnexion&nbsp;; vos préférences d'affichage
+        et de parcours (clés <code>mtc.*</code> et <code>mtc_*</code>, par exemple le compte
+        sélectionné, le son des alertes, l'onglet ouvert, la progression de la prise en main, les
+        messages au coach du jour ou les alertes déjà vues, ainsi que <code>sidebar_collapsed</code>
+        et <code>ambassador_last_seen</code>). Elles ne nous sont pas transmises.
+      </p>
+      <p>
+        <strong>Paiement.</strong> La page de paiement charge Stripe.js, le formulaire de notre
+        prestataire de paiement Stripe, qui dépose ses propres cookies de prévention de la fraude
+        (<code>__stripe_mid</code> et <code>__stripe_sid</code>). Ils sont strictement nécessaires au
+        paiement et exemptés de consentement.
+      </p>
+      <p>
+        <strong>Connexion avec Google.</strong> Quand la connexion avec Google est proposée, les
+        écrans de connexion et d'inscription chargent le script de Google qui affiche le bouton
+        «&nbsp;Continuer avec Google&nbsp;», même si vous ne cliquez pas&nbsp;: Google reçoit alors
+        l'adresse IP de votre navigateur et peut lire ses propres cookies, selon sa politique de
+        confidentialité.
+      </p>
 
       <h2>7. Sécurité</h2>
       <ul>
-        <li>Chiffrement TLS 1.3 sur toutes les communications</li>
+        <li>Communications chiffrées en TLS 1.2 au minimum (TLS 1.3 quand votre navigateur le permet)</li>
         <li>Mots de passe hashés avec argon2</li>
         <li>Tokens JWT avec expiration courte (15 minutes)</li>
         <li>Base de données non exposée publiquement</li>
-        <li>Sauvegardes chiffrées quotidiennes</li>
+        <li>Sauvegardes quotidiennes de la base de données&nbsp;: une copie sur le serveur et une copie hors site, chiffrée avant l'envoi</li>
       </ul>
 
       <p class="legal-updated">
-        Dernière mise à jour : Octobre 2026
+        Dernière mise à jour : 30 octobre 2026
       </p>
     </div>
   </main>

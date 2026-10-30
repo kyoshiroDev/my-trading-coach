@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AdminPushEvent, AuthProvider, Prisma, Role } from '@prisma/client';
+import { CGU_VERSION } from '@mtc/shared';
 import * as argon2 from 'argon2';
 import { hashPassword, needsPasswordRehash } from './password-hashing';
 import * as crypto from 'crypto';
@@ -223,6 +224,10 @@ export class AuthService {
         authProvider: data.authProvider,
         googleId: data.googleId ?? null,
         emailVerifiedAt: data.emailVerifiedAt ?? null,
+        // Les deux parcours affichent « tu acceptes les CGU et confirmes avoir 18 ans » au-dessus du
+        // bouton qui crée le compte : la création vaut acceptation (#745, F2).
+        termsAcceptedAt: now,
+        termsVersion: CGU_VERSION,
       },
       select: {
         id: true,

@@ -252,4 +252,14 @@ describe('EmailDispatchService', () => {
       data: { campaignKey: 'k1', userId: 'u1', kind: 'marketing' },
     });
   });
+
+  it('override en fonction (annonce) : reçoit le lien construit APRÈS la création du jeton (#747)', async () => {
+    const campaign = baseCampaign({ key: 'announcement', kind: 'marketing' });
+    const user = { id: 'u2', email: 'b@test.com', name: null, marketingConsent: true, unsubToken: null };
+    await service.dispatch(campaign, user, (unsubUrl) => ({ subject: 'A', html: `<a href="${unsubUrl}">x</a>` }));
+    const html = mockResend.send.mock.calls[0][0].html as string;
+    expect(user.unsubToken).toMatch(/^[0-9a-f]{64}$/);
+    expect(html).toContain(`token=${user.unsubToken}"`);
+    expect(html).not.toContain('token="');
+  });
 });

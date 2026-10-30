@@ -19,6 +19,7 @@ import { PostSignupService } from '../../core/auth/post-signup.service';
 import { REFERRAL_STORAGE_KEY, UTM_STORAGE_KEY } from '../../core/auth/signup-context';
 import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
 import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
+import { SignupTermsNoteComponent } from './auth-layout/signup-terms-note.component';
 import { PREMIUM_SIGNUP_TRIAL_DAYS } from '../../core/constants/pricing.const';
 
 /** Hôte d'un referrer externe (sans `www.`), ou '' pour nos domaines / localhost / absent. */
@@ -33,7 +34,7 @@ export function referrerHost(referrer: string): string {
 
 @Component({
   selector: 'mtc-register',
-  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent],
+  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent, SignupTermsNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./auth-layout/auth-form.css', './register.component.css'],
   templateUrl: './register.component.html',

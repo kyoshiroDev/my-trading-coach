@@ -19,7 +19,6 @@ Typecheck : `pnpm nx typecheck tools-scripts`.
 | `ops/preview-trial-emails.ts` | Aperçu des e-mails J+11 et fin d'essai d'inscription (#769) avec les vrais gabarits : HTML dans `--out`, envoi `[APERÇU]` à `--to` (refusé avec l'env de prod). | `pnpm exec tsx --env-file=apps/api-mytradingcoach/.env --tsconfig tools/scripts/tsconfig.check.json tools/scripts/ops/preview-trial-emails.ts --out <dossier> [--to <adresse>]` |
 | `ops/send-welcome.mjs` | Envoie l'email de bienvenue (test de rendu Resend). | `node tools/scripts/ops/send-welcome.mjs <email>` |
 | `ops/send-debrief-email.mjs` | Envoie un email de débrief hebdo d'exemple. | `node tools/scripts/ops/send-debrief-email.mjs <email>` |
-| `ops/send-discord-invite.mjs` | Invite Discord aux utilisateurs (dry-run par défaut). | `node tools/scripts/ops/send-discord-invite.mjs` |
 
 Règles : un en-tête d'une ligne (but + usage) par script ; jamais d'email, d'identifiant ou de clé
 en dur (argument ou `.env`) ; un backfill est idempotent et propose un `--dry-run` quand il écrit.
