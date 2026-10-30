@@ -376,6 +376,16 @@ Règles :
   `security.md`. Guillemets français de la page : `«&nbsp;…&nbsp;»` (sinon « » orphelin à 390 px).
 - Nouveau traceur (pixel, Hotjar…) = même règle : chargé par `Analytics.astro` après consentement,
   et déclaré dans la politique de confidentialité.
+- Cookies GA : `cookie_expires` à 13 mois dans `gtag('config')` (GA4 met 2 ans par défaut ; la
+  politique annonce 13 mois, #745).
+- **Toute clé de stockage navigateur de la landing** (localStorage / sessionStorage) est listée
+  nommément en section 6 de la politique (« Stockage du navigateur sur le site vitrine »), avec sa
+  durée. Nouvelle clé = nouvelle ligne, dans le même commit (#745).
+- Pages légales : n'y écrire que ce que le code fait (audit du 25/10, #745/#747). Pas d'export CSV
+  libre-service (portabilité **sur demande**), conservation « jusqu'à la suppression du compte »,
+  hébergeur unique OVH (pas de Vercel), l'IA s'appuie AUSSI sur des annonces économiques publiques
+  (calendrier éco) : jamais « exclusivement vos données ». Changer un texte → date « Dernière mise
+  à jour » de la page.
 
 ---
 

@@ -27,7 +27,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Comment fonctionne le calendrier économique IA ?',
     answer:
-      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne : NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA analyse immédiatement la surprise et t'indique l'impact probable sur chacun de tes actifs (bull/bear/neutre).",
+      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne : NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA lit immédiatement la surprise et t'indique comment elle se lit pour chacun de tes actifs (haussière, baissière ou neutre). C'est une lecture de l'annonce, à titre informatif : ni une prévision, ni un conseil.",
   },
   {
     question: 'Puis-je importer mon historique de trades ?',
