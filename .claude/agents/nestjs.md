@@ -1118,6 +1118,10 @@ Conséquences à connaître :
   de chevaucher le suivant. Le marqueur n'est posé que par un import de profondeur pleine **et**
   si aucune fenêtre n'a échoué — sinon le trou ne serait plus jamais comblé.
 - Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
+- **Frais de l'historique (#783)** : `Fills` (fills + horodatages) + `Cash History` (tous les frais),
+  joints par `cashHistoryFeesByFill` (même règle que l'import CSV, cf. `instruments.md`). Cash History
+  indisponible ou vide → repli sur la colonne `commission` de `Fills` (commission seule). 3 appels par
+  mois non vide. Les trades importés avant le 31/10 n'ont que la commission (réparation à part).
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
 rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée

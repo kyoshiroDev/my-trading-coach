@@ -497,6 +497,34 @@ describe('CsvImportService — garde-fou des colonnes Tradovate Performance', ()
   });
 });
 
+describe('CsvImportService — frais Tradovate complets (#783, export réel du 27/10)', () => {
+  // Compte « test NT8 » : 2,18 $ par côté-contrat (commission 0,59 + Exchange 1,38 + Clearing 0,19 + NFA 0,02).
+  const fx = (name: string) => readFileSync(join(__dirname, '__fixtures__', name));
+
+  async function importReal(cashName: string) {
+    const report: { fees?: FeesReport } = {};
+    const dtos = await makeService().parseCSV(
+      fx('tradovate-fees-2026-10-27-performance.csv'), 'Performance.csv',
+      undefined, undefined, undefined, undefined,
+      { buffer: fx(cashName), filename: 'Cash History.csv' }, report,
+    );
+    return { dtos, report, total: +dtos.reduce((s, d) => s + (d.commission ?? 0), 0).toFixed(2) };
+  }
+
+  it('tous les frais du Cash History : 74,12 $ attribués, rapprochés au centime', async () => {
+    const { dtos, report, total } = await importReal('tradovate-fees-2026-10-27-cash-history.csv');
+    expect(dtos).toHaveLength(17);
+    expect(total).toBe(74.12);
+    expect(report.fees).toMatchObject({ assigned: 74.12, expected: 74.12, reconciled: true });
+  });
+
+  it('contre-épreuve : pas 20,06 $ (commission seule) ni 0 $ (ancienne jointure « Transaction ID − 1 »)', async () => {
+    const { total } = await importReal('tradovate-fees-2026-10-27-cash-history.csv');
+    expect(total).not.toBe(20.06);
+    expect(total).not.toBe(0);
+  });
+});
+
 describe('CsvImportService — Fusion Tradovate (Performance + Cash history)', () => {
   const fixture = (name: string) =>
     readFileSync(join(__dirname, '__fixtures__', name));
