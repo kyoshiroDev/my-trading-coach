@@ -145,8 +145,8 @@ describe('Profil > Abonnement', () => {
         subscription: { interval: 'month', status: 'active' },
       }),
     }).textContent ?? '';
-    expect(text).toContain('Tarif partenaire TRADER10 : 29 €/mois à vie');
-    expect(text).toContain("Passer à l'annuel (290 €/an à vie)");
+    expect(text).toContain('Tarif partenaire TRADER10 : 29 €/mois tant que ton abonnement reste actif');
+    expect(text).toContain("Passer à l'annuel (290 €/an tant que ton abonnement reste actif)");
     expect(text).toContain('met fin à ton tarif partenaire');
   });
 

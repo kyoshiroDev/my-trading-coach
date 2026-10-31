@@ -53,7 +53,7 @@ import {
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 import { OffersStore } from '../../core/stores/offers.store';
 import { PRICING } from '../../core/constants/pricing.const';
-import { partnerDurationLabel } from '../../shared/components/plan-modal/plan-modal.component';
+import { PARTNER_FOREVER_LABEL, partnerDurationLabel } from '../../shared/components/plan-modal/plan-modal.component';
 import { searchLocalInstruments, sessionLabel, styleEmoji, styleLabel, withAsset, withoutAsset } from './profile.helpers';
 
 type ProfileTab = 'trader' | 'params';
@@ -355,14 +355,14 @@ export class ProfileComponent implements OnInit {
     return yearly ? `${PRICING.founder.yearly} €/an` : `${PRICING.founder.monthly} €/mois`;
   });
 
-  /** « 29 €/mois à vie » · « 29 €/mois jusqu'au 31/12/2026 » (conditions figées de l'abonné). */
+  /** « 29 €/mois tant que ton abonnement reste actif » · « 29 €/mois jusqu'au 31/12/2026 » (conditions figées de l'abonné). */
   protected readonly partnerTariff = computed(() => {
     const o = this.offersStore.offers();
     const p = o?.partner;
     if (!p) return null;
     const yearly = o.subscription.interval === 'year';
     const price = yearly ? `${p.priceAnnualEur} €/an` : `${p.priceMonthlyEur} €/mois`;
-    if (!p.endsAt) return `${price} à vie`;
+    if (!p.endsAt) return `${price} ${PARTNER_FOREVER_LABEL}`;
     return `${price} jusqu'au ${new Date(p.endsAt).toLocaleDateString('fr-FR')}`;
   });
 

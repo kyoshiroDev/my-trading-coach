@@ -48,7 +48,7 @@ describe('validate : chaque refus a sa raison', () => {
     const res = await setup().service.validate('trader10', null, now);
     expect(res).toEqual({
       valid: true, code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null,
-      label: '29 €/mois ou 290 €/an, à vie',
+      label: '29 €/mois ou 290 €/an, tant que ton abonnement reste actif',
     });
     expect(JSON.stringify(res)).not.toContain('Formateur (formation)');
   });

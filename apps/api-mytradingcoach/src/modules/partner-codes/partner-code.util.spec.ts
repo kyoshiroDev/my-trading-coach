@@ -29,7 +29,7 @@ describe('coupons : 29,00 € et 290,00 € pile', () => {
   });
 
   it('libellé des conditions', () => {
-    expect(conditionsLabel(TRADER10)).toBe('29 €/mois ou 290 €/an, à vie');
+    expect(conditionsLabel(TRADER10)).toBe('29 €/mois ou 290 €/an, tant que ton abonnement reste actif');
     expect(conditionsLabel(THREE_MONTHS)).toBe('29 €/mois ou 290 €/an, pendant 3 mois puis prix normal');
   });
 });

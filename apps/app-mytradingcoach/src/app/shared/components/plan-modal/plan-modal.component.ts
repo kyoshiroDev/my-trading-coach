@@ -31,11 +31,14 @@ type Interval = 'monthly' | 'yearly';
 /** Offre choisie : jamais deux à la fois (fondateur, code partenaire ou prix normal). */
 export type OfferChoice = 'founder' | 'partner' | 'premium';
 
+/** Remise partenaire sans durée : jamais « à vie » seul (#820), elle tombe si l'abonnement s'arrête. */
+export const PARTNER_FOREVER_LABEL = 'tant que ton abonnement reste actif';
+
 const CODE_PATTERN = /^[A-Z0-9_-]{3,20}$/;
 
-/** « à vie » · « pendant 3 mois, puis 49 €/mois » (ou /an). */
+/** « tant que ton abonnement reste actif » · « pendant 3 mois, puis 49 €/mois » (ou /an). */
 export function partnerDurationLabel(durationMonths: number | null, interval: Interval): string {
-  if (durationMonths === null) return 'à vie';
+  if (durationMonths === null) return PARTNER_FOREVER_LABEL;
   const normal = interval === 'yearly' ? `${PRICING.premium.yearly} €/an` : `${PRICING.premium.monthly} €/mois`;
   return `pendant ${durationMonths} mois, puis ${normal}`;
 }

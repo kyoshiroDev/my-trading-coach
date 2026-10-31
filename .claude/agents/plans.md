@@ -388,6 +388,9 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 - Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
   **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
   remise des abonnés) ; `active`.
+- **Libellé côté utilisateur** (#820) : une durée « à vie » s'affiche toujours « tant que ton abonnement
+  reste actif » (`conditionsLabel` côté API, `PARTNER_FOREVER_LABEL` dans l'app), jamais « à vie » seul.
+  L'admin garde « à vie » (usage interne).
 - **Prix pile** : coupon Stripe `amount_off` EUR = prix normal − prix remisé, **de l'intervalle choisi**
   (−20 € → 29,00 €, −200 € → 290,00 €), appliqué côté serveur sur le prix NORMAL. Coupons créés par
   l'API, identifiant déterministe `mtc-partner-<centimes>-<forever|N>`. Sur l'annuel, un coupon N mois
