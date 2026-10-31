@@ -390,6 +390,19 @@ restent dans le navigateur. Nouvel événement → liste blanche `PRODUCT_EVENTS
 Journal de `ProductEventsService.record` : nom de l'erreur seulement, jamais `err.message` (une
 erreur Prisma recopie la requête, donc l'identifiant du compte) ; testé avec contre-épreuve.
 
+## Identifiants Stripe des places et remises sans compte (#826, 2026-11-01)
+
+`FounderSeat` et `PartnerRedemption` gardent `stripeSubscriptionId` après la suppression du compte
+(`userId` passe à null par `onDelete: SetNull`). Règle : **effacement par le cron à 180 jours**,
+jamais à la suppression du compte ni dans le webhook (`releaseUnpaid`, `markLost` et
+`PartnerCodeService.end` retrouvent la ligne par cet identifiant tant qu'elle est ACTIVE).
+`RetentionCron.detachStripeIds`, appelé par la purge mensuelle (1er du mois, 4 h 30) : efface quand
+`userId` nul, statut ≠ ACTIVE et `endedAt` de plus de 180 jours (`STRIPE_IDS_RETENTION_DAYS`, délai des
+litiges tardifs). Jamais touchées, seulement comptées et signalées (`warn`) : ligne ACTIVE sans compte
+(webhook de fin jamais traité) et ligne terminée sans `endedAt`. Une place RELEASED d'un compte vivant
+(`releaseUnpaid` détache la place) suit la même règle. Couvert par `retention.cron.spec.ts` et
+`retention.int-spec.ts` (179/181 j, ACTIVE, sans fin, compte lié, rejeu).
+
 ## Liaison Discord par code à usage unique (#741, 2026-10-25)
 
 Avant : `/verify email:` reliait au Discord de l'appelant le compte dont on tapait l'e-mail, sans
