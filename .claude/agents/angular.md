@@ -1183,6 +1183,12 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
   publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
   (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
+  **Boutons express** (#818) : ils arrivent 3 à 7 s après le formulaire carte. Leur zone
+  (`.express`, 52 px + séparateur « ou par carte ») est réservée dès le chargement, avec un
+  squelette (`pending`), et retirée seulement si Stripe ne propose aucun moyen express ou ne se
+  charge pas (`loaderror`). `.express-host` en `display: flow-root` : le bloc Stripe a des marges
+  de −4 px. Ne jamais créer la session plus tôt pour gagner du temps : chaque création réserve une
+  place fondateur 35 min.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la

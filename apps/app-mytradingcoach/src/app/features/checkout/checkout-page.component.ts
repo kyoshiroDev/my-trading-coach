@@ -101,7 +101,12 @@ export class CheckoutPageComponent {
   protected readonly fatalError = signal<string | null>(null);
   protected readonly payError = signal<string | null>(null);
   protected readonly paying = signal(false);
-  protected readonly showOr = signal(false);
+  /**
+   * Boutons express (Link, Google Pay, Apple Pay) : ils arrivent plusieurs secondes après le
+   * formulaire carte. Leur place est réservée dès le chargement (#818) pour que le formulaire ne
+   * descende pas ; elle n'est rendue que si aucun moyen express n'est disponible.
+   */
+  protected readonly express = signal<'pending' | 'shown' | 'none'>('pending');
   protected readonly cardMinHeight = signal<number | null>(null);
   protected readonly summary = signal<CheckoutSummary | null>(null);
   protected readonly todayEur = signal<number | null>(null);
@@ -176,7 +181,10 @@ export class CheckoutPageComponent {
       buttonType: { applePay: 'subscribe', googlePay: 'subscribe' },
       layout: { maxColumns: 3, overflow: 'never' },
     } as Parameters<typeof checkout.createExpressCheckoutElement>[0]);
-    express.on('ready', (e) => this.showOr.set(Object.values(e.availablePaymentMethods ?? {}).some(Boolean)));
+    express.on('ready', (e) =>
+      this.express.set(Object.values(e.availablePaymentMethods ?? {}).some(Boolean) ? 'shown' : 'none'),
+    );
+    express.on('loaderror', () => this.express.set('none'));
     express.on('confirm', (e) => void this.confirm(e));
 
     const paymentEl = this.paymentHost()?.nativeElement;

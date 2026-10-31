@@ -90,6 +90,11 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter
 }
 .who { font-size: 12.5px; color: var(--pay-ink-3); margin: 0 0 16px; }
 .who strong { color: var(--pay-ink); font-weight: 500; }
+/* Zone express réservée dès le chargement (#818) : 52 px = une rangée de boutons de 44 px telle que
+   Stripe la rend. Sans elle, le formulaire carte descendait de ~95 px à l'arrivée des boutons.
+   flow-root : le bloc Stripe a des marges de −4 px qui, sinon, débordent et décalent le formulaire. */
+.express-host { display: flow-root; min-height: 52px; border-radius: 8px; }
+.express.pending .express-host { background: var(--pay-line); opacity: 0.5; }
 .or { display: flex; align-items: center; gap: 12px; margin: 14px 0; font-size: 12px; color: var(--pay-ink-4); }
 .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--pay-line); }
 .loading { padding: 48px 0; text-align: center; font-size: 13px; color: var(--pay-ink-4); }
