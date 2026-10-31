@@ -236,12 +236,14 @@ export class StripeWebhookService {
       this.logger.error(
         `[MONITORING] Subscription ${subscription.id} | status: ${subscription.status}, customer: ${customerId ?? 'unknown'}`,
       );
+      // Sentry : identifiant interne du compte, jamais l'identifiant client Stripe (#827).
       if (process.env['SENTRY_DSN']) {
         Sentry.captureMessage(
           `Subscription ${subscription.status}: ${subscription.id}`,
           {
             level: 'warning',
-            tags: { customerId: customerId ?? 'unknown' },
+            tags: { subscriptionStatus: subscription.status },
+            user: { id: known.id },
           },
         );
       }

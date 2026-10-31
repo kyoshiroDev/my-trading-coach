@@ -1569,6 +1569,10 @@ part de lignes et non la perfection.
   `dataCollection` : posée, elle repart de « tout collecter », IP comprise. Gardés : erreur,
   méthode, chemin, en-têtes techniques, `user.id`, tags. Dans un `captureMessage` / `extra` :
   nom et code de l'erreur, **jamais son message** (texte libre : adresse, hôte, port…).
+  **Jamais l'identifiant client Stripe** (#827) : pour situer un compte, `user: { id }` interne.
+  Filet : `scrubEvent` et `scrubBreadcrumb` remplacent tout `cus_…` (message, exceptions, URL des
+  appels sortants vers `/v1/customers/…`) par `cus_[masqué]`. L'identifiant d'abonnement (`sub_…`)
+  reste dans le message `Subscription past_due/unpaid`.
   Vérification sur un vrai événement : `docs/ops/verif-sentry-donnees-requete.md`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
 - **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en

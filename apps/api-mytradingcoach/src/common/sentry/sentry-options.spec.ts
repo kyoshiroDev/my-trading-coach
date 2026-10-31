@@ -62,6 +62,16 @@ describe('scrubEvent (#746)', () => {
     const plain: ErrorEvent = { type: undefined, message: 'cron', extra: { n: 1 } };
     expect(scrubEvent({ ...plain })).toEqual(plain);
   });
+
+  it('masque l’identifiant client Stripe du message et des exceptions (#827)', () => {
+    const scrubbed = scrubEvent({
+      type: undefined,
+      message: 'Subscription past_due, client cus_Fictif123',
+      exception: { values: [{ type: 'StripeInvalidRequestError', value: "No such customer: 'cus_Fictif123'" }] },
+    });
+    expect(JSON.stringify(scrubbed)).not.toContain('cus_Fictif123');
+    expect(scrubbed.exception?.values?.[0].value).toBe("No such customer: 'cus_[masqué]'");
+  });
 });
 
 describe('scrubBreadcrumb (#746)', () => {
@@ -80,6 +90,19 @@ describe('scrubBreadcrumb (#746)', () => {
       url: 'https://financialmodelingprep.com/stable/quote',
       'http.method': 'GET',
       status_code: 200,
+    });
+  });
+
+  it('masque l’identifiant client Stripe dans l’URL d’un appel sortant (#827)', () => {
+    const crumb: Breadcrumb = {
+      category: 'http',
+      type: 'http',
+      data: { url: 'https://api.stripe.com/v1/customers/cus_Fictif123', 'http.method': 'GET', status_code: 404 },
+    };
+    expect(scrubBreadcrumb(crumb).data).toEqual({
+      url: 'https://api.stripe.com/v1/customers/cus_[masqué]',
+      'http.method': 'GET',
+      status_code: 404,
     });
   });
 
