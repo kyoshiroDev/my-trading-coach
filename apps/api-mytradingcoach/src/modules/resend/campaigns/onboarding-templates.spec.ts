@@ -145,8 +145,8 @@ describe('contenu de chaque e-mail', () => {
     const { subject, html } = EMAILS.founder_followup;
     const t = text(html);
     const { priceMonthlyEur: m, priceAnnualEur: y, seats } = FOUNDER_OFFER;
-    expect(subject).toBe(`${m} €/mois à vie, pour les ${seats} premiers`);
-    expect(t).toContain(`${m} €/mois à vie`);
+    expect(subject).toBe(`${m} €/mois tant que ton abonnement reste actif, pour les ${seats} premiers`);
+    expect(t).toContain(`${m} €/mois tant que ton abonnement reste actif`);
     expect(t).toContain(`(ou ${y} €/an), au lieu de ${PREMIUM_PRICE_EUR.monthly} €/mois`);
     expect(t).toContain('Plus que 154 places sur 200');
     expect(t).toContain(`satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours`);

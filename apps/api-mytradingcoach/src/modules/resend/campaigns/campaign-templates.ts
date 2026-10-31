@@ -146,17 +146,17 @@ export function founderFollowupTemplate({ userName, appUrl, unsubUrl, seatsLeft,
   const seatsText = founderSeatsLabel(seatsLeft ?? total, total) ?? founderSeatsLabel(total, total);
   const content =
     card(`
-      ${heading('Offre fondateur', `${m}&nbsp;€/mois à vie, pour les ${total} premiers`)}
+      ${heading('Offre fondateur', `${m}&nbsp;€/mois tant que ton abonnement reste actif, pour les ${total} premiers`)}
       <p ${P}>${hello(userName)} MyTradingCoach a ouvert une offre pour ses premiers utilisateurs : Premium à
-        <strong style="color:#e2eaf5;">${m}&nbsp;€/mois à vie</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
+        <strong style="color:#e2eaf5;">${m}&nbsp;€/mois tant que ton abonnement reste actif</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
       <p ${P}><strong style="color:#e2eaf5;">${seatsText}</strong>.</p>
       <p ${P}>Pas d'essai sur cette offre : satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
       ${cta('Devenir fondateur →', onboardingLink(appUrl, '/dashboard', 'founder_followup', { plan: 'founder', cta: 'email' }))}
     `, 'rgba(139,92,246,.4)') + RISK_NOTICE + marketingFooter(unsubUrl);
 
   return {
-    subject: `${m} €/mois à vie, pour les ${total} premiers`,
-    html: emailWrapper(content, `Premium à ${m} €/mois à vie au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
+    subject: `${m} €/mois tant que ton abonnement reste actif, pour les ${total} premiers`,
+    html: emailWrapper(content, `Premium à ${m} €/mois tant que ton abonnement reste actif, au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
   };
 }
 
