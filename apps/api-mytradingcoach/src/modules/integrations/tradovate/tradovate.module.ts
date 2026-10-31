@@ -25,6 +25,8 @@ import { PropAlertsService } from './prop-alerts.service';
 import { TiltAlertsService } from './tilt-alerts.service';
 import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
+import { TradovateAdminController } from './tradovate-admin.controller';
+import { TradovateFeesRepairService } from './tradovate-fees-repair.service';
 
 /**
  * Intégration Tradovate / NinjaTrader — synchro API en LECTURE SEULE.
@@ -39,7 +41,7 @@ import { FreeLimitSyncService } from './free-limit-sync.service';
   // BehaviorModule : détecteurs de comportement branchés sur le temps réel (#602, silencieux).
   // TraderPushModule : push des alertes et de la connexion à renouveler (#666).
   imports: [PrismaModule, TradesModule, SetupsModule, AuthModule, AccountsModule, AdminPushModule, BehaviorModule, TraderPushModule],
-  controllers: [TradovateController, TradovateCallbackController],
+  controllers: [TradovateController, TradovateCallbackController, TradovateAdminController],
   providers: [
     TradovateApiClient,
     TradovateConnectionService,
@@ -70,6 +72,8 @@ import { FreeLimitSyncService } from './free-limit-sync.service';
     TradovateBackgroundRefreshCron,
     // Comptes au-delà de la limite gratuite (#769, B0) : journal seul, rien n'est bloqué.
     FreeLimitSyncService,
+    // Réparation des frais importés avant le 31/10 (#783), lancée par l'admin.
+    TradovateFeesRepairService,
   ],
 })
 export class TradovateModule {}

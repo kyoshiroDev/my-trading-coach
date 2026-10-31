@@ -1121,7 +1121,15 @@ Conséquences à connaître :
 - **Frais de l'historique (#783)** : `Fills` (fills + horodatages) + `Cash History` (tous les frais),
   joints par `cashHistoryFeesByFill` (même règle que l'import CSV, cf. `instruments.md`). Cash History
   indisponible ou vide → repli sur la colonne `commission` de `Fills` (commission seule). 3 appels par
-  mois non vide. Les trades importés avant le 31/10 n'ont que la commission (réparation à part).
+  mois non vide. Les trades importés avant le 31/10 n'avaient que la commission.
+- **Réparation des frais (#783)** : `POST /api/admin/tradovate/repair-fees` (ADMIN, 202, essai par
+  défaut, `?apply=true` pour écrire, 409 si une réparation tourne : verrou Redis 2 h) ; `GET` = dernier
+  rapport (Redis, 14 j). `TradovateFeesRepairService` relit chaque connexion CONNECTED non démo via
+  `TradovateHistoryService.recomputedWindows` (mêmes calculs que l'import, rien d'écrit), rapproche
+  par `dedupeKey` (`planFeeRepairs`, un pour un) les trades `BROKER_HISTORY` / `CSV_IMPORT` du compte,
+  et ne change QUE `commission`, toujours à la hausse ; puis barème + cache analytics
+  (`TradesService.refreshAfterFeesRepair`). Pas de détection d'incident relancée. Dans l'API et non en
+  script : un script renouvellerait les jetons hors des verrous de connexion.
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
 rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
