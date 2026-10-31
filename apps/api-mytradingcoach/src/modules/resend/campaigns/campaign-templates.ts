@@ -397,7 +397,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
     unsubUrl,
   });
   return {
-    subject: `${total} places à ${m} €/mois, à vie`,
+    subject: `${total} places à ${m} €/mois, prix bloqué tant que tu restes abonné`,
     html: letter.html,
     text: letter.text,
     from: GREG_FROM,
