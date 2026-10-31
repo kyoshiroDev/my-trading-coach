@@ -17,7 +17,7 @@ export const ORGANIZATION = {
   name: 'MyTradingCoach',
   url: SITE,
   logo: `${SITE}/icon/og-image.png`,
-  contactPoint: { '@type': 'ContactPoint', email: 'hello@mytradingcoach.app', contactType: 'customer support', availableLanguage: 'French' },
+  contactPoint: { '@type': 'ContactPoint', email: 'support@mytradingcoach.app', contactType: 'customer support', availableLanguage: 'French' },
   address: { '@type': 'PostalAddress', addressCountry: 'FR' },
   sameAs: [],
 };

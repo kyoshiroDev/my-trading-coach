@@ -549,3 +549,6 @@ auto-héberger les fontes (`@fontsource/*`, fin du hack `media="print" onload`).
 - **Barre sticky mobile** (`Nav.astro`, `.nav-sticky-cta`) : masquée quand `.hero-cta-main` est à
   l'écran (IntersectionObserver), quand le menu est ouvert (`body.nav-open`), et absente des pages
   qui passent `<Nav stickyCta={false} />` (`/disclaimer`).
+- **Adresse de contact publique unique : `support@mytradingcoach.app`** (#747) : pied de page, pages
+  légales, JSON-LD. Plus de `contact@` (boîte non vérifiée) ni de `hello@` (adresse interne, jamais
+  montrée aux utilisateurs).
