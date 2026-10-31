@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { HISTORY_MAX_MONTHS, TradovateHistoryService } from './tradovate-history.service';
 import { TradovateApiError } from './tradovate.errors';
@@ -17,9 +19,8 @@ const PERFORMANCE_CSV = [
 ].join('\n');
 
 /**
- * Les frais viennent du rapport `Fills` : il porte le `Fill ID` ET sa `commission`, donc la
- * jointure est exacte. Le `Cash History` de l'import CSV manuel relie la commission au fill par
- * `txnId − 1`, convention qui NE TIENT PAS sur les comptes testés (0/291 le 2026-09-26).
+ * Rapport `Fills` : `Fill ID`, horodatage, contrat et `commission`. Sans `Cash History`, seule la
+ * commission compte (repli) ; avec, tous les frais du fill (#783, tests en fin de fichier).
  */
 const FILLS_CSV = [
   '_id,_orderId,Fill ID,Order ID,Timestamp,Account,B/S,Quantity,Price,Contract,Product,commission',
@@ -441,5 +442,36 @@ describe('CSV de la Reporting API ↔ parseur d’import existant', () => {
 
     // Le piège du P&L comptable : `$(30.00)` vaut MOINS trente, pas plus.
     expect(perdant.pnl).toBe(-30);
+  });
+});
+
+describe('TradovateHistoryService — frais complets depuis le Cash History (#783)', () => {
+  // Export réel du compte « test NT8 », 27/10/2026 : 2,18 $ par côté-contrat, dont 0,59 $ de commission.
+  const fx = (n: string) => readFileSync(join(__dirname, '../../trades/__fixtures__', n), 'utf-8');
+  const reports = {
+    Performance: fx('tradovate-fees-2026-10-27-performance.csv'),
+    Fills: fx('tradovate-fees-2026-10-27-fills.csv'),
+  };
+  const total = (dtos: Record<string, unknown>[]) =>
+    +dtos.reduce((s, d) => s + Number(d.commission ?? 0), 0).toFixed(2);
+
+  it('Cash History disponible : commission + Exchange + Clearing + NFA, 74,12 $ attribués', async () => {
+    const { service, persiste } = setup({ ...reports, 'Cash History': fx('tradovate-fees-2026-10-27-cash-history.csv') });
+
+    const r = await service.importHistory('u1', conn(), { months: 1 });
+
+    expect(r.feesExpected).toBe(74.12);
+    expect(r.feesAssigned).toBe(74.12);
+    expect(total(persiste[0])).toBe(74.12);
+  });
+
+  it('contre-épreuve : Cash History en échec → commission seule (20,06 $), import non bloqué', async () => {
+    const { service, persiste } = setup({ ...reports, 'Cash History': new TradovateApiError('unavailable', 500, 'Cash History') });
+
+    const r = await service.importHistory('u1', conn(), { months: 1 });
+
+    expect(r.created).toBeGreaterThan(0);
+    expect(r.feesExpected).toBe(20.06);
+    expect(total(persiste[0])).toBe(20.06);
   });
 });
