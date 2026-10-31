@@ -55,7 +55,7 @@ const premium = PLAN_BENEFITS.premium.filter((b) => b.id !== 'accounts' || FEATU
         <p class="pp-lead">Tout Premium inclus :</p>
         <ul class="pp-feats">{premium.map((f) => <li>{f}</li>)}</ul>
         <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="pp-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pf-pricing">Devenir fondateur</a>
-        <span class="pp-foot">Paiement à la fin de tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts · Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</span>
+        <span class="pp-foot">Réservable pendant tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts · Satisfait ou remboursé {FOUNDER_REFUND_DAYS} jours</span>
       </div>
       </FounderWrap>
 

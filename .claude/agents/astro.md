@@ -135,7 +135,7 @@ src/
     clavier). Carte affichée sans fondu (`.reveal.vis-now`). Bureau : inchangé. Mesure du
     2026-10-16 (Slow 4G, iPhone 390×844) : bouton cliquable à 1,7 s (1,9 à 2,2 s avec CPU ×4),
     445 px sous le haut de l'écran, au lieu de 1 900 px plus bas.
-  - Hero, mobile seulement : raccourci « 🔥 Offre fondateur : 29 €/mois à vie » (`#fondateur`)
+  - Hero, mobile seulement : raccourci « 🔥 Offre fondateur : 29 €/mois » (`#fondateur`)
     juste après « Commencer gratuitement » (qui reste le premier), rendu si l'offre est ouverte au
     build (`data-founder-only`). Compact en ≤ 768 px (46 px de haut) et `.hero-founder` réduit la
     marge sous les puces (24 px au lieu de 40) : entièrement visible au-dessus du bandeau cookies en
