@@ -71,6 +71,7 @@ const ADMIN_USER_SELECT = {
   plan: true,
   role: true,
   trialEndsAt: true,
+  trialSource: true,
   stripeInterval: true,
   stripeCurrentPeriodEnd: true,
   lastSeenAt: true,

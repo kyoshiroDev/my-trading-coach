@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
 import { isOfferedPremium } from '../users/premium-offer.util';
+import { isPremiumAccess } from '../discord/discord-access.util';
 
 const DAY_MS = 86_400_000;
 
@@ -157,6 +158,8 @@ export class UserDetailService {
         subscriptionStatus: user.stripeSubscriptionStatus ?? null,
         trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
         offeredPremium: isOfferedPremium(user),
+        trialSource: user.trialSource ?? null,
+        premiumAccess: isPremiumAccess(user),
         isDemo: user.isDemo,
         ambassadorRefCode: user.role === 'AMBASSADOR' ? user.referralCode : null,
         acquisition: {

@@ -173,7 +173,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
   {
     key: 'trial_ending',
     label: 'Fin du Premium offert dans 3 jours (J+11)',
-    description: "Service : date de fin de l'essai d'inscription et ce qui change en gratuit, rien n'est prélevé.",
+    description: "Service\u00a0: date de fin de l'essai d'inscription et ce qui change en gratuit, rien n'est prélevé.",
     kind: 'service',
     requiresConsent: false,
     automated: true,
@@ -192,7 +192,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
   {
     key: 'trial_ended',
     label: 'Premium offert terminé (J+15)',
-    description: "Service : l'essai d'inscription est terminé, retour au gratuit sans rien perdre.",
+    description: "Service\u00a0: l'essai d'inscription est terminé, retour au gratuit sans rien perdre.",
     kind: 'service',
     requiresConsent: false,
     automated: true,

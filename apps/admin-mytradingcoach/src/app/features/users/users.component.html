@@ -64,7 +64,10 @@
               <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
               <td data-label="Abonnement">
                 @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
-                @else if (isOffered(u)) { <span class="sub-badge sub-badge--trial" title="Premium offert jusqu'au {{ u.trialEndsAt | date:'dd/MM/yyyy' }}">Offert</span> }
+                @else if (trial(u); as t) {
+                  @if (t.origin === 'inscription') { <span class="sub-badge sub-badge--signup" data-testid="badge-signup-trial" title="Essai d'inscription jusqu'au {{ t.until | date:'dd/MM/yyyy' }}">Essai</span> }
+                  @else { <span class="sub-badge sub-badge--trial" data-testid="badge-offered" title="Premium offert jusqu'au {{ t.until | date:'dd/MM/yyyy' }}">Offert</span> }
+                }
                 @else { <span class="muted">-</span> }
               </td>
               <td data-label="Activité" class="td-mono" [class.muted]="!u.lastSeenAt">{{ relativeTime(u.lastSeenAt) }}</td>

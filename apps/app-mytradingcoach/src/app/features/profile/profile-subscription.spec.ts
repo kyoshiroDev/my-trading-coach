@@ -87,7 +87,7 @@ describe('Profil > Abonnement', () => {
 
   it('Premium offert : jours restants, aucun prélèvement, pas de portail Stripe', () => {
     const text = render({ offered: true }).textContent ?? '';
-    expect(text).toContain('Premium offert : il te reste 20 jours');
+    expect(text).toContain('Premium offert\u00a0: il te reste 20 jours');
     expect(text).toContain('Aucun prélèvement, tu repasses en gratuit automatiquement.');
     expect(text).toContain('Continuer en Premium →');
     expect(text).not.toContain('Premier prélèvement');
@@ -97,7 +97,7 @@ describe('Profil > Abonnement', () => {
 
   it('Essai d’inscription (#769, sans carte) : Premium offert, aucun prélèvement, pas de portail Stripe', () => {
     const text = render({ offered: false, signup: true }).textContent ?? '';
-    expect(text).toContain('Premium offert : il te reste 20 jours');
+    expect(text).toContain('Premium offert\u00a0: il te reste 20 jours');
     expect(text).toContain('Aucun prélèvement, tu repasses en gratuit automatiquement.');
     expect(text).not.toContain('Premier prélèvement');
     expect(text).not.toContain('annuler mon essai');
@@ -106,10 +106,20 @@ describe('Profil > Abonnement', () => {
 
   it('Essai Stripe : comportement inchangé (premier prélèvement + portail)', () => {
     const text = render({ offered: false }).textContent ?? '';
-    expect(text).toContain('Essai gratuit : il te reste 20 jours');
+    expect(text).toContain('Essai gratuit\u00a0: il te reste 20 jours');
     expect(text).toContain('Premier prélèvement le');
     expect(text).toContain('Gérer / annuler mon essai →');
     expect(text).not.toContain('Premium offert');
+  });
+
+  it.each([
+    ['Premium offert', { offered: true }],
+    ['essai d’inscription', { offered: false, signup: true }],
+    ['essai Stripe', { offered: false }],
+  ])('textes de l’essai (%s) : espace insécable avant les deux-points (#769)', (_l, opts) => {
+    const text = render(opts).textContent ?? '';
+    expect(text).toContain('Accès à tout\u00a0: Insights IA');
+    expect(text).not.toMatch(/(Premium offert|Essai gratuit|Accès à tout) :/);
   });
 
   it('fondateur : badge numéroté, tarif bloqué, remboursement sous 14 jours, rappel avant résiliation', () => {

@@ -756,7 +756,7 @@ export function partnerWelcomeTemplate(params: {
       Salut ${userName || 'Trader'}, ton Premium est actif avec le code <strong style="color:#e2eaf5;">${code}</strong>.
     </p>
     ${rulesList([
-      ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)} : aucun prélèvement avant.`] : []),
+      ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)}&nbsp;: aucun prélèvement avant.`] : []),
       `Ensuite <strong style="color:#e2eaf5;">${priceLabel}</strong>, ${duration}.`,
       'Ces conditions sont figées : elles ne changent pas même si le code évolue.',
       'Si tu résilies, le tarif partenaire est perdu.',
