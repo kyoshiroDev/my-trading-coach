@@ -549,7 +549,7 @@ export class UsersService {
     const prefs = { ...dto };
     delete prefs.currency;
     // Consentement marketing : horodaté quand il CHANGE seulement (preuve RGPD ; le profil le renvoie
-    // à chaque enregistrement). Le réglage (« Conseils, nouveautés et offres ») couvre aussi les
+    // à chaque enregistrement). Au retrait, la date du consentement reste, celle du retrait s'ajoute (#747). Le réglage (« Conseils, nouveautés et offres ») couvre aussi les
     // conseils de prise en main : l'activer les rétablit, le couper les arrête.
     let consentAt = {};
     if (dto.marketingConsent !== undefined) {
@@ -559,8 +559,8 @@ export class UsersService {
       });
       if (current?.marketingConsent !== dto.marketingConsent) {
         consentAt = dto.marketingConsent
-          ? { marketingConsentAt: new Date(), serviceEmailsOptOutAt: null }
-          : { marketingConsentAt: null, serviceEmailsOptOutAt: new Date() };
+          ? { marketingConsentAt: new Date(), marketingConsentWithdrawnAt: null, serviceEmailsOptOutAt: null }
+          : { marketingConsentWithdrawnAt: new Date(), serviceEmailsOptOutAt: new Date() };
       }
     }
     return this.prisma.user.update({

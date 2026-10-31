@@ -12,8 +12,15 @@ describe('EmailsService.unsubscribe', () => {
     await expect(service.unsubscribe('tok-123')).resolves.toBe(1);
     expect(prisma.user.updateMany).toHaveBeenCalledWith({
       where: { unsubToken: 'tok-123' },
-      data: { marketingConsent: false, marketingConsentAt: null, serviceEmailsOptOutAt: expect.any(Date) },
+      data: { serviceEmailsOptOutAt: expect.any(Date) },
     });
+    // #747 : la date du consentement est gardée (preuve), le retrait est daté, seulement s'il y avait consentement.
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { unsubToken: 'tok-123', marketingConsent: true },
+      data: { marketingConsent: false, marketingConsentWithdrawnAt: expect.any(Date) },
+    });
+    const writes = prisma.user.updateMany.mock.calls.map((c) => JSON.stringify(c));
+    expect(writes.some((w) => w.includes('"marketingConsentAt"'))).toBe(false);
   });
 
   it('portée service : coupe seulement les conseils de prise en main, garde le consentement marketing', async () => {
@@ -23,6 +30,7 @@ describe('EmailsService.unsubscribe', () => {
       where: { unsubToken: 'tok-123' },
       data: { serviceEmailsOptOutAt: expect.any(Date) },
     });
+    expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
   });
 
   it('token absent : aucune écriture', async () => {
@@ -33,7 +41,8 @@ describe('EmailsService.unsubscribe', () => {
   });
 
   it('token inconnu : 0 ligne, sans erreur', async () => {
-    const { service } = setup(0);
+    const { service, prisma } = setup(0);
     await expect(service.unsubscribe('inconnu')).resolves.toBe(0);
+    expect(prisma.user.updateMany).toHaveBeenCalledTimes(1);
   });
 });

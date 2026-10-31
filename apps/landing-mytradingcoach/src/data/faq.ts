@@ -27,7 +27,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: 'Comment fonctionne le calendrier économique IA ?',
     answer:
-      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne : NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA analyse immédiatement la surprise et t'indique l'impact probable sur chacun de tes actifs (bull/bear/neutre).",
+      "Chaque matin, MTC récupère les événements économiques du jour (NFP, PMI, décisions Fed, etc.) et les filtre pour tes actifs spécifiques. Tu vois uniquement ce qui te concerne : NQ, BTC/USDT, EUR/USD. Quand un résultat tombe en cours de session, l'IA lit immédiatement la surprise et t'indique comment elle se lit pour chacun de tes actifs (haussière, baissière ou neutre). C'est une lecture de l'annonce, à titre informatif : ni une prévision, ni un conseil.",
   },
   {
     question: 'Puis-je importer mon historique de trades ?',
@@ -51,7 +51,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     question: "J'ai un code partenaire, comment ça marche ?",
     answer:
-      "Un formateur partenaire peut te donner un code (par exemple dans son lien) : il baisse le prix du Premium selon ses conditions, affichées avant le paiement (prix mensuel ou annuel, à vie ou pendant quelques mois puis prix normal). L'essai d'un mois reste accordé sur le mensuel. Un seul code par personne, réservé à qui n'a jamais été abonné. Il ne se cumule avec aucune autre offre : face à la réduction de parrainage, on applique la plus avantageuse pour toi. Les conditions obtenues ne changent plus ensuite ; la remise s'arrête si ton abonnement se termine.",
+      "Un formateur partenaire peut te donner un code (par exemple dans son lien) : il baisse le prix du Premium selon ses conditions, affichées avant le paiement (prix mensuel ou annuel, à vie ou pendant quelques mois puis prix normal). Un seul code par personne, réservé à qui n'a jamais été abonné. Il ne se cumule avec aucune autre offre : face à la réduction de parrainage, on applique la plus avantageuse pour toi. Les conditions obtenues ne changent plus ensuite ; la remise s'arrête si ton abonnement se termine.",
   },
 ];
 

@@ -15,6 +15,7 @@ import {
 import {
   assignFeesOncePerFill,
 } from './tradovate-pair.util';
+import { cashHistoryFeesByFill, performanceFillStamps } from './tradovate-fees.util';
 import {
   applyMappingWithPnlCheck,
   MAPPING_MIN_PARSED_RATIO,
@@ -97,7 +98,7 @@ interface ClaudeResponse {
 export interface FeesReport {
   /** Σ commissions attribuées aux trades (après dédup des fills partagés). */
   assigned: number;
-  /** Σ |Delta| des lignes Commission du Cash history (checksum attendu). */
+  /** Σ |Delta| des lignes de frais du Cash history, tous types (checksum attendu, #783). */
   expected: number;
   /** true si |assigned − expected| < 0,01 (frais rapprochés au centime). */
   reconciled: boolean;
@@ -145,10 +146,21 @@ export class CsvImportService {
       throw new BadRequestException(this.emptyMessage());
 
     // 2. Détecter le broker et pré-normaliser
-    const { broker, csv, formatChanged } = preprocessCsv(content);
+    const { broker, csv, formatChanged, numbersAmbiguous } = preprocessCsv(content);
     const normalizedLines = csv.split('\n').filter((l) => l.trim());
     if (normalizedLines.length < 2)
       throw new BadRequestException(this.emptyMessage());
+
+    // Nombres aux deux formats dans le même fichier (souvent retouché dans Excel) : en lire un
+    // seul faux donnerait un P&L 1 000 fois trop petit ou trop grand, sans erreur. Refus, pas d'IA.
+    if (numbersAmbiguous) {
+      this.logger.warn(`CSV "${filename}" refusé : nombres au format US et européen mélangés`);
+      throw new BadRequestException(
+        'Les nombres de ce fichier mélangent deux formats (1 234,56 et 1,234.56) : ' +
+        'impossible de les lire sans risque d\'erreur. Réexporte le fichier depuis ton broker ' +
+        'sans le modifier, ou contacte support@mytradingcoach.app.',
+      );
+    }
 
     let dtos: ImportDto[];
 
@@ -226,7 +238,7 @@ export class CsvImportService {
     let feesMerged = false;
     if (broker === 'tradovate' && feesFile) {
       const feesText = await this.toCsvText(feesFile.buffer, feesFile.filename);
-      const merge = feesText ? this.mergeTradovateFees(dtos, feesText) : null;
+      const merge = feesText ? this.mergeTradovateFees(dtos, feesText, content) : null;
       if (merge) {
         feesMerged = true;
         if (report) report.fees = merge;
@@ -318,76 +330,32 @@ export class CsvImportService {
     });
   }
 
-  /** Montant robuste en valeur absolue : retire `$`, espaces et séparateurs de milliers. */
-  private parseMoneyAbs(raw: string): number {
-    let s = (raw ?? '').replace(/[$\s]/g, '').trim();
-    const neg = s.startsWith('(') && s.endsWith(')');
-    if (neg) s = s.slice(1, -1);
-    // Format US : `,` = milliers, `.` = décimale → on retire les virgules.
-    s = s.replace(/,/g, '');
-    const n = parseFloat(s);
-    return Number.isFinite(n) ? Math.abs(n) : 0;
-  }
-
   /**
-   * Fusion Tradovate : rapproche les commissions EXACTES par trade à partir du Cash history.
-   *
-   * Jointure (validée sur données réelles) : `fillId = (Transaction ID) − 1`, une entrée par fill.
-   * Dédup obligatoire : un même fill peut clôturer un trade ET en ouvrir un autre (scalping) → sa
-   * commission ne doit compter qu'UNE fois sur tout l'import, sinon le net est double-compté.
-   * On parcourt les trades dans l'ordre du fichier avec un Set de fills consommés.
-   * Garantit `Σ commission(trade) == Σ |Delta| Commission` (checksum au centime).
+   * Fusion Tradovate : rapproche les frais EXACTS par trade à partir du Cash history, TOUS types
+   * (commission, Exchange, Clearing, NFA…, #783) : une ligne de frais va au fill de même horodatage
+   * et même contrat qui la précède (cf. `cashHistoryFeesByFill`), les fills étant lus dans l'export
+   * Performance brut. Chaque fill n'est compté qu'UNE fois sur tout l'import (scalping : un fill
+   * clôture un trade et en ouvre un autre), règle partagée avec la synchro API.
+   * Garantit `Σ commission(trade) == Σ |Delta| des frais` (checksum au centime) quand tout est rattaché.
    *
    * Mute `commission` (positive) sur chaque DTO ; le P&L net déduit ensuite `commission`.
    * Retourne le rapport (assigned/expected/reconciled) ou null si le fichier n'est pas un Cash history.
    */
-  private mergeTradovateFees(dtos: ImportDto[], feesText: string): FeesReport | null {
-    const lines = feesText.split(/\r?\n/).filter((l) => l.trim());
-    if (lines.length < 2) return null;
-
-    const header = lines[0].toLowerCase();
-    // Détection du fichier de frais : Cash history (Transaction ID + Cash Change Type).
-    if (!header.includes('transaction id') || !header.includes('cash change type')) {
-      this.logger.warn('Fichier de frais ignoré : en-tête Cash history non reconnu (Transaction ID / Cash Change Type).');
+  private mergeTradovateFees(dtos: ImportDto[], feesText: string, performanceText: string): FeesReport | null {
+    const fees = cashHistoryFeesByFill(feesText, performanceFillStamps(performanceText));
+    if (!fees) {
+      this.logger.warn('Fichier de frais ignoré : en-tête Cash history non reconnu (Transaction ID / Timestamp / Delta / Cash Change Type / Contract).');
       return null;
     }
-
-    const cols0 = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
-    const iTxn = cols0.indexOf('transaction id');
-    const iDelta = cols0.indexOf('delta');
-    const iType = cols0.indexOf('cash change type');
-    if (iTxn < 0 || iDelta < 0 || iType < 0) {
-      this.logger.warn('Fichier de frais ignoré : colonnes Transaction ID / Delta / Cash Change Type introuvables.');
-      return null;
-    }
-
-    // commissionParFill[fillId] = |Delta| : une entrée par ligne Commission (fillId = TxnID − 1).
-    const commissionParFill = new Map<string, number>();
-    let expected = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const c = splitCsvLine(lines[i]);
-      if ((c[iType] ?? '').trim() !== 'Commission') continue; // ignore Trade Paired & co
-      const txnId = parseInt((c[iTxn] ?? '').trim(), 10);
-      if (!Number.isFinite(txnId)) continue;
-      const amount = this.parseMoneyAbs(c[iDelta] ?? '');
-      if (amount <= 0) continue;
-      commissionParFill.set(String(txnId - 1), amount);
-      expected += amount;
-    }
-    expected = +expected.toFixed(2);
-
-    // Attribution + dédup : ordre du fichier, chaque fill consommé une seule fois
-    // (règle partagée avec la synchro API, cf. tradovate-pair.util).
-    const { assigned, consumed } = assignFeesOncePerFill(dtos, commissionParFill);
-
-    const reconciled = Math.abs(assigned - expected) < 0.01;
+    const { assigned, consumed } = assignFeesOncePerFill(dtos, fees.feeByFill);
+    const reconciled = Math.abs(assigned - fees.expected) < 0.01;
     if (!reconciled) {
       this.logger.warn(
-        `Frais Tradovate partiellement rapprochés : attribué ${assigned} vs attendu ${expected} ` +
-        `(${commissionParFill.size} fills, ${consumed} consommés).`,
+        `Frais Tradovate partiellement rapprochés : attribué ${assigned} vs attendu ${fees.expected} ` +
+        `(${fees.feeByFill.size} fills, ${consumed} consommés, ${fees.orphans} ligne(s) sans fill).`,
       );
     }
-    return { assigned, expected, reconciled, count: dtos.length };
+    return { assigned, expected: fees.expected, reconciled, count: dtos.length };
   }
 
   /**

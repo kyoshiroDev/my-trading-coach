@@ -11,6 +11,7 @@ import {
   type ImportDto,
 } from '../../trades/csv-parsers';
 import { assignFeesOncePerFill } from '../../trades/tradovate-pair.util';
+import { cashHistoryFeesByFill, fillsReportStamps } from '../../trades/tradovate-fees.util';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { FreeLimitSyncService } from './free-limit-sync.service';
@@ -219,13 +220,14 @@ export class TradovateHistoryService {
   }
 
   /**
-   * Une fenêtre : `Performance` (les trades appariés) + `Fills` (les commissions).
+   * Une fenêtre : `Performance` (les trades appariés) + `Fills` et `Cash History` (les frais).
    *
-   * Les frais viennent de `Fills` et NON de `Cash History`, malgré ce que fait l'import CSV
-   * manuel : celui-ci relie une commission à son fill par la convention `txnId − 1 = fillId`,
-   * qui **ne tient pas** sur les comptes testés (0 correspondance sur 291 le 2026-09-26, avec un
-   * décalage variable d'une ligne à l'autre). `Fills` porte le `Fill ID` ET sa `commission` :
-   * la jointure est exacte, vérifiée à 291/291 et au centime (266,40 $).
+   * Frais complets (#783) : le `Cash History` porte TOUS les frais (commission, Exchange, Clearing,
+   * NFA…), le rapport `Fills` seulement la commission. Chaque ligne de frais est rattachée au fill
+   * de même horodatage et même contrat qui la précède (`cashHistoryFeesByFill`), les fills étant
+   * lus dans `Fills`. L'ancienne jointure `txnId − 1 = fillId` ne tenait pas (décalage variable,
+   * 0 correspondance sur 291 le 2026-09-26). Sans Cash History exploitable : commission de `Fills`
+   * seule, comme avant.
    */
   private async importWindow(
     userId: string,
@@ -318,7 +320,10 @@ export class TradovateHistoryService {
       .join('\n');
   }
 
-  /** Commissions du rapport `Fills`, attribuées une seule fois par fill. Renvoie le total attendu. */
+  /**
+   * Frais de la fenêtre, attribués une seule fois par fill. Renvoie le total attendu.
+   * Cash History (tous les frais) en priorité, repli sur la colonne `commission` de `Fills`.
+   */
   private async applyFees(
     env: TradovateEnv,
     token: string,
@@ -328,6 +333,23 @@ export class TradovateHistoryService {
   ): Promise<number> {
     const csv = await this.reporting.fetchCsv(env, token, 'Fills', window, apiHosts);
     if (!csv) return 0;
+
+    const cash = await this.reporting
+      .fetchCsv(env, token, 'Cash History', window, apiHosts)
+      .catch((err: unknown) => {
+        this.logger.warn(`Cash History indisponible (${(err as Error).message}) : commission seule.`);
+        return null;
+      });
+    const full = cash ? cashHistoryFeesByFill(cash, fillsReportStamps(csv)) : null;
+    if (full && full.feeByFill.size > 0) {
+      const { assigned, consumed } = assignFeesOncePerFill(dtos, full.feeByFill);
+      this.logger.log(
+        `Frais de la fenêtre (Cash History) : ${assigned} attribué(s) sur ${full.expected} attendu(s) ` +
+          `(${full.feeByFill.size} fills, ${consumed} consommés, ${full.orphans} ligne(s) sans fill).`,
+      );
+      return full.expected;
+    }
+
     const lines = csv.split(/\r?\n/).filter((l) => l.trim());
     const header = splitCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
     const iId = header.indexOf('fill id');
@@ -348,7 +370,7 @@ export class TradovateHistoryService {
     }
     const { assigned, consumed } = assignFeesOncePerFill(dtos, feeByFill);
     this.logger.log(
-      `Frais de la fenêtre : ${assigned} attribué(s) sur ${+expected.toFixed(2)} attendu(s) ` +
+      `Frais de la fenêtre (commission seule) : ${assigned} attribué(s) sur ${+expected.toFixed(2)} attendu(s) ` +
         `(${feeByFill.size} fills, ${consumed} consommés).`,
     );
     return +expected.toFixed(2);

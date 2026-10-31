@@ -152,11 +152,18 @@ commission **exacte au centime par trade**, sans saisie manuelle ni limite de no
   `buyFillId`/`sellFillId` **par nom de colonne** (portés en métadonnée interne `_buyFillId`/
   `_sellFillId`, retirés avant persistance).
 - **Cash history** (les frais) : header `Account,Transaction ID,…,Delta,Amount,Cash Change Type,…`.
-  Seules les lignes `Cash Change Type` (trim) == `Commission` comptent ; le montant est **`Delta`**
-  (négatif → on prend `abs`). `Amount` = solde courant → **ignoré**. Lignes `Trade Paired` → ignorées.
+  **Tous les frais** comptent (#783) : `Cash Change Type` (trim) `Commission` ou `… Fee`
+  (Exchange, Clearing, Nfa, Brokerage, Routing… : `isTradovateFeeType`). Sur ES le 27/10 :
+  2,18 $ par côté-contrat dont 0,59 $ de commission seulement. Le montant est **`Delta`** (abs).
+  `Amount` = solde courant → **ignoré**. `Trade Paired`, `Fund Transaction`, payouts → ignorés.
 
-**Jointure (validée sur données réelles)** : `fillId = (Transaction ID) − 1`, une entrée par fill →
-`commissionParFill[fillId] = |Delta|`.
+**Jointure (`cashHistoryFeesByFill`, `tradovate-fees.util.ts`)** : une ligne de frais appartient au
+fill de **même `Timestamp` (à la seconde) et même contrat** dont l'id est le plus grand sous son
+`Transaction ID` (fills et trésorerie partagent une même suite d'ids : fill …007, frais …008-011).
+Les fills viennent de l'export Performance brut (`buyFillId`+`boughtTimestamp`, `sellFillId`+
+`soldTimestamp`, `symbol`). L'ancienne règle `fillId = Transaction ID − 1` est FAUSSE (décalage
+variable : 0/30 sur l'export réel du 27/10). Une ligne sans fill du lot reste **orpheline** (jamais
+posée sur un autre fill) → checksum en écart. Fixtures réelles : `__fixtures__/tradovate-fees-2026-10-27-*`.
 
 **Dédup obligatoire (scalping)** : un même `fillId` peut clôturer un trade ET en ouvrir un autre.
 Sa commission ne compte qu'**une fois** sur tout l'import. On parcourt les trades **dans l'ordre du
@@ -164,7 +171,7 @@ fichier** avec un `Set<fillId>` consommés ; un fill n'ajoute sa commission que 
 consommé, puis on le marque. Sinon double comptage (ex. données de Val : naïf 24,96 $ vs exact 21,84 $,
 soit +3,12 $ de 3 fills partagés comptés deux fois).
 
-**Checksum** : `Σ commission(trade) == Σ |Delta| Commission` (à 0,01 près) → `reconciled`. En cas
+**Checksum** : `Σ commission(trade) == Σ |Delta| des frais` (à 0,01 près) → `reconciled`. En cas
 d'écart : warning + `reconciled=false` (non bloquant, « frais partiellement rapprochés »), jamais de
 crash.
 

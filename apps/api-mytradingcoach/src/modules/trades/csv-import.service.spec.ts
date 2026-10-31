@@ -135,12 +135,17 @@ describe('CsvImportService — séparateur européen & limites', () => {
 
   it('normalise le séparateur `;` et les décimales `,`→`.`', () => {
     const input = 'a;b;c\n1,5;2,5;x';
-    expect(normalizeSeparator(input)).toBe('a,b,c\n1.5,2.5,x');
+    expect(normalizeSeparator(input)).toEqual({ csv: 'a,b,c\n1.5,2.5,x', format: 'eu' });
   });
 
   it('laisse intact un CSV déjà en virgules', () => {
     const input = 'a,b,c\n1.5,2.5,x';
-    expect(normalizeSeparator(input)).toBe(input);
+    expect(normalizeSeparator(input)).toEqual({ csv: input, format: 'us' });
+  });
+
+  it('refuse un fichier aux nombres US et européens mélangés, sans appel IA (#781)', async () => {
+    const csv = 'Date;Symbole;Prix;Profit\n2026-10-27;EURUSD;1.234,56;12,50\n2026-10-28;EURUSD;1,234.56;12.50';
+    await expect(svc.parseCSV(Buffer.from(csv), 'retouche.csv')).rejects.toThrow(/mélangent deux formats/);
   });
 
   it('refuse le chemin IA au-delà de 2000 lignes avec un message clair', async () => {
@@ -489,6 +494,34 @@ describe('CsvImportService — garde-fou des colonnes Tradovate Performance', ()
     expect(msg).toBe('Le format de ce fichier a changé. Contacte support@mytradingcoach.app.');
     expect(msg).not.toMatch(/\bIA\b/);
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('CsvImportService — frais Tradovate complets (#783, export réel du 27/10)', () => {
+  // Compte « test NT8 » : 2,18 $ par côté-contrat (commission 0,59 + Exchange 1,38 + Clearing 0,19 + NFA 0,02).
+  const fx = (name: string) => readFileSync(join(__dirname, '__fixtures__', name));
+
+  async function importReal(cashName: string) {
+    const report: { fees?: FeesReport } = {};
+    const dtos = await makeService().parseCSV(
+      fx('tradovate-fees-2026-10-27-performance.csv'), 'Performance.csv',
+      undefined, undefined, undefined, undefined,
+      { buffer: fx(cashName), filename: 'Cash History.csv' }, report,
+    );
+    return { dtos, report, total: +dtos.reduce((s, d) => s + (d.commission ?? 0), 0).toFixed(2) };
+  }
+
+  it('tous les frais du Cash History : 74,12 $ attribués, rapprochés au centime', async () => {
+    const { dtos, report, total } = await importReal('tradovate-fees-2026-10-27-cash-history.csv');
+    expect(dtos).toHaveLength(17);
+    expect(total).toBe(74.12);
+    expect(report.fees).toMatchObject({ assigned: 74.12, expected: 74.12, reconciled: true });
+  });
+
+  it('contre-épreuve : pas 20,06 $ (commission seule) ni 0 $ (ancienne jointure « Transaction ID − 1 »)', async () => {
+    const { total } = await importReal('tradovate-fees-2026-10-27-cash-history.csv');
+    expect(total).not.toBe(20.06);
+    expect(total).not.toBe(0);
   });
 });
 

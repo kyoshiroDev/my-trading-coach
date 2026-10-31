@@ -502,8 +502,8 @@ export function paymentFailedTemplate(params: {
       Problème de paiement
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton paiement
-      ${attemptCount > 1 ? `(tentative ${attemptCount})` : ''}.
+      Bonjour ${userName || 'Trader'}, nous n'avons pas pu traiter ton
+      paiement${attemptCount > 1 ? ` (tentative ${attemptCount})` : ''}.
       Ton accès Premium reste actif quelques jours le temps de mettre à jour ta carte.
     </p>
     ${cta('Mettre à jour mon paiement →', portalUrl)}

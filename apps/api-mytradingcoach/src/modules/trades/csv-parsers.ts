@@ -54,6 +54,8 @@ export function preprocessCsv(raw: string): {
   csv: string;
   /** Export Tradovate reconnu (fill ids) mais colonnes déplacées : rien n'a été lu par position. */
   formatChanged?: string[];
+  /** Nombres aux deux formats (1.234,56 et 1,234.56) : aucun ne peut être lu sans risque. */
+  numbersAmbiguous?: true;
 } {
   // BOM UTF-8 (exports Windows) + normalisation des fins de ligne CRLF/CR → \n
   const cleaned = (raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw)
@@ -66,13 +68,19 @@ export function preprocessCsv(raw: string): {
     .filter((l) => l.trim());
   if (lines.length < 2) return { broker: 'unknown', csv: cleaned };
 
-  const broker = detectBroker(lines[0]);
+  // Un relevé IBKR (Activity Statement) commence par sa section `Statement` : la section `Trades`
+  // arrive plus bas, la 1ʳᵉ ligne seule ne la voit jamais (#784).
+  const broker =
+    detectBroker(lines[0]) === 'unknown' && lines.some(isIbkrTradesHeader)
+      ? 'ibkr'
+      : detectBroker(lines[0]);
 
   // MEXC découpe lui-même sur `;` → traiter avant la normalisation du séparateur.
   if (broker === 'mexc') return { broker, csv: parseMexc(lines) };
 
   // CSV européen : `;` séparateur + `,` décimale → tout ramener en virgule/point.
-  const normalized = normalizeSeparator(cleaned);
+  const { csv: normalized, format } = normalizeSeparator(cleaned);
+  if (format === 'ambigu') return { broker: 'unknown', csv: normalized, numbersAmbiguous: true };
   const nlines = normalized
     .trim()
     .split('\n')
@@ -102,16 +110,147 @@ export function preprocessCsv(raw: string): {
   }
 }
 
-/** CSV européen : si la 1ʳᵉ ligne a plus de `;` que de `,`, basculer `,`(décimale)→`.` puis `;`→`,`. */
-export function normalizeSeparator(text: string): string {
-  const firstLine = text.split('\n')[0] ?? '';
+/**
+ * Format des nombres d'un fichier : `us` (1,234.56), `eu` (1.234,56 ou 1 234,56), ou `ambigu`
+ * (les deux à la fois, ou rien pour trancher) → fichier refusé plutôt que lu 1 000 fois trop petit.
+ */
+export type NumberFormat = 'us' | 'eu' | 'ambigu';
+
+/**
+ * Ramène un CSV au pivot `,` + point décimal, en décidant le format des nombres UNE FOIS pour tout
+ * le fichier (#781). Avant, chaque `chiffre,chiffre` devenait un point : `1.234,56` donnait
+ * `1.234.56`, lu 1,234. Un CSV à virgules au format US repart intact (cas courant, rien à faire).
+ */
+export function normalizeSeparator(text: string): { csv: string; format: NumberFormat } {
+  const lines = text.split('\n');
+  const firstLine = lines[0] ?? '';
   const semi = (firstLine.match(/;/g) ?? []).length;
   const comma = (firstLine.match(/,/g) ?? []).length;
-  if (semi <= comma) return text;
-  return text
-    .split('\n')
-    .map((line) => line.replace(/(\d),(\d)/g, '$1.$2').replace(/;/g, ','))
+  const sep = semi > comma ? ';' : ',';
+
+  const format = detectNumberFormat(lines.slice(1), sep);
+  if (sep === ',' && format !== 'eu') return { csv: text, format };
+
+  const csv = lines
+    .map((line, i) =>
+      splitRawCells(line, sep)
+        .map((raw) => {
+          const quoted = /^".*"$/.test(raw);
+          const inner = quoted ? raw.slice(1, -1) : raw;
+          const converted = i > 0 && format !== 'ambigu' ? toPivotNumber(inner, format) : null;
+          if (converted !== null) return quoted ? `"${converted}"` : converted;
+          // Le `;` devient `,` : une cellule de texte qui contient une virgule doit être protégée.
+          return sep === ';' && !quoted && raw.includes(',') ? `"${raw}"` : raw;
+        })
+        .join(','),
+    )
     .join('\n');
+  return { csv, format };
+}
+
+/**
+ * Format dominant des nombres des lignes de données. Une cellule tranche quand elle n'a qu'une
+ * lecture (`1.234,56`, `12,50`, `0.5`, `1,234,567`). `1,085` et `151.234` en ont deux (milliers
+ * ou 3 décimales) : ils suivent le reste du fichier. Sans autre indice, la virgule seule vaut
+ * décimale dans un fichier à `;` et milliers dans un fichier à `,` (lecture d'avant #781), le point
+ * seul vaut décimale ; les deux ensemble restent ambigus.
+ */
+export function detectNumberFormat(dataLines: string[], sep: ',' | ';'): NumberFormat {
+  let us = 0;
+  let eu = 0;
+  let virguleAmbigue = 0;
+  let pointAmbigu = 0;
+  for (const line of dataLines) {
+    if (!line.trim()) continue;
+    for (const cell of splitCsvLine(line, sep)) {
+      const nombre = numericCore(cell);
+      if (!nombre) continue;
+      const vote = classifyNumber(nombre.core);
+      if (vote === 'us') us++;
+      else if (vote === 'eu') eu++;
+      else if (vote === 'virgule?') virguleAmbigue++;
+      else if (vote === 'point?') pointAmbigu++;
+    }
+  }
+  if (us && eu) return 'ambigu';
+  if (eu) return 'eu';
+  if (us) return 'us';
+  if (virguleAmbigue && pointAmbigu) return 'ambigu';
+  if (virguleAmbigue) return sep === ';' ? 'eu' : 'us';
+  return 'us';
+}
+
+/**
+ * Partie numérique d'une cellule : symbole monétaire, parenthèses comptables, signe et unité en
+ * suffixe (`1,24 USD`, `0.001BTC`) mis de côté, espaces de milliers retirés. null si ce n'est pas
+ * un nombre (date, heure, symbole, texte libre).
+ */
+function numericCore(cell: string): { core: string; negative: boolean; suffix: string } | null {
+  let s = cell.trim();
+  const unite = /\s*[A-Za-z%]{1,6}$/.exec(s);
+  const suffix = unite ? unite[0] : '';
+  if (unite) s = s.slice(0, unite.index);
+  s = s.replace(/[$€£]/g, '').trim();
+  let negative = false;
+  if (s.startsWith('(') && s.endsWith(')')) {
+    negative = true;
+    s = s.slice(1, -1).trim();
+  }
+  if (s.startsWith('-') || s.startsWith('+')) {
+    if (s.startsWith('-')) negative = !negative;
+    s = s.slice(1).trim();
+  }
+  s = s.replace(/(\d)[\s\u00a0\u202f](?=\d{3}(?!\d))/g, '$1');
+  if (!/^\d(?:[\d.,]*\d)?$/.test(s)) return null;
+  return { core: s, negative, suffix };
+}
+
+/** Lecture(s) possible(s) d'un nombre sans signe ; null si mal formé (`1,2,3`, `2026.10.27`). */
+function classifyNumber(core: string): 'us' | 'eu' | 'virgule?' | 'point?' | 'neutre' | null {
+  const point = core.includes('.');
+  const virgule = core.includes(',');
+  if (point && virgule) {
+    if (core.lastIndexOf('.') > core.lastIndexOf(',')) return /^\d{1,3}(?:,\d{3})+\.\d+$/.test(core) ? 'us' : null;
+    return /^\d{1,3}(?:\.\d{3})+,\d+$/.test(core) ? 'eu' : null;
+  }
+  if (virgule) {
+    if (/^[1-9]\d{0,2},\d{3}$/.test(core)) return 'virgule?';
+    if (/^[1-9]\d{0,2}(?:,\d{3}){2,}$/.test(core)) return 'us';
+    return /^\d+,\d+$/.test(core) ? 'eu' : null;
+  }
+  if (point) {
+    if (/^[1-9]\d{0,2}\.\d{3}$/.test(core)) return 'point?';
+    if (/^[1-9]\d{0,2}(?:\.\d{3}){2,}$/.test(core)) return 'eu';
+    return /^\d+\.\d+$/.test(core) ? 'us' : null;
+  }
+  return 'neutre';
+}
+
+/** Cellule numérique réécrite au pivot (`-1234.56`, unité gardée) ; null si ce n'est pas un nombre. */
+function toPivotNumber(cell: string, format: 'us' | 'eu'): string | null {
+  const nombre = numericCore(cell);
+  if (!nombre || classifyNumber(nombre.core) === null) return null;
+  const chiffres =
+    format === 'eu' ? nombre.core.replace(/\./g, '').replace(',', '.') : nombre.core.replace(/,/g, '');
+  return `${nombre.negative ? '-' : ''}${chiffres}${nombre.suffix}`;
+}
+
+/** Découpe une ligne sur `sep` hors guillemets, chaque cellule gardée telle quelle (guillemets compris). */
+function splitRawCells(line: string, sep: string): string[] {
+  const cells: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (const ch of line) {
+    if (ch === '"') inQuotes = !inQuotes;
+    if (ch === sep && !inQuotes) {
+      cells.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current);
+  return cells;
 }
 
 export function detectBroker(header: string): BrokerType {
@@ -247,15 +386,22 @@ export function parseTradovatePnl(raw: string): number {
  * La virgule n'est un séparateur de milliers que dans un regroupement VALIDE (1 à 3 chiffres puis
  * des groupes d'exactement trois : `1,234`, `12,345,678.9`). Sinon c'est peut-être une décimale
  * européenne (`12,50`) : la retirer lirait 1 250, cent fois trop. Comportement d'origine conservé
- * (`parseFloat` s'arrête à la virgule). Les CSV européens à `;` sont convertis en amont
- * (`normalizeSeparator`) ; `1.234,56` y reste lu 1,234, défaut connu (ticket format européen).
+ * (`parseFloat` s'arrête à la virgule). À l'import, les nombres européens sont déjà convertis en
+ * amont, format décidé pour tout le fichier (`normalizeSeparator`, #781) : ce garde-fou ne joue
+ * que pour un appel direct.
+ *
+ * `strict` (rapports Tradovate : soldes de clôture, payouts) : la cellule entière doit être un
+ * nombre, sinon NaN. Pas d'unité tolérée, et `12,50` vaut NaN plutôt que 12 : une ligne de
+ * rapport illisible est ignorée, jamais devinée. Seule lecture des montants US depuis #782
+ * (l'ancien `parseReportAmount` retirait TOUTES les virgules : `12,50` y valait 1 250).
  */
-export function parseUsNumber(raw: string | null | undefined): number {
-  let s = String(raw ?? '').replace(/[$€£\s\u00a0\u202f]/g, '');
+export function parseUsNumber(raw: string | null | undefined, { strict = false } = {}): number {
+  let s = String(raw ?? '').replace(/["$€£\s\u00a0\u202f]/g, '');
   const negatifParParentheses = s.startsWith('(') && s.endsWith(')');
   if (negatifParParentheses) s = s.slice(1, -1);
   const milliers = /^[+-]?\d{1,3}(?:,\d{3})+(?![\d,])/.exec(s);
   if (milliers) s = milliers[0].replace(/,/g, '') + s.slice(milliers[0].length);
+  if (strict && !/^[+-]?\d+(?:\.\d+)?$/.test(s)) return NaN;
   const n = parseFloat(s);
   if (!Number.isFinite(n)) return NaN;
   return negatifParParentheses && n !== 0 ? -n : n;
@@ -385,47 +531,69 @@ export function parseBybit(lines: string[]): string {
   return result.join('\n');
 }
 
+/** En-tête de la section `Trades` d'un relevé IBKR (une par catégorie d'actif). */
+function isIbkrTradesHeader(line: string): boolean {
+  return line.startsWith('Trades,Header,') && line.toLowerCase().includes('asset category');
+}
+
+/**
+ * IBKR Activity Statement, section `Trades` (#784). Un trade = une exécution qui CLÔTURE
+ * (P/L réalisé ≠ 0 ou code `C`) : un achat ferme un short, une vente ferme un long. Avant, `BUY`
+ * donnait LONG, soit le sens inverse, et l'entrée estimée depuis le P&L était fausse aussi.
+ *
+ * - Un en-tête par catégorie d'actif (Stocks, Futures…) : chaque `Trades,Header` remplace le
+ *   précédent. Les lignes `SubTotal` / `Total` et les autres sections sont sautées, la lecture
+ *   continue (avant : arrêt au premier `SubTotal`, les symboles suivants étaient perdus).
+ * - `ClosedLot` détaille les lots d'une clôture déjà comptée sur sa ligne `Order` : ignoré.
+ * - Sens lu sur `Buy/Sell` s'il existe, sinon sur le signe de `Quantity` (relevé standard).
+ * - Entrée = prix × |Basis| / |Proceeds| : coût de la position ramené au prix, multiplicateur
+ *   compris (futures, options) ; à défaut, estimée en aval depuis le P&L.
+ * - Date illisible : ligne ignorée, jamais datée d'aujourd'hui.
+ *
+ * Format reconstruit d'après la documentation IBKR (fixture `ibkr-activity-statement.csv`),
+ * pas encore confronté à un relevé réel.
+ */
 export function parseIBKR(lines: string[]): string {
   const result: string[] = ['symbol,side,entry,exit,qty,pnl,tradedAt'];
+  let headers: string[] = [];
 
-  let headerLine = '';
-  let headerIndex = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('Trades,Header,')) {
-      headerLine = lines[i];
-      headerIndex = i;
-      break;
+  for (const line of lines) {
+    if (isIbkrTradesHeader(line)) {
+      headers = splitCsvLine(line).map((h) => h.trim().toLowerCase());
+      continue;
     }
-  }
-  if (headerIndex === -1) return result.join('\n');
-
-  const headers = headerLine.split(',').map((h) => h.trim().toLowerCase());
-  const col = (name: string) => headers.indexOf(name);
-
-  const symbolCol = col('symbol');
-  const buySellCol = col('buy/sell');
-  const quantityCol = col('quantity');
-  const priceCol = col('t. price');
-  const pnlCol = col('realized p/l');
-  const dateCol = col('date/time');
-
-  for (let i = headerIndex + 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.startsWith('Trades,Data,')) break;
+    if (!line.startsWith('Trades,Data,') || !headers.length) continue;
 
     const cols = splitCsvLine(line);
-    const pnl = parseUsNumber(cols[pnlCol]) || 0;
-    if (pnl === 0) continue;
+    const at = (name: string): string => {
+      const i = headers.indexOf(name);
+      return i >= 0 ? (cols[i] ?? '').trim() : '';
+    };
 
-    const symbol = (cols[symbolCol]?.trim() ?? '').replace('.', '/');
-    const qty = Math.abs(parseUsNumber(cols[quantityCol]) || 0);
-    const price = parseUsNumber(cols[priceCol]) || 0;
-    const dateStr = cols[dateCol]?.trim() ?? '';
-    const tradedAt = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
-    const side = cols[buySellCol]?.trim() === 'BUY' ? 'LONG' : 'SHORT';
+    const discriminator = at('datadiscriminator').toLowerCase();
+    if (discriminator && discriminator !== 'order' && discriminator !== 'trade') continue;
 
-    result.push(`${symbol},${side},0,${price},${qty},${pnl},${tradedAt}`);
+    const pnl = parseUsNumber(at('realized p/l')) || 0;
+    const codes = at('code').toUpperCase().split(/[;\s]+/);
+    if (pnl === 0 && !codes.includes('C')) continue; // ouverture
+
+    const date = new Date(at('date/time'));
+    if (!at('date/time') || Number.isNaN(date.getTime())) continue;
+
+    const signedQty = parseUsNumber(at('quantity')) || 0;
+    const buySell = at('buy/sell').toUpperCase();
+    const achat = buySell ? buySell === 'BUY' : signedQty > 0;
+    const side = achat ? 'SHORT' : 'LONG';
+
+    const price = parseUsNumber(at('t. price')) || 0;
+    const proceeds = Math.abs(parseUsNumber(at('proceeds')) || 0);
+    const basis = Math.abs(parseUsNumber(at('basis')) || 0);
+    const entry = price > 0 && proceeds > 0 && basis > 0 ? +((price * basis) / proceeds).toFixed(8) : 0;
+
+    // `EUR.USD` (forex) → `EUR/USD` ; une action `BRK.B` garde son point.
+    const symbol = /forex/i.test(at('asset category')) ? at('symbol').replace('.', '/') : at('symbol');
+
+    result.push(`${symbol},${side},${entry},${price},${Math.abs(signedQty)},${pnl},${date.toISOString()}`);
   }
   return result.join('\n');
 }

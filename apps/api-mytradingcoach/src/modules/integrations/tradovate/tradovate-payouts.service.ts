@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
-import { splitCsvLine } from '../../trades/csv-parsers';
+import { parseUsNumber, splitCsvLine } from '../../trades/csv-parsers';
 import { tradingDay } from '../../accounts/account-rules';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateReportingClient } from './tradovate-reporting.client';
 import { TradovateApiError } from './tradovate.errors';
-import { CLOSINGS_WINDOW_DAYS, parseReportAmount } from './tradovate-closings.service';
+import { CLOSINGS_WINDOW_DAYS } from './tradovate-closings.service';
 import type { TradovateAccount, TradovateEnv } from './tradovate.types';
 
 const DAY_MS = 86_400_000;
@@ -115,7 +115,7 @@ export function scanCashHistory(csv: string, accountName: string, funded = false
     const type = normalizeChangeType(cells[iType]);
     if (!type) continue;
     scan.typeCounts[type] = (scan.typeCounts[type] ?? 0) + 1;
-    const delta = parseReportAmount(cells[iDelta]);
+    const delta = parseUsNumber(cells[iDelta], { strict: true });
     const transactionId = cells[iTxn]?.trim() ?? '';
     const confidence = Number.isNaN(delta) || !transactionId ? null : payoutConfidence(type, delta, funded);
     if (!confidence) continue;

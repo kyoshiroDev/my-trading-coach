@@ -20,11 +20,15 @@ export class EmailsService {
     const now = new Date();
     const { count } = await this.prisma.user.updateMany({
       where: { unsubToken: token },
-      data:
-        scope === 'service'
-          ? { serviceEmailsOptOutAt: now }
-          : { marketingConsent: false, marketingConsentAt: null, serviceEmailsOptOutAt: now },
+      data: { serviceEmailsOptOutAt: now },
     });
+    // Retrait daté seulement s'il y avait un consentement ; sa date est gardée comme preuve (#747).
+    if (count > 0 && scope !== 'service') {
+      await this.prisma.user.updateMany({
+        where: { unsubToken: token, marketingConsent: true },
+        data: { marketingConsent: false, marketingConsentWithdrawnAt: now },
+      });
+    }
     return count;
   }
 }

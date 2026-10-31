@@ -1,4 +1,5 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post, Query, Res } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { EmailsService } from './emails.service';
@@ -11,6 +12,22 @@ import { EmailsService } from './emails.service';
 export class EmailsController {
   constructor(private readonly emails: EmailsService) {}
 
+  /**
+   * Désinscription en un clic (RFC 8058, #791) : appelée par le client mail (bouton « Se désabonner »
+   * de Gmail), jeton dans l'URL, corps `List-Unsubscribe=One-Click` (non lu : le jeton suffit). Même
+   * portée que le lien GET. 200 sans page, réponse identique si le jeton est inconnu.
+   * Limite large : les requêtes arrivent des serveurs de Gmail ou Yahoo, peu d'IP pour beaucoup de
+   * monde ; le jeton (64 hex) ne se devine pas.
+   */
+  @Public()
+  @Post('unsubscribe')
+  @HttpCode(200)
+  @Throttle({ default: { ttl: 60_000, limit: 120 } })
+  async unsubscribeOneClick(@Query('token') token: string, @Query('scope') scope: string): Promise<void> {
+    await this.emails.unsubscribe(token, scope === 'service' ? 'service' : undefined);
+  }
+
+  /** Lien du texte de l'e-mail (et anciens e-mails déjà envoyés) : page de confirmation. */
   @Public()
   @Get('unsubscribe')
   async unsubscribe(@Query('token') token: string, @Query('scope') scope: string, @Res() res: Response) {

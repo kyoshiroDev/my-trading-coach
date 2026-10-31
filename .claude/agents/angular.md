@@ -348,6 +348,10 @@ vaut `0px` hors démo, et le bandeau a une **hauteur fixe égale à la variable*
 mentir. Sous 768px : 40px, la phrase longue (`.demo-banner-long`) tombe, le CTA reste.
 
 **Toute nouvelle vue calée sur `100vh` doit retrancher `var(--demo-banner-h, 0px)`.**
+**Tout élément `position: sticky` du contenu (topbar, sélecteur de compte, en-tête propre d'une
+page) se cale sous le bandeau : `top: var(--demo-banner-h, 0px)` (+ ce qu'il y a au-dessus).** Le
+bandeau est collant à `top: 0` avec `z-index: 50` : un élément collé à 0 passe dessous en défilant
+(titre de la topbar illisible en démo à 390 px, #721). Verrouillé par `topbar-burger-alignment.spec.ts`.
 
 ---
 
@@ -1578,6 +1582,11 @@ Lien direct utilisé par le bot : `/profil?tab=params`. Commande en `white-space
   navigateur + « Copier le lien », pas de bouton. Zone toujours présente (classe `.gone`) : le
   script y dessine, un `viewChild` dans un `@if` n'était pas résolu à temps. Bouton Google = iframe
   de 40 px (non modifiable) centrée dans une zone de 44 px.
+- `mtc-signup-terms-note` (`features/auth/auth-layout`, #745 F2) : « tu acceptes les CGU et confirmes
+  avoir 18 ans » **avant chaque bouton qui crée un compte** (variantes `email`, `google`,
+  `google-login` : sur la connexion, Google crée le compte au 1er passage). L'API enregistre date et
+  version (`CGU_VERSION`) à la création : nouveau bouton de création = la mention avec, sinon
+  l'enregistrement ment. Verrouillé par `signup-terms-note.spec.ts`.
 - `GoogleSignInService` : parrain (`mtc_ref`) et UTM (`mtc_utm`) lus dans le stockage
   (`signup-context.ts`) ; compte créé → `/inscription/finaliser` (`GoogleFinalizeComponent`, opt-in
   non coché, `plan=premium` repassé) ; compte relié → toast au 1er passage (mention du mot de passe

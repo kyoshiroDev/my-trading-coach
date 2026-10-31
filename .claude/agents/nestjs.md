@@ -1118,6 +1118,10 @@ Conséquences à connaître :
   de chevaucher le suivant. Le marqueur n'est posé que par un import de profondeur pleine **et**
   si aucune fenêtre n'a échoué — sinon le trou ne serait plus jamais comblé.
 - Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
+- **Frais de l'historique (#783)** : `Fills` (fills + horodatages) + `Cash History` (tous les frais),
+  joints par `cashHistoryFeesByFill` (même règle que l'import CSV, cf. `instruments.md`). Cash History
+  indisponible ou vide → repli sur la colonne `commission` de `Fills` (commission seule). 3 appels par
+  mois non vide. Les trades importés avant le 31/10 n'ont que la commission (réparation à part).
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
 rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
@@ -1436,12 +1440,25 @@ sont en direct.
   futures/spot, Bybit, IBKR, MEXC, MT4/MT5), séparateur européen, `splitCsvLine`,
   `mapNormalizedCsvToDto`, `detectSession`, et les types `BrokerType` / `ImportDto`. Fonctions
   PURES : aucun service injecté, testables directement (`csv-parsers.spec.ts`, `csv-import.service.spec.ts`).
-- **Nombres des parseurs : toujours `parseUsNumber`**, jamais `parseFloat` brut (bug prod du
+- **IBKR (`parseIBKR`, #784)** : relevé Activity Statement, détecté même si la 1ʳᵉ ligne est la
+  section `Statement` (on cherche un `Trades,Header` avec `Asset Category`). Un trade = une exécution
+  de CLÔTURE (P/L ≠ 0 ou code `C`) : achat = ferme un SHORT, vente = ferme un LONG (sens via
+  `Buy/Sell` sinon signe de `Quantity`). `ClosedLot`, `SubTotal`, `Total` sautés sans arrêter la
+  lecture ; un `Trades,Header` par catégorie. Entrée = prix × |Basis| / |Proceeds| (multiplicateur
+  absorbé). Fixture `__fixtures__/ibkr-activity-statement.csv` **reconstruite** d'après la doc IBKR :
+  à remplacer par un relevé réel anonymisé dès qu'on en a un. Heures lues dans le fuseau du serveur.
+- **Nombres des parseurs : toujours `parseUsNumber`** (mode `strict` pour les rapports Tradovate, une seule fonction depuis #782), jamais `parseFloat` brut (bug prod du
   2026-10-28). Les exports, et toute conversion Excel (`sheet_to_csv` écrit les nombres formatés),
   mettent `"$1,125.00"` entre guillemets ; `parseFloat` s'arrête à la virgule et rend 1. Un trade
   de +1 125 $ a été importé à +1 $. La virgule n'est retirée que dans un regroupement VALIDE
-  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250) ; le format européen
-  complet (`1.234,56`) est le ticket #781. Même règle pour découper une ligne : jamais `split(',')`, un
+  (`1,234`, `12,345.67`) : `12,50` européen reste lu 12 (jamais 1 250). Ce garde-fou ne joue qu'en
+  appel direct : à l'import, `normalizeSeparator` (`preprocessCsv`) décide le format des nombres
+  UNE FOIS pour tout le fichier (#781, `detectNumberFormat`) et réécrit les cellules numériques au
+  pivot (`1.234,56` → `1234.56`, `1 234,56 USD` → `1234.56 USD`). `1,085` / `151.234` (milliers ou
+  3 décimales) suivent le reste du fichier ; sans indice, virgule seule = décimale si `;`, milliers
+  si `,` ; point seul = décimale. US et européen mélangés (fichier retouché dans Excel) →
+  `numbersAmbiguous` → import refusé (400, sans IA), jamais deviné. Un CSV `,` au format US repart
+  intact. MEXC garde son parseur propre (traité avant). Même règle pour découper une ligne : jamais `split(',')`, un
   champ entre guillemets décale les colonnes (`splitCsvLine`, ou `champsBruts` pour réécrire une
   ligne à l'octet près dans `TradovateHistoryService.horodatagesEnUtc`). Trades déjà touchés :
   `pnl-milliers.util.ts` (détection, `casReparation`) et `scripts/repair-tradovate-pnl-milliers.ts`
@@ -1972,8 +1989,8 @@ Amount », `realizedPnl`). Même jeton OAuth que l'import, aucune permission en 
   une clôture qu'après la fermeture.
 - **Format réel** (mesuré) : `Account ID, Account Name, Trade Date (AAAA-MM-JJ), Total Amount
   ("50,000.00"), Total Realized PNL` ; une ligne seulement les jours où le solde a bougé. Colonnes
-  lues par leur nom ; montants par `parseReportAmount` (strict : `NaN` si illisible). Les
-  parseurs d'import utilisent `parseUsNumber` (`csv-parsers.ts`), qui retire aussi les milliers.
+  lues par leur nom ; montants par `parseUsNumber(…, { strict: true })` (`NaN` si illisible ; ex-`parseReportAmount`, fusionné #782). Les
+  parseurs d'import utilisent la même fonction en mode tolérant (unité en suffixe acceptée).
 - **Métriques** : trailing EOD → plus haut = max des clôtures officielles si elles couvrent la
   séance précédente (`previousSession`, week-end sauté) ET que le solde broker est dans le
   référentiel du compte ; sinon le plus prudent des deux (trades / officiel). `rule.peakSource`
@@ -2244,6 +2261,23 @@ décision), cron `AutoCampaignsCron` (10 h Paris, prod, worker cron), journal `E
   `…/emails/unsubscribe?token=…&scope=service` → ne coupe que les conseils). Le lien marketing
   (sans `scope`) coupe marketing ET conseils. Profil : activer le consentement rétablit les conseils,
   le couper les arrête, **seulement si la valeur change** (le profil la renvoie à chaque enregistrement).
+- **Désinscription en un clic** (RFC 8058, #791) : `EmailDispatchService.dispatch` ajoute
+  `List-Unsubscribe: <url>` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` aux e-mails
+  `marketing` et `service` (même URL, même portée que le lien du texte), JAMAIS aux transactionnels.
+  `EmailJob.headers` est transmis tel quel à Resend par `deliver` (et survit à la file BullMQ).
+  `POST /api/emails/unsubscribe?token=…[&scope=service]` (public, 200 sans corps, réponse neutre
+  si jeton inconnu, `@Throttle` 120/min : les appels viennent des serveurs Gmail/Yahoo) ; le `GET`
+  reste pour le lien du texte et les anciens e-mails. Un envoi hors `dispatch` (`ResendService.send`
+  direct) n'a pas d'en-tête : n'y faire passer que du transactionnel.
+- **Retrait du consentement** (#747) : la désinscription et le réglage coupé gardent
+  `marketingConsentAt` et datent `marketingConsentWithdrawnAt` (seulement s'il y avait consentement).
+  Jamais remettre `marketingConsentAt` à null.
+- **Lien de désinscription d'un contenu fourni par l'admin** (annonce) : passer à `dispatch` un
+  override en FONCTION `(unsubUrl) => contenu`, construit après `ensureUnsubToken`. Construire l'URL
+  avant avec `user.unsubToken ?? ''` donnait un lien `?token=` mort pour un compte sans jeton (#747).
+- Aucun envoi de masse hors du moteur de campagnes : pas de script qui lit la base et appelle Resend
+  (`send-discord-invite.mjs` supprimé, #747 : ni consentement, ni démo, ni désinscription). Une
+  invitation Discord passe par la campagne `discord_invite`.
 - **Plafond** : 1 e-mail marketing OU service / `MARKETING_COOLDOWN_DAYS` (4) par personne, à
   **1 h près** (`CAP_TOLERANCE_MS`) : le cron examine les campagnes par priorité, un e-mail plus
   prioritaire que le précédent est vu quelques secondes avant 4 j pile et glissait d'un jour. Une

@@ -16,10 +16,11 @@ import { GoogleIdentityService } from '../../core/auth/google-identity.service';
 import { GoogleSignInService, googleAuthErrorMessage } from '../../core/auth/google-sign-in.service';
 import { GoogleAuthButtonComponent } from '../../shared/components/google-auth-button/google-auth-button.component';
 import { AuthLayoutComponent } from './auth-layout/auth-layout.component';
+import { SignupTermsNoteComponent } from './auth-layout/signup-terms-note.component';
 
 @Component({
   selector: 'mtc-login',
-  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent],
+  imports: [FormsModule, RouterLink, EyeIconComponent, GoogleAuthButtonComponent, AuthLayoutComponent, SignupTermsNoteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./auth-layout/auth-form.css', './login.component.css'],
   templateUrl: './login.component.html',
