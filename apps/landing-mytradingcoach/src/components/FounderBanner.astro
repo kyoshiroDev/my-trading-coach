@@ -20,7 +20,7 @@ const { href = '/#pricing' } = Astro.props;
 <div class="offer-bar" id="offer-bar">
   <a href={href} class="offer-link" data-offer-cta="bandeau" data-ga-event="cta_founder" data-ga-place="bandeau">
     <span class="offer-long">
-      🔥 <strong>Offre fondateur</strong> · Premium à <strong>{FOUNDER_OFFER.priceMonthlyEur} €/mois à vie</strong>
+      🔥 <strong>Offre fondateur</strong> · Premium à <strong>{FOUNDER_OFFER.priceMonthlyEur} €/mois tant que tu restes abonné</strong>,
       pour les {FOUNDER_OFFER.seats} premiers · <strong data-offer-left-long></strong> →
     </span>
     <span class="offer-short">🔥 Fondateur {FOUNDER_OFFER.priceMonthlyEur} €/mois · <span data-offer-left-short></span> →</span>
@@ -137,7 +137,8 @@ const { href = '/#pricing' } = Astro.props;
     transform: scaleX(0);
     transform-origin: left;
   }
-  @media (max-width: 767px) {
+  /* Version courte jusqu'à 879 px : la longue (« tant que tu restes abonné ») demande ~825 px. */
+  @media (max-width: 879px) {
     .offer-bar { font-size: 12.5px; padding: 0 36px 0 12px; }
     .offer-long { display: none; }
     .offer-short { display: inline; }
