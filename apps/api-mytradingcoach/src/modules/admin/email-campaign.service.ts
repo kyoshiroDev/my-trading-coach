@@ -50,7 +50,6 @@ export type CampaignType =
   | 'premium_upsell'
   | 'reengagement'
   | 'strategy_profile'
-  | 'debrief_reminder'
   | 'announcement'
   | 'founder_launch'
   | 'legal_notice';
@@ -66,7 +65,6 @@ const TYPE_TO_KEY: Record<CampaignType, string> = {
   premium_upsell: 'premium_upsell',
   reengagement: 'reengagement',
   strategy_profile: 'profile_reminder',
-  debrief_reminder: 'debrief_reminder',
   announcement: 'announcement',
   founder_launch: 'founder_launch',
   legal_notice: 'legal_notice',
@@ -90,7 +88,6 @@ const PRESENTATION: CampaignPresentation[] = [
   { type: 'premium_upsell',   emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',           targetDesc: 'Users FREE actifs (14 derniers j)' },
   { type: 'reengagement',     emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',      targetDesc: 'Users sans trade depuis 7j' },
   { type: 'strategy_profile', emoji: '📊', desc: 'Rappel pour renseigner le profil IA',                targetDesc: 'Users sans profil stratégie' },
-  { type: 'debrief_reminder', emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible', targetDesc: 'Users Premium' },
   { type: 'announcement',     emoji: '📣', desc: 'Envoyer une annonce libre aux users consentants',    targetDesc: 'Tous les users consentants' },
   { type: 'founder_launch',   emoji: '🔥', desc: "Annoncer l'ouverture de l'offre fondateur",           targetDesc: 'Inscrits non abonnés (hors fondateurs, codes partenaires, bêta)' },
   { type: 'legal_notice',     emoji: '⚖️', desc: 'Prévenir 30 jours avant un changement des CGU ou des prix (sans consentement requis)', targetDesc: 'Tous les comptes (hors démo et admin)' },

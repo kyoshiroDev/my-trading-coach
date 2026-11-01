@@ -283,3 +283,11 @@ describe('données chargées au moment de l’envoi', () => {
     expect(d.prisma.$queryRaw).not.toHaveBeenCalled();
   });
 });
+
+describe('débrief hebdo : aucune campagne « débrief prêt » (#833)', () => {
+  // L'e-mail « débrief prêt » part déjà, automatiquement, après chaque débrief généré
+  // (debrief.processor). Une campagne en plus le doublait et l'annonçait à des comptes sans débrief.
+  it('debrief_reminder retirée du registre', () => {
+    expect(CAMPAIGNS_BY_KEY.has('debrief_reminder')).toBe(false);
+  });
+});
