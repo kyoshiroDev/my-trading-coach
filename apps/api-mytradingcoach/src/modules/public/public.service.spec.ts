@@ -33,7 +33,7 @@ describe('PublicService', () => {
     service = module.get(PublicService);
   });
 
-  it('compte les inscrits réels en excluant démo et admin', async () => {
+  it('compte les inscrits réels en excluant démo, comptes internes (#823) et admin', async () => {
     mockRedisService.client.get.mockResolvedValueOnce(null);
     mockPrisma.user.count.mockResolvedValueOnce(14);
 
@@ -41,7 +41,7 @@ describe('PublicService', () => {
 
     expect(result).toBe(14);
     expect(mockPrisma.user.count).toHaveBeenCalledWith({
-      where: { isDemo: false, role: { not: Role.ADMIN } },
+      where: { isDemo: false, isInternal: false, role: { not: Role.ADMIN } },
     });
     // Résultat mis en cache 10 min
     expect(mockRedisService.client.setex).toHaveBeenCalledWith('public:traders-count:dev.app.mytradingcoach.app', 600, '14');

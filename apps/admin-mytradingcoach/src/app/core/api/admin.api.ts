@@ -213,6 +213,8 @@ export interface DeletedAccount {
   deletedBy: string; // "self" | "admin"
   reason: string | null;
   anonymizedAt: string | null;
+  /** Compte interne (#823) : affiché avec un badge, hors des chiffres. */
+  isInternal?: boolean;
 }
 
 export interface ReferralAdminParrain {
@@ -286,7 +288,7 @@ export class AdminApi {
     }
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
+  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR'; isInternal?: boolean }) {
     return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }

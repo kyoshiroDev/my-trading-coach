@@ -22,6 +22,7 @@
             }
             <span class="badge" [class.b-ok]="status()==='actif'" [class.b-free]="status()!=='actif'">● {{ statusLabel() }}</span>
             @if (d.identity.role !== 'USER') { <span class="role-tag purple">{{ d.identity.role }}</span> }
+            @if (d.identity.isInternal) { <span class="badge b-manual" data-testid="internal-badge">Interne</span> }
             @if (d.offer?.founder; as f) {
               <span class="badge" [class.b-ok]="f.status === 'ACTIVE'" [class.b-free]="f.status !== 'ACTIVE'" data-testid="founder-badge">Fondateur n° {{ f.number }}</span>
             } @else if (d.offer?.partner; as p) {
@@ -113,6 +114,16 @@
             @if (offerWarning(); as w) {
               <p class="ud-offer-warn" data-testid="offer-warning">{{ w }}</p>
             }
+            <!-- Compte interne (#823) : tests de l'équipe, exclus des statistiques admin -->
+            <div class="srow ud-internal">
+              <span class="s-l">Compte interne <span class="ud-internal-hint">hors statistiques</span></span>
+              <button type="button" role="switch" class="ud-switch" data-testid="internal-toggle"
+                [attr.aria-checked]="!!d.identity.isInternal"
+                [disabled]="!!internalBlocked() || internalSaving()"
+                [attr.title]="internalBlocked()"
+                aria-label="Compte interne, exclu des statistiques"
+                (click)="toggleInternal()"><span class="ud-switch-knob"></span></button>
+            </div>
             @if (d.offer?.founder; as f) {
               <!-- Offre fondateur (#525) -->
               <div class="srow" data-testid="founder-row">

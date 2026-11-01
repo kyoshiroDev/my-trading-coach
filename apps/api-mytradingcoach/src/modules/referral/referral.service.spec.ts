@@ -92,6 +92,9 @@ describe('ReferralService', () => {
       // Vérifie l'exclusion via le where passé à findMany
       const where = prisma.user.findMany.mock.calls[0][0].where;
       expect(where).toMatchObject({ isDemo: false, role: { not: 'AMBASSADOR' } });
+      // Filleuls internes (#823) hors des compteurs et des récents.
+      for (const call of prisma.user.groupBy.mock.calls) expect(call[0].where).toMatchObject({ isInternal: false });
+      expect(prisma.user.findMany.mock.calls[1][0].where).toMatchObject({ isInternal: false });
 
       expect(o.parrainsActifs).toBe(1);
       expect(o.invitesTotal).toBe(4);

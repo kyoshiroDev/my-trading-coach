@@ -624,3 +624,9 @@ retrait : c'est la preuve du consentement donné. Nouveau consentement → `mark
 défaut, compatible N-1) : fin programmée de l'abonnement, écrite par `syncSubscription` (`cancel_at`,
 ou fin de période si `cancel_at_period_end`), remise à null avec les autres champs Stripe à la fin de
 l'abonnement. Pas de rattrapage : renseignée au prochain `customer.subscription.updated`.
+
+`User.isInternal` et `DeletedAccount.isInternal` (migration `20261101150000_is_internal`, #823,
+`BOOLEAN NOT NULL DEFAULT false`, sans réécriture de table, sans index, compatible N-1) : compte
+interne (tests de l'équipe), exclu des statistiques admin par `REAL_USERS_WHERE`. Posé depuis la fiche
+admin, jamais par SQL ni par le domaine de l'adresse ; recopié dans `DeletedAccount` à la suppression.
+La règle des 90 jours lit toutes les lignes `DeletedAccount`, internes comprises.

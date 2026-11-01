@@ -50,6 +50,20 @@ describe('DeletedAccountService', () => {
       expect(reasons['Trop compliqué']).toBe(1);
     });
 
+    it('compte interne (#823) : dans la liste, hors de tous les chiffres', async () => {
+      const now = Date.now();
+      const internal = { id: 'i', deletedAt: new Date(now), lifetimeDays: 0, hadTraded: false, reason: 'test', isInternal: true };
+      const real = { id: 'r', deletedAt: new Date(now), lifetimeDays: 10, hadTraded: true, reason: null, isInternal: false };
+      findMany.mockResolvedValue([internal, real]);
+
+      const res = await service.getDeletedAccounts();
+
+      expect(res.accounts).toEqual([internal, real]);
+      expect(res.stats).toEqual({ thisMonth: 1, total: 1, medianLifetimeDays: 10, noTradePct: 0, noTradeCount: 0 });
+      expect(res.byMonth.reduce((s, m) => s + m.count, 0)).toBe(1);
+      expect(res.byReason).toEqual([{ reason: 'Non renseigné', count: 1 }]);
+    });
+
     it('liste vide → agrégats à zéro sans crash', async () => {
       findMany.mockResolvedValue([]);
       const res = await service.getDeletedAccounts();

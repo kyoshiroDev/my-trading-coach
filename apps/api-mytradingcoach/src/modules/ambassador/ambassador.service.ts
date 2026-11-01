@@ -187,15 +187,16 @@ export class AmbassadorService {
       },
     });
 
+    // Filleuls comptés hors comptes internes (#823) ; les commissions, elles, restent entières.
     const referralCounts = await this.prisma.user.groupBy({
       by: ['referredBy'],
-      where: { referredBy: { not: null } },
+      where: { referredBy: { not: null }, isInternal: false },
       _count: { _all: true },
     });
 
     const premiumCounts = await this.prisma.user.groupBy({
       by: ['referredBy'],
-      where: { referredBy: { not: null }, plan: 'PREMIUM' },
+      where: { referredBy: { not: null }, isInternal: false, plan: 'PREMIUM' },
       _count: { _all: true },
     });
 
