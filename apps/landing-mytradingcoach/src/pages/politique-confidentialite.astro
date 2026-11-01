@@ -21,7 +21,7 @@ import { GA_ID } from '../config';
 
     <h1>Politique de confidentialité</h1>
     <p class="legal-lead">
-      Dernière mise à jour&nbsp;: 31 octobre 2026 &nbsp;·&nbsp;
+      Dernière mise à jour&nbsp;: 1er novembre 2026 &nbsp;·&nbsp;
       Responsable du traitement&nbsp;: Grégory Tahir (My Trading Coach), <a href="mailto:support@mytradingcoach.app">support@mytradingcoach.app</a>
     </p>
 
@@ -47,7 +47,7 @@ import { GA_ID } from '../config';
         <li>Compte de trading que vous choisissez de garder actif en plan Gratuit, quand vous en avez plusieurs</li>
         <li>Provenance de l'inscription (paramètres <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code> du lien suivi, ou à défaut le site d'où vous arrivez, ex. ninjatrader.com), pour mesurer quels canaux amènent des inscrits</li>
         <li>Offre fondateur, code partenaire et parrainage, si vous en bénéficiez&nbsp;: place et numéro, statut, intervalle de paiement, identifiant d'abonnement Stripe, dates (prise de la place, premier paiement, fin), tarif et remise appliqués, code de parrainage et récompenses ou commissions associées</li>
-        <li>E-mails&nbsp;: votre choix de recevoir les offres et nouveautés, avec la date du consentement et, si vous le retirez, la date du retrait (la date du consentement est gardée comme preuve)&nbsp;; l'historique des e-mails de suivi et des annonces envoyés (nom de l'e-mail et date), qui sert à ne pas renvoyer le même e-mail et à limiter leur fréquence</li>
+        <li>E-mails&nbsp;: votre choix de recevoir les offres et nouveautés, avec la date du consentement et, si vous le retirez, la date du retrait (la date du consentement est gardée comme preuve)&nbsp;; l'historique des e-mails de suivi, des annonces et des informations de service envoyés (nom de l'e-mail et date), qui sert à ne pas renvoyer le même e-mail et à limiter leur fréquence</li>
       </ul>
 
       <h3>b) Données de trading (saisies par l'utilisateur)</h3>
@@ -162,7 +162,7 @@ import { GA_ID } from '../config';
         <tbody>
           <tr><td>Compte et trades</td><td>Jusqu'à la suppression du compte</td></tr>
           <tr><td>Trace d'un compte supprimé (nom, adresse e-mail, dates d'inscription et de suppression, durée de vie du compte, plan, nombre de trades, code du parrain éventuel, auteur de la suppression, vous ou notre équipe, et motif s'il est donné)</td><td>Nom et adresse e-mail effacés automatiquement 90 jours après la suppression&nbsp;; le reste, sans nom ni e-mail, sert aux statistiques, sans limite de durée</td></tr>
-          <tr><td>Places fondateur et remises partenaire</td><td>Conservées après la suppression du compte, sans identifiant de compte, avec l'identifiant d'abonnement Stripe, sans limite de durée pour l'instant</td></tr>
+          <tr><td>Places fondateur et remises partenaire</td><td>Conservées après la suppression du compte, sans identifiant de compte, sans limite de durée pour l'instant. L'identifiant d'abonnement Stripe d'une place ou d'une remise sans compte rattaché et au statut terminé est effacé automatiquement 180 jours après sa fin, lors de la purge mensuelle qui suit</td></tr>
           <tr><td>Parrainage (récompenses et commissions)</td><td>Conservés après la suppression du compte du filleul, avec son identifiant interne et l'identifiant d'abonnement Stripe, sans limite de durée pour l'instant. Effacés à la suppression du compte du parrain</td></tr>
           <tr><td>Factures et client Stripe (identifiant, adresse e-mail, historique des paiements)</td><td>10 ans chez Stripe (obligation comptable), y compris après la suppression du compte, abonnements résiliés. MyTradingCoach n'en garde pas d'archive</td></tr>
           <tr><td>Sauvegardes de la base de données</td><td>Une donnée supprimée y reste jusqu'à leur renouvellement&nbsp;: 14 jours pour les sauvegardes quotidiennes, 8 semaines pour les hebdomadaires, 6 mois pour les mensuelles</td></tr>
@@ -173,8 +173,8 @@ import { GA_ID } from '../config';
           <tr><td>Appareil de notification push</td><td>Jusqu'au retrait de l'appareil, à la déconnexion de l'application sur cet appareil ou à la suppression du compte. Un abonnement que le service de notification déclare invalide est supprimé automatiquement lors de l'envoi suivant</td></tr>
           <tr><td>Réglages des notifications push</td><td>Jusqu'à la suppression du compte</td></tr>
           <tr><td>Événements d'usage rattachés au compte</td><td>13 mois, puis effacement automatique, ou à la suppression du compte</td></tr>
-          <tr><td>Jours d'activité dans l'application</td><td>24 mois, puis effacement automatique, ou à la suppression du compte</td></tr>
-          <tr><td>Consommation de l'IA</td><td>13 mois, puis effacement automatique, ou à la suppression du compte</td></tr>
+          <tr><td>Jours d'activité dans l'application</td><td>24 mois, puis effacement automatique lors de la purge mensuelle qui suit, ou à la suppression du compte</td></tr>
+          <tr><td>Consommation de l'IA</td><td>13 mois, puis effacement automatique lors de la purge mensuelle qui suit, ou à la suppression du compte</td></tr>
           <tr><td>Analyse IA d'une autopsie de compte</td><td>Jusqu'à la suppression du compte de trading concerné ou de votre compte. «&nbsp;Retirer cette autopsie&nbsp;» la masque sans l'effacer</td></tr>
         </tbody>
       </table>
@@ -187,7 +187,7 @@ import { GA_ID } from '../config';
         <li><strong>OVH</strong>&nbsp;: hébergement de l'API, de la base de données et de l'application de production à Strasbourg (France), et du site vitrine. Sous-traitant EU, RGPD compliant.</li>
         <li><strong>Resend (USA)</strong>&nbsp;: envoi des e-mails (liés au compte, aide à la prise en main et, avec votre consentement, offres et nouveautés). Base&nbsp;: CCT.</li>
         {GA_ID && <li><strong>Google (USA)</strong>&nbsp;: mesure d'audience du site vitrine (Google Analytics 4), uniquement après votre consentement. Base&nbsp;: CCT et Data Privacy Framework.</li>}
-        <li><strong>Sentry (société américaine, données stockées dans l'Union européenne)</strong>&nbsp;: suivi des erreurs techniques de l'API. Données transmises&nbsp;: le type et le message de l'erreur, sa trace technique, la méthode et l'adresse appelée sans ses paramètres, les en-têtes techniques de la requête (dont l'identification de votre navigateur), l'identifiant interne de votre compte et, pour certaines alertes de paiement, les identifiants Stripe de l'abonnement et du client. Ne sont pas transmis&nbsp;: votre adresse IP, vos cookies, le corps des requêtes, les en-têtes d'authentification et les paramètres de requête. Le message d'une erreur est un texte libre&nbsp;: il peut, dans certains cas, contenir des données liées à la requête en cause. La localisation éventuellement associée à une erreur est celle de notre serveur, pas la vôtre.</li>
+        <li><strong>Sentry (société américaine, données stockées dans l'Union européenne)</strong>&nbsp;: suivi des erreurs techniques de l'API. Données transmises&nbsp;: le type et le message de l'erreur, sa trace technique, la méthode et l'adresse appelée sans ses paramètres, les en-têtes techniques de la requête (dont l'identification de votre navigateur), l'identifiant interne de votre compte et, pour certaines alertes de paiement, l'identifiant de l'abonnement Stripe dans le message de l'alerte. Quand le traitement d'un événement de paiement échoue définitivement, le type et l'identifiant de cet événement Stripe sont aussi transmis. Ne sont pas transmis&nbsp;: votre identifiant client Stripe (masqué s'il apparaît dans le message d'une erreur ou dans l'adresse d'un appel à Stripe), votre adresse IP, vos cookies, le corps des requêtes, les en-têtes d'authentification et les paramètres de requête. Le message d'une erreur est un texte libre&nbsp;: il peut, dans certains cas, contenir des données liées à la requête en cause. La localisation éventuellement associée à une erreur est celle de notre serveur, pas la vôtre.</li>
         <li><strong>Backblaze (données stockées dans l'Union européenne, Amsterdam)</strong>&nbsp;: stockage des sauvegardes de la base de données, chiffrées avant l'envoi.</li>
       </ul>
       <p>
@@ -339,7 +339,7 @@ import { GA_ID } from '../config';
       </ul>
 
       <p class="legal-updated">
-        Dernière mise à jour&nbsp;: 31 octobre 2026
+        Dernière mise à jour&nbsp;: 1er novembre 2026
       </p>
     </div>
   </main>
