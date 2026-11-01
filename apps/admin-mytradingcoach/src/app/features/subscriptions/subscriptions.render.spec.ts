@@ -51,11 +51,31 @@ describe('SubscriptionsComponent', () => {
     expect(amounts).toEqual([`${PREMIUM_PRICE_EUR.monthly} €/mois`, `${PREMIUM_PRICE_EUR.annual} €/an`]);
   });
 
-  it('KPIs : MRR et essais, essai annoncé à 30 jours', async () => {
+  it('KPIs : MRR, essais et offerts (#828)', async () => {
     const el = await render({ stripeUsers: [], betaTesters: [], total: 0, page: 1, limit: 20 });
     expect(el.textContent).toContain('98€');
-    expect(el.textContent).toContain('essai 30 j');
+    expect(el.textContent).toContain('+ 0 offert');
+    expect(el.textContent).not.toContain('essai 30 j');
     expect(el.textContent).not.toContain('7j');
+  });
+
+  it('Essais et offerts (#828) : type et prélèvement lus par subscriptionState', async () => {
+    const soon = '2099-11-12T08:00:00.000Z';
+    const trialUsers = [
+      { ...user('inscription', null), plan: 'FREE', trialEndsAt: soon, trialSource: 'SIGNUP', stripeCurrentPeriodEnd: null },
+      { ...user('reservation', 'month'), trialEndsAt: soon, trialSource: 'SIGNUP', stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: soon },
+      { ...user('annule', 'month'), stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: soon, stripeCancelAt: soon },
+      { ...user('offert', null), plan: 'FREE', trialEndsAt: soon, trialSource: 'ADMIN', stripeCurrentPeriodEnd: null },
+    ];
+    const el = await render({ stripeUsers: [], betaTesters: [], trialUsers, total: 0, page: 1, limit: 20 });
+    const rows = [...el.querySelectorAll('[data-testid="trial-row"]')].map((tr) =>
+      [...tr.querySelectorAll('td')].slice(1).map((td) => td.textContent?.trim()));
+    expect(rows).toEqual([
+      ["Essai d'inscription", '12/11/2099', 'aucun'],
+      ["Essai d'abonnement", '12/11/2099', 'à la fin'],
+      ["Essai d'abonnement", '12/11/2099', 'annulé, aucun'],
+      ['Premium offert', '12/11/2099', 'aucun'],
+    ]);
   });
 
   it('panne de l’API : message explicite', async () => {

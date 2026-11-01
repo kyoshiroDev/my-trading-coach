@@ -13,6 +13,8 @@ export interface AdminUser {
   trialSource?: TrialSource | null;
   /** Statut de l'abonnement Stripe (#813) : badge « En pause », essai d'abonnement. */
   stripeSubscriptionStatus?: string | null;
+  /** Fin programmée de l'abonnement (#813), page Abonnements seulement. */
+  stripeCancelAt?: string | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
@@ -32,7 +34,12 @@ export interface AdminStats {
   totalPremium: number;
   premiumMonthly: number; premiumAnnual: number;
   monthly: number; annual: number;
+  /** Essais en cours (#828) : essai d'inscription + essai d'abonnement (réservation, ancien essai 30 j). */
   trials: number;
+  /** Premium offerts par l'admin en cours (#828). */
+  offered: number;
+  /** Abonnements en pause : paiement à confirmer ou refusé (#828). */
+  paused: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
   // Engagement par récence (≥1 trade sur la fenêtre) : distinct de l'activation.
@@ -111,6 +118,8 @@ export interface AiCostData {
 export interface SubscriptionsData {
   stripeUsers: AdminUser[];
   betaTesters: AdminUser[];
+  /** Essais d'inscription, essais d'abonnement et Premium offerts en cours (#828). */
+  trialUsers?: AdminUser[];
   total: number; page: number; limit: number;
 }
 

@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AdminApi, AdminFoundersData, AdminStats, AdminUser, SubscriptionsData } from '../../core/api/admin.api';
 import { realAmountLabel } from '../../core/utils/offers.util';
+import { subscriptionState } from '@mtc/shared';
 import { FoundersTabComponent } from './founders-tab.component';
 import { PartnerCodesTabComponent } from './partner-codes-tab.component';
 
@@ -29,6 +30,19 @@ export class SubscriptionsComponent {
   protected readonly founders = signal<AdminFoundersData | null>(null);
 
   protected readonly tab = signal<SubscriptionsTab>(this.tabFrom(this.route.snapshot.queryParamMap.get('filtre')));
+  /**
+   * Essais et offerts (#828) : type et dates lus par `subscriptionState`, comme le profil et la fiche.
+   * Essai d'abonnement = réservation fondateur pendant l'essai d'inscription ou ancien essai de 30 jours.
+   */
+  protected readonly trialRows = computed(() =>
+    (this.data()?.trialUsers ?? []).map((user) => {
+      const s = subscriptionState(user);
+      const type = s.kind === 'signup_trial' ? "Essai d'inscription" : s.kind === 'offered' ? 'Premium offert' : "Essai d'abonnement";
+      const charge = s.kind === 'subscription_trial' ? (s.cancelAt ? 'annulé, aucun' : 'à la fin') : 'aucun';
+      return { user, type, end: s.trialEndsAt, charge };
+    }),
+  );
+
   protected readonly founderLabel = computed(() => {
     const f = this.founders();
     return f ? `${f.totals.taken} / ${f.offer.seatsTotal}` : '-';

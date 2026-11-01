@@ -1,4 +1,5 @@
 import { AccountStatus, AccountType, BrokerConnectionStatus, Plan, PlanLinkChoice, Prisma, Role, TrialSource } from '@prisma/client';
+import { noFreeAccessWhere, noSubscriptionWhere } from '../../../common/stats/subscription-state-where';
 import { formatMoney } from '@mtc/shared';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -90,9 +91,7 @@ const noTrade: Prisma.UserWhereInput = { trades: { none: {} } };
  * Hors Premium sans abonnement en cours (essai d'inscription ou Premium offert, #769) : le plan reste
  * FREE pendant l'essai, mais une relance « passe Premium » n'a pas de sens pour qui l'a déjà.
  */
-export const notInTrial = (now: Date): Prisma.UserWhereInput => ({
-  OR: [{ trialEndsAt: null }, { trialEndsAt: { lte: now } }],
-});
+export const notInTrial = (now: Date): Prisma.UserWhereInput => noFreeAccessWhere(now);
 
 /** Mêmes exclusions que founder_launch : abonnés payants, fondateurs, codes partenaires, bêta. */
 const founderTargets: Prisma.UserWhereInput = {
@@ -144,9 +143,12 @@ export async function loadFirstWeek(deps: CampaignLoadDeps, userIds: string[]): 
 }
 
 /** Ni abonné Stripe en cours, ni réservation fondateur : le Premium offert est le seul accès. */
-const noStripeSubscription: Prisma.UserWhereInput = {
-  OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'trialing', 'past_due'] } }],
-};
+/**
+ * Aucun abonnement payant, en essai ou en attente de paiement : un abonné qui paie ne reçoit JAMAIS
+ * les e-mails de fin d'essai (#828). Filtres partagés avec les statistiques ; liste de statuts gardée
+ * telle quelle (`unpaid` n'y est pas, comportement d'avant #828).
+ */
+export const noStripeSubscription: Prisma.UserWhereInput = noSubscriptionWhere(['active', 'trialing', 'past_due']);
 
 /** Essai d'inscription qui se termine (#769, B2) : date de fin, une lecture pour la page. */
 export async function loadTrialEnd(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {

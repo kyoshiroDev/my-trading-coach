@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Role } from '@prisma/client';
+import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from '../resend/resend.service';
 import { acquisitionLabel } from '@mtc/shared';
@@ -29,7 +29,7 @@ export class SignupDigestCron {
   async sendDigest(now = new Date()): Promise<number> {
     const since = new Date(now.getTime() - DAY_MS);
     const users = await this.prisma.user.findMany({
-      where: { createdAt: { gte: since, lt: now }, isDemo: false, role: { not: Role.ADMIN } },
+      where: { createdAt: { gte: since, lt: now }, ...REAL_USERS_WHERE },
       select: {
         email: true, name: true, createdAt: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,

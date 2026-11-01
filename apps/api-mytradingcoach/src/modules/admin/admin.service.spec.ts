@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AdminService } from './admin.service';
 
+/** Texte complet d'un `$queryRaw` : morceaux fixes et fragments SQL interpolés (filtre des comptes réels). */
+const fullSql = ([strings, ...values]: [TemplateStringsArray, ...unknown[]]) =>
+  strings.reduce((acc, part, i) => {
+    const v = values[i];
+    const sqlPart = v && typeof v === 'object' && 'sql' in v ? (v as { sql: string }).sql : i < values.length ? '?' : '';
+    return acc + part + sqlPart;
+  }, '');
+
 const mockPrisma = {
   anthropicCostDaily: { findMany: vi.fn() },
   aiUsageLog: { aggregate: vi.fn(), groupBy: vi.fn() },
@@ -100,7 +108,7 @@ describe('AdminService.getSignupMethods (#618)', () => {
   it('exclut démo et ADMIN dans la requête', async () => {
     raw().mockResolvedValueOnce([]);
     await service.getSignupMethods();
-    const sql = (raw().mock.calls[0][0] as TemplateStringsArray).join('?');
+    const sql = fullSql(raw().mock.calls[0] as [TemplateStringsArray, ...unknown[]]);
     expect(sql).toContain('"isDemo" = false');
     expect(sql).toContain(`"role" <> 'ADMIN'`);
   });
@@ -230,7 +238,7 @@ describe('AdminService.getFunnel', () => {
     const [sql, ...values] = q.mock.calls[6] as [TemplateStringsArray, ...unknown[]];
     expect(sql.join('?')).toMatch(/GROUP BY e\."event", e\."place"/);
     expect(sql.join('?')).not.toMatch(/CASE/);
-    expect(sql.join('?')).toMatch(/"isDemo" = false/);
+    expect(fullSql([sql, ...values])).toMatch(/"isDemo" = false/);
     expect(JSON.stringify(values)).toContain('install_shown');
     // Ordre fixe des étapes, 0 quand aucune donnée (retour Stripe réussi absent ici).
     expect(f.steps.map((s) => [s.key, s.users])).toEqual([

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { AccountStatus, PlanLinkChoice, Role } from '@prisma/client';
+import { AccountStatus, PlanLinkChoice } from '@prisma/client';
+import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import type { AdminPlanLinkStats } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { planLinkStats } from './plan-link-stats';
 
 /** Utilisateurs « réels » : hors démo et hors ADMIN (même filtre que les KPIs du dashboard). */
-const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
+const REAL_USERS = REAL_USERS_WHERE;
 
 /** Mesure de la liaison compte ↔ plan prop firm pour l'admin (#612). Lecture seule. */
 @Injectable()
