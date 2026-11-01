@@ -27,11 +27,22 @@ export function buildSentryOptions(dsn: string, env: NodeJS.ProcessEnv = process
   };
 }
 
+/** Identifiant client Stripe (`cus_…`) : jamais envoyé à Sentry (#827). */
+const STRIPE_CUSTOMER_ID = /\bcus_[A-Za-z0-9]+/g;
+const maskCustomerId = (text: string) => text.replace(STRIPE_CUSTOMER_ID, 'cus_[masqué]');
+
 /** En-têtes jamais transmis : jetons de session et d'accès. */
 const SECRET_HEADERS = new Set(['authorization', 'cookie']);
 
-/** Retire de l'erreur les données de la requête ; garde `user.id` et les tags (dont `path`). */
+/**
+ * Retire de l'erreur les données de la requête ; garde `user.id` et les tags (dont `path`).
+ * Masque l'identifiant client Stripe du message et des exceptions (« No such customer: 'cus_…' »).
+ */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
+  if (typeof event.message === 'string') event.message = maskCustomerId(event.message);
+  for (const ex of event.exception?.values ?? []) {
+    if (typeof ex.value === 'string') ex.value = maskCustomerId(ex.value);
+  }
   const request = event.request;
   if (!request) return event;
   delete request.data;
@@ -46,11 +57,16 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
   return event;
 }
 
-/** Appels sortants : la query string porte des clés d'API (`apikey=`), on ne garde que l'URL nue. */
+/**
+ * Appels sortants : la query string porte des clés d'API (`apikey=`), on ne garde que l'URL nue.
+ * L'URL d'un appel Stripe peut porter l'identifiant client (`/v1/customers/cus_…`) : masqué.
+ */
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
   if (breadcrumb.data && 'http.query' in breadcrumb.data) {
     const { 'http.query': _query, ...data } = breadcrumb.data;
     breadcrumb.data = data;
   }
+  if (typeof breadcrumb.data?.['url'] === 'string') breadcrumb.data['url'] = maskCustomerId(breadcrumb.data['url']);
+  if (typeof breadcrumb.message === 'string') breadcrumb.message = maskCustomerId(breadcrumb.message);
   return breadcrumb;
 }
