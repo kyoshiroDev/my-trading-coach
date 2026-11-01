@@ -211,6 +211,15 @@ describe('e-mails de l’essai d’inscription (#769, B2)', () => {
     expect(matches('trial_ended', trialUser(-24, { trialSource: 'ADMIN' }))).toBe(false);
   });
 
+  it('trial_ended : pas derrière un « Abonnement résilié » standard reçu dans les 7 jours (#845)', () => {
+    const sent = (daysBefore: number, campaignKey = 'subscription_canceled') => ({
+      emailSends: [{ campaignKey, sentAt: new Date(NOW.getTime() - daysBefore * 86_400_000) }],
+    });
+    expect(matches('trial_ended', trialUser(-24, sent(1)))).toBe(false); // réservation annulée à la fin de l'essai
+    expect(matches('trial_ended', trialUser(-24, sent(8)))).toBe(true); // résiliation d'une autre époque
+    expect(matches('trial_ended', trialUser(-24, sent(1, 'trial_ending')))).toBe(true);
+  });
+
   it('plafond respecté : l’e-mail de fin part au plus tôt 4 jours après J+11 sur le passage de 10 h', () => {
     // Fin à 09:00 le 14e jour : J+11 part le 11e jour à 10:00 (71 h avant), la fin le 15e jour à 10:00.
     const end = new Date('2026-11-16T08:00:00Z'); // 09:00 Paris

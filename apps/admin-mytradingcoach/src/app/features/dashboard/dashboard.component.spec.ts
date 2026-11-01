@@ -57,10 +57,11 @@ describe('DashboardComponent — graphe évolution', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
   it('jours aux essais non comptés (#828, G4) : marqués, valeurs inchangées', () => {
-    const cmp = setup(makeStats(), [pt('2026-10-27', 4), pt('2026-10-28', 5), pt('2026-11-01', 6), pt('2026-11-02', 7)]);
+    // Le relevé du 01/11 est pris le 02/11 à 00:05 avec le nouveau code (#828 en prod le 01/11) : il est juste.
+    const cmp = setup(makeStats(), [pt('2026-10-27', 4), pt('2026-10-28', 5), pt('2026-10-31', 6), pt('2026-11-01', 7)]);
     expect(cmp.daily().map((x: { trialUnreliable: boolean }) => x.trialUnreliable)).toEqual([false, true, true, false]);
     expect(cmp.daily().map((x: { signups: number }) => x.signups)).toEqual([4, 5, 6, 7]);
-    expect(cmp.trialUnreliableNote()).toBe('essais non comptés du 28/10 au 01/11');
+    expect(cmp.trialUnreliableNote()).toBe('essais non comptés du 28/10 au 31/10');
     const footer = cmp.trendConfig().options.plugins.tooltip.callbacks.footer;
     expect(footer([{ dataIndex: 1 }])).toBe('Essais non comptés ce jour');
     expect(footer([{ dataIndex: 3 }])).toBe('');

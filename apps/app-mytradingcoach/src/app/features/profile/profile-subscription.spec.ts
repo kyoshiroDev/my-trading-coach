@@ -277,6 +277,23 @@ describe('Profil > Abonnement : un bloc par état d’abonnement (#813)', () => 
     expect(text).not.toContain('Passer à Premium');
   });
 
+  it('6 bis. pause (past_due) pendant l’essai d’inscription : bloc « Paiement en attente » seul, accès offert jusqu’à la fin de l’essai', () => {
+    // Le store voit l'accès Premium (essai en cours) : le profil suit quand même `subscriptionState` (pause).
+    const el = render({
+      offered: false, signup: true, premium: true,
+      user: { plan: 'FREE', trialSource: 'SIGNUP', trialEndsAt: IN_31_DAYS, stripeSubscriptionStatus: 'past_due', stripeCurrentPeriodEnd: IN_31_DAYS },
+    });
+    const text = el.textContent ?? '';
+    expect(el.querySelector('[data-testid="payment-pending"]')?.textContent).toContain('Paiement en attente');
+    expect(el.querySelector('[data-testid="payment-pending-trial"]')?.textContent).toContain('Ton accès offert continue jusqu');
+    expect(el.querySelector('[data-testid="confirm-payment"]')).not.toBeNull();
+    expect(text).toContain('EN PAUSE');
+    expect(el.querySelector('[data-testid="offered-premium"]')).toBeNull();
+    expect(text).not.toContain('Premium offert');
+    expect(text).not.toContain('Continuer en Premium');
+    expect(text).not.toMatch(/PREMIUM\s/);
+  });
+
   it('7. après l’essai, sans abonnement : bloc gratuit avec l’offre', () => {
     const text = render({
       offered: false, premium: false, user: { plan: 'FREE', trialSource: 'SIGNUP', trialEndsAt: AGO_2_DAYS, stripeSubscriptionStatus: null },

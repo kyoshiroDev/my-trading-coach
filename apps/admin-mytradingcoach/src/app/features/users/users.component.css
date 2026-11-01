@@ -25,6 +25,8 @@
 .sub-badge--trial   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,.25); }
 .sub-badge--signup  { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-dim); }
 .sub-badge--paused  { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,85,99,.25); }
+.sub-badge--canceled,
+.sub-badge--ended   { background: rgba(255,255,255,.04); color: var(--text2); border: 1px dashed var(--border2); }
 .sub-badge--manual  { background: rgba(255,255,255,.04); color: var(--text2); border: 1px solid var(--border2); }
 
 /* ── Pagination ── */

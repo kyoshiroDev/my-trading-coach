@@ -124,4 +124,34 @@ describe('UsersComponent — inscrits d’une campagne', () => {
     expect(badges).toEqual(['Mensuel', 'Essai', 'En pause']);
     expect(el.querySelectorAll('[data-testid="badge-paused"]')).toHaveLength(1);
   });
+
+  it('annulation programmée (#813, état 5) : « Essai annulé » ou « Résilié », date de fin en info-bulle, comme la fiche', async () => {
+    const { fixture, http } = setup();
+    const soon = new Date(Date.now() + DAY).toISOString();
+    await flushList(fixture, http, [
+      // 5. réservation pendant l'essai, annulée : fin programmée.
+      user({ plan: 'PREMIUM', trialEndsAt: soon, trialSource: 'SIGNUP', stripeSubscriptionStatus: 'trialing', stripeInterval: 'month', stripeCurrentPeriodEnd: soon, stripeCancelAt: '2099-11-12T08:00:00.000Z' }),
+      // Abonnement payant résilié en fin de période.
+      user({ id: 'u2', email: 'b@test.local', plan: 'PREMIUM', stripeSubscriptionStatus: 'active', stripeInterval: 'year', stripeCancelAt: '2099-11-12T08:00:00.000Z' }),
+      // 2. réservation non annulée : toujours « Essai ».
+      user({ id: 'u3', email: 'c@test.local', plan: 'PREMIUM', stripeSubscriptionStatus: 'trialing', stripeInterval: 'month', stripeCurrentPeriodEnd: soon }),
+    ]);
+    const el = fixture.nativeElement as HTMLElement;
+    const badges = [...el.querySelectorAll('.sub-badge')].map((b) => (b as HTMLElement).textContent?.trim());
+    expect(badges).toEqual(['Essai annulé', 'Résilié', 'Essai']);
+    expect(el.querySelector('[data-testid="badge-canceled"]')?.getAttribute('title')).toBe('Fin le 12/11/2099, aucun prélèvement');
+    expect(el.querySelector('[data-testid="badge-ended"]')?.getAttribute('title')).toBe('Fin le 12/11/2099, aucun prélèvement');
+    expect(el.querySelector('[data-testid="badge-trial"]')?.getAttribute('title')).toBeNull();
+  });
+
+  it('pause (past_due) pendant l’essai d’inscription : « En pause » seul, sans badge « Essai » (même lecture que la fiche)', async () => {
+    const { fixture, http } = setup();
+    await flushList(fixture, http, [
+      user({ plan: 'FREE', trialEndsAt: new Date(Date.now() + 10 * DAY).toISOString(), trialSource: 'SIGNUP', stripeSubscriptionStatus: 'past_due', stripeInterval: 'month' }),
+    ]);
+    const el = fixture.nativeElement as HTMLElement;
+    const badges = [...el.querySelectorAll('.sub-badge')].map((b) => (b as HTMLElement).textContent?.trim());
+    expect(badges).toEqual(['En pause']);
+    expect(el.querySelector('[data-testid="badge-signup-trial"]')).toBeNull();
+  });
 });

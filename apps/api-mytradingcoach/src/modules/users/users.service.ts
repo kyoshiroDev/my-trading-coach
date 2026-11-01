@@ -80,6 +80,8 @@ const ADMIN_USER_SELECT = {
   stripeSubscriptionStatus: true,
   stripeInterval: true,
   stripeCurrentPeriodEnd: true,
+  // Annulation programmée (#813, état 5) : badge « Essai annulé » ou « Résilié » de la liste admin.
+  stripeCancelAt: true,
   lastSeenAt: true,
   lastLoginAt: true,
   createdAt: true,

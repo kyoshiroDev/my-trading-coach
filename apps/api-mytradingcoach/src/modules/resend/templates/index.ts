@@ -561,11 +561,25 @@ export function paymentSucceededTemplate(params: {
 
 // ── Abonnement résilié ────────────────────────────────────────────────────────
 
+/** Date courte JJ/MM, heure de Paris (quel que soit le fuseau du serveur). */
+const parisDayMonth = (d: Date) =>
+  d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Paris' });
+
+/**
+ * `offered` (#845) : résiliation pendant l'essai d'inscription, dont le Premium continue jusqu'à
+ * `until`. `paid` : l'abonnement a déjà été payé (« Aucun nouveau prélèvement. »), sinon
+ * « Aucun prélèvement. ». Jamais de mention de remboursement.
+ */
 export function subscriptionCanceledTemplate(params: {
   userName: string;
   resubscribeUrl: string;
+  offered?: { until: Date; paid: boolean };
 }): { subject: string; html: string } {
-  const { userName, resubscribeUrl } = params;
+  const { userName, resubscribeUrl, offered } = params;
+  const status = offered
+    ? `ton abonnement est résilié. Ton Premium offert continue jusqu'au ${parisDayMonth(offered.until)}. ${offered.paid ? 'Aucun nouveau prélèvement.' : 'Aucun prélèvement.'}`
+    : `ton abonnement Premium a bien été résilié.
+      Tu es maintenant sur le plan gratuit : journal, stats de base et historique illimité restent accessibles.`;
 
   const content = card(`
     <p style="${FONT}font-size:13px;color:#8fa3bf;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.8px;">Facturation</p>
@@ -573,8 +587,7 @@ export function subscriptionCanceledTemplate(params: {
       Abonnement résilié
     </h1>
     <p style="${FONT}font-size:14px;color:#9db4ce;margin:0 0 12px 0;line-height:1.7;">
-      Bonjour ${userName || 'Trader'}, ton abonnement Premium a bien été résilié.
-      Tu es maintenant sur le plan gratuit : journal, stats de base et historique illimité restent accessibles.
+      Bonjour ${userName || 'Trader'}, ${status}
     </p>
     <p style="${FONT}font-size:13px;color:#6b8299;margin:0 0 20px 0;">
       Tu peux te réabonner à tout moment pour retrouver les analytics avancés, l'IA Coach et les Weekly Debriefs.
@@ -689,7 +702,7 @@ export function founderReservationTemplate(params: {
     </p>
     ${rulesList([
       'Prix bloqué tant que ton abonnement reste actif, même si le prix normal augmente.',
-      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, la place est rendue à la fin de ton essai.`,
+      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, et ta place est rendue.`,
       'Si le prélèvement échoue définitivement, la place est rendue.',
       `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier prélèvement.`,
     ])}

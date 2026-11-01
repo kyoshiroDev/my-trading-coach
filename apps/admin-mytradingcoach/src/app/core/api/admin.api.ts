@@ -13,7 +13,7 @@ export interface AdminUser {
   trialSource?: TrialSource | null;
   /** Statut de l'abonnement Stripe (#813) : badge « En pause », essai d'abonnement. */
   stripeSubscriptionStatus?: string | null;
-  /** Fin programmée de l'abonnement (#813), page Abonnements seulement. */
+  /** Fin programmée de l'abonnement (#813) : liste des utilisateurs (essai annulé, résilié) et page Abonnements. */
   stripeCancelAt?: string | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;

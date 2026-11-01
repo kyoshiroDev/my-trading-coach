@@ -38,6 +38,13 @@ describe('UsersService.adminFindAll — filtre par campagne', () => {
     expect(where()).toEqual({ isDemo: false, acquisitionSource: 'instagram', acquisitionCampaign: null });
   });
 
+  it('sélectionne l’état d’abonnement lu par la liste (#813) : statut, origine de l’essai, annulation programmée', async () => {
+    await service.adminFindAll(1, 20);
+    expect(prisma.user.findMany.mock.calls[0][0].select).toMatchObject({
+      stripeSubscriptionStatus: true, trialEndsAt: true, trialSource: true, stripeCancelAt: true, stripeCurrentPeriodEnd: true,
+    });
+  });
+
   it('se combine avec la recherche e-mail / nom', async () => {
     await service.adminFindAll(1, 20, 'gmail', { campaign: 'exemple' });
     expect(where()).toMatchObject({ acquisitionCampaign: 'exemple', OR: expect.any(Array) });
