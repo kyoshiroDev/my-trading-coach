@@ -254,7 +254,7 @@ describe('PlanModal — offres pas encore reçues (#578)', () => {
 
 describe('partnerDurationLabel', () => {
   it('à vie, ou N mois puis prix normal de l’intervalle', () => {
-    expect(partnerDurationLabel(null, 'monthly')).toBe('à vie');
+    expect(partnerDurationLabel(null, 'monthly')).toBe('tant que ton abonnement reste actif');
     expect(partnerDurationLabel(3, 'monthly')).toBe('pendant 3 mois, puis 49 €/mois');
     expect(partnerDurationLabel(3, 'yearly')).toBe('pendant 3 mois, puis 490 €/an');
   });
