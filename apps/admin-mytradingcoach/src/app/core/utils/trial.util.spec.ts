@@ -14,6 +14,9 @@ describe('activeTrial (#769)', () => {
     ['essai expiré', { plan: 'FREE', trialEndsAt: PAST, trialSource: 'SIGNUP' }, null],
     ['fin exactement maintenant', { plan: 'FREE', trialEndsAt: new Date(NOW).toISOString(), trialSource: 'SIGNUP' }, null],
     ['Premium Stripe (essai Stripe compris)', { plan: 'PREMIUM', trialEndsAt: FUTURE, trialSource: null }, null],
+    ['pause (past_due) pendant l’essai d’inscription', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'SIGNUP', stripeSubscriptionStatus: 'past_due' }, null],
+    ['pause (unpaid) pendant un Premium offert', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'ADMIN', stripeSubscriptionStatus: 'unpaid' }, null],
+    ['abonnement résilié (canceled) : l’essai d’inscription reprend', { plan: 'FREE', trialEndsAt: FUTURE, trialSource: 'SIGNUP', stripeSubscriptionStatus: 'canceled' }, { until: FUTURE, origin: 'inscription' }],
   ] as const)('%s', (_l, user, expected) => {
     expect(activeTrial(user, NOW)).toEqual(expected);
   });

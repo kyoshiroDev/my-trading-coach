@@ -183,10 +183,10 @@ export class UserDetailComponent {
     if (d.identity.subscriptionStatus) return 'payant';
     return d.identity.plan === 'FREE' ? 'gratuit' : 'accès manuel';
   });
-  /** Essai en cours (#769) : inscription ou Premium offert, plan FREE + `trialEndsAt` futur. */
+  /** Essai en cours (#769) : inscription ou Premium offert, plan FREE + `trialEndsAt` futur, sans abonnement ni pause. */
   protected readonly trial = computed(() => {
     const i = this.data()?.identity;
-    return i ? activeTrial(i) : null;
+    return i ? activeTrial({ ...i, stripeSubscriptionStatus: i.subscriptionStatus }) : null;
   });
   /**
    * Plan affiché : l'accès réel pendant un essai, pas le plan FREE stocké ; pour un abonnement, son
@@ -204,7 +204,7 @@ export class UserDetailComponent {
     const end = s.cancelAt ? s.cancelAt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }) : null;
     if (s.kind === 'subscription_trial') return end ? `${i.plan} · essai annulé, fin le ${end}` : `${i.plan} · essai avant prélèvement`;
     if (s.kind === 'paying' && end) return `${i.plan} · résilié, fin le ${end}`;
-    if (s.kind === 'paused') return `${i.plan} · paiement en attente`;
+    if (s.kind === 'paused') return 'En pause · paiement en attente';
     return `${i.plan} · ${this.planSub()}`;
   });
   // ── Premium offert ──

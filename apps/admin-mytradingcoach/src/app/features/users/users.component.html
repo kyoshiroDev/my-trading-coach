@@ -63,7 +63,7 @@
               <td data-label="Rôle"><span class="role-tag" [class.purple]="u.role !== 'USER'">{{ u.role }}</span></td>
               <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
               <td data-label="Abonnement">
-                @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
+                @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)" [attr.data-testid]="'badge-' + subType(u)" [attr.title]="subTitle(u)">{{ subLabel(u) }}</span> }
                 @else if (subType(u) === 'paused') { <span class="sub-badge sub-badge--paused" data-testid="badge-paused" title="Paiement en attente (abonnement en pause)">En pause</span> }
                 @else if (trial(u); as t) {
                   @if (t.origin === 'inscription') { <span class="sub-badge sub-badge--signup" data-testid="badge-signup-trial" title="Essai d'inscription jusqu'au {{ t.until | date:'dd/MM/yyyy' }}">Essai</span> }

@@ -487,7 +487,7 @@
           <div class="settings-section-label">Abonnement</div>
           <div class="settings-card">
             <div class="plan-inner">
-              @if (userStore.isPremium()) {
+              @if (userStore.isPremium() && !paymentPending()) {
                 <div class="plan-badges">
                   <div class="plan-badge premium">
                     <div class="plan-badge-dot"></div>
@@ -579,9 +579,15 @@
                 <div class="plan-badge free">EN PAUSE</div>
                 <div class="trial-status" data-testid="payment-pending">
                   <p class="trial-status-title">Paiement en attente</p>
-                  <p class="trial-status-sub">
-                    Ton Premium est en pause tant que le paiement n'est pas confirmé. Confirme-le dans l'espace de facturation&nbsp;: l'accès revient dès qu'il passe.
-                  </p>
+                  @if (pausedFreeAccessUntil(); as until) {
+                    <p class="trial-status-sub" data-testid="payment-pending-trial">
+                      Ton abonnement n'a pas démarré, le paiement n'est pas confirmé. Ton accès offert continue jusqu'au {{ until | date:'dd/MM/yyyy' }}. Confirme le paiement dans l'espace de facturation&nbsp;: l'abonnement démarre dès qu'il passe.
+                    </p>
+                  } @else {
+                    <p class="trial-status-sub">
+                      Ton Premium est en pause tant que le paiement n'est pas confirmé. Confirme-le dans l'espace de facturation&nbsp;: l'accès revient dès qu'il passe.
+                    </p>
+                  }
                 </div>
                 <div class="plan-actions">
                   <button class="btn btn-primary" (click)="openPortal()" data-testid="confirm-payment">Confirmer mon paiement →</button>

@@ -155,7 +155,9 @@ export class UsersComponent implements OnInit {
    * paie déjà pendant son essai d'inscription (réservation à moins de 48 h) est mensuel ou annuel.
    */
   protected subType(user: AdminUser): string {
-    const kind = subscriptionState(user).kind;
+    const { kind, cancelAt } = subscriptionState(user);
+    // Annulation programmée (état 5, ou résiliation en fin de période) : comme la fiche.
+    if (cancelAt && (kind === 'subscription_trial' || kind === 'paying')) return kind === 'paying' ? 'ended' : 'canceled';
     if (kind === 'subscription_trial' || kind === 'signup_trial' || kind === 'offered') return 'trial';
     if (kind === 'paused') return 'paused';
     if (user.stripeInterval === 'year') return 'annual';
@@ -163,7 +165,13 @@ export class UsersComponent implements OnInit {
     return 'manual';
   }
   protected subLabel(user: AdminUser): string {
-    return ({ trial: 'Essai', paused: 'En pause', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '-';
+    return ({ trial: 'Essai', canceled: 'Essai annulé', ended: 'Résilié', paused: 'En pause', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '-';
+  }
+  /** Info-bulle de l'annulation programmée : date de fin (Paris), sinon aucune. */
+  protected subTitle(user: AdminUser): string | null {
+    const end = subscriptionState(user).cancelAt;
+    if (!end) return null;
+    return `Fin le ${end.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' })}, aucun prélèvement`;
   }
 
   protected getMonthLabel(): string {
