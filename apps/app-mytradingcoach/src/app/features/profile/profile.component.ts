@@ -94,10 +94,12 @@ export class ProfileComponent implements OnInit {
   /**
    * Premium sans abonnement Stripe (essai d'inscription #769, ou offert par l'admin) : aucun
    * prélèvement à annoncer ni portail Stripe à ouvrir (le compte n'a pas de client Stripe).
+   * Même lecture que l'admin (`subscriptionState`) : une pause (`past_due`) pendant l'essai n'en est pas un.
    */
-  protected readonly freePremium = computed(
-    () => this.userStore.isOfferedPremium() || this.userStore.signupTrialDaysLeft() !== null,
-  );
+  protected readonly freePremium = computed(() => {
+    const kind = this.subState().kind;
+    return (kind === 'signup_trial' || kind === 'offered') && !this.userStore.isDemo();
+  });
 
   /**
    * État d'abonnement (#813) : même lecture que l'API et l'admin (`subscriptionState`). `trialEndsAt`
@@ -116,6 +118,11 @@ export class ProfileComponent implements OnInit {
   protected readonly renewalAt = computed(() => (this.subState().kind === 'paying' ? this.subState().nextChargeAt : null));
   /** Abonnement en pause (paiement à confirmer, carte refusée) : pas de nouvelle offre (#813). */
   protected readonly paymentPending = computed(() => this.subState().kind === 'paused');
+  /** Pause pendant l'essai d'inscription ou un Premium offert : l'accès continue jusqu'à cette date. */
+  protected readonly pausedFreeAccessUntil = computed(() => {
+    const end = this.paymentPending() ? this.userStore.user()?.trialEndsAt : null;
+    return end && new Date(end) > new Date() ? new Date(end) : null;
+  });
   /** Fin du Premium sans abonnement, ou date du premier prélèvement de l'essai d'abonnement. */
   protected readonly trialEndsAt = computed(() => {
     const own = this.userStore.user()?.trialEndsAt;

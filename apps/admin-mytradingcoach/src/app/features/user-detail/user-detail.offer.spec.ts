@@ -113,10 +113,19 @@ describe('Fiche admin — état réel de l’abonnement (#813)', () => {
     ['3. payé tout de suite (moins de 48 h), essai d’inscription encore futur', { plan: 'PREMIUM', subscriptionStatus: 'active', trialEndsAt: FUTURE, trialSource: 'SIGNUP' }, 'PREMIUM · payant'],
     ['5. essai annulé', { plan: 'PREMIUM', subscriptionStatus: 'trialing', subscriptionCancelAt: FUTURE }, 'PREMIUM · essai annulé, fin le 12/11/2099'],
     ['abonnement résilié en fin de période', { plan: 'PREMIUM', subscriptionStatus: 'active', subscriptionCancelAt: FUTURE }, 'PREMIUM · résilié, fin le 12/11/2099'],
-    ['6. en pause', { plan: 'FREE', subscriptionStatus: 'past_due' }, 'FREE · paiement en attente'],
+    ['6. en pause', { plan: 'FREE', subscriptionStatus: 'past_due' }, 'En pause · paiement en attente'],
   ] as const)('%s', async (_l, identity, label) => {
     const { el } = await render(makeData({ premiumAccess: identity.plan === 'PREMIUM', ...identity }));
     expect(q(el, 'plan-row')).toBe(label);
+  });
+
+  it('pause (past_due) pendant l’essai d’inscription : « En pause » partout, aucune ligne ni badge d’essai', async () => {
+    const { el } = await render(makeData({
+      plan: 'FREE', subscriptionStatus: 'past_due', trialEndsAt: FUTURE, trialSource: 'SIGNUP', premiumAccess: true,
+    }));
+    expect(q(el, 'plan-row')).toBe('En pause · paiement en attente');
+    expect(q(el, 'plan-badge')).toBe('FREE');
+    expect(q(el, 'trial-row')).toBeNull();
   });
 });
 

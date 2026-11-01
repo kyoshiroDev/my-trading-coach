@@ -286,7 +286,12 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   `admin core/utils/trial.util.ts`). Fiche : « Premium (essai) », « Essai jusqu'au JJ/MM/AAAA » et la
   source (inscription = `trialSource` SIGNUP, sinon admin) ; ligne IA sur `identity.premiumAccess`
   (`isPremiumAccess`), jamais sur le plan brut. Liste : badge « Essai » (inscription) distinct de
-  « Offert » (admin). `isOfferedPremium` et le bouton « Offrir » ne changent pas.
+  « Offert » (admin). `isOfferedPremium` et le bouton « Offrir » ne changent pas. `activeTrial` lit
+  `subscriptionState` : une pause (`past_due` / `unpaid`) pendant l'essai s'affiche « En pause » partout
+  (liste, fiche « En pause · paiement en attente », profil « Paiement en attente » avec la date de fin de
+  l'accès offert), jamais « Essai » ; l'accès Premium, lui, continue jusqu'à `trialEndsAt`. Annulation
+  programmée (`stripeCancelAt`, dans `ADMIN_USER_SELECT`) : badge « Essai annulé » ou « Résilié » dans la
+  liste, comme la fiche. Équivalence ancienne règle / `premiumAccess` : `subscription-state.equivalence.spec.ts`.
 - **État d'abonnement unique (#813, 2026-11-01)** : `subscriptionState` (`libs/shared/src/subscription-state.ts`,
   fonction pure partagée API / app / admin). Ordre : statut Stripe (`active` = payant, `trialing` = essai
   d'abonnement, `past_due` / `unpaid` = en pause), puis `trialEndsAt` futur (SIGNUP = essai d'inscription,
@@ -303,9 +308,9 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   part ; « En pause » (`past_due` / `unpaid`) ; « Gratuits » = état `free` seulement. MRR inchangé
   (abonnements `active`). Comptage par `subscriptionStateWhere` (`common/stats/`), testé contre la
   fonction sur un compte par état (`subscription-state-where.int-spec.ts`). Page Abonnements :
-  « payants » = `active` seulement, liste « Essais et offerts ». Historique `MetricsSnapshot` du 28/10 à
-  la veille du déploiement en prod de #828 : **annoté, jamais recalculé** (`TRIAL_KPI_UNRELIABLE`,
-  `@mtc/shared`, mention « essais non comptés » sur la courbe du dashboard ; `to` à régler au déploiement).
+  « payants » = `active` seulement, liste « Essais et offerts ». Historique `MetricsSnapshot` du 28/10 au
+  31/10 (dernier relevé pris avec l'ancien code, #828 en prod le 01/11) : **annoté, jamais recalculé**
+  (`TRIAL_KPI_UNRELIABLE`, `@mtc/shared`, mention « essais non comptés » sur la courbe du dashboard).
 - **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
   marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
   25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis
