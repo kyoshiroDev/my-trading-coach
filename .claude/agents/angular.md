@@ -1098,10 +1098,13 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
 - Aperçu des campagnes (admin `/emails`) : **toujours** le HTML renvoyé par
   `POST /admin/campaigns/:type/preview` (le vrai template envoyé), jamais un rendu reconstruit côté
   front. Objet/contenu d'une annonce → nouvel appel après 400 ms de pause (`switchMap`).
-- Campagnes `requiresTest` (`founder_launch`) : bouton « Envoyer un test à {testEmail} » (adresse
+- Campagnes `requiresTest` (`founder_launch`, `legal_notice`) : bouton « Envoyer un test à {testEmail} » (adresse
   donnée par l'API, jamais saisie) ; « Envoyer à N inscrits » désactivé tant que le contenu actuel
   n'est pas testé (`testedCurrent`, revérifié par le serveur), puis confirmation « Envoyer à N
   inscrits ? ». Pas de case « force » pour ces campagnes. Ciblés avec / sans consentement affichés.
+- Contenu saisi (`FREE_CONTENT` : `announcement`, `legal_notice` #817) : mêmes champs objet / texte.
+  `legal_notice` exige aussi le texte, et l'avertissement dit « Information obligatoire » (envoyée
+  même à ceux qui ont coupé les e-mails, réservée aux CGU et aux prix, 30 jours avant).
 
 ## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
 

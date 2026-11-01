@@ -47,12 +47,12 @@
         </button>
       </div>
       <div class="modal-body">
-        @if (previewCampaign()!.type === 'announcement') {
+        @if (hasContent(previewCampaign()!)) {
           <div class="preview-compose">
             <div class="field-group">
               <label class="field-label" for="preview-subject">Objet *</label>
               <input id="preview-subject" type="text" class="field-input"
-                placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
+                [placeholder]="subjectPlaceholder(previewCampaign()!)"
                 [ngModel]="announcementSubject()"
                 (ngModelChange)="announcementSubject.set($event); refreshPreview()" />
             </div>
@@ -102,11 +102,11 @@
         </button>
       </div>
       <div class="modal-body">
-        @if (sendCampaignModal()!.type === 'announcement') {
+        @if (hasContent(sendCampaignModal()!)) {
           <div class="field-group">
             <label class="field-label" for="announce-subject">Sujet *</label>
             <input id="announce-subject" type="text" class="field-input"
-              placeholder="ex: 🚀 Nouvelle feature : Import CSV amélioré"
+              [placeholder]="subjectPlaceholder(sendCampaignModal()!)"
               [ngModel]="announcementSubject()"
               (ngModelChange)="announcementSubject.set($event); contentChanged()" />
           </div>
@@ -163,7 +163,9 @@
           </label>
         }
         <div class="warning-box">
-          @if (sendCampaignModal()!.requiresConsent) {
+          @if (sendCampaignModal()!.kind === 'transactional') {
+            ⚠️ Information obligatoire : envoyée à <strong>{{ sendCount() }} compte{{ sendCount() !== 1 ? 's' : '' }}</strong>, y compris ceux qui ont coupé les e-mails. À réserver aux changements des CGU ou des prix, 30 jours avant.
+          } @else if (sendCampaignModal()!.requiresConsent) {
             ⚠️ Campagne marketing : seuls les users <strong>consentants</strong> et hors plafond de fréquence recevront l'email. Le compte réel peut être inférieur.
           } @else {
             ⚠️ Envoi à <strong>{{ sendCount() }} personne{{ sendCount() !== 1 ? 's' : '' }}</strong>. Vérifie l'aperçu avant.

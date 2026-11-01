@@ -12,6 +12,7 @@ import {
   firstWeekRecapTemplate,
   founderFollowupTemplate,
   founderLaunchTemplate,
+  legalNoticeTemplate,
   premiumTemplate,
   profileTemplate,
   propFirmRulesTemplate,
@@ -399,6 +400,22 @@ export const CAMPAIGNS: EmailCampaign[] = [
     priority: 10,
     segment: () => ({}),
     build: (ctx) => announcementTemplate(ctx),
+  },
+  {
+    // Information « 30 jours avant » (#817) : modification des CGU ou des prix. Transactionnel :
+    // tous les comptes réels (hors démo et admin, filtre de l'admin), sans consentement ni plafond.
+    // Délai de 7 jours entre deux envois à une même personne : un renvoi après erreur ne touche que
+    // ceux qui ne l'ont pas reçu, une nouvelle information reste possible ensuite.
+    key: 'legal_notice',
+    label: 'Information de service (CGU, prix)',
+    description: 'Information obligatoire envoyée à tous les comptes, sans condition de consentement.',
+    kind: 'transactional',
+    requiresConsent: false,
+    automated: false,
+    priority: 5,
+    recurringCooldownDays: 7,
+    segment: () => ({}),
+    build: (ctx) => legalNoticeTemplate(ctx, { bodyHtml: '' }),
   },
 ];
 

@@ -326,6 +326,31 @@ export function announcementTemplate(
   };
 }
 
+// ── Information de service « 30 jours avant » (#817) ──────────────────────────
+// Modification des CGU ou des prix : envoyée à TOUS les comptes, sans condition de consentement ni
+// lien de désinscription (obligation d'information, pas une sollicitation). Aucun bouton commercial.
+
+/** Mention du pied : pourquoi cet e-mail arrive même quand les autres e-mails sont coupés. */
+export const LEGAL_NOTICE_FOOTER =
+  "Tu reçois cet e-mail parce que tu as un compte MyTradingCoach. C'est une information obligatoire sur ton compte, envoyée à tous les comptes quels que soient tes réglages d'e-mails.";
+
+export function legalNoticeTemplate(
+  ctx: CampaignBuildCtx,
+  content: { subject?: string; bodyHtml: string },
+): CampaignContent {
+  const subject = content.subject?.trim() || 'Information importante sur ton compte MyTradingCoach';
+  const html =
+    card(`
+      ${heading('Information de service', escapeHtml(subject))}
+      <p ${P}>${escapeHtml(hello(ctx.userName))}</p>
+      ${content.bodyHtml}
+      ${divider}
+      <p ${SMALL}>Une question&nbsp;? Écris à ${textLink('support@mytradingcoach.app', 'mailto:support@mytradingcoach.app')}.</p>
+    `) +
+    `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">${LEGAL_NOTICE_FOOTER}</p>`;
+  return { subject, html: emailWrapper(html, '', ACCENT.brand) };
+}
+
 // ── Lancement de l'offre fondateur (#525) ──────────────────────────────────────
 // Lettre de Greg (version validée le 2026-10-08). Les destinataires ont déjà un compte : le lien va
 // droit dans l'app, qui garde l'intention (`plan=founder`, `cta=email`) pendant la connexion puis

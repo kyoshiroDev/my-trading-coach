@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailDispatchService } from './email-dispatch.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ResendService } from './resend.service';
-import { EmailCampaign } from './campaigns/campaign-registry';
+import { CAMPAIGNS_BY_KEY, EmailCampaign } from './campaigns/campaign-registry';
 
 const DAY = 24 * 3600e3;
 
@@ -261,6 +261,24 @@ describe('EmailDispatchService', () => {
     expect(user.unsubToken).toMatch(/^[0-9a-f]{64}$/);
     expect(html).toContain(`token=${user.unsubToken}"`);
     expect(html).not.toContain('token="');
+  });
+
+  describe('information de service legal_notice (#817)', () => {
+    const legal = () => CAMPAIGNS_BY_KEY.get('legal_notice')!;
+    const unreachable = { id: 'u1', marketingConsent: false, serviceEmailsOptOutAt: new Date() };
+
+    it('part sans consentement, malgré la désinscription des e-mails de service et le plafond', async () => {
+      lastMarketing.mockResolvedValue({ sentAt: new Date(Date.now() - DAY) });
+      expect(await service.canSend(legal(), unreachable)).toBe(true);
+      expect(lastMarketing).not.toHaveBeenCalled(); // hors plafond
+    });
+
+    it('7 jours entre deux envois à la même personne', async () => {
+      lastForCampaign.mockResolvedValue({ sentAt: new Date(Date.now() - 2 * DAY) });
+      expect(await service.canSend(legal(), unreachable)).toBe(false);
+      lastForCampaign.mockResolvedValue({ sentAt: new Date(Date.now() - 8 * DAY) });
+      expect(await service.canSend(legal(), unreachable)).toBe(true);
+    });
   });
 
   describe('désinscription en un clic (RFC 8058, #791)', () => {
