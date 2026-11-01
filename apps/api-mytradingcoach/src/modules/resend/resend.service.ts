@@ -156,11 +156,14 @@ export class ResendService {
   async sendSubscriptionCanceled(params: {
     to: string;
     userName: string;
+    /** Essai d'inscription encore en cours (#845) : fin du Premium offert, abonnement déjà payé ou non. */
+    offered?: { until: Date; paid: boolean };
   }): Promise<void> {
     const resubscribeUrl = this.billingUrl;
     const { subject, html } = subscriptionCanceledTemplate({
       userName: params.userName,
       resubscribeUrl,
+      offered: params.offered,
     });
 
     await this.send({ to: params.to, subject, html });

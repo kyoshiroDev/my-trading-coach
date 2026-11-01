@@ -740,6 +740,17 @@ canActivate(ctx: ExecutionContext): boolean {
   test : `gt` / `lt`. Mention de bas des deux e-mails (décision du 28/10) : « Tu reçois cet e-mail parce
   que tu as un compte MyTradingCoach. » (`serviceFooter(unsubUrl, reason)`), pas « pour t'aider à
   démarrer ». Aperçu avant l'envoi réel : `tools/scripts/ops/preview-trial-emails.ts`.
+- **Résiliation pendant l'essai d'inscription** (#845, `onSubscriptionDeleted`) : payer ou réserver
+  ne met pas fin à l'essai (`trialEndsAt` gardé). Si l'essai continue plus d'une heure après la
+  suppression de l'abonnement (`subscriptionState` = `signup_trial`), « Abonnement résilié » dit
+  « Ton Premium offert continue jusqu'au JJ/MM » (heure de Paris) puis « Aucun prélèvement. » si
+  l'abonnement n'a sûrement jamais été payé (place fondateur rendue, ou aucune facture payée), sinon
+  « Aucun nouveau prélèvement. » ; jamais de remboursement évoqué. Sinon texte standard, enregistré
+  dans `EmailSend` (`SUBSCRIPTION_CANCELED_EMAIL_KEY`, transactionnel) : `trial_ended` exclut ceux
+  qui l'ont reçu dans les 7 jours (pas de doublon quand une réservation s'arrête à la fin de l'essai).
+  Réservation jamais payée (`releaseUnpaid` a rendu une place) : alerte « Réservation fondateur
+  annulée, place n° X rendue » au lieu de « Churn », pas de push « Annulation », pas de
+  `subscriptionCanceledAt` (ce n'est pas un départ de client payant).
 - E-mail de bienvenue (`sendWelcomeFree`, transactionnel) : `trialEndsAt` passé par `createAccount`,
   paragraphe « Tu as 14 jours de Premium offerts jusqu'au … » (aucun bouton, aucune offre) ; sans essai
   (réinscription récente), aucune mention Premium. Relances `first_week_recap` / `premium_upsell` :
