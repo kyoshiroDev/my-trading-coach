@@ -4,9 +4,9 @@
 </a>
 
 <div class="wrap">
-  <main class="grid">
+  <main class="grid" [class.settling]="!formShown()">
     <section class="summary">
-      <div class="head">
+      <div class="head" [class.head-pending]="!copy()">
         <div class="brand">
           <span class="brand-mark">
             <svg width="20" height="20" viewBox="0 0 64 64" aria-hidden="true">
@@ -65,7 +65,10 @@
           <div class="express-host" #expressHost></div>
           <div class="or">ou par carte</div>
         </div>
-        @if (status() === 'loading') { <div class="loading">Préparation du paiement…</div> }
+        <!-- Formulaire, total et bouton masqués jusqu'à un formulaire de hauteur stable (#829) :
+             « Préparation du paiement… » est posé par-dessus, hors du flux. -->
+        <div class="pay-zone" [class.settling]="!formShown()" data-testid="checkout-pay-zone">
+        @if (!formShown()) { <div class="loading" data-testid="checkout-loading">Préparation du paiement…</div> }
         <div class="payment" #paymentHost></div>
 
         @if (copy(); as c) {
@@ -83,6 +86,7 @@
             <a [href]="cguUrl" target="_blank" rel="noopener">Conditions générales</a>.
           </p>
         }
+        </div>
       }
     </aside>
   </main>

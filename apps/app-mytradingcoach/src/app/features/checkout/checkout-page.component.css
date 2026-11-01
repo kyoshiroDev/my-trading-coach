@@ -34,10 +34,10 @@
 }
 .back:hover { color: var(--text); border-color: var(--border-hover); }
 
-/* Centré verticalement ; colonnes alignées en haut (rien ne bouge quand le formulaire change). */
+/* Aligné en haut, à distance fixe (#829) : centrée verticalement, la page entière se recentrait
+   quand le panneau de paiement changeait de hauteur (écran haut). */
 .wrap {
-  max-width: 1040px; min-height: 100vh; margin: 0 auto; padding: 32px 24px;
-  display: flex; flex-direction: column; justify-content: center;
+  max-width: 1040px; min-height: 100vh; margin: 0 auto; padding: clamp(32px, 10vh, 120px) 24px 32px;
 }
 .grid {
   width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
@@ -97,7 +97,16 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter
 .express.pending .express-host { background: var(--pay-line); opacity: 0.5; }
 .or { display: flex; align-items: center; gap: 12px; margin: 14px 0; font-size: 12px; color: var(--pay-ink-4); }
 .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--pay-line); }
-.loading { padding: 48px 0; text-align: center; font-size: 13px; color: var(--pay-ink-4); }
+/* Tant que le formulaire se pose (#829) : un panneau opaque le recouvre, hors du flux (sa disparition
+   ne décale rien). Le formulaire Stripe reste visible dessous : Stripe ne finit sa mise en page
+   (344 → 416 px à 360 px de large) qu'une fois son cadre affiché, `visibility: hidden` la retardait.
+   Total, bouton et mentions, eux, sont simplement invisibles. */
+.pay-zone { position: relative; min-height: 120px; }
+.pay-zone.settling > :not(.loading):not(.payment) { visibility: hidden; }
+.loading {
+  position: absolute; inset: 0; z-index: 1; padding: 48px 0;
+  background: var(--pay-surface); text-align: center; font-size: 13px; color: var(--pay-ink-4);
+}
 
 .total { margin: 18px 0 14px; padding-top: 14px; border-top: 1px solid var(--pay-line); display: grid; gap: 6px; }
 .row { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; color: var(--pay-ink-2); }
@@ -128,8 +137,16 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter
   .summary { display: contents; }
   .head { grid-area: head; }
   .details { grid-area: details; }
+  /* Sous le panneau en mobile : invisible tant que le formulaire se pose (#829), sinon il se décale. */
+  .grid.settling .details { visibility: hidden; }
+  /* En-tête au-dessus du panneau en mobile : le squelette prend la hauteur du vrai texte (310 px
+     mesurés à 360 et 390 px de large, 288 px dès 430), sinon le panneau descendait de ~120 px (#829). */
+  .head.head-pending { min-height: 310px; }
   .brand { margin-bottom: 20px; }
   h1 { font-size: 24px; }
   .features { grid-template-columns: 1fr; margin-top: 0; }
   .card { padding: 22px 18px; min-height: 0 !important; }
+}
+@media (min-width: 430px) and (max-width: 860px) {
+  .head.head-pending { min-height: 288px; }
 }

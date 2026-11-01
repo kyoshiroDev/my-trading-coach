@@ -1189,6 +1189,15 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   charge pas (`loaderror`). `.express-host` en `display: flow-root` : le bloc Stripe a des marges
   de −4 px. Ne jamais créer la session plus tôt pour gagner du temps : chaque création réserve une
   place fondateur 35 min.
+  **Formulaire posé avant affichage** (#829) : Stripe redimensionne encore le formulaire carte après
+  son `ready` (332, 344 puis 416 px à 360 px ; la hauteur finale dépend de la largeur : 273 à 760 px,
+  344 en desktop), et seulement une fois son cadre affiché. Le formulaire reste donc visible pour
+  Stripe mais recouvert par « Préparation du paiement… » (panneau opaque hors du flux, jamais
+  `visibility: hidden` sur `.payment`), total, bouton et mentions invisibles, jusqu'à 1,2 s sans
+  changement de hauteur (`ResizeObserver`, plafond 5 s). En mobile, les avantages (sous le panneau)
+  sont masqués pendant ce temps et l'en-tête réserve la hauteur du vrai texte (310 / 288 px). Page
+  alignée en haut à distance fixe, plus centrée verticalement. Mesuré sur le banc : CLS ≤ 0,0014
+  de 360 à 1024 px.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
