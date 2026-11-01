@@ -23,7 +23,7 @@ import {
 import { AdminApi, AdminUser, AdminStats } from '../../core/api/admin.api';
 import { TableSort } from '../../shared/tables/table-sort';
 import { PRICING_EUR } from '../../core/constants/pricing.const';
-import { acquisitionLabel, type AcquisitionUtm, type Plan } from '@mtc/shared';
+import { acquisitionLabel, subscriptionState, type AcquisitionUtm, type Plan } from '@mtc/shared';
 import { DialogDirective } from '@mtc/front-ui';
 
 @Component({
@@ -144,24 +144,26 @@ export class UsersComponent implements OnInit {
     return (user.name ?? user.email).slice(0, 2).toUpperCase();
   }
 
-  private isFuture(dateStr: string | null): boolean {
-    return !!dateStr && new Date(dateStr) > new Date();
-  }
-
   /**
    * Essai en cours (plan FREE + `trialEndsAt` futur) : badge « Essai » pour l'essai d'inscription,
    * « Offert » pour le Premium offert par l'admin (#769).
    */
   protected readonly trial = activeTrial;
 
+  /**
+   * Type d'abonnement (#813) : l'état réel (`subscriptionState`), pas `trialEndsAt` seul. Un abonné qui
+   * paie déjà pendant son essai d'inscription (réservation à moins de 48 h) est mensuel ou annuel.
+   */
   protected subType(user: AdminUser): string {
-    if (user.trialEndsAt && this.isFuture(user.trialEndsAt)) return 'trial';
+    const kind = subscriptionState(user).kind;
+    if (kind === 'subscription_trial' || kind === 'signup_trial' || kind === 'offered') return 'trial';
+    if (kind === 'paused') return 'paused';
     if (user.stripeInterval === 'year') return 'annual';
     if (user.stripeInterval === 'month') return 'monthly';
     return 'manual';
   }
   protected subLabel(user: AdminUser): string {
-    return ({ trial: 'Essai', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '-';
+    return ({ trial: 'Essai', paused: 'En pause', annual: 'Annuel', monthly: 'Mensuel', manual: 'Manuel' })[this.subType(user)] ?? '-';
   }
 
   protected getMonthLabel(): string {

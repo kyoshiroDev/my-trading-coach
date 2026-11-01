@@ -522,16 +522,27 @@
                       Jusqu'au {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Aucun prélèvement, tu repasses en gratuit automatiquement.
                     </p>
                   </div>
+                } @else if (canceledAt(); as end) {
+                  <!-- Annulation programmée (#813) : aucune promesse de remboursement ici. -->
+                  <div class="trial-status" data-testid="subscription-canceled">
+                    @if (subState().kind === 'subscription_trial') {
+                      <p class="trial-status-title">Essai annulé</p>
+                      <p class="trial-status-sub">Tu repasses en gratuit le {{ end | date:'dd/MM/yyyy' }}, aucun prélèvement.</p>
+                    } @else {
+                      <p class="trial-status-title">Abonnement résilié</p>
+                      <p class="trial-status-sub">Premium jusqu'au {{ end | date:'dd/MM/yyyy' }}, puis tu repasses en gratuit. Aucun nouveau prélèvement.</p>
+                    }
+                  </div>
                 } @else if (isInTrial()) {
-                  <div class="trial-status">
+                  <div class="trial-status" data-testid="subscription-trial">
                     <p class="trial-status-title"><svg [lucideIcon]="GiftIcon" [size]="15"></svg>Essai gratuit&nbsp;: il te reste {{ trialDaysLeft() }} jour{{ trialDaysLeft() > 1 ? 's' : '' }}</p>
                     <p class="trial-status-sub">
                       Premier prélèvement le {{ trialEndsAt() | date:'dd/MM/yyyy' }}. Annulable en un clic, aucun prélèvement si tu annules avant.
                     </p>
                   </div>
-                } @else if (userStore.user()?.stripeCurrentPeriodEnd) {
-                  <p class="plan-renewal">
-                    Renouvellement : {{ userStore.user()?.stripeCurrentPeriodEnd | date:'dd/MM/yyyy' }}
+                } @else if (renewalAt(); as renewal) {
+                  <p class="plan-renewal" data-testid="plan-renewal">
+                    Renouvellement&nbsp;: {{ renewal | date:'dd/MM/yyyy' }}
                   </p>
                 }
                 @if (freePremium()) {
@@ -555,7 +566,7 @@
                       {{ isInTrial() ? 'Gérer / annuler mon essai →' : 'Gérer mon abonnement →' }}
                     </button>
                   </div>
-                  @if (offersStore.isFounder() || offersStore.partner()) {
+                  @if ((offersStore.isFounder() || offersStore.partner()) && !canceledAt()) {
                     <!-- Rappel neutre, sans freiner : le portail garde son bouton de résiliation. -->
                     <p class="plan-cancel-note" data-testid="tariff-loss-note">
                       Résilier dans l'espace de facturation met fin à ton tarif
@@ -563,6 +574,18 @@
                     </p>
                   }
                 }
+              } @else if (paymentPending()) {
+                <!-- Abonnement en pause (#813) : confirmer le paiement, jamais une nouvelle offre (409 côté API). -->
+                <div class="plan-badge free">EN PAUSE</div>
+                <div class="trial-status" data-testid="payment-pending">
+                  <p class="trial-status-title">Paiement en attente</p>
+                  <p class="trial-status-sub">
+                    Ton Premium est en pause tant que le paiement n'est pas confirmé. Confirme-le dans l'espace de facturation&nbsp;: l'accès revient dès qu'il passe.
+                  </p>
+                </div>
+                <div class="plan-actions">
+                  <button class="btn btn-primary" (click)="openPortal()" data-testid="confirm-payment">Confirmer mon paiement →</button>
+                </div>
               } @else {
                 <div class="plan-badge free">GRATUIT</div>
                 <p class="plan-desc">Trades illimités · Journal complet · Import · Historique illimité · IA mutualisée (contexte marché, calendrier éco, news).</p>

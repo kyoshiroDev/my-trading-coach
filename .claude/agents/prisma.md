@@ -619,3 +619,8 @@ additive, nullable, compatible N-1) : date du RETRAIT du consentement marketing 
 désinscription ou réglage du profil coupé). `marketingConsentAt` n'est plus jamais remis à null au
 retrait : c'est la preuve du consentement donné. Nouveau consentement → `marketingConsentAt` = maintenant,
 `marketingConsentWithdrawnAt` = null. Les comptes désinscrits avant le 30/10 ont les deux à null.
+
+`User.stripeCancelAt` (migration `20261101120000_user_stripe_cancel_at`, #813, additive, nullable, sans
+défaut, compatible N-1) : fin programmée de l'abonnement, écrite par `syncSubscription` (`cancel_at`,
+ou fin de période si `cancel_at_period_end`), remise à null avec les autres champs Stripe à la fin de
+l'abonnement. Pas de rattrapage : renseignée au prochain `customer.subscription.updated`.

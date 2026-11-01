@@ -273,6 +273,7 @@ export class StripeWebhookService {
         stripePriceId: null,
         stripeCurrentPeriodEnd: null,
         stripeSubscriptionStatus: null,
+        stripeCancelAt: null,
         subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
       },
     });
@@ -326,6 +327,7 @@ export class StripeWebhookService {
         stripeInterval: null,
         stripeCurrentPeriodEnd: null,
         stripeSubscriptionStatus: null,
+        stripeCancelAt: null,
         subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
       },
     });

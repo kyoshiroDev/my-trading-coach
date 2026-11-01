@@ -1362,6 +1362,12 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
   CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
   neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.
+  **Blocs selon `subscriptionState`** (#813) : Premium sans abonnement → « Premium offert » ; essai
+  d'abonnement → « Essai gratuit… Premier prélèvement le » + « Gérer / annuler mon essai » ; annulation
+  programmée (`stripeCancelAt`) → « Essai annulé » / « Abonnement résilié », date de retour au gratuit,
+  sans bouton d'annulation ni mention de remboursement ; payant → « Renouvellement » ; en pause →
+  « Paiement en attente » + « Confirmer mon paiement » (portail), jamais « Passer Premium ». Jours
+  restants en jours de calendrier (`calendarDaysUntil`, comme le bandeau).
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 

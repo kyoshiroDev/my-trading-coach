@@ -28,7 +28,8 @@ import { TopbarComponent } from '../../shared/components/topbar/topbar.component
 import { PlanModalComponent } from '../../shared/components/plan-modal/plan-modal.component';
 import { PushSettingsComponent } from './notifications/push-settings.component';
 import { InstallSettingsComponent } from '../install/install-settings.component';
-import { UserStore } from '../../core/stores/user.store';
+import { UserStore, calendarDaysUntil } from '../../core/stores/user.store';
+import { subscriptionState } from '@mtc/shared';
 import { AuthService } from '../../core/auth/auth.service';
 import { BillingApi } from '../../core/api/billing.api';
 import { UsersApi } from '../../core/api/users.api';
@@ -98,19 +99,33 @@ export class ProfileComponent implements OnInit {
     () => this.userStore.isOfferedPremium() || this.userStore.signupTrialDaysLeft() !== null,
   );
 
-  // Statut d'essai : N calculé depuis trialEndsAt Stripe, pas l'inscription.
-  protected readonly isInTrial = computed(() => {
-    const end = this.userStore.user()?.trialEndsAt;
-    return !!end && new Date(end).getTime() > Date.now();
+  /**
+   * État d'abonnement (#813) : même lecture que l'API et l'admin (`subscriptionState`). `trialEndsAt`
+   * ne dit rien d'un abonnement Stripe : un abonné qui paie déjà (réservation à moins de 48 h, essai
+   * terminé en avance) n'est plus « en essai » même si l'essai d'inscription court encore.
+   */
+  protected readonly subState = computed(() => subscriptionState(this.userStore.user() ?? { plan: 'FREE' }));
+  /** Essai d'abonnement en cours, non annulé : premier prélèvement à venir. */
+  protected readonly isInTrial = computed(() => this.subState().kind === 'subscription_trial' && !this.subState().cancelAt);
+  /** Fin programmée d'un essai annulé ou d'un abonnement résilié : plus aucun prélèvement. */
+  protected readonly canceledAt = computed(() => {
+    const s = this.subState();
+    return s.kind === 'subscription_trial' || s.kind === 'paying' ? s.cancelAt : null;
   });
-  /** Jours restants avant le 1er prélèvement (arrondi au jour supérieur, min 0). */
+  /** Renouvellement d'un abonnement payant non résilié. */
+  protected readonly renewalAt = computed(() => (this.subState().kind === 'paying' ? this.subState().nextChargeAt : null));
+  /** Abonnement en pause (paiement à confirmer, carte refusée) : pas de nouvelle offre (#813). */
+  protected readonly paymentPending = computed(() => this.subState().kind === 'paused');
+  /** Fin du Premium sans abonnement, ou date du premier prélèvement de l'essai d'abonnement. */
+  protected readonly trialEndsAt = computed(() => {
+    const own = this.userStore.user()?.trialEndsAt;
+    return this.freePremium() ? (own ? new Date(own) : null) : this.subState().trialEndsAt;
+  });
+  /** Jours restants : jours de calendrier, comme le bandeau d'essai (0 le dernier jour). */
   protected readonly trialDaysLeft = computed(() => {
-    const end = this.userStore.user()?.trialEndsAt;
-    if (!end) return 0;
-    const ms = new Date(end).getTime() - Date.now();
-    return Math.max(0, Math.ceil(ms / 86_400_000));
+    const end = this.trialEndsAt();
+    return end ? calendarDaysUntil(end, new Date()) : 0;
   });
-  protected readonly trialEndsAt = computed(() => this.userStore.user()?.trialEndsAt ?? null);
 
   // Compte : nom
   protected readonly editingName = signal(false);

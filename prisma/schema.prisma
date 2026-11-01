@@ -70,6 +70,9 @@ model User {
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
   subscriptionCanceledAt   DateTime? // date de résiliation (churn fiable) ; remis à null au réabonnement
+  /// Fin programmée de l'abonnement (#813) : `cancel_at` Stripe, ou fin de période si
+  /// `cancel_at_period_end`. Null = rien de programmé. Écrit par `syncSubscription`.
+  stripeCancelAt           DateTime?
 
   // Compte vitrine en lecture seule (démo landing). Bloque les écritures
   // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.

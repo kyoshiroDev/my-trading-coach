@@ -11,6 +11,8 @@ export interface AdminUser {
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
   /** Origine de `trialEndsAt` (#769) : essai d'inscription ou Premium offert par l'admin. */
   trialSource?: TrialSource | null;
+  /** Statut de l'abonnement Stripe (#813) : badge « En pause », essai d'abonnement. */
+  stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
