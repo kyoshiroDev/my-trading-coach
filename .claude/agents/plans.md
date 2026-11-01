@@ -298,6 +298,14 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   avance) est « payant ». Place fondateur d'un essai annulé : rendue **à la fin de l'essai**
   (`customer.subscription.deleted`, décision G2), e-mail de réservation aligné. Checkout refusé (409,
   `PAYMENT_PENDING_MESSAGE`) en `past_due` / `unpaid` : confirmer le paiement, jamais une nouvelle offre.
+- **KPI admin selon l'état (#828, décisions G3 / G4)** : « Premium » = **accès** Premium (payants, essais,
+  offerts, bêta, accès manuels) ; « Essais » = essai d'inscription + essai d'abonnement ; « Offerts » à
+  part ; « En pause » (`past_due` / `unpaid`) ; « Gratuits » = état `free` seulement. MRR inchangé
+  (abonnements `active`). Comptage par `subscriptionStateWhere` (`common/stats/`), testé contre la
+  fonction sur un compte par état (`subscription-state-where.int-spec.ts`). Page Abonnements :
+  « payants » = `active` seulement, liste « Essais et offerts ». Historique `MetricsSnapshot` du 28/10 à
+  la veille du déploiement en prod de #828 : **annoté, jamais recalculé** (`TRIAL_KPI_UNRELIABLE`,
+  `@mtc/shared`, mention « essais non comptés » sur la courbe du dashboard ; `to` à régler au déploiement).
 - **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
   marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
   25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis

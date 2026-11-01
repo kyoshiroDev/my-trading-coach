@@ -40,8 +40,10 @@
     <div class="card">
       <div class="card-head"><span class="card-label">Aperçu</span></div>
       <div class="card-body slim">
-        <div class="info-row"><span class="ov-label">Total Premium</span><span class="info-v">{{ s.totalPremium }}</span></div>
-        <div class="info-row"><span class="ov-label">En essai gratuit</span><span class="info-v">{{ s.trials }}</span></div>
+        <div class="info-row"><span class="ov-label">Accès Premium</span><span class="info-v">{{ s.totalPremium }}</span></div>
+        <div class="info-row"><span class="ov-label">En essai</span><span class="info-v" data-testid="kpi-trials">{{ s.trials }}</span></div>
+        <div class="info-row"><span class="ov-label">Premium offerts</span><span class="info-v" data-testid="kpi-offered">{{ s.offered }}</span></div>
+        <div class="info-row"><span class="ov-label">En pause (paiement en attente)</span><span class="info-v" data-testid="kpi-paused">{{ s.paused }}</span></div>
         <div class="info-row"><span class="ov-label">Nouveaux ce mois</span><span class="info-v green">+{{ s.newThisMonth }}</span></div>
         <div class="info-row"><span class="ov-label">Churn ce mois</span><span class="info-v red">{{ s.churnedThisMonth }}</span></div>
       </div>

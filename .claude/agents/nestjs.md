@@ -1785,6 +1785,12 @@ redéployer : rien à lancer sur le VPS.
   `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
   **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
   (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
+- **Comptes réels des statistiques (#828)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
+  brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts`. Toute nouvelle statistique admin les
+  utilise, jamais une copie de `isDemo: false, role: { not: ADMIN }`. Jamais pour cibler des envois
+  (`email-campaign.service.ts` garde son filtre : les comptes de test reçoivent les e-mails). États
+  d'abonnement à compter : `subscriptionStateWhere(kind, now)` / `premiumAccessWhere(now)`
+  (`common/stats/subscription-state-where.ts`), miroir de `subscriptionState` (@mtc/shared).
 - **Mesure admin** (`GET /admin/prop-firms/plan-links`, `AdminPropFirmsController` + `PlanLinkStatsService`,
   calcul pur `plan-link-stats.ts`) : comptes **connectés** (sous-compte choisi, non archivés) reliés à un
   plan / connectés, filtre `REAL_USERS` (hors démo, hors ADMIN) ; répartition des comptes sans plan par

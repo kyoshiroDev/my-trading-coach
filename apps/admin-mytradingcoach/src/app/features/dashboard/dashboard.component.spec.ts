@@ -11,7 +11,7 @@ function makeStats(over: Partial<AdminStats> = {}): AdminStats {
   return {
     mrr: 0, arr: 0, totalUsers: 10, totalPremium: 0,
     premiumMonthly: 0, premiumAnnual: 0,
-    monthly: 0, annual: 0, trials: 0, freeUsers: 10, newThisMonth: 3, churnedThisMonth: 0,
+    monthly: 0, annual: 0, trials: 0, offered: 0, paused: 0, freeUsers: 10, newThisMonth: 3, churnedThisMonth: 0,
     betaTesters: 0, ambassadors: 0,
     tradersActifs7d: 4, tradersActifs30d: 7,
     comptesSupprimesMois: 1, comptesSupprimesTotal: 5,
@@ -55,6 +55,20 @@ function setup(stats: AdminStats, history: MetricsHistoryPoint[]) {
 
 describe('DashboardComponent — graphe évolution', () => {
   beforeEach(() => TestBed.resetTestingModule());
+
+  it('jours aux essais non comptés (#828, G4) : marqués, valeurs inchangées', () => {
+    const cmp = setup(makeStats(), [pt('2026-10-27', 4), pt('2026-10-28', 5), pt('2026-11-01', 6), pt('2026-11-02', 7)]);
+    expect(cmp.daily().map((x: { trialUnreliable: boolean }) => x.trialUnreliable)).toEqual([false, true, true, false]);
+    expect(cmp.daily().map((x: { signups: number }) => x.signups)).toEqual([4, 5, 6, 7]);
+    expect(cmp.trialUnreliableNote()).toBe('essais non comptés du 28/10 au 01/11');
+    const footer = cmp.trendConfig().options.plugins.tooltip.callbacks.footer;
+    expect(footer([{ dataIndex: 1 }])).toBe('Essais non comptés ce jour');
+    expect(footer([{ dataIndex: 3 }])).toBe('');
+  });
+
+  it('aucun jour concerné dans la fenêtre : pas de mention', () => {
+    expect(setup(makeStats(), [pt('2026-06-01', 2)]).trialUnreliableNote()).toBeNull();
+  });
 
   const HISTORY = [
     pt('2026-06-01', 2, 0), // lundi

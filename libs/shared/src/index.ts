@@ -30,3 +30,4 @@ export * from './acquisition-filter';
 export * from './attempt-label';
 export * from './terms';
 export * from './subscription-state';
+export * from './metrics-annotations';
