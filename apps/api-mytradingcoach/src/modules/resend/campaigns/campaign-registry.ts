@@ -60,6 +60,14 @@ export interface EmailCampaign {
 const DAY = 24 * 3600e3;
 
 /**
+ * E-mail « Abonnement résilié » au texte standard (« plan gratuit »), envoyé par le webhook Stripe et
+ * enregistré dans `EmailSend` sous cette clé (type transactionnel, hors plafond) : `trial_ended`
+ * ne repart pas derrière lui pour la même fin d'essai (#845). La variante « Premium offert continue
+ * jusqu'au… » n'est pas enregistrée : « Premium offert terminé » doit partir à la vraie fin.
+ */
+export const SUBSCRIPTION_CANCELED_EMAIL_KEY = 'subscription_canceled';
+
+/**
  * Fenêtre d'âge du compte : inscrit depuis `minDays` à `maxDays` jours. Toute campagne automatique
  * en a une : un ancien inscrit ne reçoit jamais d'un coup une relance pensée pour ses premiers jours.
  */
@@ -207,6 +215,8 @@ export const CAMPAIGNS: EmailCampaign[] = [
         { signupTrialEndsAt: { gte: new Date(now.getTime() - 6 * DAY), lte: new Date(now.getTime() - 15 * 3600e3) } },
         { plan: Plan.FREE },
         noStripeSubscription,
+        // Déjà prévenu par « Abonnement résilié » (réservation annulée à la fin de l'essai, #845).
+        { emailSends: { none: { campaignKey: SUBSCRIPTION_CANCELED_EMAIL_KEY, sentAt: { gte: new Date(now.getTime() - 7 * DAY) } } } },
       ],
     }),
     build: trialEndedTemplate,

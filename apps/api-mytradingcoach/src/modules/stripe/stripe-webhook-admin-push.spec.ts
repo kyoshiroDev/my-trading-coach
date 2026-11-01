@@ -20,6 +20,7 @@ function makeSvc() {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     founderSeat: { findUnique: vi.fn().mockResolvedValue(null) },
+    emailSend: { create: vi.fn().mockResolvedValue({}) },
     partnerRedemption: { findFirst: vi.fn().mockResolvedValue(null) },
   };
   const resend = new Proxy({}, { get: () => vi.fn().mockResolvedValue(undefined) });
@@ -47,7 +48,7 @@ function makeSvc() {
     subscriptions as never, referrals as never, founders as never, partners as never,
     queue as never, stripe as never, undefined, notifier as never,
   );
-  return { svc, prisma, stripe, queue, notifier, subscriptions, synced };
+  return { svc, prisma, stripe, queue, notifier, subscriptions, synced, founders };
 }
 
 const run = (svc: StripeWebhookService, type: string, object: Record<string, unknown>) =>
@@ -104,6 +105,13 @@ describe('Webhooks Stripe → push admin', () => {
     const { svc, notifier } = makeSvc();
     await run(svc, 'customer.subscription.deleted', subscription());
     expect(notifier.notify).toHaveBeenCalledWith(AdminPushEvent.BILLING_ISSUE, expect.objectContaining({ title: 'Annulation' }));
+  });
+
+  it('réservation fondateur jamais payée annulée → aucun push « Annulation » (#845)', async () => {
+    const { svc, notifier, founders } = makeSvc();
+    founders.releaseUnpaid.mockResolvedValue({ number: 12 });
+    await run(svc, 'customer.subscription.deleted', subscription());
+    expect(notifier.notify).not.toHaveBeenCalled();
   });
 
   it('même événement livré deux fois par Stripe → un seul job, donc un seul push', async () => {

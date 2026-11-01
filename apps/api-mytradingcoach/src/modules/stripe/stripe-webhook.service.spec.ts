@@ -21,6 +21,7 @@ function makePrisma() {
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findMany: vi.fn().mockResolvedValue([]),
     },
+    emailSend: { create: vi.fn().mockResolvedValue({}) },
   };
 }
 
@@ -38,7 +39,10 @@ function makeSvc() {
   const config = { getOrThrow: vi.fn(() => 'sk_test_fake'), get: vi.fn() };
   const retrieve = vi.fn();
   const listInvoicePayments = vi.fn().mockResolvedValue({ data: [] });
-  const stripe = { subscriptions: { retrieve }, invoicePayments: { list: listInvoicePayments } } as never;
+  const listInvoices = vi.fn().mockResolvedValue({ data: [] });
+  const stripe = {
+    subscriptions: { retrieve }, invoicePayments: { list: listInvoicePayments }, invoices: { list: listInvoices },
+  } as never;
 
   const subscriptions = new StripeSubscriptionService(prisma as never, redisService as never, stripe);
   const referrals = new StripeReferralService(
@@ -55,7 +59,7 @@ function makeSvc() {
     { claim: vi.fn(), markLost: vi.fn(), release: vi.fn(), activeForSubscription: vi.fn().mockResolvedValue(null), isRefundableFirstPayment: vi.fn().mockResolvedValue(false) } as never,
     queue as never, stripe,
   );
-  return { svc, prisma, resend, discord, retrieve, listInvoicePayments };
+  return { svc, prisma, resend, discord, retrieve, listInvoicePayments, listInvoices, founders };
 }
 
 function subscription(over: Record<string, any> = {}): any {
@@ -298,5 +302,93 @@ describe('StripeWebhookService — événements après suppression du compte', (
     // #827 : l'identifiant client Stripe ne part jamais chez Sentry ; le compte interne, si.
     expect(JSON.stringify(vi.mocked(Sentry.captureMessage).mock.calls)).not.toContain('cus_1');
     expect(vi.mocked(Sentry.captureMessage).mock.calls[0][1]).toMatchObject({ user: { id: 'user_1' } });
+  });
+});
+
+describe('customer.subscription.deleted pendant l’essai d’inscription (#845)', () => {
+  const HOUR = 3_600_000;
+  const inTrial = (endsInMs: number) => ({
+    id: 'user_1', email: 'u@t.com', name: 'U', role: 'USER', trialSource: 'SIGNUP',
+    trialEndsAt: new Date(Date.now() + endsInMs),
+  });
+  const deleted = (svc: StripeWebhookService) =>
+    svc.processWebhookEvent({
+      type: 'customer.subscription.deleted',
+      data: { object: subscription({ items: { data: [{ price: { unit_amount: 2900, recurring: { interval: 'month' } } }] } }) },
+    } as any);
+  const paidInvoice = { data: [{ amount_paid: 2900 }] };
+
+  it('réservation fondateur jamais payée : variante datée « Aucun prélèvement », alerte réservation, pas de churn daté', async () => {
+    const { svc, prisma, resend, founders, listInvoices } = makeSvc();
+    founders.releaseUnpaid.mockResolvedValue({ number: 12 });
+    const user = inTrial(5 * 24 * HOUR);
+    prisma.user.findFirst.mockResolvedValue(user);
+
+    await deleted(svc);
+
+    expect(founders.markLost).not.toHaveBeenCalled();
+    expect(resend.sendSubscriptionCanceled).toHaveBeenCalledWith({
+      to: 'u@t.com', userName: 'U', offered: { until: user.trialEndsAt, paid: false },
+    });
+    expect(listInvoices).not.toHaveBeenCalled(); // place rendue : jamais payée, inutile de demander à Stripe
+    expect(prisma.user.updateMany.mock.calls[0][0].data).not.toHaveProperty('subscriptionCanceledAt');
+    expect(resend.sendAdminAlert).toHaveBeenCalledTimes(1);
+    expect(resend.sendAdminAlert.mock.calls[0][0]).toBe('Réservation fondateur annulée, place n° 12 rendue');
+    // Variante datée : pas enregistrée, « Premium offert terminé » partira à la vraie fin.
+    expect(prisma.emailSend.create).not.toHaveBeenCalled();
+  });
+
+  it('abonné qui a payé puis résilie pendant l’essai : variante « Aucun nouveau prélèvement », alerte Churn, churn daté', async () => {
+    const { svc, prisma, resend, founders, listInvoices } = makeSvc();
+    listInvoices.mockResolvedValue(paidInvoice);
+    const user = inTrial(5 * 24 * HOUR);
+    prisma.user.findFirst.mockResolvedValue(user);
+
+    await deleted(svc);
+
+    expect(founders.markLost).toHaveBeenCalledWith('sub_1');
+    expect(resend.sendSubscriptionCanceled).toHaveBeenCalledWith({
+      to: 'u@t.com', userName: 'U', offered: { until: user.trialEndsAt, paid: true },
+    });
+    expect(prisma.user.updateMany.mock.calls[0][0].data.subscriptionCanceledAt).toBeInstanceOf(Date);
+    expect(resend.sendAdminAlert.mock.calls[0][0]).toBe('🔴 Churn : u@t.com');
+  });
+
+  it('Stripe ne répond pas sur les factures : « Aucun nouveau prélèvement » (jamais « aucun » sans certitude)', async () => {
+    const { svc, prisma, resend, listInvoices } = makeSvc();
+    listInvoices.mockRejectedValue(new Error('stripe down'));
+    prisma.user.findFirst.mockResolvedValue(inTrial(5 * 24 * HOUR));
+
+    await deleted(svc);
+
+    expect(resend.sendSubscriptionCanceled.mock.calls[0][0].offered.paid).toBe(true);
+  });
+
+  it.each([
+    ['finit dans moins d’une heure', 30 * 60_000, true],
+    ['déjà terminé', -24 * HOUR, true],
+    ['finit dans moins d’une heure (abonné payé)', 30 * 60_000, false],
+    ['déjà terminé (abonné payé)', -24 * HOUR, false],
+  ])('essai %s : e-mail standard, enregistré pour bloquer « Premium offert terminé »', async (_label, endsIn, neverPaid) => {
+    const { svc, prisma, resend, founders, listInvoices } = makeSvc();
+    if (neverPaid) founders.releaseUnpaid.mockResolvedValue({ number: 12 });
+    else listInvoices.mockResolvedValue(paidInvoice);
+    prisma.user.findFirst.mockResolvedValue(inTrial(endsIn));
+
+    await deleted(svc);
+
+    expect(resend.sendSubscriptionCanceled).toHaveBeenCalledWith({ to: 'u@t.com', userName: 'U', offered: undefined });
+    expect(prisma.emailSend.create).toHaveBeenCalledWith({
+      data: { campaignKey: 'subscription_canceled', userId: 'user_1', kind: 'transactional' },
+    });
+  });
+
+  it('Premium offert par l’admin (pas l’essai d’inscription) : e-mail standard', async () => {
+    const { svc, prisma, resend } = makeSvc();
+    prisma.user.findFirst.mockResolvedValue({ ...inTrial(5 * 24 * HOUR), trialSource: 'ADMIN' });
+
+    await deleted(svc);
+
+    expect(resend.sendSubscriptionCanceled.mock.calls[0][0].offered).toBeUndefined();
   });
 });

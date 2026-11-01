@@ -25,7 +25,8 @@ import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { RedisService } from '../infra/redis.service';
 import { AdminNotifier } from '../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
-import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR } from '@mtc/shared';
+import { FOUNDER_OFFER, FOUNDER_REFUND_DAYS, PREMIUM_PRICE_EUR, subscriptionState } from '@mtc/shared';
+import { SUBSCRIPTION_CANCELED_EMAIL_KEY } from '../resend/campaigns/campaign-registry';
 
 /** « 29,00 € par mois » / « 290,00 € par an ». */
 function priceLabel(eur: number, interval: string | null): string {
@@ -37,6 +38,11 @@ const MAIL_ONCE_TTL_S = 30 * 86_400;
 
 /** Abonnement terminé pour de bon : plus aucun prélèvement possible. */
 const ENDED_STATUSES = new Set<string>(['canceled', 'incomplete_expired']);
+/**
+ * Résiliation pendant l'essai d'inscription (#845) : en deçà d'une heure restante, l'essai est
+ * traité comme fini (suppression à la fin de l'essai), pour ne pas écrire « continue jusqu'à aujourd'hui ».
+ */
+const OFFERED_CANCEL_MARGIN_MS = 3_600_000;
 
 /**
  * Webhooks Stripe, en deux temps :
@@ -254,7 +260,8 @@ export class StripeWebhookService {
     // Fin RÉELLE de l'abonnement : tarif fondateur perdu (la place reste prise). Une résiliation
     // programmée, elle, ne passe pas ici avant la fin de période. Réservation jamais payée (#769 :
     // prélèvement de fin d'essai en échec, ou annulée avant) : place rendue au compteur.
-    if (!(await this.founders.releaseUnpaid(subscription.id))) await this.founders.markLost(subscription.id);
+    const releasedSeat = await this.founders.releaseUnpaid(subscription.id);
+    if (!releasedSeat) await this.founders.markLost(subscription.id);
     // Remise partenaire : perdue ; mais si le 1er paiement réel a échoué (fin d'essai impayée),
     // l'utilisation revient au quota du code.
     const neverPaid =
@@ -264,7 +271,7 @@ export class StripeWebhookService {
     // Récupérer l'user avant de supprimer ses données
     const user = await this.prisma.user.findFirst({
       where: { stripeSubscriptionId: subscription.id },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, role: true, trialEndsAt: true, trialSource: true },
     });
 
     await this.prisma.user.updateMany({
@@ -276,7 +283,9 @@ export class StripeWebhookService {
         stripeCurrentPeriodEnd: null,
         stripeSubscriptionStatus: null,
         stripeCancelAt: null,
-        subscriptionCanceledAt: new Date(), // churn daté (KPI fiable)
+        // Churn daté (KPI fiable). Pas pour une réservation fondateur jamais payée (#845) : ce n'est
+        // pas un départ de client payant.
+        ...(releasedSeat ? {} : { subscriptionCanceledAt: new Date() }),
       },
     });
     await this.userCache?.invalidate(...(user ? [user.id] : [])); // retour en FREE effectif tout de suite (SCA-B3-01)
@@ -287,11 +296,27 @@ export class StripeWebhookService {
     if (customerId) await this.subscriptions.invalidateBillingCacheByCustomerId(customerId);
 
     if (user) {
-      await this.resend.sendSubscriptionCanceled({
-        to: user.email,
-        userName: user.name ?? '',
-      });
+      const offered = await this.offeredAfterCancel(user, subscription.id, !!releasedSeat);
+      await this.resend.sendSubscriptionCanceled({ to: user.email, userName: user.name ?? '', offered });
+      // Texte standard (« plan gratuit ») : enregistré pour que « Premium offert terminé » ne le
+      // double pas (#845). La variante datée ne l'est pas : l'e-mail de fin d'essai reste à venir.
+      if (!offered) {
+        await this.prisma.emailSend
+          .create({ data: { campaignKey: SUBSCRIPTION_CANCELED_EMAIL_KEY, userId: user.id, kind: 'transactional' } })
+          .catch((err: Error) => this.logger.warn(`Envoi « abonnement résilié » non enregistré (user ${user.id}) : ${err.message}`));
+      }
       await this.discord.syncDiscordRole(user.id).catch(() => undefined);
+    }
+
+    if (user && releasedSeat) {
+      // Réservation jamais payée (#845) : pas un churn, ni alerte « Churn » ni notification push.
+      await this.resend
+        .sendAdminAlert(
+          `Réservation fondateur annulée, place n° ${releasedSeat.number} rendue`,
+          `Email : ${user.email}\nDate  : ${new Date().toLocaleDateString('fr-FR')}`,
+        )
+        .catch(() => undefined);
+    } else if (user) {
       // Montant réel dérivé de l'abonnement Stripe (ne jamais coder le prix en dur).
       const churnItem = subscription.items.data[0];
       const churnInterval =
@@ -306,10 +331,28 @@ export class StripeWebhookService {
           `Email   : ${user.email}\nMontant : ${amount}\nDate    : ${new Date().toLocaleDateString('fr-FR')}`,
         )
         .catch(() => undefined);
+      this.adminNotifier?.notify(AdminPushEvent.BILLING_ISSUE, ADMIN_PUSH_MESSAGES.subscriptionCanceled());
     }
-
-    if (user) this.adminNotifier?.notify(AdminPushEvent.BILLING_ISSUE, ADMIN_PUSH_MESSAGES.subscriptionCanceled());
     this.logger.log(`Abonnement résilié ${subscription.id} → plan FREE`);
+  }
+
+  /**
+   * Essai d'inscription encore en cours après la résiliation (#845) : le Premium offert continue,
+   * l'e-mail le dit avec sa date de fin. Moins d'une heure restante (suppression à la fin de l'essai)
+   * ou essai terminé : texte standard. `paid` : « Aucun nouveau prélèvement. » sauf si l'abonnement
+   * n'a sûrement jamais été payé (place fondateur rendue, ou aucune facture payée chez Stripe).
+   */
+  private async offeredAfterCancel(
+    user: { role: string; trialEndsAt: Date | null; trialSource: string | null },
+    subscriptionId: string,
+    reservationNeverPaid: boolean,
+    now = new Date(),
+  ): Promise<{ until: Date; paid: boolean } | undefined> {
+    const state = subscriptionState({ ...user, plan: Plan.FREE, stripeSubscriptionStatus: null }, now);
+    const until = state.kind === 'signup_trial' ? state.trialEndsAt : null;
+    if (!until || until.getTime() - now.getTime() <= OFFERED_CANCEL_MARGIN_MS) return undefined;
+    const paid = reservationNeverPaid ? false : (await this.realPaymentState(subscriptionId)) !== false;
+    return { until, paid };
   }
 
   private async onCustomerDeleted(customer: Stripe.Customer): Promise<void> {
@@ -686,10 +729,15 @@ export class StripeWebhookService {
 
   /** Au moins une facture réellement payée (> 0 €) sur l'abonnement. */
   private async hasRealPayment(subscriptionId: string): Promise<boolean> {
+    return (await this.realPaymentState(subscriptionId)) === true;
+  }
+
+  /** Facture payée d'un montant non nul ? `null` si Stripe ne répond pas (on ne sait pas). */
+  private async realPaymentState(subscriptionId: string): Promise<boolean | null> {
     const paid = await this.stripe.invoices
       .list({ subscription: subscriptionId, status: 'paid', limit: 10 })
       .catch(() => null);
-    return (paid?.data ?? []).some((i) => (i.amount_paid ?? 0) > 0);
+    return paid ? paid.data.some((i) => (i.amount_paid ?? 0) > 0) : null;
   }
 
   private isFounderPrice(priceId: string | null | undefined): boolean {
