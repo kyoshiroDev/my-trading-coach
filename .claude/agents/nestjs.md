@@ -1622,11 +1622,19 @@ part de lignes et non la perfection.
   `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
   (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
   prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
-  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  les campagnes `REQUIRES_TEST` (`founder_launch`, `legal_notice`), `send` refuse sans test sur le contenu actuel.
   `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
   passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
   + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
   modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
+- **Information de service « 30 jours avant »** (#817) : campagne manuelle `legal_notice`, pour
+  prévenir d'une modification des CGU ou des prix. Type `transactional` : tous les comptes réels
+  (`REAL_USERS`, hors démo et admin), sans consentement, malgré « ne plus recevoir les e-mails d'aide »,
+  hors plafond, sans lien ni en-tête de désinscription. Objet et texte (Markdown) saisis dans l'admin,
+  tous deux obligatoires (`assertContent`) ; `REQUIRES_TEST` ; gabarit `legalNoticeTemplate` (pied
+  `LEGAL_NOTICE_FOOTER`, contact support@, aucun bouton). `recurringCooldownDays: 7` : un renvoi
+  après erreur ne touche que ceux qui ne l'ont pas reçu, une nouvelle information reste possible
+  après 7 jours. Jamais pour une nouveauté ou une offre : c'est `announcement` (marketing).
 - **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
   (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
   avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,

@@ -19,6 +19,8 @@ import { AdminApi, CampaignMeta } from '../../core/api/admin.api';
 import { DialogDirective } from '@mtc/front-ui';
 
 const PREVIEW_DEBOUNCE_MS = 400;
+/** Campagnes au contenu saisi ici (objet + corps) : annonce et information de service (#817). */
+const FREE_CONTENT = new Set(['announcement', 'legal_notice']);
 
 @Component({
   selector: 'mtc-admin-emails',
@@ -72,7 +74,8 @@ export class EmailsComponent {
   protected readonly canSend = computed(() => {
     const c = this.sendCampaignModal();
     if (!c) return false;
-    if (c.type === 'announcement' && !this.announcementSubject().trim()) return false;
+    if (this.hasContent(c) && !this.announcementSubject().trim()) return false;
+    if (c.type === 'legal_notice' && !this.announcementBody().trim()) return false;
     if (c.requiresTest && (!this.tested() || this.sendCount() === 0)) return false;
     return true;
   });
@@ -122,8 +125,19 @@ export class EmailsComponent {
     if (c) this.previewRequests.next({ campaign: c, debounced: true });
   }
 
+  /** Objet et corps saisis dans les modales. */
+  protected hasContent(c: CampaignMeta): boolean {
+    return FREE_CONTENT.has(c.type);
+  }
+
+  protected subjectPlaceholder(c: CampaignMeta): string {
+    return c.type === 'legal_notice'
+      ? 'ex\u00a0: Évolution de nos conditions générales au 1er décembre'
+      : 'ex: 🚀 Nouvelle feature : Import CSV amélioré';
+  }
+
   openSend(c: CampaignMeta): void {
-    if (c.type !== 'announcement') {
+    if (!this.hasContent(c)) {
       this.announcementSubject.set('');
       this.announcementBody.set('');
     }
