@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
@@ -10,20 +10,26 @@ import type { CheckoutSummary } from '@app/core/api/billing.api';
 import TEMPLATE from './checkout-page.component.html?raw';
 
 // Isolé (NEEDS_ISOLATION) : Stripe.js est remplacé. Les boutons express arrivent après le
-// formulaire carte : leur place doit être réservée dès le chargement (#818).
+// formulaire carte : leur place doit être réservée dès le chargement (#818). Le formulaire, le total
+// et le bouton n'apparaissent qu'une fois le formulaire de hauteur stable (#829).
 type Handler = (e?: unknown) => void;
 const expressHandlers: Record<string, Handler> = {};
-const element = () => ({ mount: vi.fn(), destroy: vi.fn() });
+const paymentHandlers: Record<string, Handler> = {};
+const element = (handlers: Record<string, Handler>) => ({
+  mount: vi.fn(), destroy: vi.fn(),
+  on: (name: string, fn: Handler) => { handlers[name] = fn; },
+});
+/** Session Stripe : chargée seulement quand le test appelle `loadSession()`. */
+let loadSession: () => void = () => undefined;
+const SESSION = { email: null, total: { total: { minorUnitsAmount: 4900 } } };
 vi.mock('@stripe/stripe-js', () => ({
   loadStripe: vi.fn(async () => ({
     initCheckoutElementsSdk: () => ({
-      createPaymentElement: () => element(),
-      createExpressCheckoutElement: () => ({
-        ...element(),
-        on: (name: string, fn: Handler) => { expressHandlers[name] = fn; },
+      createPaymentElement: () => element(paymentHandlers),
+      createExpressCheckoutElement: () => element(expressHandlers),
+      loadActions: () => new Promise((resolve) => {
+        loadSession = () => resolve({ type: 'success', actions: { getSession: () => SESSION, confirm: vi.fn() } });
       }),
-      // Session jamais chargée : on ne teste ici que la zone express.
-      loadActions: () => new Promise(() => undefined),
     }),
   })),
 }));
@@ -59,13 +65,16 @@ async function mount() {
   };
   await settle();
   const zone = () => el.querySelector<HTMLElement>('[data-testid="checkout-express"]')!;
-  return { el, settle, zone };
+  return { el, settle, zone, fixture };
 }
 
+const reset = () => {
+  for (const h of [expressHandlers, paymentHandlers]) for (const k of Object.keys(h)) delete h[k];
+  loadSession = () => undefined;
+};
+
 describe('Page de paiement : zone des boutons express réservée (#818)', () => {
-  beforeEach(() => {
-    for (const k of Object.keys(expressHandlers)) delete expressHandlers[k];
-  });
+  beforeEach(reset);
 
   it('avant que Stripe ne réponde : zone et séparateur déjà en place, au-dessus du formulaire', async () => {
     const { el, zone } = await mount();
@@ -98,5 +107,77 @@ describe('Page de paiement : zone des boutons express réservée (#818)', () => 
     expressHandlers['loaderror']();
     await settle();
     expect(zone().hidden).toBe(true);
+  });
+});
+
+describe('Page de paiement : formulaire affiché une fois posé (#829)', () => {
+  beforeEach(reset);
+  afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+  const zone = (el: HTMLElement) => el.querySelector<HTMLElement>('[data-testid="checkout-pay-zone"]')!;
+  const loading = (el: HTMLElement) => el.querySelector('[data-testid="checkout-loading"]');
+
+  it('pendant le chargement : formulaire, total et bouton masqués, message par-dessus, avantages masqués', async () => {
+    const { el } = await mount();
+    expect(zone(el).classList.contains('settling')).toBe(true);
+    expect(loading(el)?.textContent).toContain('Préparation du paiement');
+    // Le total et le bouton sont déjà dans la page (place prise), mais invisibles.
+    expect(zone(el).querySelector('[data-testid="checkout-pay"]')).not.toBeNull();
+    expect(el.querySelector('.grid')!.classList.contains('settling')).toBe(true);
+    expect(el.querySelector('.head')!.classList.contains('head-pending')).toBe(false); // récapitulatif déjà là
+  });
+
+  it('session chargée mais formulaire Stripe pas encore prêt : toujours masqué', async () => {
+    const { el, settle } = await mount();
+    loadSession();
+    await settle();
+    expect(zone(el).classList.contains('settling')).toBe(true);
+  });
+
+  it('session chargée et formulaire prêt : tout apparaît d’un coup', async () => {
+    const { el, settle } = await mount();
+    loadSession();
+    await settle();
+    paymentHandlers['ready']();
+    await settle();
+    expect(zone(el).classList.contains('settling')).toBe(false);
+    expect(loading(el)).toBeNull();
+    expect(el.querySelector('.grid')!.classList.contains('settling')).toBe(false);
+    expect(el.querySelector('[data-testid="checkout-today"]')?.textContent).toContain('49,00');
+  });
+
+  /** Attente « hauteur stable » appelée directement, avec un faux ResizeObserver et une horloge simulée. */
+  async function settleWatcher() {
+    let resized: () => void = () => undefined;
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(cb: () => void) { resized = cb; }
+      observe() { /* rien */ }
+      disconnect() { /* rien */ }
+    });
+    const { fixture } = await mount();
+    vi.useFakeTimers();
+    let done = false;
+    const watcher = (fixture.componentInstance as unknown as { formSettled: (el: HTMLElement) => Promise<void> })
+      .formSettled(document.createElement('div'));
+    void watcher.then(() => { done = true; });
+    return { resize: () => resized(), isDone: () => done, advance: (ms: number) => vi.advanceTimersByTimeAsync(ms) };
+  }
+
+  it('formulaire encore redimensionné par Stripe : attend 1,2 s sans changement de hauteur', async () => {
+    const w = await settleWatcher();
+    await w.advance(1000);
+    w.resize(); // 344 → 416 px : le compte repart de zéro
+    await w.advance(1000);
+    expect(w.isDone()).toBe(false);
+    await w.advance(250);
+    expect(w.isDone()).toBe(true);
+  });
+
+  it('Stripe n’arrête pas de redimensionner : affiché quand même au bout de 5 s', async () => {
+    const w = await settleWatcher();
+    for (let i = 0; i < 9; i++) { await w.advance(500); w.resize(); }
+    expect(w.isDone()).toBe(false); // 4,5 s
+    await w.advance(600);
+    expect(w.isDone()).toBe(true);
   });
 });
