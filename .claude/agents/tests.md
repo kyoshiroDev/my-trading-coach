@@ -170,6 +170,12 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > porte une clé invalide (vrai 401 Stripe). Il faut la vraie clé `sk_test_` du job CI : avec la
 > clé factice de la recette locale, `balance.retrieve()` échoue au démarrage et ses tests sont
 > **sautés** (pas en échec). Nettoyage : horloges, customers et produit de test en `afterAll`.
+>
+> **Séquence de webhooks sans Stripe réel : `stripe-3ds-pause.int-spec.ts`** (#819). `STRIPE_CLIENT`
+> remplacé par un faux client (`configure: (b) => b.overrideProvider(STRIPE_CLIENT).useValue(…)`) dont
+> `subscriptions.retrieve` renvoie un abonnement modifié à chaque étape ; événements passés à
+> `processWebhookEvent` (ids uniques) ; vraie base (places fondateur) et vrai Redis (e-mails « une
+> seule fois »). Aucune clé Stripe requise. Modèle pour tout scénario de facturation à plusieurs étapes.
 
 ---
 

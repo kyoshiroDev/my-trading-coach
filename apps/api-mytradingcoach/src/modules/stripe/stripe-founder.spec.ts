@@ -415,6 +415,46 @@ describe('synchro : fin programmée de l’abonnement (stripeCancelAt, #813)', (
   });
 });
 
+describe('synchro : Premium en pause pendant un paiement en attente (#819)', () => {
+  function syncStatus(status: string, user: object = {}) {
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'u1', stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active', trialUsed: true, ...user,
+        }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_1', status, customer: 'cus_1', trial_end: null, metadata: {}, cancel_at: null, cancel_at_period_end: false,
+          items: { data: [{ price: { id: 'price_29', recurring: { interval: 'month' } }, current_period_end: 1_900_000_000 }] },
+        }),
+      },
+    };
+    const redis = { client: { del: vi.fn().mockResolvedValue(1) }, del: vi.fn().mockResolvedValue(1) };
+    const cache = { invalidate: vi.fn().mockResolvedValue(undefined) };
+    const sync = new StripeSubscriptionService(prisma as never, redis as never, stripe as never, cache as never);
+    return { sync, data: () => prisma.user.update.mock.calls[0][0].data, cache };
+  }
+
+  it.each(['past_due', 'unpaid'])('%s → plan FREE, statut et abonnement gardés, jeton invalidé', async (status) => {
+    const { sync, data, cache } = syncStatus(status);
+    await sync.syncSubscription('sub_1');
+    expect(data()).toMatchObject({ plan: 'FREE', stripeSubscriptionStatus: status, stripeSubscriptionId: 'sub_1' });
+    // Pas une résiliation : la date de churn n'est pas touchée.
+    expect(data().subscriptionCanceledAt).toBeUndefined();
+    expect(cache.invalidate).toHaveBeenCalledWith('u1');
+  });
+
+  it('paiement confirmé (active) → retour en PREMIUM', async () => {
+    const { sync, data } = syncStatus('active', { plan: 'FREE', stripeSubscriptionStatus: 'past_due' });
+    await sync.syncSubscription('sub_1');
+    expect(data()).toMatchObject({ plan: 'PREMIUM', stripeSubscriptionStatus: 'active', subscriptionCanceledAt: null });
+  });
+});
+
 // ── Codes partenaires ──────────────────────────────────────────────────────────
 
 const TRADER10 = { valid: true, code: 'TRADER10', priceMonthlyEur: 29, priceAnnualEur: 290, durationMonths: null, label: '' };
