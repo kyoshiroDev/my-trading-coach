@@ -61,8 +61,10 @@
         </div>
       } @else {
         <p class="who">Abonnement pour <strong>{{ email() }}</strong></p>
-        <div #expressHost></div>
-        @if (showOr()) { <div class="or">ou par carte</div> }
+        <div class="express" [class.pending]="express() === 'pending'" [hidden]="express() === 'none'" data-testid="checkout-express">
+          <div class="express-host" #expressHost></div>
+          <div class="or">ou par carte</div>
+        </div>
         @if (status() === 'loading') { <div class="loading">Préparation du paiement…</div> }
         <div class="payment" #paymentHost></div>
 
