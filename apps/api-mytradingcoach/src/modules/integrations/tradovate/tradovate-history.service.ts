@@ -64,6 +64,11 @@ function champsBruts(ligne: string): string[] {
   return champs;
 }
 
+/** Une fenêtre recalculée pour la réparation des frais (#783) : ses trades, ou son échec. */
+export type RecomputedWindow =
+  | { window: ReportWindow; dtos: ImportDto[]; feesExpected: number; fullFees: boolean; error?: undefined }
+  | { window: ReportWindow; error: string };
+
 export interface HistoryImportResult {
   created: number;
   duplicates: number;
@@ -239,26 +244,10 @@ export class TradovateHistoryService {
     result: HistoryImportResult,
     apiHosts: TradovateApiHosts | null,
   ): Promise<boolean> {
-    const performance = await this.reporting.fetchCsv(env, token, 'Performance', window, apiHosts);
-    // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
-    if (!performance) return false;
-
-    const { broker, csv, formatChanged } = preprocessCsv(this.horodatagesEnUtc(performance));
-    if (formatChanged) {
-      throw new Error(`rapport Performance au format modifié (${formatChanged.join(' ; ')})`);
-    }
-    if (broker !== 'tradovate') {
-      throw new Error(`rapport Performance non reconnu (détecté « ${broker} »)`);
-    }
-    const dtos = mapNormalizedCsvToDto(csv);
-    if (dtos.length === 0) return false;
-
-    // Les frais sont un bonus : leur absence donne un P&L brut, jamais un import raté.
-    try {
-      result.feesExpected += await this.applyFees(env, token, window, dtos, apiHosts);
-    } catch (err) {
-      this.logger.warn(`Frais indisponibles sur la fenêtre (${(err as Error).message}) : P&L brut.`);
-    }
+    const computed = await this.windowTrades(env, token, window, apiHosts);
+    if (!computed) return false;
+    const { dtos } = computed;
+    result.feesExpected += computed.feesExpected;
     result.feesAssigned = +(
       result.feesAssigned + dtos.reduce((sum, d) => sum + (d.commission ?? 0), 0)
     ).toFixed(2);
@@ -277,6 +266,65 @@ export class TradovateHistoryService {
     result.duplicates += imported.duplicates;
     result.failed += imported.failed;
     return true;
+  }
+
+  /**
+   * Trades d'une fenêtre tels que l'import les créerait (rapport Performance, frais joints), SANS
+   * rien écrire. null = mois sans trade. Partagé par l'import et la réparation des frais (#783).
+   */
+  private async windowTrades(
+    env: TradovateEnv,
+    token: string,
+    window: ReportWindow,
+    apiHosts: TradovateApiHosts | null,
+  ): Promise<{ dtos: ImportDto[]; feesExpected: number; fullFees: boolean } | null> {
+    const performance = await this.reporting.fetchCsv(env, token, 'Performance', window, apiHosts);
+    // Un mois sans trade renvoie un CSV vide : ce n'est pas une erreur.
+    if (!performance) return null;
+
+    const { broker, csv, formatChanged } = preprocessCsv(this.horodatagesEnUtc(performance));
+    if (formatChanged) {
+      throw new Error(`rapport Performance au format modifié (${formatChanged.join(' ; ')})`);
+    }
+    if (broker !== 'tradovate') {
+      throw new Error(`rapport Performance non reconnu (détecté « ${broker} »)`);
+    }
+    const dtos = mapNormalizedCsvToDto(csv);
+    if (dtos.length === 0) return null;
+
+    // Les frais sont un bonus : leur absence donne un P&L brut, jamais un import raté.
+    try {
+      const fees = await this.applyFees(env, token, window, dtos, apiHosts);
+      return { dtos, feesExpected: fees.expected, fullFees: fees.full };
+    } catch (err) {
+      this.logger.warn(`Frais indisponibles sur la fenêtre (${(err as Error).message}) : P&L brut.`);
+      return { dtos, feesExpected: 0, fullFees: false };
+    }
+  }
+
+  /**
+   * Toute la vie d'un compte, mois par mois, recalculée depuis la Reporting API sans rien écrire
+   * (réparation des frais, #783). Une fenêtre en échec est rendue comme telle, sans arrêter les
+   * autres ; un jeton mort arrête tout (les suivantes échoueraient pareil).
+   */
+  async *recomputedWindows(conn: BrokerConnection): AsyncGenerator<RecomputedWindow> {
+    if (!conn.externalAccountId || !conn.externalEnv) {
+      throw new TradovateException('TRADOVATE_ACCOUNT_SELECTION_REQUIRED');
+    }
+    const env = conn.externalEnv as TradovateEnv;
+    const { token, apiHosts } = await this.connections.getSession(conn);
+    const account = await this.resolveAccount(env, token, conn, apiHosts);
+    const { months } = this.depthFromCreation(account, new Date());
+    for (const window of this.monthlyWindows(months, account.name)) {
+      try {
+        const computed = await this.windowTrades(env, token, window, apiHosts);
+        yield computed ? { window, ...computed } : { window, dtos: [], feesExpected: 0, fullFees: false };
+      } catch (err) {
+        if (err instanceof TradovateApiError && err.kind === 'unauthorized') throw err.toException();
+        yield { window, error: (err as Error).message };
+      }
+      await this.wait(PAUSE_BETWEEN_WINDOWS_MS);
+    }
   }
 
   /**
@@ -323,6 +371,7 @@ export class TradovateHistoryService {
   /**
    * Frais de la fenêtre, attribués une seule fois par fill. Renvoie le total attendu.
    * Cash History (tous les frais) en priorité, repli sur la colonne `commission` de `Fills`.
+   * `full` : les frais viennent du Cash History (tous types), pas de la commission seule.
    */
   private async applyFees(
     env: TradovateEnv,
@@ -330,9 +379,9 @@ export class TradovateHistoryService {
     window: ReportWindow,
     dtos: ImportDto[],
     apiHosts: TradovateApiHosts | null,
-  ): Promise<number> {
+  ): Promise<{ expected: number; full: boolean }> {
     const csv = await this.reporting.fetchCsv(env, token, 'Fills', window, apiHosts);
-    if (!csv) return 0;
+    if (!csv) return { expected: 0, full: false };
 
     const cash = await this.reporting
       .fetchCsv(env, token, 'Cash History', window, apiHosts)
@@ -347,7 +396,7 @@ export class TradovateHistoryService {
         `Frais de la fenêtre (Cash History) : ${assigned} attribué(s) sur ${full.expected} attendu(s) ` +
           `(${full.feeByFill.size} fills, ${consumed} consommés, ${full.orphans} ligne(s) sans fill).`,
       );
-      return full.expected;
+      return { expected: full.expected, full: true };
     }
 
     const lines = csv.split(/\r?\n/).filter((l) => l.trim());
@@ -356,7 +405,7 @@ export class TradovateHistoryService {
     const iFee = header.indexOf('commission');
     if (iId < 0 || iFee < 0) {
       this.logger.warn('Rapport Fills sans colonne « Fill ID » ou « commission » : P&L brut.');
-      return 0;
+      return { expected: 0, full: false };
     }
     const feeByFill = new Map<string, number>();
     let expected = 0;
@@ -373,7 +422,7 @@ export class TradovateHistoryService {
       `Frais de la fenêtre (commission seule) : ${assigned} attribué(s) sur ${+expected.toFixed(2)} attendu(s) ` +
         `(${feeByFill.size} fills, ${consumed} consommés).`,
     );
-    return +expected.toFixed(2);
+    return { expected: +expected.toFixed(2), full: false };
   }
 
   /**

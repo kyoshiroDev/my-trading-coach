@@ -29,6 +29,8 @@ export interface AuthUser {
   /** Statut de l'abonnement Stripe (`active`, `trialing`, `canceled`…), jamais d'identifiant. */
   stripeSubscriptionStatus?: string | null;
   stripeCurrentPeriodEnd?: string | null;
+  /** Fin programmée de l'abonnement (essai annulé, résiliation en fin de période), #813. */
+  stripeCancelAt?: string | null;
   isDemo?: boolean;
   onboardingCompleted?: boolean;
   market?: string | null;

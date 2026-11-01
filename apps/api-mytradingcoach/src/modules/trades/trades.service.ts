@@ -548,4 +548,13 @@ export class TradesService {
   recomputeBehavioralGrades(accountId: string): Promise<void> {
     return recomputeBehavioralGrades(this.prisma, accountId);
   }
+
+  /**
+   * Après une correction en masse des frais (réparation #783) : barème du compte recalculé et
+   * cache analytics invalidé, comme après un import.
+   */
+  async refreshAfterFeesRepair(userId: string, accountId: string): Promise<void> {
+    await this.recomputeBehavioralGrades(accountId);
+    await this.analyticsService.invalidateUserCache(userId);
+  }
 }

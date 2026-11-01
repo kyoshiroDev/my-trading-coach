@@ -73,6 +73,7 @@ const ME_SELECT = {
   signupTrialEndsAt: true,
   stripeSubscriptionStatus: true,
   stripeCurrentPeriodEnd: true,
+  stripeCancelAt: true,
   tradingStyle: true,
   tradingStrategy: true,
   tradingSessions: true,

@@ -138,6 +138,24 @@ describe('UserDetailService', () => {
     expect(r.profile.tradingStrategy).toEqual([]);
   });
 
+  it.each([
+    ['essai d’inscription', { plan: 'FREE', trialEndsAt: 10, trialSource: 'SIGNUP' }, { trialSource: 'SIGNUP', premiumAccess: true, offeredPremium: false }],
+    ['essai prolongé par l’admin', { plan: 'FREE', trialEndsAt: 10, trialSource: 'ADMIN' }, { trialSource: 'ADMIN', premiumAccess: true, offeredPremium: true }],
+    ['Premium offert (ancien, sans origine)', { plan: 'FREE', trialEndsAt: 10, trialSource: null }, { trialSource: null, premiumAccess: true, offeredPremium: true }],
+    ['gratuit', { plan: 'FREE', trialEndsAt: null, trialSource: null }, { trialSource: null, premiumAccess: false, offeredPremium: false }],
+    ['essai expiré', { plan: 'FREE', trialEndsAt: -1, trialSource: 'SIGNUP' }, { trialSource: 'SIGNUP', premiumAccess: false, offeredPremium: false }],
+  ] as const)('identité (#769) : %s → origine de l’essai et accès Premium réel', async (_l, u, expected) => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'u3', name: null, email: 'trial@test.com', plan: u.plan, role: 'USER',
+      stripeSubscriptionStatus: null, referralCode: null, trialSource: u.trialSource,
+      trialEndsAt: u.trialEndsAt === null ? null : new Date(Date.now() + u.trialEndsAt * DAY),
+      createdAt: new Date(Date.now() - DAY), lastSeenAt: null,
+    });
+    const { identity } = await service.getUserDetail('u3');
+    expect({ trialSource: identity.trialSource, premiumAccess: identity.premiumAccess, offeredPremium: identity.offeredPremium })
+      .toEqual(expected);
+  });
+
   it('fondateur et code partenaire (#525) : numéro, statut, date de perte, conditions figées', async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'u1', name: null, email: 'f@test.com', plan: 'FREE', role: 'USER',

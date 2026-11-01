@@ -64,6 +64,16 @@ const APPEARANCE: Appearance = {
   },
 };
 
+/**
+ * Formulaire carte « posé » (#829) : Stripe le redimensionne encore après son `ready` (332, 344 puis
+ * 416 px à 360 px de large, mesuré sur le banc). Il reste masqué derrière « Préparation du
+ * paiement… » jusqu'à ce que sa hauteur ne bouge plus pendant ce délai, puis apparaît d'un coup avec
+ * le total et le bouton : rien de visible ne se décale. Écarts relevés entre deux redimensionnements :
+ * 0,5 à 1,1 s. Plafond : affiché quoi qu'il arrive.
+ */
+const FORM_SETTLE_MS = 1200;
+const FORM_SETTLE_MAX_MS = 5000;
+
 const eur = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
 
 /**
@@ -101,8 +111,15 @@ export class CheckoutPageComponent {
   protected readonly fatalError = signal<string | null>(null);
   protected readonly payError = signal<string | null>(null);
   protected readonly paying = signal(false);
-  protected readonly showOr = signal(false);
+  /**
+   * Boutons express (Link, Google Pay, Apple Pay) : ils arrivent plusieurs secondes après le
+   * formulaire carte. Leur place est réservée dès le chargement (#818) pour que le formulaire ne
+   * descende pas ; elle n'est rendue que si aucun moyen express n'est disponible.
+   */
+  protected readonly express = signal<'pending' | 'shown' | 'none'>('pending');
   protected readonly cardMinHeight = signal<number | null>(null);
+  /** Formulaire, total et bouton affichés : seulement une fois la hauteur du formulaire stable (#829). */
+  protected readonly formShown = signal(false);
   protected readonly summary = signal<CheckoutSummary | null>(null);
   protected readonly todayEur = signal<number | null>(null);
   protected readonly email = signal(this.userStore.user()?.email ?? '');
@@ -176,8 +193,12 @@ export class CheckoutPageComponent {
       buttonType: { applePay: 'subscribe', googlePay: 'subscribe' },
       layout: { maxColumns: 3, overflow: 'never' },
     } as Parameters<typeof checkout.createExpressCheckoutElement>[0]);
-    express.on('ready', (e) => this.showOr.set(Object.values(e.availablePaymentMethods ?? {}).some(Boolean)));
+    express.on('ready', (e) =>
+      this.express.set(Object.values(e.availablePaymentMethods ?? {}).some(Boolean) ? 'shown' : 'none'),
+    );
+    express.on('loaderror', () => this.express.set('none'));
     express.on('confirm', (e) => void this.confirm(e));
+    const paymentReady = new Promise<void>((resolve) => payment.on('ready', () => resolve()));
 
     const paymentEl = this.paymentHost()?.nativeElement;
     const expressEl = this.expressHost()?.nativeElement;
@@ -192,8 +213,33 @@ export class CheckoutPageComponent {
     if (session.email) this.email.set(session.email);
     this.todayEur.set(session.total.total.minorUnitsAmount / 100);
     this.status.set('ready');
-    // Hauteur du formulaire figée une fois chargé : replier la carte (choix Klarna) ne fait rien bouger.
-    setTimeout(() => this.lockCardHeight(), 600);
+    await paymentReady;
+    await this.formSettled(this.paymentHost()?.nativeElement);
+    this.formShown.set(true);
+    // Hauteur du formulaire figée une fois affiché : replier la carte (choix Klarna) ne fait rien bouger.
+    setTimeout(() => this.lockCardHeight());
+  }
+
+  /** Résout quand la hauteur du formulaire n'a pas bougé depuis `FORM_SETTLE_MS` (plafond `FORM_SETTLE_MAX_MS`). */
+  private formSettled(el: HTMLElement | undefined): Promise<void> {
+    return new Promise((resolve) => {
+      if (!el || typeof ResizeObserver === 'undefined') return resolve();
+      let quiet: ReturnType<typeof setTimeout>;
+      const done = () => {
+        clearTimeout(quiet);
+        clearTimeout(max);
+        observer.disconnect();
+        resolve();
+      };
+      const observer = new ResizeObserver(() => {
+        clearTimeout(quiet);
+        quiet = setTimeout(done, FORM_SETTLE_MS);
+      });
+      const max = setTimeout(done, FORM_SETTLE_MAX_MS);
+      observer.observe(el);
+      quiet = setTimeout(done, FORM_SETTLE_MS);
+      this.cleanups.push(done);
+    });
   }
 
   protected async confirm(expressEvent?: StripeExpressCheckoutElementConfirmEvent): Promise<void> {

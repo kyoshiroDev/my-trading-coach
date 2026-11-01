@@ -474,4 +474,22 @@ describe('TradovateHistoryService — frais complets depuis le Cash History (#78
     expect(r.feesExpected).toBe(20.06);
     expect(total(persiste[0])).toBe(20.06);
   });
+
+  it('recomputedWindows (réparation) : frais complets par fenêtre, AUCUNE écriture', async () => {
+    const { service, trades, prisma } = setup({ ...reports, 'Cash History': fx('tradovate-fees-2026-10-27-cash-history.csv') });
+    vi.spyOn(service as unknown as { depthFromCreation: () => unknown }, 'depthFromCreation').mockReturnValue({ months: 1, stopOnEmpty: false });
+
+    const fenetres = [];
+    for await (const w of service.recomputedWindows(conn())) fenetres.push(w);
+
+    expect(fenetres).toHaveLength(1);
+    const [w] = fenetres;
+    expect(w.error).toBeUndefined();
+    if (w.error === undefined) {
+      expect(w.fullFees).toBe(true);
+      expect(total(w.dtos as Record<string, unknown>[])).toBe(74.12);
+    }
+    expect(trades.importTrades).not.toHaveBeenCalled();
+    expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+  });
 });

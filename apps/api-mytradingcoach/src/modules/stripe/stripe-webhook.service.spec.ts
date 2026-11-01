@@ -295,5 +295,8 @@ describe('StripeWebhookService — événements après suppression du compte', (
     }
 
     expect(Sentry.captureMessage).toHaveBeenCalledOnce();
+    // #827 : l'identifiant client Stripe ne part jamais chez Sentry ; le compte interne, si.
+    expect(JSON.stringify(vi.mocked(Sentry.captureMessage).mock.calls)).not.toContain('cus_1');
+    expect(vi.mocked(Sentry.captureMessage).mock.calls[0][1]).toMatchObject({ user: { id: 'user_1' } });
   });
 });

@@ -20,6 +20,8 @@ import { AuthUserCacheService } from '../infra/auth-user-cache.service';
 import { OFFER_PREMIUM_DEFAULT_DAYS, hasActiveStripeSubscription } from './premium-offer.util';
 import { StripeAccountClosureService } from '../stripe/stripe-account-closure.service';
 import { DiscordGuildClient } from '../discord/discord-guild.client';
+import { REAL_USERS_WHERE } from '../../common/stats/real-users';
+import { premiumAccessWhere, subscriptionStateWhere, subscriptionStatesWhere } from '../../common/stats/subscription-state-where';
 
 /** Résiliation Stripe impossible : rien n'est supprimé, l'utilisateur peut réessayer. */
 export const BILLING_CLOSURE_FAILED_MESSAGE =
@@ -54,6 +56,9 @@ const USER_SELECT = {
   createdAt: true,
 } as const;
 
+/** Page Abonnements : essais et offerts listés (les plus récents d'abord). */
+const TRIAL_LIST_MAX = 200;
+
 /** Filtre par UTM d'inscription (#625) : absent = ignoré, `UTM_NONE` = non renseigné. */
 function utmWhere(utm: Partial<AcquisitionUtm>): Prisma.UserWhereInput {
   const eq = (v: string) => (v === UTM_NONE ? null : v);
@@ -71,6 +76,8 @@ const ADMIN_USER_SELECT = {
   plan: true,
   role: true,
   trialEndsAt: true,
+  trialSource: true,
+  stripeSubscriptionStatus: true,
   stripeInterval: true,
   stripeCurrentPeriodEnd: true,
   lastSeenAt: true,
@@ -79,6 +86,7 @@ const ADMIN_USER_SELECT = {
   acquisitionSource: true,
   acquisitionMedium: true,
   acquisitionCampaign: true,
+  isInternal: true,
 } as const;
 
 @Injectable()
@@ -175,7 +183,7 @@ export class UsersService {
 
   async adminUpdate(
     targetId: string,
-    dto: { name?: string; plan?: Plan; role?: Role },
+    dto: { name?: string; plan?: Plan; role?: Role; isInternal?: boolean },
   ) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
@@ -235,6 +243,7 @@ export class UsersService {
         plan: true,
         createdAt: true,
         referredBy: true,
+        isInternal: true,
         stripeCustomerId: true,
         discordId: true,
         _count: { select: { trades: true } },
@@ -272,6 +281,7 @@ export class UsersService {
           referredBy: user.referredBy,
           deletedBy,
           reason: reason?.trim() ? reason.trim().slice(0, 280) : null,
+          isInternal: user.isInternal,
         },
       }),
       this.prisma.user.delete({ where: { id: userId } }),
@@ -288,12 +298,12 @@ export class UsersService {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
 
-    // Utilisateurs « réels » : hors démo ET hors comptes ADMIN (super-admin, etc.).
-    const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
+    // Utilisateurs « réels » : hors démo, hors comptes internes et hors ADMIN, filtre partagé.
+    const REAL_USERS = REAL_USERS_WHERE;
 
     const [
       premiumMonthly, premiumAnnual,
-      trials, freeUsers, newThisMonth, churnedThisMonth,
+      trials, offered, paused, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
       totalUsers, totalPremium,
       tradersActifs7d, tradersActifs30d,
@@ -307,26 +317,30 @@ export class UsersService {
       this.prisma.user.count({
         where: { ...REAL_USERS, plan: 'PREMIUM', stripeInterval: 'year', stripeSubscriptionStatus: 'active' },
       }),
-      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'PREMIUM', trialEndsAt: { gt: now } } }),
-      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'FREE' } }),
+      // État réel (#828, `subscriptionState`) : le plan reste FREE pendant l'essai d'inscription.
+      // Essais = essai d'inscription + essai d'abonnement (réservation fondateur, ancien essai 30 j).
+      this.prisma.user.count({ where: { AND: [REAL_USERS, subscriptionStatesWhere(['signup_trial', 'subscription_trial'], now)] } }),
+      this.prisma.user.count({ where: { AND: [REAL_USERS, subscriptionStateWhere('offered', now)] } }),
+      this.prisma.user.count({ where: { AND: [REAL_USERS, subscriptionStateWhere('paused', now)] } }),
+      this.prisma.user.count({ where: { AND: [REAL_USERS, subscriptionStateWhere('free', now)] } }),
       this.prisma.user.count({ where: { ...REAL_USERS, createdAt: { gte: startOfMonth } } }),
       // Churn fiable : résiliations effectives datées sur le mois courant (webhook Stripe).
       this.prisma.user.count({ where: { ...REAL_USERS, subscriptionCanceledAt: { gte: startOfMonth } } }),
       // role spécifique → écrase le `role: { not: ADMIN }` du spread (un user a un seul rôle).
       this.prisma.user.count({ where: { ...REAL_USERS, role: 'BETA_TESTER' } }),
       this.prisma.user.count({ where: { ...REAL_USERS, role: 'AMBASSADOR' } }),
-      // Total réel (tous plans/rôles, hors démo + hors admin) + comptes Premium (inclut les
-      // Premium octroyés sans abonnement Stripe : beta, ambassadeur, comp).
+      // Total réel (tous plans/rôles, hors démo + hors admin) + accès Premium (#828, décision G3) :
+      // payants, essais, offerts, bêta et accès manuels.
       this.prisma.user.count({ where: { ...REAL_USERS } }),
-      this.prisma.user.count({ where: { ...REAL_USERS, plan: 'PREMIUM' } }),
+      this.prisma.user.count({ where: { AND: [REAL_USERS, premiumAccessWhere(now)] } }),
       // Engagement par récence : ≥1 trade sur 7j / 30j (distinct users, hors démo+admin).
       // À ne pas confondre avec l'activation (= a tradé au moins une fois).
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } } }),
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: thirtyDaysAgo } } } } }),
-      // Comptes supprimés (trace DeletedAccount) : distinct du churn d'abonnement.
-      // Les comptes démo ne sont jamais supprimés → naturellement hors démo.
-      this.prisma.deletedAccount.count({ where: { deletedAt: { gte: startOfMonth } } }),
-      this.prisma.deletedAccount.count(),
+      // Comptes supprimés (trace DeletedAccount) : distinct du churn d'abonnement, hors comptes
+      // internes (#823). Les comptes démo ne sont jamais supprimés → naturellement hors démo.
+      this.prisma.deletedAccount.count({ where: { isInternal: false, deletedAt: { gte: startOfMonth } } }),
+      this.prisma.deletedAccount.count({ where: { isInternal: false } }),
     ]);
 
     // MRR/ARR sur le montant RÉELLEMENT payé (#525) : 49 € / 490/12 au prix normal, 29 € / 290/12
@@ -344,7 +358,7 @@ export class UsersService {
       totalPremium,
       premiumMonthly, premiumAnnual,
       monthly, annual,
-      trials, freeUsers, newThisMonth, churnedThisMonth,
+      trials, offered, paused, freeUsers, newThisMonth, churnedThisMonth,
       betaTesters, ambassadors,
       tradersActifs7d, tradersActifs30d,
       comptesSupprimesMois, comptesSupprimesTotal,
@@ -582,11 +596,13 @@ export class UsersService {
       lastSeenAt: true, lastLoginAt: true, createdAt: true,
     } as const;
 
-    // Abonnés payants = Premium avec abonnement Stripe (hors démo).
-    const stripeWhere = {
-      isDemo: false,
-      plan: 'PREMIUM' as Plan,
-      stripeInterval: { not: null },
+    // Abonnés payants = abonnement Stripe `active` (hors démo, #828) : une réservation fondateur ou un
+    // essai d'abonnement (`trialing`) ne paie pas encore, il va dans « Essais et offerts ».
+    const now = new Date();
+    const stripeWhere: Prisma.UserWhereInput = { isDemo: false, ...subscriptionStateWhere('paying', now) };
+    // Essais et offerts (#828) : essai d'inscription, essai d'abonnement, Premium offert par l'admin.
+    const trialWhere: Prisma.UserWhereInput = {
+      AND: [{ isDemo: false }, subscriptionStatesWhere(['signup_trial', 'subscription_trial', 'offered'], now)],
     };
     // « Accès manuels » = accès Premium octroyé SANS abonnement Stripe
     // (bêta, ambassadeur, comp) : pas seulement le rôle BETA_TESTER. Hors démo.
@@ -595,7 +611,7 @@ export class UsersService {
       plan: 'PREMIUM' as Plan,
       stripeInterval: null,
     };
-    const [stripeUsers, stripeTotal, betaTesters] = await Promise.all([
+    const [stripeUsers, stripeTotal, betaTesters, trialUsers] = await Promise.all([
       this.prisma.user.findMany({
         where: stripeWhere,
         skip,
@@ -619,6 +635,12 @@ export class UsersService {
         orderBy: { createdAt: 'desc' },
         select: userSelect,
       }),
+      this.prisma.user.findMany({
+        where: trialWhere,
+        orderBy: { createdAt: 'desc' },
+        take: TRIAL_LIST_MAX,
+        select: { ...userSelect, trialSource: true, stripeSubscriptionStatus: true, stripeCancelAt: true },
+      }),
     ]);
 
     // Objet brut : l'intercepteur global ajoute `{ data }`. L'ancien `{ data: { … } }` donnait
@@ -626,6 +648,7 @@ export class UsersService {
     return {
       stripeUsers,
       betaTesters,
+      trialUsers,
       total: stripeTotal + betaTesters.length,
       page,
       limit,

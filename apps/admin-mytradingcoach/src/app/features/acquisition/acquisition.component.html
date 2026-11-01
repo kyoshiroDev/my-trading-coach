@@ -164,7 +164,7 @@
         </ol>
         <p class="funnel-foot">
           Démo : {{ f.demo.opens }} ouverture(s) · {{ f.demo.signupClicks }} clic(s) « Créer mon compte »
-          · Stripe aujourd'hui : {{ f.current.trialing }} essai(s) en cours, {{ f.current.paying }} payant(s)
+          · Stripe aujourd'hui&nbsp;: {{ f.current.trialing }} essai(s) en cours, {{ f.current.paying }} payant(s)
           @if (f.steps[4].users) { · {{ f.steps[4].users }} retour(s) Stripe annulé(s) }
         </p>
         @if (funnelPlaces().length) {

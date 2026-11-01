@@ -11,6 +11,7 @@ import {
 } from '../resend/campaigns/campaign-registry';
 import {
   announcementTemplate,
+  legalNoticeTemplate,
   type CampaignBuildCtx,
   type CampaignContent,
 } from '../resend/campaigns/campaign-templates';
@@ -25,7 +26,9 @@ const testEmail = () => process.env['CAMPAIGN_TEST_EMAIL'] ?? 'hello@mytradingco
 /** Prénom d'exemple de l'envoi test. */
 const TEST_FIRST_NAME = 'Alex';
 /** Campagnes dont l'envoi réel exige un test sur le contenu ACTUEL (vérifié côté serveur). */
-const REQUIRES_TEST = new Set<CampaignType>(['founder_launch']);
+const REQUIRES_TEST = new Set<CampaignType>(['founder_launch', 'legal_notice']);
+/** Campagnes au contenu saisi dans l'admin (objet + corps en Markdown). */
+const FREE_CONTENT = new Set<CampaignType>(['announcement', 'legal_notice']);
 const testKey = (type: CampaignType) => `campaign-test:${type}`;
 const TEST_TTL_SECONDS = 7 * 24 * 3600;
 /** Bilan d'exemple (aperçu / test de first_week_recap) : aucune donnée réelle d'un utilisateur. */
@@ -47,9 +50,9 @@ export type CampaignType =
   | 'premium_upsell'
   | 'reengagement'
   | 'strategy_profile'
-  | 'debrief_reminder'
   | 'announcement'
-  | 'founder_launch';
+  | 'founder_launch'
+  | 'legal_notice';
 
 // Mapping type admin → clé du registre.
 const TYPE_TO_KEY: Record<CampaignType, string> = {
@@ -62,9 +65,9 @@ const TYPE_TO_KEY: Record<CampaignType, string> = {
   premium_upsell: 'premium_upsell',
   reengagement: 'reengagement',
   strategy_profile: 'profile_reminder',
-  debrief_reminder: 'debrief_reminder',
   announcement: 'announcement',
   founder_launch: 'founder_launch',
+  legal_notice: 'legal_notice',
 };
 
 interface CampaignPresentation {
@@ -85,9 +88,9 @@ const PRESENTATION: CampaignPresentation[] = [
   { type: 'premium_upsell',   emoji: '⚡', desc: 'Inciter les FREE actifs à passer Premium',           targetDesc: 'Users FREE actifs (14 derniers j)' },
   { type: 'reengagement',     emoji: '😴', desc: 'Réengager les inactifs depuis plus de 7 jours',      targetDesc: 'Users sans trade depuis 7j' },
   { type: 'strategy_profile', emoji: '📊', desc: 'Rappel pour renseigner le profil IA',                targetDesc: 'Users sans profil stratégie' },
-  { type: 'debrief_reminder', emoji: '📅', desc: 'Notifier les Premium que le debrief est disponible', targetDesc: 'Users Premium' },
   { type: 'announcement',     emoji: '📣', desc: 'Envoyer une annonce libre aux users consentants',    targetDesc: 'Tous les users consentants' },
   { type: 'founder_launch',   emoji: '🔥', desc: "Annoncer l'ouverture de l'offre fondateur",           targetDesc: 'Inscrits non abonnés (hors fondateurs, codes partenaires, bêta)' },
+  { type: 'legal_notice',     emoji: '⚖️', desc: 'Prévenir 30 jours avant un changement des CGU ou des prix (sans consentement requis)', targetDesc: 'Tous les comptes (hors démo et admin)' },
 ];
 
 export interface CampaignMeta extends CampaignPresentation {
@@ -150,7 +153,7 @@ export class EmailCampaignService {
     return { firstWeek: SAMPLE_FIRST_WEEK, ...loaded };
   }
 
-  /** Rendu d'une campagne : annonce = contenu saisi ; founder_launch = places restantes. */
+  /** Rendu d'une campagne : annonce et information = contenu saisi ; founder_launch = places restantes. */
   private render(
     type: CampaignType,
     ctx: Partial<CampaignBuildCtx> & { userName: string; unsubUrl: string },
@@ -158,9 +161,18 @@ export class EmailCampaignService {
     body?: string,
   ): CampaignContent {
     const full = { ...ctx, appUrl: this.appUrl };
-    return type === 'announcement'
-      ? announcementTemplate(full, { subject, bodyHtml: renderEmailMarkdown(body ?? '') })
-      : this.campaign(type).build(full);
+    const bodyHtml = renderEmailMarkdown(body ?? '');
+    if (type === 'announcement') return announcementTemplate(full, { subject, bodyHtml });
+    if (type === 'legal_notice') return legalNoticeTemplate(full, { subject, bodyHtml });
+    return this.campaign(type).build(full);
+  }
+
+  /** Contenu saisi obligatoire : objet pour l'annonce, objet et texte pour l'information de service. */
+  private assertContent(type: CampaignType, subject?: string, body?: string): void {
+    if (FREE_CONTENT.has(type) && !subject?.trim()) {
+      throw new BadRequestException(type === 'announcement' ? 'Sujet requis pour une annonce' : 'Objet requis');
+    }
+    if (type === 'legal_notice' && !body?.trim()) throw new BadRequestException('Texte de l’information requis');
   }
 
   /**
@@ -295,9 +307,7 @@ export class EmailCampaignService {
    * contenu testé : l'envoi réel exige un test sur le contenu actuel.
    */
   async sendTest(type: CampaignType, subject?: string, body?: string) {
-    if (type === 'announcement' && !subject?.trim()) {
-      throw new BadRequestException('Sujet requis pour une annonce');
-    }
+    this.assertContent(type, subject, body);
     const c = this.campaign(type);
     const seatsLeft = type === 'founder_launch' ? (await this.founderSelling()).seatsLeft : undefined;
     const sample = await this.sampleContext(c);
@@ -333,9 +343,7 @@ export class EmailCampaignService {
     body?: string,
     force = false,
   ) {
-    if (type === 'announcement' && !subject?.trim()) {
-      throw new BadRequestException('Sujet requis pour une annonce');
-    }
+    this.assertContent(type, subject, body);
     const c = this.campaign(type);
     // Offre fondateur : refusée si l'offre ne vend pas ; places restantes figées au moment de l'envoi.
     let seatsLeft: number | undefined;
@@ -367,7 +375,6 @@ export class EmailCampaignService {
       }
     }
 
-    const appUrl = process.env['FRONTEND_URL'] ?? 'https://app.mytradingcoach.app';
     let success = 0;
     let errors = 0;
     let skipped = 0;
@@ -379,16 +386,11 @@ export class EmailCampaignService {
         continue;
       }
       try {
-        // Annonce : contenu personnalisé fourni par l'admin (override), construit par le dispatch une
+        // Annonce, information : contenu fourni par l'admin (override), construit par le dispatch une
         // fois le jeton de désinscription créé (un compte sans jeton recevait un lien `?token=` mort, #747).
-        const override =
-          type === 'announcement'
-            ? (unsubUrl: string) =>
-                announcementTemplate(
-                  { userName: user.name ?? '', appUrl, unsubUrl },
-                  { subject, bodyHtml: renderEmailMarkdown(body ?? '') },
-                )
-            : undefined;
+        const override = FREE_CONTENT.has(type)
+          ? (unsubUrl: string) => this.render(type, { userName: user.name ?? '', unsubUrl }, subject, body)
+          : undefined;
         await this.dispatch.dispatch(c, user, override, extra);
         success++;
         await new Promise((r) => setTimeout(r, 150));

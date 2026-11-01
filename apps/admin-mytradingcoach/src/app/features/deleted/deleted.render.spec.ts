@@ -122,3 +122,19 @@ describe('Comptes supprimés — carte « Motifs de départ » sans données', (
     expect(text).toContain('Total supprimés');
   });
 });
+
+describe('Comptes supprimés — compte interne (#823)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('badge « Interne » sur la ligne du compte interne seulement', async () => {
+    const data = donneesAvecMotifs();
+    const base = data.accounts[0];
+    data.accounts = [{ ...base, id: 'i1', isInternal: true }, { ...base, id: 'r1', isInternal: false }];
+    const { el } = await rendre(data);
+    const lignes = [...el.querySelectorAll('tbody tr')];
+    expect(lignes).toHaveLength(2);
+    expect(lignes[0].querySelector('[data-testid="internal-badge"]')?.textContent?.trim()).toBe('Interne');
+    expect(lignes[1].querySelector('[data-testid="internal-badge"]')).toBeNull();
+  });
+});

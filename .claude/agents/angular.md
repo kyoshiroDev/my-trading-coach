@@ -1098,10 +1098,13 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
 - Aperçu des campagnes (admin `/emails`) : **toujours** le HTML renvoyé par
   `POST /admin/campaigns/:type/preview` (le vrai template envoyé), jamais un rendu reconstruit côté
   front. Objet/contenu d'une annonce → nouvel appel après 400 ms de pause (`switchMap`).
-- Campagnes `requiresTest` (`founder_launch`) : bouton « Envoyer un test à {testEmail} » (adresse
+- Campagnes `requiresTest` (`founder_launch`, `legal_notice`) : bouton « Envoyer un test à {testEmail} » (adresse
   donnée par l'API, jamais saisie) ; « Envoyer à N inscrits » désactivé tant que le contenu actuel
   n'est pas testé (`testedCurrent`, revérifié par le serveur), puis confirmation « Envoyer à N
   inscrits ? ». Pas de case « force » pour ces campagnes. Ciblés avec / sans consentement affichés.
+- Contenu saisi (`FREE_CONTENT` : `announcement`, `legal_notice` #817) : mêmes champs objet / texte.
+  `legal_notice` exige aussi le texte, et l'avertissement dit « Information obligatoire » (envoyée
+  même à ceux qui ont coupé les e-mails, réservée aux CGU et aux prix, 30 jours avant).
 
 ## Libs front partagées (`libs/front/*`, audit du 27/09/2026)
 
@@ -1183,6 +1186,21 @@ en plein contenu. Le refus « mode démo » (403 `DemoReadOnlyGuard`) ne fait **
   la session. Après paiement : `/dashboard?checkout=success`. Si l'API renvoie `{ url }` (clé
   publiable absente), repli sur la page Stripe. Hauteur du formulaire figée après chargement
   (passer à Klarna ne fait rien bouger) ; colonne gauche collante en desktop.
+  **Boutons express** (#818) : ils arrivent 3 à 7 s après le formulaire carte. Leur zone
+  (`.express`, 52 px + séparateur « ou par carte ») est réservée dès le chargement, avec un
+  squelette (`pending`), et retirée seulement si Stripe ne propose aucun moyen express ou ne se
+  charge pas (`loaderror`). `.express-host` en `display: flow-root` : le bloc Stripe a des marges
+  de −4 px. Ne jamais créer la session plus tôt pour gagner du temps : chaque création réserve une
+  place fondateur 35 min.
+  **Formulaire posé avant affichage** (#829) : Stripe redimensionne encore le formulaire carte après
+  son `ready` (332, 344 puis 416 px à 360 px ; la hauteur finale dépend de la largeur : 273 à 760 px,
+  344 en desktop), et seulement une fois son cadre affiché. Le formulaire reste donc visible pour
+  Stripe mais recouvert par « Préparation du paiement… » (panneau opaque hors du flux, jamais
+  `visibility: hidden` sur `.payment`), total, bouton et mentions invisibles, jusqu'à 1,2 s sans
+  changement de hauteur (`ResizeObserver`, plafond 5 s). En mobile, les avantages (sous le panneau)
+  sont masqués pendant ce temps et l'en-tête réserve la hauteur du vrai texte (310 / 288 px). Page
+  alignée en haut à distance fixe, plus centrée verticalement. Mesuré sur le banc : CLS ≤ 0,0014
+  de 360 à 1024 px.
 - **Contrastes** : texte blanc sur un fond plein → `background: var(--primary)` (survol
   `--primary-hover`), jamais `var(--blue)` / `var(--blue-bright)` (trop clairs sous du blanc).
 - Les couleurs restent propres à chaque app : l'admin suit sa maquette (teal, Geist), seules la
@@ -1362,6 +1380,12 @@ L'API lit ce corps en JSON sur cette route seulement (cf. nestjs.md). Ne pas rev
   remboursement se fait dans Stripe, le webhook `charge.refunded` fait le reste), « Tarif partenaire
   CODE : … à vie / jusqu'au », bouton mensuel ↔ annuel (`POST /billing/interval`, confirmation), rappel
   neutre sous « Gérer mon abonnement » pour un fondateur / partenaire. Modale du Profil : `cta="profil"`.
+  **Blocs selon `subscriptionState`** (#813) : Premium sans abonnement → « Premium offert » ; essai
+  d'abonnement → « Essai gratuit… Premier prélèvement le » + « Gérer / annuler mon essai » ; annulation
+  programmée (`stripeCancelAt`) → « Essai annulé » / « Abonnement résilié », date de retour au gratuit,
+  sans bouton d'annulation ni mention de remboursement ; payant → « Renouvellement » ; en pause →
+  « Paiement en attente » + « Confirmer mon paiement » (portail), jamais « Passer Premium ». Jours
+  restants en jours de calendrier (`calendarDaysUntil`, comme le bandeau).
 - Tests JIT : les entrées signal ne s'affectent pas par `setInput` → remplacer le signal d'entrée sur
   l'instance AVANT le premier `detectChanges` (`plan-modal-offers.spec.ts`).
 

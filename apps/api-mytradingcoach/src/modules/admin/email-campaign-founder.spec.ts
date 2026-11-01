@@ -58,7 +58,7 @@ describe('campagne founder_launch : ciblage et texte', () => {
 
   it('texte validé : objet, prénom (ou « Salut, »), places restantes, lien direct dans l’app avec cta=email', () => {
     const named = founderLaunchTemplate({ userName: 'Ana', appUrl: 'https://app.test/', unsubUrl: 'U', seatsLeft: 187 });
-    expect(named.subject).toBe('200 places à 29 €/mois, à vie');
+    expect(named.subject).toBe('200 places à 29 €/mois, prix bloqué tant que tu restes abonné');
     expect(named.html).toContain('Salut Ana,');
     expect(named.html).toContain('<b>Plus que 187 places sur 200</b>');
     expect(named.html).toContain('Premier arrivé, premier servi.');
@@ -98,7 +98,7 @@ describe('campagne founder_launch : envoi test et envoi réel', () => {
   it('envoi test : un seul e-mail vers hello@, sujet [TEST], mêmes places, aucun EmailSend', async () => {
     const { svc, resend, dispatch, prisma } = makeService({ seatsLeft: 187 });
     const res = await svc.sendTest('founder_launch');
-    expect(res).toEqual({ to: 'hello@mytradingcoach.app', subject: '[TEST] 200 places à 29 €/mois, à vie' });
+    expect(res).toEqual({ to: 'hello@mytradingcoach.app', subject: '[TEST] 200 places à 29 €/mois, prix bloqué tant que tu restes abonné' });
     expect(resend.send).toHaveBeenCalledTimes(1);
     const mail = resend.send.mock.calls[0][0];
     expect(mail.to).toBe('hello@mytradingcoach.app');

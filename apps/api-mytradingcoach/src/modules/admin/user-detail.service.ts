@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { closedTradeStats } from '../analytics/analytics.sql';
 import type { AdminUserDetail as AdminUserDetailDto } from '@mtc/shared';
 import { isOfferedPremium } from '../users/premium-offer.util';
+import { isPremiumAccess } from '../discord/discord-access.util';
 
 const DAY_MS = 86_400_000;
 
@@ -19,8 +20,8 @@ export class UserDetailService {
       where: { id },
       select: {
         id: true, name: true, email: true, plan: true, role: true,
-        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, referralCode: true,
-        trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true,
+        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, stripeCancelAt: true, referralCode: true,
+        trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true, isInternal: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,
@@ -155,9 +156,13 @@ export class UserDetailService {
         plan: user.plan,
         role: user.role,
         subscriptionStatus: user.stripeSubscriptionStatus ?? null,
+        subscriptionCancelAt: user.stripeCancelAt?.toISOString() ?? null,
         trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
         offeredPremium: isOfferedPremium(user),
+        trialSource: user.trialSource ?? null,
+        premiumAccess: isPremiumAccess(user),
         isDemo: user.isDemo,
+        isInternal: user.isInternal,
         ambassadorRefCode: user.role === 'AMBASSADOR' ? user.referralCode : null,
         acquisition: {
           source: user.acquisitionSource ?? null,

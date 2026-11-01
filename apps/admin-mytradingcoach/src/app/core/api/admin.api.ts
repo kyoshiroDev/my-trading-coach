@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '@admin/environments/environment';
-import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role } from '@mtc/shared';
+import type { AcquisitionUtm, AdminAcquisitionData, AdminLandingEngagementData, AdminFunnelData, AdminPlanLinkStats, AdminSignupFunnelData, AdminSignupMethodsData, AdminUserDetail as UserDetailData, Plan, Role, TrialSource } from '@mtc/shared';
 export type { AdminPlanLinkStats };
 export type { UserDetailData };
 
@@ -9,6 +9,12 @@ export interface AdminUser {
   id: string; email: string; name: string | null;
   plan: Plan; role: Role;
   trialEndsAt: string | null; stripeInterval: 'month' | 'year' | null;
+  /** Origine de `trialEndsAt` (#769) : essai d'inscription ou Premium offert par l'admin. */
+  trialSource?: TrialSource | null;
+  /** Statut de l'abonnement Stripe (#813) : badge « En pause », essai d'abonnement. */
+  stripeSubscriptionStatus?: string | null;
+  /** Fin programmée de l'abonnement (#813), page Abonnements seulement. */
+  stripeCancelAt?: string | null;
   stripeCurrentPeriodEnd: string | null;
   lastSeenAt: string | null; lastLoginAt: string | null; createdAt: string;
   /** UTM d'inscription (#625), null = non renseigné. */
@@ -28,7 +34,12 @@ export interface AdminStats {
   totalPremium: number;
   premiumMonthly: number; premiumAnnual: number;
   monthly: number; annual: number;
+  /** Essais en cours (#828) : essai d'inscription + essai d'abonnement (réservation, ancien essai 30 j). */
   trials: number;
+  /** Premium offerts par l'admin en cours (#828). */
+  offered: number;
+  /** Abonnements en pause : paiement à confirmer ou refusé (#828). */
+  paused: number;
   freeUsers: number; newThisMonth: number; churnedThisMonth: number;
   betaTesters: number; ambassadors: number;
   // Engagement par récence (≥1 trade sur la fenêtre) : distinct de l'activation.
@@ -107,6 +118,8 @@ export interface AiCostData {
 export interface SubscriptionsData {
   stripeUsers: AdminUser[];
   betaTesters: AdminUser[];
+  /** Essais d'inscription, essais d'abonnement et Premium offerts en cours (#828). */
+  trialUsers?: AdminUser[];
   total: number; page: number; limit: number;
 }
 
@@ -200,6 +213,8 @@ export interface DeletedAccount {
   deletedBy: string; // "self" | "admin"
   reason: string | null;
   anonymizedAt: string | null;
+  /** Compte interne (#823) : affiché avec un badge, hors des chiffres. */
+  isInternal?: boolean;
 }
 
 export interface ReferralAdminParrain {
@@ -273,7 +288,7 @@ export class AdminApi {
     }
     return this.http.get<{ data: { users: AdminUser[]; total: number } }>(this.usersBase, { params });
   }
-  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR' }) {
+  update(id: string, dto: { name?: string; plan?: Plan; role?: 'USER' | 'BETA_TESTER' | 'AMBASSADOR'; isInternal?: boolean }) {
     return this.http.patch<{ data: AdminUser }>(`${this.usersBase}/${id}`, dto);
   }
   delete(id: string)    { return this.http.delete<void>(`${this.usersBase}/${id}`); }

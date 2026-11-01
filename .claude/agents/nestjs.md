@@ -1121,7 +1121,15 @@ Conséquences à connaître :
 - **Frais de l'historique (#783)** : `Fills` (fills + horodatages) + `Cash History` (tous les frais),
   joints par `cashHistoryFeesByFill` (même règle que l'import CSV, cf. `instruments.md`). Cash History
   indisponible ou vide → repli sur la colonne `commission` de `Fills` (commission seule). 3 appels par
-  mois non vide. Les trades importés avant le 31/10 n'ont que la commission (réparation à part).
+  mois non vide. Les trades importés avant le 31/10 n'avaient que la commission.
+- **Réparation des frais (#783)** : `POST /api/admin/tradovate/repair-fees` (ADMIN, 202, essai par
+  défaut, `?apply=true` pour écrire, 409 si une réparation tourne : verrou Redis 2 h) ; `GET` = dernier
+  rapport (Redis, 14 j). `TradovateFeesRepairService` relit chaque connexion CONNECTED non démo via
+  `TradovateHistoryService.recomputedWindows` (mêmes calculs que l'import, rien d'écrit), rapproche
+  par `dedupeKey` (`planFeeRepairs`, un pour un) les trades `BROKER_HISTORY` / `CSV_IMPORT` du compte,
+  et ne change QUE `commission`, toujours à la hausse ; puis barème + cache analytics
+  (`TradesService.refreshAfterFeesRepair`). Pas de détection d'incident relancée. Dans l'API et non en
+  script : un script renouvellerait les jetons hors des verrous de connexion.
 
 La raison d'être du rattrapage mensuel : **la Trade API ne montre que la séance ouverte et ne
 rejoue JAMAIS une séance passée**. Tout ce qui est tradé pendant que l'API est arrêtée
@@ -1561,6 +1569,10 @@ part de lignes et non la perfection.
   `dataCollection` : posée, elle repart de « tout collecter », IP comprise. Gardés : erreur,
   méthode, chemin, en-têtes techniques, `user.id`, tags. Dans un `captureMessage` / `extra` :
   nom et code de l'erreur, **jamais son message** (texte libre : adresse, hôte, port…).
+  **Jamais l'identifiant client Stripe** (#827) : pour situer un compte, `user: { id }` interne.
+  Filet : `scrubEvent` et `scrubBreadcrumb` remplacent tout `cus_…` (message, exceptions, URL des
+  appels sortants vers `/v1/customers/…`) par `cus_[masqué]`. L'identifiant d'abonnement (`sub_…`)
+  reste dans le message `Subscription past_due/unpaid`.
   Vérification sur un vrai événement : `docs/ops/verif-sentry-donnees-requete.md`.
   Les 5xx sont remontées par le filtre global ; ne pas ajouter de `captureException` ailleurs.
 - **IA** : modèles dans `AI_MODELS` (`modules/infra/ai-pricing.const.ts`), jamais en dur ni en
@@ -1610,11 +1622,23 @@ part de lignes et non la perfection.
   `CAMPAIGN_TEST_EMAIL` (défaut hello@, jamais saisi dans l'admin), sujet « [TEST] », même rendu
   (prénom d'exemple). Aucun `EmailSend`, ni oneShot ni plafond. L'empreinte sha256 du contenu (sans
   prénom / places / lien de désinscription) est gardée 7 j dans Redis `campaign-test:{type}` ; pour
-  les campagnes `REQUIRES_TEST` (`founder_launch`), `send` refuse sans test sur le contenu actuel.
+  les campagnes `REQUIRES_TEST` (`founder_launch`, `legal_notice`), `send` refuse sans test sur le contenu actuel.
   `founder_launch` : refusée si l'offre est fermée ou complète ; `seatsLeft` calculé à l'envoi et
   passé à `dispatch(…, { seatsLeft })`. Lien `founderLaunchUrl(FRONTEND_URL)` = `/dashboard?plan=founder&cta=email`
   + UTM : les destinataires ont un compte, l'app garde l'intention pendant la connexion puis ouvre la
   modale fondateur (→ `/paiement`). Signature : « Grégory », sans nom de famille (demande de Greg).
+- **Information de service « 30 jours avant »** (#817) : campagne manuelle `legal_notice`, pour
+  prévenir d'une modification des CGU ou des prix. Type `transactional` : tous les comptes réels
+  (`REAL_USERS`, hors démo et admin), sans consentement, malgré « ne plus recevoir les e-mails d'aide »,
+  hors plafond, sans lien ni en-tête de désinscription. Objet et texte (Markdown) saisis dans l'admin,
+  tous deux obligatoires (`assertContent`) ; `REQUIRES_TEST` ; gabarit `legalNoticeTemplate` (pied
+  `LEGAL_NOTICE_FOOTER`, contact support@, aucun bouton). `recurringCooldownDays: 7` : un renvoi
+  après erreur ne touche que ceux qui ne l'ont pas reçu, une nouvelle information reste possible
+  après 7 jours. Jamais pour une nouveauté ou une offre : c'est `announcement` (marketing).
+- **Pas de campagne « débrief prêt »** (#833) : l'e-mail part déjà, automatiquement, après chaque
+  débrief généré (`debrief.processor`, réglage `notificationsEmail`), essai d'inscription compris.
+  L'ancienne campagne manuelle `debrief_reminder` (ciblée sur `plan: PREMIUM`) le doublait et
+  l'annonçait à des comptes sans débrief : retirée, ne pas la recréer.
 - **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
   (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
   avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
@@ -1773,9 +1797,23 @@ redéployer : rien à lancer sur le VPS.
   `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
   **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
   (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
+- **Comptes réels des statistiques (#828, #823)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
+  brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts` : hors démo, hors comptes internes
+  (`isInternal`) et hors ADMIN. Toute nouvelle statistique admin les utilise, jamais une copie du filtre.
+  Jamais pour cibler des envois (`email-campaign.service.ts` garde son filtre : les comptes de test
+  reçoivent les e-mails).
+- **Comptes internes (#823)** : `User.isInternal`, posé par l'interrupteur de la fiche admin
+  (`PATCH /admin/users/:id { isInternal }`, `AdminGuard`), jamais par le domaine de l'adresse. Recopié
+  dans `DeletedAccount.isInternal` par `archiveAndDelete`. Exclu : agrégats admin (via `REAL_USERS_WHERE`),
+  chiffres des comptes supprimés (`adminStats`, `getDeletedAccounts` : la liste les garde, avec badge),
+  compteur public de traders, compteurs de filleuls de l'admin (parrainage, ambassadeurs). Gardé :
+  accès, e-mails, crons, commissions, compteur de places fondateur, vue du parrain sur ses filleuls,
+  règle des 90 jours (`auth.service.ts`), `MetricsSnapshot` déjà enregistrés. États
+  d'abonnement à compter : `subscriptionStateWhere(kind, now)` / `premiumAccessWhere(now)`
+  (`common/stats/subscription-state-where.ts`), miroir de `subscriptionState` (@mtc/shared).
 - **Mesure admin** (`GET /admin/prop-firms/plan-links`, `AdminPropFirmsController` + `PlanLinkStatsService`,
   calcul pur `plan-link-stats.ts`) : comptes **connectés** (sous-compte choisi, non archivés) reliés à un
-  plan / connectés, filtre `REAL_USERS` (hors démo, hors ADMIN) ; répartition des comptes sans plan par
+  plan / connectés, filtre `REAL_USERS` (hors démo, internes et ADMIN) ; répartition des comptes sans plan par
   `planLinkChoice` ; firms « absentes » regroupées sans casse. Contrat `AdminPlanLinkStats` (`@mtc/shared`).
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement

@@ -12,7 +12,7 @@ describe('réservation fondateur', () => {
     const t = text(mail.html);
     expect(mail.subject).toBe('Ta place fondateur n° 12 est réservée');
     expect(t).toContain('Premier prélèvement de 29,00 € par mois le 16 novembre 2026, pas avant.');
-    expect(t).toContain('Tu peux annuler avant le 16 novembre 2026 depuis ton profil : aucun prélèvement, la place est rendue.');
+    expect(t).toContain('Tu peux annuler avant le 16 novembre 2026 depuis ton profil : aucun prélèvement, la place est rendue à la fin de ton essai.');
     expect(t).toContain('Si le prélèvement échoue définitivement, la place est rendue.');
     expect(t).toContain('Satisfait ou remboursé 14 jours à partir du premier prélèvement.');
     expect(t).not.toMatch(/remboursé jusqu/);

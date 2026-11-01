@@ -146,17 +146,17 @@ export function founderFollowupTemplate({ userName, appUrl, unsubUrl, seatsLeft,
   const seatsText = founderSeatsLabel(seatsLeft ?? total, total) ?? founderSeatsLabel(total, total);
   const content =
     card(`
-      ${heading('Offre fondateur', `${m}&nbsp;€/mois à vie, pour les ${total} premiers`)}
+      ${heading('Offre fondateur', `${m}&nbsp;€/mois tant que ton abonnement reste actif, pour les ${total} premiers`)}
       <p ${P}>${hello(userName)} MyTradingCoach a ouvert une offre pour ses premiers utilisateurs : Premium à
-        <strong style="color:#e2eaf5;">${m}&nbsp;€/mois à vie</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
+        <strong style="color:#e2eaf5;">${m}&nbsp;€/mois tant que ton abonnement reste actif</strong> (ou ${y}&nbsp;€/an), au lieu de ${PREMIUM_PRICE_EUR.monthly}&nbsp;€/mois.</p>
       <p ${P}><strong style="color:#e2eaf5;">${seatsText}</strong>.</p>
-      <p ${P}>Pas d'essai sur cette offre : satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
+      <p ${P}>Pas d'essai sur cette offre&nbsp;: satisfait ou remboursé pendant ${FOUNDER_REFUND_DAYS} jours.</p>
       ${cta('Devenir fondateur →', onboardingLink(appUrl, '/dashboard', 'founder_followup', { plan: 'founder', cta: 'email' }))}
     `, 'rgba(139,92,246,.4)') + RISK_NOTICE + marketingFooter(unsubUrl);
 
   return {
-    subject: `${m} €/mois à vie, pour les ${total} premiers`,
-    html: emailWrapper(content, `Premium à ${m} €/mois à vie au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
+    subject: `${m} €/mois tant que ton abonnement reste actif, pour les ${total} premiers`,
+    html: emailWrapper(content, `Premium à ${m} €/mois tant que ton abonnement reste actif, au lieu de ${PREMIUM_PRICE_EUR.monthly} €.`, ACCENT.brand, unsubUrl),
   };
 }
 
@@ -326,6 +326,31 @@ export function announcementTemplate(
   };
 }
 
+// ── Information de service « 30 jours avant » (#817) ──────────────────────────
+// Modification des CGU ou des prix : envoyée à TOUS les comptes, sans condition de consentement ni
+// lien de désinscription (obligation d'information, pas une sollicitation). Aucun bouton commercial.
+
+/** Mention du pied : pourquoi cet e-mail arrive même quand les autres e-mails sont coupés. */
+export const LEGAL_NOTICE_FOOTER =
+  "Tu reçois cet e-mail parce que tu as un compte MyTradingCoach. C'est une information obligatoire sur ton compte, envoyée à tous les comptes quels que soient tes réglages d'e-mails.";
+
+export function legalNoticeTemplate(
+  ctx: CampaignBuildCtx,
+  content: { subject?: string; bodyHtml: string },
+): CampaignContent {
+  const subject = content.subject?.trim() || 'Information importante sur ton compte MyTradingCoach';
+  const html =
+    card(`
+      ${heading('Information de service', escapeHtml(subject))}
+      <p ${P}>${escapeHtml(hello(ctx.userName))}</p>
+      ${content.bodyHtml}
+      ${divider}
+      <p ${SMALL}>Une question&nbsp;? Écris à ${textLink('support@mytradingcoach.app', 'mailto:support@mytradingcoach.app')}.</p>
+    `) +
+    `<p style="${FONT}font-size:12px;color:#9db4ce;line-height:1.6;margin:18px 0 0 0;text-align:center;">${LEGAL_NOTICE_FOOTER}</p>`;
+  return { subject, html: emailWrapper(html, '', ACCENT.brand) };
+}
+
 // ── Lancement de l'offre fondateur (#525) ──────────────────────────────────────
 // Lettre de Greg (version validée le 2026-10-08). Les destinataires ont déjà un compte : le lien va
 // droit dans l'app, qui garde l'intention (`plan=founder`, `cta=email`) pendant la connexion puis
@@ -397,7 +422,7 @@ export function founderLaunchTemplate({ userName, appUrl, unsubUrl, seatsLeft }:
     unsubUrl,
   });
   return {
-    subject: `${total} places à ${m} €/mois, à vie`,
+    subject: `${total} places à ${m} €/mois, prix bloqué tant que tu restes abonné`,
     html: letter.html,
     text: letter.text,
     from: GREG_FROM,

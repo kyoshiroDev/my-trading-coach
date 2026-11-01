@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
-import { StripeBillingService } from './stripe-billing.service';
+import { PAYMENT_PENDING_MESSAGE, StripeBillingService } from './stripe-billing.service';
 import { StripeCouponService } from './stripe-coupon.service';
 import { StripeCustomerService } from './stripe-customer.service';
 import { StripeReferralService } from './stripe-referral.service';
@@ -344,6 +344,114 @@ describe('synchro : bascule sans écraser l’abonnement fondateur', () => {
     const sync = new StripeSubscriptionService(prisma as never, { client: { del: vi.fn() } } as never, stripe as never);
     expect(await sync.syncSubscription('sub_trial')).toBeNull();
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('abonnement en pause : pas de nouveau checkout (#813)', () => {
+  it.each(['past_due', 'unpaid'])('%s → 409 avec renvoi vers le profil, aucune session ni place réservée', async (status) => {
+    const paused = { status, items: { data: [{ price: { id: 'price_29' } }] } };
+    for (const start of [
+      (svc: StripeBillingService) => founder(svc),
+      (svc: StripeBillingService) => svc.createCheckoutSession('u1', 'u1@test.com', 'price_49', 'https://app', { offer: 'premium' }),
+    ]) {
+      const { svc, create, founders } = makeBilling({ user: { stripeSubscriptionId: 'sub_paused' }, existingSub: paused });
+      const err = await start(svc).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ConflictException);
+      expect((err as ConflictException).message).toBe(PAYMENT_PENDING_MESSAGE);
+      expect(create).not.toHaveBeenCalled();
+      expect(founders.reserve).not.toHaveBeenCalled();
+    }
+    expect(PAYMENT_PENDING_MESSAGE).toContain('Confirmer mon paiement');
+  });
+
+  it('abonnement terminé (canceled) : le checkout reste possible', async () => {
+    const ended = { status: 'canceled', items: { data: [{ price: { id: 'price_29' } }] } };
+    const { svc } = makeBilling({ user: { stripeSubscriptionId: 'sub_old' }, existingSub: ended });
+    await expect(founder(svc)).resolves.toBeDefined();
+  });
+});
+
+describe('synchro : fin programmée de l’abonnement (stripeCancelAt, #813)', () => {
+  const PERIOD_END = 1_794_000_000; // secondes
+  function syncWith(sub: Record<string, unknown>) {
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'u1', stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'trialing', trialUsed: true }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_1', status: 'trialing', customer: 'cus_1', trial_end: PERIOD_END, metadata: {},
+          cancel_at: null, cancel_at_period_end: false,
+          items: { data: [{ price: { id: 'price_29', recurring: { interval: 'month' } }, current_period_end: PERIOD_END }] },
+          ...sub,
+        }),
+      },
+    };
+    const redis = { client: { del: vi.fn().mockResolvedValue(1) }, del: vi.fn().mockResolvedValue(1) };
+    const sync = new StripeSubscriptionService(prisma as never, redis as never, stripe as never);
+    return { sync, prisma };
+  }
+  const written = (prisma: { user: { update: ReturnType<typeof vi.fn> } }) => prisma.user.update.mock.calls[0][0].data.stripeCancelAt;
+
+  it('essai annulé (cancel_at, facturation flexible) → date de cancel_at', async () => {
+    const { sync, prisma } = syncWith({ cancel_at: PERIOD_END });
+    await sync.syncSubscription('sub_1');
+    expect(written(prisma)).toEqual(new Date(PERIOD_END * 1000));
+  });
+
+  it('résiliation en fin de période (cancel_at_period_end) → fin de période', async () => {
+    const { sync, prisma } = syncWith({ status: 'active', cancel_at_period_end: true });
+    await sync.syncSubscription('sub_1');
+    expect(written(prisma)).toEqual(new Date(PERIOD_END * 1000));
+  });
+
+  it('rien de programmé, ou annulation retirée depuis le portail → null', async () => {
+    const { sync, prisma } = syncWith({});
+    await sync.syncSubscription('sub_1');
+    expect(written(prisma)).toBeNull();
+  });
+});
+
+describe('synchro : Premium en pause pendant un paiement en attente (#819)', () => {
+  function syncStatus(status: string, user: object = {}) {
+    const prisma = {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'u1', stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active', trialUsed: true, ...user,
+        }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: 'sub_1', status, customer: 'cus_1', trial_end: null, metadata: {}, cancel_at: null, cancel_at_period_end: false,
+          items: { data: [{ price: { id: 'price_29', recurring: { interval: 'month' } }, current_period_end: 1_900_000_000 }] },
+        }),
+      },
+    };
+    const redis = { client: { del: vi.fn().mockResolvedValue(1) }, del: vi.fn().mockResolvedValue(1) };
+    const cache = { invalidate: vi.fn().mockResolvedValue(undefined) };
+    const sync = new StripeSubscriptionService(prisma as never, redis as never, stripe as never, cache as never);
+    return { sync, data: () => prisma.user.update.mock.calls[0][0].data, cache };
+  }
+
+  it.each(['past_due', 'unpaid'])('%s → plan FREE, statut et abonnement gardés, jeton invalidé', async (status) => {
+    const { sync, data, cache } = syncStatus(status);
+    await sync.syncSubscription('sub_1');
+    expect(data()).toMatchObject({ plan: 'FREE', stripeSubscriptionStatus: status, stripeSubscriptionId: 'sub_1' });
+    // Pas une résiliation : la date de churn n'est pas touchée.
+    expect(data().subscriptionCanceledAt).toBeUndefined();
+    expect(cache.invalidate).toHaveBeenCalledWith('u1');
+  });
+
+  it('paiement confirmé (active) → retour en PREMIUM', async () => {
+    const { sync, data } = syncStatus('active', { plan: 'FREE', stripeSubscriptionStatus: 'past_due' });
+    await sync.syncSubscription('sub_1');
+    expect(data()).toMatchObject({ plan: 'PREMIUM', stripeSubscriptionStatus: 'active', subscriptionCanceledAt: null });
   });
 });
 

@@ -6,7 +6,7 @@ import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import { ConfirmService } from '@mtc/front-ui';
-import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage } from '@mtc/shared';
+import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
@@ -125,6 +125,7 @@ export function buildSignals(
 }
 
 import { partnerConditions } from '../../core/utils/offers.util';
+import { activeTrial } from '../../core/utils/trial.util';
 
 @Component({
   selector: 'mtc-admin-user-detail',
@@ -182,6 +183,30 @@ export class UserDetailComponent {
     if (d.identity.subscriptionStatus) return 'payant';
     return d.identity.plan === 'FREE' ? 'gratuit' : 'accès manuel';
   });
+  /** Essai en cours (#769) : inscription ou Premium offert, plan FREE + `trialEndsAt` futur. */
+  protected readonly trial = computed(() => {
+    const i = this.data()?.identity;
+    return i ? activeTrial(i) : null;
+  });
+  /**
+   * Plan affiché : l'accès réel pendant un essai, pas le plan FREE stocké ; pour un abonnement, son
+   * état réel (#813, `subscriptionState`) : essai avant prélèvement, annulé, résilié, en pause.
+   */
+  protected readonly planLabel = computed(() => {
+    const d = this.data();
+    if (!d) return '';
+    if (this.trial()) return 'Premium (essai)';
+    const i = d.identity;
+    const s = subscriptionState({
+      plan: i.plan, role: i.role, trialEndsAt: i.trialEndsAt, trialSource: i.trialSource,
+      stripeSubscriptionStatus: i.subscriptionStatus, stripeCancelAt: i.subscriptionCancelAt,
+    });
+    const end = s.cancelAt ? s.cancelAt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }) : null;
+    if (s.kind === 'subscription_trial') return end ? `${i.plan} · essai annulé, fin le ${end}` : `${i.plan} · essai avant prélèvement`;
+    if (s.kind === 'paying' && end) return `${i.plan} · résilié, fin le ${end}`;
+    if (s.kind === 'paused') return `${i.plan} · paiement en attente`;
+    return `${i.plan} · ${this.planSub()}`;
+  });
   // ── Premium offert ──
   /** Fin du Premium offert en cours, sinon null. */
   protected readonly offeredUntil = computed(() => {
@@ -208,8 +233,8 @@ export class UserDetailComponent {
     const from = Math.max(Date.now(), this.offeredUntil() ? Date.parse(this.offeredUntil()!) : 0);
     const end = frDate(new Date(from + OFFER_DAYS * DAY_MS));
     const confirmed = await this.confirm.ask({
-      title: this.offeredUntil() ? 'Prolonger le Premium offert ?' : 'Offrir 1 mois de Premium ?',
-      message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email} ? Fin le ${end}. Aucun prélèvement.`,
+      title: this.offeredUntil() ? 'Prolonger le Premium offert\u00a0?' : 'Offrir 1 mois de Premium\u00a0?',
+      message: `Offrir ${OFFER_DAYS} jours de Premium à ${i.email}\u00a0? Fin le ${end}. Aucun prélèvement.`,
       confirmLabel: 'Confirmer',
     });
     if (!confirmed) return;
@@ -223,6 +248,32 @@ export class UserDetailComponent {
       error: (err) => {
         this.offering.set(false);
         this.showToast(apiErrorMessage(err, 'Le Premium n’a pas pu être offert. Réessaie.'), true);
+      },
+    });
+  }
+
+  // ── Compte interne (#823) ──
+  /** Les comptes ADMIN sont déjà hors statistiques, et l'API refuse de les modifier. */
+  protected readonly internalBlocked = computed(() =>
+    this.data()?.identity.role === 'ADMIN' ? 'Compte admin, déjà hors statistiques' : null,
+  );
+  protected readonly internalSaving = signal(false);
+
+  /** Marque ou démarque le compte comme interne : il sort (ou revient dans) les statistiques admin. */
+  protected toggleInternal(): void {
+    const i = this.data()?.identity;
+    if (!i || this.internalBlocked() || this.internalSaving()) return;
+    const next = !i.isInternal;
+    this.internalSaving.set(true);
+    this.api.update(i.id, { isInternal: next }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.internalSaving.set(false);
+        this.showToast(next ? 'Compte marqué interne, hors statistiques' : 'Compte de nouveau compté dans les statistiques');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.internalSaving.set(false);
+        this.showToast(apiErrorMessage(err, 'Le compte n’a pas pu être modifié. Réessaie.'), true);
       },
     });
   }

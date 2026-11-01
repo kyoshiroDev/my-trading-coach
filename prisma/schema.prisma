@@ -70,10 +70,16 @@ model User {
   stripeCurrentPeriodEnd   DateTime?
   stripeSubscriptionStatus String? // 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled'
   subscriptionCanceledAt   DateTime? // date de résiliation (churn fiable) ; remis à null au réabonnement
+  /// Fin programmée de l'abonnement (#813) : `cancel_at` Stripe, ou fin de période si
+  /// `cancel_at_period_end`. Null = rien de programmé. Écrit par `syncSubscription`.
+  stripeCancelAt           DateTime?
 
   // Compte vitrine en lecture seule (démo landing). Bloque les écritures
   // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.
   isDemo Boolean @default(false)
+  /// Compte interne (tests de l'équipe, #823) : exclu des statistiques admin comme `isDemo`, mais
+  /// garde l'accès, les e-mails et la règle des 90 jours. Marqué depuis la fiche admin.
+  isInternal Boolean @default(false)
   productEvents ProductEventDaily[]
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
@@ -1039,6 +1045,8 @@ model DeletedAccount {
   deletedBy    String // "self" | "admin"
   reason       String?
   anonymizedAt DateTime?
+  /// Recopié de `User.isInternal` à la suppression (#823) : hors des chiffres, visible dans la liste.
+  isInternal   Boolean   @default(false)
 
   @@index([deletedAt])
   @@index([anonymizedAt])

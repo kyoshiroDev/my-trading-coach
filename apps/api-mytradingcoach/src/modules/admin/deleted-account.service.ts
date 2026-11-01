@@ -37,11 +37,15 @@ export class DeletedAccountService {
     return res.count;
   }
 
-  /** Liste (récents d'abord) + agrégats pour les graphes. */
+  /**
+   * Liste (récents d'abord) + agrégats pour les graphes. Les comptes internes (#823) restent dans la
+   * liste, avec leur badge, mais sortent de tous les chiffres.
+   */
   async getDeletedAccounts() {
-    const accounts = await this.prisma.deletedAccount.findMany({
+    const all = await this.prisma.deletedAccount.findMany({
       orderBy: { deletedAt: 'desc' },
     });
+    const accounts = all.filter((a) => !a.isInternal);
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -73,7 +77,7 @@ export class DeletedAccountService {
     const byReason = [...reasonMap.entries()].map(([reason, count]) => ({ reason, count }));
 
     return {
-      accounts,
+      accounts: all,
       stats: { thisMonth, total: accounts.length, medianLifetimeDays, noTradePct, noTradeCount: noTrade },
       byMonth,
       byReason,

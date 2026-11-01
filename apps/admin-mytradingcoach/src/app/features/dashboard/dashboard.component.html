@@ -18,7 +18,7 @@
         <div class="kpi-sub">+{{ s.newThisMonth }} ce mois</div></div>
       <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium</div>
         <div class="kpi-value blue">{{ s.totalPremium }}</div>
-        <div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
+        <div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai · {{ s.offered }} offert@if (s.paused) { · {{ s.paused }} en pause }</div></div>
       <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div>
         <div class="kpi-value purple">{{ s.ambassadors }}</div>
         <div class="kpi-sub">+{{ s.betaTesters }} bêta</div></div>
@@ -45,7 +45,7 @@
     <!-- Gauche : Évolution + Entonnoir -->
     <div class="area-left dcol">
       <div class="card grow-chart">
-        <div class="card-head"><span class="card-label">Évolution · inscrits par jour{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted">snapshots</span></div>
+        <div class="card-head"><span class="card-label">Évolution · inscrits par jour{{ showMrrLine() ? ' + MRR' : '' }}</span><span class="card-label muted" data-testid="trend-note">snapshots@if (trialUnreliableNote(); as note) { · {{ note }} }</span></div>
         <div class="card-body"><div class="chart-box"><mtc-admin-chart [config]="trendConfig()" /></div></div>
       </div>
       <div class="card">

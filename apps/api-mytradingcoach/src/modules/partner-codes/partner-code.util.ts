@@ -38,10 +38,10 @@ export function partnerCouponId(amountOff: number, durationMonths: number | null
   return `mtc-partner-${amountOff}-${durationMonths ?? 'forever'}`;
 }
 
-/** « 29 €/mois ou 290 €/an, à vie » · « …, pendant 3 mois puis prix normal ». */
+/** « 29 €/mois ou 290 €/an, tant que ton abonnement reste actif » · « …, pendant 3 mois puis prix normal ». */
 export function conditionsLabel(c: PartnerConditions): string {
   const base = `${c.priceMonthlyEur} €/mois ou ${c.priceAnnualEur} €/an`;
-  return c.durationMonths === null ? `${base}, à vie` : `${base}, pendant ${c.durationMonths} mois puis prix normal`;
+  return c.durationMonths === null ? `${base}, tant que ton abonnement reste actif` : `${base}, pendant ${c.durationMonths} mois puis prix normal`;
 }
 
 /** Date de fin de la remise (null = à vie). */

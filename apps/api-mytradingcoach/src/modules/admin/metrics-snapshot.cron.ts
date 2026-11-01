@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Role } from '@prisma/client';
+import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { VpsService } from '../vps/vps.service';
@@ -111,14 +111,10 @@ export class MetricsSnapshotCron {
     // totalUsers vient d'adminStats() (source unique) → snapshot et KPI live concordent.
     const [activeUsers, newThisDay] = await Promise.all([
       this.prisma.user.count({
-        where: { isDemo: false, role: { not: Role.ADMIN }, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
+        where: { ...REAL_USERS_WHERE, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } },
       }),
       this.prisma.user.count({
-        where: {
-          isDemo: false,
-          role: { not: Role.ADMIN },
-          createdAt: { gte: start, lt: end },
-        },
+        where: { ...REAL_USERS_WHERE, createdAt: { gte: start, lt: end } },
       }),
     ]);
 

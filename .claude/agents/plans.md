@@ -282,6 +282,30 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   aussi pour le Premium offert par l'admin). Comptes de trading en trop : visibles, signalés
   (`overFreeLimit`), l'utilisateur choisit le compte gardé. Arrêt de leur synchro (B0) : **journal
   seul** au 28/10 (comptés, rien bloqué), activation après lecture du décompte.
+- **Affichage admin de l'essai** : plan FREE + `trialEndsAt` futur = essai en cours (`activeTrial`,
+  `admin core/utils/trial.util.ts`). Fiche : « Premium (essai) », « Essai jusqu'au JJ/MM/AAAA » et la
+  source (inscription = `trialSource` SIGNUP, sinon admin) ; ligne IA sur `identity.premiumAccess`
+  (`isPremiumAccess`), jamais sur le plan brut. Liste : badge « Essai » (inscription) distinct de
+  « Offert » (admin). `isOfferedPremium` et le bouton « Offrir » ne changent pas.
+- **État d'abonnement unique (#813, 2026-11-01)** : `subscriptionState` (`libs/shared/src/subscription-state.ts`,
+  fonction pure partagée API / app / admin). Ordre : statut Stripe (`active` = payant, `trialing` = essai
+  d'abonnement, `past_due` / `unpaid` = en pause), puis `trialEndsAt` futur (SIGNUP = essai d'inscription,
+  sinon offert), rôle ADMIN / BETA_TESTER, plan PREMIUM sans abonnement (accès manuel), gratuit.
+  `premiumAccess` = règle des guards inchangée ; `isPremiumAccess` et `UserStore.isPremium` l'appellent.
+  **`trialEndsAt` n'est jamais écrit par Stripe** : il ne dit rien d'un abonnement. Date du 1er
+  prélèvement d'un essai d'abonnement = `stripeCurrentPeriodEnd` ; fin programmée = `stripeCancelAt`.
+  Un abonné qui paie pendant son essai d'inscription (réservation à moins de 48 h, essai terminé en
+  avance) est « payant ». Place fondateur d'un essai annulé : rendue **à la fin de l'essai**
+  (`customer.subscription.deleted`, décision G2), e-mail de réservation aligné. Checkout refusé (409,
+  `PAYMENT_PENDING_MESSAGE`) en `past_due` / `unpaid` : confirmer le paiement, jamais une nouvelle offre.
+- **KPI admin selon l'état (#828, décisions G3 / G4)** : « Premium » = **accès** Premium (payants, essais,
+  offerts, bêta, accès manuels) ; « Essais » = essai d'inscription + essai d'abonnement ; « Offerts » à
+  part ; « En pause » (`past_due` / `unpaid`) ; « Gratuits » = état `free` seulement. MRR inchangé
+  (abonnements `active`). Comptage par `subscriptionStateWhere` (`common/stats/`), testé contre la
+  fonction sur un compte par état (`subscription-state-where.int-spec.ts`). Page Abonnements :
+  « payants » = `active` seulement, liste « Essais et offerts ». Historique `MetricsSnapshot` du 28/10 à
+  la veille du déploiement en prod de #828 : **annoté, jamais recalculé** (`TRIAL_KPI_UNRELIABLE`,
+  `@mtc/shared`, mention « essais non comptés » sur la courbe du dashboard ; `to` à régler au déploiement).
 - **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
   marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
   25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis
@@ -388,6 +412,9 @@ Constantes : `FOUNDER_OFFER = { priceMonthlyEur: 29, priceAnnualEur: 290, seats:
 - Réglages : durée **à vie** (`durationMonths` null) ou **N mois** puis prix normal ; personnes
   **illimité** ou **N** (`maxRedemptions`) ; date de fin d'**utilisation** (`expiresAt`, n'arrête pas la
   remise des abonnés) ; `active`.
+- **Libellé côté utilisateur** (#820) : une durée « à vie » s'affiche toujours « tant que ton abonnement
+  reste actif » (`conditionsLabel` côté API, `PARTNER_FOREVER_LABEL` dans l'app), jamais « à vie » seul.
+  L'admin garde « à vie » (usage interne).
 - **Prix pile** : coupon Stripe `amount_off` EUR = prix normal − prix remisé, **de l'intervalle choisi**
   (−20 € → 29,00 €, −200 € → 290,00 €), appliqué côté serveur sur le prix NORMAL. Coupons créés par
   l'API, identifiant déterministe `mtc-partner-<centimes>-<forever|N>`. Sur l'annuel, un coupon N mois

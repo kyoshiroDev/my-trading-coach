@@ -1,9 +1,9 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { AdminPushEvent } from '@prisma/client';
+import { REAL_USERS_WHERE } from '../../common/stats/real-users';
 import { AdminNotifier } from '../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../admin-push/push-messages';
 import { ConfigService } from '@nestjs/config';
-import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 import { ResendService } from '../resend/resend.service';
@@ -83,7 +83,7 @@ export class PublicService {
     }
 
     const count = await this.prisma.user.count({
-      where: { isDemo: false, role: { not: Role.ADMIN } },
+      where: REAL_USERS_WHERE,
     });
 
     try {

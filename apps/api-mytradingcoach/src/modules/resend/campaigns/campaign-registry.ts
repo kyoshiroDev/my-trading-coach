@@ -1,4 +1,5 @@
 import { AccountStatus, AccountType, BrokerConnectionStatus, Plan, PlanLinkChoice, Prisma, Role, TrialSource } from '@prisma/client';
+import { noFreeAccessWhere, noSubscriptionWhere } from '../../../common/stats/subscription-state-where';
 import { formatMoney } from '@mtc/shared';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -11,6 +12,7 @@ import {
   firstWeekRecapTemplate,
   founderFollowupTemplate,
   founderLaunchTemplate,
+  legalNoticeTemplate,
   premiumTemplate,
   profileTemplate,
   propFirmRulesTemplate,
@@ -90,9 +92,7 @@ const noTrade: Prisma.UserWhereInput = { trades: { none: {} } };
  * Hors Premium sans abonnement en cours (essai d'inscription ou Premium offert, #769) : le plan reste
  * FREE pendant l'essai, mais une relance « passe Premium » n'a pas de sens pour qui l'a déjà.
  */
-export const notInTrial = (now: Date): Prisma.UserWhereInput => ({
-  OR: [{ trialEndsAt: null }, { trialEndsAt: { lte: now } }],
-});
+export const notInTrial = (now: Date): Prisma.UserWhereInput => noFreeAccessWhere(now);
 
 /** Mêmes exclusions que founder_launch : abonnés payants, fondateurs, codes partenaires, bêta. */
 const founderTargets: Prisma.UserWhereInput = {
@@ -144,9 +144,12 @@ export async function loadFirstWeek(deps: CampaignLoadDeps, userIds: string[]): 
 }
 
 /** Ni abonné Stripe en cours, ni réservation fondateur : le Premium offert est le seul accès. */
-const noStripeSubscription: Prisma.UserWhereInput = {
-  OR: [{ stripeSubscriptionStatus: null }, { stripeSubscriptionStatus: { notIn: ['active', 'trialing', 'past_due'] } }],
-};
+/**
+ * Aucun abonnement payant, en essai ou en attente de paiement : un abonné qui paie ne reçoit JAMAIS
+ * les e-mails de fin d'essai (#828). Filtres partagés avec les statistiques ; liste de statuts gardée
+ * telle quelle (`unpaid` n'y est pas, comportement d'avant #828).
+ */
+export const noStripeSubscription: Prisma.UserWhereInput = noSubscriptionWhere(['active', 'trialing', 'past_due']);
 
 /** Essai d'inscription qui se termine (#769, B2) : date de fin, une lecture pour la page. */
 export async function loadTrialEnd(deps: CampaignLoadDeps, userIds: string[]): Promise<CampaignContextMap> {
@@ -173,7 +176,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
   {
     key: 'trial_ending',
     label: 'Fin du Premium offert dans 3 jours (J+11)',
-    description: "Service : date de fin de l'essai d'inscription et ce qui change en gratuit, rien n'est prélevé.",
+    description: "Service\u00a0: date de fin de l'essai d'inscription et ce qui change en gratuit, rien n'est prélevé.",
     kind: 'service',
     requiresConsent: false,
     automated: true,
@@ -192,7 +195,7 @@ export const CAMPAIGNS: EmailCampaign[] = [
   {
     key: 'trial_ended',
     label: 'Premium offert terminé (J+15)',
-    description: "Service : l'essai d'inscription est terminé, retour au gratuit sans rien perdre.",
+    description: "Service\u00a0: l'essai d'inscription est terminé, retour au gratuit sans rien perdre.",
     kind: 'service',
     requiresConsent: false,
     automated: true,
@@ -343,24 +346,6 @@ export const CAMPAIGNS: EmailCampaign[] = [
     build: premiumTemplate,
   },
   {
-    key: 'debrief_reminder',
-    label: 'Débrief prêt',
-    description: 'Notifie les Premium que le débrief hebdo est disponible.',
-    kind: 'marketing',
-    requiresConsent: true,
-    automated: false,
-    priority: 25,
-    segment: () => ({ plan: 'PREMIUM' }),
-    build: ({ userName, appUrl, unsubUrl }) =>
-      announcementTemplate(
-        { userName, appUrl, unsubUrl },
-        {
-          subject: '📅 Ton débrief hebdo est prêt',
-          bodyHtml: `<p style="font-family:'Inter',Arial,sans-serif;font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">Ton analyse de la semaine vient d'être générée : tes patterns, tes points forts et 3 objectifs concrets pour la semaine.</p>`,
-        },
-      ),
-  },
-  {
     key: 'reengagement',
     label: "Tu n'as pas tradé",
     description: 'Réengage les users sans trade depuis 7 jours.',
@@ -397,6 +382,22 @@ export const CAMPAIGNS: EmailCampaign[] = [
     priority: 10,
     segment: () => ({}),
     build: (ctx) => announcementTemplate(ctx),
+  },
+  {
+    // Information « 30 jours avant » (#817) : modification des CGU ou des prix. Transactionnel :
+    // tous les comptes réels (hors démo et admin, filtre de l'admin), sans consentement ni plafond.
+    // Délai de 7 jours entre deux envois à une même personne : un renvoi après erreur ne touche que
+    // ceux qui ne l'ont pas reçu, une nouvelle information reste possible ensuite.
+    key: 'legal_notice',
+    label: 'Information de service (CGU, prix)',
+    description: 'Information obligatoire envoyée à tous les comptes, sans condition de consentement.',
+    kind: 'transactional',
+    requiresConsent: false,
+    automated: false,
+    priority: 5,
+    recurringCooldownDays: 7,
+    segment: () => ({}),
+    build: (ctx) => legalNoticeTemplate(ctx, { bodyHtml: '' }),
   },
 ];
 

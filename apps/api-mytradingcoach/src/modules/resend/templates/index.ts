@@ -689,7 +689,7 @@ export function founderReservationTemplate(params: {
     </p>
     ${rulesList([
       'Prix bloqué tant que ton abonnement reste actif, même si le prix normal augmente.',
-      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, la place est rendue.`,
+      `Tu peux annuler avant le ${date} depuis ton profil\u00a0: aucun prélèvement, la place est rendue à la fin de ton essai.`,
       'Si le prélèvement échoue définitivement, la place est rendue.',
       `Satisfait ou remboursé ${FOUNDER_REFUND_DAYS} jours à partir du premier prélèvement.`,
     ])}
@@ -756,7 +756,7 @@ export function partnerWelcomeTemplate(params: {
       Salut ${userName || 'Trader'}, ton Premium est actif avec le code <strong style="color:#e2eaf5;">${code}</strong>.
     </p>
     ${rulesList([
-      ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)} : aucun prélèvement avant.`] : []),
+      ...(trialEndsAt ? [`Essai gratuit jusqu’au ${longDate(trialEndsAt)}&nbsp;: aucun prélèvement avant.`] : []),
       `Ensuite <strong style="color:#e2eaf5;">${priceLabel}</strong>, ${duration}.`,
       'Ces conditions sont figées : elles ne changent pas même si le code évolue.',
       'Si tu résilies, le tarif partenaire est perdu.',

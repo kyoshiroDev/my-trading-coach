@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { PrismaService } from '@api/prisma/prisma.service';
-import { DAILY_RETENTION_RULES, RETENTION_BATCH, RETENTION_RULES, RetentionCron } from './retention.cron';
+import { DAILY_RETENTION_RULES, RETENTION_BATCH, RETENTION_RULES, RetentionCron, STRIPE_IDS_RETENTION_DAYS } from './retention.cron';
 
 describe('RetentionCron (SCA-B5-09)', () => {
   it('EmailSend jamais purgée (anti-doublon des campagnes une seule fois)', () => {
@@ -52,5 +52,67 @@ describe('RetentionCron (SCA-B5-09)', () => {
 
   it('la purge mensuelle ne touche pas aux événements d’usage', () => {
     expect(RETENTION_RULES.map((r) => r.table)).not.toContain('ProductEventDaily');
+  });
+});
+
+describe('RetentionCron : identifiants Stripe des places et remises sans compte (#826)', () => {
+  const DAY = 24 * 3600 * 1000;
+  const NOW = new Date('2026-11-01T03:30:00Z');
+
+  function makePrisma(counts = { cleared: 2, missing: 1, active: 1 }) {
+    const table = () => ({
+      updateMany: vi.fn().mockResolvedValue({ count: counts.cleared }),
+      count: vi.fn().mockResolvedValueOnce(counts.missing).mockResolvedValueOnce(counts.active),
+    });
+    return { founderSeat: table(), partnerRedemption: table(), $executeRaw: vi.fn().mockResolvedValue(0) };
+  }
+
+  it('efface seulement sans compte, terminée (≠ ACTIVE) et finie depuis plus de 180 jours', async () => {
+    const prisma = makePrisma();
+    const report = await new RetentionCron(prisma as unknown as PrismaService).detachStripeIds(NOW);
+
+    const before = new Date(NOW.getTime() - STRIPE_IDS_RETENTION_DAYS * DAY);
+    for (const t of [prisma.founderSeat, prisma.partnerRedemption]) {
+      expect(t.updateMany).toHaveBeenCalledOnce();
+      expect(t.updateMany).toHaveBeenCalledWith({
+        where: { userId: null, stripeSubscriptionId: { not: null }, status: { not: 'ACTIVE' }, endedAt: { lt: before } },
+        data: { stripeSubscriptionId: null },
+      });
+    }
+    expect(STRIPE_IDS_RETENTION_DAYS).toBe(180);
+    expect(report).toEqual({
+      founderSeats: { cleared: 2, missingEndedAt: 1, activeWithoutAccount: 1 },
+      partnerRedemptions: { cleared: 2, missingEndedAt: 1, activeWithoutAccount: 1 },
+    });
+  });
+
+  it('ACTIVE sans compte et fin sans date : comptées, jamais dans la mise à jour', async () => {
+    const prisma = makePrisma();
+    await new RetentionCron(prisma as unknown as PrismaService).detachStripeIds(NOW);
+
+    for (const t of [prisma.founderSeat, prisma.partnerRedemption]) {
+      const where = t.updateMany.mock.calls[0][0].where;
+      expect(where.status).toEqual({ not: 'ACTIVE' });
+      expect(where.endedAt).toEqual({ lt: expect.any(Date) }); // endedAt nul ne satisfait jamais « < date »
+      expect(t.count).toHaveBeenCalledWith({ where: { userId: null, stripeSubscriptionId: { not: null }, status: { not: 'ACTIVE' }, endedAt: null } });
+      expect(t.count).toHaveBeenCalledWith({ where: { userId: null, status: 'ACTIVE' } });
+    }
+  });
+
+  it('purge mensuelle : les identifiants passent après les tables ; un échec ne casse pas le cron', async () => {
+    const prisma = makePrisma();
+    prisma.founderSeat.updateMany.mockRejectedValueOnce(new Error('verrou'));
+    const cron = new RetentionCron(prisma as unknown as PrismaService);
+
+    await expect(cron.scheduledPurge()).resolves.toBeUndefined();
+    expect(prisma.$executeRaw).toHaveBeenCalled();
+    expect(prisma.founderSeat.updateMany).toHaveBeenCalledOnce();
+  });
+
+  it('purge quotidienne : ne touche pas aux identifiants Stripe', async () => {
+    const prisma = makePrisma();
+    await new RetentionCron(prisma as unknown as PrismaService).scheduledDailyPurge();
+    expect(prisma.founderSeat.updateMany).not.toHaveBeenCalled();
+    expect(prisma.partnerRedemption.updateMany).not.toHaveBeenCalled();
   });
 });

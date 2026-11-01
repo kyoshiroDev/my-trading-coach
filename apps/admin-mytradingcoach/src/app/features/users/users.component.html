@@ -29,7 +29,7 @@
   @if (stats(); as s) {
     <div class="kpi-strip">
       <div class="kpi"><div class="kpi-top teal"></div><div class="kpi-label">MRR</div><div class="kpi-value teal">{{ s.mrr }}€</div><div class="kpi-sub">ARR {{ s.arr }}€</div></div>
-      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Premium actifs</div><div class="kpi-value blue">{{ s.totalPremium }}</div><div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai</div></div>
+      <div class="kpi"><div class="kpi-top blue"></div><div class="kpi-label">Accès Premium</div><div class="kpi-value blue">{{ s.totalPremium }}</div><div class="kpi-sub">{{ s.premiumMonthly }}m · {{ s.premiumAnnual }}an · {{ s.trials }} essai · {{ s.offered }} offert@if (s.paused) { · {{ s.paused }} en pause }</div></div>
       <div class="kpi"><div class="kpi-top purple"></div><div class="kpi-label">Ambassadeurs</div><div class="kpi-value purple">{{ s.ambassadors }}</div><div class="kpi-sub">{{ s.betaTesters }} bêta testeur{{ s.betaTesters > 1 ? 's' : '' }}</div></div>
       <div class="kpi"><div class="kpi-top green"></div><div class="kpi-label">Nouveaux ce mois</div><div class="kpi-value">{{ s.newThisMonth }}</div><div class="kpi-sub">inscrits en {{ getMonthLabel() }}</div></div>
       <div class="kpi"><div class="kpi-top red"></div><div class="kpi-label">Churn ce mois</div><div class="kpi-value red">{{ s.churnedThisMonth }}</div><div class="kpi-sub">passés en FREE</div></div>
@@ -64,7 +64,11 @@
               <td data-label="Plan"><span class="badge" [class.b-premium]="u.plan==='PREMIUM'" [class.b-free]="u.plan==='FREE'">{{ u.plan }}</span></td>
               <td data-label="Abonnement">
                 @if (u.plan !== 'FREE') { <span [class]="'sub-badge sub-badge--' + subType(u)">{{ subLabel(u) }}</span> }
-                @else if (isOffered(u)) { <span class="sub-badge sub-badge--trial" title="Premium offert jusqu'au {{ u.trialEndsAt | date:'dd/MM/yyyy' }}">Offert</span> }
+                @else if (subType(u) === 'paused') { <span class="sub-badge sub-badge--paused" data-testid="badge-paused" title="Paiement en attente (abonnement en pause)">En pause</span> }
+                @else if (trial(u); as t) {
+                  @if (t.origin === 'inscription') { <span class="sub-badge sub-badge--signup" data-testid="badge-signup-trial" title="Essai d'inscription jusqu'au {{ t.until | date:'dd/MM/yyyy' }}">Essai</span> }
+                  @else { <span class="sub-badge sub-badge--trial" data-testid="badge-offered" title="Premium offert jusqu'au {{ t.until | date:'dd/MM/yyyy' }}">Offert</span> }
+                }
                 @else { <span class="muted">-</span> }
               </td>
               <td data-label="Activité" class="td-mono" [class.muted]="!u.lastSeenAt">{{ relativeTime(u.lastSeenAt) }}</td>

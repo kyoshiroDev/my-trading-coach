@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { normalizeUtm } from '../../auth/dto/register.dto';
 import { Plan, Role } from '@prisma/client';
@@ -12,6 +12,8 @@ export class AdminUpdateUserDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsEnum(Plan) plan?: Plan;
   @IsOptional() @IsEnum(Role) role?: Role;
+  /** Compte interne (#823) : exclu des statistiques admin. */
+  @IsOptional() @IsBoolean() isInternal?: boolean;
 }
 
 export class AdminListQueryDto {

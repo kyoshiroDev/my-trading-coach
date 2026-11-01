@@ -13,6 +13,7 @@ import {
   AdminFoundersData,
   AdminPlanLinkStats,
 } from '../../core/api/admin.api';
+import { TRIAL_KPI_UNRELIABLE, isTrialKpiUnreliable } from '@mtc/shared';
 import { VpsApi, VpsStats, DockerContainer } from '../../core/api/vps.api';
 import { visiblePoll } from '../../core/utils/visible-poll';
 import { ChartCanvasComponent } from '../../shared/components/chart-canvas/chart-canvas.component';
@@ -86,9 +87,18 @@ export class DashboardComponent {
         label: this.dayLabel(p.date),
         signups: p.newSignups,
         mrr: p.mrr,
+        // Snapshots où les essais n'étaient pas comptés (#828, G4) : marqués, jamais recalculés.
+        trialUnreliable: isTrialKpiUnreliable(p.date),
         order: new Date(p.date + 'T00:00:00').getTime(),
       }))
       .sort((a, b) => a.order - b.order),
+  );
+
+  /** Période « essais non comptés » visible sur la courbe (#828), sinon null. */
+  protected readonly trialUnreliableNote = computed(() =>
+    this.daily().some((d) => d.trialUnreliable)
+      ? `essais non comptés du ${this.dayLabel(TRIAL_KPI_UNRELIABLE.from)} au ${this.dayLabel(TRIAL_KPI_UNRELIABLE.to)}`
+      : null,
   );
 
   /** Ligne MRR affichée uniquement quand le MRR courant dépasse 0 (pas de faux axe). */
@@ -141,6 +151,7 @@ export class DashboardComponent {
                   ? `MRR €${v}`
                   : `${v} inscrit${v > 1 ? 's' : ''}`;
               },
+              footer: (items) => (w[items[0]?.dataIndex ?? -1]?.trialUnreliable ? 'Essais non comptés ce jour' : ''),
             },
           },
         },

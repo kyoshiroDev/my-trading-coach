@@ -61,7 +61,7 @@ describe('Landing : essai Premium d’inscription (#769)', () => {
 
   it('réservation fondateur pendant l’essai (#769, B1) : tarifs, /prop-firm, FAQ et CGU l’annoncent', () => {
     for (const f of ['components/Pricing.astro', 'components/prop-firm-page/PfPricing.astro']) {
-      expect(read(`apps/landing-mytradingcoach/src/${f}`)).toContain('Paiement à la fin de tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts');
+      expect(read(`apps/landing-mytradingcoach/src/${f}`)).toContain('Réservable pendant tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts');
     }
     expect(read('apps/landing-mytradingcoach/src/data/faq.ts')).toContain('tu peux réserver ta place');
     const cgu = read('apps/landing-mytradingcoach/src/pages/cgu.astro');

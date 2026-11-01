@@ -12,7 +12,7 @@ import { environment } from '@admin/environments/environment';
 
 const STATS = {
   mrr: 1470, arr: 17640, totalUsers: 120, totalPremium: 32, premiumMonthly: 30, premiumAnnual: 2,
-  monthly: 30, annual: 2, trials: 4, freeUsers: 84, newThisMonth: 9, churnedThisMonth: 1,
+  monthly: 30, annual: 2, trials: 4, offered: 2, paused: 1, freeUsers: 84, newThisMonth: 9, churnedThisMonth: 1,
   betaTesters: 3, ambassadors: 2, tradersActifs7d: 40, tradersActifs30d: 70,
   comptesSupprimesMois: 1, comptesSupprimesTotal: 5,
 } as AdminStats;
@@ -45,6 +45,13 @@ describe('RevenueComponent', () => {
     expect(values[1]).toBe('€17,640');
     expect(values[2]).toBe('30');
     expect(values[3]).toBe('2');
+  });
+
+  it('aperçu (#828) : essais, offerts et comptes en pause séparés', async () => {
+    const { el } = await render(STATS);
+    const v = (id: string) => el.querySelector(`[data-testid="${id}"]`)?.textContent?.trim();
+    expect([v('kpi-trials'), v('kpi-offered'), v('kpi-paused')]).toEqual(['4', '2', '1']);
+    expect(el.textContent).toContain('Accès Premium');
   });
 
   it('panne de l’API : message et bouton « Réessayer » à la place du chargement infini', async () => {

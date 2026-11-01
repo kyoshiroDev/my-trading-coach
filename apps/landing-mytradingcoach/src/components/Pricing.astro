@@ -114,7 +114,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
         </ul>
         <a href={`${APP_URL}/register?plan=founder&cta=carte`} class="price-cta prim" data-founder-cta data-cta="founder" data-ga-event="cta_founder" data-ga-place="pricing">
           <span class="cta-main">Devenir fondateur →</span>
-          <span class="cta-sub-text">Paiement à la fin de tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts</span>
+          <span class="cta-sub-text">Réservable pendant tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours offerts</span>
         </a>
       </div>
       </FounderWrap>
@@ -150,7 +150,7 @@ const FounderWrap = founderOpen ? 'div' : 'template';
     <FounderWrap data-founder-note-tpl={founderOpen ? undefined : ''} class={founderOpen ? 'founder-slot' : undefined}>
       <p class="founder-note" data-founder-note>
         Pendant tes {PREMIUM_SIGNUP_TRIAL_DAYS} jours de Premium offerts à l'inscription, tu peux réserver ta
-        place fondateur&nbsp;: tu ne paies qu'à la fin de ton essai.
+        place fondateur&nbsp;: tu ne paies qu'à la fin de ton essai, s'il reste plus de 2 jours.
       </p>
     </FounderWrap>
     {founderOpen && (

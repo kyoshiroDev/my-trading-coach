@@ -7,6 +7,9 @@
 /* avatar grisé (compte supprimé) */
 .del-av { background: linear-gradient(135deg, #5a6472, #3a4350); color: #fff; }
 
+/* compte interne (#823) : dans la liste, hors des chiffres */
+.del-internal { margin-left: 6px; vertical-align: middle; }
+
 @media (min-width: 1024px) {
   /* les 2 graphes de gauche se partagent la hauteur restante sous les KPIs */
   .del-left > .card.grow { flex: 1; }

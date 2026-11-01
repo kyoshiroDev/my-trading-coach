@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
+import { REAL_USERS_WHERE, realUsersSql } from '../../common/stats/real-users';
 import { INSTALL_EVENTS } from '../product-events/product-events.const';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
@@ -126,7 +127,7 @@ export class AdminService {
     const d30 = new Date(now - 30 * 86_400_000);
 
     // Utilisateurs « réels » : hors démo ET hors comptes ADMIN.
-    const REAL_USERS = { isDemo: false, role: { not: Role.ADMIN } } as const;
+    const REAL_USERS = REAL_USERS_WHERE;
 
     const [
       totalUsers,
@@ -156,7 +157,7 @@ export class AdminService {
               AND t."tradedAt" < u."createdAt" + INTERVAL '7 days'
           )) AS retained
         FROM "User" u
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+        WHERE ${realUsersSql('u')}
       `,
     ]);
 
@@ -204,7 +205,7 @@ export class AdminService {
         SELECT SUM("visits") AS n FROM "LandingVisitDaily" WHERE "date" >= ${from}::date`,
       this.prisma.$queryRaw<{ n: bigint }[]>`
         SELECT COUNT(*) AS n FROM "User"
-        WHERE "isDemo" = false AND "role" <> 'ADMIN' AND "createdAt" >= ${from}`,
+        WHERE ${realUsersSql()} AND "createdAt" >= ${from}`,
       this.prisma.$queryRaw<{ event: string; n: bigint }[]>`
         SELECT e."event", SUM(e."count") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
@@ -215,24 +216,24 @@ export class AdminService {
         SELECT CASE WHEN e."event" = 'checkout_return' THEN 'checkout_' || e."place" ELSE e."event" END AS key,
           COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
           AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click', 'checkout_return')
         GROUP BY 1`,
       this.prisma.$queryRaw<{ event: AdminFunnelPlace['event']; place: string; n: bigint }[]>`
         SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
           AND e."event" IN ('premium_seen', 'plan_modal_open', 'trial_click')
         GROUP BY e."event", e."place"
         ORDER BY n DESC`,
       this.prisma.$queryRaw<{ trialing: bigint; paying: bigint }[]>`
         SELECT COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" = 'trialing') AS trialing,
           COUNT(*) FILTER (WHERE "stripeSubscriptionStatus" IN ('active', 'past_due')) AS paying
-        FROM "User" WHERE "isDemo" = false AND "role" <> 'ADMIN'`,
+        FROM "User" WHERE ${realUsersSql()}`,
       this.prisma.$queryRaw<{ event: AdminInstallRow['event']; place: string; n: bigint }[]>`
         SELECT e."event", e."place", COUNT(DISTINCT e."userId") AS n
         FROM "ProductEventDaily" e JOIN "User" u ON u."id" = e."userId"
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND e."date" >= ${from}::date
+        WHERE ${realUsersSql('u')} AND e."date" >= ${from}::date
           AND e."event" IN (${Prisma.join([...INSTALL_EVENTS])})
         GROUP BY e."event", e."place"
         ORDER BY e."place", e."event"`,
@@ -250,7 +251,7 @@ export class AdminService {
           MIN(u."stripeCurrentPeriodEnd") FILTER (WHERE s."number" IS NOT NULL AND u."stripeSubscriptionStatus" = 'trialing') AS next_charge
         FROM "User" u
         LEFT JOIN "FounderSeat" s ON s."userId" = u."id" AND s."status" = 'ACTIVE' AND s."firstPaidAt" IS NULL
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN' AND u."signupTrialEndsAt" IS NOT NULL`,
+        WHERE ${realUsersSql('u')} AND u."signupTrialEndsAt" IS NOT NULL`,
     ]);
 
     const step = new Map(stepRows.map((r) => [r.key, Number(r.n)]));
@@ -292,7 +293,7 @@ export class AdminService {
         COUNT(*) FILTER (WHERE u."signupFinalizedAt" IS NOT NULL) AS finalized,
         COUNT(*) FILTER (WHERE u."googleId" IS NOT NULL) AS linked
       FROM "User" u
-      WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+      WHERE ${realUsersSql('u')}
       GROUP BY u."authProvider"
     `;
     const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 1000) / 10 : 0);
@@ -344,7 +345,7 @@ export class AdminService {
           COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" IN ('active', 'trialing', 'past_due')) AS premium,
           COUNT(*) FILTER (WHERE u."stripeSubscriptionStatus" = 'trialing') AS trialing
         FROM "User" u
-        WHERE u."isDemo" = false AND u."role" <> 'ADMIN'
+        WHERE ${realUsersSql('u')}
         GROUP BY u."acquisitionSource", u."acquisitionMedium", u."acquisitionCampaign"
       `,
       this.prisma.$queryRaw<(Utm & { v7: bigint; v30: bigint })[]>`

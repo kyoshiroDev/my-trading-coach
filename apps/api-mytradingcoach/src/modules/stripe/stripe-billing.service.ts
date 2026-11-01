@@ -84,6 +84,13 @@ const frDate = (d: Date) => d.toLocaleDateString('fr-FR', { day: '2-digit', mont
 /** Refus du checkout fondateur : message clair, le Premium au prix normal reste possible. */
 const FOUNDER_REFUSALS = FOUNDER_INELIGIBLE_MESSAGES;
 
+/**
+ * Abonnement en pause (`past_due` / `unpaid` : 3D Secure à confirmer, carte refusée) : pas de
+ * nouveau checkout (#813), sinon Stripe relance l'ancien abonnement pendant que le nouveau démarre.
+ */
+export const PAYMENT_PENDING_MESSAGE =
+  'Un paiement de ton abonnement est en attente\u00a0: confirme-le depuis ton profil (« Confirmer mon paiement »), sans repasser par une nouvelle offre.';
+
 /** Routes /billing de l'utilisateur : statut, checkout, portail client. */
 @Injectable()
 export class StripeBillingService {
@@ -190,6 +197,9 @@ export class StripeBillingService {
         .retrieve(user.stripeSubscriptionId)
         .catch(() => null);
 
+      if (existing && (existing.status === 'past_due' || existing.status === 'unpaid')) {
+        throw new ConflictException(PAYMENT_PENDING_MESSAGE);
+      }
       if (existing && ACTIVE_STATUSES.has(existing.status)) {
         const existingPrice = existing.items.data[0]?.price.id ?? '';
         const canSwitchToFounder =
