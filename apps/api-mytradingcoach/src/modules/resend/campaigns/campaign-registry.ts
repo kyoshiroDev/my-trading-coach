@@ -346,24 +346,6 @@ export const CAMPAIGNS: EmailCampaign[] = [
     build: premiumTemplate,
   },
   {
-    key: 'debrief_reminder',
-    label: 'Débrief prêt',
-    description: 'Notifie les Premium que le débrief hebdo est disponible.',
-    kind: 'marketing',
-    requiresConsent: true,
-    automated: false,
-    priority: 25,
-    segment: () => ({ plan: 'PREMIUM' }),
-    build: ({ userName, appUrl, unsubUrl }) =>
-      announcementTemplate(
-        { userName, appUrl, unsubUrl },
-        {
-          subject: '📅 Ton débrief hebdo est prêt',
-          bodyHtml: `<p style="font-family:'Inter',Arial,sans-serif;font-size:14px;color:#9db4ce;margin:0 0 16px 0;line-height:1.7;">Ton analyse de la semaine vient d'être générée : tes patterns, tes points forts et 3 objectifs concrets pour la semaine.</p>`,
-        },
-      ),
-  },
-  {
     key: 'reengagement',
     label: "Tu n'as pas tradé",
     description: 'Réengage les users sans trade depuis 7 jours.',

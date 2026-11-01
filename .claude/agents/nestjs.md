@@ -1635,6 +1635,10 @@ part de lignes et non la perfection.
   `LEGAL_NOTICE_FOOTER`, contact support@, aucun bouton). `recurringCooldownDays: 7` : un renvoi
   après erreur ne touche que ceux qui ne l'ont pas reçu, une nouvelle information reste possible
   après 7 jours. Jamais pour une nouveauté ou une offre : c'est `announcement` (marketing).
+- **Pas de campagne « débrief prêt »** (#833) : l'e-mail part déjà, automatiquement, après chaque
+  débrief généré (`debrief.processor`, réglage `notificationsEmail`), essai d'inscription compris.
+  L'ancienne campagne manuelle `debrief_reminder` (ciblée sur `plan: PREMIUM`) le doublait et
+  l'annonçait à des comptes sans débrief : retirée, ne pas la recréer.
 - **Lettre de Greg** (`resend/campaigns/greg-letter.ts`) : forme des e-mails écrits à la 1re personne
   (`founder_launch`) = celle de ses envois manuels : fond blanc, style lettre, signature Zoho de Greg
   avec le logo joint en inline (`cid:logo-mtc`), expéditeur `Grégory · MyTradingCoach <support@>`,
