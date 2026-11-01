@@ -43,11 +43,16 @@ function offers(over: Partial<BillingOffers> = {}): BillingOffers {
   };
 }
 
-function render(opts: { offered: boolean; signup?: boolean; paying?: boolean; offers?: BillingOffers }) {
+function render(opts: {
+  offered: boolean; signup?: boolean; paying?: boolean; offers?: BillingOffers;
+  /** Champs du compte à forcer (états #813) ; `premium` = accès Premium vu par le store. */
+  user?: Record<string, unknown>; premium?: boolean;
+}) {
   const user = {
     email: 'alex@test.com', plan: 'FREE', trialEndsAt: opts.paying ? null : IN_20_DAYS, trialUsed: true,
     stripeSubscriptionStatus: opts.paying ? 'active' : opts.offered || opts.signup ? null : 'trialing',
     notificationsEmail: true, debriefAutomatic: true, marketingConsent: false,
+    ...opts.user,
   };
   TestBed.configureTestingModule({
     providers: [
@@ -59,7 +64,7 @@ function render(opts: { offered: boolean; signup?: boolean; paying?: boolean; of
         provide: UserStore,
         useValue: {
           user: () => user,
-          isPremium: () => true, isDemo: () => false, isOfferedPremium: () => opts.offered, signupTrialDaysLeft: () => (opts.signup ? 20 : null),
+          isPremium: () => opts.premium ?? true, isDemo: () => false, isOfferedPremium: () => opts.offered, signupTrialDaysLeft: () => (opts.signup ? 20 : null),
           trialAvailable: () => false,
           displayName: () => 'Alex', startingCapital: () => 0, refreshUser: vi.fn(),
         },
@@ -181,5 +186,131 @@ describe('Profil > Abonnement', () => {
     }).textContent ?? '';
     expect(text).toContain('Passer au mensuel (49 €/mois)');
     expect(text).not.toContain('met fin à ton tarif');
+  });
+});
+
+describe('Profil > Abonnement : un bloc par état d’abonnement (#813)', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+  const IN_1_DAY = new Date(Date.now() + 86_400_000).toISOString();
+  const IN_31_DAYS = new Date(Date.now() + 31 * 86_400_000).toISOString();
+  const AGO_2_DAYS = new Date(Date.now() - 2 * 86_400_000).toISOString();
+  const NO_CANCEL_WORDING = (text: string) => {
+    expect(text).not.toContain('annuler mon essai');
+    expect(text).not.toMatch(/rembours/i);
+  };
+
+  it('2. réservation fondateur pendant l’essai : premier prélèvement à la fin de l’essai, portail « Gérer / annuler mon essai »', () => {
+    const text = render({
+      offered: false,
+      user: { plan: 'PREMIUM', trialSource: 'SIGNUP', trialEndsAt: IN_20_DAYS, stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: IN_20_DAYS },
+    }).textContent ?? '';
+    expect(text).toContain('Essai gratuit\u00a0: il te reste 20 jours');
+    expect(text).toContain('Premier prélèvement le');
+    expect(text).toContain('Gérer / annuler mon essai →');
+  });
+
+  it('3. réservation à moins de 48 h, payée tout de suite : renouvellement, jamais « essai »', () => {
+    const el = render({
+      offered: false,
+      user: { plan: 'PREMIUM', trialSource: 'SIGNUP', trialEndsAt: IN_1_DAY, stripeSubscriptionStatus: 'active', stripeCurrentPeriodEnd: IN_31_DAYS },
+    });
+    const text = el.textContent ?? '';
+    expect(el.querySelector('[data-testid="plan-renewal"]')?.textContent).toContain('Renouvellement\u00a0:');
+    expect(text).toContain('Gérer mon abonnement →');
+    expect(text).not.toContain('Essai gratuit');
+    expect(text).not.toContain('Premier prélèvement');
+    expect(text).not.toContain('annuler mon essai');
+  });
+
+  it('4. essai terminé en avance (T4) ou abonnement après l’essai : renouvellement', () => {
+    for (const trialEndsAt of [IN_20_DAYS, AGO_2_DAYS]) {
+      TestBed.resetTestingModule();
+      const text = render({
+        offered: false,
+        user: { plan: 'PREMIUM', trialSource: 'SIGNUP', trialEndsAt, stripeSubscriptionStatus: 'active', stripeCurrentPeriodEnd: IN_31_DAYS },
+      }).textContent ?? '';
+      expect(text).toContain('Renouvellement');
+      expect(text).not.toContain('Essai gratuit');
+    }
+  });
+
+  it('5. essai annulé : retour au gratuit daté, aucun prélèvement, ni bouton d’annulation ni remboursement', () => {
+    const el = render({
+      offered: false,
+      offers: offers({ founder: { isFounder: true, number: 7, interval: 'month', since: null, eligible: false, ineligibleReason: null, refundUntil: null } }),
+      user: {
+        plan: 'PREMIUM', trialSource: 'SIGNUP', trialEndsAt: IN_20_DAYS, stripeSubscriptionStatus: 'trialing',
+        stripeCurrentPeriodEnd: IN_20_DAYS, stripeCancelAt: IN_20_DAYS,
+      },
+    });
+    const text = el.textContent ?? '';
+    expect(el.querySelector('[data-testid="subscription-canceled"]')?.textContent).toContain('Essai annulé');
+    expect(text).toContain('Tu repasses en gratuit le');
+    expect(text).toContain('aucun prélèvement');
+    expect(text).not.toContain('Premier prélèvement');
+    expect(text).not.toContain('Essai gratuit');
+    expect(el.querySelector('[data-testid="tariff-loss-note"]')).toBeNull();
+    NO_CANCEL_WORDING(text);
+  });
+
+  it('abonnement payant résilié en fin de période : Premium jusqu’à la date, plus de renouvellement', () => {
+    const el = render({
+      offered: false,
+      user: { plan: 'PREMIUM', trialEndsAt: null, stripeSubscriptionStatus: 'active', stripeCurrentPeriodEnd: IN_20_DAYS, stripeCancelAt: IN_20_DAYS },
+    });
+    const text = el.textContent ?? '';
+    expect(text).toContain('Abonnement résilié');
+    expect(text).toContain('Aucun nouveau prélèvement.');
+    expect(el.querySelector('[data-testid="plan-renewal"]')).toBeNull();
+    NO_CANCEL_WORDING(text);
+  });
+
+  it('6. en pause (past_due) : « Paiement en attente » et « Confirmer mon paiement », jamais « Passer Premium »', () => {
+    const el = render({
+      offered: false, premium: false,
+      user: { plan: 'FREE', trialSource: 'SIGNUP', trialEndsAt: AGO_2_DAYS, stripeSubscriptionStatus: 'past_due', stripeCurrentPeriodEnd: IN_31_DAYS },
+    });
+    const text = el.textContent ?? '';
+    expect(el.querySelector('[data-testid="payment-pending"]')?.textContent).toContain('Paiement en attente');
+    expect(el.querySelector('[data-testid="confirm-payment"]')?.textContent).toContain('Confirmer mon paiement →');
+    expect(text).not.toContain('Passer Premium');
+    expect(text).not.toContain('Passer à Premium');
+  });
+
+  it('7. après l’essai, sans abonnement : bloc gratuit avec l’offre', () => {
+    const text = render({
+      offered: false, premium: false, user: { plan: 'FREE', trialSource: 'SIGNUP', trialEndsAt: AGO_2_DAYS, stripeSubscriptionStatus: null },
+    }).textContent ?? '';
+    expect(text).toContain('GRATUIT');
+    expect(text).toContain('Passer à Premium');
+    expect(text).not.toContain('Paiement en attente');
+  });
+
+  it('8. ancien essai Stripe de 30 jours (sans trialEndsAt) : premier prélèvement à la fin de période', () => {
+    const text = render({
+      offered: false, user: { plan: 'PREMIUM', trialEndsAt: null, stripeSubscriptionStatus: 'trialing', stripeCurrentPeriodEnd: IN_20_DAYS },
+    }).textContent ?? '';
+    expect(text).toContain('Essai gratuit\u00a0: il te reste 20 jours');
+    expect(text).not.toContain('Renouvellement');
+  });
+});
+
+describe('Profil > Abonnement : jours restants en jours de calendrier, comme le bandeau', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('au passage de minuit, le décompte baisse d’un jour (et pas à l’heure de fin)', () => {
+    // Fin de l'essai le 3 novembre à 8 h (heure locale).
+    const end = new Date(2026, 10, 3, 8, 0).toISOString();
+    const days = (now: Date) => {
+      TestBed.resetTestingModule();
+      vi.useFakeTimers({ now, toFake: ['Date'] });
+      try {
+        return render({ offered: false, signup: true, user: { trialSource: 'SIGNUP', trialEndsAt: end } }).textContent ?? '';
+      } finally {
+        vi.useRealTimers();
+      }
+    };
+    expect(days(new Date(2026, 10, 1, 23, 59))).toContain('il te reste 2 jours');
+    expect(days(new Date(2026, 10, 2, 0, 1))).toContain('il te reste 1 jour');
   });
 });

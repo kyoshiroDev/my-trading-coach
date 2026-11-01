@@ -2,6 +2,7 @@ import { Injectable, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { ACCOUNT_LIMITS } from '../constants/pricing.const';
+import { subscriptionState } from '@mtc/shared';
 
 const DAY_MS = 86_400_000;
 
@@ -22,10 +23,7 @@ export class UserStore {
   /** Accès payant : plan PREMIUM, essai en cours, ou rôle privilégié (admin / beta). */
   readonly isPremium = computed(() => {
     const user = this.user();
-    if (!user) return false;
-    if (user.role === 'ADMIN' || user.role === 'BETA_TESTER') return true;
-    if (user.plan === 'PREMIUM') return true;
-    return !!(user.trialEndsAt && new Date() < new Date(user.trialEndsAt));
+    return !!user && subscriptionState(user).premiumAccess; // même règle que l'API (#813)
   });
 
   /**

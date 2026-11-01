@@ -6,7 +6,7 @@ import { httpResource } from '@angular/common/http';
 import { map } from 'rxjs';
 import { environment } from '@admin/environments/environment';
 import { ConfirmService } from '@mtc/front-ui';
-import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage } from '@mtc/shared';
+import { acquisitionLabel, acquisitionQueryParams, apiErrorMessage, subscriptionState } from '@mtc/shared';
 import { AdminApi, UserDetailData } from '../../core/api/admin.api';
 import { ActivityCalendarComponent } from './activity-calendar.component';
 
@@ -188,11 +188,24 @@ export class UserDetailComponent {
     const i = this.data()?.identity;
     return i ? activeTrial(i) : null;
   });
-  /** Plan affiché : l'accès réel pendant un essai, pas le plan FREE stocké. */
+  /**
+   * Plan affiché : l'accès réel pendant un essai, pas le plan FREE stocké ; pour un abonnement, son
+   * état réel (#813, `subscriptionState`) : essai avant prélèvement, annulé, résilié, en pause.
+   */
   protected readonly planLabel = computed(() => {
     const d = this.data();
     if (!d) return '';
-    return this.trial() ? 'Premium (essai)' : `${d.identity.plan} · ${this.planSub()}`;
+    if (this.trial()) return 'Premium (essai)';
+    const i = d.identity;
+    const s = subscriptionState({
+      plan: i.plan, role: i.role, trialEndsAt: i.trialEndsAt, trialSource: i.trialSource,
+      stripeSubscriptionStatus: i.subscriptionStatus, stripeCancelAt: i.subscriptionCancelAt,
+    });
+    const end = s.cancelAt ? s.cancelAt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' }) : null;
+    if (s.kind === 'subscription_trial') return end ? `${i.plan} · essai annulé, fin le ${end}` : `${i.plan} · essai avant prélèvement`;
+    if (s.kind === 'paying' && end) return `${i.plan} · résilié, fin le ${end}`;
+    if (s.kind === 'paused') return `${i.plan} · paiement en attente`;
+    return `${i.plan} · ${this.planSub()}`;
   });
   // ── Premium offert ──
   /** Fin du Premium offert en cours, sinon null. */

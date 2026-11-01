@@ -287,6 +287,17 @@ Toute feature gated doit être alignée **partout**, sinon on vend une chose qu'
   source (inscription = `trialSource` SIGNUP, sinon admin) ; ligne IA sur `identity.premiumAccess`
   (`isPremiumAccess`), jamais sur le plan brut. Liste : badge « Essai » (inscription) distinct de
   « Offert » (admin). `isOfferedPremium` et le bouton « Offrir » ne changent pas.
+- **État d'abonnement unique (#813, 2026-11-01)** : `subscriptionState` (`libs/shared/src/subscription-state.ts`,
+  fonction pure partagée API / app / admin). Ordre : statut Stripe (`active` = payant, `trialing` = essai
+  d'abonnement, `past_due` / `unpaid` = en pause), puis `trialEndsAt` futur (SIGNUP = essai d'inscription,
+  sinon offert), rôle ADMIN / BETA_TESTER, plan PREMIUM sans abonnement (accès manuel), gratuit.
+  `premiumAccess` = règle des guards inchangée ; `isPremiumAccess` et `UserStore.isPremium` l'appellent.
+  **`trialEndsAt` n'est jamais écrit par Stripe** : il ne dit rien d'un abonnement. Date du 1er
+  prélèvement d'un essai d'abonnement = `stripeCurrentPeriodEnd` ; fin programmée = `stripeCancelAt`.
+  Un abonné qui paie pendant son essai d'inscription (réservation à moins de 48 h, essai terminé en
+  avance) est « payant ». Place fondateur d'un essai annulé : rendue **à la fin de l'essai**
+  (`customer.subscription.deleted`, décision G2), e-mail de réservation aligné. Checkout refusé (409,
+  `PAYMENT_PENDING_MESSAGE`) en `past_due` / `unpaid` : confirmer le paiement, jamais une nouvelle offre.
 - **Encart de séance du gratuit (B4)** : compte gratuit relié à un plan prop firm, en séance : quand la
   marge avant le plancher franchit un seuil d'alerte Premium, « Avec Premium, tu aurais été alerté à
   25 % (puis 10 %) de ta marge avant le plancher ». MÊMES seuils que les alertes Premium (25 % puis

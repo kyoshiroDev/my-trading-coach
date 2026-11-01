@@ -106,6 +106,13 @@ export class StripeSubscriptionService {
     // à tort son droit à l'essai (bug corrigé). trial_end reste renseigné après
     // conversion, donc le flag reste vrai une fois posé.
     const trialGranted = subscription.trial_end != null;
+    // Annulation programmée (#813) : essai annulé (cancel_at, facturation flexible) ou résiliation en
+    // fin de période. Le profil l'affiche au lieu du prochain prélèvement.
+    const cancelAt = subscription.cancel_at
+      ? new Date(subscription.cancel_at * 1000)
+      : subscription.cancel_at_period_end
+        ? periodEnd
+        : null;
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -116,6 +123,7 @@ export class StripeSubscriptionService {
         stripeInterval: interval,
         stripeCurrentPeriodEnd: periodEnd,
         stripeSubscriptionStatus: status,
+        stripeCancelAt: cancelAt,
         trialUsed: user.trialUsed || trialGranted,
         // Réabonnement actif → on efface la date de churn (ne plus compter comme résilié).
         subscriptionCanceledAt: isActive ? null : undefined,

@@ -103,6 +103,23 @@ describe('Fiche admin — essai en cours (#769)', () => {
   });
 });
 
+describe('Fiche admin — état réel de l’abonnement (#813)', () => {
+  beforeEach(() => { TestBed.resetTestingModule(); confirm.ask.mockReset(); });
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  const FUTURE = '2099-11-12T08:00:00.000Z';
+
+  it.each([
+    ['2. réservation fondateur pendant l’essai', { plan: 'PREMIUM', subscriptionStatus: 'trialing', trialEndsAt: FUTURE, trialSource: 'SIGNUP' }, 'PREMIUM · essai avant prélèvement'],
+    ['3. payé tout de suite (moins de 48 h), essai d’inscription encore futur', { plan: 'PREMIUM', subscriptionStatus: 'active', trialEndsAt: FUTURE, trialSource: 'SIGNUP' }, 'PREMIUM · payant'],
+    ['5. essai annulé', { plan: 'PREMIUM', subscriptionStatus: 'trialing', subscriptionCancelAt: FUTURE }, 'PREMIUM · essai annulé, fin le 12/11/2099'],
+    ['abonnement résilié en fin de période', { plan: 'PREMIUM', subscriptionStatus: 'active', subscriptionCancelAt: FUTURE }, 'PREMIUM · résilié, fin le 12/11/2099'],
+    ['6. en pause', { plan: 'FREE', subscriptionStatus: 'past_due' }, 'FREE · paiement en attente'],
+  ] as const)('%s', async (_l, identity, label) => {
+    const { el } = await render(makeData({ premiumAccess: identity.plan === 'PREMIUM', ...identity }));
+    expect(q(el, 'plan-row')).toBe(label);
+  });
+});
+
 describe('Fiche admin — Premium offert', () => {
   beforeEach(() => { TestBed.resetTestingModule(); confirm.ask.mockReset(); });
   afterEach(() => TestBed.inject(HttpTestingController).verify());

@@ -14,6 +14,8 @@ export interface AdminUserDetail {
     plan: Plan;
     role: Role;
     subscriptionStatus: string | null;
+    /** Fin programmée de l'abonnement (essai annulé, résiliation en fin de période), #813 ; null = rien. */
+    subscriptionCancelAt?: string | null;
     /** Fin d'accès Premium hors plan (mois offert par l'admin, ou essai historique). */
     trialEndsAt: string | null;
     /** Premium offert par l'admin en cours : `trialEndsAt` futur ET aucun abonnement Stripe. */

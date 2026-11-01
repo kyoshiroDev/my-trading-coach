@@ -20,7 +20,7 @@ export class UserDetailService {
       where: { id },
       select: {
         id: true, name: true, email: true, plan: true, role: true,
-        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, referralCode: true,
+        stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, stripeCancelAt: true, referralCode: true,
         trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
         createdAt: true, lastSeenAt: true,
@@ -156,6 +156,7 @@ export class UserDetailService {
         plan: user.plan,
         role: user.role,
         subscriptionStatus: user.stripeSubscriptionStatus ?? null,
+        subscriptionCancelAt: user.stripeCancelAt?.toISOString() ?? null,
         trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
         offeredPremium: isOfferedPremium(user),
         trialSource: user.trialSource ?? null,
