@@ -25,6 +25,8 @@ export interface AdminUserDetail {
     /** Accès Premium réel (plan, rôle ADMIN / BETA_TESTER ou essai en cours), même règle que les guards. */
     premiumAccess: boolean;
     isDemo: boolean;
+    /** Compte interne (tests de l'équipe, #823) : exclu des statistiques admin. */
+    isInternal?: boolean;
     ambassadorRefCode: string | null;
     /** UTM enregistrés à l'inscription (#625) ; null = non renseigné. */
     acquisition: AcquisitionUtm;

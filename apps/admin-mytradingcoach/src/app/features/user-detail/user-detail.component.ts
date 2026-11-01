@@ -252,6 +252,32 @@ export class UserDetailComponent {
     });
   }
 
+  // ── Compte interne (#823) ──
+  /** Les comptes ADMIN sont déjà hors statistiques, et l'API refuse de les modifier. */
+  protected readonly internalBlocked = computed(() =>
+    this.data()?.identity.role === 'ADMIN' ? 'Compte admin, déjà hors statistiques' : null,
+  );
+  protected readonly internalSaving = signal(false);
+
+  /** Marque ou démarque le compte comme interne : il sort (ou revient dans) les statistiques admin. */
+  protected toggleInternal(): void {
+    const i = this.data()?.identity;
+    if (!i || this.internalBlocked() || this.internalSaving()) return;
+    const next = !i.isInternal;
+    this.internalSaving.set(true);
+    this.api.update(i.id, { isInternal: next }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.internalSaving.set(false);
+        this.showToast(next ? 'Compte marqué interne, hors statistiques' : 'Compte de nouveau compté dans les statistiques');
+        this.detail.reload();
+      },
+      error: (err) => {
+        this.internalSaving.set(false);
+        this.showToast(apiErrorMessage(err, 'Le compte n’a pas pu être modifié. Réessaie.'), true);
+      },
+    });
+  }
+
   private showToast(message: string, error = false): void {
     this.toast.set({ message, error });
     setTimeout(() => this.toast.set(null), 4000);

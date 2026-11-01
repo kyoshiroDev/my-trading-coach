@@ -86,6 +86,7 @@ const ADMIN_USER_SELECT = {
   acquisitionSource: true,
   acquisitionMedium: true,
   acquisitionCampaign: true,
+  isInternal: true,
 } as const;
 
 @Injectable()
@@ -182,7 +183,7 @@ export class UsersService {
 
   async adminUpdate(
     targetId: string,
-    dto: { name?: string; plan?: Plan; role?: Role },
+    dto: { name?: string; plan?: Plan; role?: Role; isInternal?: boolean },
   ) {
     const target = await this.prisma.user.findUnique({
       where: { id: targetId },
@@ -242,6 +243,7 @@ export class UsersService {
         plan: true,
         createdAt: true,
         referredBy: true,
+        isInternal: true,
         stripeCustomerId: true,
         discordId: true,
         _count: { select: { trades: true } },
@@ -279,6 +281,7 @@ export class UsersService {
           referredBy: user.referredBy,
           deletedBy,
           reason: reason?.trim() ? reason.trim().slice(0, 280) : null,
+          isInternal: user.isInternal,
         },
       }),
       this.prisma.user.delete({ where: { id: userId } }),
@@ -295,7 +298,7 @@ export class UsersService {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
 
-    // Utilisateurs « réels » : hors démo ET hors comptes ADMIN (super-admin, etc.), filtre partagé.
+    // Utilisateurs « réels » : hors démo, hors comptes internes et hors ADMIN, filtre partagé.
     const REAL_USERS = REAL_USERS_WHERE;
 
     const [
@@ -334,10 +337,10 @@ export class UsersService {
       // À ne pas confondre avec l'activation (= a tradé au moins une fois).
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: sevenDaysAgo } } } } }),
       this.prisma.user.count({ where: { ...REAL_USERS, trades: { some: { tradedAt: { gte: thirtyDaysAgo } } } } }),
-      // Comptes supprimés (trace DeletedAccount) : distinct du churn d'abonnement.
-      // Les comptes démo ne sont jamais supprimés → naturellement hors démo.
-      this.prisma.deletedAccount.count({ where: { deletedAt: { gte: startOfMonth } } }),
-      this.prisma.deletedAccount.count(),
+      // Comptes supprimés (trace DeletedAccount) : distinct du churn d'abonnement, hors comptes
+      // internes (#823). Les comptes démo ne sont jamais supprimés → naturellement hors démo.
+      this.prisma.deletedAccount.count({ where: { isInternal: false, deletedAt: { gte: startOfMonth } } }),
+      this.prisma.deletedAccount.count({ where: { isInternal: false } }),
     ]);
 
     // MRR/ARR sur le montant RÉELLEMENT payé (#525) : 49 € / 490/12 au prix normal, 29 € / 290/12

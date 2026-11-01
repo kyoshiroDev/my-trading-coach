@@ -105,11 +105,12 @@ describe('AdminService.getSignupMethods (#618)', () => {
     expect(res.google.finalizationRate).toBe(0);
   });
 
-  it('exclut démo et ADMIN dans la requête', async () => {
+  it('exclut démo, comptes internes (#823) et ADMIN dans la requête', async () => {
     raw().mockResolvedValueOnce([]);
     await service.getSignupMethods();
     const sql = fullSql(raw().mock.calls[0] as [TemplateStringsArray, ...unknown[]]);
     expect(sql).toContain('"isDemo" = false');
+    expect(sql).toContain('"isInternal" = false');
     expect(sql).toContain(`"role" <> 'ADMIN'`);
   });
 });

@@ -88,6 +88,17 @@ describe('UsersService — suppression + trace DeletedAccount', () => {
     expect(discordGuild.removePlanRoles).not.toHaveBeenCalled();
   });
 
+  it('compte interne (#823) : recopié dans la trace ; compte normal : false', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, isInternal: true });
+    await service.deleteMe('user-1');
+    expect(mockPrisma.deletedAccount.create.mock.calls[0][0].data.isInternal).toBe(true);
+
+    mockPrisma.user.findUnique.mockResolvedValue({ ...baseUser, isInternal: false });
+    await service.adminDelete('user-1');
+    expect(mockPrisma.deletedAccount.create.mock.calls[1][0].data.isInternal).toBe(false);
+    expect(mockPrisma.user.findUnique.mock.calls[0][0].select.isInternal).toBe(true);
+  });
+
   it('reason vide → null', async () => {
     await service.deleteMe('user-1', '   ');
     expect(mockPrisma.deletedAccount.create.mock.calls[0][0].data.reason).toBeNull();

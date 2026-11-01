@@ -84,6 +84,8 @@ describe('AmbassadorService', () => {
         totalEarned: 19.6,
         pendingPayout: 9.8,
       });
+      // Filleuls internes (#823) hors des compteurs ; les commissions restent entières (19,6 ci-dessus).
+      for (const call of prisma.user.groupBy.mock.calls) expect(call[0].where).toMatchObject({ isInternal: false });
     });
 
     it('le comptage ne porte que sur les lignes retournées (donc les AMBASSADOR)', async () => {

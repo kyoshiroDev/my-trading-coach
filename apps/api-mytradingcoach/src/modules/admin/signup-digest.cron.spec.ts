@@ -48,12 +48,13 @@ describe('SignupDigestCron — un récap par jour au lieu d’un e-mail par insc
     expect(body).toContain('b@test.local · direct');
   });
 
-  it('fenêtre des 24 dernières heures, sans compte démo ni admin', async () => {
+  it('fenêtre des 24 dernières heures, sans compte démo, interne (#823) ni admin', async () => {
     prisma.user.findMany.mockResolvedValue([]);
     await cron.sendDigest(NOW);
     expect(prisma.user.findMany.mock.calls[0][0].where).toEqual({
       createdAt: { gte: new Date(NOW.getTime() - 24 * 3600_000), lt: NOW },
       isDemo: false,
+      isInternal: false,
       role: { not: Role.ADMIN },
     });
   });

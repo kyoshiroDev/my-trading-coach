@@ -77,6 +77,9 @@ model User {
   // Compte vitrine en lecture seule (démo landing). Bloque les écritures
   // (DemoReadOnlyGuard) et est exclu de toutes les métriques/crons/emails admin.
   isDemo Boolean @default(false)
+  /// Compte interne (tests de l'équipe, #823) : exclu des statistiques admin comme `isDemo`, mais
+  /// garde l'accès, les e-mails et la règle des 90 jours. Marqué depuis la fiche admin.
+  isInternal Boolean @default(false)
   productEvents ProductEventDaily[]
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
@@ -1042,6 +1045,8 @@ model DeletedAccount {
   deletedBy    String // "self" | "admin"
   reason       String?
   anonymizedAt DateTime?
+  /// Recopié de `User.isInternal` à la suppression (#823) : hors des chiffres, visible dans la liste.
+  isInternal   Boolean   @default(false)
 
   @@index([deletedAt])
   @@index([anonymizedAt])

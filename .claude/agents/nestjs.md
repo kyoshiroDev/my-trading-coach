@@ -1785,15 +1785,23 @@ redéployer : rien à lancer sur le VPS.
   `externalUserId`, solde de départ = 1re `BrokerDailyClose` (`closingBalance − realizedPnl`).
   **Aucun appel broker** (clause 2.i NinjaTrader). `null` sans sous-compte choisi. La déduction
   (`guessPlan`, préfixes `PAAPEX` / `APEX` / `TAKEPROFIT`) est pure et vit dans `@mtc/shared`.
-- **Comptes réels des statistiques (#828)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
-  brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts`. Toute nouvelle statistique admin les
-  utilise, jamais une copie de `isDemo: false, role: { not: ADMIN }`. Jamais pour cibler des envois
-  (`email-campaign.service.ts` garde son filtre : les comptes de test reçoivent les e-mails). États
+- **Comptes réels des statistiques (#828, #823)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
+  brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts` : hors démo, hors comptes internes
+  (`isInternal`) et hors ADMIN. Toute nouvelle statistique admin les utilise, jamais une copie du filtre.
+  Jamais pour cibler des envois (`email-campaign.service.ts` garde son filtre : les comptes de test
+  reçoivent les e-mails).
+- **Comptes internes (#823)** : `User.isInternal`, posé par l'interrupteur de la fiche admin
+  (`PATCH /admin/users/:id { isInternal }`, `AdminGuard`), jamais par le domaine de l'adresse. Recopié
+  dans `DeletedAccount.isInternal` par `archiveAndDelete`. Exclu : agrégats admin (via `REAL_USERS_WHERE`),
+  chiffres des comptes supprimés (`adminStats`, `getDeletedAccounts` : la liste les garde, avec badge),
+  compteur public de traders, compteurs de filleuls de l'admin (parrainage, ambassadeurs). Gardé :
+  accès, e-mails, crons, commissions, compteur de places fondateur, vue du parrain sur ses filleuls,
+  règle des 90 jours (`auth.service.ts`), `MetricsSnapshot` déjà enregistrés. États
   d'abonnement à compter : `subscriptionStateWhere(kind, now)` / `premiumAccessWhere(now)`
   (`common/stats/subscription-state-where.ts`), miroir de `subscriptionState` (@mtc/shared).
 - **Mesure admin** (`GET /admin/prop-firms/plan-links`, `AdminPropFirmsController` + `PlanLinkStatsService`,
   calcul pur `plan-link-stats.ts`) : comptes **connectés** (sous-compte choisi, non archivés) reliés à un
-  plan / connectés, filtre `REAL_USERS` (hors démo, hors ADMIN) ; répartition des comptes sans plan par
+  plan / connectés, filtre `REAL_USERS` (hors démo, internes et ADMIN) ; répartition des comptes sans plan par
   `planLinkChoice` ; firms « absentes » regroupées sans casse. Contrat `AdminPlanLinkStats` (`@mtc/shared`).
 - **Comptes saisis avant le catalogue** (`prop-firm-plan-backfill.service.ts`) : après la synchro,
   le worker qui a tenu le verrou relie à leur plan les comptes EVAL / FUNDED sans plan, **seulement

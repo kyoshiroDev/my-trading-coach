@@ -130,7 +130,7 @@ export class ReferralService {
     };
   }
 
-  // ── ÉTAPE 4 : overview admin (parrainage grand public, démo exclus) ─────────
+  // ── ÉTAPE 4 : overview admin (parrainage grand public, démo et filleuls internes exclus, #823) ─
 
   async getAdminOverview() {
     // Parrains « grand public » : ont un code, hors ambassadeurs (dashboard dédié).
@@ -143,12 +143,12 @@ export class ReferralService {
     const [invitedGroups, payantGroups, rewardGroups, recent] = await Promise.all([
       this.prisma.user.groupBy({
         by: ['referredBy'],
-        where: { referredBy: { in: codes }, isDemo: false },
+        where: { referredBy: { in: codes }, isDemo: false, isInternal: false },
         _count: { _all: true },
       }),
       this.prisma.user.groupBy({
         by: ['referredBy'],
-        where: { referredBy: { in: codes }, isDemo: false, stripeSubscriptionStatus: 'active', plan: { not: 'FREE' } },
+        where: { referredBy: { in: codes }, isDemo: false, isInternal: false, stripeSubscriptionStatus: 'active', plan: { not: 'FREE' } },
         _count: { _all: true },
       }),
       this.prisma.referralReward.groupBy({
@@ -156,7 +156,7 @@ export class ReferralService {
         _count: { _all: true },
       }),
       this.prisma.user.findMany({
-        where: { referredBy: { in: codes }, isDemo: false },
+        where: { referredBy: { in: codes }, isDemo: false, isInternal: false },
         select: { name: true, email: true, plan: true, stripeSubscriptionStatus: true, createdAt: true, referredBy: true },
         orderBy: { createdAt: 'desc' },
         take: 20,

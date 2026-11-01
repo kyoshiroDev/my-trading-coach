@@ -21,7 +21,7 @@ export class UserDetailService {
       select: {
         id: true, name: true, email: true, plan: true, role: true,
         stripeSubscriptionStatus: true, stripeCurrentPeriodEnd: true, stripeCancelAt: true, referralCode: true,
-        trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true,
+        trialEndsAt: true, trialSource: true, signupTrialEndsAt: true, isDemo: true, isInternal: true,
         acquisitionSource: true, acquisitionMedium: true, acquisitionCampaign: true,
         createdAt: true, lastSeenAt: true,
         market: true, goal: true, tradingStyle: true, tradingStrategy: true,
@@ -162,6 +162,7 @@ export class UserDetailService {
         trialSource: user.trialSource ?? null,
         premiumAccess: isPremiumAccess(user),
         isDemo: user.isDemo,
+        isInternal: user.isInternal,
         ambassadorRefCode: user.role === 'AMBASSADOR' ? user.referralCode : null,
         acquisition: {
           source: user.acquisitionSource ?? null,
