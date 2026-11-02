@@ -53,10 +53,14 @@ function optionRank(plan: PropFirmPlanSummary): number {
   return path * 8 + (c?.evalDrawdown === 'intraday' ? 4 : 0) + (c?.dailyLossLimit ? 2 : 0) + (c?.addon ? 1 : 0);
 }
 
-/** Programmes d'une firm par nom, puis options ; les plans sur invitation en dernier. */
-export function programsOf(firm: PropFirmCatalogFirm): PropFirmProgram[] {
+/**
+ * Programmes d'une firm par nom, puis options ; les plans sur invitation en dernier.
+ * Un plan plus vendu n'est pas proposé, sauf s'il est déjà celui du compte (`keepPlanId`).
+ */
+export function programsOf(firm: PropFirmCatalogFirm, keepPlanId: string | null = null): PropFirmProgram[] {
   const byKey = new Map<string, PropFirmProgram>();
   for (const plan of firm.plans) {
+    if (plan.availability === 'discontinued' && plan.id !== keepPlanId) continue;
     const key = programKey(plan);
     const program = byKey.get(key) ?? {
       key,

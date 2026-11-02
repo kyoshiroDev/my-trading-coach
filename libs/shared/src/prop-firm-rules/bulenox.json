@@ -10,7 +10,7 @@
       "ninjatrader"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-02",
   "plans": [
     {
       "id": "bulenox-qualification-trailing-25k",
@@ -80,7 +80,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -115,7 +115,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -127,8 +127,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-trailing-50k",
@@ -198,7 +198,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -233,7 +233,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -245,8 +245,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-trailing-100k",
@@ -316,7 +316,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -351,7 +351,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -363,8 +363,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-trailing-150k",
@@ -434,7 +434,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -469,7 +469,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -481,8 +481,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 1 (trailing, sans scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-eod-25k",
@@ -581,7 +581,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -629,7 +629,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis aucun. Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 26600 $ après le retrait (réserve 1600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -641,8 +641,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-eod-50k",
@@ -747,7 +747,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -801,7 +801,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 52600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis aucun. Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1500 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 52600 $ après le retrait (réserve 2600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -813,8 +813,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-eod-100k",
@@ -925,7 +925,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -985,7 +985,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 103100,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis aucun. Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 1750 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 103100 $ après le retrait (réserve 3100 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -997,8 +997,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-qualification-eod-150k",
@@ -1109,7 +1109,7 @@
           "consistency": {
             "max_single_day_pct": 0.4,
             "applies_to": "payout",
-            "notes": "Meilleur jour au plus 40 % du P&L total de toute la vie du compte Master (ne repart pas à zéro après un payout ; le Safety Threshold Reserve compte au 1er payout)."
+            "notes": "Meilleur jour au plus 40 % du P&L total de la période de payout, remis à zéro après chaque payout (à confirmer par le support (traduction française)). Le Safety Threshold Reserve compte au 1er payout."
           },
           "min_trading_days": null,
           "max_duration_days": null,
@@ -1169,7 +1169,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 154600,
-            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis aucun. Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
+            "notes": "10 jours de trading avant chaque payout (comptés après le versement précédent). Minimum 1 000 $, plafond 2000 $ pour les 3 premiers, puis, à partir du 4e, moins de 50 % du profit total du compte Master (à confirmer par le support (traduction française)). Garder 154600 $ après le retrait (réserve 4600 $). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Versements le mercredi."
           }
         }
       ],
@@ -1181,8 +1181,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox."
+      "needs_review": true,
+      "notes": "Option 2 (EOD, DLL et scaling). Compte Master : activation unique, 5 comptes Master-level maximum. Live après 3 payouts, sur décision de Bulenox. Consistency du Master et plafond à partir du 4e payout à confirmer par le support (traduction française)."
     },
     {
       "id": "bulenox-fast-track-trailing-25k",
@@ -1302,14 +1302,14 @@
           "profit_target": null,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_intraday",
             "trails_on": "equity",
-            "locks_at": 52350,
+            "locks_at": 52100,
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2000 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52100 $."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -1370,7 +1370,7 @@
         "https://bulenox.com/help-center/funded"
       ],
       "needs_review": false,
-      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level."
+      "notes": "Option 1 (trailing). Sans qualification. Partage la limite de 5 comptes Master-level. Drawdown abaissé de 2250 à 2000 $, gel à 52100 $ (page Fast Track lue le 2026-11-02)."
     },
     {
       "id": "bulenox-fast-track-trailing-100k",
@@ -1686,14 +1686,14 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": 52350,
+            "locks_at": 52100,
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52100 $."
           },
           "consistency": {
             "max_single_day_pct": 0.2,
@@ -1754,7 +1754,7 @@
         "https://bulenox.com/help-center/funded"
       ],
       "needs_review": false,
-      "notes": "Option 2 (EOD), DLL pour toute la vie du compte. Sans qualification. Partage la limite de 5 comptes Master-level."
+      "notes": "Option 2 (EOD), DLL pour toute la vie du compte. Sans qualification. Partage la limite de 5 comptes Master-level. Drawdown abaissé de 2250 à 2000 $, gel à 52100 $ (page Fast Track lue le 2026-11-02)."
     },
     {
       "id": "bulenox-fast-track-eod-100k",
@@ -1995,7 +1995,7 @@
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 3,
             "micros": 30,
@@ -2049,7 +2049,10 @@
             "min_days": 5,
             "min_daily_profit": 100,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              1000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2063,7 +2066,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2075,8 +2078,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09). Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-trailing-50k",
@@ -2102,18 +2105,18 @@
           "profit_target": 3000,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_intraday",
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 7,
             "micros": 70,
@@ -2134,14 +2137,14 @@
           "profit_target": null,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_intraday",
             "trails_on": "equity",
-            "locks_at": 52350,
+            "locks_at": 52100,
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2250 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52350 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 2000 $ en dessous ; ne redescend jamais. Se fige définitivement à 50100 $ quand le compte atteint 52100 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2167,7 +2170,10 @@
             "min_days": 5,
             "min_daily_profit": 150,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              2000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2181,7 +2187,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2193,8 +2199,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52350 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52100 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 2250 à 2000 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-trailing-100k",
@@ -2220,18 +2226,18 @@
           "profit_target": 6000,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 4000,
+            "amount": 3000,
             "type": "trailing_intraday",
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 3000 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 12,
             "micros": 120,
@@ -2252,14 +2258,14 @@
           "profit_target": null,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 4000,
+            "amount": 3000,
             "type": "trailing_intraday",
             "trails_on": "equity",
-            "locks_at": 104100,
+            "locks_at": 103100,
             "locked_floor": 100100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 104100 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 3000 $ en dessous ; ne redescend jamais. Se fige définitivement à 100100 $ quand le compte atteint 103100 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2285,7 +2291,10 @@
             "min_days": 5,
             "min_daily_profit": 200,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              3500
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2299,7 +2308,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2311,8 +2320,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 104100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 103100 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 4000 à 3000 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-trailing-150k",
@@ -2338,18 +2347,18 @@
           "profit_target": 9000,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 5500,
+            "amount": 4500,
             "type": "trailing_intraday",
             "trails_on": "equity",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4500 $ en dessous ; ne redescend jamais. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 15,
             "micros": 150,
@@ -2370,14 +2379,14 @@
           "profit_target": null,
           "daily_loss_limit": null,
           "max_drawdown": {
-            "amount": 5500,
+            "amount": 4500,
             "type": "trailing_intraday",
             "trails_on": "equity",
-            "locks_at": 155600,
+            "locks_at": 154600,
             "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 5500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 155600 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 1 : trailing en temps réel sur la plus haute valeur du compte (réalisé + latent + commissions), 4500 $ en dessous ; ne redescend jamais. Se fige définitivement à 150100 $ quand le compte atteint 154600 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2403,7 +2412,10 @@
             "min_days": 5,
             "min_daily_profit": 250,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              5000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2417,7 +2429,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2429,8 +2441,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 155600 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 154600 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 5500 à 4500 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-eod-25k",
@@ -2475,7 +2487,7 @@
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 2,
             "micros": 20,
@@ -2537,7 +2549,10 @@
             "min_days": 5,
             "min_daily_profit": 100,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              1000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2551,7 +2566,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 26500,
-            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 100 $ par cycle, solde minimum 26500 $ pour demander, minimum 500 $. Plafonds par numéro de payout : 1000, 1000, 1000, 1000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 1000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2563,8 +2578,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (25100 $) quand le solde atteint 26100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09). Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-eod-50k",
@@ -2598,18 +2613,18 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_eod",
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 4,
             "micros": 40,
@@ -2638,14 +2653,14 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 2250,
+            "amount": 2000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": 52350,
+            "locks_at": 52100,
             "locked_floor": 50100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2250 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52350 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 2000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 50100 $ quand la clôture atteint 52100 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2671,7 +2686,10 @@
             "min_days": 5,
             "min_daily_profit": 150,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              2000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2685,7 +2703,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 53000,
-            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 150 $ par cycle, solde minimum 53000 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 1500, 2000, 2500, 3000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 2000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2697,8 +2715,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52350 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (50100 $) quand le solde atteint 52100 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 2250 à 2000 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-eod-100k",
@@ -2732,18 +2750,18 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 4000,
+            "amount": 3000,
             "type": "trailing_eod",
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 3000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 8,
             "micros": 80,
@@ -2772,14 +2790,14 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 4000,
+            "amount": 3000,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": 104100,
+            "locks_at": 103100,
             "locked_floor": 100100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 104100 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 3000 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 100100 $ quand la clôture atteint 103100 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2805,7 +2823,10 @@
             "min_days": 5,
             "min_daily_profit": 200,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              3500
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2819,7 +2840,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 104500,
-            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 200 $ par cycle, solde minimum 104500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2000, 2500, 3000, 4000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 3500 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2831,8 +2852,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 104100 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (100100 $) quand le solde atteint 103100 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 4000 à 3000 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     },
     {
       "id": "bulenox-momentum-eod-150k",
@@ -2866,18 +2887,18 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 5500,
+            "amount": 4500,
             "type": "trailing_eod",
             "trails_on": "balance",
             "locks_at": null,
             "locked_floor": null,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Pas de blocage en Qualification."
           },
           "consistency": null,
           "min_trading_days": null,
-          "max_duration_days": null,
+          "max_duration_days": 30,
           "max_contracts": {
             "minis": 12,
             "micros": 120,
@@ -2906,14 +2927,14 @@
             "notes": "P&L réalisé + latent + commissions de 17:00 à 16:00 CT. Pas une violation : trading coupé jusqu'à la session suivante."
           },
           "max_drawdown": {
-            "amount": 5500,
+            "amount": 4500,
             "type": "trailing_eod",
             "trails_on": "balance",
-            "locks_at": 155600,
+            "locks_at": 154600,
             "locked_floor": 150100,
             "enforced_on": "equity_realtime",
             "platform_overrides": null,
-            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 5500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 155600 $. Blocage confirmé par le support (2026-10-09)."
+            "basis_notes": "Option 2 : mis à jour une fois par jour sur le solde de clôture, 4500 $ sous le plus haut ; l'intraday ne le fait pas monter. Compte suspendu si la valeur passe sous le seuil. Se fige définitivement à 150100 $ quand la clôture atteint 154600 $. Gel déduit : règle départ + 100 $ confirmée par le support le 2026-10-09 et seuil recalculé avec le nouveau drawdown, la page Momentum ne le publie pas."
           },
           "consistency": {
             "max_single_day_pct": 0.35,
@@ -2939,7 +2960,10 @@
             "min_days": 5,
             "min_daily_profit": 250,
             "min_cycle_profit": null,
-            "min_cycle_profit_schedule": null,
+            "min_cycle_profit_schedule": [
+              0,
+              5000
+            ],
             "split_pct": 0.9,
             "split_after": null,
             "split_by_profit": null,
@@ -2953,7 +2977,7 @@
             ],
             "max_payouts": null,
             "safety_net_balance": 156500,
-            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18)."
+            "notes": "5 jours gagnants d'au moins 250 $ par cycle, solde minimum 156500 $ pour demander, minimum 1000 $. Plafonds par numéro de payout : 2500, 3000, 4000, 5000 $ (le dernier reste ensuite). Partage 90/10 dès le 1er payout : les 100 % sur les 10 000 premiers dollars ont disparu du site et des articles (« Keep up to 90% of profits », relevé du 2026-10-18). Après le 1er payout, 5000 $ de nouveau profit net par cycle (à confirmer par le support (traduction française))."
           }
         }
       ],
@@ -2965,8 +2989,8 @@
         "https://bulenox.com/help-center/momentum",
         "https://bulenox.com/help-center/funded"
       ],
-      "needs_review": false,
-      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 155600 $, en option 1 comme en option 2 (support Bulenox, 2026-10-09)."
+      "needs_review": true,
+      "notes": "Qualification incluant le Momentum Master sans activation. Momentum Master : même drawdown, même DLL (option 2) et même taille que la qualification Momentum, sans scaling ; drawdown figé à départ + 100 $ (150100 $) quand le solde atteint 154600 $ (seuil déduit du nouveau drawdown), en option 1 comme en option 2 (support Bulenox, 2026-10-09). Drawdown abaissé de 5500 à 4500 $ (page Momentum lue le 2026-11-02). Comptes déjà ouverts : valeur basse appliquée, à confirmer par le support. Évaluation limitée à 30 jours calendaires (à confirmer par le support (traduction française))."
     }
   ]
 }

@@ -553,3 +553,21 @@ Centre d'aide Tradeify relu dans Chrome le 2026-10-22 (illisible hors navigateur
 | https://help.tradeify.co/en/articles/10468320-rules-consistency-rule (2026-10-17) | 35 % Growth, 40 % en évaluation Select, aucune en funded Select, 20 / 25 / 30 % Lightning : conformes. | Aucun |
 | https://help.tradeify.co/en/articles/10495876-rules-permitted-times-to-trade (2026-10-17) | Clôture à 16:45 ET (12:59 ET les jours écourtés), positions fermées par Tradeify sans échec du compte : conforme. | Aucun |
 | https://help.tradeify.co/en/articles/10495874-rules-news-trading (2026-08-12) | News autorisées. Sur les comptes funded, plus de la moitié des trades et plus de la moitié du profit doivent venir de positions tenues plus de 10 secondes, sinon pas de payout. | Règle ajoutée aux notes de payout des 28 phases funded |
+
+## Veille du 2026-11-02 (#653)
+
+Pages lues dans Chrome le 2026-11-02. La source de chaque modification est aussi dans `veille/sources.json` (champ `lectures`). Seules les empreintes des pages lues ont été enregistrées : les autres sources modifiées restent signalées par la veille.
+
+| Firm | Source | Constat | Effet |
+|---|---|---|---|
+| Bulenox | https://bulenox.com/help-center/momentum (version française) | Drawdown 50K / 100K / 150K à 2 000 / 3 000 / 4 500 $, objectif par cycle après le 1er payout, évaluation de 30 jours. La page ne parle pas du gel. | Gel 52 100 / 103 100 / 154 600 $ déduit de la règle départ + 100 $. Comptes déjà ouverts : valeur basse. 8 plans en `needs_review`, à confirmer par le support |
+| Bulenox | https://bulenox.com/help-center/fast-track | Fast Track 50K à 2 000 $, gel à départ + 100 $. | 2 plans 50K |
+| Bulenox | https://bulenox.com/help-center/master (version française) | Consistency remise à zéro après chaque payout, à partir du 4e payout moins de 50 % du profit total. | 8 plans Qualification en `needs_review`, à confirmer par le support |
+| FFF | Articles 16949878, 16950249, 16964735 et https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/ | Règles Accelerate selon la date d'achat, plans Labs sur invitation. | Id d'origine = achats d'avant le 22/10 ; 2 plans ajoutés. L'id d'origine reste `public` pour rester sélectionnable par les détenteurs |
+| FFF | Articles 17333029 et 17332937 | Accelerate 25K et Payday 50K. | 2 plans ajoutés (Payday en `needs_review` : scaling et base de la DLL non publiés). Accelerate 25K porte les règles depuis le 22/10. Sniper et Choice non ajoutés |
+| Top One | https://www.toponefutures.com/launchpad et articles X-Daily Spark 17678693, 17678769, 17678771, 17678752 | X-Ultra « Launch closed » ; X-Daily Spark 50K en vente. | X-Ultra `discontinued`, règles inchangées ; Spark ajouté, options d'évaluation en note |
+| BluSky | Articles 12434092, 12434059, 16300862 et https://blusky.pro/ | Reset Propel 79 à 199 $ (Resets, 2026-10-23 ; l'article Propel dit encore 79 $). Consistency Launch 50 % ou 55 %, contrats Propel 25K 2 ou 4 minis selon la page. | Resets appliqués ; valeurs du catalogue gardées, 4 plans en `needs_review` |
+| Apex | https://apextraderfunding.com/legacy-products/ | 397 / 697 / 797 $ sur WealthCharts et Rithmic, Tradovate 227 à 847 $, frais de PA Tradovate 105 à 199 $. | 3 prix, notes des 6 plans Legacy. `verified_at` inchangé : relecture partielle |
+| Lucid | https://lucidtrading.com/ | 150K Pro avec DLL à 365 $ ; prix différent sans DLL. | Prix du seul `lucid-pro-dll-150k`. `verified_at` inchangé : relecture partielle |
+
+Catalogue à 311 plans. Restent à vérifier : Bulenox Funded, Lucid (63 plans), Apex (28 articles), Tradeify (7 articles sur 13), Phidias.

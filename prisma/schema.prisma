@@ -1146,7 +1146,7 @@ model PropFirmPlan {
   planName        String
   accountSize     Float
   currency        String
-  /// `public` | `invite_only` (valeurs du catalogue).
+  /// `public` | `invite_only` | `discontinued` (valeurs du catalogue).
   availability    String
   configuration   Json?
   price           Json

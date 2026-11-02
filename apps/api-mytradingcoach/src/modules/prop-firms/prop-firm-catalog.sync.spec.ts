@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PROP_FIRM_CATALOG_FILES } from '@mtc/shared';
-import { contentHash, isNoop, parseCatalog, planCatalogSync, toRows } from './prop-firm-catalog.sync';
+import { availabilityOf, contentHash, isNoop, parseCatalog, planCatalogSync, toRows } from './prop-firm-catalog.sync';
 
 /*
  * Aucun prix, date de relevé ni règle d'un plan précis n'est figé ici : la veille modifie le
@@ -213,5 +213,19 @@ describe('planCatalogSync', () => {
     state.plans.find((p) => p.id === firstPlanId)!.active = false;
     const plan = planCatalogSync(catalog, state);
     expect(plan.plansToUpdate.map((p) => [p.id, p.active])).toEqual([[firstPlanId, true]]);
+  });
+});
+
+describe('availabilityOf', () => {
+  it('garde le statut « plus vendu » jusqu\'au front, toute valeur inconnue reste publique', () => {
+    expect(availabilityOf('discontinued')).toBe('discontinued');
+    expect(availabilityOf('invite_only')).toBe('invite_only');
+    expect(availabilityOf('public')).toBe('public');
+    expect(availabilityOf('autre')).toBe('public');
+  });
+
+  it('un plan plus vendu reste écrit en base, donc lisible par les comptes déjà liés', () => {
+    const { plans } = toRows(parseCatalog(PROP_FIRM_CATALOG_FILES));
+    expect(plans.find((p) => p.id === 'toponefutures-x-ultra-50k')?.availability).toBe('discontinued');
   });
 });

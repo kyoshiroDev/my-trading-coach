@@ -139,3 +139,22 @@ describe('phaseFor / rulesFromPlan', () => {
     });
   });
 });
+
+describe('programsOf, plan plus vendu', () => {
+  const firm: PropFirmCatalogFirm = {
+    ...lucid,
+    plans: [plan({ id: 'lucid-flex-50k' }), plan({ id: 'lucid-old-50k', planName: 'Ancien', availability: 'discontinued' })],
+  };
+
+  it('masque le plan à l\'achat', () => {
+    expect(programsOf(firm).flatMap((p) => p.plans.map((x) => x.id))).toEqual(['lucid-flex-50k']);
+  });
+
+  it('le garde pour le compte qui y est déjà lié', () => {
+    expect(programsOf(firm, 'lucid-old-50k').flatMap((p) => p.plans.map((x) => x.id))).toContain('lucid-old-50k');
+  });
+
+  it('findPlan le retrouve toujours', () => {
+    expect(findPlan([firm], 'lucid-old-50k')?.plan.id).toBe('lucid-old-50k');
+  });
+});

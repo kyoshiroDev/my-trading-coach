@@ -1613,7 +1613,7 @@
         "amount": 177,
         "billing": "monthly",
         "activation_fee": 99,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -1766,7 +1766,7 @@
         "amount": 197,
         "billing": "monthly",
         "activation_fee": 125,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -1916,10 +1916,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 210,
+        "amount": 397,
         "billing": "monthly",
         "activation_fee": 149,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -2072,7 +2072,7 @@
         "amount": 597,
         "billing": "monthly",
         "activation_fee": 179,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -2222,10 +2222,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 210,
+        "amount": 697,
         "billing": "monthly",
         "activation_fee": 189,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {
@@ -2375,10 +2375,10 @@
       "availability": "public",
       "configuration": null,
       "price": {
-        "amount": 210,
+        "amount": 797,
         "billing": "monthly",
         "activation_fee": 199,
-        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles et mêmes prix sur Tradovate, WealthCharts et Rithmic. Le 2026-10-22, la page de vente affiche 210 $/mois pour les 100K, 250K et 300K (même tarif sur les trois plateformes)."
+        "notes": "Offre Legacy en promotion limitée (relevée le 2026-10-02, prix et frais de PA relus le 2026-10-22) : abonnement mensuel jusqu'à résiliation, frais de PA payés une fois. Coupon en cours sur la page de vente. Mêmes règles sur Tradovate, WealthCharts et Rithmic. Tarifs lus le 2026-11-02 : WealthCharts et Rithmic 177 / 197 / 397 / 597 / 697 / 797 $ par mois, frais de PA 99 / 125 / 149 / 179 / 189 / 199 $ ; Tradovate 227 / 247 / 447 / 647 / 747 / 847 $ par mois, frais de PA 105 / 130 / 155 / 185 / 189 / 199 $ (25K à 300K). Montants du plan : WealthCharts et Rithmic."
       },
       "phases": [
         {

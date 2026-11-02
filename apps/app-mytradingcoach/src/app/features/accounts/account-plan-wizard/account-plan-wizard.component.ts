@@ -85,9 +85,12 @@ export class AccountPlanWizardComponent implements OnInit {
   });
   protected readonly sizes = computed(() => {
     const firm = this.firm();
-    return firm ? [...new Set(firm.plans.map((p) => p.accountSize))].sort((a, b) => a - b) : [];
+    return firm ? [...new Set(this.proposable(firm).map((p) => p.accountSize))].sort((a, b) => a - b) : [];
   });
-  private readonly plansAtSize = computed(() => (this.firm()?.plans ?? []).filter((p) => p.accountSize === this.size()));
+  private readonly plansAtSize = computed(() => {
+    const firm = this.firm();
+    return firm ? this.proposable(firm).filter((p) => p.accountSize === this.size()) : [];
+  });
   protected readonly phases = computed<PlanPhase[]>(() => {
     const all = new Set(this.plansAtSize().flatMap(phasesOf));
     return (['evaluation', 'funded'] as const).filter((p) => all.has(p));
@@ -102,6 +105,11 @@ export class AccountPlanWizardComponent implements OnInit {
     }
     return [...byKey.values()].sort((a, b) => Number(a.inviteOnly) - Number(b.inviteOnly) || a.label.localeCompare(b.label));
   });
+
+  /** Plans proposés au choix : un plan plus vendu ne l'est pas (il reste lisible pour un compte déjà lié). */
+  private proposable(firm: PropFirmCatalogFirm): PropFirmPlanSummary[] {
+    return firm.plans.filter((p) => p.availability !== 'discontinued');
+  }
 
   ngOnInit(): void {
     forkJoin({

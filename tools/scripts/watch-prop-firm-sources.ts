@@ -23,7 +23,8 @@ const SAMPLES = 4;
 /** Versions gardées par source dans le relevé. */
 const MAX_VARIANTS = 4;
 
-type Snapshot = Record<string, Fingerprint & { firms: string[] }>;
+/** `lectures` : relectures humaines d'une source et ce qu'elles ont changé au catalogue, conservées d'un relevé à l'autre. */
+type Snapshot = Record<string, Fingerprint & { firms: string[]; lectures?: { date: string; modification: string }[] }>;
 
 type Result =
   | { url: string; firms: string[]; status: 'ok'; fp: Fingerprint }
@@ -229,7 +230,7 @@ async function main() {
       if (r.status === 'ok') {
         const before = previous[r.url];
         const keep = r.fp.kind === 'hash' && before?.kind === 'hash' ? before.values : [];
-        next[r.url] = { kind: r.fp.kind, values: [...new Set([...r.fp.values, ...keep])].slice(0, MAX_VARIANTS), firms: r.firms };
+        next[r.url] = { kind: r.fp.kind, values: [...new Set([...r.fp.values, ...keep])].slice(0, MAX_VARIANTS), firms: r.firms, ...(before?.lectures ? { lectures: before.lectures } : {}) };
       }
       else if (previous[r.url]) next[r.url] = { ...previous[r.url], firms: r.firms };
     }

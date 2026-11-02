@@ -122,7 +122,7 @@ export const propFirmPlanSchema = z.strictObject({
   plan_name: z.string().min(1),
   account_size: z.number().gt(0),
   currency: z.string().regex(/^[A-Z]{3,4}$/),
-  availability: z.enum(['public', 'invite_only']).optional(),
+  availability: z.enum(['public', 'invite_only', 'discontinued']).optional(),
   configuration: propFirmConfigurationSchema.nullable().optional(),
   price: propFirmPriceSchema,
   phases: z.array(propFirmPhaseSchema).min(1),

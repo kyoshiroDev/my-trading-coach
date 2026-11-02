@@ -22,7 +22,10 @@ const CATALOG: PropFirmCatalogFirm[] = [
   {
     id: 'apex', name: 'Apex Trader Funding', website: '', verifiedAt: '2026-10-18',
     plans: [plan('apex-eod-50k', 'EOD Trail', 50_000, 'eod'), plan('apex-intraday-50k', 'Intraday Trail', 50_000, 'intraday'),
-      plan('apex-eod-100k', 'EOD Trail', 100_000, 'eod')],
+      plan('apex-eod-100k', 'EOD Trail', 100_000, 'eod'),
+      // Plans plus vendus : jamais proposés (ni le programme ni une taille qui n'aurait qu'eux).
+      { ...plan('apex-old-50k', 'Ancien', 50_000), availability: 'discontinued' },
+      { ...plan('apex-old-25k', 'Ancien', 25_000), availability: 'discontinued' }],
   },
   { id: 'lucid', name: 'Lucid Trading', website: '', verifiedAt: '2026-10-18', plans: [plan('lucid-flex-50k', 'LucidFlex', 50_000)] },
 ];
@@ -144,4 +147,15 @@ describe('AccountPlanWizardComponent — « Quel est ce compte ? »', () => {
     const { el } = mount(null);
     expect(el.textContent).toContain('estimation MyTradingCoach, pas le calcul officiel de ta firm');
   });
+
+  it('un plan plus vendu n\'est proposé ni en taille ni en programme', () => {
+    const { fixture } = mount(null);
+    const cmp = fixture.componentInstance as unknown as Record<string, unknown>;
+    (cmp['firmId'] as ReturnType<typeof signal<string | null>>).set('apex');
+    expect((cmp['sizes'] as () => number[])()).toEqual([50_000, 100_000]);
+    (cmp['size'] as ReturnType<typeof signal<number | null>>).set(50_000);
+    const ids = (cmp['programs'] as () => { plan: PropFirmPlanSummary }[])().map((p) => p.plan.id);
+    expect(ids).not.toContain('apex-old-50k');
+  });
 });
+

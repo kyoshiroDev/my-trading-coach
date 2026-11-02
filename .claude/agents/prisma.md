@@ -326,6 +326,9 @@ de l'API (`PropFirmCatalogSyncService`, cf. `nestjs.md`) écraserait la modifica
   (`phases`, `price`, `configuration`), relues avec `propFirmPhaseSchema` / `propFirmPriceSchema`
   (Zod, `modules/prop-firms/prop-firm-catalog.schema.ts`). Un champ ajouté au JSON = aucune migration.
 - `contentHash` (sha256 du contenu écrit) : la synchro n'écrit que les lignes dont l'empreinte change.
+- `availability` : `public` | `invite_only` | `discontinued` (chaîne libre, aucune migration). Un plan
+  plus vendu reste dans le JSON en `discontinued` : masqué dans les sélecteurs et sur la landing,
+  toujours servi par `/prop-firms` pour les comptes déjà liés (X-Ultra, 2026-11-02).
 - **Plan retiré du JSON → `active = false`, jamais supprimé** (des comptes peuvent le référencer).
   `PropFirmPlan.firmId` en `onDelete: Restrict`.
 - `verifiedAt` (date du relevé) est porté par `PropFirm`, pas par le plan.

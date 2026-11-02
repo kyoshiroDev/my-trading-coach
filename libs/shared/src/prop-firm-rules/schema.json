@@ -43,8 +43,8 @@
         "account_size": { "type": "number", "exclusiveMinimum": 0 },
         "currency": { "type": "string", "pattern": "^[A-Z]{3,4}$" },
         "availability": {
-          "enum": ["public", "invite_only"],
-          "description": "Ajout : invite_only = vendu seulement aux traders invités par la firm."
+          "enum": ["public", "invite_only", "discontinued"],
+          "description": "Ajout : invite_only = vendu seulement aux traders invités par la firm. discontinued = plus vendu : masqué à l'achat, conservé pour les comptes déjà liés."
         },
         "configuration": {
           "description": "Ajout : options choisies au checkout qui changent les règles. null = plan sans option.",

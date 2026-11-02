@@ -3218,10 +3218,10 @@
         "eval_drawdown": null
       },
       "price": {
-        "amount": null,
+        "amount": 365,
         "billing": "one_time",
         "activation_fee": 0,
-        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. Le prix dépend des options choisies et le site renvoie au checkout pour le prix final ; promotions temporaires en cours. Non relevé de façon fiable, donc laissé à null."
+        "notes": "Paiement unique, pas d'abonnement ni de frais d'activation. 365 $ pour la configuration 150K Pro avec DLL (accueil lu le 2026-11-02, 255,50 $ avec le coupon en cours, reset 255 $). Les autres configurations ne sont pas relevées."
       },
       "phases": [
         {
