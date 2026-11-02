@@ -638,3 +638,9 @@ La règle des 90 jours lit toutes les lignes `DeletedAccount`, internes comprise
 nullable, sans réécriture de table, compatible N-1) : date du dernier changement de `status`. `null`
 pour tout compte antérieur, lu comme « ancien » par la pause de synchro (règle dans `nestjs.md`,
 « Pause de la synchro des comptes perdus »). Aucun index : lu par relation depuis `BrokerConnection`.
+
+`TradovateAccountObservation` + enum `TradovateObservationOutcome` (migration
+`20261103090000_tradovate_account_observation`, #684 phase 2, nouvelle table seulement, compatible N-1) :
+journal d'observation, une ligne par connexion et par jour (`@@unique([connectionId, day])`, `day` en
+`@db.Date` Paris, index sur `day` pour la purge à 90 j). `onDelete: Cascade` depuis `BrokerConnection`.
+Aucun jeton, montant ni identifiant Tradovate. Règles dans `nestjs.md`, « Journal d'observation Tradovate ».

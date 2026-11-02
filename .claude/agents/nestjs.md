@@ -795,6 +795,7 @@ une session de 11 jours). Seul `startSession` ferme encore TOUTES les `ACTIVE` s
 | `TrialEndService` | `30 0 * * *` Paris | Fins de `trialEndsAt` passées (essai d'inscription ou Premium offert, #769) : rôle Discord réaligné, `trialEndHandledAt` posé (retraité si `trialEndsAt` est repoussé ensuite), hors démo. Journal : des nombres seulement |
 | `DemoSeedCron` | `20 3 * * *` Paris | Re-seed le compte démo (dates relatives recalculées) |
 | `TradovateTokenRefreshCron` | `17 * * * *` Paris | Renouvelle les tokens Tradovate qui expirent sous 18 h + seconde chance des « à reconnecter » encore promises (aucun import de trades, hors démo) |
+| `TradovateObservationCron` | `40 6 * * *` Paris | Journal d'observation (#684, phase 2) : une lecture de `/account/list` par login, une ligne `TradovateAccountObservation` par connexion `CONNECTED` (comptes en pause compris), hors démo, purge à 90 j. N'agit sur rien |
 | `TradovateBackgroundRefreshCron` | `*/15 * * * *` Paris | Synchro de fond des connexions sans synchro depuis 12 min (hors démo, hors app ouverte). **Au 1er passage de chaque heure seulement** (minute < 15), ajoute le rattrapage du mois par la Reporting API, et remonte tout le passé (≤ 2 par passage) des connexions dont `historyImportedAt` est vide |
 
 > `TradovateBackgroundRefreshCron` (SCA-B5-03, 2026-10-09) : verrou Redis `tradovate:background-refresh`
@@ -1948,6 +1949,28 @@ Règle unique dans `integrations/tradovate/tradovate-sync-pause.ts` : la synchr
 - Push de reconnexion (`noticeReconnectRequired`) : coupé côté trader pour un compte `FAILED` ou
   `ARCHIVED`, gardé côté admin.
 - Tests : `tradovate-sync-pause.spec.ts`, `tradovate-sync-pause.int-spec.ts` (filtre sur vraie base).
+
+### Journal d'observation Tradovate (#684 phase 2, 2026-11-03)
+
+But : savoir, avec de vraies données, ce que Tradovate renvoie pour un compte échoué, archivé ou
+fermé, avant de décider d'un signal « compte fermé chez Tradovate ». **Observe seulement** : aucune
+synchro, aucun statut, aucune pause ne lit cette table.
+- `TradovateObservationCron` (`tradovate-observation.cron.ts`, `40 6 * * *` Paris), fonctions pures
+  dans `tradovate-observation.ts`. Cible : connexions `CONNECTED` avec compte choisi, hors démo, pas
+  encore notées ce jour (`observations: { none: { day } }`). Les comptes en pause (#684) sont compris :
+  ce sont eux qu'on veut voir.
+- **Un appel `/account/list` par login et par jour** : groupe = même utilisateur MTC + même
+  `externalUserId` (repli sur la connexion) + même hôte. Lecture avec la première sœur verrouillable
+  (`tryLock`, même verrou que la synchro) ; toutes occupées → groupe sauté pour la journée.
+- Une ligne par connexion : `outcome` (`OK`, `UNAUTHORIZED`, `FORBIDDEN`, `RATE_LIMITED`, `PENALIZED`,
+  `NOT_FOUND`, `UNAVAILABLE`, `TOKEN_REFUSED`, `TOKEN_DEFERRED`, `ERROR`), `httpStatus`, `listed`,
+  `active`, `closed`, `restricted` (bruts, null si absent ou non lu), plus le contexte MTC
+  `accountStatus`, `syncPaused`, `lastSyncAt`. Ni jeton, ni montant, ni nom ou identifiant Tradovate.
+- Pénalité reçue → `notePenalty` comme ailleurs ; pause en cours → aucun appel, ligne `PENALIZED`.
+- Idempotent (`@@unique([connectionId, day])`, `createMany … skipDuplicates`), purge au-delà de
+  `OBSERVATION_RETENTION_DAYS` (90), cascade avec la connexion. Journal : une ligne de nombres par passage.
+- Pourquoi une table et pas des logs : les journaux des conteneurs ne survivent pas à un déploiement.
+- Tests : `tradovate-observation.spec.ts`, `tradovate-observation.int-spec.ts` (migration, unicité, cascade).
 
 ## Autopsie d'un compte grillé (#669, 2026-10-23)
 
