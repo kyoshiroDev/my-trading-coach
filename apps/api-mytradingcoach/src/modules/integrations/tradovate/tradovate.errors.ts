@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import type { TradovatePenalty } from './tradovate-penalty';
 
 /**
  * Erreurs de l'intégration Tradovate, toutes traduites en message clair pour l'utilisateur
@@ -19,6 +20,8 @@ export type TradovateErrorCode =
   | 'TRADOVATE_REFRESH_DEFERRED'
   | 'TRADOVATE_ACCOUNT_SUSPENDED'
   | 'TRADOVATE_RATE_LIMITED'
+  | 'TRADOVATE_PENALIZED'
+  | 'TRADOVATE_CAPTCHA_REQUIRED'
   | 'TRADOVATE_SYNC_IN_PROGRESS'
   | 'TRADOVATE_UNAVAILABLE';
 
@@ -70,6 +73,17 @@ const MESSAGES: Record<TradovateErrorCode, [HttpStatus, string]> = {
     HttpStatus.TOO_MANY_REQUESTS,
     'Tradovate limite temporairement les requêtes. Réessaie dans quelques minutes.',
   ],
+  // Ticket de pénalité (HTTP 200 + `p-ticket`) : ni jeton refusé, ni reconnexion à faire. En 503
+  // comme TRADOVATE_REFRESH_DEFERRED : un 429 serait réécrit en « trop de requêtes » par le filtre
+  // global, qui parle des requêtes de l'utilisateur et perdrait ce message.
+  TRADOVATE_PENALIZED: [
+    HttpStatus.SERVICE_UNAVAILABLE,
+    'Tradovate limite temporairement cette connexion. La synchro reprendra à la fin de la pause, rien à faire de ton côté.',
+  ],
+  TRADOVATE_CAPTCHA_REQUIRED: [
+    HttpStatus.SERVICE_UNAVAILABLE,
+    "Tradovate demande une vérification que l'application ne peut pas effectuer. La synchro est en pause : pas de nouvel essai avant 24 h.",
+  ],
   TRADOVATE_SYNC_IN_PROGRESS: [
     HttpStatus.CONFLICT,
     'Une synchronisation est déjà en cours pour ce compte.',
@@ -120,4 +134,31 @@ export class TradovateApiError extends Error {
         return new TradovateException('TRADOVATE_UNAVAILABLE');
     }
   }
+}
+
+/**
+ * Réponse pénalisée (HTTP 200 + `p-ticket`, `p-time` ou `p-captcha`). Reste un `rate_limited` pour
+ * les appelants existants, et porte la durée de la pause. Son message ne contient que la route :
+ * jamais le contenu du ticket.
+ */
+export class TradovatePenaltyError extends TradovateApiError {
+  constructor(
+    status: number,
+    path: string,
+    readonly penalty: TradovatePenalty,
+  ) {
+    super('rate_limited', status, path);
+  }
+
+  override toException(): TradovateException {
+    return new TradovateException(this.penalty.captcha ? 'TRADOVATE_CAPTCHA_REQUIRED' : 'TRADOVATE_PENALIZED');
+  }
+}
+
+/** Échec dû à une pénalité, brut ou déjà traduit : déjà journalisé une fois, sans identifiant. */
+export function isPenaltyFailure(err: unknown): boolean {
+  return (
+    err instanceof TradovatePenaltyError ||
+    (err instanceof TradovateException && (err.code === 'TRADOVATE_PENALIZED' || err.code === 'TRADOVATE_CAPTCHA_REQUIRED'))
+  );
 }

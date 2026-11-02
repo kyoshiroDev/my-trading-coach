@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
 import { PrismaService } from '@api/prisma/prisma.service';
+import { TradovatePenaltyError } from './tradovate.errors';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { RedisService } from '../../infra/redis.service';
@@ -87,7 +88,8 @@ export class TradovateBalanceService {
         apiHosts,
       );
     } catch (err) {
-      this.logger.warn(`Instantané de solde indisponible (connexion ${conn.id}) : ${(err as Error).message}`);
+      if (err instanceof TradovatePenaltyError) await this.connections.notePenalty(conn, err);
+      else this.logger.warn(`Instantané de solde indisponible (connexion ${conn.id}) : ${(err as Error).message}`);
       return null;
     }
     const now = new Date();

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { TradovateApiError } from './tradovate.errors';
+import { TradovateApiError, TradovatePenaltyError } from './tradovate.errors';
+import { readPenalty } from './tradovate-penalty';
 import { FALLBACK_HOSTS, fetchFollowingRedirect, parseApiHosts, restBase } from './tradovate-hosts';
 import type { TradovateApiHosts, TradovateEnv, TradovateOAuthTokenResponse } from './tradovate.types';
 
@@ -198,6 +199,9 @@ export class TradovateApiClient {
       throw new TradovateApiError('unavailable', 0, `oauthtoken : ${(err as Error).name}`);
     }
     const json = (await this.readJson(res)) as TradovateOAuthTokenResponse | null;
+    // Un 200 sans `access_token` n'est un refus que s'il ne porte pas de pénalité.
+    const penalty = readPenalty(json);
+    if (penalty) throw new TradovatePenaltyError(res.status, 'oauthtoken', penalty);
     if (!res.ok || !json?.access_token) {
       // Jamais le corps complet dans les logs : il pourrait contenir un token.
       this.logger.warn(
@@ -227,9 +231,9 @@ export class TradovateApiClient {
       : null;
 
     // Pénalité de débit : Tradovate répond un objet { p-ticket, p-time } au lieu des données.
-    if (status === 429 || (obj && ('p-ticket' in obj || 'p-time' in obj))) {
-      throw new TradovateApiError('rate_limited', status, path);
-    }
+    const penalty = readPenalty(obj);
+    if (penalty) throw new TradovatePenaltyError(status, path, penalty);
+    if (status === 429) throw new TradovateApiError('rate_limited', status, path);
     if (status === 401) throw new TradovateApiError('unauthorized', status, path);
     if (status === 403) throw new TradovateApiError('forbidden', status, path);
     if (status === 404) throw new TradovateApiError('not_found', status, path);

@@ -5,7 +5,7 @@ import { parseUsNumber, splitCsvLine } from '../../trades/csv-parsers';
 import { tradingDay } from '../../accounts/account-rules';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateReportingClient } from './tradovate-reporting.client';
-import { TradovateApiError } from './tradovate.errors';
+import { TradovateApiError, TradovatePenaltyError } from './tradovate.errors';
 import { CLOSINGS_WINDOW_DAYS } from './tradovate-closings.service';
 import type { TradovateAccount, TradovateEnv } from './tradovate.types';
 
@@ -184,7 +184,8 @@ export class TradovatePayoutsService {
         payouts.push(...scan.payouts);
         for (const [t, n] of Object.entries(scan.typeCounts)) typeCounts[t] = (typeCounts[t] ?? 0) + n;
       } catch (err) {
-        if (err instanceof TradovateApiError && err.kind === 'unauthorized') throw err;
+        // Jeton mort ou pénalité : les fenêtres suivantes échoueraient pareil, et rien n'est validé.
+        if (err instanceof TradovatePenaltyError || (err instanceof TradovateApiError && err.kind === 'unauthorized')) throw err;
         complete = false;
         this.logger.warn(`Payouts : fenêtre ${from.toISOString().slice(0, 10)} ignorée (${(err as Error).message}).`);
       }

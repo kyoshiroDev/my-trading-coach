@@ -14,7 +14,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { AdminNotifier } from '../../admin-push/admin-notifier.service';
 import { TraderNotifier } from '../../push/trader-notifier.service';
 import { RECONNECT_NOTICE_SELECT, noticeReconnectRequired } from './tradovate-reconnect-notice';
-import { TradovateApiError, TradovateException } from './tradovate.errors';
+import { TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import { signOAuthState, verifyOAuthState } from './oauth-state.util';
 import type { OAuthOrigin } from './oauth-state.util';
 import type {
@@ -197,6 +197,8 @@ export class TradovateConnectionService {
           found.push({ id: String(a.id), name: a.name, env, userId: a.userId != null ? String(a.userId) : undefined });
         }
       } catch (err) {
+        // Une pénalité vaut pour le login : le reste de la lecture serait pénalisé aussi.
+        if (err instanceof TradovatePenaltyError) throw err;
         // Un hôte peut refuser le token (ex. aucun compte simulé) : l'autre suffit.
         lastError = err;
         this.logger.warn(`account/list ${env} indisponible : ${(err as Error).message}`);
@@ -490,6 +492,11 @@ export class TradovateConnectionService {
       },
     });
     throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
+  }
+
+  /** Réponse pénalisée : pause du login, statut et jetons inchangés (cf. TradovateTokenManager). */
+  notePenalty(conn: BrokerConnection, err: TradovatePenaltyError): Promise<void> {
+    return this.tokens.notePenalty(conn, err);
   }
 
   /** Verrou de la connexion, partagé par la synchro et le cron (cf. LOCK_TTL_S). */

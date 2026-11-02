@@ -294,6 +294,9 @@ Tradovate / NinjaTrader avant toute dépendance.
   `p-time`, `p-message`, et parfois `p-captcha: true` — dans ce dernier cas l'opération **ne peut
   plus être retentée depuis une app tierce**. `accesstokenrequest` est limité à **5 échecs/heure**.
   Le `p-ticket` est lié à l'IP et doit être renvoyé dans le corps de la requête suivante.
+  **Dans MTC :** ni refus de jeton, ni rapport vide. Pause du login sur `p-time` (1 h si absent),
+  24 h si captcha, voir « Tickets de pénalité » dans `.claude/agents/nestjs.md`. Le ticket n'est
+  ni conservé, ni renvoyé, et aucune réponse pénalisée n'a encore été observée en réel.
 - **Deux sessions simultanées maximum** par utilisateur : une troisième ferme la plus ancienne, et
   les jetons de la session fermée produisent ensuite des 408/429/500. Ne jamais redemander un jeton
   quand on peut renouveler.
