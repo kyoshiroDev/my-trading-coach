@@ -43,6 +43,7 @@ function conn(accountId: string, p: Partial<TradovateConnection> = {}): Tradovat
     externalEnv: 'demo', availableAccounts: [{ id: '90000021', name: 'APEX-1234-01', env: 'demo' }],
     needsAccountSelection: false, lastSyncAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     lastSyncError: null, tradesImported: 34, brokerTradesCount: 0, connectedAt: '2026-09-01T00:00:00.000Z',
+    syncPaused: false, syncPausedReason: null,
     ...p,
   };
 }
@@ -151,10 +152,40 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     const { q, click, tv } = setup({ accounts: [acct('a', 'A')], connections: [conn('a')] });
     click('tradovate-disconnect-a');
     expect(tv.disconnect).not.toHaveBeenCalled();
-    expect(q('tradovate-row-a')!.textContent).toContain('Déconnecter ce compte');
+    expect(q('tradovate-row-a')!.textContent).toContain('Déconnecter Tradovate de ce compte ?');
 
     click('tradovate-disconnect-confirm-a');
     expect(tv.disconnect).toHaveBeenCalledWith('a', { deleteTrades: false }, expect.any(Function));
+  });
+
+  it('synchro en pause (compte échoué) : pastille « En pause », texte, synchro manuelle et déconnexion gardées', () => {
+    const { q } = setup({
+      accounts: [acct('a', 'A', { status: 'FAILED' })],
+      connections: [conn('a', { syncPaused: true, syncPausedReason: 'FAILED' })],
+    });
+    expect(q('tradovate-status-a')!.textContent!.trim()).toBe('En pause');
+    expect(q('tradovate-paused-a')!.textContent!.trim()).toBe(
+      'Synchro en pause : ce compte est marqué échoué. Tes trades déjà importés restent dans ton journal. Elle reprend si tu remets ce compte en actif.',
+    );
+    expect(q('tradovate-last-sync-a')).toBeNull();
+    expect(q('tradovate-sync-a')).not.toBeNull();
+    expect(q('tradovate-disconnect-a')).not.toBeNull();
+    expect(q('tradovate-row-a')!.textContent).not.toMatch(/révoqu/);
+  });
+
+  it('synchro en pause (compte archivé) : le texte dit « archivé »', () => {
+    const { q } = setup({
+      accounts: [acct('a', 'A', { status: 'ARCHIVED' })],
+      connections: [conn('a', { syncPaused: true, syncPausedReason: 'ARCHIVED' })],
+    });
+    expect(q('tradovate-paused-a')!.textContent).toContain('ce compte est marqué archivé.');
+  });
+
+  it('compte échoué depuis moins de 48 h (pas en pause) : « Connecté » et dernière synchro, comme avant', () => {
+    const { q } = setup({ accounts: [acct('a', 'A', { status: 'FAILED' })], connections: [conn('a')] });
+    expect(q('tradovate-status-a')!.textContent).toContain('Connecté');
+    expect(q('tradovate-paused-a')).toBeNull();
+    expect(q('tradovate-last-sync-a')).not.toBeNull();
   });
 
   it('déconnexion d’un compte sans trade importé : simple « Oui », pas de choix de suppression', () => {
@@ -169,6 +200,7 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     click('tradovate-disconnect-a');
     expect(q('tradovate-disconnect-confirm-a'), 'plus de « Oui » ambigu').toBeNull();
     const count = q('tradovate-disconnect-count-a')!.textContent!.replace(/\s+/g, ' ');
+    expect(count).toContain("La synchro s'arrête. Tes trades déjà importés restent, sauf si tu choisis de les supprimer.");
     expect(count).toContain('12 trades importés');
     expect(count).toContain('saisis à la main');
     // Garder vient en premier : c'est le choix par défaut.

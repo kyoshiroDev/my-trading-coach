@@ -1,4 +1,4 @@
-import { AdminPushEvent, BrokerConnectionStatus } from '@prisma/client';
+import { AccountStatus, AdminPushEvent, BrokerConnectionStatus } from '@prisma/client';
 import type { AdminNotifier } from '../../admin-push/admin-notifier.service';
 import { ADMIN_PUSH_MESSAGES } from '../../admin-push/push-messages';
 import type { TraderNotifier } from '../../push/trader-notifier.service';
@@ -16,6 +16,7 @@ export const RECONNECT_NOTICE_SELECT = {
   userId: true,
   accountId: true,
   user: { select: { isDemo: true } },
+  account: { select: { status: true } },
 } as const;
 
 export interface ReconnectNoticeBefore {
@@ -23,7 +24,11 @@ export interface ReconnectNoticeBefore {
   userId: string;
   accountId: string;
   user: { isDemo: boolean } | null;
+  account?: { status: AccountStatus } | null;
 }
+
+/** Compte Échoué ou Archivé (#684) : le trader l'a laissé, on ne lui demande pas de le reconnecter. */
+const LOST_ACCOUNT: readonly AccountStatus[] = [AccountStatus.FAILED, AccountStatus.ARCHIVED];
 
 export function noticeReconnectRequired(
   before: ReconnectNoticeBefore | null,
@@ -31,6 +36,7 @@ export function noticeReconnectRequired(
 ): void {
   if (!before?.user || before.user.isDemo || before.status === BrokerConnectionStatus.NEEDS_RECONNECT) return;
   notifiers.admin?.notify(AdminPushEvent.TRADOVATE_RECONNECT, ADMIN_PUSH_MESSAGES.tradovateReconnect());
+  if (before.account && LOST_ACCOUNT.includes(before.account.status)) return;
   notifiers.trader?.notify(
     before.userId,
     'CONNECTION',

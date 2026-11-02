@@ -247,7 +247,7 @@
                   </button>
                 }
               } @else if (confirmDisconnectId() === a.id) {
-                <span class="tv-confirm">Déconnecter ce compte&nbsp;?</span>
+                <span class="tv-confirm">Déconnecter Tradovate de ce compte&nbsp;?</span>
                 <!-- Des trades importés : le choix garder / supprimer s'affiche en sous-ligne. -->
                 @if (!conn.brokerTradesCount) {
                   <button class="tv-btn danger sm" type="button" (click)="confirmDisconnect(a)"
@@ -256,7 +256,11 @@
                 <button class="tv-btn ghost sm" type="button" (click)="confirmDisconnectId.set(null)"
                         [attr.data-testid]="'tradovate-disconnect-cancel-' + a.id">Annuler</button>
               } @else {
-                <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
+                @if (conn.syncPaused) {
+                  <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">En pause</span>
+                } @else {
+                  <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
+                }
                 @if (!conn.needsAccountSelection) {
                   <button class="tv-icon" type="button" (click)="syncTradovate(a)" [disabled]="!!busy"
                           [attr.title]="busy === 'sync' ? 'Synchronisation…' : 'Synchroniser'"
@@ -276,7 +280,7 @@
               }
               </div>
 
-              @if (conn && conn.status === 'CONNECTED' && !conn.needsAccountSelection) {
+              @if (conn && conn.status === 'CONNECTED' && !conn.needsAccountSelection && !conn.syncPaused) {
                 <span class="sync-detail" [attr.data-testid]="'tradovate-last-sync-' + a.id">
                   @if (conn.externalAccountName) { <span class="tv-ext">{{ conn.externalAccountName }}</span><br /> }
                   Dernière synchro : {{ relativeTime(conn.lastSyncAt) }} · {{ conn.tradesImported }} trade{{ conn.tradesImported > 1 ? 's' : '' }} importé{{ conn.tradesImported > 1 ? 's' : '' }}
@@ -369,6 +373,11 @@
                   [busy]="busy === 'select' || busy === 'sync'"
                   (picked)="pickTradovateAccount(a, $event)" />
               </div>
+            } @else if (conn.syncPaused) {
+              <!-- Compte perdu depuis plus de 48 h (#684) : plus de synchro de fond, connexion gardée. -->
+              <div class="acct-sub" [attr.data-testid]="'tradovate-paused-' + a.id">
+                <span class="tv-text">Synchro en pause&nbsp;: ce compte est marqué {{ conn.syncPausedReason === 'ARCHIVED' ? 'archivé' : 'échoué' }}. Tes trades déjà importés restent dans ton journal. Elle reprend si tu remets ce compte en actif.</span>
+              </div>
             }
           }
 
@@ -377,6 +386,7 @@
           @if (conn && conn.brokerTradesCount > 0 && confirmDisconnectId() === a.id) {
             <div class="acct-sub tv-disconnect-choice" [attr.data-testid]="'tradovate-disconnect-choice-' + a.id">
               <span class="tv-text" [attr.data-testid]="'tradovate-disconnect-count-' + a.id">
+                La synchro s'arrête. Tes trades déjà importés restent, sauf si tu choisis de les supprimer.
                 <b>{{ brokerTradesLabel(conn.brokerTradesCount) }}</b> depuis ce compte Tradovate.
                 Si tu les supprimes, tes trades saisis à la main et importés en CSV restent.
               </span>

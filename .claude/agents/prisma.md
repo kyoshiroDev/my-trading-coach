@@ -633,3 +633,8 @@ l'abonnement. Pas de rattrapage : renseignée au prochain `customer.subscription
 interne (tests de l'équipe), exclu des statistiques admin par `REAL_USERS_WHERE`. Posé depuis la fiche
 admin, jamais par SQL ni par le domaine de l'adresse ; recopié dans `DeletedAccount` à la suppression.
 La règle des 90 jours lit toutes les lignes `DeletedAccount`, internes comprises.
+
+`TradingAccount.statusChangedAt` (migration `20261102120000_account_status_changed_at`, #684, additive,
+nullable, sans réécriture de table, compatible N-1) : date du dernier changement de `status`. `null`
+pour tout compte antérieur, lu comme « ancien » par la pause de synchro (règle dans `nestjs.md`,
+« Pause de la synchro des comptes perdus »). Aucun index : lu par relation depuis `BrokerConnection`.
