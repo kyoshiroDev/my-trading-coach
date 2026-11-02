@@ -381,6 +381,9 @@ model TradingAccount {
   broker          String? // prop firm / courtier
   type            AccountType    @default(PERSONAL)
   status          AccountStatus  @default(ACTIVE)
+  /// Dernier changement de `status` (#684). `null` = statut antérieur à la colonne, jugé ancien.
+  /// Sert au délai de 48 h avant la pause de synchro d'un compte Échoué ou Archivé.
+  statusChangedAt DateTime?
   accountSize     Float?
   currency        String         @default("USD")
   // Règles prop firm (saisies par l'user, propres à sa firm/plan) :
@@ -1146,7 +1149,7 @@ model PropFirmPlan {
   planName        String
   accountSize     Float
   currency        String
-  /// `public` | `invite_only` (valeurs du catalogue).
+  /// `public` | `invite_only` | `discontinued` (valeurs du catalogue).
   availability    String
   configuration   Json?
   price           Json

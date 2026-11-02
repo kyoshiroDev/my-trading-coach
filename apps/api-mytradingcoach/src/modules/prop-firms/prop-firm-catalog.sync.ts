@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
+import type { PropFirmAvailability } from '@mtc/shared';
 import { propFirmFileSchema, type PropFirmFile } from './prop-firm-catalog.schema';
 
 /**
@@ -58,6 +59,11 @@ function summarizeIssues(issues: { path: PropertyKey[]; message: string }[]): st
     .slice(0, 3)
     .map((i) => `${i.path.map(String).join('.') || '(racine)'} : ${i.message}`)
     .join(' ; ');
+}
+
+/** La base stocke une chaîne libre : toute valeur inconnue reste vendue au public. */
+export function availabilityOf(value: string): PropFirmAvailability {
+  return value === 'invite_only' || value === 'discontinued' ? value : 'public';
 }
 
 /** Empreinte stable d'une valeur déjà passée par Zod (ordre des clés = ordre du schéma). */

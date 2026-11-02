@@ -1928,6 +1928,27 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
 - `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
   compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
 
+### Pause de la synchro des comptes perdus (#684, 2026-11-02)
+
+Règle unique dans `integrations/tradovate/tradovate-sync-pause.ts` : la synchro de fond d'un compte
+`FAILED` ou `ARCHIVED` est en pause quand son statut date de **48 h ou plus** (`statusChangedAt`,
+`null` = ancien) **et** que `historyImportedAt` est posé. `PASSED` n'est jamais en pause.
+- Filtre `notSyncPausedWhere(now)` : cron de fond (`tradovate-background-refresh.cron.ts`) et
+  `trackableConnection(now)` (temps réel `eligible()` et compteur de la veille #770). Jamais d'autre
+  copie du filtre.
+- **Inchangés :** statut `CONNECTED` de la connexion (une sœur qui propage ses jetons ne lève donc pas
+  la pause), cron des jetons (renouvellement maintenu), bouton « Synchroniser » (manuel, ne lève pas la
+  pause), trades déjà importés.
+- `statusChangedAt` est écrit par `AccountsService.update` (tout changement de statut, y compris via
+  `AccountIncidentsService.updateAccount`) et par `remove` quand il archive. Un nouveau chemin qui
+  change le statut doit l'écrire aussi.
+- Retour en `ACTIVE` d'un compte en pause : `historyImportedAt` remis à `null` sur ses connexions, et
+  le cron reprend l'historique complet (dédup par trade) pour combler la période de pause.
+- Vue (`toConnectionView`) : `syncPaused` et `syncPausedReason`, calculés, sans colonne.
+- Push de reconnexion (`noticeReconnectRequired`) : coupé côté trader pour un compte `FAILED` ou
+  `ARCHIVED`, gardé côté admin.
+- Tests : `tradovate-sync-pause.spec.ts`, `tradovate-sync-pause.int-spec.ts` (filtre sur vraie base).
+
 ## Autopsie d'un compte grillé (#669, 2026-10-23)
 
 Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : pas de cycle).

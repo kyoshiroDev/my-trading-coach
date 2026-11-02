@@ -26,7 +26,7 @@ import {
 } from './tradovate-live.connection';
 import { createLimiter } from '../../../common/utils/concurrency.util';
 import { appRole } from '../../../config/app-role';
-import { TRACKABLE_CONNECTION, TradovateWatchService } from './tradovate-watch.service';
+import { trackableConnection, TradovateWatchService } from './tradovate-watch.service';
 import { WATCH_SWEEP_MS, type WatchVerdict } from './tradovate-watch';
 
 /** Bail « un seul WebSocket Tradovate par user », tous workers du cluster confondus. */
@@ -520,7 +520,7 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
       return []; // intégration non configurée sur cet environnement
     }
     return this.prisma.brokerConnection.findMany({
-      where: { userId, ...TRACKABLE_CONNECTION, user: { isDemo: false } },
+      where: { userId, ...trackableConnection(), user: { isDemo: false } },
     });
   }
 

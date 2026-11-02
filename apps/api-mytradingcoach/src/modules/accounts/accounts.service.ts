@@ -21,6 +21,7 @@ import {
 } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { syncPauseReason } from '../integrations/tradovate/tradovate-sync-pause';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import {
@@ -683,8 +684,19 @@ export class AccountsService {
     if (dto.propFirmPlanId && dto.propFirmPlanId !== account.propFirmPlanId) {
       await this.assertCatalogPlan(dto.propFirmPlanId);
     }
-    const updated = await this.prisma.tradingAccount.update({ where: { id }, data: withPlanLink(withDates(dto)) });
-    if (dto.status !== undefined && dto.status !== account.status) await this.invalidateStats(userId);
+    const statusChanged = dto.status !== undefined && dto.status !== account.status;
+    const now = new Date();
+    // Retour en Actif d'un compte dont la synchro était en pause (#684) : l'historique complet est
+    // redemandé au cron (dédup par trade), pour combler les mois que la pause n'a pas lus.
+    const resume = statusChanged && dto.status === AccountStatus.ACTIVE ? await this.pausedConnectionIds(id, account, now) : [];
+    const updated = await this.prisma.tradingAccount.update({
+      where: { id },
+      data: { ...withPlanLink(withDates(dto)), ...(statusChanged ? { statusChangedAt: now } : {}) },
+    });
+    if (resume.length > 0) {
+      await this.prisma.brokerConnection.updateMany({ where: { id: { in: resume } }, data: { historyImportedAt: null } });
+    }
+    if (statusChanged) await this.invalidateStats(userId);
     return updated;
   }
 
@@ -765,6 +777,19 @@ export class AccountsService {
     }
   }
 
+  /** Connexions de ce compte dont la synchro de fond est en pause à `now` (#684). */
+  private async pausedConnectionIds(
+    accountId: string,
+    account: { status: AccountStatus; statusChangedAt: Date | null },
+    now: Date,
+  ): Promise<string[]> {
+    const conns = await this.prisma.brokerConnection.findMany({
+      where: { accountId },
+      select: { id: true, historyImportedAt: true },
+    });
+    return conns.filter((c) => syncPauseReason(account, c.historyImportedAt, now) !== null).map((c) => c.id);
+  }
+
   /**
    * Suppression : hard delete si le compte est vide, sinon archivage (l'historique
    * reste rattaché au compte archivé). On refuse d'archiver le DERNIER compte actif
@@ -801,7 +826,10 @@ export class AccountsService {
 
     await this.prisma.tradingAccount.update({
       where: { id },
-      data: { status: AccountStatus.ARCHIVED },
+      data: {
+        status: AccountStatus.ARCHIVED,
+        ...(account.status !== AccountStatus.ARCHIVED ? { statusChangedAt: new Date() } : {}),
+      },
     });
     if (account.status !== AccountStatus.ARCHIVED) await this.invalidateStats(userId);
     return { archived: true };

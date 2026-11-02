@@ -38,6 +38,10 @@ import { describeHosts, parseApiHosts } from './tradovate-hosts';
 import { TradovateLocks } from './tradovate-locks';
 import { TradovateTokenManager, buildTokenColumns } from './tradovate-token-manager';
 import type { TradovateSession } from './tradovate-token-manager';
+import type { SyncPauseAccount } from './tradovate-sync-pause';
+
+/** Ce que la vue lit du compte pour dire si la synchro est en pause (#684). */
+const SYNC_PAUSE_ACCOUNT_SELECT = { status: true, statusChangedAt: true } as const;
 
 // Réexports : les appelants existants importent ces noms depuis le service.
 export { ACCOUNT_GONE_GRACE_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
@@ -327,9 +331,10 @@ export class TradovateConnectionService {
     const rows = await this.prisma.brokerConnection.findMany({
       where: { userId, provider: BrokerProvider.TRADOVATE },
       orderBy: { createdAt: 'asc' },
+      include: { account: { select: SYNC_PAUSE_ACCOUNT_SELECT } },
     });
     const counts = await this.brokerTradesCounts(userId, rows.map((r) => r.accountId));
-    return rows.map((r) => this.toView(r, counts.get(r.accountId) ?? 0));
+    return rows.map(({ account, ...r }) => this.toView(r, counts.get(r.accountId) ?? 0, account));
   }
 
   /** Choix du compte Tradovate à synchroniser vers ce TradingAccount. */
@@ -358,11 +363,13 @@ export class TradovateConnectionService {
         // Efface la raison d'un rechoix (« ce compte n'existe plus… ») : le nouveau compte est posé.
         lastSyncError: null,
       },
+      include: { account: { select: SYNC_PAUSE_ACCOUNT_SELECT } },
     });
     // La devise du compte suit le broker, lue chez lui (cf. resolveAccountCurrency).
     await this.syncAccountCurrency(accountId, conn, target);
     const counts = await this.brokerTradesCounts(userId, [accountId]);
-    return this.toView(updated, counts.get(accountId) ?? 0);
+    const { account, ...view } = updated;
+    return this.toView(view, counts.get(accountId) ?? 0, account);
   }
 
   /**
@@ -541,8 +548,8 @@ export class TradovateConnectionService {
     if (!account) throw new NotFoundException('Compte introuvable.');
   }
 
-  private toView(conn: BrokerConnection, brokerTradesCount = 0): TradovateConnectionView {
-    return toConnectionView(conn, brokerTradesCount);
+  private toView(conn: BrokerConnection, brokerTradesCount = 0, account?: SyncPauseAccount | null): TradovateConnectionView {
+    return toConnectionView(conn, brokerTradesCount, account);
   }
 
   /** Trades importés par le broker, par compte : affichés AVANT de proposer leur suppression. */

@@ -30,7 +30,7 @@ const account = (type: TradingAccount['type']): TradingAccount => ({
 const conn: TradovateConnection = {
   accountId: 'a', status: 'CONNECTED', externalAccountId: '1', externalAccountName: 'APEX-1',
   externalEnv: 'demo', availableAccounts: [], needsAccountSelection: false, lastSyncAt: null,
-  lastSyncError: null, tradesImported: 0, brokerTradesCount: 0, connectedAt: '',
+  lastSyncError: null, tradesImported: 0, brokerTradesCount: 0, connectedAt: '', syncPaused: false, syncPausedReason: null,
 };
 
 function setup(opts: { type?: TradingAccount['type']; connected?: boolean; loaded?: boolean }) {

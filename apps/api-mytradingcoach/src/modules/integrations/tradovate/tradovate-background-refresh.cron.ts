@@ -10,6 +10,7 @@ import { TradovateHistoryService } from './tradovate-history.service';
 import { isPenaltyFailure } from './tradovate.errors';
 import { RedisService } from '../../infra/redis.service';
 import { PropAlertsService } from './prop-alerts.service';
+import { notSyncPausedWhere } from './tradovate-sync-pause';
 import { mapWithConcurrency } from '../../../common/utils/concurrency.util';
 import { randomUUID } from 'node:crypto';
 
@@ -54,6 +55,7 @@ export const BACKGROUND_USER_CONCURRENCY = 5;
  *
  * - Ne duplique jamais le WebSocket : un user dont l'app est ouverte (bail live) est sauté.
  * - Synchros récentes (< 12 min) sautées ; comptes démo exclus (règle CLAUDE.md).
+ * - Comptes Échoués ou Archivés depuis plus de 48 h, historique importé : en pause (#684).
  * - Rattrape aussi l'historique COMPLET des connexions qui ne l'ont jamais eu (`historyImportedAt`
  *   vide) : connexions antérieures à la feature, ou dont l'import initial a échoué. Au plus
  *   `FULL_BACKFILLS_PER_PASS` par passage. C'est le seul endroit où une profondeur pleine est
@@ -125,6 +127,9 @@ export class TradovateBackgroundRefreshCron {
         externalAccountId: { not: null },
         externalEnv: { not: null },
         user: { isDemo: false },
+        // Comptes perdus en pause (#684) : ni séance, ni mois, ni passé complet. Le cron des jetons,
+        // lui, continue : la reprise au retour en Actif se fait sans nouveau consentement.
+        ...notSyncPausedWhere(now),
         // Hors passage horaire : seulement les connexions en retard. AU passage horaire :
         // toutes, car le rattrapage mensuel doit aussi atteindre les utilisateurs en direct —
         // leur synchro étant permanente, le filtre de fraîcheur les exclurait toujours.

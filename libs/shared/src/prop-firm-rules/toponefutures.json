@@ -10,7 +10,7 @@
       "tradingview"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-02",
   "plans": [
     {
       "id": "toponefutures-elite-daily-25k",
@@ -4721,7 +4721,7 @@
       "plan_name": "X-Ultra",
       "account_size": 50000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": null,
       "price": {
         "amount": 258,
@@ -4868,14 +4868,14 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil. Plus vendu (« Launch closed », page Launchpad lue le 2026-11-02) : masqué à l'achat, conservé pour les comptes déjà liés, règles inchangées."
     },
     {
       "id": "toponefutures-x-ultra-100k",
       "plan_name": "X-Ultra",
       "account_size": 100000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": null,
       "price": {
         "amount": 378,
@@ -5023,14 +5023,14 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil. Plus vendu (« Launch closed », page Launchpad lue le 2026-11-02) : masqué à l'achat, conservé pour les comptes déjà liés, règles inchangées."
     },
     {
       "id": "toponefutures-x-ultra-150k",
       "plan_name": "X-Ultra",
       "account_size": 150000,
       "currency": "USD",
-      "availability": "public",
+      "availability": "discontinued",
       "configuration": null,
       "price": {
         "amount": 518,
@@ -5184,7 +5184,137 @@
         "https://www.toponefutures.com/"
       ],
       "needs_review": false,
-      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil."
+      "notes": "Série limitée à 1 500 comptes, en vente depuis le 1er octobre 2026. 3 comptes X-Ultra maximum. Prix non affiché sur la page d'accueil. Plus vendu (« Launch closed », page Launchpad lue le 2026-11-02) : masqué à l'achat, conservé pour les comptes déjà liés, règles inchangées."
+    },
+    {
+      "id": "toponefutures-x-daily-spark-50k",
+      "plan_name": "X-Daily Spark",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": 39,
+        "billing": "one_time",
+        "activation_fee": 189,
+        "notes": "Paiement unique 39 $ (code LAUNCHPAD au paiement), activation 189 $ seulement après réussite. Reset évaluation 35 $, pas de reset en funded."
+      },
+      "phases": [
+        {
+          "phase": "evaluation",
+          "profit_target": 3000,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2 000 $ sous le plus haut solde de clôture, contrôlé en temps réel sur l'equity."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": 30,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": null
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Journée de 18:00 à 16:10 ET, pas d'overnight. Pas de règle news en évaluation. EA et bots interdits."
+          },
+          "payout": null
+        },
+        {
+          "phase": "funded",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": "18:00 America/New_York",
+            "breach": "trading_paused_for_day",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Trading en pause pour la journée. Option à 30 $ à l'activation : pas de perte journalière."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52100,
+            "locked_floor": 50100,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2 000 $ sous le plus haut solde de clôture, contrôlé en temps réel sur l'equity ; se fige à 50 100 $ après une clôture à 52 100 $ ou plus."
+          },
+          "consistency": null,
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": true,
+            "tiers": [
+              {
+                "min_profit": 0,
+                "max_profit": 1499,
+                "minis": 1,
+                "micros": 10
+              },
+              {
+                "min_profit": 1500,
+                "max_profit": 1999,
+                "minis": 2,
+                "micros": 20
+              },
+              {
+                "min_profit": 2000,
+                "max_profit": null,
+                "minis": 3,
+                "micros": 30
+              }
+            ],
+            "notes": "Palier calculé sur le solde de clôture, appliqué le jour de trading suivant."
+          },
+          "time_rules": {
+            "must_close_by": "16:10 America/New_York",
+            "news_trading_allowed": false,
+            "overnight_allowed": false,
+            "notes": "Journée de 18:00 à 16:10 ET, pas d'overnight. Aucun trade ouvert ou fermé 2 minutes avant et après une news majeure. EA et bots interdits."
+          },
+          "payout": {
+            "min_days": null,
+            "min_daily_profit": null,
+            "min_cycle_profit": null,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.8,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 1000,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 53000,
+            "notes": "Payout chaque jour, sans minimum de jours. Minimum 500 $, plafond 1 000 $ par demande, buffer de 3 000 $, 80/20."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://www.toponefutures.com/launchpad",
+        "https://help.toponefutures.com/en/articles/17678693-x-daily-spark-accounts-overview",
+        "https://help.toponefutures.com/en/articles/17678769-x-daily-spark-contract-limits-scaling",
+        "https://help.toponefutures.com/en/articles/17678771-x-daily-spark-other-trading-rules",
+        "https://help.toponefutures.com/en/articles/17678752-x-daily-spark-maximum-drawdown-mll-eod"
+      ],
+      "needs_review": false,
+      "notes": "Lancement limité à 1 500 comptes, 3 comptes maximum par trader. Options à l'évaluation non modélisées : drawdown statique +15 $, objectif 2 500 $ +15 $, objectif 2 000 $ +30 $."
     }
   ]
 }

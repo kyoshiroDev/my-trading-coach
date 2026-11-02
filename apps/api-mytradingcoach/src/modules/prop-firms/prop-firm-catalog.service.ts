@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PropFirmCatalogFirm, PropFirmPhaseRules, PropFirmPlanDetail, PropFirmPlanSummary } from '@mtc/shared';
 import { dailyLossLimitStatus } from '@mtc/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { availabilityOf } from './prop-firm-catalog.sync';
 import { propFirmConfigurationSchema, propFirmPhaseSchema, type PropFirmPhase } from './prop-firm-catalog.schema';
 
 // Le contrat partagé (@mtc/shared) et le schéma Zod du catalogue décrivent la même donnée :
@@ -45,7 +46,7 @@ export class PropFirmCatalogService {
               planName: plan.planName,
               accountSize: plan.accountSize,
               currency: plan.currency,
-              availability: plan.availability === 'invite_only' ? 'invite_only' : 'public',
+              availability: availabilityOf(plan.availability),
               configuration: configuration && {
                 dailyLossLimit: configuration.daily_loss_limit,
                 evalDrawdown: configuration.eval_drawdown,
@@ -81,7 +82,7 @@ export class PropFirmCatalogService {
       planName: plan.planName,
       accountSize: plan.accountSize,
       currency: plan.currency,
-      availability: plan.availability === 'invite_only' ? 'invite_only' : 'public',
+      availability: availabilityOf(plan.availability),
       needsReview: plan.needsReview,
       notes: plan.notes,
       sourceUrls: plan.sourceUrls,

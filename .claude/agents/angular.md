@@ -1641,3 +1641,13 @@ Lien direct utilisé par le bot : `/profil?tab=params`. Commande en `white-space
   l'utilisateur : un `blur()` programmé sur un champ autorempli affiche « requis ».
 - ⚠️ `src/styles/global.css` n'est **importé nulle part** (seul `styles/theme.css` l'est) : une
   règle globale va dans `styles.css`, pas là.
+
+## Mes comptes : synchro en pause (#684, 2026-11-02)
+
+Connexion avec `syncPaused` (compte Échoué ou Archivé depuis 48 h ou plus, historique importé) :
+pastille « En pause » (`tv-pill off`) à la place de « ● Connecté », ligne « Dernière synchro »
+masquée, sous-ligne `tradovate-paused-<id>` avec le texte validé (« échoué » ou « archivé » selon
+`syncPausedReason`). « Synchroniser » et « Déconnecter » restent. Déconnexion : « Déconnecter
+Tradovate de ce compte ? », puis, s'il y a des trades importés, « La synchro s'arrête. Tes trades
+déjà importés restent, sauf si tu choisis de les supprimer. » Jamais le mot « révoqué » dans ces
+textes (la déconnexion supprime nos jetons, elle ne révoque rien chez Tradovate).
