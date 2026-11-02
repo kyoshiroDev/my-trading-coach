@@ -5,7 +5,7 @@ import { parseUsNumber, splitCsvLine } from '../../trades/csv-parsers';
 import { tradingDay } from '../../accounts/account-rules';
 import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateReportingClient } from './tradovate-reporting.client';
-import { TradovateApiError } from './tradovate.errors';
+import { TradovateApiError, TradovatePenaltyError } from './tradovate.errors';
 import type { TradovateAccount, TradovateEnv } from './tradovate.types';
 
 /**
@@ -103,7 +103,8 @@ export class TradovateClosingsService {
         const csv = await this.reporting.fetchCsv(env, token, 'Account Balance History', { from, to, accountName: account.name }, apiHosts);
         closes.push(...parseAccountBalanceHistory(csv, account.name));
       } catch (err) {
-        if (err instanceof TradovateApiError && err.kind === 'unauthorized') throw err;
+        // Jeton mort ou pénalité : les fenêtres suivantes échoueraient pareil, et rien n'est validé.
+        if (err instanceof TradovatePenaltyError || (err instanceof TradovateApiError && err.kind === 'unauthorized')) throw err;
         this.logger.warn(`Clôtures officielles : fenêtre ${from.toISOString().slice(0, 10)} ignorée (${(err as Error).message}).`);
       }
     }

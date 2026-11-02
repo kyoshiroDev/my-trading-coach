@@ -16,7 +16,7 @@ import { TradovateApiClient } from './tradovate-api.client';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateReportingClient, type ReportWindow } from './tradovate-reporting.client';
-import { TradovateApiError, TradovateException } from './tradovate.errors';
+import { TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import type { TradovateAccount, TradovateApiHosts, TradovateEnv } from './tradovate.types';
 
 /**
@@ -180,6 +180,7 @@ export class TradovateHistoryService {
     // Setup « Sans setup » : créé une fois pour tout l'import, comme le fait l'import CSV.
     const setupId = await this.setups.getImportSetupId(userId);
     let consecutiveEmpty = 0;
+    let penalty: TradovatePenaltyError | null = null;
 
     for (const window of this.monthlyWindows(months, accountName)) {
       if (stopOnEmpty && consecutiveEmpty >= EMPTY_WINDOWS_BEFORE_STOP) break;
@@ -191,6 +192,14 @@ export class TradovateHistoryService {
       } catch (err) {
         // Un jeton mort arrête tout : les fenêtres suivantes échoueraient pareil.
         if (err instanceof TradovateApiError && err.kind === 'unauthorized') throw err.toException();
+        // Pénalité : ce mois n'est pas validé et les suivants seraient pénalisés aussi. On s'arrête,
+        // `historyImportedAt` reste vide et le cron retentera après la pause.
+        if (err instanceof TradovatePenaltyError) {
+          penalty = err;
+          result.failed++;
+          await this.connections.notePenalty(conn, err);
+          break;
+        }
         // Le reste (fenêtre refusée, rapport illisible) ne doit pas priver l'utilisateur des
         // autres mois : on compte l'échec et on continue.
         result.failed++;
@@ -213,6 +222,7 @@ export class TradovateHistoryService {
     if (Object.keys(data).length > 0) {
       await this.prisma.brokerConnection.update({ where: { id: conn.id }, data });
     }
+    if (penalty) throw penalty.toException();
 
     const profondeur = stopOnEmpty
       ? `${months} mois`
@@ -297,6 +307,8 @@ export class TradovateHistoryService {
       const fees = await this.applyFees(env, token, window, dtos, apiHosts);
       return { dtos, feesExpected: fees.expected, fullFees: fees.full };
     } catch (err) {
+      // Pénalité : surtout pas d'import en P&L brut, la fenêtre sera relue entière après la pause.
+      if (err instanceof TradovatePenaltyError) throw err;
       this.logger.warn(`Frais indisponibles sur la fenêtre (${(err as Error).message}) : P&L brut.`);
       return { dtos, feesExpected: 0, fullFees: false };
     }
@@ -321,6 +333,10 @@ export class TradovateHistoryService {
         yield computed ? { window, ...computed } : { window, dtos: [], feesExpected: 0, fullFees: false };
       } catch (err) {
         if (err instanceof TradovateApiError && err.kind === 'unauthorized') throw err.toException();
+        if (err instanceof TradovatePenaltyError) {
+          await this.connections.notePenalty(conn, err);
+          throw err.toException();
+        }
         yield { window, error: (err as Error).message };
       }
       await this.wait(PAUSE_BETWEEN_WINDOWS_MS);
@@ -386,6 +402,7 @@ export class TradovateHistoryService {
     const cash = await this.reporting
       .fetchCsv(env, token, 'Cash History', window, apiHosts)
       .catch((err: unknown) => {
+        if (err instanceof TradovatePenaltyError) throw err;
         this.logger.warn(`Cash History indisponible (${(err as Error).message}) : commission seule.`);
         return null;
       });

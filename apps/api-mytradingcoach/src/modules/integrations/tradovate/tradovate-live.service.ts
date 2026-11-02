@@ -6,7 +6,7 @@ import { RedisService } from '../../infra/redis.service';
 import { TradovateConnectionService } from './tradovate-connection.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateBalanceService, toBalanceView, type BrokerBalanceView } from './tradovate-balance.service';
-import { TradovateException } from './tradovate.errors';
+import { isPenaltyFailure, TradovateException } from './tradovate.errors';
 import type { TradovateEnv } from './tradovate.types';
 import { wsUrl } from './tradovate-hosts';
 import type { InitialAccountState, OrderEvent } from './tradovate-live.protocol';
@@ -313,7 +313,7 @@ export class TradovateLiveService implements OnModuleInit, OnModuleDestroy {
         this.pending.add(t);
       } else if (code === 'TRADOVATE_RECONNECT_REQUIRED') {
         this.emitter(userId, 'tradovate:status', { accountId, status: 'NEEDS_RECONNECT' });
-      } else if (code !== 'TRADOVATE_SYNC_IN_PROGRESS') {
+      } else if (code !== 'TRADOVATE_SYNC_IN_PROGRESS' && !isPenaltyFailure(err)) {
         this.logger.warn(`Synchro live en échec (compte ${accountId}) : ${(err as Error).message}`);
       }
     }
