@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
 import type { RedisService } from '../../infra/redis.service';
+import type { TradovatePenalty } from './tradovate-penalty';
 import { LOCK_TTL_S, LOGIN_LOCK_TTL_S, REFRESH_DEAD_RETRY_S, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
 
 /**
@@ -97,6 +98,37 @@ export class TradovateLocks {
       await this.redis.client.set(this.deadRefreshKey(conn), fingerprint, 'EX', REFRESH_DEAD_RETRY_S);
     } catch {
       // sans Redis, le refresh sera représenté à chaque passage, comme avant
+    }
+  }
+
+  /** Clés de pause à lire : celle du login (partagée avec les sœurs) et celle de la connexion. */
+  private penaltyKeys(conn: BrokerConnection): string[] {
+    const own = `tradovate:penalty:conn:${conn.id}`;
+    return conn.externalUserId ? [`tradovate:penalty:login:${conn.externalUserId}`, own] : [own];
+  }
+
+  /** Pause en cours pour cette connexion ou son login. Redis indisponible → aucune. */
+  async activePenalty(conn: BrokerConnection): Promise<{ captcha: boolean } | null> {
+    try {
+      const values = await this.redis.client.mget(...this.penaltyKeys(conn));
+      const found = (Array.isArray(values) ? values : []).filter((v): v is string => !!v);
+      return found.length ? { captcha: found.includes('captcha') } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Pose la pause sur le login s'il est connu (donc toutes ses connexions), sinon sur la connexion.
+   * Une pause captcha n'est jamais raccourcie par une pénalité ordinaire.
+   */
+  async startPenalty(conn: BrokerConnection, penalty: TradovatePenalty): Promise<void> {
+    const key = this.penaltyKeys(conn)[0];
+    try {
+      if (!penalty.captcha && (await this.redis.client.get(key)) === 'captcha') return;
+      await this.redis.client.set(key, penalty.captcha ? 'captcha' : 'penalty', 'EX', penalty.seconds);
+    } catch {
+      // sans Redis, pas de pause : la prochaine réponse pénalisée sera traitée de la même façon
     }
   }
 

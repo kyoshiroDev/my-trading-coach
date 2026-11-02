@@ -7,6 +7,7 @@ import { TradovateLiveService } from './tradovate-live.service';
 import { FreeLimitSyncService } from './free-limit-sync.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
+import { isPenaltyFailure } from './tradovate.errors';
 import { RedisService } from '../../infra/redis.service';
 import { PropAlertsService } from './prop-alerts.service';
 import { notSyncPausedWhere } from './tradovate-sync-pause';
@@ -208,7 +209,9 @@ export class TradovateBackgroundRefreshCron {
     } catch (err) {
       // Une connexion en échec ne prive pas les suivantes (état déjà noté par la synchro).
       result.failed++;
-      this.logger.warn(`Rafraîchissement Tradovate en échec (connexion ${c.id}) : ${(err as Error).message}`);
+      if (!isPenaltyFailure(err)) {
+        this.logger.warn(`Rafraîchissement Tradovate en échec (connexion ${c.id}) : ${(err as Error).message}`);
+      }
     }
   }
 

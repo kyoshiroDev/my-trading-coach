@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TradovateApiError } from './tradovate.errors';
+import { TradovateApiError, TradovatePenaltyError } from './tradovate.errors';
+import { readPenalty } from './tradovate-penalty';
 import { fetchFollowingRedirect, reportingBase } from './tradovate-hosts';
 import type { TradovateEnv } from './tradovate.types';
 
@@ -108,16 +109,23 @@ export class TradovateReportingClient {
     }
 
     const text = await res.text();
+    let parsed: { data?: string; errorText?: string } | null = null;
+    let readable = true;
+    try {
+      parsed = JSON.parse(text) as { data?: string; errorText?: string };
+    } catch {
+      readable = false;
+    }
+
+    // Une réponse pénalisée n'a pas de `data` : sans cette lecture, elle passerait pour un mois vide.
+    const penalty = readPenalty(parsed);
+    if (penalty) throw new TradovatePenaltyError(res.status, `rapport ${name}`, penalty);
+
     if (res.status === 401) throw new TradovateApiError('unauthorized', 401, `rapport ${name}`);
     if (res.status === 429) throw new TradovateApiError('rate_limited', 429, `rapport ${name}`);
     if (!res.ok) throw new TradovateApiError('unavailable', res.status, `rapport ${name}`);
 
-    let parsed: { data?: string; errorText?: string } | null = null;
-    try {
-      parsed = JSON.parse(text) as { data?: string; errorText?: string };
-    } catch {
-      throw new TradovateApiError('unavailable', res.status, `rapport ${name} : réponse illisible`);
-    }
+    if (!readable) throw new TradovateApiError('unavailable', res.status, `rapport ${name} : réponse illisible`);
 
     // Le serveur répond 200 avec un `errorText` : fenêtre trop large, compte inconnu…
     if (parsed?.errorText) {

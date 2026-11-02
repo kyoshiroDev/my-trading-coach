@@ -1213,6 +1213,17 @@ sont en direct.
   - Un **401 sur une lecture de données** (token pourtant frais) ne condamne plus : `lastSyncError`
     + 503. Seul `getAccessToken` décide de `NEEDS_RECONNECT`, et `markNeedsReconnect(id, cause)`
     **journalise la cause** (warn « → À RECONNECTER (…) »).
+  - ⚠️ **Tickets de pénalité** (`tradovate-penalty.ts`, #852, #853, #854) : un 200 avec `p-ticket`,
+    `p-time` ou `p-captcha` lève `TradovatePenaltyError` (kind `rate_limited`) dans les trois clients
+    (`postToken`, `assertOk`, `fetchCsv`). Ce n'est **jamais** un refus de jeton ni un CSV vide.
+    Clé Redis `tradovate:penalty:login:<login>` (`conn:<id>` si login inconnu), TTL = `p-time`, 1 h si
+    absent, 24 h si captcha. Pendant la pause : `validToken` lève `TRADOVATE_PENALIZED` ou
+    `TRADOVATE_CAPTCHA_REQUIRED` sans appel, `refreshNow` rend `retry`, `tryRevive` rend `false`.
+    Statut et jetons intacts. Import : arrêt au mois pénalisé, `historyImportedAt` non posé, pas
+    d'import en P&L brut ; clôtures et payouts : le curseur n'avance pas. Captcha : `lastSyncError`
+    écrit sur le login. Journal d'une seule ligne, sans jeton, ticket ni identifiant : un nouveau
+    `catch` Tradovate qui journalise un identifiant doit tester `isPenaltyFailure`. Le 429 sans
+    ticket garde son traitement ordinaire. Redis indisponible : pas de pause.
   - ⚠️ **`HTTP 200` + `{"error":"invalid_token"}`** : le refus n'est pas un 401, et il est souvent
     **transitoire** (mesuré : refus d'un token jamais utilisé émis 1 h 50 plus tôt).
   - `TradovateTokenRefreshCron` (**toutes les heures** depuis le 2026-09-26, celles qui expirent

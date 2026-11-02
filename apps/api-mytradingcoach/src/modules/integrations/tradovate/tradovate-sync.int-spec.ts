@@ -16,6 +16,7 @@ import { join } from 'node:path';
 import { BrokerConnectionStatus } from '@prisma/client';
 import { createIntegrationApp } from '@api/test/integration-app.helper';
 import { PrismaService } from '@api/prisma/prisma.service';
+import { TradovateHistoryService } from './tradovate-history.service';
 import { TradovateTokenRefreshCron } from './tradovate-token-refresh.cron';
 import { AuthUserCacheService } from '../../infra/auth-user-cache.service';
 
@@ -58,7 +59,8 @@ const PAIRS = [
 
 type Call = { method: string; url: string; auth: string | null; body: string | null };
 let calls: Call[] = [];
-let refreshMode: 'ok' | 'refused' = 'ok';
+let refreshMode: 'ok' | 'refused' | 'penalty' = 'ok';
+let reportMode: 'refused' | 'empty' | 'penalty' = 'refused'; // refused : ce que répond le vrai serveur à un jeton factice
 
 // Comportements du vrai Tradovate reproduits à la demande (synchro de Val, 14/09/2026).
 const ITEMS_LIMIT = 10;             // au-delà, Tradovate répond 404 (corps vide) à /fill/items et /fillFee/items
@@ -117,8 +119,15 @@ function tradovate(rawUrl: string, init?: RequestInit): Response {
   const body = init?.body ? String(init.body) : null;
   calls.push({ method: init?.method ?? 'GET', url: rawUrl, auth: headers.get('authorization'), body });
 
+  if (url.pathname === '/v1/reports/requestReport') {
+    if (reportMode === 'penalty') return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
+    return reportMode === 'empty' ? json({ data: '\r\n' }) : new Response('', { status: 401 });
+  }
   if (url.pathname === '/auth/oauthtoken') {
     const form = new URLSearchParams(body ?? '');
+    if (refreshMode === 'penalty' && form.get('grant_type') === 'refresh_token') {
+      return json({ 'p-ticket': 'ticket-de-test', 'p-time': 600 });
+    }
     if (form.get('grant_type') === 'authorization_code') {
       if (form.get('code') !== 'good-code') return json({ error: 'invalid_grant' }, 400);
       return json({ access_token: 'AT-1', expires_in: 4800, refresh_token: 'RT-1', refresh_token_expires_in: 2_592_000, id_token: 'x', token_type: 'bearer' });
@@ -169,7 +178,8 @@ const realFetch = globalThis.fetch;
 beforeAll(async () => {
   vi.stubGlobal('fetch', (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url = input instanceof Request ? input.url : String(input);
-    if (/^https:\/\/(live|demo)\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
+    // Tous les hôtes Tradovate, reporting compris : aucun appel réel depuis ce test.
+    if (/^https:\/\/[a-z0-9-]+\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
     return realFetch(input, init);
   });
   // Rate limiting neutralisé par createIntegrationApp (toutes les requêtes viennent de la même IP).
@@ -200,6 +210,7 @@ beforeEach(async () => {
   await prisma.brokerConnection.deleteMany({ where: { user: { email: { startsWith: PREFIX } } } });
   calls = [];
   refreshMode = 'ok';
+  reportMode = 'refused';
   extraPairs = 0;
   listOmits = new Set();
   itemsNotFound = false;
@@ -428,7 +439,8 @@ describe('Tradovate — synchro', () => {
     // Lecture seule : que des GET vers l'API de données, sur l'hôte du compte (demo), plus la SEULE
     // lecture que Tradovate expose en POST (instantané de solde). Les appels d'auth sont à part :
     // `renewaccesstoken` (sur live) relit `apiHosts` à chaque synchro.
-    const dataCalls = calls.filter((c) => !new URL(c.url).pathname.includes('/auth/'));
+    // Les rapports non plus : l'import d'historique lancé à la connexion a son propre hôte (rpt-*).
+    const dataCalls = calls.filter((c) => !/\/auth\/|\/reports\//.test(new URL(c.url).pathname));
     expect(dataCalls.filter((c) => c.method !== 'GET').map((c) => new URL(c.url).pathname))
       .toEqual(expect.arrayContaining(['/v1/cashBalance/getcashbalancesnapshot']));
     expect(dataCalls.every((c) => c.method === 'GET' || c.url.endsWith('/cashBalance/getcashbalancesnapshot'))).toBe(true);
@@ -540,6 +552,55 @@ describe('Tradovate — synchro', () => {
 
     const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
     expect(conn.status).toBe(BrokerConnectionStatus.NEEDS_RECONNECT);
+  });
+
+  it('refresh pénalisé (200 + p-ticket) : 503, connexion intacte, une seule tentative, puis plus aucun appel', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    await connect(token, account.id);
+    await prisma.brokerConnection.updateMany({
+      where: { accountId: account.id },
+      // Échéance passée : hors pénalité, un refus condamnerait la connexion.
+      data: { accessTokenExpiresAt: new Date(Date.now() - 60_000), refreshTokenExpiresAt: new Date(Date.now() - 60_000) },
+    });
+    refreshMode = 'penalty';
+    calls = [];
+
+    const res = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as { code: string }).code).toBe('TRADOVATE_PENALIZED');
+    expect(calls.filter((c) => c.url.includes('/auth/')).length).toBe(1);
+
+    const conn = await prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
+    expect(conn.lastSyncError).toMatch(/limite temporairement/);
+
+    // Pause en cours : la nouvelle synchro ne touche plus Tradovate.
+    calls = [];
+    const again = await api(token, `/accounts/${account.id}/sync`, 'POST');
+    expect(again.status).toBe(503);
+    expect(calls).toEqual([]);
+  });
+
+  it('import complet : rapport pénalisé → historyImportedAt reste vide ; témoin : mois vides → posé', async () => {
+    const { id: userId, token } = await registerUser();
+    const account = await createAccount(userId, 'Compte');
+    await connect(token, account.id);
+    await vi.waitFor(() => expect(calls.some((c) => c.url.includes('/reports/requestReport'))).toBe(true));
+    const history = app.get(TradovateHistoryService);
+    const fresh = () => prisma.brokerConnection.findFirstOrThrow({ where: { accountId: account.id } });
+    await prisma.brokerConnection.updateMany({ where: { accountId: account.id }, data: { historyImportedAt: null } });
+
+    reportMode = 'empty';
+    await history.importHistory(userId, await fresh());
+    expect((await fresh()).historyImportedAt).not.toBeNull();
+
+    await prisma.brokerConnection.updateMany({ where: { accountId: account.id }, data: { historyImportedAt: null } });
+    reportMode = 'penalty';
+    await expect(history.importHistory(userId, await fresh())).rejects.toMatchObject({ code: 'TRADOVATE_PENALIZED' });
+    const conn = await fresh();
+    expect(conn.historyImportedAt).toBeNull();
+    expect(conn.status).toBe(BrokerConnectionStatus.CONNECTED);
   });
 
   it('compte actif (> 10 fills) : fills et frais lus par liste, jamais de lot /items au-delà de 10', async () => {

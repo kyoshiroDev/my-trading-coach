@@ -14,7 +14,7 @@ import { TradovatePayoutsService } from './tradovate-payouts.service';
 import { TradovateHistoryService } from './tradovate-history.service';
 import { FreeLimitSyncService } from './free-limit-sync.service';
 import { toOpenPositions } from './tradovate-open-positions';
-import { TradovateApiError, TradovateException } from './tradovate.errors';
+import { isPenaltyFailure, TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import { mapTradovatePairs } from './tradovate-trade.mapper';
 import { describeTradovateSnapshot } from './tradovate-sync-diagnostics';
 import type {
@@ -144,6 +144,7 @@ export class TradovateSyncService {
       });
       return { ...result, created: result.created + rattrapage };
     } catch (err) {
+      if (err instanceof TradovatePenaltyError) await this.connections.notePenalty(conn, err);
       const exception =
         err instanceof TradovateException
           ? err
@@ -165,7 +166,9 @@ export class TradovateSyncService {
           data: { lastSyncError: exception.message },
         });
       }
-      this.logger.warn(`Synchro Tradovate en échec (connexion ${conn.id}) : ${(err as Error).message}`);
+      if (!isPenaltyFailure(err)) {
+        this.logger.warn(`Synchro Tradovate en échec (connexion ${conn.id}) : ${(err as Error).message}`);
+      }
       throw exception ?? err;
     } finally {
       await this.connections.unlock(conn.id);
@@ -206,14 +209,20 @@ export class TradovateSyncService {
       const { token, apiHosts } = await this.connections.getSession(conn);
       await this.closings.refresh(conn, token, apiHosts);
     } catch (err) {
-      this.logger.warn(`Clôtures officielles non relues (connexion ${conn.id}) : ${(err as Error).message}`);
+      if (err instanceof TradovatePenaltyError) await this.connections.notePenalty(conn, err);
+      if (!isPenaltyFailure(err)) {
+        this.logger.warn(`Clôtures officielles non relues (connexion ${conn.id}) : ${(err as Error).message}`);
+      }
     }
     // Payouts reçus (historique de trésorerie) : début du cycle et rang du prochain payout.
     try {
       const { token, apiHosts } = await this.connections.getSession(conn);
       await this.payouts.refresh(conn, token, apiHosts);
     } catch (err) {
-      this.logger.warn(`Payouts non relus (connexion ${conn.id}) : ${(err as Error).message}`);
+      if (err instanceof TradovatePenaltyError) await this.connections.notePenalty(conn, err);
+      if (!isPenaltyFailure(err)) {
+        this.logger.warn(`Payouts non relus (connexion ${conn.id}) : ${(err as Error).message}`);
+      }
     }
   }
 

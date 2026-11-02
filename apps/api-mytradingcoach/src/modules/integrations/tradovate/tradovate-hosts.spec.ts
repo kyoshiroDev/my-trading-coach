@@ -166,7 +166,7 @@ describe('TradovateTokenManager — relecture de apiHosts', () => {
     const manager = new TradovateTokenManager({
       prisma: prisma as never,
       api: api as never,
-      locks: {} as never,
+      locks: { activePenalty: async () => null } as never,
       logger: logger as never,
       tokenKey: () => key,
       wait: async () => undefined,

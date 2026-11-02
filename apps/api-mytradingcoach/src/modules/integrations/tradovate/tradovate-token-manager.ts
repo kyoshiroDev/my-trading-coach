@@ -3,7 +3,7 @@ import { BrokerConnection, BrokerConnectionStatus, BrokerProvider, Prisma } from
 import type { PrismaService } from '@api/prisma/prisma.service';
 import { decryptToken, encryptToken } from '@api/common/utils/token-cipher.util';
 import type { TradovateApiClient } from './tradovate-api.client';
-import { TradovateApiError, TradovateException } from './tradovate.errors';
+import { isPenaltyFailure, TradovateApiError, TradovateException, TradovatePenaltyError } from './tradovate.errors';
 import type { TradovateApiHosts, TradovateOAuthTokenResponse } from './tradovate.types';
 import type { TradovateLocks } from './tradovate-locks';
 import { REFRESH_DEAD_RETRY_S, REFRESH_MARGIN_MS, REFRESH_RETRY_DELAY_MS, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
@@ -95,6 +95,10 @@ export class TradovateTokenManager {
     try {
       renewed = await this.deps.api.renewAccessToken(token);
     } catch (err) {
+      if (err instanceof TradovatePenaltyError) {
+        await this.notePenalty(conn, err);
+        throw err.toException();
+      }
       this.deps.logger.warn(`apiHosts Tradovate non relus (connexion ${conn.id}) : ${(err as Error).message}`);
       return { token, apiHosts: previous };
     }
@@ -130,6 +134,9 @@ export class TradovateTokenManager {
     if (conn.status === BrokerConnectionStatus.NEEDS_RECONNECT) {
       throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
     }
+    // Pénalité en cours sur ce login : aucun appel à Tradovate, statut et jetons inchangés.
+    const penalty = await this.deps.locks.activePenalty(conn);
+    if (penalty) throw new TradovateException(penalty.captcha ? 'TRADOVATE_CAPTCHA_REQUIRED' : 'TRADOVATE_PENALIZED');
     const now = Date.now();
     const current = decryptToken(conn.accessTokenEnc, this.deps.tokenKey());
     if (conn.accessTokenExpiresAt.getTime() - REFRESH_MARGIN_MS > now) return current;
@@ -167,6 +174,28 @@ export class TradovateTokenManager {
     }
     await this.deps.markNeedsReconnect(conn.id, 'refresh refusé deux fois, renew impossible, refresh_token échu ou de durée inconnue');
     throw new TradovateException('TRADOVATE_RECONNECT_REQUIRED');
+  }
+
+  /**
+   * Réponse pénalisée : pause du login (ou de la seule connexion si le login est inconnu), sans
+   * toucher au statut ni aux jetons. Captcha : l'erreur reste lisible sur ces connexions.
+   * Journal sans jeton ni identifiant.
+   */
+  async notePenalty(conn: BrokerConnection, err: TradovatePenaltyError): Promise<void> {
+    const { seconds, captcha } = err.penalty;
+    await this.deps.locks.startPenalty(conn, err.penalty);
+    this.deps.logger.warn(
+      captcha
+        ? `Captcha Tradovate : opération non retentable depuis l'application, pause de ${seconds} s.`
+        : `Pénalité Tradovate : pause de ${seconds} s.`,
+    );
+    if (!captcha) return;
+    await this.deps.prisma.brokerConnection.updateMany({
+      where: conn.externalUserId
+        ? { userId: conn.userId, provider: BrokerProvider.TRADOVATE, externalUserId: conn.externalUserId }
+        : { id: conn.id },
+      data: { lastSyncError: err.toException().message },
+    });
   }
 
   /**
@@ -297,6 +326,7 @@ export class TradovateTokenManager {
       });
       return renewed.accessToken;
     } catch (err) {
+      if (err instanceof TradovatePenaltyError) await this.notePenalty(conn, err);
       if (err instanceof TradovateApiError && err.kind !== 'unauthorized') throw err.toException();
       return null;
     }
@@ -315,6 +345,7 @@ export class TradovateTokenManager {
       await this.deps.markNeedsReconnect(conn.id, 'aucun refresh_token stocké');
       return 'reconnect';
     }
+    if (await this.deps.locks.activePenalty(conn)) return 'retry';
     if (this.refreshStillPromised(conn) && (await this.deps.locks.inRefusalCooldown(conn))) return 'retry';
     try {
       const current = decryptToken(conn.accessTokenEnc, this.deps.tokenKey());
@@ -332,7 +363,9 @@ export class TradovateTokenManager {
       await this.deps.markNeedsReconnect(conn.id, 'cron : refresh refusé deux fois, refresh_token échu ou de durée inconnue');
       return 'reconnect';
     } catch (err) {
-      this.deps.logger.warn(`Renouvellement Tradovate reporté (connexion ${conn.id}) : ${(err as Error).message}`);
+      if (!isPenaltyFailure(err)) {
+        this.deps.logger.warn(`Renouvellement Tradovate reporté (connexion ${conn.id}) : ${(err as Error).message}`);
+      }
       return 'retry';
     }
   }
@@ -344,6 +377,7 @@ export class TradovateTokenManager {
    */
   async tryRevive(conn: BrokerConnection): Promise<boolean> {
     if (conn.status !== BrokerConnectionStatus.NEEDS_RECONNECT || !this.refreshStillPromised(conn)) return false;
+    if (await this.deps.locks.activePenalty(conn)) return false;
     try {
       const held = await this.deps.locks.tryLoginLock(conn);
       try {
@@ -352,7 +386,9 @@ export class TradovateTokenManager {
         if (held) await this.deps.locks.unlockLogin(conn);
       }
     } catch (err) {
-      this.deps.logger.warn(`Connexion Tradovate ${conn.id} toujours refusée : ${(err as Error).message}`);
+      if (!isPenaltyFailure(err)) {
+        this.deps.logger.warn(`Connexion Tradovate ${conn.id} toujours refusée : ${(err as Error).message}`);
+      }
       return false;
     }
     await this.deps.prisma.brokerConnection.update({
@@ -369,7 +405,13 @@ export class TradovateTokenManager {
    * sans ça leur copie vient d'être invalidée par cette rotation.
    */
   private async refreshWithToken(conn: BrokerConnection): Promise<string> {
-    const tokens = await this.deps.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.deps.tokenKey()));
+    let tokens: TradovateOAuthTokenResponse;
+    try {
+      tokens = await this.deps.api.refresh(decryptToken(conn.refreshTokenEnc as string, this.deps.tokenKey()));
+    } catch (err) {
+      if (err instanceof TradovatePenaltyError) await this.notePenalty(conn, err);
+      throw err;
+    }
     const columns = buildTokenColumns(tokens, this.deps.tokenKey(), conn);
     await this.deps.prisma.brokerConnection.update({ where: { id: conn.id }, data: columns });
     await this.deps.locks.clearRefusalCooldown(conn);
