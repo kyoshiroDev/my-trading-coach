@@ -27,7 +27,7 @@ function makePrisma() {
     user: { findUnique: vi.fn() },
     propFirmPlan: { count: vi.fn() },
     brokerDailyClose: { groupBy: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
-    brokerConnection: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0) },
+    brokerConnection: { findFirst: vi.fn(async () => null), count: vi.fn(async () => 0), findMany: vi.fn(async () => []), updateMany: vi.fn() },
     brokerPayout: { findMany: vi.fn(async () => []), updateMany: vi.fn() },
     accountIncident: { findMany: vi.fn(async (): Promise<unknown[]> => []), updateMany: vi.fn(async () => ({ count: 1 })) },
   };
@@ -196,7 +196,7 @@ describe('AccountsService', () => {
       await svc.update('u1', 'a1', { status: 'ACTIVE' } as never, ctx('FREE', { trialEndsAt: null }));
       expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
         where: { id: 'a1' },
-        data: { status: 'ACTIVE' },
+        data: { status: 'ACTIVE', statusChangedAt: expect.any(Date) },
       });
     });
 
@@ -427,7 +427,7 @@ describe('AccountsService', () => {
     expect(res).toEqual({ archived: true });
     expect(prisma.tradingAccount.update).toHaveBeenCalledWith({
       where: { id: 'a1' },
-      data: { status: 'ARCHIVED' },
+      data: { status: 'ARCHIVED', statusChangedAt: expect.any(Date) },
     });
     expect(prisma.tradingAccount.delete).not.toHaveBeenCalled();
   });

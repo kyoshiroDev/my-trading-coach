@@ -6,17 +6,24 @@ import { TraderNotifier } from '../../push/trader-notifier.service';
 import { tradingDayStart } from '../../session/active-session';
 import { resolveWatchMax } from '../../../config/tradovate-watch-config';
 import { type WatchVerdict, watchEnd, watchVerdict } from './tradovate-watch';
+import { notSyncPausedWhere } from './tradovate-sync-pause';
 
 /** Registre des veilles : ZSET, membre `userId`, score = fin de veille (ms epoch). Éphémère, rien en base. */
 export const WATCH_KEY = 'tradovate:watch';
 
-/** Connexion Tradovate qu'un WebSocket peut suivre (même filtre que l'ouverture du direct). */
-export const TRACKABLE_CONNECTION: Prisma.BrokerConnectionWhereInput = {
-  provider: BrokerProvider.TRADOVATE,
-  status: BrokerConnectionStatus.CONNECTED,
-  externalAccountId: { not: null },
-  externalEnv: { not: null },
-};
+/**
+ * Connexion Tradovate qu'un WebSocket peut suivre (même filtre que l'ouverture du direct). Hors
+ * comptes perdus en pause de synchro (#684, cf. tradovate-sync-pause.ts).
+ */
+export function trackableConnection(now: Date = new Date()): Prisma.BrokerConnectionWhereInput {
+  return {
+    provider: BrokerProvider.TRADOVATE,
+    status: BrokerConnectionStatus.CONNECTED,
+    externalAccountId: { not: null },
+    externalEnv: { not: null },
+    ...notSyncPausedWhere(now),
+  };
+}
 
 /**
  * Veille serveur (#770) : registre partagé entre workers et éligibilité relue en base.
@@ -92,7 +99,7 @@ export class TradovateWatchService {
           select: { id: true },
           take: 1,
         },
-        _count: { select: { pushDevices: true, brokerConnections: { where: TRACKABLE_CONNECTION } } },
+        _count: { select: { pushDevices: true, brokerConnections: { where: trackableConnection(now) } } },
       },
     });
     for (const u of rows) {

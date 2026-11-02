@@ -1,6 +1,7 @@
 import type { BrokerConnection, BrokerConnectionStatus } from '@prisma/client';
 import type { OAuthOrigin } from './oauth-state.util';
 import type { ExternalAccountRef } from './tradovate.types';
+import { syncPauseReason, type SyncPauseAccount, type SyncPauseReason } from './tradovate-sync-pause';
 
 /** Vue publique d'une connexion : JAMAIS de token, même chiffré. */
 export interface TradovateConnectionView {
@@ -22,6 +23,10 @@ export interface TradovateConnectionView {
    */
   brokerTradesCount: number;
   connectedAt: Date;
+  /** Synchro de fond en pause : compte Échoué ou Archivé depuis plus de 48 h (#684). */
+  syncPaused: boolean;
+  /** Statut qui a mis la synchro en pause, pour le texte affiché. */
+  syncPausedReason: SyncPauseReason | null;
 }
 
 /**
@@ -55,8 +60,14 @@ export function availableAccountsOf(conn: BrokerConnection): ExternalAccountRef[
     : [];
 }
 
-export function toConnectionView(conn: BrokerConnection, brokerTradesCount = 0): TradovateConnectionView {
+export function toConnectionView(
+  conn: BrokerConnection,
+  brokerTradesCount = 0,
+  account?: SyncPauseAccount | null,
+  now: Date = new Date(),
+): TradovateConnectionView {
   const availableAccounts = availableAccountsOf(conn);
+  const syncPausedReason = syncPauseReason(account, conn.historyImportedAt, now);
   return {
     accountId: conn.accountId,
     status: conn.status,
@@ -72,6 +83,8 @@ export function toConnectionView(conn: BrokerConnection, brokerTradesCount = 0):
     tradesImported: conn.tradesImported,
     brokerTradesCount,
     connectedAt: conn.createdAt,
+    syncPaused: syncPausedReason !== null,
+    syncPausedReason,
   };
 }
 

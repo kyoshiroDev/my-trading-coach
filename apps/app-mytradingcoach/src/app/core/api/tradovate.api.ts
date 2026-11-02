@@ -28,6 +28,9 @@ export interface TradovateConnection {
   /** Trades importés par Tradovate ENCORE présents sur ce compte (ce que supprimerait la déconnexion). */
   brokerTradesCount: number;
   connectedAt: string;
+  /** Synchro de fond en pause : compte Échoué ou Archivé depuis plus de 48 h (#684). */
+  syncPaused: boolean;
+  syncPausedReason: 'FAILED' | 'ARCHIVED' | null;
 }
 
 export interface TradovateSyncResult {
