@@ -4,6 +4,9 @@
  * ne sont pas dans ce résumé.
  */
 
+/** `discontinued` : plus vendu, masqué à l'achat, conservé pour les comptes déjà liés. */
+export type PropFirmAvailability = 'public' | 'invite_only' | 'discontinued';
+
 export type PropFirmPhaseKind = 'evaluation' | 'funded' | 'direct';
 export type PropFirmDrawdownKind = 'static' | 'trailing_eod' | 'trailing_intraday';
 /**
@@ -33,7 +36,7 @@ export interface PropFirmPlanSummary {
   planName: string;
   accountSize: number;
   currency: string;
-  availability: 'public' | 'invite_only';
+  availability: PropFirmAvailability;
   /** Options du checkout qui distinguent deux plans de même taille, null s'il n'y en a pas. */
   configuration: {
     dailyLossLimit: boolean | null;
@@ -165,7 +168,7 @@ export interface PropFirmPlanDetail {
   planName: string;
   accountSize: number;
   currency: string;
-  availability: 'public' | 'invite_only';
+  availability: PropFirmAvailability;
   needsReview: boolean;
   notes: string | null;
   sourceUrls: string[];

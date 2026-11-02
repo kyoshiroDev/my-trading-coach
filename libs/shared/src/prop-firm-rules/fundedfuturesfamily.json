@@ -11,7 +11,7 @@
       "rithmic"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-02",
   "plans": [
     {
       "id": "fundedfuturesfamily-prime-25k",
@@ -3275,7 +3275,7 @@
     },
     {
       "id": "fundedfuturesfamily-accelerate-50k",
-      "plan_name": "Accelerate S2F",
+      "plan_name": "Accelerate S2F (achat avant le 2026-10-22)",
       "account_size": 50000,
       "currency": "USD",
       "availability": "public",
@@ -3354,7 +3354,342 @@
         "https://www.fundedfuturesfamily.com/"
       ],
       "needs_review": false,
-      "notes": "Sans évaluation."
+      "notes": "Sans évaluation. Règles des comptes achetés avant le 2026-10-22 : 25 % à vie, aucun objectif, plafonds 1 250 / 1 250 / 1 500 $. Pour un achat ultérieur, choisir le plan de la période d'achat."
+    },
+    {
+      "id": "fundedfuturesfamily-accelerate-oct22-50k",
+      "plan_name": "Accelerate S2F (achat du 2026-10-22 au 2026-10-29)",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "invite_only",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2 000 $ sous la plus haute balance ou equity atteinte, latent compris ; ne redescend pas, aucun blocage publié. Ne se bloque jamais, pendant toute la vie du compte (support FFF, e-mail du 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "20 % au 1er payout, 25 % au 2e, 30 % au 3e et aux suivants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 4000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1250,
+              1250,
+              1500
+            ],
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 4 000 $ de nouveau profit par cycle, remis à zéro après chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 1 250 $ puis 1 500 $ dès le 3e payout. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/",
+        "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/"
+      ],
+      "needs_review": false,
+      "notes": "Plan sur invitation depuis le 2026-10-22 (FFF Labs). Les règles dépendent de la date d'achat du compte, pas de la date du payout."
+    },
+    {
+      "id": "fundedfuturesfamily-accelerate-oct30-50k",
+      "plan_name": "Accelerate S2F (achat depuis le 2026-10-30)",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "invite_only",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 2 000 $ sous la plus haute balance ou equity atteinte, latent compris ; ne redescend pas, aucun blocage publié. Ne se bloque jamais, pendant toute la vie du compte (support FFF, e-mail du 2026-10-04)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "20 % au 1er payout, 25 % au 2e, 30 % au 3e et aux suivants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 1500,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": 500,
+            "max_amount": 500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 52100,
+            "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 1 500 $ de nouveau profit par cycle, remis à zéro après chaque payout. Solde au-dessus de 52 100 $ (buffer non retirable). Plafond 500 $ par payout. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account",
+        "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements",
+        "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage",
+        "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown",
+        "https://intercom.help/funded-futures-family/en/articles/15650785-account-fees",
+        "https://intercom.help/funded-futures-family/en/articles/15892350-permitted-times-to-trade",
+        "https://intercom.help/funded-futures-family/en/articles/15892353-news-trading-policy",
+        "https://intercom.help/funded-futures-family/en/articles/15892427-maximum-account-idle-time",
+        "https://www.fundedfuturesfamily.com/",
+        "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/"
+      ],
+      "needs_review": false,
+      "notes": "Plan sur invitation depuis le 2026-10-22 (FFF Labs). Les règles dépendent de la date d'achat du compte, pas de la date du payout."
+    },
+    {
+      "id": "fundedfuturesfamily-accelerate-25k",
+      "plan_name": "Accelerate S2F 25K (achat depuis le 2026-10-22)",
+      "account_size": 25000,
+      "currency": "USD",
+      "availability": "invite_only",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Prix affiché uniquement au paiement, dans le dashboard FFF (réponse du support, 2026-10-04). Pas de frais d'activation. Achat unique."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": null,
+          "max_drawdown": {
+            "amount": 1000,
+            "type": "trailing_intraday",
+            "trails_on": "equity",
+            "locks_at": null,
+            "locked_floor": null,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "Intraday : 1 000 $ sous la plus haute balance ou equity atteinte, latent compris ; ne redescend pas et ne se bloque jamais (article 25k Accelerate Plan et annonce d'octobre 2026)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.2,
+            "max_single_day_pct_schedule": [
+              0.2,
+              0.25,
+              0.3
+            ],
+            "applies_to": "payout",
+            "notes": "20 % au 1er payout, 25 % au 2e, 30 % au 3e et aux suivants."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 3,
+            "micros": 30,
+            "scaling": false,
+            "tiers": null,
+            "notes": "Pleine taille dès le premier jour, pas de scaling."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 5,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 2000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": 500,
+            "max_amount_schedule": null,
+            "max_payouts": null,
+            "safety_net_balance": 26100,
+            "notes": "5 jours gagnants de 200 $ minimum avant chaque payout. 2 000 $ de nouveau profit par cycle, remis à zéro après chaque payout. Buffer de 1 100 $ non retirable (solde de 26 100 $). Plafond 500 $ par payout. Minimum de payout non publié pour le 25K. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/17333029-25k-accelerate-plan",
+        "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/"
+      ],
+      "needs_review": false,
+      "notes": "Plan sur invitation depuis le 2026-10-22 (FFF Labs). Comptes achetés avant : 25 % à vie et aucun objectif, non modélisés dans un plan distinct. Horaires repris du plan Accelerate 50K, non précisés dans l'article 25K."
+    },
+    {
+      "id": "fundedfuturesfamily-payday-50k",
+      "plan_name": "S2F Payday",
+      "account_size": 50000,
+      "currency": "USD",
+      "availability": "public",
+      "configuration": null,
+      "price": {
+        "amount": null,
+        "billing": "one_time",
+        "activation_fee": 0,
+        "notes": "Achat unique. Prix affiché au paiement, variable selon les promotions (annonce d'octobre 2026)."
+      },
+      "phases": [
+        {
+          "phase": "direct",
+          "profit_target": null,
+          "daily_loss_limit": {
+            "amount": 1000,
+            "basis": null,
+            "resets_at": null,
+            "breach": "account_failed",
+            "tiers": null,
+            "scaling_rule": null,
+            "notes": "Hard breach. Base de calcul et heure de remise à zéro non publiées dans l'article Payday 50K."
+          },
+          "max_drawdown": {
+            "amount": 2000,
+            "type": "trailing_eod",
+            "trails_on": "balance",
+            "locks_at": 52000,
+            "locked_floor": 50000,
+            "enforced_on": "equity_realtime",
+            "platform_overrides": null,
+            "basis_notes": "EOD : 2 000 $ sous le plus haut solde de clôture ; se fige à 50 000 $ après une clôture à 52 000 $ (article Payday 50K et annonce d'octobre 2026)."
+          },
+          "consistency": {
+            "max_single_day_pct": 0.4,
+            "applies_to": "payout",
+            "notes": "40 %."
+          },
+          "min_trading_days": null,
+          "max_duration_days": null,
+          "max_contracts": {
+            "minis": 5,
+            "micros": 50,
+            "scaling": true,
+            "tiers": null,
+            "notes": "Plan de scaling annoncé, paliers non publiés dans l'article."
+          },
+          "time_rules": {
+            "must_close_by": "16:45 America/New_York",
+            "news_trading_allowed": true,
+            "overnight_allowed": false,
+            "notes": "Trading de 18:00 à 16:45 heure de New York (la session de nuit est autorisée). Positions fermées automatiquement à 16:45 sans échec du compte. News autorisées, y compris Tier 1. Au moins un trade de 10 secondes par semaine, sinon le compte est fermé."
+          },
+          "payout": {
+            "min_days": 7,
+            "min_daily_profit": 200,
+            "min_cycle_profit": 3000,
+            "min_cycle_profit_schedule": null,
+            "split_pct": 0.9,
+            "split_after": null,
+            "split_by_profit": null,
+            "min_amount": null,
+            "max_amount": null,
+            "max_amount_schedule": [
+              1000,
+              1000,
+              1250
+            ],
+            "max_payouts": null,
+            "safety_net_balance": null,
+            "notes": "7 jours de 200 $ minimum et 3 000 $ de profit entre deux payouts. Plafond 1 000 $ (payouts 1 et 2) puis 1 250 $. 90/10."
+          }
+        }
+      ],
+      "source_urls": [
+        "https://intercom.help/funded-futures-family/en/articles/17332937-payday-50k",
+        "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/"
+      ],
+      "needs_review": true,
+      "notes": "Plan Core depuis le 2026-10-22, non réservé aux invités. À vérifier : paliers de scaling et base de la perte journalière, non publiés. Horaires repris du plan S2F 50K, non précisés dans l'article."
     }
   ]
 }

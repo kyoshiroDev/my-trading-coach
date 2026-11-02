@@ -22,7 +22,7 @@ interface RawPlan {
   plan_name: string;
   account_size: number;
   currency: string;
-  availability: 'public' | 'invite_only';
+  availability: 'public' | 'invite_only' | 'discontinued';
   configuration: { daily_loss_limit?: boolean | null; eval_drawdown?: string | null; payout_path?: string | null; addon?: string | null } | null;
   phases: RawPhase[];
 }

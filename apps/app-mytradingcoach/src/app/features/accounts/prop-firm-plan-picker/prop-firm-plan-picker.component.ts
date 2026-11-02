@@ -47,7 +47,7 @@ export class PropFirmPlanPickerComponent {
   protected readonly firm = computed(() => this.catalog().find((f) => f.id === this.firmId()) ?? null);
   protected readonly programs = computed(() => {
     const firm = this.firm();
-    return firm ? programsOf(firm) : [];
+    return firm ? programsOf(firm, this.planId()) : [];
   });
   protected readonly program = computed(() => this.programs().find((p) => p.key === this.programId()) ?? null);
   protected readonly selected = computed(() => findPlan(this.catalog(), this.planId()));

@@ -22,7 +22,7 @@ Le script de validation est dans `tools/scripts/` (et non dans un `scripts/` rac
 | `<firm>.json` | Une firm par fichier, nommé d'après `firm.id` : `lucid`, `apex`, `topstep`, `tradeify`, `myfundedfutures`, `tradeday`, `takeprofittrader`, `phidias`, `earn2trade`, `toponefutures`, `blusky`, `fundedfuturesfamily`, `oneuptrader`, `uprofit`, `bulenox`, `elitetraderfunding`. |
 | `EXTRACTION-REPORT.md` | Sources, tableau récap, plans à revoir, contradictions. |
 | `tools/scripts/validate-prop-firm-rules.ts` | Validation ajv + contrôles métier. |
-| `veille/sources.json` | Relevé de référence des sources (date publiée ou empreinte), comparé chaque semaine par la veille automatique. |
+| `veille/sources.json` | Relevé de référence des sources (date publiée ou empreinte), comparé chaque semaine par la veille automatique. Champ `lectures` : date de relecture et modification apportée au catalogue. |
 | `tools/scripts/watch-prop-firm-sources.ts` | Veille des sources : `pnpm prop-firms:watch [--update]`. |
 
 ## Valider
@@ -51,7 +51,7 @@ Tous documentés dans `schema.json`. Aucun champ du format de départ n'a été 
 | Champ | Pourquoi |
 |---|---|
 | `firm.help_center` | Source principale, pour la re-vérification. |
-| `plan.availability` | `invite_only` pour les plans non vendus au public (LucidMaxx). |
+| `plan.availability` | `invite_only` pour les plans non vendus au public (LucidMaxx). `discontinued` pour un plan plus vendu : masqué dans les sélecteurs et sur la landing, conservé pour les comptes déjà liés (X-Ultra). |
 | `plan.configuration` | Options du checkout qui distinguent deux plans de même taille. |
 | `price.activation_fee` | Frais d'activation du compte funded (Apex), séparés du prix de l'évaluation. |
 | `phase.max_duration_days` | Accès limité dans le temps (évaluations Apex : 30 jours). |

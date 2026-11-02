@@ -15,7 +15,7 @@
       "tradesea"
     ]
   },
-  "verified_at": "2026-10-18",
+  "verified_at": "2026-11-02",
   "plans": [
     {
       "id": "blusky-launch-50k",
@@ -125,8 +125,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
     },
     {
       "id": "blusky-launch-100k",
@@ -236,8 +236,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3500 $, drawdown 2500 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
     },
     {
       "id": "blusky-launch-200k",
@@ -347,8 +347,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 3000 $, drawdown 2000 $ static, consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Consistency d'évaluation à confirmer par le support : 50 % dans l'article Evaluation Rules, 55 % dans le sélecteur de blusky.pro (lus le 2026-11-02)."
     },
     {
       "id": "blusky-propel-25k",
@@ -361,7 +361,7 @@
         "amount": 150,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -458,8 +458,8 @@
         "https://help.blusky.pro/en/articles/12434092-resets",
         "https://blusky.pro/"
       ],
-      "needs_review": false,
-      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers)."
+      "needs_review": true,
+      "notes": "Entre l'évaluation et le Sim Funded, une Buffer Zone (non modélisée comme phase) : objectif 1500 $, drawdown 1200 $ trailing EOD qui se fige au solde de départ de la Buffer Zone (exemple du support : 50 000 $ avec 2 500 $ de drawdown, seuil figé à 50 000 $ une fois le solde de clôture au-dessus de 52 500 $) (support BluSky, Mike, chat, 2026-10-06), consistency 34 %, pas de DLL. Son profit devient le solde de départ du Sim Funded ; un échec ne remet en cause que la Buffer Zone (reset 250 $ les trois premiers). Contrats à confirmer par le support : 2 minis dans l'article Propel, 4 minis dans le sélecteur de blusky.pro (lus le 2026-11-02)."
     },
     {
       "id": "blusky-propel-50k",
@@ -472,7 +472,7 @@
         "amount": 160,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 89 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -583,7 +583,7 @@
         "amount": 220,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 99 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -694,7 +694,7 @@
         "amount": 170,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 109 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -805,7 +805,7 @@
         "amount": 270,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 149 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {
@@ -916,7 +916,7 @@
         "amount": 320,
         "billing": "monthly",
         "activation_fee": 0,
-        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 79 $ ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
+        "notes": "Abonnement tous les 30 jours pendant l'évaluation seulement, pas de launch fee. Reset évaluation 199 $ (article Resets du 2026-10-23 ; l'article Propel du 2026-10-19 indique encore 79 $) ; renouvellement sur compte échoué = reset gratuit. Prix relevés dans le sélecteur de blusky.pro le 2026-10-05 (prix catalogue, hors code promo 30OFF en cours)."
       },
       "phases": [
         {

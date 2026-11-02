@@ -1,12 +1,32 @@
 {
+  "https://apextraderfunding.com/legacy-products/": {
+    "kind": "hash",
+    "values": [],
+    "firms": [
+      "apex"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Legacy : prix mensuels et frais de PA par plateforme."
+      }
+    ]
+  },
   "https://blusky.pro/": {
     "kind": "hash",
     "values": [
+      "1c5cead52e904612",
       "8ce050a137659c5d",
       "2aca5f5208923792"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Sélecteur : consistency Launch 55 %, Propel 25K 4 minis, à confirmer."
+      }
     ]
   },
   "https://bulenox.com/accounts-pricing": {
@@ -22,11 +42,18 @@
   "https://bulenox.com/help-center/fast-track": {
     "kind": "hash",
     "values": [
+      "435cf79318e187dd",
       "e46ca8283a6bfe32",
       "68d345e50a64180c"
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Fast Track 50K : drawdown 2 000 $, gel à 52 100 $."
+      }
     ]
   },
   "https://bulenox.com/help-center/funded": {
@@ -46,15 +73,28 @@
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Master : consistency remise à zéro après chaque payout, plafond à partir du 4e payout."
+      }
     ]
   },
   "https://bulenox.com/help-center/momentum": {
     "kind": "hash",
     "values": [
+      "8e1ea591baedd3d2",
       "095b545c192d5d3b"
     ],
     "firms": [
       "bulenox"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Momentum : drawdown 50K / 100K / 150K, gel déduit, objectif par cycle, 30 jours."
+      }
     ]
   },
   "https://bulenox.com/help-center/qualification": {
@@ -169,19 +209,31 @@
   "https://help.blusky.pro/en/articles/12434059-evaluation-rules": {
     "kind": "date",
     "values": [
-      "2026-08-12T18:37:10Z"
+      "2026-10-19T16:58:03Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Launch : consistency 50 %, à confirmer face au sélecteur."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/12434092-resets": {
     "kind": "date",
     "values": [
-      "2026-10-15T15:02:38Z"
+      "2026-10-23T15:23:10Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Propel : reset 79 à 199 $ selon la taille."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/12434458-blulive-buffer-stage": {
@@ -214,10 +266,16 @@
   "https://help.blusky.pro/en/articles/16300862-propel-plans-phases-rules-and-costs": {
     "kind": "date",
     "values": [
-      "2026-09-11T12:24:37Z"
+      "2026-10-19T20:41:11Z"
     ],
     "firms": [
       "blusky"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Propel 25K : 2 minis, à confirmer face au sélecteur."
+      }
     ]
   },
   "https://help.blusky.pro/en/articles/16300866-orbit-plans-two-phases-faster-payouts": {
@@ -877,6 +935,66 @@
       "toponefutures"
     ]
   },
+  "https://help.toponefutures.com/en/articles/17678693-x-daily-spark-accounts-overview": {
+    "kind": "date",
+    "values": [
+      "2026-10-21T16:33:18Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "X-Daily Spark 50K ajouté."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17678752-x-daily-spark-maximum-drawdown-mll-eod": {
+    "kind": "date",
+    "values": [
+      "2026-10-27T14:55:39Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "X-Daily Spark : drawdown et gel."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17678769-x-daily-spark-contract-limits-scaling": {
+    "kind": "date",
+    "values": [
+      "2026-10-21T16:33:29Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "X-Daily Spark : paliers de scaling."
+      }
+    ]
+  },
+  "https://help.toponefutures.com/en/articles/17678771-x-daily-spark-other-trading-rules": {
+    "kind": "date",
+    "values": [
+      "2026-10-21T16:33:31Z"
+    ],
+    "firms": [
+      "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "X-Daily Spark : horaires et news."
+      }
+    ]
+  },
   "https://help.topstep.com/en/articles/10305426-prohibited-trading-strategies-at-topstep": {
     "kind": "date",
     "values": [
@@ -1312,19 +1430,31 @@
   "https://intercom.help/funded-futures-family/en/articles/16949878-accelerate-plan-funded-account": {
     "kind": "date",
     "values": [
-      "2026-09-14T21:28:41Z"
+      "2026-10-30T22:51:27Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Accelerate 50K : règles par date d'achat."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16950249-accelerate-plan-payout-requirements": {
     "kind": "date",
     "values": [
-      "2026-09-24T16:36:34Z"
+      "2026-10-30T22:50:58Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Accelerate 50K : objectifs et plafonds par date d'achat."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16964667-premier-consistency": {
@@ -1339,10 +1469,16 @@
   "https://intercom.help/funded-futures-family/en/articles/16964735-s2f-accelerate-plan-consistency-percentage": {
     "kind": "date",
     "values": [
-      "2026-09-17T15:26:40Z"
+      "2026-10-22T16:42:35Z"
     ],
     "firms": [
       "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Accelerate : consistency 20 / 25 / 30 % depuis le 2026-10-22."
+      }
     ]
   },
   "https://intercom.help/funded-futures-family/en/articles/16964753-s2f-accelerate-plan-drawdown": {
@@ -1352,6 +1488,49 @@
     ],
     "firms": [
       "fundedfuturesfamily"
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/17332937-payday-50k": {
+    "kind": "date",
+    "values": [
+      "2026-10-05T03:02:03Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Payday 50K ajouté."
+      }
+    ]
+  },
+  "https://intercom.help/funded-futures-family/en/articles/17333029-25k-accelerate-plan": {
+    "kind": "date",
+    "values": [
+      "2026-10-22T16:35:59Z"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Accelerate 25K ajouté."
+      }
+    ]
+  },
+  "https://lucidtrading.com/": {
+    "kind": "hash",
+    "values": [],
+    "firms": [
+      "lucid"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "150K Pro avec DLL : 365 $."
+      }
     ]
   },
   "https://myfundedfutures.com/plans/builder": {
@@ -2153,6 +2332,21 @@
       "fundedfuturesfamily"
     ]
   },
+  "https://www.fundedfuturesfamily.com/fff-plan-update-october-2026/": {
+    "kind": "date",
+    "values": [
+      "2026-10-27T17:48:03+00:00"
+    ],
+    "firms": [
+      "fundedfuturesfamily"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "Accelerate sur invitation ; Accelerate 25K et Payday 50K ajoutés."
+      }
+    ]
+  },
   "https://www.oneuptrader.com/": {
     "kind": "date",
     "values": [
@@ -2175,11 +2369,18 @@
   "https://www.toponefutures.com/launchpad": {
     "kind": "hash",
     "values": [
+      "12116144e8f44504",
       "74a71cddbe063afb",
       "ca3f06ba738f932f"
     ],
     "firms": [
       "toponefutures"
+    ],
+    "lectures": [
+      {
+        "date": "2026-11-02",
+        "modification": "X-Ultra plus vendu ; X-Daily Spark 50K ajouté."
+      }
     ]
   },
   "https://www.tradeday.com/#pricing": {
