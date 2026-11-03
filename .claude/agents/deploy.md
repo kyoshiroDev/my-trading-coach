@@ -424,6 +424,28 @@ le dump s'affiche sous le mauvais environnement dans l'admin :
 `backup.sh` (VPS) · `backup.service.ts` (`DB_BY_TARGET`, `LABEL_BY_TARGET`,
 `targetFromFilename`) · `TARGET_CONFIG` du front admin.
 
+### ⚠️ Jamais de dump de prod restauré tel quel en beta ou dev
+
+La beta tourne avec un process de crons (campagnes, J+3, J+11, J+15, onboarding) et la clé
+Resend réelle. **Aucun filtre d'adresses** côté code (#862 non retenu le 2026-11-04) : seule la
+séparation des bases protège les vrais utilisateurs. Une copie de la base de prod restaurée en
+beta (ou en dev) ferait écrire la beta à toute la base réelle.
+
+Règle : avant tout démarrage d'une API sur une base issue d'un dump de prod, **remplacer
+toutes les adresses e-mail** par des adresses de test Resend, dans la même session psql que la
+restauration :
+
+```sql
+UPDATE "User"           SET email = 'delivered+u-' || id || '@resend.dev';
+UPDATE "DeletedAccount" SET email = 'delivered+d-' || id || '@resend.dev' WHERE email IS NOT NULL;
+```
+
+- Nouvelle colonne e-mail dans le schéma → l'ajouter ici.
+- Ne jamais restaurer un dump de prod sur la base d'un environnement dont l'API tourne :
+  arrêter d'abord l'API et son process de crons.
+- Si un jour la beta est ouverte à d'autres personnes, ou si une copie de prod y devient
+  nécessaire, rouvrir #862 (liste blanche d'envoi).
+
 ### Monitoring — ⚠️ inexistant
 
 `/opt/apps/monitor-containers.sh` a disparu du VPS et n'est plus dans le cron
