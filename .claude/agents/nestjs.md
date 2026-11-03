@@ -1128,6 +1128,11 @@ Conséquences à connaître :
   ce qui étale un déploiement trouvant N connexions au lieu d'empiler N imports dans un passage et
   de chevaucher le suivant. Le marqueur n'est posé que par un import de profondeur pleine **et**
   si aucune fenêtre n'a échoué — sinon le trou ne serait plus jamais comblé.
+- **Équité du budget (#856)** : la requête du cron est triée par `createdAt` (ordre stable), et les
+  places vont d'abord aux connexions jamais tentées, puis aux moins récemment tentées (Redis
+  `tradovate:backfill-tried:<connexion>`, posé dès l'attribution de la place, réussite ou non, TTL
+  7 j). Deux connexions qui échouent toujours ne prennent plus les 2 places à chaque heure. Redis
+  indisponible → ordre de création seul, le rattrapage continue.
 - Un mois vide ne coûte qu'**un** appel (pas de rapport `Fills`), donc remonter loin est bon marché.
 - **Frais de l'historique (#783)** : `Fills` (fills + horodatages) + `Cash History` (tous les frais),
   joints par `cashHistoryFeesByFill` (même règle que l'import CSV, cf. `instruments.md`). Cash History
@@ -1312,8 +1317,12 @@ sont en direct.
   de Val a disparu de son login pendant la maintenance du week-end, le token marchait toujours,
   l'app lui disait « reconnecte-toi »). `handleMissingAccount` :
   - présent sur l'**autre hôte** → `externalEnv` corrigé, la synchro continue ;
-  - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` (2 h sans synchro réussie) →
-    `TRADOVATE_ACCOUNT_TEMPORARILY_MISSING` (503), rien de détaché ;
+  - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` (2 h) **comptées depuis la première absence
+    constatée** (#855, Redis `tradovate:account-missing:<connexion>`, TTL 48 h, effacé au
+    détachement ; une synchro réussie après cette date la remet à zéro) →
+    `TRADOVATE_ACCOUNT_TEMPORARILY_MISSING` (503), rien de détaché. Avant #855, le délai partait de
+    la dernière synchro réussie : après une panne de plus de 2 h, une seule absence détachait.
+    Redis indisponible → on patiente, jamais de détachement ;
   - absent durablement → connexion **détachée** (`externalAccountId/Env/Name = null`, reste
     `CONNECTED`), `availableAccounts` relu sur les 2 hôtes, `TRADOVATE_ACCOUNT_NOT_FOUND` (« choisis
     le compte à synchroniser »). Le front affiche le sélecteur : `needsAccountSelection` vaut

@@ -556,12 +556,14 @@ describe('TradovateConnectionService.getAccessToken', () => {
     });
 
     it('absent durablement → détaché, comptes du login relus, statut CONNECTED conservé', async () => {
-      const { service, api, prisma, conn } = setup({
+      const { service, api, prisma, conn, redis } = setup({
         externalAccountId: '90000024',
         externalAccountName: 'FTD',
         externalEnv: 'demo',
-        lastSyncAt: new Date(Date.now() - ACCOUNT_GONE_GRACE_MS - 60_000),
+        lastSyncAt: new Date(Date.now() - ACCOUNT_GONE_GRACE_MS - 10 * 60_000),
       });
+      // Première absence constatée il y a plus de 2 h, sans synchro réussie depuis.
+      redis.client.get.mockResolvedValue(String(Date.now() - ACCOUNT_GONE_GRACE_MS - 60_000));
       listes(api, [], [compte(90000023, 'PTLOP')]);
 
       await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
@@ -571,6 +573,85 @@ describe('TradovateConnectionService.getAccessToken', () => {
       expect(data).toMatchObject({ externalAccountId: null, externalEnv: null });
       expect(data.availableAccounts).toEqual([{ id: '90000023', name: 'PTLOP', env: 'demo', userId: '42' }]);
       expect(data.status).toBeUndefined(); // jamais « à reconnecter » : le token marche
+      // La marque d'absence est effacée avec le détachement.
+      expect(redis.client.del).toHaveBeenCalledWith('tradovate:account-missing:c1');
+    });
+
+    describe('délai de grâce compté depuis la première absence (#855)', () => {
+      const clé = 'tradovate:account-missing:c1';
+
+      it('première absence après une panne de 3 h → on patiente, la date d’absence est posée', async () => {
+        const { service, api, prisma, conn, redis } = setup({
+          externalAccountId: '90000024',
+          externalEnv: 'demo',
+          lastSyncAt: new Date(Date.now() - 3 * 60 * 60_000),
+        });
+        listes(api, [], [compte(90000023, 'PTLOP')]);
+
+        await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+          code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+        });
+        expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+        expect(redis.client.set).toHaveBeenCalledWith(clé, expect.any(String), 'EX', 48 * 60 * 60);
+      });
+
+      it('sans aucune synchro réussie (lastSyncAt vide) → on patiente au lieu de détacher tout de suite', async () => {
+        const { service, api, prisma, conn } = setup({ externalAccountId: '90000024', externalEnv: 'demo', lastSyncAt: null });
+        listes(api, [], []);
+
+        await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+          code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+        });
+        expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+      });
+
+      it('absent depuis 1 h (première absence connue) → on patiente, la date n’est pas réécrite', async () => {
+        const { service, api, prisma, conn, redis } = setup({
+          externalAccountId: '90000024',
+          externalEnv: 'demo',
+          lastSyncAt: new Date(Date.now() - 5 * 60 * 60_000),
+        });
+        redis.client.get.mockResolvedValue(String(Date.now() - 60 * 60_000));
+        listes(api, [], []);
+
+        await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+          code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+        });
+        expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+        expect(redis.client.set).not.toHaveBeenCalled();
+      });
+
+      it('compte revenu entre deux absences (synchro réussie après la date) → l’absence repart de zéro', async () => {
+        const { service, api, prisma, conn, redis } = setup({
+          externalAccountId: '90000024',
+          externalEnv: 'demo',
+          lastSyncAt: new Date(Date.now() - 20 * 60_000),
+        });
+        // Vieille absence de 5 h, mais une synchro a réussi il y a 20 min : elle ne compte plus.
+        redis.client.get.mockResolvedValue(String(Date.now() - 5 * 60 * 60_000));
+        listes(api, [], []);
+
+        await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+          code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+        });
+        expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+        expect(redis.client.set).toHaveBeenCalledWith(clé, expect.any(String), 'EX', 48 * 60 * 60);
+      });
+
+      it('Redis indisponible → jamais de détachement, même après une longue panne', async () => {
+        const { service, api, prisma, conn, redis } = setup({
+          externalAccountId: '90000024',
+          externalEnv: 'demo',
+          lastSyncAt: new Date(Date.now() - 24 * 60 * 60_000),
+        });
+        redis.client.get.mockRejectedValue(new Error('Redis down'));
+        listes(api, [], []);
+
+        await expect(service.handleMissingAccount(conn, 'AT')).rejects.toMatchObject({
+          code: 'TRADOVATE_ACCOUNT_TEMPORARILY_MISSING',
+        });
+        expect(prisma.brokerConnection.update).not.toHaveBeenCalled();
+      });
     });
 
     it('détachée avec un seul compte restant → le choix est quand même demandé', () => {

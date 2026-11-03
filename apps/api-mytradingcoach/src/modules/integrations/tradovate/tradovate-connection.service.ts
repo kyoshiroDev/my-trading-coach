@@ -453,7 +453,8 @@ export class TradovateConnectionService {
    * Le compte choisi n'apparaît plus dans `/account/list` de son hôte. Trois issues, jamais une
    * reconnexion (le token, lui, fonctionne) :
    * - il est sur l'AUTRE hôte → on corrige `externalEnv` et la synchro continue ;
-   * - absent depuis moins de `ACCOUNT_GONE_GRACE_MS` → trou passager, on réessaiera ;
+   * - absent depuis moins de `ACCOUNT_GONE_GRACE_MS`, comptés depuis la première absence constatée
+   *   (#855), ou durée inconnue faute de Redis → trou passager, on réessaiera ;
    * - absent durablement (clôturé ou remplacé par la prop firm) → la connexion est détachée du
    *   compte, la liste des comptes du login est relue : l'utilisateur choisit le suivant, sans
    *   refaire le consentement.
@@ -475,8 +476,9 @@ export class TradovateConnectionService {
       });
     }
 
-    const lastOk = conn.lastSyncAt?.getTime() ?? 0;
-    if (Date.now() - lastOk < ACCOUNT_GONE_GRACE_MS) {
+    // Délai compté depuis la PREMIÈRE absence (#855). Redis indisponible → `null` : on patiente.
+    const since = await this.locks.accountMissingSince(conn);
+    if (since === null || Date.now() - since < ACCOUNT_GONE_GRACE_MS) {
       this.logger.warn(
         `Compte Tradovate ${conn.externalAccountId} absent de la liste du login (connexion ${conn.id}) : ` +
           `on patiente (${available.map((a) => `${a.id}@${a.env}`).join(', ') || 'liste vide'}).`,
@@ -498,6 +500,7 @@ export class TradovateConnectionService {
         availableAccounts: available as unknown as Prisma.InputJsonValue,
       },
     });
+    await this.locks.clearAccountMissing(conn);
     throw new TradovateException('TRADOVATE_ACCOUNT_NOT_FOUND');
   }
 

@@ -27,6 +27,14 @@ export const BACKGROUND_STALE_MS = 12 * 60 * 1000;
  * chevaucher avec le passage suivant, 15 min plus tard.
  */
 export const FULL_BACKFILLS_PER_PASS = 2;
+/**
+ * Dernière tentative de passé complet d'une connexion (#856), en ms. Les places vont d'abord aux
+ * connexions jamais tentées, puis aux moins récemment tentées : deux connexions qui échouent
+ * toujours ne prennent plus les deux places à chaque heure. Une semaine suffit : au-delà, une
+ * connexion encore sans historique repasse simplement en tête.
+ */
+export const BACKFILL_TRIED_KEY = (connectionId: string) => `tradovate:backfill-tried:${connectionId}`;
+export const BACKFILL_TRIED_TTL_S = 7 * 24 * 60 * 60;
 
 /**
  * Passage en cours (SCA-B5-03) : un passage qui dure plus de 15 min ne se fait plus doubler par le
@@ -138,16 +146,13 @@ export class TradovateBackgroundRefreshCron {
           : { OR: [{ lastSyncAt: null }, { lastSyncAt: { lt: new Date(now.getTime() - BACKGROUND_STALE_MS) } }] }),
       },
       select: { id: true, userId: true, accountId: true, historyImportedAt: true },
+      // Ordre stable : sans lui, la base choisit, et le budget de passés complets suivait cet ordre.
+      orderBy: { createdAt: 'asc' },
     });
 
-    // Budget de passés complets décidé AVANT le parallélisme, dans l'ordre des connexions : même
-    // choix qu'en séquentiel.
-    let budget = FULL_BACKFILLS_PER_PASS;
-    const plan = due.map((c) => {
-      const passeComplet = avecHistorique && !c.historyImportedAt && budget > 0;
-      if (passeComplet) budget--;
-      return { c, passeComplet };
-    });
+    // Budget de passés complets décidé AVANT le parallélisme : même choix qu'en séquentiel.
+    const elus = avecHistorique ? await this.choisirPassesComplets(due.filter((c) => !c.historyImportedAt), now) : new Set<string>();
+    const plan = due.map((c) => ({ c, passeComplet: elus.has(c.id) }));
     const byUser = new Map<string, typeof plan>();
     for (const p of plan) byUser.set(p.c.userId, [...(byUser.get(p.c.userId) ?? []), p]);
 
@@ -168,6 +173,35 @@ export class TradovateBackgroundRefreshCron {
       );
     }
     return result;
+  }
+
+  /**
+   * Les `FULL_BACKFILLS_PER_PASS` connexions sans historique qui reçoivent un passé complet à ce
+   * passage (#856) : jamais tentées d'abord, puis les moins récemment tentées ; à égalité, l'ordre
+   * de création (tri stable). La tentative est notée dès l'attribution de la place, qu'elle
+   * réussisse ou non.
+   *
+   * Redis indisponible → ordre de création seul, comme avant : le rattrapage continue.
+   */
+  private async choisirPassesComplets(candidats: { id: string }[], now: Date): Promise<Set<string>> {
+    if (candidats.length === 0) return new Set();
+    let ordre = candidats;
+    if (candidats.length > FULL_BACKFILLS_PER_PASS) {
+      try {
+        const tentes = await this.redis.client.mget(...candidats.map((c) => BACKFILL_TRIED_KEY(c.id)));
+        const derniere = new Map(candidats.map((c, i) => [c.id, Number(tentes[i]) || 0]));
+        ordre = [...candidats].sort((a, b) => (derniere.get(a.id) ?? 0) - (derniere.get(b.id) ?? 0));
+      } catch (err) {
+        this.logger.warn(`Ordre des passés complets non lu (${(err as Error).message}) : ordre de création.`);
+      }
+    }
+    const elus = ordre.slice(0, FULL_BACKFILLS_PER_PASS);
+    await Promise.all(
+      elus.map((c) =>
+        this.redis.client.set(BACKFILL_TRIED_KEY(c.id), String(now.getTime()), 'EX', BACKFILL_TRIED_TTL_S).catch(() => undefined),
+      ),
+    );
+    return new Set(elus.map((c) => c.id));
   }
 
   /** Une connexion : séance, mois et/ou passé complet selon le passage (corps de l'ancienne boucle). */
