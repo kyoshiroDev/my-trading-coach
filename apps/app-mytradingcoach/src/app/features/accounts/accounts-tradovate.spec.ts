@@ -188,6 +188,56 @@ describe('Mes comptes — connexion Tradovate par compte', () => {
     expect(q('tradovate-last-sync-a')).not.toBeNull();
   });
 
+  describe('dernière synchro en échec sur une connexion active (#857)', () => {
+    const erreur = 'Tradovate limite temporairement cette connexion. La synchro reprendra à la fin de la pause, rien à faire de ton côté.';
+
+    it('pastille « Synchro en erreur », message de l’API en sous-ligne, dernière synchro et actions gardées', () => {
+      const { q } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { lastSyncError: erreur })] });
+      const pill = q('tradovate-status-a')!;
+      expect(pill.textContent!.trim()).toBe('● Synchro en erreur');
+      expect(pill.classList).toContain('warn');
+      expect(q('tradovate-sync-error-a')!.textContent!.trim()).toBe(erreur);
+      expect(q('tradovate-last-sync-a')!.textContent).toContain('Dernière synchro : il y a 2 h');
+      expect(q('tradovate-sync-a')).not.toBeNull();
+      expect(q('tradovate-disconnect-a')).not.toBeNull();
+    });
+
+    it('sans erreur : « Connecté », aucune sous-ligne d’erreur', () => {
+      const { q } = setup({ accounts: [acct('a', 'A')], connections: [conn('a')] });
+      expect(q('tradovate-status-a')!.textContent!.trim()).toBe('● Connecté');
+      expect(q('tradovate-sync-error-a')).toBeNull();
+    });
+
+    it('en pause avec une erreur : « En pause » reste prioritaire, pas de doublon', () => {
+      const { q } = setup({
+        accounts: [acct('a', 'A', { status: 'FAILED' })],
+        connections: [conn('a', { syncPaused: true, syncPausedReason: 'FAILED', lastSyncError: erreur })],
+      });
+      expect(q('tradovate-status-a')!.textContent!.trim()).toBe('En pause');
+      expect(q('tradovate-paused-a')).not.toBeNull();
+      expect(q('tradovate-sync-error-a')).toBeNull();
+    });
+
+    it('choix du compte en cours (compte disparu) : affichage inchangé, la raison reste au-dessus du sélecteur', () => {
+      const { q } = setup({
+        accounts: [acct('a', 'A')],
+        connections: [conn('a', { externalAccountId: null, needsAccountSelection: true, lastSyncError: 'Compte introuvable.' })],
+      });
+      expect(q('tradovate-status-a')!.textContent!.trim()).toBe('● Connecté');
+      expect(q('tradovate-reselect-reason-a')!.textContent!.trim()).toBe('Compte introuvable.');
+      expect(q('tradovate-sync-error-a')).toBeNull();
+    });
+
+    it('à reconnecter : affichage inchangé (« À reconnecter » et son message)', () => {
+      const { q } = setup({
+        accounts: [acct('a', 'A')],
+        connections: [conn('a', { status: 'NEEDS_RECONNECT', lastSyncError: 'Connexion expirée ou révoquée : reconnecte ton compte Tradovate.' })],
+      });
+      expect(q('tradovate-status-a')!.textContent!.trim()).toBe('À reconnecter');
+      expect(q('tradovate-sync-error-a')).toBeNull();
+    });
+  });
+
   it('déconnexion d’un compte sans trade importé : simple « Oui », pas de choix de suppression', () => {
     const { q, click } = setup({ accounts: [acct('a', 'A')], connections: [conn('a', { brokerTradesCount: 0 })] });
     click('tradovate-disconnect-a');

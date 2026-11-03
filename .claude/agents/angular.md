@@ -776,6 +776,13 @@ Réutilisable pour tout broker synchronisé par API (cf. `nestjs.md` pour le bac
     chemin, et un rechargement ne rejoue pas le message.
 - **Après une synchro qui crée des trades** : `SelectedAccountStore.load()` +
   `TradesStore.reset()`, sinon dashboard et métriques restent sur l'ancien cache.
+- **Pastille d'état « Mes comptes », par priorité** : `À reconnecter` (`NEEDS_RECONNECT`, message
+  en sous-ligne) · `En pause` (`syncPaused`, texte de pause) · `● Synchro en erreur` (#857 :
+  `syncFailed(conn)` = `CONNECTED` + `lastSyncError`, hors choix du compte et hors pause ; pastille
+  `warn` jaune, message de l'API tel quel en sous-ligne `tradovate-sync-error-<id>`, dernière
+  synchro et actions gardées) · `● Connecté`. Pendant le choix du compte, la pastille reste
+  « Connecté » et l'erreur s'affiche au-dessus du sélecteur. L'erreur disparaît d'elle-même :
+  l'API vide `lastSyncError` à la synchro réussie suivante.
 - **Déconnexion** : confirmation en ligne (pas de `confirm()` natif), `404` = déjà
   déconnecté = succès. Le bouton reste rendu **pendant le choix du compte**
   (`needsAccountSelection`) : c'est la seule sortie après un mauvais login Tradovate.

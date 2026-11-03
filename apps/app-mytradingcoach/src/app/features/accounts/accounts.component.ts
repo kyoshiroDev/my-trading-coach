@@ -46,7 +46,7 @@ import { TradovateStore } from '../../core/stores/tradovate.store';
 import { TradesStore } from '../../core/stores/trades.store';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
-import { TradovateApi, type TradovateSyncResult } from '../../core/api/tradovate.api';
+import { TradovateApi, type TradovateConnection, type TradovateSyncResult } from '../../core/api/tradovate.api';
 import { catchError, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
@@ -344,6 +344,15 @@ export class AccountsComponent implements OnInit {
         this.balanceBusy.update((s) => new Set([...s].filter((id) => !ids.includes(id))));
         this.store.load();
       });
+  }
+
+  /**
+   * Connexion active dont la dernière synchro a échoué (#857) : pastille « Synchro en erreur » et
+   * texte de l'erreur, au lieu de « Connecté ». La pause, le choix du compte et la reconnexion ont
+   * déjà leur propre affichage. L'erreur disparaît à la synchro réussie suivante (API).
+   */
+  protected syncFailed(conn: TradovateConnection): boolean {
+    return conn.status === 'CONNECTED' && !!conn.lastSyncError && !conn.needsAccountSelection && !conn.syncPaused;
   }
 
   /** Relevé broker affiché : « il y a 2 min », sur la date la plus récente (equity ou solde). */
