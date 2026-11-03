@@ -54,8 +54,17 @@ const byIds = <T extends { id: number }>(url: URL, items: T[]) => {
   return items.filter((i) => ids.has(i.id));
 };
 
+/** Hôtes Tradovate appelés pendant le test (preuve que le simulateur les a bien interceptés). */
+const hotesSimules = new Set<string>();
+/** Appels sortants hors simulateur et hors API locale : refusés, et le test final exige zéro (#859). */
+const sortiesRefusees: string[] = [];
+
 function tradovate(rawUrl: string, init?: RequestInit): Response {
   const url = new URL(rawUrl);
+  hotesSimules.add(url.hostname);
+  // Rapports (import d'historique lancé en fond à la connexion, hôte rpt-*) : comme le vrai serveur
+  // face à un jeton factice, 401 à corps vide (#859).
+  if (url.pathname === '/v1/reports/requestReport') return new Response('', { status: 401 });
   if (url.pathname === '/auth/oauthtoken') {
     const form = new URLSearchParams(init?.body ? String(init.body) : '');
     if (form.get('grant_type') === 'authorization_code' && form.get('code') === 'good-code') {
@@ -111,8 +120,12 @@ const realFetch = globalThis.fetch;
 beforeAll(async () => {
   vi.stubGlobal('fetch', (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url = input instanceof Request ? input.url : String(input);
-    if (/^https:\/\/(live|demo)\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
-    return realFetch(input, init);
+    // Tous les hôtes Tradovate, reporting compris (#859) : aucun appel réel depuis ce test.
+    if (/^https:\/\/[a-z0-9-]+\.tradovateapi\.com\//.test(url)) return Promise.resolve(tradovate(url, init));
+    // Seule l'API locale du test passe ; tout autre appel sortant est refusé et relevé.
+    if (/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?\//.test(url)) return realFetch(input, init);
+    sortiesRefusees.push(new URL(url).host);
+    return Promise.reject(new Error(`Appel réseau non simulé refusé par le test : ${new URL(url).host}`));
   });
   ({ app, baseUrl } = await createIntegrationApp({
     configure: (b) =>
@@ -299,5 +312,11 @@ describe('Tradovate live — app ouverte, puis fermée', () => {
     const client = openApp('pas-un-jwt');
     await next(client, 'disconnect');
     expect(wsSockets.length).toBe(before);
+  });
+
+  it('aucun appel réseau réel : les rapports passent par le simulateur, rien d’autre ne sort (#859)', async () => {
+    // L'import d'historique part en fond à la connexion : on lui laisse le temps d'appeler rpt-*.
+    await until(() => [...hotesSimules].some((h) => h.startsWith('rpt-')));
+    expect(sortiesRefusees).toEqual([]);
   });
 });
