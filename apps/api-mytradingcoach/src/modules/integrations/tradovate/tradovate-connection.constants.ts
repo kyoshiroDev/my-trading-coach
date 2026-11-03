@@ -41,11 +41,18 @@ export const LOCK_TTL_S = 120;
  */
 export const LOGIN_LOCK_TTL_S = 30;
 /**
- * Un compte absent de `/account/list` n'est déclaré disparu qu'après ce délai sans synchro réussie
- * (bug prod du 2026-09-26 : un compte de Val a disparu du login pendant la maintenance Tradovate du
- * week-end). Le cron passe toutes les 15 min : un trou passager de la liste ne détache rien.
+ * Un compte absent de `/account/list` n'est déclaré disparu qu'après ce délai, compté depuis sa
+ * PREMIÈRE absence constatée (#855) et non depuis la dernière synchro réussie : après une panne de
+ * plus de 2 h, une seule absence passagère détachait le compte. Bug prod du 2026-09-26 : un compte
+ * de Val a disparu du login pendant la maintenance Tradovate du week-end. Le cron passe toutes les
+ * 15 min : un trou passager de la liste ne détache rien.
  */
 export const ACCOUNT_GONE_GRACE_MS = 2 * 60 * 60 * 1000;
+/**
+ * Durée de vie de la date de première absence en Redis : bien plus longue que le délai de grâce
+ * (le cron détache au bout de 2 h), elle ne fait que nettoyer les marques orphelines.
+ */
+export const ACCOUNT_MISSING_TTL_S = 48 * 60 * 60;
 /**
  * Après un refus « passager » (refresh_token encore promis), on ne rappelle PAS Tradovate avant ce
  * délai, quel que soit l'appelant. Sans ça, le WebSocket (backoff plafonné à 60 s) redemandait un

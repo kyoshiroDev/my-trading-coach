@@ -35,6 +35,7 @@ function setup(conns: Conn[], liveUsers: string[] = []) {
         return 'OK';
       }),
       eval: vi.fn(async (_lua: string, _n: number, k: string, v: string) => (store.get(k) === v ? (store.delete(k), 1) : 0)),
+      mget: vi.fn(async (...keys: string[]) => keys.map((k) => store.get(k) ?? null)),
     },
   };
   const alerts = { checkFromBackground: vi.fn(async () => undefined) };
@@ -207,6 +208,65 @@ describe('Tradovate — rafraîchissement de fond (15 min)', () => {
         (c: unknown[]) => Object.keys(c[2] as object).length === 0,
       );
       expect(pleines).toHaveLength(FULL_BACKFILLS_PER_PASS);
+    });
+
+    describe('équité du budget (#856)', () => {
+      const pleins = (history: { importForAccount: ReturnType<typeof vi.fn> }) =>
+        history.importForAccount.mock.calls
+          .filter((c: unknown[]) => Object.keys(c[2] as object).length === 0)
+          .map((c: unknown[]) => c[1]);
+
+      it('ordre stable demandé à la base : par date de création', async () => {
+        const { cron, prisma } = setup([]);
+        await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+        const args = (prisma.brokerConnection.findMany.mock.calls[0] as unknown as [{ orderBy: unknown }])[0];
+        expect(args.orderBy).toEqual({ createdAt: 'asc' });
+      });
+
+      it('2 connexions toujours en échec en tête de liste → une 3e passe à l’heure suivante, pas jamais', async () => {
+        const { cron, history, sync } = setup([jamais('ko1', 'u1'), jamais('ko2', 'u2'), jamais('ok', 'u3')]);
+        sync.sync.mockImplementation(async (userId: string) => {
+          if (userId !== 'u3') throw new Error('Tradovate refuse');
+          return { created: 0, duplicates: 0, failed: 0, total: 0 };
+        });
+
+        await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+        expect(pleins(history)).toEqual([]); // ko1 et ko2 ont eu les places, et ont échoué
+        history.importForAccount.mockClear();
+
+        await cron.refreshStale(new Date('2026-09-26T11:07:00Z'));
+        // Heure suivante : « ok », jamais tentée, passe devant les deux qui viennent d'échouer.
+        expect(pleins(history)).toEqual(['a-ok']);
+      });
+
+      it('les places tournent : chacune passe à son tour, la moins récemment tentée d’abord', async () => {
+        const conns = ['c1', 'c2', 'c3', 'c4', 'c5'].map((id, i) => jamais(id, `u${i}`));
+        const { cron, history } = setup(conns);
+        const parHeure: unknown[][] = [];
+        for (const h of [10, 11, 12]) {
+          history.importForAccount.mockClear();
+          await cron.refreshStale(new Date(`2026-09-26T${h}:07:00Z`));
+          parHeure.push(pleins(history).sort());
+        }
+        // Le double ne pose jamais historyImportedAt : chaque connexion reste candidate.
+        expect(parHeure).toEqual([
+          ['a-c1', 'a-c2'],
+          ['a-c3', 'a-c4'],
+          ['a-c1', 'a-c5'], // c5 jamais tentée, puis c1 (même heure que c2, créée avant)
+        ]);
+      });
+
+      it('Redis indisponible → ordre de création, le rattrapage continue', async () => {
+        const conns = ['c1', 'c2', 'c3'].map((id, i) => jamais(id, `u${i}`));
+        const { cron, history, redis } = setup(conns);
+        redis.client.mget.mockRejectedValue(new Error('down'));
+        redis.client.set.mockRejectedValue(new Error('down'));
+
+        const r = await cron.refreshStale(new Date('2026-09-26T10:07:00Z'));
+
+        expect(r.backfilled).toBe(FULL_BACKFILLS_PER_PASS);
+        expect(pleins(history)).toEqual(['a-c1', 'a-c2']);
+      });
     });
 
     it('connexion dont le passé est déjà remonté → jamais deux fois', async () => {

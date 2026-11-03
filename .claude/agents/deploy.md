@@ -509,6 +509,13 @@ ONBOARDING_SEQUENCE_START=2026-11-0XT00:00:00+01:00  # suite d'onboarding : seul
 # cette date reçoivent les nouveaux e-mails. Absente → la suite ne part pas (warn du cron). À poser
 # en prod au déploiement de la suite, à la date de mise en prod (cf. nestjs.md).
 FRONTEND_URL=https://app.mytradingcoach.app
+# Adresse publique de CETTE API, origine seule SANS /api (le code ajoute /api/emails/unsubscribe) :
+# lien de désinscription des e-mails de campagne (#861). Prod : https://api.mytradingcoach.app ;
+# beta : https://beta.api.mytradingcoach.app (.env.beta) ; dev : https://dev.api.mytradingcoach.app
+# (.env.dev). Absente : repli sur l'API de prod seulement si FRONTEND_URL est l'app de prod ;
+# ailleurs, chaque e-mail de campagne est refusé et journalisé (jamais de lien vers la prod).
+# Avertissement au démarrage si absente (config/env.ts).
+API_URL=https://api.mytradingcoach.app
 CORS_ORIGINS=https://app.mytradingcoach.app,https://mytradingcoach.app
 PORT=3000
 ```

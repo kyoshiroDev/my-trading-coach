@@ -258,6 +258,8 @@
               } @else {
                 @if (conn.syncPaused) {
                   <span class="tv-pill off" [attr.data-testid]="'tradovate-status-' + a.id">En pause</span>
+                } @else if (syncFailed(conn)) {
+                  <span class="tv-pill warn" [attr.data-testid]="'tradovate-status-' + a.id">● Synchro en erreur</span>
                 } @else {
                   <span class="tv-pill on" [attr.data-testid]="'tradovate-status-' + a.id">● Connecté</span>
                 }
@@ -377,6 +379,11 @@
               <!-- Compte perdu depuis plus de 48 h (#684) : plus de synchro de fond, connexion gardée. -->
               <div class="acct-sub" [attr.data-testid]="'tradovate-paused-' + a.id">
                 <span class="tv-text">Synchro en pause&nbsp;: ce compte est marqué {{ conn.syncPausedReason === 'ARCHIVED' ? 'archivé' : 'échoué' }}. Tes trades déjà importés restent dans ton journal. Elle reprend si tu remets ce compte en actif.</span>
+              </div>
+            } @else if (syncFailed(conn)) {
+              <!-- Connexion active, dernière synchro en échec (#857) : le message de l'API, tel quel. -->
+              <div class="acct-sub" [attr.data-testid]="'tradovate-sync-error-' + a.id">
+                <span class="tv-text">{{ conn.lastSyncError }}</span>
               </div>
             }
           }
