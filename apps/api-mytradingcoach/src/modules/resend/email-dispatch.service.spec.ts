@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { EmailDispatchService } from './email-dispatch.service';
@@ -41,7 +41,7 @@ const mockPrisma = {
 const mockResend = { send: vi.fn().mockResolvedValue(undefined) };
 
 const mockConfig = {
-  get: vi.fn((k: string) => {
+  get: vi.fn((k: string): string | number | undefined => {
     if (k === 'MARKETING_COOLDOWN_DAYS') return 4;
     if (k === 'FRONTEND_URL') return 'https://app.test';
     if (k === 'API_URL') return 'https://api.test';
@@ -307,6 +307,43 @@ describe('EmailDispatchService', () => {
     it('annonce (override en fonction) : en-têtes présents aussi', async () => {
       await service.dispatch(baseCampaign({ key: 'announcement', kind: 'marketing' }), user(), () => ({ subject: 'A', html: 'h' }));
       expect(sentHeaders()?.['List-Unsubscribe']).toBe('<https://api.test/api/emails/unsubscribe?token=tok>');
+    });
+  });
+
+  describe('API_URL absente : jamais de lien de désinscription vers la prod hors prod (#861)', () => {
+    const defaultGet = mockConfig.get.getMockImplementation()!;
+    const env = (vars: Record<string, string | undefined>) =>
+      mockConfig.get.mockImplementation((k: string) => (k === 'MARKETING_COOLDOWN_DAYS' ? 4 : vars[k]));
+    const user = () => ({ id: 'u4', email: 'd@test.com', name: 'Dee', marketingConsent: true, unsubToken: 'tok' });
+    afterEach(() => mockConfig.get.mockImplementation(defaultGet));
+
+    it('API_URL définie : elle est utilisée, barre finale retirée', () => {
+      env({ API_URL: 'https://beta.api.mytradingcoach.app/', FRONTEND_URL: 'https://beta.app.mytradingcoach.app' });
+      expect(service.buildUnsubUrl('tok')).toBe('https://beta.api.mytradingcoach.app/api/emails/unsubscribe?token=tok');
+    });
+
+    it('prod (FRONTEND_URL de prod) sans API_URL : repli sur l’API de prod, comme avant', () => {
+      env({ FRONTEND_URL: 'https://app.mytradingcoach.app' });
+      expect(service.buildUnsubUrl('tok', 'service')).toBe(
+        'https://api.mytradingcoach.app/api/emails/unsubscribe?token=tok&scope=service',
+      );
+    });
+
+    it('FRONTEND_URL absente aussi : traitée comme la prod (même règle que le lien vers l’app)', () => {
+      env({});
+      expect(service.buildUnsubUrl('tok')).toBe('https://api.mytradingcoach.app/api/emails/unsubscribe?token=tok');
+    });
+
+    it('beta sans API_URL : erreur claire, aucun lien vers la prod', () => {
+      env({ FRONTEND_URL: 'https://beta.app.mytradingcoach.app' });
+      expect(() => service.buildUnsubUrl('tok')).toThrow(/API_URL manquante hors prod/);
+    });
+
+    it('beta sans API_URL : l’e-mail de campagne n’est pas envoyé et rien n’est enregistré dans EmailSend', async () => {
+      env({ FRONTEND_URL: 'https://beta.app.mytradingcoach.app' });
+      await expect(service.dispatch(baseCampaign({ kind: 'marketing' }), user())).rejects.toThrow(/API_URL manquante/);
+      expect(mockResend.send).not.toHaveBeenCalled();
+      expect(mockPrisma.emailSend.create).not.toHaveBeenCalled();
     });
   });
 });

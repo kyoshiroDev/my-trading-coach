@@ -45,6 +45,9 @@ export const ENV_VARS: EnvVar[] = [
   // Sans CORS_ORIGINS, seul http://localhost:4200 est autorisé : l'app de prod est bloquée.
   { name: 'CORS_ORIGINS', level: 'production' },
   { name: 'FRONTEND_URL', level: 'production' },
+  // Adresse publique de CETTE API, origine seule sans /api (lien de désinscription des e-mails, #861).
+  // Absente : repli sur l'API de prod en prod, e-mails de campagne refusés ailleurs (beta, dev).
+  { name: 'API_URL', level: 'production' },
   // Sans SENTRY_DSN, aucune erreur de prod n'est suivie : une panne ne se voit que si un user écrit.
   { name: 'SENTRY_DSN', level: 'production' },
   { name: 'PORT', level: 'optional', check: isPort },
