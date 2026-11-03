@@ -143,6 +143,18 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 > (`releaseExtAccount`). Sans ça, tout test après le premier reçoit `account_already_linked`
 > (14 échecs, CI rouge du 27 au 29/09).
 
+> ⚠️ **Aucun appel réel vers Tradovate depuis un test (#859).** Le faux `fetch` des int-spec
+> Tradovate doit intercepter **tous** les hôtes `*.tradovateapi.com`, pas seulement `live.` et
+> `demo.` : la connexion d'un compte lance l'import d'historique en fond vers `rpt-*`, qui sortait
+> sur le vrai réseau avec un jeton factice. Rapports simulés comme le vrai serveur face à un jeton
+> factice (401 à corps vide). `tradovate-live.int-spec.ts` refuse en plus tout appel sortant autre
+> que l'API locale du test, et son dernier test exige zéro appel refusé.
+>
+> ⚠️ **Redis local protégé par mot de passe.** Sans `REDIS_PASSWORD`, chaque appel Redis échoue
+> en silence (les verrous et pauses retombent sur « pas de Redis ») : `tradovate-sync.int-spec`
+> échoue alors 10 fois sur 10 sur la pause de pénalité. Passer la variable du `.env` local, sans
+> l'afficher.
+
 > ⚠️ **Schéma local souvent périmé.** Le volume `postgres_local_data` survit aux
 > `docker compose down` : une base démarrée après une pause a des migrations de retard,
 > et les `int-spec` échouent sur une colonne inexistante (`The column X does not exist`)
