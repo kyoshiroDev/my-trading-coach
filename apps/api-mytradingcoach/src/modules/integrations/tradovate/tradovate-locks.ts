@@ -3,7 +3,13 @@ import type { Logger } from '@nestjs/common';
 import type { BrokerConnection } from '@prisma/client';
 import type { RedisService } from '../../infra/redis.service';
 import type { TradovatePenalty } from './tradovate-penalty';
-import { LOCK_TTL_S, LOGIN_LOCK_TTL_S, REFRESH_DEAD_RETRY_S, REFUSAL_COOLDOWN_S } from './tradovate-connection.constants';
+import {
+  ACCOUNT_MISSING_TTL_S,
+  LOCK_TTL_S,
+  LOGIN_LOCK_TTL_S,
+  REFRESH_DEAD_RETRY_S,
+  REFUSAL_COOLDOWN_S,
+} from './tradovate-connection.constants';
 
 /**
  * Verrous Redis et pause après refus des connexions Tradovate. Redis indisponible → on laisse
@@ -98,6 +104,39 @@ export class TradovateLocks {
       await this.redis.client.set(this.deadRefreshKey(conn), fingerprint, 'EX', REFRESH_DEAD_RETRY_S);
     } catch {
       // sans Redis, le refresh sera représenté à chaque passage, comme avant
+    }
+  }
+
+  private accountMissingKey(conn: BrokerConnection): string {
+    return `tradovate:account-missing:${conn.id}`;
+  }
+
+  /**
+   * Début de l'absence du compte choisi dans `/account/list` (#855), en ms : la première absence
+   * constatée. Si une synchro a réussi depuis (`lastSyncAt` plus récent), le compte était revenu
+   * entre-temps et l'absence repart de maintenant. Aucun appel Redis tant que le compte est listé.
+   *
+   * Redis indisponible → `null` : l'appelant patiente, il ne détache jamais sans preuve de durée.
+   */
+  async accountMissingSince(conn: BrokerConnection, now = Date.now()): Promise<number | null> {
+    const key = this.accountMissingKey(conn);
+    try {
+      const stored = Number(await this.redis.client.get(key));
+      const lastOk = conn.lastSyncAt?.getTime() ?? 0;
+      if (stored > 0 && lastOk <= stored) return stored;
+      await this.redis.client.set(key, String(now), 'EX', ACCOUNT_MISSING_TTL_S);
+      return now;
+    } catch (err) {
+      this.logger.warn(`Absence du compte Tradovate non mesurable (${(err as Error).message}) : on patiente.`);
+      return null;
+    }
+  }
+
+  async clearAccountMissing(conn: BrokerConnection): Promise<void> {
+    try {
+      await this.redis.client.del(this.accountMissingKey(conn));
+    } catch {
+      // expirera seul (TTL)
     }
   }
 
