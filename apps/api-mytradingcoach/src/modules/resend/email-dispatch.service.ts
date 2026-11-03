@@ -13,6 +13,13 @@ const DAY_MS = 24 * 3600e3;
  * 4 jours pile et glisse d'un jour. Une heure ne change pas le plafond en jours.
  */
 export const CAP_TOLERANCE_MS = 3600e3;
+/**
+ * Repli de `API_URL` (#861) : réservé à l'API de prod, reconnue à son `FRONTEND_URL` (absent =
+ * prod, comme le lien vers l'app plus bas). Hors prod, un lien de désinscription vers la prod
+ * porterait un jeton que la prod ne connaît pas : on refuse l'envoi plutôt que de l'écrire.
+ */
+const PROD_API_URL = 'https://api.mytradingcoach.app';
+const PROD_FRONTEND_URL = 'https://app.mytradingcoach.app';
 /** Types comptés dans le plafond de fréquence : marketing et e-mails de service (même plafond). */
 const CAPPED_KINDS = ['marketing', 'service'];
 
@@ -174,11 +181,22 @@ export class EmailDispatchService {
   /**
    * URL publique de désinscription (token unique du user). Préfixe global 'api'. Sans portée : tous
    * les e-mails non transactionnels ; `service` : seulement les e-mails d'aide à la prise en main.
+   *
+   * `API_URL` absente : repli sur l'API de prod seulement si l'app est celle de prod. Ailleurs
+   * (beta, dev), erreur : l'appelant saute l'e-mail et la journalise (#861).
    */
   buildUnsubUrl(token: string, scope?: 'service'): string {
-    const apiUrl = this.config.get<string>('API_URL') ?? 'https://api.mytradingcoach.app';
+    const apiUrl = this.config.get<string>('API_URL') ?? this.prodApiUrlOrThrow();
     const base = `${apiUrl.replace(/\/+$/, '')}/api/emails/unsubscribe?token=${token}`;
     return scope ? `${base}&scope=${scope}` : base;
+  }
+
+  private prodApiUrlOrThrow(): string {
+    const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? PROD_FRONTEND_URL;
+    if (frontendUrl === PROD_FRONTEND_URL) return PROD_API_URL;
+    throw new Error(
+      `API_URL manquante hors prod (FRONTEND_URL=${frontendUrl}) : lien de désinscription impossible, e-mail non envoyé.`,
+    );
   }
 
   /** Génère et persiste un unsubToken si le user n'en a pas encore (lazy). */

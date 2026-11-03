@@ -24,7 +24,7 @@ describe('checkEnv', () => {
 
   it('environnement complet et valide → rien à signaler', () => {
     const key = Buffer.alloc(32, 1).toString('base64');
-    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', SENTRY_DSN: 'https://k@o.ingest.sentry.io/1', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000', STRIPE_PUBLIC_KEY: 'pk_live_x' };
+    const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app', API_URL: 'https://api', SENTRY_DSN: 'https://k@o.ingest.sentry.io/1', BROKER_TOKEN_ENCRYPTION_KEY: key, AI_ENABLED: 'true', PORT: '3000', STRIPE_PUBLIC_KEY: 'pk_live_x' };
     expect(checkEnv(env, true)).toEqual({ errors: [], warnings: [] });
   });
 
@@ -36,5 +36,12 @@ describe('checkEnv', () => {
   it('production sans SENTRY_DSN → avertissement (aucune erreur suivie sinon)', () => {
     const env = { ...allRequired, REDIS_HOST: 'redis', CORS_ORIGINS: 'https://app', FRONTEND_URL: 'https://app' };
     expect(checkEnv(env, true).warnings).toContain('SENTRY_DSN manquante (indispensable en production)');
+  });
+
+  it('production sans API_URL → avertissement seulement, jamais bloquant (#861)', () => {
+    const report = checkEnv(allRequired, true);
+    expect(report.warnings).toContain('API_URL manquante (indispensable en production)');
+    expect(report.errors).toEqual([]);
+    expect(checkEnv(allRequired, false).warnings).not.toContain('API_URL manquante (indispensable en production)');
   });
 });
