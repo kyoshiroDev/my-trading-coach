@@ -293,23 +293,8 @@
             <!-- 8 · Menu actions -->
             <div class="cell cell-menu">
               <div class="acct-menu-wrap">
-                <button class="acct-menu" aria-label="Actions du compte" [attr.aria-expanded]="menuOpenId() === a.id" (click)="toggleMenu(a.id)" [attr.data-testid]="'account-menu-' + a.id"><svg [lucideIcon]="MoreHorizontalIcon" [size]="16"></svg></button>
-                @if (menuOpenId() === a.id) {
-                  <div class="menu-pop">
-                    <button class="menu-item" (click)="openEdit(a)"><svg [lucideIcon]="PencilIcon" [size]="13"></svg> Modifier</button>
-                    <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
-                         trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
-                         incertains partent quand même et `deleteError` les explique. -->
-                    <button class="menu-item danger" (click)="confirmDelete(a)"
-                      [disabled]="suppressionBloquee(a)"
-                      [attr.title]="suppressionBloquee(a)
-                        ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
-                        : null"
-                      [attr.data-testid]="'account-delete-' + a.id">
-                      <svg [lucideIcon]="TrashIcon" [size]="13"></svg> Supprimer
-                    </button>
-                  </div>
-                }
+                <!-- Le menu s'ouvre HORS du tableau (fin du gabarit) : voir `menuPos`. -->
+                <button class="acct-menu" aria-label="Actions du compte" aria-haspopup="menu" [attr.aria-expanded]="menuOpenId() === a.id" (click)="toggleMenu(a.id, $event)" [attr.data-testid]="'account-menu-' + a.id"><svg [lucideIcon]="MoreHorizontalIcon" [size]="16"></svg></button>
               </div>
             </div>
           </div>
@@ -743,4 +728,28 @@
 
 @if (showPlanModal()) {
   <mtc-plan-modal (closed)="showPlanModal.set(false)" />
+}
+
+<!-- Menu « … » d'une ligne : rendu ici, en position fixe, et non dans la ligne. Dans la ligne, un
+     compte archivé (opacité) le rendait translucide et la ligne suivante passait par-dessus : le
+     clic sélectionnait la ligne du dessous au lieu de l'entrée du menu. -->
+@if (menuAccount(); as a) {
+  <div class="menu-pop" role="menu" data-account-menu-pop data-testid="account-menu-pop"
+       [attr.aria-label]="'Actions de ' + a.label"
+       [style.right.px]="menuPos()?.right"
+       [style.top.px]="menuPos()?.top"
+       [style.bottom.px]="menuPos()?.bottom">
+    <button class="menu-item" role="menuitem" (click)="openEdit(a)" [attr.data-testid]="'account-edit-' + a.id"><svg [lucideIcon]="PencilIcon" [size]="13"></svg> Modifier</button>
+    <!-- Désactivé quand l'échec est CERTAIN (dernier compte actif avec
+         trades) : éviter l'erreur vaut mieux que l'afficher. Les cas
+         incertains partent quand même et `deleteError` les explique. -->
+    <button class="menu-item danger" role="menuitem" (click)="confirmDelete(a)"
+      [disabled]="suppressionBloquee(a)"
+      [attr.title]="suppressionBloquee(a)
+        ? 'Garde au moins un compte actif. Crée-en un autre avant d\'archiver celui-ci.'
+        : null"
+      [attr.data-testid]="'account-delete-' + a.id">
+      <svg [lucideIcon]="TrashIcon" [size]="13"></svg> Supprimer
+    </button>
+  </div>
 }

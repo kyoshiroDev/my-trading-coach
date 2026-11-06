@@ -126,8 +126,32 @@ function emptyForm(): AccountFormState {
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 // Seul le NOMBRE de comptes ACTIVE est gaté (FREE 1 · Premium illimité), côté back dans
 // AccountsService ; `atLimit` n'en est que le miroir pour l'UI.
+/** Menu « … » : ancré au bouton, aligné sur son bord droit, ouvert vers le haut s'il manque de place. */
+export interface MenuPosition {
+  right: number;
+  top: number | null;
+  bottom: number | null;
+}
+
+const MENU_GAP = 4;
+const MENU_EDGE = 8;
+/** Hauteur réservée au menu (2 entrées) pour choisir le sens d'ouverture. */
+const MENU_HEIGHT = 96;
+
+export function menuPositionFor(rect: Pick<DOMRect, 'top' | 'bottom' | 'right'>, vw: number, vh: number): MenuPosition {
+  const right = Math.max(MENU_EDGE, vw - rect.right);
+  const roomBelow = vh - rect.bottom;
+  return roomBelow >= MENU_HEIGHT + MENU_EDGE || roomBelow >= rect.top
+    ? { right, top: rect.bottom + MENU_GAP, bottom: null }
+    : { right, top: null, bottom: vh - rect.top + MENU_GAP };
+}
+
 @Component({
   selector: 'mtc-accounts',
+  host: {
+    '(document:pointerdown)': 'onDocumentPointerDown($event)',
+    '(document:keydown.escape)': 'closeMenu()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DialogDirective,
@@ -167,6 +191,16 @@ export class AccountsComponent implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly menuOpenId = signal<string | null>(null);
+  /**
+   * Position du menu « … » ouvert, en coordonnées de la fenêtre (`position: fixed`). Le menu est
+   * rendu HORS du tableau : dans la ligne, il héritait de l'opacité d'un compte archivé et restait
+   * piégé sous la ligne suivante (contexte d'empilement), qui recevait alors le clic.
+   */
+  protected readonly menuPos = signal<MenuPosition | null>(null);
+  protected readonly menuAccount = computed(() => {
+    const id = this.menuOpenId();
+    return id ? this.store.accounts().find((a) => a.id === id) ?? null : null;
+  });
   /**
    * Ligne dépliée (mobile) : en desktop les 8 colonnes tiennent à l'écran, en mobile
    * seules les colonnes vitales restent visibles et le reste s'ouvre ici. Un seul
@@ -362,6 +396,18 @@ export class AccountsComponent implements OnInit {
   }
 
   constructor() {
+    // Menu en position fixe : au défilement (page ou zone de contenu) ou au redimensionnement, il
+    // suit son bouton ; il se ferme si le bouton sort de l'écran. Capture : le défilement d'un
+    // conteneur ne remonte pas jusqu'au document.
+    const followAnchor = () => {
+      if (this.menuOpenId()) this.placeMenu();
+    };
+    document.addEventListener('scroll', followAnchor, { capture: true, passive: true });
+    window.addEventListener('resize', followAnchor, { passive: true });
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('scroll', followAnchor, { capture: true });
+      window.removeEventListener('resize', followAnchor);
+    });
     // Une fois les connexions connues : solde et equity à jour pour chaque compte connecté.
     effect(() => {
       if (!this.tv.loaded() || this.brokerRefreshed) return;
@@ -627,11 +673,49 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Menu ligne ──────────────────────────────────────────────────────────
-  protected toggleMenu(id: string): void {
+  protected toggleMenu(id: string, event?: Event): void {
     // Une nouvelle interaction efface le message : sinon il traîne indéfiniment sous
     // une liste qui a pu changer entre-temps, et ne décrit plus rien.
     this.deleteError.set(null);
-    this.menuOpenId.update((cur) => (cur === id ? null : id));
+    if (this.menuOpenId() === id) {
+      this.closeMenu();
+      return;
+    }
+    this.menuAnchor = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+    this.menuOpenId.set(id);
+    this.placeMenu();
+  }
+
+  protected closeMenu(): void {
+    this.menuOpenId.set(null);
+    this.menuPos.set(null);
+    this.menuAnchor = null;
+  }
+
+  /** Bouton « … » du menu ouvert : ancre de sa position fixe. */
+  private menuAnchor: HTMLElement | null = null;
+
+  /** Recale le menu sous (ou au-dessus de) son bouton ; ferme si le bouton a quitté l'écran. */
+  private placeMenu(): void {
+    const anchor = this.menuAnchor;
+    if (!anchor) {
+      this.menuPos.set(null);
+      return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    if (!anchor.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) {
+      this.closeMenu();
+      return;
+    }
+    this.menuPos.set(menuPositionFor(rect, window.innerWidth, window.innerHeight));
+  }
+
+  /** Clic hors du menu et de son bouton : fermeture (le clic n'est pas consommé). */
+  protected onDocumentPointerDown(event: Event): void {
+    if (!this.menuOpenId()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('[data-account-menu-pop], .acct-menu')) return;
+    this.closeMenu();
   }
 
   // ── Formulaire create / edit ────────────────────────────────────────────
@@ -645,7 +729,7 @@ export class AccountsComponent implements OnInit {
     this.form.set(emptyForm());
     this.firmChoice.set('');
     this.loadCatalog();
-    this.menuOpenId.set(null);
+    this.closeMenu();
     this.formOpen.set(true);
   }
   protected openEdit(a: TradingAccount): void {
@@ -667,7 +751,7 @@ export class AccountsComponent implements OnInit {
     });
     this.firmChoice.set(this.startFirmOf(a));
     this.loadCatalog();
-    this.menuOpenId.set(null);
+    this.closeMenu();
     this.formOpen.set(true);
   }
   /** Firm sur laquelle ouvrir le sélecteur d'un compte sans plan : celle du catalogue qu'il désigne, sinon « Autre ». */
@@ -828,7 +912,7 @@ export class AccountsComponent implements OnInit {
 
   // ── Suppression / archivage ──────────────────────────────────────────────
   protected async confirmDelete(a: TradingAccount): Promise<void> {
-    this.menuOpenId.set(null);
+    this.closeMenu();
     const confirmed = await this.confirm.ask({
       title: `Supprimer « ${a.label} » ?`,
       message:
