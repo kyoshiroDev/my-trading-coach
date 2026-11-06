@@ -57,7 +57,11 @@ const ACCOUNTS = [
   account('arc-3', 'Archivé bas', 'ARCHIVED', 4),
 ];
 
+/** Suppressions définitives reçues par l'API simulée. */
+let deletes: { id: string; body: unknown }[] = [];
+
 async function mockApi(page: Page): Promise<void> {
+  deletes = [];
   await page.addInitScript((user) => {
     localStorage.setItem('access_token', 'e2e-fake-token');
     localStorage.setItem('user', JSON.stringify(user));
@@ -72,7 +76,12 @@ async function mockApi(page: Page): Promise<void> {
     if (/^\/accounts\/[^/]+\/deletion-preview$/.test(path)) {
       const id = path.split('/')[2];
       const a = ACCOUNTS.find((x) => x.id === id);
-      return json({ tradesCount: a?.metrics.tradesCount ?? 0, sessionsCount: 0, brokerConnected: false });
+      return json({ archived: true, tradesCount: a?.metrics.tradesCount ?? 0, sessionsCount: 0, brokerConnected: id === 'arc-2' });
+    }
+    if (/^\/accounts\/[^/]+\/archived$/.test(path) && route.request().method() === 'DELETE') {
+      const id = path.split('/')[2];
+      deletes.push({ id, body: route.request().postDataJSON() });
+      return json({ deleted: true, tradesDeleted: ACCOUNTS.find((x) => x.id === id)?.metrics.tradesCount ?? 0 });
     }
     return json([]);
   });
@@ -150,6 +159,19 @@ for (const viewport of [
       await page.getByTestId('account-menu-arc-2').click();
       await page.getByTestId('accounts-table').click({ position: { x: 5, y: 5 } });
       await expect(page.getByTestId('account-menu-pop')).toBeHidden();
+    });
+
+    test('suppression confirmée : modale explicite puis DELETE /archived avec confirmation', async ({ page }) => {
+      await page.getByTestId('account-menu-arc-2').click();
+      await page.getByTestId('account-delete-arc-2').click();
+      const dialog = page.getByTestId('confirm-dialog');
+      await expect(dialog).toContainText('Archivé milieu');
+      await expect(dialog).toContainText('7 trades seront supprimés');
+      await expect(dialog).toContainText('connexion Tradovate sera aussi supprimée');
+      await expect(dialog).toContainText('Action définitive');
+      expect(deletes).toEqual([]); // rien au premier clic
+      await page.getByTestId('confirm-ok').click();
+      await expect.poll(() => deletes).toEqual([{ id: 'arc-2', body: { confirm: true } }]);
     });
   });
 }

@@ -158,6 +158,26 @@ export class AccountsController {
     return this.accounts.dismissPayout(user.id, id, payoutId);
   }
 
+  /** Ce que la suppression d'un compte archivé effacera : trades, séances, connexion broker. */
+  @Get(':id/deletion-preview')
+  deletionPreview(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    return this.accounts.deletionPreview(user.id, id);
+  }
+
+  /**
+   * Suppression DÉFINITIVE d'un compte ARCHIVÉ et de tous ses trades (Mes comptes). Corps obligatoire
+   * `{ "confirm": true }` (400 sinon) ; 409 `ACCOUNT_NOT_ARCHIVED` si le compte n'est pas archivé.
+   * Réponse `{ deleted: true, tradesDeleted }`.
+   */
+  @Delete(':id/archived')
+  deleteArchived(
+    @CurrentUser() user: { id: string },
+    @Param('id') id: string,
+    @Body() body?: { confirm?: unknown },
+  ) {
+    return this.accounts.deleteArchived(user.id, id, body?.confirm);
+  }
+
   @Delete(':id')
   remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.accounts.remove(user.id, id);

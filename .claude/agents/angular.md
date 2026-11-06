@@ -472,6 +472,10 @@ et `accounts.component.css` :
   suit le défilement, fermé par Échap ou clic extérieur). Dans la ligne, l'`opacity` d'un compte
   archivé créait un contexte d'empilement : menu translucide et ligne suivante au-dessus, qui
   recevait le clic. Test réel : `app-mytradingcoach-e2e/src/14-accounts-menu.spec.ts` (API simulée) ;
+- « Supprimer » d'un compte **ARCHIVÉ** (Mes comptes) = suppression définitive du compte et de ses
+  trades : `GET deletion-preview` (nombre exact), `ConfirmService` danger (nom, N trades, connexion
+  Tradovate, « Action définitive »), puis `DELETE /accounts/:id/archived` ; `store.load()`,
+  `tradesStore.reset()`, `tv.load()`. Un compte non archivé garde `DELETE /accounts/:id` (archivage) ;
 - repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
   chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une

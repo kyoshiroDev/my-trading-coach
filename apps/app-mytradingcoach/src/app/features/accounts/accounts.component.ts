@@ -47,7 +47,7 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { TradovateApi, type TradovateConnection, type TradovateSyncResult } from '../../core/api/tradovate.api';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
   excludedAccountsMessage,
@@ -67,6 +67,7 @@ import {
   DrawdownType,
   TradingAccount,
   AccountsApi,
+  type AccountDeletionPreview,
 } from '../../core/api/accounts.api';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 import { PropFirmsApi, type PropFirmCatalogFirm, type PropFirmPlanDetail } from '../../core/api/prop-firms.api';
@@ -913,6 +914,10 @@ export class AccountsComponent implements OnInit {
   // ── Suppression / archivage ──────────────────────────────────────────────
   protected async confirmDelete(a: TradingAccount): Promise<void> {
     this.closeMenu();
+    if (a.status === 'ARCHIVED') {
+      await this.confirmDeleteArchived(a);
+      return;
+    }
     const confirmed = await this.confirm.ask({
       title: `Supprimer « ${a.label} » ?`,
       message:
@@ -932,6 +937,51 @@ export class AccountsComponent implements OnInit {
         // message est déjà clair et actionnable : on l'affiche tel quel.
         error: (err) =>
           this.deleteError.set(err?.error?.message ?? 'Suppression impossible.'),
+      });
+  }
+
+  /**
+   * Compte ARCHIVÉ : suppression définitive du compte ET de tous ses trades. Jamais au premier clic :
+   * le nombre exact de trades (ouverts compris) est lu à l'API, puis confirmé dans une modale rouge.
+   * Le serveur revérifie tout (archivé, propriétaire) : un compte non archivé y est refusé.
+   */
+  private async confirmDeleteArchived(a: TradingAccount): Promise<void> {
+    this.deleteError.set(null);
+    let preview: AccountDeletionPreview;
+    try {
+      preview = (await firstValueFrom(this.api.deletionPreview(a.id))).data;
+    } catch (err) {
+      this.deleteError.set(apiErrorMessage(err, "La suppression n'a pas pu être préparée. Réessaie."));
+      return;
+    }
+    const n = preview.tradesCount;
+    const trades = n === 0
+      ? "Aucun trade n'est rattaché à ce compte."
+      : `${n} trade${n > 1 ? 's seront supprimés' : ' sera supprimé'} avec lui, ainsi que son journal.`;
+    const broker = preview.brokerConnected ? ' Sa connexion Tradovate sera aussi supprimée.' : '';
+    const ok = await this.confirm.ask({
+      title: `Supprimer définitivement « ${a.label} »\u00a0?`,
+      message:
+        `${trades}${broker} Action définitive\u00a0: rien ne pourra être récupéré. ` +
+        'Ton compte MyTradingCoach et ton abonnement ne changent pas.',
+      confirmLabel: n === 0 ? 'Supprimer définitivement' : `Supprimer le compte et ${n} trade${n > 1 ? 's' : ''}`,
+      danger: true,
+    });
+    if (!ok) return;
+    this.api
+      .deleteArchived(a.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const deleted = res.data.tradesDeleted;
+          this.store.load();
+          this.tradesStore.reset();
+          this.tv.load();
+          this.toast.success(
+            `« ${a.label} » supprimé${deleted ? ` · ${deleted} trade${deleted > 1 ? 's' : ''} effacé${deleted > 1 ? 's' : ''}` : ''}.`,
+          );
+        },
+        error: (err) => this.deleteError.set(apiErrorMessage(err, 'Suppression impossible.')),
       });
   }
 }
