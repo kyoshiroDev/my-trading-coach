@@ -2062,7 +2062,9 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
 - **Métriques** (`AccountsService.ruleMetricsFromAgg(…, broker)`) : le solde broker fait foi
   (`currentBalance`, `realizedPnl`, objectif) et la marge de drawdown se calcule sur l'**equity**
   (latent compris tant qu'une position est ouverte ; sans position, equity = solde). Trailing
-  intraday : un nouveau plus haut d'equity relève le seuil. Écart solde broker ↔ solde MTC
+  intraday : un nouveau plus haut d'equity relève le seuil. **Sans aucun trade, `realizedPnl` = 0**
+  (objectif et progression aussi) : l'écart broker ↔ solde de départ d'un compte neuf (frais,
+  centimes) reste dans le solde et la marge, jamais compté comme perte de trading. Écart solde broker ↔ solde MTC
   > max(2 000 $, 25 % de la taille) = référentiel incompatible (`brokerReferenceMismatch`, ex.
   funded saisi à 0 $) → calcul MTC + latent, `broker.referenceMismatch` affiché à l'utilisateur.
 - Le plus haut de clôture des règles EOD vient des **clôtures officielles** (section suivante).

@@ -779,6 +779,26 @@ describe('AccountsService', () => {
       expect(m.disclaimer).toContain('lus chez le broker');
     });
 
+    it('compte neuf connecté, 0 trade, broker à 49 999,50 $ : P&L et objectif à 0, le solde reste celui du broker', () => {
+      // Cas Lucid Flex 50K : l'écart du broker (frais, centimes) n'est pas une perte de trading.
+      const lucid: RulePlan = { firmName: 'Lucid', planName: 'Flex 50K', accountSize: 50_000, phases: [
+        { phase: 'evaluation', profit_target: 3_000, max_drawdown: { amount: 2_000, type: 'trailing_eod', trails_on: 'balance', locks_at: null, locked_floor: null, enforced_on: 'eod_balance', basis_notes: null } } as PropFirmPhaseRules,
+      ] };
+      const m = svc.computeRuleMetrics({ ...manual, type: 'EVALUATION' }, [], lucid, broker({ cashBalance: 49_999.5 }));
+      expect(m.tradesCount).toBe(0);
+      expect(m.realizedPnl).toBe(0);
+      expect(m.objective?.current).toBe(0);
+      expect(m.progress?.requirements.find((r) => r.key === 'profit')?.current).toBe(0);
+      expect(m.currentBalance).toBe(49_999.5);
+      // La marge reste calculée sur le solde réel du broker : c'est lui que la firm surveille.
+      expect(m.drawdown?.margin).toBe(1_999.5);
+    });
+
+    it('avec des trades, le solde du broker fait toujours foi pour le P&L (frais compris)', () => {
+      const m = svc.computeRuleMetrics(manual, [d(100, 1)], null, broker({ cashBalance: 50_098.5 }));
+      expect(m.realizedPnl).toBe(98.5);
+    });
+
     it('position ouverte : la marge se calcule sur l\'equity du broker, latent compris', () => {
       const m = svc.computeRuleMetrics(manual, [d(500, 1)], null, broker({ cashBalance: 50_500, netLiq: 48_700, openPnl: -1_800, openPositions: 1 }));
       expect(m.currentBalance).toBe(50_500);

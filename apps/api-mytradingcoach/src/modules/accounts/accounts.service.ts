@@ -473,7 +473,11 @@ export class AccountsService {
       };
     }
     const currentBalance = broker && !broker.referenceMismatch ? broker.cashBalance : tradesBalance;
-    const realizedPnl = currentBalance - startingBalance;
+    // P&L DE TRADING : sans aucun trade, il vaut 0. Un écart entre le solde du broker et le solde de
+    // départ (frais de plateforme, centimes, solde initial non rond) n'est pas une perte de trading :
+    // il reste visible dans le solde et compte pour la marge de drawdown, pas pour le P&L ni l'objectif.
+    // Avec des trades, le solde du broker fait foi (trades ou frais manquants côté MTC).
+    const realizedPnl = agg.count === 0 ? 0 : currentBalance - startingBalance;
     /** Valeur comparée au plancher : l'equity du broker (latent compris) quand on l'a. */
     const equity = broker ? broker.equity : currentBalance;
 
@@ -597,6 +601,7 @@ export class AccountsService {
           startingBalance,
           phaseStartingBalance: phase.starting_balance ?? plan.accountSize,
           currentBalance,
+          profit: realizedPnl,
           sessions,
           ...lastPayout(account.lastPayoutAt, payouts),
           unconfirmed: plan.needsReview ?? false,

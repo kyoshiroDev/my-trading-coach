@@ -372,7 +372,8 @@ un montant s'affiche dans la devise de son compte de trading (`TradingAccount.cu
 reçu — un compte prop firm en USD s'affiche en USD pour tout le monde. Source UNIQUE front + back :
 `@mtc/shared` (`libs/shared/src/currency.ts`) — `ACCOUNT_CURRENCIES` (USD, USDT, EUR : sélecteurs
 de l'onboarding et de la page Comptes, validation API), `formatMoney(value, currency)` (`$1.00`,
-`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole), `commonCurrency`.
+`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole ; signe de la valeur
+AFFICHÉE : -0,40 $ à 0 décimale → `+$0`, jamais `-$0`), `commonCurrency`.
 - **Totaux de l'écran** : `MoneyService.format()` / pipes → `SelectedAccountStore.displayCurrency`
   (compte sélectionné, sinon devise commune de « Tous les comptes »).
 - **Ligne de trade** : devise de SON compte → passer l'`accountId` (`pnlFormat : entry : accountId`,
