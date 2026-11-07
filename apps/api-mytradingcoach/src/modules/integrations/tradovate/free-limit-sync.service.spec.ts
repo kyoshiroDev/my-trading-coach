@@ -39,6 +39,12 @@ function setup(user: object | null) {
 
 describe('FreeLimitSyncService (#769, B0, journal seul)', () => {
   let logs: string[];
+  // Horloge figée sur NOW : l'accès Premium (essai en cours) est évalué à l'heure courante.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+  });
+  afterEach(() => vi.useRealTimers());
   beforeEach(() => {
     logs = [];
     vi.spyOn(Logger.prototype, 'log').mockImplementation((m: unknown) => void logs.push(String(m)));
