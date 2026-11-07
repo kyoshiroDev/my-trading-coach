@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { SkipThrottle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import {
   HealthCheck,
   HealthCheckService,
@@ -11,6 +11,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
 
 /**
+ * Limite dédiée, très au-dessus d'une sonde (1 requête par seconde = 60 par minute), mais la route
+ * est publique et interroge Postgres et Redis : jamais sans limite. Compté par IP (route anonyme).
+ */
+export const READY_THROTTLE_LIMIT = 600;
+
+/**
  * Readiness : l'API est-elle capable de servir des requêtes ? Vérifie Postgres et Redis.
  * Réponse 200 si tout va bien, 503 sinon (avec le composant en panne dans les logs).
  *
@@ -18,7 +24,7 @@ import { RedisService } from '../infra/redis.service';
  * redémarrage du conteneur ne réparerait pas une base indisponible.
  */
 @Public()
-@SkipThrottle()
+@Throttle({ default: { ttl: 60_000, limit: READY_THROTTLE_LIMIT } })
 @Controller('health')
 export class HealthController {
   constructor(

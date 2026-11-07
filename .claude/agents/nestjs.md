@@ -1628,6 +1628,7 @@ part de lignes et non la perfection.
     réflexion avec `between_tools`, sans autre champ, effort `high` au plus. Détail dans `plans.md`.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
+  `/health` jamais limitée en débit, `/health/ready` à 600 / min / IP (voir `security.md`).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
   optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
   En local, la valeur va dans le `.env` racine (commun) : `.env.development` / `.env.local` ne

@@ -1,10 +1,12 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
+import { SkipAllThrottlers } from '../common/throttler/skip-all-throttlers.decorator';
 
 @Controller()
 export class AppController {
   @Public()
+  @SkipAllThrottlers()
   @Get('health')
   health() {
     return { status: 'ok' };
