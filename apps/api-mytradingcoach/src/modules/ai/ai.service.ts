@@ -12,6 +12,8 @@ import { OrchestratorAgent } from './agents/orchestrator.agent';
 import { DebriefAgent } from './agents/debrief.agent';
 import { buildDebriefPrompt } from './prompts/debrief.prompt';
 import { FRENCH_RULE, NO_EM_DASH_RULE } from './prompts/style.prompt';
+import { COMPLIANCE_RULE } from './prompts/compliance.prompt';
+import { guardAiText } from '../../common/ai-text-guard/ai-text-guard';
 import { handleAnthropicError } from './agents/anthropic-errors.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../infra/redis.service';
@@ -33,15 +35,16 @@ const AI_MONTHLY_QUOTA = 100;
 const DEMO_INSIGHTS = {
   // Aligné sur le seed démo : qualitatif, sans pourcentage figé (les chiffres du
   // seed varient légèrement selon le jour du run).
+  // Passé et comportement seulement (#881) : aucun setup présenté comme une source de profit.
   topPattern:
-    "Ton edge est net sur les breakouts MNQ/MES à l'ouverture : c'est ton setup le plus rentable. Tes Reversals, eux, te coûtent de l'argent semaine après semaine.",
+    "Sur les 6 dernières semaines, tes breakouts MNQ/MES à l'ouverture ont porté l'essentiel de ton P&L net. Tes Reversals, eux, ont fini en négatif semaine après semaine.",
   emotionInsight:
-    'FOCALISÉ ou CONFIANT, tes entrées sont sélectives et ton net est positif. STRESSÉ ou FATIGUÉ, tu enchaînes les trades moyens, et ta pire journée a commencé par une perte suivie de ré-entrées immédiates.',
+    'FOCALISÉ ou CONFIANT, tes entrées ont été sélectives et ton net positif. STRESSÉ ou FATIGUÉ, tu as enchaîné les trades moyens, et ta pire journée a commencé par une perte suivie de ré-entrées immédiates.',
   insights: [
-    { type: 'strength', title: 'Edge clair sur les breakouts', description: 'Ton setup Breakout porte l’essentiel de ton P&L net sur 6 semaines.', badge: 'Force' },
-    { type: 'weakness', title: 'Le scalping ne paie pas les frais', description: 'Positif en brut, négatif en net : sur 6 contrats, les frais mangent tout le gain.', badge: 'Attention' },
+    { type: 'strength', title: 'Breakout, ton setup le plus régulier', description: 'Ton setup Breakout a porté l’essentiel de ton P&L net sur 6 semaines.', badge: 'Force' },
+    { type: 'weakness', title: 'Le scalping n’a pas couvert ses frais', description: 'Positif en brut, négatif en net : sur 6 contrats, les frais ont absorbé tout le gain.', badge: 'Attention' },
     { type: 'pattern', title: 'Revenge trading après une perte', description: 'Deux ré-entrées en moins de 2 minutes, taille doublée et sans stop : ta pire journée du mois.', badge: 'Pattern' },
-    { type: 'weakness', title: 'Reversal perdant', description: 'Win rate le plus bas de tes setups et net négatif : à suspendre ou à retravailler.', badge: 'Attention' },
+    { type: 'weakness', title: 'Reversal en net négatif', description: 'Le win rate le plus bas de tes setups et un net négatif sur la période.', badge: 'Attention' },
   ],
 };
 const DEMO_CHAT_REPLY =
@@ -63,9 +66,10 @@ export class AiService {
 
   async getInsights(userId: string, role: Role, isDemo = false) {
     if (isDemo) return DEMO_INSIGHTS; // données figées, zéro appel modèle
-    if (role === Role.ADMIN) return this.orchestrator.runInsightsFlow(userId);
+    const flow = () => guardAiText('insights', () => this.orchestrator.runInsightsFlow(userId), this.logger);
+    if (role === Role.ADMIN) return flow();
     await this.checkInsightsCooldown(userId);
-    return this.metered(userId, () => this.orchestrator.runInsightsFlow(userId));
+    return this.metered(userId, flow);
   }
 
   // ── Chat : direct Anthropic call with trader context ─────────────────────
@@ -133,7 +137,8 @@ export class AiService {
 Tutoiement. Réponds en texte naturel uniquement : jamais de JSON, jamais de markdown, pas de ** ni de tirets listes.
 ${NO_EM_DASH_RULE}
 Sois concis (3-5 phrases). Si le trader a des données, base-toi dessus pour répondre précisément.
-${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.`;
+${userContext}Adapte tes retours au profil du trader ci-dessus. Ne mets pas en garde sur des comportements qui font partie de sa stratégie normale.
+${COMPLIANCE_RULE}`;
 
     let contextSummary: string;
     if (recentTrades.length === 0) {
@@ -205,34 +210,36 @@ ${userContext}Adapte tes conseils au profil du trader ci-dessus. Ne mets pas en 
       { role: 'user', content: message },
     ];
 
-    let response: Anthropic.Message;
-    try {
-      response = await this.anthropicClient.create(
-        {
-          model: AI_MODELS.analysis,
-          max_tokens: 512,
-          system: [
-            {
-              type: 'text',
-              text: CHAT_SYSTEM,
-              cache_control: { type: 'ephemeral' },
-            },
-          ],
-          messages,
-        },
-        { feature: 'chat', userId },
-      );
-    } catch (err) {
-      handleAnthropicError(err, this.logger);
-    }
-
-    const text = response ? responseText(response) : '';
-    if (!text)
-      throw new HttpException(
-        'Réponse IA invalide',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    return { response: text };
+    const ask = async (): Promise<string> => {
+      let response: Anthropic.Message | undefined;
+      try {
+        response = await this.anthropicClient.create(
+          {
+            model: AI_MODELS.analysis,
+            max_tokens: 512,
+            system: [
+              {
+                type: 'text',
+                text: CHAT_SYSTEM,
+                cache_control: { type: 'ephemeral' },
+              },
+            ],
+            messages,
+          },
+          { feature: 'chat', userId },
+        );
+      } catch (err) {
+        handleAnthropicError(err, this.logger);
+      }
+      const text = response ? responseText(response) : '';
+      if (!text)
+        throw new HttpException(
+          'Réponse IA invalide',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      return text;
+    };
+    return { response: await guardAiText('chat', ask, this.logger) };
   }
 
   // ── Daily recap one-liner ─────────────────────────────────────────────────
@@ -358,7 +365,7 @@ ${data.propContext ? `
 Suivi prop firm du jour (estimations MyTradingCoach déjà calculées : ne recalcule rien, aucun chiffre n'est officiel) :
 ${data.propContext}
 ` : ''}
-Génère UNE seule phrase coaching (max 140 caractères).
+Génère UNE seule phrase de retour sur la journée (max 140 caractères), qui décrit ce qui s'est passé.
 Règles :
 - Directe et concrète : cite l'asset, le setup ou la session problématique si identifié
 - Basée sur les vrais patterns de ce trader, pas des conseils génériques
@@ -370,13 +377,15 @@ Règles :
 - PAS de "Bonne journée", "Continue comme ça", "Félicitations" génériques
 - PAS d'astérisques ni de markdown`;
 
+    const generate = async () => {
     const response = await this.anthropicClient.create(
       {
         model: AI_MODELS.analysis,
         max_tokens: 200,
         system: `Tu es un coach de trading expert qui connaît en profondeur la stratégie et les habitudes de ce trader.
-Tu analyses ses données réelles pour donner un conseil ultra-personnalisé, jamais générique.
+Tu analyses ses données réelles pour donner un retour ultra-personnalisé sur ce qui s'est passé, jamais générique.
 ${NO_EM_DASH_RULE}
+${COMPLIANCE_RULE}
 Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
         messages: [{ role: 'user', content: prompt }],
       },
@@ -384,6 +393,8 @@ Réponds UNIQUEMENT avec la phrase coaching, sans guillemets, sans préambule.`,
     );
 
     return responseText(response).trim().replace(/^["']|["']$/g, '');
+    };
+    return guardAiText('daily_recap', generate, this.logger);
   }
 
   // ── Eco calendar : morning analysis + released event ─────────────────────
@@ -450,24 +461,27 @@ Actifs du trader : ${data.userAssets.join(', ')}.
 Événements économiques du jour : ${JSON.stringify(data.events, null, 2)}.
 ${NO_EM_DASH_RULE}
 ${FRENCH_RULE}
+${COMPLIANCE_RULE}
+Le sentiment de chaque actif décrit la réaction que le marché a souvent eue à ce type d'événement, à titre indicatif : ce n'est ni une prévision ni une invitation à prendre position.
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "summary": "1-2 phrases sur les risques du jour pour ce trader précis",
-  "recommendation": "1 conseil actionnable concret (créneau à éviter, actif sensible)",
+  "recommendation": "1 point de vigilance concret (créneau plus volatil, actif concerné), sans dire quoi trader ni quand entrer",
   "assetImpacts": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "reason": string }]
 }`;
 
-    const response = await this.anthropicClient.create(
-      {
-        model: AI_MODELS.fast,
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
-      },
-      { feature: 'eco_calendar', userId: data.userId },
-    );
-
-    const text = responseText(response) || '{}';
-    return this.parseModelJson<EcoAnalysis>(text);
+    const generate = async () => {
+      const response = await this.anthropicClient.create(
+        {
+          model: AI_MODELS.fast,
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        },
+        { feature: 'eco_calendar', userId: data.userId },
+      );
+      return this.parseModelJson<EcoAnalysis>(responseText(response) || '{}');
+    };
+    return guardAiText('eco_calendar', generate, this.logger);
   }
 
   async analyzeEcoResult(data: {
@@ -490,29 +504,32 @@ Surprise : ${surprise >= 0 ? '+' : ''}${surprise.toFixed(2)}.
 Actifs tradés : ${data.userAssets.join(', ')}.
 ${NO_EM_DASH_RULE}
 ${FRENCH_RULE}
+${COMPLIANCE_RULE}
+Le sentiment de chaque actif décrit la réaction habituelle du marché à ce type de surprise, à titre indicatif : ce n'est ni une prévision ni une invitation à prendre position.
 Génère un JSON strict (pas de markdown, pas de texte autour) :
 {
   "interpretation": "phrase courte expliquant la surprise",
   "assetSentiments": [{ "asset": string, "sentiment": "bull"|"bear"|"neutral", "shortReason": string }]
 }`;
 
-    const response = await this.anthropicClient.create(
-      {
-        model: AI_MODELS.fast,
-        max_tokens: 700,
-        messages: [{ role: 'user', content: prompt }],
-      },
-      { feature: 'eco_calendar', userId: data.userId },
-    );
-
-    const text = responseText(response) || '{}';
-    return this.parseModelJson<EcoResultAnalysis>(text);
+    const generate = async () => {
+      const response = await this.anthropicClient.create(
+        {
+          model: AI_MODELS.fast,
+          max_tokens: 700,
+          messages: [{ role: 'user', content: prompt }],
+        },
+        { feature: 'eco_calendar', userId: data.userId },
+      );
+      return this.parseModelJson<EcoResultAnalysis>(responseText(response) || '{}');
+    };
+    return guardAiText('eco_result', generate, this.logger);
   }
 
   // ── Debrief : delegates to debrief agent ──────────────────────────────────
 
   async generateDebrief(data: Parameters<typeof buildDebriefPrompt>[0], userId?: string) {
-    return this.debriefAgent.generate(data, userId);
+    return guardAiText('weekly_debrief', () => this.debriefAgent.generate(data, userId), this.logger);
   }
 
   // ── Cooldown / Daily limits ───────────────────────────────────────────────

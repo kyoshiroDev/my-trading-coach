@@ -316,7 +316,7 @@ export function buildCoachInsights(
   const setups = bySetup.filter((x) => (x.count ?? 0) > 0 && x.winRate != null);
   if (setups.length) {
     const b = setups.reduce((a, c) => (c.winRate! > a.winRate! ? c : a));
-    if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » affiche ${b.winRate!.toFixed(0)}% de réussite : c'est ton edge.` });
+    if (b.winRate! >= 55) out.push({ tone: 'good', text: `Ton setup « ${b.title} » a affiché ${b.winRate!.toFixed(0)}% de réussite sur la période : ton taux le plus élevé.` });
   }
 
   return out.slice(0, 5);

@@ -16,6 +16,7 @@ import {
   type PreviousSession,
 } from './incident-report';
 import { INCIDENT_AI_MAX_TOKENS, INCIDENT_AI_SYSTEM, buildIncidentPrompt } from './incident-ai.prompt';
+import { guardAiText } from '../../../common/ai-text-guard/ai-text-guard';
 
 export type IncidentSource = 'live' | 'sync' | 'manual';
 
@@ -240,16 +241,19 @@ export class AccountIncidentsService {
       }
       const account = await this.prisma.tradingAccount.findUniqueOrThrow({ where: { id: accountId }, select: { currency: true } });
       const report = await this.report(user, incident, account.currency);
-      const response = await this.anthropic.create(
-        {
-          model: AI_MODELS.analysis,
-          max_tokens: INCIDENT_AI_MAX_TOKENS,
-          system: INCIDENT_AI_SYSTEM,
-          messages: [{ role: 'user', content: buildIncidentPrompt(incident.kind as IncidentKind, account.currency, report) }],
-        },
-        { feature: 'incident', userId: user.id },
-      );
-      const text = responseText(response).trim();
+      const generate = async () =>
+        responseText(
+          await this.anthropic.create(
+            {
+              model: AI_MODELS.analysis,
+              max_tokens: INCIDENT_AI_MAX_TOKENS,
+              system: INCIDENT_AI_SYSTEM,
+              messages: [{ role: 'user', content: buildIncidentPrompt(incident.kind as IncidentKind, account.currency, report) }],
+            },
+            { feature: 'incident', userId: user.id },
+          ),
+        ).trim();
+      const text = await guardAiText('incident', generate, this.logger);
       if (!text) {
         await retryLater();
         return unavailable;
