@@ -225,6 +225,15 @@ const user = await prisma.user.findUnique({
 - **Limites dédiées** : auth (login 10, register 5, forgot-password 3, reset-password 5,
   demo-login 20 / min), IA (insights, chat : 20 / min), Tradovate et routes publiques.
   Toute nouvelle route qui envoie un email ou coûte un appel IA reçoit son `@Throttle`.
+- **Routes de santé** : une sonde d'uptime ou de déploiement ne doit jamais recevoir de 429 (le
+  healthcheck Docker en `wget` passerait « unhealthy »).
+  - `GET /api/health` (aucune entrée-sortie) : `@SkipAllThrottlers()`
+    (`common/throttler/skip-all-throttlers.decorator.ts` : ni `default` ni `ip`), seule route sans limite.
+    `@SkipThrottle()` sans argument ne saute que `default`.
+  - `GET /api/health/ready` (Postgres + Redis, publique) : limite dédiée `READY_THROTTLE_LIMIT`
+    = 600 / minute / IP, dix fois une sonde à 1/s, mais jamais martelable sans limite.
+  - Limiteurs de l'app : `THROTTLERS` (`email-aware-throttler.guard.ts`).
+  Verrouillé par `health-throttle.spec.ts` et `health-throttle.int-spec.ts`.
 
 ## Validation des entrées
 

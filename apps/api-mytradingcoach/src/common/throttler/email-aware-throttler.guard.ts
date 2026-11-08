@@ -24,6 +24,13 @@ export const defaultThrottleLimit = (ctx: ExecutionContext): number =>
   ctx.switchToHttp().getRequest<{ user?: { id?: string } }>().user?.id ? USER_THROTTLE_LIMIT : ANON_THROTTLE_LIMIT;
 export const IP_THROTTLER_OFF = Number.MAX_SAFE_INTEGER;
 
+/** Limiteurs de l'API (AppModule) : défaut par utilisateur ou par IP, et limiteur par IP neutre par défaut. */
+export const THROTTLERS = [
+  { ttl: 60_000, limit: defaultThrottleLimit },
+  // Par IP seule, neutre sauf sur les routes qui le resserrent (inscription, connexion…).
+  { name: IP_THROTTLER, ttl: 60_000, limit: IP_THROTTLER_OFF },
+];
+
 /**
  * Rate limiting compté par **IP + compte visé**, et non par IP seule.
  *

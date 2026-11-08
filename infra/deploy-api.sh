@@ -42,8 +42,8 @@ exec 9>"/tmp/deploy-api-${ENV_NAME}.lock"
 flock -w 600 9 || die "un autre déploiement ${ENV_NAME} tourne depuis plus de 10 min"
 
 # Backends qui ont servi les sondes de ce déploiement : journal d'accès Traefik, ligne
-# « "GET /api/health?<tag> …" … "<router>" "http://<ip>:3000" ». Sondes espacées (limite anonyme
-# 60/min par IP : une sonde 429 est quand même servie par un backend, donc comptée).
+# « "GET /api/health?<tag> …" … "<router>" "http://<ip>:3000" ». /api/health n'est pas limitée en
+# débit ; une réponse 429 d'une ancienne image reste servie par un backend, donc comptée.
 probe_backends() {
   local since; since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   for _ in $(seq 1 8); do
