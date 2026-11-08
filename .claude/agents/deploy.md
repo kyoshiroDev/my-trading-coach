@@ -393,7 +393,15 @@ envoie `/` et `/index.html` en **302** vers `/prop-firm`, query string conservé
 pour la landing prod **et** dev (conf partagée). Côté Astro, une page de secours (`index.astro`)
 fait la même redirection en JavaScript si la règle manque, et l'ancienne home est sur `/accueil`
 (astro.md, « Accueil → /prop-firm »). Ordre : la landing passe d'abord par la CD, la règle nginx
-ensuite. Application par Greg sur l'ancien VPS (fichier réécrit en place, même inode) :
+ensuite.
+
+**État : EN PROD depuis le 2026-11-08** (landing prod et dev ; CD `f934ee0c` puis règle appliquée par
+Greg). Sauvegarde de la conf d'avant sur l'ancien VPS : `/home/greg/landing-releases.conf.bak-20261108`.
+Vérifié le 08/11 : `/?utm_source=test&utm_medium=x` → 302 `Location: /prop-firm?utm_source=test&utm_medium=x` ;
+`mytradingcoach.app/?ref=…` → 308 vers www → 302 → `/prop-firm?ref=…` → 200 ; `dev.` → 302 sur dev ;
+`/prop-firm`, `/accueil`, blog, légal → 200. La page de secours n'est plus servie sur `/`.
+
+Procédure suivie (pour la réappliquer ; fichier réécrit en place, même inode) :
 
 ```bash
 # Poste, depuis le dépôt :

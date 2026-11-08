@@ -231,8 +231,9 @@ Refonte complète (contenu de /prop-firm servi sur `/`, canonical, sort de l'anc
 newsletter.
 
 - **302 nginx** (`landing-releases.conf`, `location = /` et `= /index.html`) → `/prop-firm` + query
-  string intacte (`utm_*`, `ref`, `promo`, `internal`…). Appliquée à la main sur l'ancien VPS (la
-  conf n'est pas déployée par la CD) : deploy.md, « Redirection temporaire de l'accueil ».
+  string intacte (`utm_*`, `ref`, `promo`, `internal`…). **En prod depuis le 2026-11-08**, appliquée
+  à la main sur l'ancien VPS (la conf n'est pas déployée par la CD) : deploy.md, « Redirection
+  temporaire de l'accueil ».
 - **Page de secours** `src/pages/index.astro` : jamais servie quand la 302 est en place. Sans
   `Base.astro` (donc ni script d'acquisition, ni GA4, ni bandeau cookies), `noindex`,
   `location.replace('/prop-firm' + search + hash)`, `meta refresh` dans `<noscript>`, lien visible.
