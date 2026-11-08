@@ -208,3 +208,23 @@ describe('compte démo : topbar sous le bandeau collant', () => {
     expect(px(sansVar(decl(topbarCss, '.topbar-accounts', 'top')))).toBe(px(tokens['--topbar-h']));
   });
 });
+
+/**
+ * Une barre collante ne colle que dans son bloc parent. Sur le Tableau de bord (hôte en flex),
+ * mtc-topbar devenait un bloc de la hauteur de la barre : .topbar défilait avec la page et le
+ * contenu apparaissait sous le bandeau « Mode démo ». L'hôte ne forme donc aucune boîte, et
+ * l'hôte du tableau de bord grandit avec son contenu au lieu de s'arrêter à l'écran.
+ */
+describe('topbar collante sur toutes les pages', () => {
+  const dashboardCss = read('../../../features/dashboard/dashboard.component.css');
+
+  it("l'hôte mtc-topbar ne forme pas de boîte", () => {
+    expect(decl(topbarCss, ':host', 'display')).toBe('contents');
+  });
+
+  it("l'hôte du tableau de bord n'est pas plafonné à la hauteur de l'écran", () => {
+    expect(decl(dashboardCss, ':host', 'flex')).toBe('1 0 auto');
+    const host = dashboardCss.match(/:host\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(host).not.toMatch(/min-height\s*:/);
+  });
+});

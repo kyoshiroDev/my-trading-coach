@@ -28,7 +28,7 @@ export const MARKETS: MarketOption[] = [
 export const GOALS: { value: Goal; label: string; emoji: string; desc: string }[] = [
   { value: 'DISCIPLINE',  label: 'Travailler ma discipline',  emoji: '🎯', desc: 'Respecter mon plan et éviter les trades impulsifs' },
   { value: 'PSYCHOLOGIE', label: 'Maîtriser ma psychologie',  emoji: '🧠', desc: 'Gérer mes émotions, éviter FOMO et revenge trades' },
-  { value: 'PERFORMANCE', label: 'Améliorer ma performance',  emoji: '📈', desc: 'Optimiser mon win rate et ma rentabilité globale' },
+  { value: 'PERFORMANCE', label: 'Améliorer ma performance',  emoji: '📈', desc: 'Suivre mon win rate et mes résultats globaux' },
 ];
 
 export const DISCORD_URL = 'https://discord.gg/TDK2npvkSN';

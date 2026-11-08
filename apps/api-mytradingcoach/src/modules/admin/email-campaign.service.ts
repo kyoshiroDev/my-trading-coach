@@ -120,7 +120,8 @@ export interface CampaignMeta extends CampaignPresentation {
   connectedWithin3d: { connected: number; sent: number } | null;
 }
 
-// Users réels (hors démo / admin), filtre commun à tous les segments.
+// Public de tous les segments : hors démo et ADMIN, comptes internes COMPRIS (ils reçoivent les
+// campagnes, #823). Différent de REAL_USERS_WHERE (statistiques). Verrouillé par campaign-audience.spec.ts.
 const REAL_USERS: Prisma.UserWhereInput = { isDemo: false, role: { not: Role.ADMIN } };
 
 @Injectable()

@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { FreeLimitSyncService, OBSERVE_TIMEOUT_MS } from './free-limit-sync.service';
 import { TradovateSyncService } from './tradovate-sync.service';
 import { TradovateHistoryService } from './tradovate-history.service';
+import { freezeClock } from '../../../test/freeze-clock';
 
 // Synchro des comptes au-delà de la limite gratuite (#769, B0) : MODE JOURNAL SEUL. Compté une fois
 // par compte et par jour, journalisé sans identifiant, jamais bloquant.
@@ -42,11 +43,7 @@ describe('FreeLimitSyncService (#769, B0, journal seul)', () => {
   // Horloge figée sur NOW (Date seulement) : l'accès Premium (`isPremiumAccess`, essai en cours) lit
   // l'heure réelle, pas le `now` passé à observe. Sans ça, « essai en cours » (NOW + 1 j) expirait
   // pour de vrai le 04/11/2026 et le test cassait (CI du 08/11).
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(NOW);
-  });
-  afterEach(() => vi.useRealTimers());
+  freezeClock(NOW);
   beforeEach(() => {
     logs = [];
     vi.spyOn(Logger.prototype, 'log').mockImplementation((m: unknown) => void logs.push(String(m)));

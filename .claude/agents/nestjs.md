@@ -312,6 +312,9 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
     principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
     Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
   - Ids de container validés (`[a-zA-Z0-9_.-]`) avant la commande SSH (pas d'injection)
+- **Tests et horloge** : tout test qui fixe une date fige l'horloge (`freezeClock(date)`,
+  `src/test/freeze-clock.ts`), car le code lit l'heure réelle (`new Date()`, `now = new Date()` par
+  défaut). Contrôle sous une autre date : `tools/scripts/shifted-clock.mjs` (voir `tests.md`).
 
 ---
 
@@ -434,6 +437,29 @@ Format JSON strict :
 ```
 
 ---
+
+## Conformité des textes de l'IA : aucune promesse (#881)
+
+MTC ne promet jamais de gain et ne donne aucun conseil d'investissement personnalisé (AMF).
+- **Consigne** : `COMPLIANCE_RULE` (`modules/ai/prompts/compliance.prompt.ts`) dans TOUT prompt dont
+  la sortie est lue (chat, insights pattern + coach, récap 17h30, débrief, analyses éco, autopsie) :
+  décrire le passé et le comportement, jamais ce qui va se passer ; pas de quoi trader ni quand entrer
+  ou sortir ; caractère indicatif. Analyses éco : le sentiment bull/bear = réaction habituelle du
+  marché, à titre indicatif, pas une prévision.
+- **Garde-fou de sortie** : `guardAiText(feature, produce, logger)` (`common/ai-text-guard`) autour de
+  chaque génération : une régénération au plus, puis `AI_TEXT_FALLBACK` pour les seules chaînes non
+  conformes (JSON contrôlé champ par champ). Journal = nombre et identifiants des motifs, jamais le
+  texte. Les textes déjà stockés ne sont jamais réécrits. Hors garde-fou : traductions de news (contenu
+  tiers), import CSV (non affiché).
+- **Motifs** (`findForbiddenTerms`, sans casse ni accents sauf « sûr » / « entré sur ») : rentable,
+  profitable, edge, avantage statistique, garanti / assuré / à coup sûr (sauf négation), futur de
+  résultat (« tu vas », « tu seras »…), « améliorer ton taux de réussite », « optimiser tes gains »,
+  impératif d'achat / vente (« achète », « vends », « entre sur », « prends ce trade »), trader
+  « gagnant / perdant ». Acceptés : « trade gagnant », « bien sûr », « assure-toi de », « tu vends trop
+  tôt » (description), négations.
+- **Tests** : `ai-text-guard.spec.ts` (motifs, faux positifs), `ai-text-guard-wiring.spec.ts` (câblage,
+  modèle simulé), `ai-texts-compliance.spec.ts` (balaie prompts, démo, gabarits, textes de l'app ;
+  phrases hors champ autorisées nommément avec leur raison). Aucun appel réel à l'IA.
 
 ## Style des textes générés : pas de tiret cadratin (PROMPT-174)
 
@@ -1628,6 +1654,7 @@ part de lignes et non la perfection.
     réflexion avec `between_tools`, sans autre champ, effort `high` au plus. Détail dans `plans.md`.
 - **Santé** : `GET /api/health` = liveness (process vivant, healthcheck Docker) ;
   `GET /api/health/ready` = readiness (ping Postgres + Redis, 503 en nommant le composant).
+  `/health` jamais limitée en débit, `/health/ready` à 600 / min / IP (voir `security.md`).
 - **Environnement** : `src/config/env.ts` est la liste de référence (required / production /
   optional + format). Nouvelle variable → l'y ajouter ET dans `apps/api-mytradingcoach/.env.example`.
   En local, la valeur va dans le `.env` racine (commun) : `.env.development` / `.env.local` ne
@@ -1831,8 +1858,8 @@ redéployer : rien à lancer sur le VPS.
 - **Comptes réels des statistiques (#828, #823)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
   brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts` : hors démo, hors comptes internes
   (`isInternal`) et hors ADMIN. Toute nouvelle statistique admin les utilise, jamais une copie du filtre.
-  Jamais pour cibler des envois (`email-campaign.service.ts` garde son filtre : les comptes de test
-  reçoivent les e-mails).
+  Jamais pour cibler des envois (`email-campaign.service.ts` et `auto-campaigns.cron.ts` gardent leur
+  filtre, hors démo et ADMIN : les comptes de test reçoivent les e-mails ; `campaign-audience.spec.ts`).
 - **Comptes internes (#823)** : `User.isInternal`, posé par l'interrupteur de la fiche admin
   (`PATCH /admin/users/:id { isInternal }`, `AdminGuard`), jamais par le domaine de l'adresse. Recopié
   dans `DeletedAccount.isInternal` par `archiveAndDelete`. Exclu : agrégats admin (via `REAL_USERS_WHERE`),

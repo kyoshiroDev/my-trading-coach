@@ -197,6 +197,11 @@ la maquette design (« The Terminal »).
     trade à la main » (lien masqué quand Trade rapide est déjà là).
   - **Trades clôturés** (`live-closed-trades`) : 2 niveaux en mobile (sens + actif + résultat ; heure
     · entrée → sortie · TP/SL/Manuel), grille alignée ≥ 768 (`display: contents` sur les 2 niveaux).
+- **Compte de la session (Pré-session, #880)** : `session-account.util.ts`. Le message « Choisis un
+  compte pour lancer la session » ne s'affiche que si AUCUNE séance n'est active, que l'utilisateur a
+  des comptes et que l'en-tête est sur « Tous les comptes ». Séance active : la liste montre le compte
+  de la séance (désactivée), quel que soit le choix de l'en-tête. La démo a toujours une séance
+  active après le seed (même le week-end ou avant 09:45 ; le `demo-login` reseede une démo périmée).
 - **Colonne suivi prop firm** : compte de la session **éval ou funded synchronisé Tradovate**
   (`isLivePropAccount`, `live-prop-firm.util.ts`). `SessionLiveComponent` charge lui-même
   `TradovateStore` s'il ne l'est pas (sinon bloc masqué en ouverture directe / après F5, #437).
@@ -437,6 +442,13 @@ envoyées à l'API sont des horodatages ISO complets.
   rangée flex d'un item qui « wrappe » un enfant `flex:1` → l'item lui-même a besoin de
   `flex:1; min-width:0` (sélecteur de compte) ; valeur + visuel côte à côte dans une carte de
   ~156 px → `flex-wrap` ; en-tête titre + onglets → `flex-wrap`
+- **Texte à côté d'un montant** (sélecteur de compte, #879) : chaque ligne de texte en `nowrap` porte
+  sa troncature (`min-width:0; overflow:hidden; text-overflow:ellipsis`, badge en `flex-shrink:0`),
+  le montant est `nowrap; flex-shrink:0` (jamais coupé). Un `nowrap` sans `overflow` déborde SOUS
+  le montant voisin. Sélecteur ≤ 480 px : bouton en grille sur deux lignes (nom en haut sur toute la
+  largeur ; type · firme + solde dessous, `justify-items:start` sinon le texte se centre). Verrouillé
+  par `app-mytradingcoach-e2e/src/14-account-selector-layout.spec.ts` (320/360/390/768/1280 px,
+  boîtes mesurées).
 - **Un seul scroll vertical sur mobile** : `.main-content`. Pas de bloc `overflow-y:auto` borné
   (`max-height`, `flex:1 + min-height:0`) sous 768px — Mes comptes, calendrier éco, live feed.
   Un débordement horizontal voulu (tableau, onglets, carrousel) porte son propre `overflow-x:auto`

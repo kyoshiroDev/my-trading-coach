@@ -191,6 +191,25 @@ env $(grep -vE '^#|^$' ../../.env | xargs -d '\n') \
 
 ---
 
+## Horloge : tout test qui fixe une date la fige (2026-11-08)
+
+Deux tests ont cassé le 04/11 sans changement de code : ils fixaient une date (`NOW` au 03/11) mais
+le code testé lisait l'heure réelle (`isPremiumAccess(user)` sans `now`, `new Date()` dans
+`AccountsService.update`). Règle : un test qui écrit une date en dur fige l'horloge.
+
+- API : `freezeClock(date)` (`src/test/freeze-clock.ts`) dans le `describe` (ou en tête de fichier) :
+  `vi.useFakeTimers({ toFake: ['Date'] })` + `vi.setSystemTime`, `vi.useRealTimers()` après chaque test.
+  Les délais (`setTimeout`) restent réels.
+- Front : même chose à la main (`vi.useFakeTimers({ toFake: ['Date'] })`, `vi.setSystemTime`, `afterEach`).
+- **Contrôle sous une autre date** (toutes les suites) : `tools/scripts/shifted-clock.mjs`, préchargé
+  par Node dans chaque worker, décale `Date` dès le démarrage (puis l'horloge avance) :
+  `TEST_NOW=2027-02-15T10:00:00Z NODE_OPTIONS="--import $PWD/tools/scripts/shifted-clock.mjs" pnpm nx test api-mytradingcoach --skip-nx-cache`.
+  Un test qui change de résultat dépend de la date du jour. Témoin : `src/test/shifted-clock.spec.ts`.
+  Limite : `NOW()` de Postgres ne bouge pas. Sous décalage, `signup-trial-funnel.int-spec.ts` échoue
+  (données en heure JS, requête en `NOW()`) sans être fautif.
+
+---
+
 ## Config Vitest NestJS
 
 ```typescript

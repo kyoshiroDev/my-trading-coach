@@ -43,6 +43,11 @@ de libs ; le front n'importe jamais le back (et inversement) ; tout le monde peu
 - Compte démo en lecture seule : toute nouvelle mutation est bloquée d'office (`DemoReadOnlyGuard`) ;
   pense à enrichir le seed démo quand tu ajoutes des données.
 - `pnpm` / `pnpm dlx` uniquement, jamais `npm` / `npx`.
+- **Tout test qui fixe une date fige l'horloge** (`vi.useFakeTimers` + `vi.setSystemTime`, remis en
+  état après chaque test ; côté API : `freezeClock(date)` de `src/test/freeze-clock.ts`). Le code lit
+  souvent l'heure réelle : sans horloge figée, le test casse le jour où la date du jour dépasse un
+  délai (essai, 48 h, 90 jours). Vérifier n'importe quelle suite sous une autre date :
+  `TEST_NOW=2027-02-15T10:00:00Z NODE_OPTIONS="--import $PWD/tools/scripts/shifted-clock.mjs" pnpm nx test <projet> --skip-nx-cache`.
 
 ## Taille des fichiers
 

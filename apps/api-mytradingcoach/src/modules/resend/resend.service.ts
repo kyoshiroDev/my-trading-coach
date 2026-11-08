@@ -85,9 +85,8 @@ export class ResendService {
       'https://app.mytradingcoach.app';
     // Champ, pas un getter : le double des tests d'intégration est dérivé du prototype.
     this.billingUrl = `${this.frontendUrl}/profil?tab=params`;
-    this.logger.log(
-      `ResendService init | from: ${this.from} | key: ${apiKey.slice(0, 8)}...`,
-    );
+    // Jamais un morceau de la clé dans les journaux, même un préfixe : seulement sa présence.
+    this.logger.log(`ResendService init | from: ${this.from} | Resend configuré`);
     const dryRunAsked = this.config.get<string>('RESEND_DRY_RUN') === 'true';
     this.dryRun = dryRunAsked && this.frontendUrl !== PROD_FRONTEND_URL;
     if (dryRunAsked && !this.dryRun) this.logger.error('RESEND_DRY_RUN ignoré : environnement de prod');
