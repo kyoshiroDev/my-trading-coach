@@ -370,8 +370,19 @@ const faq = [
   .pf-ex-bar { height: 12px; border-radius: 6px; background: var(--bg3); overflow: hidden; }
   .pf-ex-bar span { display: block; width: 24%; height: 100%; background: var(--yel); border-radius: 6px; }
   .pf-ex-tiles { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .pf-ex-tiles div { background: var(--bg3); border-radius: 12px; padding: 14px; }
-  .pf-ex-tiles dd { margin: 0; font-family: var(--mono); font-size: 19px; font-variant-numeric: tabular-nums; }
+  /* Libellé et valeur centrés ; largeur égale (grille) et hauteur égale (étirement de ligne). */
+  .pf-ex-tiles div {
+    background: var(--bg3);
+    border-radius: 12px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+  }
+  .pf-ex-tiles dd { margin: 0; font-family: var(--mono); font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pf-ex-loss dd { color: var(--red); }
   .pf-example figcaption { text-align: center; font-size: 13px; color: var(--txt3); }
 
@@ -524,11 +535,19 @@ const faq = [
     .pf-ex-label { font-size: 11px; }
     .pf-ex-amt { font-size: 46px; }
     .pf-ex-bar { height: 10px; }
-    .pf-ex-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pf-ex-tiles div { padding: 12px; }
-    .pf-ex-tiles dt { font-size: 12px; }
-    .pf-ex-tiles dd { font-size: 17px; }
-    .pf-ex-loss { display: none; }
+    /* Les trois cartes restent visibles en mobile (08/11), sur une ligne. */
+    .pf-ex-tiles { gap: 8px; }
+    .pf-ex-tiles div { padding: 12px 6px; gap: 4px; }
+    /* « Objectif restant » passe sur 2 lignes : chaque libellé réserve 2 lignes, valeurs alignées. */
+    .pf-ex-tiles dt {
+      font-size: 12px;
+      letter-spacing: 0;
+      line-height: 1.3;
+      min-height: calc(2 * 1.3em);
+      display: flex;
+      align-items: center;
+    }
+    .pf-ex-tiles dd { font-size: 15px; }
     .pf-example figcaption { font-size: 12px; }
     .pf-reassure { font-size: 13px; }
   }
