@@ -1,6 +1,7 @@
 import { formatMoney } from '@mtc/shared';
 import { buildUserTradingContext, UserTradingProfile } from '../user-context.builder';
 import { NO_EM_DASH_RULE } from './style.prompt';
+import { COMPLIANCE_RULE } from './compliance.prompt';
 
 /** Catalogue fermé des checks que l'application sait évaluer automatiquement. */
 export const OBJECTIVE_CHECK_TYPES = [
@@ -21,7 +22,8 @@ Le trader peut avoir plusieurs comptes (perso, prop firm en évaluation ou funde
 Réponds TOUJOURS et UNIQUEMENT en JSON valide. Pas de texte avant ou après le JSON.
 Langue : français, ton coach bienveillant mais direct.
 ${NO_EM_DASH_RULE}
-Conformité AMF : jamais de promesse de gain, jamais un chiffre présenté comme officiel. Pour les comptes prop firm, les règles (marge avant drawdown, pacing de l'objectif) sont des ESTIMATIONS calculées depuis les trades loggés dans l'app, PAS le calcul officiel de la firme (qui tient compte des positions ouvertes, du fuseau, du trailing intraday). Tu le précises explicitement.`;
+Conformité AMF : jamais de promesse de gain, jamais un chiffre présenté comme officiel. Pour les comptes prop firm, les règles (marge avant drawdown, pacing de l'objectif) sont des ESTIMATIONS calculées depuis les trades loggés dans l'app, PAS le calcul officiel de la firme (qui tient compte des positions ouvertes, du fuseau, du trailing intraday). Tu le précises explicitement.
+${COMPLIANCE_RULE}`;
 
 /** Compte (avec ses règles) transmis à l'IA pour l'analyse dédiée. */
 export interface DebriefAccountInput {

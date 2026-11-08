@@ -1,3 +1,11 @@
+/* L'hôte ne doit pas former de boîte : une barre collante reste prisonnière de son bloc
+   parent. Dans une page dont l'hôte est en flex (Tableau de bord, Mes comptes), mtc-topbar
+   devenait un bloc de la hauteur de la barre et .topbar défilait avec la page, laissant voir
+   le contenu sous le bandeau « Mode démo ». */
+:host {
+  display: contents;
+}
+
 .topbar {
   position: sticky;
   /* Sous le bandeau « Mode démo », collant lui aussi (z-index 50) : à top 0, la barre passait

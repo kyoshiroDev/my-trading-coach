@@ -10,7 +10,7 @@
  *  2. la purge reste scopée au user démo (aucun deleteMany sans userId) ;
  *  3. tous les trades générés tiennent dans la fenêtre « 1M » par défaut du dashboard.
  */
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 
 // Chaque test lance le seed complet (hash du mot de passe + recherche du tirage) : sous la
 // charge de la suite complète, deux runs dépassent les 5 s par défaut.
@@ -24,6 +24,7 @@ vi.setConfig({ testTimeout: 60_000 });
 import { PrismaClient } from '@prisma/client';
 import { seedDemo, assertDemoCalendar, buildDemoDataset, DEMO_EMAIL, DEMO_WINDOW_DAYS } from './demo-seed';
 import { generate } from './demo-data/generate';
+import { activeSessionWhere } from '../session/active-session';
 
 // Date simulée, pour vérifier la robustesse du tirage (il dépend de la date du run) :
 // DEMO_SEED_DATE=2026-11-03T03:20:00 pnpm exec vitest run … demo-seed-idempotence.spec.ts
@@ -813,4 +814,40 @@ describe('seedDemo : notifications push (revue phase 2 m9)', () => {
     const pref = calls.find((c) => c.model === 'traderPushPreference' && c.op === 'upsert')!;
     expect(pref.args).toMatchObject({ where: { userId: DEMO_ID }, update: { quietStart: 22 * 60, quietEnd: 7 * 60 } });
   });
+});
+
+/**
+ * Pré-session de la démo (#880) : à toute heure après un seed, la séance du jour est ACTIVE, vue
+ * comme active par l'API et rattachée à un compte. L'écran « Session du jour » ne doit donc jamais
+ * inviter à la lancer (le message venait du front, qui ignorait la séance en cours).
+ * Horloge figée : le seed et le filtre de séance active lisent l'heure courante.
+ */
+describe('séance du jour de la démo selon l’heure (horloge figée)', () => {
+  const HOURS: Record<string, string> = {
+    'lundi 10:30 Paris': '2026-11-09T09:30:00Z',
+    'lundi 22:00 Paris': '2026-11-09T21:00:00Z',
+    'dimanche 15:00 Paris': '2026-11-08T14:00:00Z',
+    'lundi 01:30 Paris (reseed du demo-login)': '2026-11-09T00:30:00Z',
+  };
+  afterEach(() => vi.useRealTimers());
+
+  for (const [label, at] of Object.entries(HOURS)) {
+    it(label, async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(at));
+      const now = new Date();
+      const { prisma, created } = fakePrisma([]);
+      await seedDemo(prisma, now);
+
+      const active = created['tradeSession'].filter((s) => s['status'] === 'ACTIVE');
+      expect(active, 'une seule séance active').toHaveLength(1);
+      const session = active[0];
+      expect(session['accountId'], 'séance sans compte').toBeTruthy();
+      expect(String(session['accountId'])).toMatch(/^tradingAccount-/); // id rendu par la création du compte
+      // Ce que l'API renvoie comme séance du jour : statut ACTIVE et ouverte dans la journée en cours.
+      const where = activeSessionWhere(DEMO_ID, now) as { startedAt: { gte: Date } };
+      expect((session['startedAt'] as Date).getTime()).toBeGreaterThanOrEqual(where.startedAt.gte.getTime());
+      expect((session['startedAt'] as Date).getTime()).toBeLessThanOrEqual(now.getTime());
+    });
+  }
 });

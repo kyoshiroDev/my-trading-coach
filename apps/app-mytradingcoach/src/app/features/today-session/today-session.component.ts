@@ -48,6 +48,7 @@ import {
   hasResultsToShare,
   moodDisplay,
 } from '../../shared/components/results-card/results-card.util';
+import { sessionAccountChoiceRequired, sessionAccountValue, sessionRunning } from './session-account.util';
 
 const EMOTION_COLORS: Record<string, string> = {
   CONFIDENT: 'var(--green)',
@@ -107,11 +108,18 @@ export class TodaySessionComponent implements OnInit, OnDestroy {
   });
 
   // ── Compte de la session ────────────────────────────────────────────────
-  // Vrai si l'utilisateur a plusieurs comptes mais reste sur « Tous » :
-  // une session = un compte → on demande un choix précis avant de lancer.
-  protected readonly accountChoiceRequired = computed(
-    () => this.selectedAccount.activeAccounts().length > 0
-      && this.selectedAccount.accountParam() === undefined,
+  // Une session = un compte : sans séance en cours, « Tous » demande un choix précis avant de
+  // lancer. Une séance active garde son compte (liste figée sur lui, pas de message), #880.
+  protected readonly sessionRunning = computed(() => sessionRunning(this.store.activeSession()));
+  protected readonly accountChoiceRequired = computed(() =>
+    sessionAccountChoiceRequired({
+      activeAccountCount: this.selectedAccount.activeAccounts().length,
+      selectedAccountParam: this.selectedAccount.accountParam(),
+      session: this.store.activeSession(),
+    }),
+  );
+  protected readonly sessionAccountSelectValue = computed(() =>
+    sessionAccountValue(this.selectedAccount.selectedAccountId(), this.store.activeSession()),
   );
 
   /** Libellé d'option du dropdown compte : « FTMO 100K · Éval · Apex ». */

@@ -119,7 +119,9 @@
         <div session-account class="sd-acct-row">
           <span class="sd-acct-lbl">Compte de la session</span>
           <select class="sd-acct-select" data-testid="session-account-select"
-                  [value]="selectedAccount.selectedAccountId()"
+                  [value]="sessionAccountSelectValue()"
+                  [disabled]="sessionRunning()"
+                  [attr.title]="sessionRunning() ? 'Compte de la session en cours' : null"
                   (change)="selectedAccount.select($any($event.target).value)">
             <option value="all" disabled>Choisis un compte (obligatoire)</option>
             @for (a of selectedAccount.activeAccounts(); track a.id) {

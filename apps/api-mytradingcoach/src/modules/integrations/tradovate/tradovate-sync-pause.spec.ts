@@ -19,7 +19,9 @@ const ago = (ms: number) => new Date(now.getTime() - ms);
 const imported = new Date('2026-10-01T00:00:00Z');
 const H = 3_600_000;
 
-// Horloge figée sur `now` : le service lit l'heure courante (date du statut, délai de 48 h).
+// Horloge figée sur `now` (Date seulement) : AccountsService.update lit l'heure réelle pour décider
+// si le compte était en pause. Sans ça, `ago(H)` (1 h avant le 02/11/2026) dépassait les 48 h pour
+// de vrai dès le 04/11 et « retour en Actif avant les 48 h » cassait (CI du 08/11).
 freezeClock(now);
 
 describe('syncPauseReason', () => {
