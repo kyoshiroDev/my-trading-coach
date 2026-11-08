@@ -70,7 +70,7 @@ Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise 
 5. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
 
 ### Avant chaque arrêt pour Greg
-**Rapport d'étape 0, questions, captures, fin de tâche** : appelle l'agent `relecteur` avec le prompt de la tâche, ton rapport et tes questions. Applique ses « Corrections à faire maintenant » et ses réponses, puis n'envoie à Greg **que** sa section « Pour Greg » avec ton résumé en 5 lignes maximum. Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné).
+**Rapport d'étape 0, questions, captures, fin de tâche** : appelle l'agent `relecteur` avec le prompt de la tâche, ton rapport et tes questions. Applique ses « Corrections à faire maintenant » et ses réponses, puis n'envoie à Greg **que** sa section « Pour Greg » avec ton résumé en 5 lignes maximum. Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné). Quand Greg donne une nouvelle règle de com ou un nouveau chiffre qui change la stratégie, ajoute-le à `.claude/contexte-com.md` dans le même commit.
 
 ### Après
 6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
