@@ -73,7 +73,9 @@ async function openMenu(page: Page, trigger: Locator) {
 }
 
 /** Le texte d'un élément tient dans sa boîte (pas coupé, pas d'ellipsis). */
-const fits = (l: Locator) => l.evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
+type Sized = { scrollWidth: number; clientWidth: number };
+const fits = (l: Locator) =>
+  l.evaluate((el) => (el as unknown as Sized).scrollWidth <= (el as unknown as Sized).clientWidth + 1);
 
 async function openDemoWith(page: Page, s: Scenario) {
   await page.route(/\/api\/accounts(\?.*)?$/, async (route) => {
@@ -123,7 +125,8 @@ for (const width of WIDTHS) {
         expect(b.x + b.width).toBeLessThanOrEqual(tr.x + tr.width);
         // Rien ne déborde de l'écran (pas de défilement horizontal de la page).
         expect(tr.x + tr.width).toBeLessThanOrEqual(width);
-        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        // Largeur réelle de la page (le projet e2e n'a pas les types DOM : élément typé à la main).
+        expect(await page.locator('html').evaluate((el) => (el as unknown as Sized).scrollWidth)).toBeLessThanOrEqual(width);
 
         // Menu ouvert : chaque option garde son solde entier, sans texte dessous.
         await openMenu(page, trigger);
