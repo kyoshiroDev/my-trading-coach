@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { freezeClock } from '../../../test/freeze-clock';
 import { AccountStatus, AdminPushEvent, BrokerConnection, BrokerConnectionStatus, BrokerProvider } from '@prisma/client';
 import { AccountsService } from '../../accounts/accounts.service';
 import { TradovateBackgroundRefreshCron } from './tradovate-background-refresh.cron';
@@ -19,11 +20,7 @@ const imported = new Date('2026-10-01T00:00:00Z');
 const H = 3_600_000;
 
 // Horloge figée sur `now` : le service lit l'heure courante (date du statut, délai de 48 h).
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] });
-  vi.setSystemTime(now);
-});
-afterEach(() => vi.useRealTimers());
+freezeClock(now);
 
 describe('syncPauseReason', () => {
   it('ACTIVE et PASSED ne sont jamais en pause', () => {
