@@ -1,221 +1,36 @@
 ---
-import { API_URL, FEATURES } from '../config';
-import Base from '../layouts/Base.astro';
-import Nav from '../components/Nav.astro';
-import Hero from '../components/Hero.astro';
-import PropFirmLive from '../components/PropFirmLive.astro';
-import Compatible from '../components/Compatible.astro';
-import DayTimeline from '../components/DayTimeline.astro';
-import Features from '../components/Features.astro';
-import CoachIA from '../components/CoachIA.astro';
-import Debrief from '../components/Debrief.astro';
-import MultiComptes from '../components/MultiComptes.astro';
-import Compare from '../components/Compare.astro';
-import Pricing from '../components/Pricing.astro';
-import Referral from '../components/Referral.astro';
-import Testimonials from '../components/Testimonials.astro';
-import FAQ from '../components/FAQ.astro';
-import CtaFinal from '../components/CtaFinal.astro';
-import Footer from '../components/Footer.astro';
-import { HOME_SCHEMA } from '../data/schema';
-import { founderOpenAtBuild } from '../lib/founder-build';
-
-const ARTICLES = [
-  {
-    slug: "revenge-trading",
-    title: "Revenge Trading : Comment l'Identifier et l'Arrêter",
-    desc: "Le revenge trading détruit les comptes. Repère ce comportement et les techniques pour l'éliminer.",
-    tags: ["Psychologie", "Discipline"],
-    date: "10 Avr 2026",
-  },
-  {
-    slug: "win-rate-trading",
-    title: "Win Rate en Trading : Ce que Votre Taux de Réussite Cache",
-    desc: "Un win rate de 40 % peut être plus rentable qu'un win rate de 70 %. Comprendre ce chiffre change tout.",
-    tags: ["Analyse", "Performance"],
-    date: "12 Avr 2026",
-  },
-  {
-    slug: "psychologie-trading",
-    title: "Psychologie du Trading : Les 7 Biais qui Détruisent vos Trades",
-    desc: "Biais de confirmation, excès de confiance, aversion aux pertes : identifier ces biais est la première étape.",
-    tags: ["Psychologie", "Biais cognitifs"],
-    date: "15 Avr 2026",
-  },
-];
-
-// Compteur de traders : fetch au build (SEO + valeur initiale), fallback si API down.
-const FALLBACK_TRADERS = 0; // sous le seuil public → aucun chiffre affiché
-let traders = FALLBACK_TRADERS;
-try {
-  const res = await fetch(`${API_URL}/public/stats`);
-  if (res.ok) {
-    const j = await res.json();
-    if (typeof j?.data?.traders === 'number') traders = j.data.traders;
-  }
-} catch {
-  // API injoignable au build → on garde le fallback
-}
-
-// Offre fondateur ouverte au build → carte, note, FAQ et bouton du Hero dans le HTML statique.
-const founderOpen = await founderOpenAtBuild();
+// PAGE DE SECOURS de la redirection temporaire de l'accueil (2026-11-08, newsletter NinjaTrader).
+// En prod, `/` et `/index.html` partent en 302 vers /prop-firm par nginx (landing-releases.conf) :
+// cette page n'est alors jamais servie. Elle ne sert que si la règle nginx n'est pas (encore)
+// appliquée : elle renvoie vers /prop-firm en gardant la query string (utm_*, ref, promo, internal…)
+// et l'ancre, par location.replace (pas d'entrée d'historique, le bouton retour ne boucle pas).
+// Sans JavaScript : meta refresh dans <noscript> (sans query string), plus un lien visible.
+//
+// Volontairement SANS Base.astro : ni script d'acquisition, ni GA4, ni bandeau cookies. La visite
+// est comptée une seule fois, sur /prop-firm, avec les UTM de l'URL. (Limite connue : sans UTM,
+// le site d'origine est perdu par la redirection JavaScript, la visite sort en « direct » ; la 302
+// nginx, elle, le conserve.)
+//
+// L'ancienne accueil est sur /accueil (noindex). Retrait de la redirection : astro.md,
+// « Accueil → /prop-firm ».
 ---
 
-<Base
-  title="Journal de trading IA et coach | MyTradingCoach"
-  description="Journal de trading IA : il te prépare avant ta session, t'accompagne en live et débrieffe ta journée. Crypto, Futures, Forex. Gratuit sans CB."
-  canonical="https://www.mytradingcoach.app/"
-  ogUrl="https://www.mytradingcoach.app/"
-  schema={HOME_SCHEMA}
->
-  {/*
-    REDIRECTION TEMPORAIRE DE LA PUB (2026-10-18, fin prévue vers le 25/10) : le boost Instagram en
-    cours pointe sur /?utm_source=instagram&utm_medium=paid&utm_campaign=gratuit-reel et Meta ne
-    permet pas d'en changer le lien. Tout visiteur arrivé avec utm_medium=paid (valeur exacte) part
-    vers /prop-firm, paramètres intacts (UTM, fbclid, internal…), par location.replace (pas d'entrée
-    d'historique : le bouton retour ne boucle pas). Tout en haut du <head>, avant tout autre script :
-    le script d'acquisition (Base.astro) et GA4 (Analytics.astro) voient window.__mtcPaidRedirect et
-    n'envoient rien depuis l'accueil ; la visite part de /prop-firm. Les autres visiteurs ne voient
-    aucune différence. Retrait : supprimer ce bloc (les deux gardes __mtcPaidRedirect deviennent
-    inertes, à retirer avec si on veut).
-  */}
-  <Fragment slot="head-start">
-    <script is:inline>(function(){try{var q=location.search;if(new URLSearchParams(q).get('utm_medium')==='paid'){window.__mtcPaidRedirect=true;location.replace('/prop-firm'+q+location.hash);}}catch(e){}})();</script>
-  </Fragment>
-  <Nav />
-  <Hero traders={traders} founderOpen={founderOpen} />
-  <!-- Prop firms en direct juste après le Hero : la promesse du titre, prouvée (audit 2026-10-06). -->
-  <PropFirmLive />
-  <!-- Compatible avec : juste après l'explication de la connexion Tradovate, comme sur /prop-firm. -->
-  <Compatible />
-  <!-- Le produit se voit dès le 2e écran ; Problem retiré, il redisait Moments (audit UX 2026-09-27). -->
-  {/*
-    « L'app en vrai » retiree le 2026-09-29 : le hero porte desormais une vraie capture avec
-    sa mention « capture reelle », donc l'objection « c'est une maquette ? » est traitee des
-    le premier ecran. Sa capture IA Insights a rejoint la section Coach IA, ou elle sert
-    d'appui a l'argument plutot que de section concurrente. Le composant reste dans le depot.
-  */}
-  {/*
-    `Moments` retire (audit UX 2026-09-28) : il racontait la MEME histoire avant/pendant/apres
-    que `DayTimeline`, avec 49 % de vocabulaire commun et 2 423 px a eux deux. La timeline est
-    la meilleure des deux, parce qu'elle est horodatee et incarnee : on voit un trader a 08h15,
-    pas une liste de fonctionnalites. Le composant reste dans le depot si tu veux revenir.
-  */}
-  <DayTimeline />
-  <Features />
-  <!-- L'app en vrai (maquettes produit), puis le coach IA et le débrief : décision D2 de l'audit. -->
-  <CoachIA />
-  <Debrief />
-  {FEATURES.multiAccounts && <MultiComptes />}
-  <Compare />
-  <Pricing founderOpen={founderOpen} />
-  {FEATURES.referral && <Referral />}
-  <Testimonials traders={traders} />
-  <FAQ founderOpen={founderOpen} />
-  <CtaFinal />
-
-  <!-- Section blog : liens internes pour le SEO -->
-  <section class="blog-teaser">
-    <div class="wrap">
-      {/* Meme traitement que les autres libelles de section : centre au-dessus du bloc,
-          au lieu d'etre coince a gauche dans la rangee qui porte aussi le lien de droite. */}
-      <div class="blog-eyebrow"><span class="blog-label">Blog</span></div>
-
-      <div class="blog-head">
-        <div>
-          <h2 class="blog-title">
-            Ressources pour <em>mieux trader</em>
-          </h2>
-        </div>
-        <a href="/blog" class="blog-all">
-          Voir tous les articles →
-        </a>
-      </div>
-
-      <div class="blog-grid">
-        {ARTICLES.map((article) => (
-          <a href={`/blog/${article.slug}`} class="blog-card">
-            <div class="blog-tags">
-              {article.tags.map((tag) => (
-                <span class="blog-tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <h3>
-              {article.title}
-            </h3>
-            <p>
-              {article.desc}
-            </p>
-            <span class="blog-date">{article.date}</span>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <Footer />
-
-  <!-- Rafraîchit le compteur de traders en live (la valeur du build sert de fallback). -->
-  <script>
-    import { TRADERS_PUBLIC_THRESHOLD } from '../config';
-    const API = import.meta.env.PUBLIC_API_URL ?? 'https://api.mytradingcoach.app/api';
-    fetch(`${API}/public/stats`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        const n = j?.data?.traders;
-        if (typeof n !== 'number') return;
-        // Repassé sous le seuil depuis le build → on retire le chiffre plutôt que d'afficher un petit nombre.
-        if (n < TRADERS_PUBLIC_THRESHOLD) {
-          document.querySelectorAll('[data-traders-proof]').forEach((el) => el.remove());
-          return;
-        }
-        document
-          .querySelectorAll('[data-traders-count]')
-          .forEach((el) => { el.textContent = String(n); });
-      })
-      .catch(() => { /* API down → on garde la valeur du build */ });
-  </script>
-</Base>
-
-<style>
-.blog-teaser { padding: 80px 5%; background: var(--bg2); border-top: 1px solid var(--b); }
-.blog-eyebrow { text-align: center; margin-bottom: 14px; }
-
-.blog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
-.blog-label {
-  font-size: 11px; font-family: var(--mono); color: var(--pulse); letter-spacing: 2px;
-  text-transform: uppercase; display: block; margin-bottom: 10px;
-}
-.blog-title {
-  font-family: var(--disp); font-size: clamp(24px, 4vw, 36px); font-weight: 700;
-  letter-spacing: -0.5px; color: var(--txt); margin: 0;
-}
-.blog-title em { font-style: italic; font-family: var(--body); font-weight: 300; color: var(--blue2); }
-.blog-all {
-  font-size: 13px; color: var(--blue2); text-decoration: none; font-family: var(--mono);
-  white-space: nowrap; flex-shrink: 0;
-}
-.blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.blog-card {
-  background: var(--card); border: 1px solid var(--b); border-radius: 14px; padding: 24px;
-  text-decoration: none; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s;
-}
-.blog-card:hover { border-color: rgba(99, 155, 255, .3); }
-.blog-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.blog-tag {
-  font-size: 10px; font-family: var(--mono); color: var(--pulse); background: rgba(34, 211, 238, .07);
-  border: 1px solid rgba(34, 211, 238, .2); padding: 2px 8px; border-radius: 100px;
-}
-.blog-card h3 { font-family: var(--disp); font-size: 16px; font-weight: 700; color: var(--txt); margin: 0; line-height: 1.3; }
-.blog-card p { font-size: 13px; color: var(--txt2); margin: 0; line-height: 1.6; font-weight: 300; flex: 1; }
-.blog-date { font-size: 11px; color: var(--txt3); font-family: var(--mono); }
-
-@media (max-width: 767px) {
-  .blog-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-</style>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script is:inline>try{location.replace('/prop-firm'+location.search+location.hash);}catch(e){location.href='/prop-firm';}</script>
+  <noscript><meta http-equiv="refresh" content="0; url=/prop-firm" /></noscript>
+  <title>MyTradingCoach</title>
+  <meta name="robots" content="noindex, follow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0e14; color: #c9d1d9; font: 16px/1.5 system-ui, sans-serif; }
+    a { color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <p><a href="/prop-firm">Continuer vers MyTradingCoach →</a></p>
+</body>
+</html>
