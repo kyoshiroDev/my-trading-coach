@@ -56,9 +56,10 @@ Pour l'app **admin**, la maquette `admin-mytradingcoach.html` (racine) reste LA 
 Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise déjà)
 - **Nouvelle feature** → branche depuis `dev`, livrée sur `dev`, puis `dev` → `main`. Ne passe pas par beta.
 - **Tout le reste** (bug, optimisation, perf, refactor, dette, docs, CI…) → branche depuis `dev`, livrée sur `dev`. Ne passe pas par beta.
-- Les PR vers `dev` et `main` sont ouvertes par Greg, jamais par Claude.
+- Les PR vers `dev` sont ouvertes par l'agent `relecteur`, une fois tout validé et après le « OK push » de Greg. La PR `dev` → `main` n'est ouverte que sur demande explicite de Greg. **Seul Greg merge** (merge commit, jamais squash).
 
 ### Avant de coder
+0. Prompt collé par Greg → l'enregistrer tel quel dans `.claude/prompts/PROMPT-<nom-du-prompt>.md` (texte exact, compléments ajoutés à la suite) et le commiter avec le travail : le relecteur lit ce texte-là.
 1. Lire l'agent pertinent dans `.claude/agents/`
 2. Lire `admin-mytradingcoach.html` avant tout travail sur l'app admin
 3. Lire la maquette dédiée (`maquette-*.html`) si elle existe pour la vue concernée
@@ -67,6 +68,9 @@ Demander d'abord : **nouvelle feature ou pas ?** (sauf si le prompt le précise 
 ### Pendant
 4. Builder après chaque partie — zéro erreur avant de continuer
 5. Ne jamais `npm` / `npx` → toujours `pnpm` / `pnpm dlx`
+
+### Avant chaque arrêt pour Greg
+**Rapport d'étape 0, questions, captures, fin de tâche** : appelle l'agent `relecteur` avec le prompt de la tâche, ton rapport et tes questions. Applique ses « Corrections à faire maintenant » et ses réponses, puis n'envoie à Greg **que** sa section « Pour Greg » avec ton résumé en 5 lignes maximum. Quand Greg prend une nouvelle décision, ajoute-la en haut de `.claude/decisions.md` (dans le même commit que le travail concerné).
 
 ### Après
 6. Commit atomique : `feat(scope):` / `fix(scope):` / `perf(scope):`
