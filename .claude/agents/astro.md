@@ -208,6 +208,11 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   de ligne). L'en-tête garde « Se connecter » sur une ligne (`white-space: nowrap`, 360 px compris).
 - Carte d'exemple « Il te reste 480 $ » : montant et barre en **jaune** (alerte), perte du jour en
   rouge (design.md : rouge = pertes uniquement), mention « Exemple avec des données de démonstration ».
+  Les 3 petites cartes (objectif, perte, trades) : libellé et valeur **centrés**, valeurs sans retour à
+  la ligne, les trois visibles aussi en mobile (une ligne, libellés réservés sur 2 lignes) (08/11).
+- Haut de page : « Voir la démo » = **bouton secondaire** (contour `--blue` 2 px, icône lecture, même
+  hauteur/arrondi/taille que « Commencer gratuitement »), mention mono « Sans compte · 1 min » dessous ;
+  < 640 px les deux boutons empilés pleine largeur, inscription d'abord. Lien et `cta_demo` inchangés (08/11).
 - Tarifs (`PfPricing`) : même mécanisme fondateur que la home (`founderOpen` au build + `initFounderPricing`),
   mêmes `data-cta` (`free` / `founder` / `premium`). Premium « Recommandé » quand la carte Fondateur
   est absente, « Prix normal » sinon. Listes courtes, « Comptes illimités » seulement si
