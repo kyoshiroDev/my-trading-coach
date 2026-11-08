@@ -20,7 +20,7 @@
         <span class="acct-dot" [style.background]="dotColor(sel)" [style.boxShadow]="'0 0 8px ' + dotColor(sel)"></span>
         <span class="acct-txt">
           <span class="acct-name">{{ sel.label }}</span>
-          <span class="acct-tag">{{ tagFor(sel) }}
+          <span class="acct-tag"><span class="acct-tag-txt">{{ tagFor(sel) }}</span>
             @if (isInactive(sel.status)) {
               <span class="status-badge {{ statusBadgeClass(sel.status) }}">{{ statusLabel(sel.status) }}</span>
             }
@@ -68,7 +68,7 @@
           <span class="acct-dot" [style.background]="dotColor(a)"></span>
           <span class="opt-txt">
             <span class="opt-name">{{ a.label }}</span>
-            <span class="opt-tag">{{ tagFor(a) }}</span>
+            <span class="opt-tag"><span class="opt-tag-txt">{{ tagFor(a) }}</span></span>
           </span>
           <span class="opt-bal">{{ balanceFor(a) }}</span>
           <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
@@ -91,7 +91,7 @@
             <span class="acct-dot" [style.background]="dotColor(a)"></span>
             <span class="opt-txt">
               <span class="opt-name">{{ a.label }}</span>
-              <span class="opt-tag">{{ tagFor(a) }} <span class="status-badge {{ statusBadgeClass(a.status) }}">{{ statusLabel(a.status) }}</span></span>
+              <span class="opt-tag"><span class="opt-tag-txt">{{ tagFor(a) }}</span> <span class="status-badge {{ statusBadgeClass(a.status) }}">{{ statusLabel(a.status) }}</span></span>
             </span>
             <span class="opt-bal">{{ balanceFor(a) }}</span>
             <span class="opt-check"><svg [lucideIcon]="CheckIcon" [size]="14"></svg></span>
