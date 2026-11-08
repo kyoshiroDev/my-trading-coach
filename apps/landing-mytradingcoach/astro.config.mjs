@@ -36,6 +36,11 @@ export default defineConfig({
         if (page.includes('/404') || page.includes('/confidentialite')) return false;
         // Page de test publicitaire (noindex), accessible par le lien de la pub seulement.
         if (/\/prop-firm\/?$/.test(page)) return false;
+        // Redirection temporaire de l'accueil (2026-11-08) : `/` part en 302 vers /prop-firm et
+        // l'ancienne accueil vit sur /accueil (noindex). Ni l'une ni l'autre dans le sitemap.
+        // Retrait : supprimer ces deux lignes avec la redirection (astro.md, « Accueil → /prop-firm »).
+        if (/^https:\/\/www\.mytradingcoach\.app\/?$/.test(page)) return false;
+        if (/\/accueil\/?$/.test(page)) return false;
         if (!MULTI_ACCOUNTS && page.includes('/journal-trading-prop-firm')) return false;
         if (!REFERRAL && page.includes('/ambassadeur')) return false;
         return true;

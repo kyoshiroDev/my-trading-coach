@@ -2,20 +2,32 @@
 import { APP_URL } from '../config';
 import FounderBanner from './FounderBanner.astro';
 
-// false sur les pages où un CTA de conversion n'a pas sa place (ex. /disclaimer).
-const { stickyCta = true } = Astro.props;
+// stickyCta : false sur les pages où un CTA de conversion n'a pas sa place (ex. /disclaimer).
+// home : true sur l'ancienne accueil (/accueil), dont le menu et le bandeau restent sur la page même.
+// Ailleurs, l'accueil du site est /prop-firm (redirection temporaire de `/`, 2026-11-08) : logo,
+// ancres et bandeau fondateur y pointent directement, sans détour par la 302.
+const { stickyCta = true, home = false } = Astro.props;
+const links = home
+  ? [
+      { href: '#journee', label: 'Comment ça marche' },
+      { href: '#features', label: 'Fonctionnalités' },
+      { href: '#pricing', label: 'Tarifs' },
+      { href: '#faq', label: 'FAQ' },
+    ]
+  : [
+      { href: '/prop-firm#comment', label: 'Comment ça marche' },
+      { href: '/prop-firm#prop-firms', label: 'Fonctionnalités' },
+      { href: '/prop-firm#tarifs', label: 'Tarifs' },
+    ];
 ---
-<FounderBanner />
+<FounderBanner href={home ? '#pricing' : '/prop-firm#tarifs'} />
 <div class="nav-bar">
-  <a href="/" class="nav-logo">
+  <a href="/prop-firm" class="nav-logo">
     <img src="/icon/logo-navbar.svg" alt="MyTradingCoach : Journal de trading IA" height="32" style="display:block" />
   </a>
 
   <nav id="nav-links" class="nav-links">
-    <a href="/#moments">Comment ça marche</a>
-    <a href="/#features">Fonctionnalités</a>
-    <a href="/#pricing">Tarifs</a>
-    <a href="/#faq">FAQ</a>
+    {links.map((l) => <a href={l.href}>{l.label}</a>)}
     <a href={`${APP_URL}/login`} class="nav-login-link">Connexion</a>
     <a href={`${APP_URL}/register`} class="nav-cta" data-ga-event="cta_signup" data-ga-place="nav">Commencer gratuitement →</a>
   </nav>
