@@ -1,5 +1,6 @@
 import { formatMoney } from '@mtc/shared';
 import { FRENCH_RULE, NO_EM_DASH_RULE } from '../../ai/prompts/style.prompt';
+import { COMPLIANCE_RULE } from '../../ai/prompts/compliance.prompt';
 import { crossingPoint, type IncidentKind, type IncidentReport } from './incident-report';
 
 /** Plafond de l'analyse d'un incident : quelques phrases, jamais plus (#669). */
@@ -25,7 +26,8 @@ Règles :
 - Ne juge pas le trader. Pas de « tu aurais dû ».
 - 2 paragraphes courts, 90 mots au total au plus, sans titre, sans liste, sans markdown.
 ${NO_EM_DASH_RULE}
-${FRENCH_RULE}`;
+${FRENCH_RULE}
+${COMPLIANCE_RULE}`;
 
 /** Message utilisateur : uniquement les faits de l'autopsie, déjà calculés. */
 export function buildIncidentPrompt(kind: IncidentKind, currency: string, report: IncidentReport): string {

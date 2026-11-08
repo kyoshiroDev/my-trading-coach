@@ -5,7 +5,7 @@ export const PLANS = [
   "Plan : attendre la prise de liquidité de l'ouverture, breakout MNQ seulement si clôture M5 au-dessus du range. 3 trades max.",
   "Plan : tendance haussière H1 sur ES, je cherche des pullbacks vers le VWAP. Stop sous le dernier creux, R:R ≥ 1.5.",
   "Plan : journée de stats US à 14h30. Aucun trade 5 min avant, je trade la réaction seulement si le range est cassé proprement.",
-  "Plan : marché en range depuis hier. Je vends le haut / j'achète le bas du range, taille réduite, 2 trades max.",
+  "Plan : marché en range depuis hier. Je ne joue que les bornes du range, taille réduite, 2 trades max.",
   "Plan : pas de conviction sur la direction. Je reste sur MES en petite taille et je coupe vite si ça ne part pas.",
 ];
 export const REFLECTIONS_GREEN = [
