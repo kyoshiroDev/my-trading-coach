@@ -331,8 +331,10 @@ un nouveau), vérifier que chaque conteneur la voit (`docker exec <c> grep … /
 **Précompression (SCA-B7-03, 2026-10-09)** : `deploy-static.sh` produit un `.gz` à côté de chaque
 fichier texte de plus de 1 Ko (`gzip -9 -k -n` : sans date, donc même contenu → même `.gz` → lien
 physique conservé entre releases) ; les deux confs ont `gzip_static on` (nginx sert le `.gz`, sinon
-compresse à la volée). `open_file_cache` volontairement absent : il garderait l'ancien
-`index.html` quelques secondes après une bascule de `current`.
+compresse à la volée). `open_file_cache` : d'abord écarté (il garderait l'ancien `index.html`
+quelques secondes après une bascule de `current`), puis **ajouté le 2026-10-17** (#482, commit
+`20797699`) avec une validité de 10 s, sur les deux confs, appliqué sur les deux VPS : après une
+bascule, l'ancienne version peut être servie au plus 10 s.
 
 **Retour arrière (sur le VPS)** — immédiat, sans rebuild :
 
@@ -385,6 +387,33 @@ location = /journal-trading-prop-firm { return 301 /; }
 
 Retirer la ligne le jour où le flag passe à `true`, sinon la page publiée reste inaccessible.
 
+**Redirection temporaire de l'accueil (2026-11-08, newsletter NinjaTrader).** `landing-releases.conf`
+envoie `/` et `/index.html` en **302** vers `/prop-firm`, query string conservée, Location relative
+(`absolute_redirect off` : sinon nginx, en http derrière Traefik, écrirait `http://<hôte>/…`). Vaut
+pour la landing prod **et** dev (conf partagée). Côté Astro, une page de secours (`index.astro`)
+fait la même redirection en JavaScript si la règle manque, et l'ancienne home est sur `/accueil`
+(astro.md, « Accueil → /prop-firm »). Ordre : la landing passe d'abord par la CD, la règle nginx
+ensuite. Application par Greg sur l'ancien VPS (fichier réécrit en place, même inode) :
+
+```bash
+# Poste, depuis le dépôt :
+scp infra/static/nginx/landing-releases.conf greg@51.83.197.230:/home/greg/landing-releases.conf.new
+# Ancien VPS :
+F=/opt/infra/static/nginx/landing-releases.conf
+cp -p "$F" /home/greg/landing-releases.conf.bak-20261108          # sauvegarde datée
+diff "$F" /home/greg/landing-releases.conf.new                     # attendu : seulement les 2 blocs de la 302
+cat /home/greg/landing-releases.conf.new > "$F"                    # en place (sinon : sudo tee "$F" < … > /dev/null)
+for c in mtc_landing_prod mtc_landing_dev; do docker exec "$c" grep -c 'return 302 /prop-firm' /etc/nginx/conf.d/default.conf && docker exec "$c" nginx -t && docker exec "$c" nginx -s reload; done
+# Vérification (n'importe où) :
+curl -sI "https://www.mytradingcoach.app/?utm_source=test&utm_medium=x" | grep -iE '^HTTP|^location'   # 302, /prop-firm?utm_source=test&utm_medium=x
+```
+
+Si `grep -c` répond 0, le conteneur ne voit pas le nouveau fichier (inode changé) : `docker restart
+<c>` (~1 s de coupure). **Retrait / retour arrière** : `cat /home/greg/landing-releases.conf.bak-20261108
+> "$F"` (ou supprimer les deux blocs `location = /` et `location = /index.html`), puis la même
+boucle `nginx -t` + `nginx -s reload` (sans le `grep -c`). La 302 n'est pas mise en cache par les
+navigateurs : effet immédiat.
+
 ---
 
 ## Backups & Monitoring
@@ -423,6 +452,28 @@ sinon `prod`) → ajouter une base au backup impose de toucher **3 endroits**, s
 le dump s'affiche sous le mauvais environnement dans l'admin :
 `backup.sh` (VPS) · `backup.service.ts` (`DB_BY_TARGET`, `LABEL_BY_TARGET`,
 `targetFromFilename`) · `TARGET_CONFIG` du front admin.
+
+### ⚠️ Jamais de dump de prod restauré tel quel en beta ou dev
+
+La beta tourne avec un process de crons (campagnes, J+3, J+11, J+15, onboarding) et la clé
+Resend réelle. **Aucun filtre d'adresses** côté code (#862 non retenu le 2026-11-04) : seule la
+séparation des bases protège les vrais utilisateurs. Une copie de la base de prod restaurée en
+beta (ou en dev) ferait écrire la beta à toute la base réelle.
+
+Règle : avant tout démarrage d'une API sur une base issue d'un dump de prod, **remplacer
+toutes les adresses e-mail** par des adresses de test Resend, dans la même session psql que la
+restauration :
+
+```sql
+UPDATE "User"           SET email = 'delivered+u-' || id || '@resend.dev';
+UPDATE "DeletedAccount" SET email = 'delivered+d-' || id || '@resend.dev' WHERE email IS NOT NULL;
+```
+
+- Nouvelle colonne e-mail dans le schéma → l'ajouter ici.
+- Ne jamais restaurer un dump de prod sur la base d'un environnement dont l'API tourne :
+  arrêter d'abord l'API et son process de crons.
+- Si un jour la beta est ouverte à d'autres personnes, ou si une copie de prod y devient
+  nécessaire, rouvrir #862 (liste blanche d'envoi).
 
 ### Monitoring — ⚠️ inexistant
 

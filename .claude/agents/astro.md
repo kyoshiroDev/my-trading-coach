@@ -33,7 +33,8 @@ src/
 ├── content/blog/<slug>.md       ← UN fichier par article (le slug = nom du fichier)
 ├── content.config.ts            ← schéma du frontmatter blog
 ├── pages/
-│   ├── index.astro              ← home
+│   ├── index.astro              ← page de secours de la redirection `/` → /prop-firm (temporaire, voir plus bas)
+│   ├── accueil.astro            ← ancienne home (noindex, hors sitemap) tant que `/` redirige
 │   ├── blog/index.astro         ← liste générée depuis la collection (tri par publishDate)
 │   ├── blog/[slug].astro        ← rendu d'un article
 │   └── cgu, mentions-legales, politique-confidentialite, disclaimer, 404, ambassadeur…
@@ -212,23 +213,47 @@ l'admin : **seul le lien de la pub** y pointe (UTM dédiées), la home ne change
   est absente, « Prix normal » sinon. Listes courtes, « Comptes illimités » seulement si
   `FEATURES.multiAccounts`.
 - Témoignages : section rendue seulement si `TEMOIGNAGES` n'est pas vide (ne rien inventer).
-- **Redirection temporaire de la pub (2026-10-18, fin prévue vers le 25/10)** : le boost Instagram en
-  cours pointe sur `/?utm_source=instagram&utm_medium=paid&utm_campaign=gratuit-reel` (lien non
-  modifiable chez Meta). Script inline tout en haut du `<head>` de `index.astro` (slot `head-start` de
-  `Base.astro`, avant tout autre script, style ou préchargement) : si `utm_medium` vaut **exactement**
-  `paid`, `location.replace('/prop-firm' + search + hash)` (paramètres intacts, aucune entrée
-  d'historique). Il pose `window.__mtcPaidRedirect` : le script d'acquisition de `Base.astro` et GA4
-  (`Analytics.astro`) n'envoient alors rien depuis `/`, la visite part de `/prop-firm`. Choisi plutôt
-  qu'une 302 nginx car la conf nginx de la landing n'est pas déployée par le CD (cf. deploy.md).
-  Coût mesuré (Slow 4G, CPU ×4, UA Instagram) : bouton de `/prop-firm` visible en ~0,42 s via `/` au
-  lieu de ~0,24 s en direct ; LCP de `/` inchangé pour les autres visiteurs. **Retrait** : supprimer le
-  bloc `head-start` de `index.astro` (les gardes `__mtcPaidRedirect` deviennent inertes).
+- La redirection de la pub (`utm_medium=paid`, script inline de `index.astro`, 2026-10-18) a été
+  **retirée le 2026-11-08** : remplacée par la redirection de tout `/` (section suivante). Les gardes
+  `window.__mtcPaidRedirect` de `Base.astro` et `Analytics.astro` et le slot `head-start` ont disparu
+  avec elle.
 - Mesure du 2026-10-18 (preview locale, iPhone 390×844, UA Instagram, Slow 4G 150 ms / 1,6 Mbit/s,
   CPU ×4) : LCP ≈ 0,7 s, chargement 1,5 s, 185 Ko, CLS 0,02 ; bouton du haut à 540 px, au-dessus du
   bandeau cookies même en 390×664. Après ajout du bandeau d'offre et de la ligne de confiance : bouton
   à 552 px (390×844), offre ouverte ou fermée, bandeau cookies à 755 px.
 - Découpage CSS : /prop-firm n'ayant pas la Nav, Vite sépare la feuille `Nav` (assez petite depuis
   l'ajout du bandeau à /prop-firm pour être mise en ligne dans la page) — même contenu sur la home.
+
+## Accueil → /prop-firm (redirection temporaire, 2026-11-08)
+
+Pour la newsletter NinjaTrader (~10/11) : qui tape l'adresse du site arrive sur `/prop-firm`.
+Refonte complète (contenu de /prop-firm servi sur `/`, canonical, sort de l'ancienne home) après la
+newsletter.
+
+- **302 nginx** (`landing-releases.conf`, `location = /` et `= /index.html`) → `/prop-firm` + query
+  string intacte (`utm_*`, `ref`, `promo`, `internal`…). Appliquée à la main sur l'ancien VPS (la
+  conf n'est pas déployée par la CD) : deploy.md, « Redirection temporaire de l'accueil ».
+- **Page de secours** `src/pages/index.astro` : jamais servie quand la 302 est en place. Sans
+  `Base.astro` (donc ni script d'acquisition, ni GA4, ni bandeau cookies), `noindex`,
+  `location.replace('/prop-firm' + search + hash)`, `meta refresh` dans `<noscript>`, lien visible.
+  Visite comptée une seule fois, sur /prop-firm, avec les UTM. Limite : sans UTM, le site d'origine
+  est perdu (la visite sort en « direct ») ; la 302 nginx, elle, le garde.
+- **Ancienne home** : `src/pages/accueil.astro` → `/accueil`, même contenu, `noindex`, sans canonical,
+  hors sitemap. Pas suivie par l'engagement admin (seuls `/` et `/prop-firm` le sont).
+- **Liens internes** directement vers /prop-firm (pas de détour par la 302) : logo et menu de `Nav`
+  (`/prop-firm#comment`, `#prop-firms`, `#tarifs`, plus d'entrée FAQ), bandeau fondateur de `Nav`
+  (`/prop-firm#tarifs`), logo de `PfHeader`, « ← Retour » des pages 404, légales, ambassadeur et
+  journal-trading-prop-firm (dont les `/#pricing` → `/prop-firm#tarifs`). `<Nav home />` sur
+  `/accueil` : ancres sur la page même (`#journee`, `#features`, `#pricing`, `#faq`).
+- **Sitemap** : `/` et `/accueil` exclus (`astro.config.mjs`). /prop-firm reste noindex et hors sitemap.
+- Liens externes inchangés (passent par la 302) : e-mails, liens de parrainage
+  `https://mytradingcoach.app?ref=CODE` (308 Traefik vers www, puis 302 → `/prop-firm?ref=CODE`, le
+  `ref` est capté par `Base.astro`), liens de l'app.
+- **Point ouvert** : noindex de /prop-firm et canonical à traiter dans la refonte de l'accueil après
+  la newsletter (vers le 15/11). D'ici là, la home n'a plus de page indexable servie en direct : ne
+  pas laisser durer.
+- **Retrait** : supprimer les deux blocs nginx (deploy.md), remettre `accueil.astro` en `index.astro`
+  (canonical `/`, sans `noindex`, `<Nav />` sans `home`), restaurer les liens `/` et le filtre sitemap.
 
 ---
 
