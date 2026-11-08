@@ -4,7 +4,8 @@ import { Prisma, Role } from '@prisma/client';
  * Comptes réels des statistiques admin (#828, #823) : hors démo, hors comptes internes (tests de
  * l'équipe) et hors ADMIN. Une seule définition pour tous les agrégats, Prisma (`REAL_USERS_WHERE`)
  * et SQL brut (`realUsersSql`). Jamais pour cibler des envois : les comptes de test doivent recevoir
- * les e-mails (`email-campaign.service.ts` garde son propre filtre).
+ * les e-mails (`email-campaign.service.ts` et `auto-campaigns.cron.ts` gardent leur propre filtre,
+ * verrouillé par `campaign-audience.spec.ts`).
  */
 export const REAL_USERS_WHERE = {
   isDemo: false,

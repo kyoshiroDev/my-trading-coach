@@ -1858,8 +1858,8 @@ redéployer : rien à lancer sur le VPS.
 - **Comptes réels des statistiques (#828, #823)** : `REAL_USERS_WHERE` (Prisma) et `realUsersSql('u')` (SQL
   brut, interpolé dans `$queryRaw`), `common/stats/real-users.ts` : hors démo, hors comptes internes
   (`isInternal`) et hors ADMIN. Toute nouvelle statistique admin les utilise, jamais une copie du filtre.
-  Jamais pour cibler des envois (`email-campaign.service.ts` garde son filtre : les comptes de test
-  reçoivent les e-mails).
+  Jamais pour cibler des envois (`email-campaign.service.ts` et `auto-campaigns.cron.ts` gardent leur
+  filtre, hors démo et ADMIN : les comptes de test reçoivent les e-mails ; `campaign-audience.spec.ts`).
 - **Comptes internes (#823)** : `User.isInternal`, posé par l'interrupteur de la fiche admin
   (`PATCH /admin/users/:id { isInternal }`, `AdminGuard`), jamais par le domaine de l'adresse. Recopié
   dans `DeletedAccount.isInternal` par `archiveAndDelete`. Exclu : agrégats admin (via `REAL_USERS_WHERE`),
