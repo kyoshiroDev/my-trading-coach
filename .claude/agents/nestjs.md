@@ -312,6 +312,9 @@ POST   /api/test/upgrade-user          NODE_ENV=test uniquement
     principal ; non configuré → 400). Une connexion SSH par serveur (`vps-servers.ts`).
     Le dashboard, le cron metrics-snapshot et les backups restent sur le principal.
   - Ids de container validés (`[a-zA-Z0-9_.-]`) avant la commande SSH (pas d'injection)
+- **Tests et horloge** : tout test qui fixe une date fige l'horloge (`freezeClock(date)`,
+  `src/test/freeze-clock.ts`), car le code lit l'heure réelle (`new Date()`, `now = new Date()` par
+  défaut). Contrôle sous une autre date : `tools/scripts/shifted-clock.mjs` (voir `tests.md`).
 
 ---
 
