@@ -64,10 +64,11 @@ un sous-composant. Fichiers encore au-dessus, à découper quand on y retouche :
 
 | Tu fais… | Branche de départ | Livrée sur |
 |---|---|---|
-| Une nouvelle feature | `beta` | `beta` (test), puis `beta` → `dev` → `main` |
-| Tout le reste : bug, optimisation, perf, refactor, dette, docs, CI… | `dev` | `dev`, puis `dev` → `main` |
+| Tout : nouvelle feature, bug, optimisation, perf, refactor, dette, docs, CI… | `dev` | `dev`, puis `dev` → `main` |
 
-`beta` est réservée aux nouvelles features. Jamais de push direct sur `main`.
+`beta` n'est plus utilisée pour les fonctionnalités. Jamais de push direct sur `main`.
+
+Relecture et PR : à chaque arrêt, Claude Code passe par l'agent `relecteur` (`.claude/agents/relecteur.md`), qui s'appuie sur le journal des décisions `.claude/decisions.md` ; les prompts collés par Greg sont enregistrés dans `.claude/prompts/PROMPT-<nom>.md` et commités avec le travail ; il ouvre la PR vers `dev` après le « OK push » de Greg, la PR `dev` → `main` seulement sur demande, et seul Greg merge (merge commit).
 
 ## Commits
 

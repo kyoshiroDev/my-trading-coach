@@ -172,6 +172,14 @@ export interface TradingAccount {
   overFreeLimit?: boolean;
 }
 
+/** Réponse de `GET /accounts/:id/deletion-preview`. */
+export interface AccountDeletionPreview {
+  archived: boolean;
+  tradesCount: number;
+  sessionsCount: number;
+  brokerConnected: boolean;
+}
+
 /** Payout d'un compte : détecté chez le broker, ou saisi à la main (`manual`, supprimable). */
 export interface AccountPayout {
   id: string;
@@ -292,6 +300,21 @@ export class AccountsApi {
    */
   purge(id: string): Observable<{ data: { deleted: true; tradesDeleted: number } }> {
     return this.http.delete<{ data: { deleted: true; tradesDeleted: number } }>(`${this.base}/${id}/permanent`, {
+      body: { confirm: true },
+    });
+  }
+
+  /** Ce que la suppression d'un compte archivé effacera : TOUS ses trades, ses séances, sa connexion broker. */
+  deletionPreview(id: string): Observable<{ data: AccountDeletionPreview }> {
+    return this.http.get<{ data: AccountDeletionPreview }>(`${this.base}/${id}/deletion-preview`);
+  }
+
+  /**
+   * Suppression DÉFINITIVE d'un compte ARCHIVÉ et de tous ses trades (Mes comptes). L'API refuse un
+   * compte non archivé (409 `ACCOUNT_NOT_ARCHIVED`) et exige `confirm: true` (400 sinon).
+   */
+  deleteArchived(id: string): Observable<{ data: { deleted: true; tradesDeleted: number } }> {
+    return this.http.delete<{ data: { deleted: true; tradesDeleted: number } }>(`${this.base}/${id}/archived`, {
       body: { confirm: true },
     });
   }

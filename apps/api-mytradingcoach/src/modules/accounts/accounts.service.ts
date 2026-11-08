@@ -473,7 +473,11 @@ export class AccountsService {
       };
     }
     const currentBalance = broker && !broker.referenceMismatch ? broker.cashBalance : tradesBalance;
-    const realizedPnl = currentBalance - startingBalance;
+    // P&L DE TRADING : sans aucun trade, il vaut 0. Un écart entre le solde du broker et le solde de
+    // départ (frais de plateforme, centimes, solde initial non rond) n'est pas une perte de trading :
+    // il reste visible dans le solde et compte pour la marge de drawdown, pas pour le P&L ni l'objectif.
+    // Avec des trades, le solde du broker fait foi (trades ou frais manquants côté MTC).
+    const realizedPnl = agg.count === 0 ? 0 : currentBalance - startingBalance;
     /** Valeur comparée au plancher : l'equity du broker (latent compris) quand on l'a. */
     const equity = broker ? broker.equity : currentBalance;
 
@@ -597,6 +601,7 @@ export class AccountsService {
           startingBalance,
           phaseStartingBalance: phase.starting_balance ?? plan.accountSize,
           currentBalance,
+          profit: realizedPnl,
           sessions,
           ...lastPayout(account.lastPayoutAt, payouts),
           unconfirmed: plan.needsReview ?? false,
@@ -864,6 +869,66 @@ export class AccountsService {
   }
 
   /**
+   * Ce que « Supprimer » d'un compte ARCHIVÉ effacera (modale de confirmation de Mes comptes) :
+   * TOUS ses trades (ouverts compris, à la différence de `metrics.tradesCount`), ses séances, et
+   * s'il est encore relié à un broker. 404 si le compte n'est pas à l'utilisateur.
+   */
+  async deletionPreview(
+    userId: string,
+    id: string,
+  ): Promise<{ archived: boolean; tradesCount: number; sessionsCount: number; brokerConnected: boolean }> {
+    const account = await this.assertOwner(userId, id);
+    const [tradesCount, sessionsCount, connections] = await Promise.all([
+      this.prisma.trade.count({ where: { userId, accountId: id } }),
+      this.prisma.tradeSession.count({ where: { userId, accountId: id } }),
+      this.prisma.brokerConnection.count({ where: { userId, accountId: id } }),
+    ]);
+    return { archived: account.status === AccountStatus.ARCHIVED, tradesCount, sessionsCount, brokerConnected: connections > 0 };
+  }
+
+  /**
+   * « Supprimer » un compte ARCHIVÉ depuis Mes comptes : le compte et TOUS ses trades, définitivement.
+   * Règles portées ici, jamais par le front :
+   * - `confirm === true` exigé (400 sinon) ;
+   * - compte de l'utilisateur (404 sinon, sans fuite d'existence) ;
+   * - compte ARCHIVÉ (409 sinon : un compte actif, validé ou échoué s'archive d'abord). La garde est
+   *   rejouée DANS la transaction (suppression conditionnée au statut) : un désarchivage concurrent
+   *   annule tout, trades compris.
+   * Une seule transaction : trades et séances (FK en SetNull, ils deviendraient orphelins), connexion
+   * broker et ses jetons chiffrés (la synchro ne peut plus rien recréer ; un WebSocket encore ouvert
+   * s'arrête à sa prochaine reconnexion, comme une déconnexion Tradovate), référence de comportement
+   * (recalculée sans ces trades à la prochaine lecture), puis le compte : clôtures, payouts, journal de
+   * risque, alertes prop firm et de comportement, incidents (autopsie et son analyse IA) partent en
+   * cascade. Cache des statistiques invalidé ensuite. Ne touche ni au compte MyTradingCoach
+   * (`DeletedAccount`, règle des 90 jours d'essai : suppression du User seulement) ni à Stripe.
+   * Démo : bloquée en amont par DemoReadOnlyGuard (DELETE).
+   */
+  async deleteArchived(userId: string, id: string, confirm: unknown): Promise<{ deleted: true; tradesDeleted: number }> {
+    if (confirm !== true) {
+      throw new BadRequestException({
+        code: 'CONFIRMATION_REQUIRED',
+        message: 'Confirme la suppression définitive : le compte et tous ses trades seront effacés.',
+      });
+    }
+    const account = await this.assertOwner(userId, id);
+    if (account.status !== AccountStatus.ARCHIVED) throw notArchived();
+    const tradesDeleted = await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.trade.deleteMany({ where: { userId, accountId: id } });
+      await tx.tradeSession.deleteMany({ where: { userId, accountId: id } });
+      await tx.brokerConnection.deleteMany({ where: { userId, accountId: id } });
+      if (count > 0) await tx.behaviorBaseline.deleteMany({ where: { userId } });
+      const { count: deleted } = await tx.tradingAccount.deleteMany({
+        where: { id, userId, status: AccountStatus.ARCHIVED },
+      });
+      if (deleted === 0) throw notArchived(); // désarchivé entre-temps : rollback complet
+      return count;
+    });
+    await this.invalidateStats(userId);
+    this.logger.log(`Compte archivé ${id} supprimé (${tradesDeleted} trade(s)).`);
+    return { deleted: true, tradesDeleted };
+  }
+
+  /**
    * Helper de filtre lecture réutilisable. `accountId` absent ou 'all' → fragment vide
    * (agrégé, comportement actuel). Sinon vérifie l'appartenance au user (sinon 404) et
    * renvoie `{ accountId }` à fusionner dans un `where` Prisma.
@@ -1092,3 +1157,11 @@ function withDates<T extends { lastPayoutAt?: string | null }>(dto: T): Omit<T, 
   return { ...rest, lastPayoutAt: lastPayoutAt === null ? null : new Date(`${lastPayoutAt.slice(0, 10)}T00:00:00.000Z`) };
 }
 
+
+/** Suppression d'un compte non archivé : il faut d'abord l'archiver. */
+function notArchived(): ConflictException {
+  return new ConflictException({
+    code: 'ACCOUNT_NOT_ARCHIVED',
+    message: "Archive ce compte avant de le supprimer : seul un compte archivé peut être supprimé définitivement.",
+  });
+}

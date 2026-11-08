@@ -46,6 +46,14 @@ describe('formatMoney : montant tel quel, jamais converti', () => {
     expect(formatMoney(24, null, { decimals: 0 })).toBe('+24');
   });
 
+  it('un montant arrondi à zéro ne porte jamais de « - » (« -$0 » sur un P&L de -0,40 $)', () => {
+    expect(formatMoney(-0.4, 'USD', { decimals: 0 })).toBe('+$0');
+    expect(formatMoney(-0.4, 'USD', { decimals: 0, sign: false })).toBe('$0');
+    expect(formatMoney(-0.004, 'USD')).toBe('+$0.00');
+    // Au-delà du demi, l'arrondi est un vrai montant : le signe reste.
+    expect(formatMoney(-0.6, 'USD', { decimals: 0 })).toBe('-$1');
+  });
+
   it('options : sans signe, sans symbole', () => {
     expect(formatMoney(12.3, 'USD', { sign: false })).toBe('$12.30');
     expect(formatMoney(24, 'USD', { decimals: 0, symbol: false })).toBe('+24');

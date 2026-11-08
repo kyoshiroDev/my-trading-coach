@@ -4,7 +4,9 @@
 dist
 tmp
 VPS.md
-.claude/prompts
+.claude/prompts/*
+# Prompts collés par Greg : commités avec le travail (lus par l'agent relecteur)
+!.claude/prompts/PROMPT-*.md
 .articles-blog
 # Ancre a la racine : sans le `/`, tout dossier `test/` du monorepo
 # (ex. apps/*/test/) serait ignore en silence.

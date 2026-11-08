@@ -573,11 +573,61 @@ model BrokerConnection {
   /// Dernière séance couverte par la détection des payouts (historique de trésorerie) : la
   /// relecture suivante repart de là au lieu de toute la vie du compte.
   payoutsCheckedThrough DateTime?              @db.Date
+  /// Journal d'observation du compte chez Tradovate (une ligne par jour), cf. le modèle.
+  observations          TradovateAccountObservation[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 
   @@unique([accountId, provider])
   @@index([userId])
+}
+
+/// Journal d'observation Tradovate (#684, phase 2) : ce que `/account/list` dit du compte de la
+/// connexion, une fois par jour, pour décider plus tard d'un signal « compte fermé chez Tradovate »
+/// avec de vraies données. Ni jeton, ni montant, ni identifiant Tradovate. Lecture seule : rien ne
+/// s'appuie dessus pour agir. Purgé au-delà de 90 jours, supprimé avec la connexion.
+model TradovateAccountObservation {
+  id            String                      @id @default(cuid())
+  connectionId  String
+  connection    BrokerConnection            @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  /// Jour d'observation (Paris).
+  day           DateTime                    @db.Date
+  outcome       TradovateObservationOutcome
+  /// Code HTTP de `/account/list` ; null si aucun appel n'a abouti (réseau, jeton, pénalité en cours).
+  httpStatus    Int?
+  /// Compte présent dans la liste ; null si la liste n'a pas été lue.
+  listed        Boolean?
+  /// Champs bruts du compte dans la liste (sens non documenté) ; null si absent ou non lu.
+  active        Boolean?
+  closed        Boolean?
+  restricted    Boolean?
+  /// Contexte MyTradingCoach au moment de l'observation.
+  accountStatus AccountStatus
+  syncPaused    Boolean
+  lastSyncAt    DateTime?
+  createdAt     DateTime                    @default(now())
+
+  @@unique([connectionId, day])
+  @@index([day])
+}
+
+/// Issue de la lecture de `/account/list` pour le journal d'observation.
+enum TradovateObservationOutcome {
+  /// Liste lue (le compte peut y être absent : voir `listed`).
+  OK
+  UNAUTHORIZED
+  /// 403 ou `errorText` lock/closed/suspend/disabled.
+  FORBIDDEN
+  RATE_LIMITED
+  /// Ticket de pénalité reçu, ou pause de pénalité en cours (aucun appel).
+  PENALIZED
+  NOT_FOUND
+  UNAVAILABLE
+  /// Jeton refusé avant l'appel (connexion à reconnecter).
+  TOKEN_REFUSED
+  /// Renouvellement du jeton reporté (refus passager).
+  TOKEN_DEFERRED
+  ERROR
 }
 
 model DailyRecap {
