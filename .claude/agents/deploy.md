@@ -408,7 +408,8 @@ Procédure suivie (pour la réappliquer ; fichier réécrit en place, même inod
 scp infra/static/nginx/landing-releases.conf greg@51.83.197.230:/home/greg/landing-releases.conf.new
 # Ancien VPS :
 F=/opt/infra/static/nginx/landing-releases.conf
-cp -p "$F" /home/greg/landing-releases.conf.bak-20261108          # sauvegarde datée
+B=/home/greg/landing-releases.conf.bak-$(date +%Y%m%d-%H%M)        # sauvegarde datée à la minute,
+cp -pn "$F" "$B" && cmp "$F" "$B" && echo SAUVEGARDE_OK            # jamais un nom existant (cp -n)
 diff "$F" /home/greg/landing-releases.conf.new                     # attendu : seulement les 2 blocs de la 302
 cat /home/greg/landing-releases.conf.new > "$F"                    # en place (sinon : sudo tee "$F" < … > /dev/null)
 for c in mtc_landing_prod mtc_landing_dev; do docker exec "$c" grep -c 'return 302 /prop-firm' /etc/nginx/conf.d/default.conf && docker exec "$c" nginx -t && docker exec "$c" nginx -s reload; done
@@ -417,8 +418,9 @@ curl -sI "https://www.mytradingcoach.app/?utm_source=test&utm_medium=x" | grep -
 ```
 
 Si `grep -c` répond 0, le conteneur ne voit pas le nouveau fichier (inode changé) : `docker restart
-<c>` (~1 s de coupure). **Retrait / retour arrière** : `cat /home/greg/landing-releases.conf.bak-20261108
-> "$F"` (ou supprimer les deux blocs `location = /` et `location = /index.html`), puis la même
+<c>` (~1 s de coupure). **Retrait / retour arrière** : `cat "$B" > "$F"` (sauvegarde
+prise juste avant ; celle d'origine, du 08/11, est `/home/greg/landing-releases.conf.bak-20261108`, à ne
+pas écraser) (ou supprimer les deux blocs `location = /` et `location = /index.html`), puis la même
 boucle `nginx -t` + `nginx -s reload` (sans le `grep -c`). La 302 n'est pas mise en cache par les
 navigateurs : effet immédiat.
 
