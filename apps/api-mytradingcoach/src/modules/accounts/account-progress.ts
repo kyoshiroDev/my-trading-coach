@@ -62,6 +62,8 @@ export interface ProgressInput {
   startingBalance: number;
   phaseStartingBalance: number;
   currentBalance: number;
+  /** P&L de trading du compte (0 sans trade, cf. `ruleMetricsFromAgg`) ; absent → solde − départ. */
+  profit?: number;
   sessions: SessionPnl[];
   /** `AAAA-MM-JJ` de la séance du dernier payout (le plus récent, détecté ou saisi). */
   lastPayoutDay: string | null;
@@ -86,7 +88,7 @@ export function computeProgress(input: ProgressInput): AccountProgress | null {
 
 function objectiveProgress(input: ProgressInput, target: number): AccountProgress {
   const { phase, sessions } = input;
-  const profit = input.currentBalance - input.startingBalance;
+  const profit = input.profit ?? input.currentBalance - input.startingBalance;
   const best = bestDay(sessions);
   const cons = phase.consistency?.applies_to === 'profit_target' ? phase.consistency.max_single_day_pct : null;
   // Consistency : le meilleur jour ne doit pas dépasser X % du profit total. Atteindre l'objectif

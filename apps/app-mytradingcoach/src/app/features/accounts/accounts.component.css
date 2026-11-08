@@ -316,13 +316,15 @@
   line-height: 1; padding: 3px 5px; border-radius: 6px;
 }
 .acct-menu:hover { color: var(--text); background: var(--bg-3); }
+/* Menu rendu hors du tableau, en position fixe (cf. `menuPos`) : au-dessus des lignes et de la barre
+   mobile (100), sous les modales (1000). */
 .menu-pop {
-  position: absolute; right: 0; top: 26px;
+  position: fixed;
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 6px;
-  z-index: 20;
+  z-index: 900;
   min-width: 150px;
   box-shadow: 0 8px 24px rgba(0,0,0,.4);
 }

@@ -65,7 +65,9 @@ export function formatMoney(
 ): string {
   const { decimals = 2, sign = true, compact = false, symbol = true } = opts;
   const abs = Math.abs(value);
-  const prefix = value < 0 ? '-' : sign ? '+' : '';
+  // Signe de la valeur AFFICHÉE : -0,40 $ à 0 décimale s'affiche « +$0 », jamais « -$0 ».
+  const shownAsZero = Number(abs.toFixed(decimals)) === 0;
+  const prefix = value < 0 && !shownAsZero ? '-' : sign ? '+' : '';
   const body =
     compact && abs >= 1000
       ? `${(abs / 1000).toFixed(1)}k`

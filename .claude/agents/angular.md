@@ -377,7 +377,8 @@ un montant s'affiche dans la devise de son compte de trading (`TradingAccount.cu
 reçu — un compte prop firm en USD s'affiche en USD pour tout le monde. Source UNIQUE front + back :
 `@mtc/shared` (`libs/shared/src/currency.ts`) — `ACCOUNT_CURRENCIES` (USD, USDT, EUR : sélecteurs
 de l'onboarding et de la page Comptes, validation API), `formatMoney(value, currency)` (`$1.00`,
-`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole), `commonCurrency`.
+`€1.00`, `1.00 USDT` : code APRÈS le montant pour les devises sans symbole ; signe de la valeur
+AFFICHÉE : -0,40 $ à 0 décimale → `+$0`, jamais `-$0`), `commonCurrency`.
 - **Totaux de l'écran** : `MoneyService.format()` / pipes → `SelectedAccountStore.displayCurrency`
   (compte sélectionné, sinon devise commune de « Tous les comptes »).
 - **Ligne de trade** : devise de SON compte → passer l'`accountId` (`pnlFormat : entry : accountId`,
@@ -478,6 +479,15 @@ et `accounts.component.css` :
   `grid-template-columns` — deux déclarations à garder synchronisées, sinon l'alignement casse ;
 - libellés d'en-tête en mono 9 px, majuscules, `letter-spacing: .1em`, `color: var(--text-3)` ;
 - pas d'`overflow: hidden` sur le wrapper si une ligne ouvre un menu « … » : il serait coupé ;
+- menu « … » de Mes comptes **rendu hors du tableau** (un seul, en fin de gabarit, `position: fixed`,
+  `z-index: 900`, ancré au bouton par `menuPositionFor`, ouvert vers le haut près du bas de l'écran,
+  suit le défilement, fermé par Échap ou clic extérieur). Dans la ligne, l'`opacity` d'un compte
+  archivé créait un contexte d'empilement : menu translucide et ligne suivante au-dessus, qui
+  recevait le clic. Test réel : `app-mytradingcoach-e2e/src/14-accounts-menu.spec.ts` (API simulée) ;
+- « Supprimer » d'un compte **ARCHIVÉ** (Mes comptes) = suppression définitive du compte et de ses
+  trades : `GET deletion-preview` (nombre exact), `ConfirmService` danger (nom, N trades, connexion
+  Tradovate, « Action définitive »), puis `DELETE /accounts/:id/archived` ; `store.load()`,
+  `tradesStore.reset()`, `tv.load()`. Un compte non archivé garde `DELETE /accounts/:id` (archivage) ;
 - repli mobile : `.table-header { display: none }`, la ligne repasse en grille de 2-3 colonnes et
   chaque cellule retrouve son étiquette via `content: attr(data-label)` ;
 - ce qui ne tient pas à l'écran étroit passe derrière un **dépli** (signal `expandedId`, une

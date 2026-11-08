@@ -1962,6 +1962,16 @@ statistique, ajouter un test « compte FAILED ou ARCHIVED exclu par défaut, inc
   plus recréer les trades), puis le compte (cascades : clôtures, payouts, journal de risque,
   événements prop firm, alertes de comportement). Réponse `{ deleted: true, tradesDeleted }`.
   Compte MyTradingCoach et Stripe intacts. Couvert par `account-purge.int-spec.ts`.
+- `DELETE /accounts/:id/archived` (Mes comptes, 2026-11-06) : suppression DÉFINITIVE d'un compte
+  **ARCHIVÉ** et de tous ses trades. Corps `{ "confirm": true }` (400), propriétaire (404), statut
+  ARCHIVED exigé (**409 `ACCOUNT_NOT_ARCHIVED`**, garde rejouée DANS la transaction par
+  `tradingAccount.deleteMany({ id, userId, status: ARCHIVED })` : un désarchivage concurrent annule
+  tout). Même transaction que `permanent` + `BehaviorBaseline` du user effacée s'il y avait des
+  trades (recalculée à la lecture suivante). `GET /accounts/:id/deletion-preview` → `{ archived,
+  tradesCount (TOUS les trades, ouverts compris), sessionsCount, brokerConnected }` pour la modale.
+  `/permanent` (parcours « compte perdu ») n'exige PAS l'archivage. `DeletedAccount` et la règle des
+  90 jours d'essai ne concernent que la suppression du User. Couvert par
+  `account-delete-archived.int-spec.ts` et `accounts-delete-archived.spec.ts`.
 - `DELETE /accounts/:id` est inchangé : il ARCHIVE dès qu'il y a de l'historique, et SUPPRIME un
   compte sans trade ni séance. Pour archiver à coup sûr, le front passe par `PATCH { status: 'ARCHIVED' }`.
 
@@ -2112,7 +2122,9 @@ tout le reste de l'app lisent `netPnl` (`round(pnl − |commission|, 2)`). Équi
 - **Métriques** (`AccountsService.ruleMetricsFromAgg(…, broker)`) : le solde broker fait foi
   (`currentBalance`, `realizedPnl`, objectif) et la marge de drawdown se calcule sur l'**equity**
   (latent compris tant qu'une position est ouverte ; sans position, equity = solde). Trailing
-  intraday : un nouveau plus haut d'equity relève le seuil. Écart solde broker ↔ solde MTC
+  intraday : un nouveau plus haut d'equity relève le seuil. **Sans aucun trade, `realizedPnl` = 0**
+  (objectif et progression aussi) : l'écart broker ↔ solde de départ d'un compte neuf (frais,
+  centimes) reste dans le solde et la marge, jamais compté comme perte de trading. Écart solde broker ↔ solde MTC
   > max(2 000 $, 25 % de la taille) = référentiel incompatible (`brokerReferenceMismatch`, ex.
   funded saisi à 0 $) → calcul MTC + latent, `broker.referenceMismatch` affiché à l'utilisateur.
 - Le plus haut de clôture des règles EOD vient des **clôtures officielles** (section suivante).

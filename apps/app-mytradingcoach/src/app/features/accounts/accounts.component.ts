@@ -47,7 +47,7 @@ import { TradesStore } from '../../core/stores/trades.store';
 import { ToastService } from '../../core/services/toast.service';
 import { apiErrorMessage } from '../../core/utils/api-error';
 import { TradovateApi, type TradovateConnection, type TradovateSyncResult } from '../../core/api/tradovate.api';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 import {
   TRADOVATE_RETURN_PARAMS,
   excludedAccountsMessage,
@@ -67,6 +67,7 @@ import {
   DrawdownType,
   TradingAccount,
   AccountsApi,
+  type AccountDeletionPreview,
 } from '../../core/api/accounts.api';
 import { ConfirmService, DialogDirective } from '@mtc/front-ui';
 import { PropFirmsApi, type PropFirmCatalogFirm, type PropFirmPlanDetail } from '../../core/api/prop-firms.api';
@@ -126,8 +127,32 @@ function emptyForm(): AccountFormState {
 // ESTIMÉES d'après les trades loggés (objectif + marge drawdown), avec disclaimer obligatoire.
 // Seul le NOMBRE de comptes ACTIVE est gaté (FREE 1 · Premium illimité), côté back dans
 // AccountsService ; `atLimit` n'en est que le miroir pour l'UI.
+/** Menu « … » : ancré au bouton, aligné sur son bord droit, ouvert vers le haut s'il manque de place. */
+export interface MenuPosition {
+  right: number;
+  top: number | null;
+  bottom: number | null;
+}
+
+const MENU_GAP = 4;
+const MENU_EDGE = 8;
+/** Hauteur réservée au menu (2 entrées) pour choisir le sens d'ouverture. */
+const MENU_HEIGHT = 96;
+
+export function menuPositionFor(rect: Pick<DOMRect, 'top' | 'bottom' | 'right'>, vw: number, vh: number): MenuPosition {
+  const right = Math.max(MENU_EDGE, vw - rect.right);
+  const roomBelow = vh - rect.bottom;
+  return roomBelow >= MENU_HEIGHT + MENU_EDGE || roomBelow >= rect.top
+    ? { right, top: rect.bottom + MENU_GAP, bottom: null }
+    : { right, top: null, bottom: vh - rect.top + MENU_GAP };
+}
+
 @Component({
   selector: 'mtc-accounts',
+  host: {
+    '(document:pointerdown)': 'onDocumentPointerDown($event)',
+    '(document:keydown.escape)': 'closeMenu()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DialogDirective,
@@ -167,6 +192,16 @@ export class AccountsComponent implements OnInit {
   protected readonly editingId = signal<string | null>(null);
   protected readonly saving = signal(false);
   protected readonly menuOpenId = signal<string | null>(null);
+  /**
+   * Position du menu « … » ouvert, en coordonnées de la fenêtre (`position: fixed`). Le menu est
+   * rendu HORS du tableau : dans la ligne, il héritait de l'opacité d'un compte archivé et restait
+   * piégé sous la ligne suivante (contexte d'empilement), qui recevait alors le clic.
+   */
+  protected readonly menuPos = signal<MenuPosition | null>(null);
+  protected readonly menuAccount = computed(() => {
+    const id = this.menuOpenId();
+    return id ? this.store.accounts().find((a) => a.id === id) ?? null : null;
+  });
   /**
    * Ligne dépliée (mobile) : en desktop les 8 colonnes tiennent à l'écran, en mobile
    * seules les colonnes vitales restent visibles et le reste s'ouvre ici. Un seul
@@ -362,6 +397,18 @@ export class AccountsComponent implements OnInit {
   }
 
   constructor() {
+    // Menu en position fixe : au défilement (page ou zone de contenu) ou au redimensionnement, il
+    // suit son bouton ; il se ferme si le bouton sort de l'écran. Capture : le défilement d'un
+    // conteneur ne remonte pas jusqu'au document.
+    const followAnchor = () => {
+      if (this.menuOpenId()) this.placeMenu();
+    };
+    document.addEventListener('scroll', followAnchor, { capture: true, passive: true });
+    window.addEventListener('resize', followAnchor, { passive: true });
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('scroll', followAnchor, { capture: true });
+      window.removeEventListener('resize', followAnchor);
+    });
     // Une fois les connexions connues : solde et equity à jour pour chaque compte connecté.
     effect(() => {
       if (!this.tv.loaded() || this.brokerRefreshed) return;
@@ -627,11 +674,49 @@ export class AccountsComponent implements OnInit {
   }
 
   // ── Menu ligne ──────────────────────────────────────────────────────────
-  protected toggleMenu(id: string): void {
+  protected toggleMenu(id: string, event?: Event): void {
     // Une nouvelle interaction efface le message : sinon il traîne indéfiniment sous
     // une liste qui a pu changer entre-temps, et ne décrit plus rien.
     this.deleteError.set(null);
-    this.menuOpenId.update((cur) => (cur === id ? null : id));
+    if (this.menuOpenId() === id) {
+      this.closeMenu();
+      return;
+    }
+    this.menuAnchor = event?.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+    this.menuOpenId.set(id);
+    this.placeMenu();
+  }
+
+  protected closeMenu(): void {
+    this.menuOpenId.set(null);
+    this.menuPos.set(null);
+    this.menuAnchor = null;
+  }
+
+  /** Bouton « … » du menu ouvert : ancre de sa position fixe. */
+  private menuAnchor: HTMLElement | null = null;
+
+  /** Recale le menu sous (ou au-dessus de) son bouton ; ferme si le bouton a quitté l'écran. */
+  private placeMenu(): void {
+    const anchor = this.menuAnchor;
+    if (!anchor) {
+      this.menuPos.set(null);
+      return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    if (!anchor.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) {
+      this.closeMenu();
+      return;
+    }
+    this.menuPos.set(menuPositionFor(rect, window.innerWidth, window.innerHeight));
+  }
+
+  /** Clic hors du menu et de son bouton : fermeture (le clic n'est pas consommé). */
+  protected onDocumentPointerDown(event: Event): void {
+    if (!this.menuOpenId()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('[data-account-menu-pop], .acct-menu')) return;
+    this.closeMenu();
   }
 
   // ── Formulaire create / edit ────────────────────────────────────────────
@@ -645,7 +730,7 @@ export class AccountsComponent implements OnInit {
     this.form.set(emptyForm());
     this.firmChoice.set('');
     this.loadCatalog();
-    this.menuOpenId.set(null);
+    this.closeMenu();
     this.formOpen.set(true);
   }
   protected openEdit(a: TradingAccount): void {
@@ -667,7 +752,7 @@ export class AccountsComponent implements OnInit {
     });
     this.firmChoice.set(this.startFirmOf(a));
     this.loadCatalog();
-    this.menuOpenId.set(null);
+    this.closeMenu();
     this.formOpen.set(true);
   }
   /** Firm sur laquelle ouvrir le sélecteur d'un compte sans plan : celle du catalogue qu'il désigne, sinon « Autre ». */
@@ -828,7 +913,11 @@ export class AccountsComponent implements OnInit {
 
   // ── Suppression / archivage ──────────────────────────────────────────────
   protected async confirmDelete(a: TradingAccount): Promise<void> {
-    this.menuOpenId.set(null);
+    this.closeMenu();
+    if (a.status === 'ARCHIVED') {
+      await this.confirmDeleteArchived(a);
+      return;
+    }
     const confirmed = await this.confirm.ask({
       title: `Supprimer « ${a.label} » ?`,
       message:
@@ -848,6 +937,51 @@ export class AccountsComponent implements OnInit {
         // message est déjà clair et actionnable : on l'affiche tel quel.
         error: (err) =>
           this.deleteError.set(err?.error?.message ?? 'Suppression impossible.'),
+      });
+  }
+
+  /**
+   * Compte ARCHIVÉ : suppression définitive du compte ET de tous ses trades. Jamais au premier clic :
+   * le nombre exact de trades (ouverts compris) est lu à l'API, puis confirmé dans une modale rouge.
+   * Le serveur revérifie tout (archivé, propriétaire) : un compte non archivé y est refusé.
+   */
+  private async confirmDeleteArchived(a: TradingAccount): Promise<void> {
+    this.deleteError.set(null);
+    let preview: AccountDeletionPreview;
+    try {
+      preview = (await firstValueFrom(this.api.deletionPreview(a.id))).data;
+    } catch (err) {
+      this.deleteError.set(apiErrorMessage(err, "La suppression n'a pas pu être préparée. Réessaie."));
+      return;
+    }
+    const n = preview.tradesCount;
+    const trades = n === 0
+      ? "Aucun trade n'est rattaché à ce compte."
+      : `${n} trade${n > 1 ? 's seront supprimés' : ' sera supprimé'} avec lui, ainsi que son journal.`;
+    const broker = preview.brokerConnected ? ' Sa connexion Tradovate sera aussi supprimée.' : '';
+    const ok = await this.confirm.ask({
+      title: `Supprimer définitivement « ${a.label} »\u00a0?`,
+      message:
+        `${trades}${broker} Action définitive\u00a0: rien ne pourra être récupéré. ` +
+        'Ton compte MyTradingCoach et ton abonnement ne changent pas.',
+      confirmLabel: n === 0 ? 'Supprimer définitivement' : `Supprimer le compte et ${n} trade${n > 1 ? 's' : ''}`,
+      danger: true,
+    });
+    if (!ok) return;
+    this.api
+      .deleteArchived(a.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const deleted = res.data.tradesDeleted;
+          this.store.load();
+          this.tradesStore.reset();
+          this.tv.load();
+          this.toast.success(
+            `« ${a.label} » supprimé${deleted ? ` · ${deleted} trade${deleted > 1 ? 's' : ''} effacé${deleted > 1 ? 's' : ''}` : ''}.`,
+          );
+        },
+        error: (err) => this.deleteError.set(apiErrorMessage(err, 'Suppression impossible.')),
       });
   }
 }
