@@ -27,6 +27,7 @@ import { PropRiskJournalService } from './prop-risk-journal.service';
 import { TradovateCallbackController, TradovateController } from './tradovate.controller';
 import { TradovateAdminController } from './tradovate-admin.controller';
 import { TradovateFeesRepairService } from './tradovate-fees-repair.service';
+import { TradovateObservationCron } from './tradovate-observation.cron';
 
 /**
  * Intégration Tradovate / NinjaTrader — synchro API en LECTURE SEULE.
@@ -74,6 +75,8 @@ import { FreeLimitSyncService } from './free-limit-sync.service';
     FreeLimitSyncService,
     // Réparation des frais importés avant le 31/10 (#783), lancée par l'admin.
     TradovateFeesRepairService,
+    // Journal d'observation (#684, phase 2) : une lecture de /account/list par login et par jour.
+    TradovateObservationCron,
   ],
 })
 export class TradovateModule {}

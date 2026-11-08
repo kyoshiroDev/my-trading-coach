@@ -116,6 +116,21 @@ export const PlanLinkChoice = {
 } as const;
 export type PlanLinkChoice = (typeof PlanLinkChoice)[keyof typeof PlanLinkChoice];
 
+// Journal d'observation Tradovate (#684, phase 2) : issue de la lecture de `/account/list`.
+export const TradovateObservationOutcome = {
+  OK: 'OK',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  RATE_LIMITED: 'RATE_LIMITED',
+  PENALIZED: 'PENALIZED',
+  NOT_FOUND: 'NOT_FOUND',
+  UNAVAILABLE: 'UNAVAILABLE',
+  TOKEN_REFUSED: 'TOKEN_REFUSED',
+  TOKEN_DEFERRED: 'TOKEN_DEFERRED',
+  ERROR: 'ERROR',
+} as const;
+export type TradovateObservationOutcome = (typeof TradovateObservationOutcome)[keyof typeof TradovateObservationOutcome];
+
 /** Tous les enums ci-dessus, par nom Prisma : utilisé par le test de synchronisation. */
 export const CONTRACT_ENUMS = {
   TradeSide,
@@ -141,4 +156,5 @@ export const CONTRACT_ENUMS = {
   AdminPushEvent,
   PushAlertType,
   PlanLinkChoice,
+  TradovateObservationOutcome,
 } as const;
