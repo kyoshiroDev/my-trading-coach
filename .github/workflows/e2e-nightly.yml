@@ -45,7 +45,8 @@ jobs:
     name: Inscription et onboarding
     needs: changes
     if: needs.changes.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    # Épinglé : voir checks.yml, job smoke-e2e (Playwright ne gère pas ubuntu 26.04).
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       DATABASE_URL: postgresql://mtc_user:devpassword@localhost:5432/mytradingcoach_e2e

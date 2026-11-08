@@ -160,7 +160,10 @@ jobs:
   # ensuite, retirer `continue-on-error`.
   smoke-e2e:
     name: Smoke E2E (non bloquant)
-    runs-on: ubuntu-latest
+    # Épinglé : ubuntu-latest est passé en 26.04, que Playwright ne gère pas encore
+    # (« Playwright does not support chromium on ubuntu26.04-x64 », CI du 2026-11-08).
+    # Revenir à ubuntu-latest quand la version de Playwright du dépôt le supporte.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: build
     continue-on-error: true
