@@ -4,8 +4,9 @@
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  /* Grandit avec son contenu (au lieu de s'arrêter à la hauteur de l'écran) : la barre
+     collante du haut reste visible sur toute la longueur du défilement. */
+  flex: 1 0 auto;
 }
 
 .content {
