@@ -2090,8 +2090,11 @@ Module `accounts/incidents/` (dans `AccountsModule`, client Anthropic global : p
 ## Statistiques calculées en SQL (SCA-B2-01, 2026-10-02)
 
 `analytics/analytics.sql.ts` : `groupTrades` (agrégats par setup / émotion / actif / session /
-heure / jour-heure / date de Paris), `summaryTotals` (sommes, drawdown max, série en cours en
-fenêtres SQL), `cumulativeByTrade`. **Plus aucun calcul ne charge tous les trades en mémoire.**
+heure / jour-heure / date de Paris), `summaryTotals` (sommes, série en cours en fenêtres SQL),
+`cumulativeByTrade`, `closedTradeNets` (net + heure de clôture par trade). **Drawdown max : plus en
+SQL** — `summary.maxDrawdown` (montant positif, lu par le débrief), `/equity-curve/trades`, les
+totaux de session et le seed démo passent tous par `maxDrawdownOfTrades` de `@mtc/shared` (après
+chaque trade clôturé, trades du même instant = une étape). **Plus aucun calcul ne charge tous les trades en mémoire.**
 - Règles reproduites à l'identique : net = `round(pnl − |commission|, 2)` (comme `netPnl`),
   gagnant si net > 0 ; R:R compté s'il est renseigné et non nul ; heure / jour dans le **fuseau du
   processus** (`processTimeZone()`, comme les anciens `getHours()` ; TZ=Europe/Paris en prod) ;

@@ -418,10 +418,17 @@ envoyées à l'API sont des horodatages ISO complets.
   Repli sans `before` (API ancienne) : solde actuel − P&L de la période. Un écart entre P&L 30 jours
   et P&L total = des trades avant la fenêtre, pas une erreur. **Jamais `startingCapital` de `/equity-curve/daily`** : c'est le capital du
   PROFIL (un compte de 50K partait de 100K dans Statistiques).
-- **Drawdown** (KPI « Drawdown max », courbe et en-tête des Statistiques) = `anchoredDrawdown` :
-  clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte (`before.peak`
-  renvoyé par l'API, solde de départ compris), comme la règle EOD des prop firms et la marge de
-  Mes comptes. Plus `summary.maxDrawdown` à l'écran (trade par trade, pic remis à 0 en début de période).
+- **Drawdown max du tableau de bord** (KPI + sparkline) = règle unique `maxDrawdownOfTrades` /
+  `maxDrawdownOfCumulative` de `@mtc/shared` : plus grand écart sommet → creux qui suit, sur le
+  solde APRÈS CHAQUE TRADE CLÔTURÉ de la période (net des frais, solde du début de période = premier
+  sommet, trades du même instant regroupés en une étape). Valeur = `maxDrawdown` de
+  `/analytics/equity-curve/trades` (toutes les clôtures, avant réduction). Libellé : « trades
+  clôturés », jamais de précision intra-trade. La courbe d'équité du dashboard est PAR TRADE
+  (`/equity-curve/trades`, ≤ 500 points, pics et creux gardés ; payouts par `withPayoutsByTrade`,
+  infobulle « Trade » / « N trades » avec l'heure).
+- **Courbe et en-tête drawdown des Statistiques** (inchangés) = `anchoredDrawdown` sur la courbe
+  journalière : clôture de journée moins le plus haut des clôtures depuis l'ouverture du compte
+  (`before.peak`), comme la règle EOD des prop firms. Écart connu avec le KPI du dashboard.
 - **Payouts reçus** (détectés chez le broker, `payouts` + `before.payouts` de l'API) : `withPayouts`
   les insère dans les points (jour sans trade = point au même P&L, champ `payout`). Seules les
   courbes de SOLDE les déduisent : équité, marge de la carte drawdown (`floorSeries`), sparkline du
