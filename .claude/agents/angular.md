@@ -488,7 +488,8 @@ envoyées à l'API sont des horodatages ISO complets.
   écartées), objectif « R:R minimum » de la session (`minRrFailureLabel`). Moyennes : R/R connus
   seulement (`averageKnownRiskReward`). Templates : `!== null && !== undefined` (lint eqeqeq).
 - Ligne du Journal sans R/R : bouton cible « Ajouter le stop initial » (`data-testid="trade-add-stop"`,
-  colonne actions passée à 88 px) → `mtc-trade-stop-dialog` (stop obligatoire, objectif facultatif,
+  colonne actions passée à 88 px, Exécution 1.15fr / Setup 0.95fr pour garder l'en-tête sur une ligne à
+  1440 px) → `mtc-trade-stop-dialog` (stop obligatoire, objectif facultatif,
   virgule acceptée). Aperçu en direct du risque (`stopRiskAmount` avec `tickValue`/`tickSize` de
   `GET /instruments`, en points si l'instrument n'a pas de valeur du point) et du R/R
   (`plannedRiskReward`), refus du mauvais côté (`stopPlacementError`) : mêmes fonctions que l'API
