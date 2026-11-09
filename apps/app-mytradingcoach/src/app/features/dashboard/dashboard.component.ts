@@ -60,6 +60,7 @@ import {
   plTooltipFor,
   setupsDonutFromStats,
   setupsDonutFromTrades,
+  tradeCountBars,
   topAssetBars,
 } from './dashboard-charts.util';
 import { DashboardKpisComponent } from './panels/dashboard-kpis/dashboard-kpis.component';
@@ -515,6 +516,8 @@ export class DashboardComponent {
   protected readonly plGranularity = computed(() => plGranularityFor(this.periodRange()));
   protected readonly plTitle = computed(() => plTitleFor(this.plGranularity()));
   protected readonly plTooltip = computed(() => plTooltipFor(this.plGranularity()));
+  /** Barres réelles de la carte « Trades pris » : trades par jour tradé de la période. */
+  protected readonly tradeBars = computed(() => tradeCountBars(this.activityResource.value()?.data?.days ?? []));
   protected readonly plBuckets = computed(() => {
     const days = this.activityResource.value()?.data?.days ?? null;
     return days === null

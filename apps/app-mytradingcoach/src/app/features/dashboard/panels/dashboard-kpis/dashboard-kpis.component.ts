@@ -4,7 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { AnalyticsSummary } from '@app/core/api/analytics.api';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { PnlFormatPipe } from '@app/shared/pipes';
-import { sparkPath } from '../../dashboard-charts.util';
+import { sparkPath, TradeCountBar } from '../../dashboard-charts.util';
 
 /** Rangée des 6 KPIs du dashboard (capital, P&L, win rate, profit factor, trades, drawdown). */
 @Component({
@@ -31,6 +31,8 @@ export class DashboardKpisComponent {
   /** Payouts cumulés aux mêmes points : la sparkline du Capital les déduit (fin = Capital). */
   readonly payoutSeries = input<number[]>([]);
   readonly periodShort = input('');
+  /** Trades clôturés par jour tradé de la période (`tradeCountBars`) : barres de « Trades pris ». */
+  readonly tradeBars = input<TradeCountBar[]>([]);
   /** Trades chargés : repli du compteur tant que les KPIs n'en donnent pas. */
   readonly fallbackTradesCount = input(0);
 
@@ -79,6 +81,10 @@ export class DashboardKpisComponent {
   });
   /** Série rouge du KPI drawdown (sans le point de départ, comme les autres sparklines). */
   protected readonly ddSeries = computed(() => this.drawdownSeries().slice(1));
+
+  protected readonly tradeBarsLabel = computed(() =>
+    `Trades par jour : ${this.tradeBars().map((b) => b.count).join(', ')}`,
+  );
 
   /** Barre win rate (KPI), pleine largeur de la carte comme les autres visuels (#642). */
   protected readonly winRatePct = computed(() => Math.max(0, Math.min(100, this.summary()?.winRate ?? 0)));

@@ -9,6 +9,7 @@ import {
   setupsDonutFromStats,
   setupsDonutFromTrades,
   sparkPath,
+  tradeCountBars,
   topAssetBars,
 } from './dashboard-charts.util';
 import { AnalyticsSummary } from '../../core/api/analytics.api';
@@ -29,6 +30,38 @@ describe('sparkPath', () => {
     expect([p.cx, p.cy]).toEqual([72, 2]);
   });
 
+  it('drawdown (sous l’eau) : 0 en haut, creux en bas, aire remplie depuis le haut', () => {
+    // Cas réel : 0 ; −268 ; −535,5 ; −88,5 → la ligne DESCEND jusqu'au creux puis remonte.
+    const p = sparkPath([0, -268, -535.5, -88.5], 72, 42, true);
+    expect(p.line).toBe('M0.0,2.0 L24.0,21.0 L48.0,40.0 L72.0,8.3');
+    expect(p.area.endsWith('L72,0 L0,0 Z')).toBe(true);
+  });
+
+  it('drawdown resté à 0 : ligne plate en haut (pas en bas)', () => {
+    expect(sparkPath([0, 0, 0], 72, 42, true).line).toBe('M0.0,2.0 L36.0,2.0 L72.0,2.0');
+  });
+});
+
+describe('tradeCountBars', () => {
+  it('trades par jour tradé, ordre chronologique, hauteur relative au plus gros jour', () => {
+    const bars = tradeCountBars([
+      { date: '2026-11-09', tradesCount: 2 },
+      { date: '2026-11-06', tradesCount: 3 },
+      { date: '2026-11-03', tradesCount: 1 },
+      { date: '2026-11-04', tradesCount: 0 },
+    ]);
+    expect(bars).toEqual([
+      { date: '2026-11-03', count: 1, pct: 33 },
+      { date: '2026-11-06', count: 3, pct: 100 },
+      { date: '2026-11-09', count: 2, pct: 67 },
+    ]);
+  });
+
+  it('garde les derniers jours seulement, aucune donnée → aucune barre', () => {
+    const days = Array.from({ length: 20 }, (_, i) => ({ date: `2026-10-${String(i + 1).padStart(2, '0')}`, tradesCount: 1 }));
+    expect(tradeCountBars(days).map((b) => b.date)).toEqual(days.slice(-14).map((d) => d.date));
+    expect(tradeCountBars([])).toEqual([]);
+  });
 });
 
 describe('P&L par période', () => {

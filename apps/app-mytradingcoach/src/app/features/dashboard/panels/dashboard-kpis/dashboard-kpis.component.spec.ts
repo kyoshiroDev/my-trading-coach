@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { formatMoney, maxDrawdownOfTrades } from '@mtc/shared';
 import { DashboardKpisComponent } from './dashboard-kpis.component';
+import { tradeCountBars } from '../../dashboard-charts.util';
 import { MoneyService } from '@app/core/services/money.service';
 import { InfoTooltipComponent } from '@app/shared/components/info-tooltip/info-tooltip.component';
 import { AnalyticsSummary } from '@app/core/api/analytics.api';
@@ -42,6 +43,8 @@ function renderCase() {
   return render({
     summary: SUMMARY, maxDrawdown: dd.maxDrawdown, drawdownSeries: dd.series, periodShort: 'sur 30 jours',
     periodStartCapital: 50_000, currentCapital: 51_064.4,
+    // Vendredi 3 trades, lundi 2 trades → barres 100 % et 67 %.
+    tradeBars: tradeCountBars([{ date: '2026-11-06', tradesCount: 3 }, { date: '2026-11-09', tradesCount: 2 }]),
   });
 }
 
@@ -98,10 +101,22 @@ describe('DashboardKpisComponent — drawdown max par trade', () => {
     expect(card(el, 'Trades pris').querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe('5');
   });
 
+  it('mini-graphiques : pas de sparkline profit factor, vraies barres de trades, drawdown rempli depuis le haut', () => {
+    const el = renderCase().nativeElement as HTMLElement;
+    expect(card(el, 'Profit factor').querySelector('svg')).toBeNull();
+    const bars = [...card(el, 'Trades pris').querySelectorAll<HTMLElement>('.mtc-minibars span')];
+    expect(bars.map((b) => b.style.height)).toEqual(['100%', '67%']);
+    expect(bars.map((b) => b.getAttribute('title'))).toEqual(['2026-11-06 : 3 trades', '2026-11-09 : 2 trades']);
+    const area = card(el, 'Drawdown max').querySelector('svg path')!.getAttribute('d')!;
+    expect(area.endsWith('L72,0 L0,0 Z')).toBe(true);
+  });
+
   it('aucun trade : 0 et « Aucune donnée »', () => {
     const fixture = render({ summary: { ...SUMMARY, totalTrades: 0, totalPnl: 0, winRate: 0, profitFactor: null }, maxDrawdown: 0 });
     const ddCard = card(fixture.nativeElement, 'Drawdown max');
     expect(ddCard.querySelector('.mtc-kpi-val')!.textContent!.trim()).toBe(usd(0));
     expect(ddCard.querySelector('.mtc-kpi-sub')!.textContent!.trim()).toBe('Aucune donnée');
+    // Aucune barre décorative sans données.
+    expect(card(fixture.nativeElement, 'Trades pris').querySelector('.mtc-minibars')).toBeNull();
   });
 });
