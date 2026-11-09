@@ -927,7 +927,8 @@ les chiffres (jamais au premier passage).
   badge (la cellule de l'actif passe à la ligne au lieu de couper le badge). Compte marqué échoué /
   archivé : liste et KPIs rechargés. Compteur des filtres : « n trades » (plus de « dans les
   chiffres » : liste = chiffres). Test : `journal-lost-account.spec.ts`.
-- Tableau de bord, « derniers trades » : `{ limit: '6', ...statsParams() }`, même périmètre que les chiffres.
+- Tableau de bord, « derniers trades » : `{ limit: '6', ...statsParams() }`, même périmètre que les chiffres ;
+  badge « Échoué » / « Archivé » du journal dans `mtc-recent-trades-table` (tableau et carte).
 - Mes comptes : « Voir les trades » sur la sous-ligne « Hors statistiques » d'un compte échoué ou
   archivé qui a des trades → `store.select(id)` puis `/journal` (un compte précis s'affiche toujours,
   l'interrupteur n'est pas touché).
