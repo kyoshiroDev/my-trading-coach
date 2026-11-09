@@ -23,6 +23,9 @@
     <mtc-account-selector />
   </div>
 
+  <!-- Séances des comptes échoués et archivés masquées en « Tous les comptes » ; l'interrupteur les réinclut. -->
+  <mtc-inactive-accounts-toggle class="sessions-inactive" />
+
   <!-- Résumé du mois -->
   @if (sessions().length > 0) {
     <div class="month-summary">
